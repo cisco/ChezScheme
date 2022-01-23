@@ -1149,7 +1149,7 @@
   ; which scheme-start is set, which was failing because its relocation information was discarded
   ; by the static-generation collection.
   (or
-   (case (machine-type) [(pb) #t] [else #f]) ; no callables in pb
+   (case (machine-type) [(pb tpb pb32 tpb32) #t] [else #f]) ; callables not always in pb
    (equal?
     (begin
       (unless (or (embedded?) (equal? *scheme* (format "~a/bin/~a/scheme~a" (path-parent *mats-dir*) (machine-type) (if (windows?) ".exe" ""))))

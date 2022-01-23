@@ -8836,8 +8836,8 @@
         integer-8 unsigned-8 integer-16 unsigned-16 integer-24 unsigned-24
         integer-32 unsigned-32 integer-40 unsigned-40 integer-48 unsigned-48
         integer-56 unsigned-56 integer-64 unsigned-64
-        boolean fixnum char wchar u8* u16* u32* utf-8 utf-16le utf-16be
-        utf-32le utf-32be) type]
+        boolean fixnum char wchar u8* u16* u32* utf-8 utf-16le utf-16be utf-16
+        utf-32le utf-32be utf-32) type]
       [(void) (and void-okay? type)]
       [(ptr) 'scheme-object]
       [(iptr)
@@ -8903,11 +8903,13 @@
          [(16)
           (constant-case native-endianness
             [(little) 'utf-16le]
-            [(big) 'utf-16be])]
+            [(big) 'utf-16be]
+            [(unknown) 'utf-16])]
          [(32)
           (constant-case native-endianness
             [(little) 'utf-32le]
-            [(big) 'utf-32be])])]
+            [(big) 'utf-32be]
+            [(unknown) 'utf-32])])]
       [else
        (and (or ($ftd? type) ($ftd-as-box? type))
             type)])))
@@ -8928,7 +8930,7 @@
           (constant-case wchar-bits
             [(16) '(lambda (id) (and (char? id) (fx<= (char->integer id) #xffff)))]
             [(32) '(lambda (id) (char? id))])]
-         [(utf-8 utf-16le utf-16be utf32-le utf32-be)
+         [(utf-8 utf-16le utf-16be utf-16 utf32-le utf32-be utf-32)
           '(lambda (id) (or (not id) (string? id)))]
          [(u8* u16* u32*)
           '(lambda (id) (or (not id) (bytevector? id)))]
@@ -9075,6 +9077,17 @@
                                                         ($fp-string->utf16 x 'big)
                                                         (err ($moi) x)))))
                                        (u16*))]
+                                   [(utf-16)
+                                    (check-strings-allowed)
+                                    #`(()
+                                       ((if (eq? x #f)
+                                            x
+                                            #,(if unsafe?
+                                                  #'($fp-string->utf16 x (native-endianness))
+                                                  #'(if (string? x)
+                                                        ($fp-string->utf16 x (native-endianness))
+                                                        (err ($moi) x)))))
+                                       (u16*))]
                                    [(utf-32le)
                                     (check-strings-allowed)
                                     #`(()
@@ -9095,6 +9108,17 @@
                                                   #'($fp-string->utf32 x 'big)
                                                   #'(if (string? x)
                                                         ($fp-string->utf32 x 'big)
+                                                        (err ($moi) x)))))
+                                       (u32*))]
+                                   [(utf-32)
+                                    (check-strings-allowed)
+                                    #`(()
+                                       ((if (eq? x #f)
+                                            x
+                                            #,(if unsafe?
+                                                  #'($fp-string->utf32 x (native-endianness))
+                                                  #'(if (string? x)
+                                                        ($fp-string->utf32 x (native-endianness))
                                                         (err ($moi) x)))))
                                        (u32*))]
                                    [(single-float)
@@ -9127,8 +9151,10 @@
                          [(utf-8) #'((lambda (x) (and x (utf8->string x))) u8*)]
                          [(utf-16le) #'((lambda (x) (and x (utf16->string x 'little #t))) u16*)]
                          [(utf-16be) #'((lambda (x) (and x (utf16->string x 'big #t))) u16*)]
+                         [(utf-16) #'((lambda (x) (and x (utf16->string x (native-endianness) #t))) u16*)]
                          [(utf-32le) #'((lambda (x) (and x (utf32->string x 'little #t))) u32*)]
                          [(utf-32be) #'((lambda (x) (and x (utf32->string x 'big #t))) u32*)]
+                         [(utf-32) #'((lambda (x) (and x (utf32->string x (native-endianness) #t))) u32*)]
                          [(integer-24) #`((lambda (x) (#,(constant-case ptr-bits [(32) #'mod0] [(64) #'fxmod0]) x #x1000000)) integer-32)]
                          [(unsigned-24) #`((lambda (x) (#,(constant-case ptr-bits [(32) #'mod] [(64) #'fxmod]) x #x1000000)) unsigned-32)]
                          [(integer-40) #`((lambda (x) (mod0 x #x10000000000)) integer-64)]
@@ -9239,6 +9265,11 @@
                                     #`((and x (utf16->string x 'big #t))
                                        (x)
                                        (u16*)))]
+                                 [(utf-16)
+                                  (with-syntax ([(x) (generate-temporaries #'(*))])
+                                    #`((and x (utf16->string x (native-endianness) #t))
+                                       (x)
+                                       (u16*)))]
                                  [(utf-32le)
                                   (with-syntax ([(x) (generate-temporaries #'(*))])
                                     #`((and x (utf32->string x 'little #t))
@@ -9247,6 +9278,11 @@
                                  [(utf-32be)
                                   (with-syntax ([(x) (generate-temporaries #'(*))])
                                     #`((and x (utf32->string x 'big #t))
+                                       (x)
+                                       (u32*)))]
+                                 [(utf-32)
+                                  (with-syntax ([(x) (generate-temporaries #'(*))])
+                                    #`((and x (utf32->string x (native-endianness) #t))
                                        (x)
                                        (u32*)))]
                                  [(integer-24)
@@ -9368,6 +9404,18 @@
                                                (err x)))))
                              u16*
                              [] [])]
+                         [(utf-16)
+                          (check-strings-allowed)
+                          #`((lambda (x)
+                               (if (eq? x #f)
+                                   x
+                                   #,(if unsafe?
+                                         #'($fp-string->utf16 x (native-endianness))
+                                         #'(if (string? x)
+                                               ($fp-string->utf16 x (native-endianness))
+                                               (err x)))))
+                             u16*
+                             [] [])]
                          [(utf-32le)
                           (check-strings-allowed)
                           #`((lambda (x)
@@ -9389,6 +9437,18 @@
                                          #'($fp-string->utf32 x 'big)
                                          #'(if (string? x)
                                                ($fp-string->utf32 x 'big)
+                                               (err x)))))
+                             u32*
+                             [] [])]
+                         [(utf-32)
+                          (check-strings-allowed)
+                          #`((lambda (x)
+                               (if (eq? x #f)
+                                   x
+                                   #,(if unsafe?
+                                         #'($fp-string->utf32 x (native-endianness))
+                                         #'(if (string? x)
+                                               ($fp-string->utf32 x (native-endianness))
                                                (err x)))))
                              u32*
                              [] [])]

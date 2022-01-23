@@ -1,5 +1,5 @@
-(define-constant machine-type (constant machine-type-pb))
-(features)
+(define-constant machine-type (constant machine-type-tpb))
+(features iconv expeditor pthreads)
 
 (define-constant architecture 'pb)
 (define-constant ptr-bits 64)

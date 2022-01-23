@@ -421,11 +421,17 @@
         (export "void" "Sinitframe" "(iptr)")
         (export "void" "Sput_arg" "(iptr, ptr)")
         (export "ptr" "Scall" "(ptr, iptr)")
-        (comment "Warning: Sforeign_callable_entry_point(x) returns a pointer into x.")
-        (def "Sforeign_callable_entry_point(x)"
-             (&ref "(void (*) PROTO((void)))" "x" ($ code-data-disp)))
-        (def "Sforeign_callable_code_object(x)"
-             (&ref "(ptr)" "x" (- ($ code-data-disp))))
+        (constant-case architecture
+          [(pb)
+           (def "Sforeign_callable_entry_point(x)"
+                "TO_PTR(Svector_ref(x, 2))")
+           (export "ptr" "Sforeign_callable_code_object" "(void*)")]
+          [else
+           (comment "Warning: Sforeign_callable_entry_point(x) returns a pointer into x.")
+           (def "Sforeign_callable_entry_point(x)"
+                (&ref "(void (*) PROTO((void)))" "x" ($ code-data-disp)))
+           (def "Sforeign_callable_code_object(x)"
+                (&ref "(ptr)" "x" (- ($ code-data-disp))))])
   
         (nl) (comment "Customization support.")
         (export "const char *" "Skernel_version" "(void)")
@@ -870,10 +876,18 @@
             (pr "  } while (0)~%")]
           [(pb)
            (pr "#define INITLOCK(addr) (*((long *) addr) = 0)~%")
-           (pr "#define SPINLOCK(addr) (*((long *) addr) = 1)~%")
            (pr "#define UNLOCK(addr) (*((long *) addr) = 0)~%")
-           (pr "#define LOCKED_INCR(addr, res) (res = ((*(uptr*)addr)-- == 1))~%")
-           (pr "#define LOCKED_DECR(addr, res) (res = ((*(uptr*)addr)-- == 1))~%")]
+           (if-feature pthreads
+             (begin
+               (pr "#define SPINLOCK(addr) S_pb_spinlock(addr)~%")
+               (pr "#define LOCKED_INCR(addr, res) (res = S_pb_locked_adjust(addr, 1))~%")
+               (pr "#define LOCKED_DECR(addr, res) (res = S_pb_locked_adjust(addr, -1))~%")
+               (export "void" "S_pb_spinlock" "(void*)")
+               (export "int" "S_pb_locked_adjust" "(void*, int)"))
+             (begin
+               (pr "#define SPINLOCK(addr) (*((long *) addr) = 1)~%")               
+               (pr "#define LOCKED_INCR(addr, res) (res = ((*(uptr*)addr)++ == -1))~%")
+               (pr "#define LOCKED_DECR(addr, res) (res = ((*(uptr*)addr)-- == 1))~%")))]
           [else
             ($oops who "asm locking code is not yet defined for ~s" (constant architecture))]))))
 

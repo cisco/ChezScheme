@@ -296,8 +296,10 @@ The types
 \index{\scheme{u16*}}\scheme{u16*},
 \index{\scheme{u32*}}\scheme{u32*},
 \index{\scheme{utf-8}}\scheme{utf-8},
+\index{\scheme{utf-16}}\scheme{utf-16},
 \index{\scheme{utf-16le}}\scheme{utf-16le},
 \index{\scheme{utf-16be}}\scheme{utf-16be},
+\index{\scheme{utf-32}}\scheme{utf-32},
 \index{\scheme{utf-32le}}\scheme{utf-32le},
 and
 \index{\scheme{utf-32be}}\scheme{utf-32be},
@@ -314,8 +316,10 @@ foreign variables and data structures.
 
 For argument types \scheme{string}, \scheme{wstring},
 \index{\scheme{utf-8}}\scheme{utf-8},
+\index{\scheme{utf-16}}\scheme{utf-16},
 \index{\scheme{utf-16le}}\scheme{utf-16le},
 \index{\scheme{utf-16be}}\scheme{utf-16be},
+\index{\scheme{utf-32}}\scheme{utf-32},
 \index{\scheme{utf-32le}}\scheme{utf-32le}, and
 \index{\scheme{utf-32be}}\scheme{utf-32be}, an argument is converted
 to a fresh object that is passed to the foreign procedure. Since the
@@ -565,6 +569,12 @@ them between foreign procedure calls and use their storage for some
 other purpose. The \scheme{utf-8} argument type is not allowed for a
 \scheme{__collect_safe} foreign procedure.
 
+\foreigntype{\scheme{utf-16}}
+\index{\scheme{utf-16}}Arguments of this type are treated like arguments
+of type \scheme{utf-8}, except they are converted as if via
+\scheme{string->utf16} with endianness \scheme{(native-endianness)}, and they are
+extended by two null bytes rather than one.
+
 \foreigntype{\scheme{utf-16le}}
 \index{\scheme{utf-16le}}Arguments of this type are treated like arguments
 of type \scheme{utf-8}, except they are converted as if via
@@ -576,6 +586,12 @@ extended by two null bytes rather than one.
 of type \scheme{utf-8}, except they are converted as if via
 \scheme{string->utf16} with endianness \scheme{big}, and they are
 extended by two null bytes rather than one.
+
+\foreigntype{\scheme{utf-32}}
+\index{\scheme{utf-32}}Arguments of this type are treated like arguments
+of type \scheme{utf-8}, except they are converted as if via
+\scheme{string->utf32} with endianness \scheme{(native-endianness)}, and they are
+extended by four null bytes rather than one.
 
 \foreigntype{\scheme{utf-32le}}
 \index{\scheme{utf-32le}}Arguments of this type are treated like arguments
@@ -593,11 +609,11 @@ extended by four null bytes rather than one.
 \index{\scheme{string}}This type is an alias for \scheme{utf-8}.
 
 \foreigntype{\scheme{wstring}}
-\index{\scheme{string}}This type is an alias for \scheme{utf-16le},
-\scheme{utf-16be}, \scheme{utf-32le}, or \scheme{utf-32be} as
+\index{\scheme{string}}This type is an alias for \scheme{utf-16},
+or \scheme{utf-32} as
 appropriate depending on the size of a C \scheme{wchar_t} and
 the endianness of the target machine.
-For example, \scheme{wstring} is equivalent to \scheme{utf-16le}
+For example, \scheme{wstring} is equivalent to \scheme{utf-16}
 under Windows running on Intel hardware.
 
 \foreigntype{\scheme{(* \var{ftype-name})}}
@@ -822,6 +838,16 @@ If the result is a null pointer, \scheme{#f} is returned.
 Otherwise, the sequence of bytes is converted into a Scheme string, as if
 via \scheme{utf8->string}, and the string is returned to Scheme.
 
+\foreigntype{\scheme{utf-16}}
+\index{\scheme{utf-16}}The result is interpreted as a pointer to a
+null-terminated sequence of 16-bit unsigned integers.
+If the result is a null pointer, \scheme{#f} is returned.
+Otherwise, the sequence of integers is converted into a Scheme string, as if
+via \scheme{utf16->string} with endianness \scheme{(native-endianness)},
+and the string is returned to Scheme.
+A byte-order mark in the sequence of integers as treated as an ordinary
+character value and does not affect the byte ordering.
+
 \foreigntype{\scheme{utf-16le}}
 \index{\scheme{utf-16le}}The result is interpreted as a pointer to a
 null-terminated sequence of 16-bit unsigned integers.
@@ -838,6 +864,16 @@ null-terminated sequence of 16-bit unsigned integers.
 If the result is a null pointer, \scheme{#f} is returned.
 Otherwise, the sequence of integers is converted into a Scheme string, as if
 via \scheme{utf16->string} with endianness \scheme{big},
+and the string is returned to Scheme.
+A byte-order mark in the sequence of integers as treated as an ordinary
+character value and does not affect the byte ordering.
+
+\foreigntype{\scheme{utf-32}}
+\index{\scheme{utf-32}}The result is interpreted as a pointer to a
+null-terminated sequence of 32-bit unsigned integers.
+If the result is a null pointer, \scheme{#f} is returned.
+Otherwise, the sequence of integers is converted into a Scheme string, as if
+via \scheme{utf32->string} with endianness \scheme{(native-endianness)},
 and the string is returned to Scheme.
 A byte-order mark in the sequence of integers as treated as an ordinary
 character value and does not affect the byte ordering.
@@ -866,11 +902,10 @@ character value and does not affect the byte ordering.
 \index{\scheme{string}}This type is an alias for \scheme{utf-8}.
 
 \foreigntype{\scheme{wstring}}
-\index{\scheme{string}}This type is an alias for \scheme{utf-16le},
-\scheme{utf-16be}, \scheme{utf-32le}, or \scheme{utf-32be} as
-appropriate depending on the size of a C \scheme{wchar_t} and
+\index{\scheme{string}}This type is an alias for \scheme{utf-16},
+or \scheme{utf-32} as appropriate depending on the size of a C \scheme{wchar_t} and
 the endianness of the target machine.
-For example, \scheme{wstring} is equivalent to \scheme{utf-16le}
+For example, \scheme{wstring} is equivalent to \scheme{utf-16}
 under Windows running on Intel hardware.
 
 \foreigntype{\scheme{(* \var{ftype-name})}}

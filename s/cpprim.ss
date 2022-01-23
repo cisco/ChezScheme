@@ -624,14 +624,14 @@
           ,(%constant type-char))))
     (define need-store-fence?
       (if-feature pthreads
-	     (constant-case architecture
-           [(arm32 arm64) #t]
-           [else #f])
-         #f))
+	(constant-case architecture
+          [(arm32 arm64 pb) #t]
+          [else #f])
+        #f))
     (define add-store-fence
       ;; A store--store fence should be good enough for safety on a platform that
       ;; orders load dependencies (which is anything except Alpha)
-	  (lambda (e)
+      (lambda (e)
         (if need-store-fence?
             `(seq ,(%inline store-store-fence) ,e)
             e)))
@@ -3146,13 +3146,13 @@
     (define-inline 2 memory-order-acquire
       [() (if-feature pthreads
             (constant-case architecture
-	          [(arm32 arm64) (%seq ,(%inline acquire-fence) (quote ,(void)))]
+	          [(arm32 arm64 pb) (%seq ,(%inline acquire-fence) (quote ,(void)))]
               [else `(quote ,(void))])
             `(quote ,(void)))])
     (define-inline 2 memory-order-release
       [() (if-feature pthreads
             (constant-case architecture
-	          [(arm32 arm64) (%seq ,(%inline release-fence) (quote ,(void)))]
+	          [(arm32 arm64 pb) (%seq ,(%inline release-fence) (quote ,(void)))]
               [else `(quote ,(void))])
             `(quote ,(void)))])
     (let ()
@@ -6863,7 +6863,7 @@
                    [(e-bv e-offset e-eness)
                     (and (or (constant unaligned-floats)
                              (bv-offset-okay? e-offset mask))
-                         (safe-assert (not (eq? (constant native-endianness) 'unknown)))
+                         (not (eq? (constant native-endianness) 'unknown))
                          (constant? (lambda (x) (eq? x (constant native-endianness))) e-eness)
                          (let-values ([(e-index imm-offset) (bv-index-offset e-offset)])
                            (build-object-ref #f 'type e-bv e-index imm-offset)))])])))
@@ -6878,7 +6878,7 @@
               [(_ check-64? name type mask)
                (with-syntax ([body #'(and (or (constant unaligned-integers)
                                               (and mask (bv-offset-okay? e-offset mask)))
-                                          (safe-assert (not (eq? (constant native-endianness) 'unknown)))
+                                          (not (eq? (constant native-endianness) 'unknown))
                                           (constant? (lambda (x) (memq x '(big little))) e-eness)
                                           (let-values ([(e-index imm-offset) (bv-index-offset e-offset)])
                                             (if (eq? (constant-value e-eness) (constant native-endianness))
@@ -6919,7 +6919,7 @@
                #'(define-inline 3 name
                    [(e-bv e-offset e-value e-eness)
                     (and (or (constant unaligned-floats) (bv-offset-okay? e-offset mask))
-                         (safe-assert (not (eq? (constant native-endianness) 'unknown)))
+                         (not (eq? (constant native-endianness) 'unknown))
                          (constant? (lambda (x) (eq? x (constant native-endianness))) e-eness)
                          (let-values ([(e-index imm-offset) (bv-index-offset e-offset)])
                            (bind #f (e-bv e-index)
@@ -6935,7 +6935,7 @@
           (lambda (type mask e-bv e-offset e-eness)
             (and (or (constant unaligned-integers) (bv-offset-okay? e-offset mask))
                  (constant? (lambda (x) (memq x '(big little))) e-eness)
-                 (safe-assert (not (eq? (constant native-endianness) 'unknown)))
+                 (not (eq? (constant native-endianness) 'unknown))
                  (let-values ([(e-index imm-offset) (bv-index-offset e-offset)])
                    (build-object-ref (not (eq? (constant-value e-eness) (constant native-endianness)))
                      type e-bv e-index imm-offset)))))
@@ -6964,7 +6964,7 @@
         (define anyint-set!-helper
           (lambda (type mask e-bv e-offset e-value e-eness)
             (and (or (constant unaligned-integers) (bv-offset-okay? e-offset mask))
-                 (safe-assert (not (eq? (constant native-endianness) 'unknown)))
+                 (not (eq? (constant native-endianness) 'unknown))
                  (constant? (lambda (x) (memq x '(big little))) e-eness)
                  (let-values ([(e-index imm-offset) (bv-index-offset e-offset)])
                    (if (eq? (constant-value e-eness) (constant native-endianness))

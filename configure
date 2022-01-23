@@ -43,6 +43,7 @@ w=""
 pb=no
 threads=yes
 nothreads=no
+libffi=no
 temproot=""
 help=no
 gzipmanpages=yes
@@ -264,6 +265,9 @@ while [ $# != 0 ] ; do
     --disable-iconv)
       disableiconv=yes
       ;;
+    --enable-libffi)
+      libffi=yes
+      ;;
     --disable-auto-flags)
       addflags=no
       ;;
@@ -346,6 +350,13 @@ if [ "$m" = "pb" ] ; then
     exit 1
 fi
 
+if [ "$m" = "tpb" ] ; then
+    echo "Don't select tpb using -m or --machine, because tpb needs the"
+    echo " machine as the kernel host machine. Instead, use --pb plus"
+    echo " --threads to select a tpb (threaded portable bytecode) build."
+    exit 1
+fi
+
 if [ "$bits" = "" ] ; then
   if uname -a | egrep 'amd64|x86_64|aarch64|arm64|ppc64|powerpc64' > /dev/null 2>&1 ; then
     bits=64
@@ -355,7 +366,11 @@ if [ "$bits" = "" ] ; then
 fi
 
 if [ "$threads" = "" ] ; then
-  threads=yes
+  if [ "$pb" = "yes" ] ; then
+    threads=no
+  else
+    threads=yes
+  fi
 fi
 
 if [ $bits = 64 ] ; then
@@ -392,6 +407,12 @@ else
   flagsm=$m
 fi
 
+if [ $threads = yes ] ; then
+  if [ $m = pb ] ; then
+    m=tpb
+  fi
+fi
+
 if [ "$w" = "" ] ; then
   w=$m
 fi
@@ -419,9 +440,11 @@ if [ "$help" = "yes" ]; then
   echo "  --threads                         specify threaded version ($threads)"
   echo "  --nothreads                       specify non-threaded version ($nothreads)"
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
+  echo "  --pb                              specify pb (portable bytecode) version"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
   echo "  --disable-iconv                   disable iconv support"
+  echo "  --enable-libffi                   enable libffi support for pb"
   echo "  --disable-auto-flags              no auto additions to CFLAGS/LDFLAGS/LIBS"
   echo "  --enable-warning-flags            add GCC warning flags to CFLAGS"
   echo "  --libkernel                       build libkernel.a (the default)"
@@ -859,6 +882,12 @@ fi
 
 if [ "$disablex11" = "yes" ]; then
   echo '#define DISABLE_X11' >> $w/c/next_config.h
+fi
+
+if [ "$pb" = "yes" ]; then
+  if [ "$libffi" = "yes" ]; then
+    echo '#define ENABLE_LIBFFI' >> $w/c/next_config.h
+  fi
 fi
 
 if [ ! -f "$w/c/config.h" ] ; then

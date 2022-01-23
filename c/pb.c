@@ -32,8 +32,10 @@ typedef uint32_t instruction_t;
 
 #define SHIFT_MASK(v) ((v) & (ptr_bits-1))
 
-static uptr regs[16];
-static double fpregs[8];
+#define regs       (&PBREGS(tc, 0))
+#define fpregs     (&PBFPREGS(tc, 0))
+#define call_arena (&PBCALLARENA(tc, 0)) /* scratch space for libffi-based foreign calls, 
+                                            somewhat analogous to the C stack */
 
 enum {
    Cretval = 9,
@@ -779,6 +781,9 @@ void S_pb_interp(ptr tc, void *bytecode) {
         case pb_call_int32_uptr_uptr:
           regs[Cretval] = ((pb_int32_uptr_uptr_t)proc)(regs[Carg1], regs[Carg2]);
           break;
+        case pb_call_int32_uptr_uptr_uptr:
+          regs[Cretval] = ((pb_int32_uptr_uptr_uptr_t)proc)(regs[Carg1], regs[Carg2], regs[Carg3]);
+          break;
         case pb_call_int32_int32_int32:
           regs[Cretval] = ((pb_int32_int32_int32_t)proc)(regs[Carg1], regs[Carg2]);
           break;
@@ -940,26 +945,44 @@ void S_pb_interp(ptr tc, void *bytecode) {
       break;
     case pb_inc_pb_register:
       {
-        uptr r = *(uptr *)TO_VOIDP(regs[INSTR_dr_dest(instr)]) + regs[INSTR_dr_reg(instr)];
-        *(uptr *)TO_VOIDP(regs[INSTR_dr_dest(instr)]) = r;
+        uptr addr = regs[INSTR_dr_dest(instr)];
+        uptr old_r = *(uptr *)TO_VOIDP(addr);
+        uptr r = old_r + regs[INSTR_dr_reg(instr)];
+#     if defined(PTHREADS)
+        if (!CAS_ANY_FENCE(TO_VOIDP(addr), TO_VOIDP(old_r), TO_VOIDP(r)))
+          next_ip = ip;
+#     else
+        *(uptr *)TO_VOIDP(addr) = r;
+#     endif
         flag = (r == 0);
       }
       break;
     case pb_inc_pb_immediate:
       {
-        uptr r = *(uptr *)TO_VOIDP(regs[INSTR_di_dest(instr)]) + INSTR_di_imm(instr);
-        *(uptr *)TO_VOIDP(regs[INSTR_di_dest(instr)]) = r;
+        uptr addr = regs[INSTR_dr_dest(instr)];
+        uptr old_r = *(uptr *)TO_VOIDP(addr);
+        uptr r = old_r + INSTR_di_imm(instr);
+#     if defined(PTHREADS)
+        if (!CAS_ANY_FENCE(TO_VOIDP(addr), TO_VOIDP(old_r), TO_VOIDP(r)))
+          next_ip = ip;
+#     else
+        *(uptr *)TO_VOIDP(addr) = r;
+#     endif
         flag = (r == 0);
       }
       break;
     case pb_lock:
       {
         uptr *l = TO_VOIDP(regs[INSTR_d_dest(instr)]);
+#     if defined(PTHREADS)
+        flag = CAS_ANY_FENCE(l, TO_VOIDP(0), TO_VOIDP(1));
+#     else
         if (*l == 0) {
           *l = 1;
           flag = 1;
         } else
           flag = 0;
+#     endif
       }
       break;
     case pb_cas:
@@ -967,12 +990,40 @@ void S_pb_interp(ptr tc, void *bytecode) {
         uptr *l = TO_VOIDP(regs[INSTR_drr_dest(instr)]);
         uptr old = regs[INSTR_drr_reg1(instr)];
         uptr new = regs[INSTR_drr_reg2(instr)];
+#     if defined(PTHREADS)
+        flag = CAS_ANY_FENCE(l, TO_VOIDP(old), TO_VOIDP(new));
+#     else
         if (*l == old) {
           *l = new;
           flag = 1;
         } else
           flag = 0;
+#     endif
       }
+      break;
+    case pb_fence_pb_fence_store_store:
+      STORE_FENCE();
+      break;
+    case pb_fence_pb_fence_acquire:
+      ACQUIRE_FENCE();
+      break;
+    case pb_fence_pb_fence_release:
+      RELEASE_FENCE();
+      break;
+    case pb_call_arena_in:
+      *(ptr *)((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr)) = regs[INSTR_di_dest(instr)];
+      break;
+    case pb_fp_call_arena_in:
+      *(double *)((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr)) = fpregs[INSTR_di_dest(instr)];
+      break;
+    case pb_call_arena_out:
+      regs[INSTR_di_dest(instr)] = *(ptr *)((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr));
+      break;
+    case pb_fp_call_arena_out:
+      fpregs[INSTR_di_dest(instr)] = *(double *)((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr));
+      break;
+    case pb_stack_call:
+      S_ffi_call(regs[INSTR_dr_reg(instr)], regs[INSTR_dr_dest(instr)], (ptr *)call_arena);
       break;
     default:
       S_error_abort("illegal pb instruction");
@@ -981,3 +1032,26 @@ void S_pb_interp(ptr tc, void *bytecode) {
     ip = next_ip;
   }
 }
+
+ptr *S_get_call_arena(ptr tc) {
+  return &PBCALLARENA(tc, 0);
+}
+
+#if defined(PTHREADS)
+void S_pb_spinlock(void *addr) {
+  while (1) {
+    if (CAS_ANY_FENCE(addr, TO_VOIDP(0), TO_VOIDP(1)))
+      break;
+  }
+}
+
+int S_pb_locked_adjust(void *addr, int delta) {
+  while (1) {
+    uptr oldv = *(uptr *)addr;
+    uptr newv = oldv + delta;
+    if (CAS_ANY_FENCE(addr, TO_VOIDP(oldv), TO_VOIDP(newv)))
+      return newv == 0;
+  }
+}
+
+#endif

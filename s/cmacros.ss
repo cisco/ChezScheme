@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050704)
+(define-constant scheme-version #x09050705)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -375,7 +375,8 @@
 
 (define-machine-types
   any
-  pb
+  pb        tpb
+  pb32      tpb32
   i3le      ti3le
   i3nt      ti3nt
   i3fb      ti3fb
@@ -1386,6 +1387,13 @@
                      ...))))))])))
 
 ;; ---------------------------------------------------------------------
+;; PB machine state
+
+(define-constant pb-reg-count (constant-case architecture [(pb) 16] [else 0]))
+(define-constant pb-fpreg-count (constant-case architecture [(pb) 8] [else 0]))
+(define-constant pb-call-arena-size (constant-case architecture [(pb) 128] [else 0]))
+
+;; ---------------------------------------------------------------------
 ;; Object layouts:
 
 (define-primitive-structure-disps typed-object type-typed-object
@@ -1619,6 +1627,9 @@
    [ptr DSTBV]
    [ptr SRCBV]
    [double fpregs (constant asm-fpreg-max)]
+   [uptr pb-regs (constant pb-reg-count)]
+   [double pb-fpregs (constant pb-fpreg-count)]
+   [uptr pb-call-arena (constant pb-call-arena-size)]
    [xptr gc-data]))
 
 (define tc-field-list
@@ -3284,12 +3295,17 @@
     pb-shift2
     pb-shift3)
 
-  (define-pb-enum pk-keeps << pb-shifts
+  (define-pb-enum pb-keeps << pb-shifts
     pb-zero-bits
     pb-keep-bits)
 
+  (define-pb-enum pb-fences
+    pb-fence-store-store
+    pb-fence-acquire
+    pb-fence-release)
+
   (define-pb-opcode
-    [pb-mov16 pk-keeps pb-shifts]
+    [pb-mov16 pb-keeps pb-shifts]
     [pb-mov pb-move-types]
     [pb-bin-op pb-signals pb-binaries pb-argument-types]
     [pb-cmp-op pb-compares pb-argument-types]
@@ -3309,6 +3325,10 @@
     [pb-inc pb-argument-types]
     [pb-lock]
     [pb-cas]
+    [pb-call-arena-in] [pb-call-arena-out]
+    [pb-fp-call-arena-in] [pb-fp-call-arena-out]
+    [pb-stack-call]
+    [pb-fence pb-fences]
     [pb-link]) ; used by linker
 
   ;; Only foreign procedures that match specific prototypes are
@@ -3366,6 +3386,7 @@
     [double uptr]
     [double double double]
     [int32 uptr uptr uptr uptr uptr]
+    [int32 uptr uptr uptr]
     [uptr]
     [uptr uptr]
     [uptr int32]
@@ -3404,3 +3425,18 @@
   ;; end pb
   ]
  [else (void)])
+
+(define-enumerated-constants
+  ffi-typerep-void
+  ffi-typerep-uint8
+  ffi-typerep-sint8
+  ffi-typerep-uint16
+  ffi-typerep-sint16
+  ffi-typerep-uint32
+  ffi-typerep-sint32
+  ffi-typerep-uint64
+  ffi-typerep-sint64
+  ffi-typerep-float
+  ffi-typerep-double
+  ffi-typerep-pointer
+  ffi-default-abi)

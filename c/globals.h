@@ -179,4 +179,10 @@ EXTERN struct S_G_struct {
    struct vfasl_hash_table *c_entries;
    struct vfasl_hash_table *library_entries;
    struct vfasl_hash_table *library_entry_codes;
+
+#ifdef PORTABLE_BYTECODE
+  /* ffi.c */
+  ptr foreign_callables;
+  iptr foreign_callables_fuel;
+#endif
 } S_G;

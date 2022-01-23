@@ -351,8 +351,8 @@
   (case-lambda
    [(bv i uptr)
     (constant-case ptr-bytes
-      [(4) (bytevector-u32-set! bv i uptr (constant native-endianness))]
-      [(8) (bytevector-u64-set! bv i uptr (constant native-endianness))])]
+      [(4) (bytevector-u32-set! bv i uptr (native-endianness))]
+      [(8) (bytevector-u64-set! bv i uptr (native-endianness))])]
    [(p delta uptr vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-uptr! bv offset uptr))]))
@@ -362,8 +362,8 @@
   (case-lambda
    [(bv i)
     (constant-case ptr-bytes
-      [(4) (bytevector-u32-ref bv i (constant native-endianness))]
-      [(8) (bytevector-u64-ref bv i (constant native-endianness))])]
+      [(4) (bytevector-u32-ref bv i (native-endianness))]
+      [(8) (bytevector-u64-ref bv i (native-endianness))])]
    [(p delta vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (ref-uptr bv offset))]))
@@ -373,8 +373,8 @@
   (case-lambda
    [(bv i uptr)
     (constant-case ptr-bytes
-      [(4) (bytevector-s32-set! bv i uptr (constant native-endianness))]
-      [(8) (bytevector-s64-set! bv i uptr (constant native-endianness))])]
+      [(4) (bytevector-s32-set! bv i uptr (native-endianness))]
+      [(8) (bytevector-s64-set! bv i uptr (native-endianness))])]
    [(p delta uptr vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-iptr! bv offset uptr))]))
@@ -383,7 +383,7 @@
 (define set-double!
   (case-lambda
    [(bv i dbl)
-    (bytevector-ieee-double-set! bv i dbl (constant native-endianness))]
+    (bytevector-ieee-double-set! bv i dbl (native-endianness))]
    [(p delta dbl vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-double! bv offset dbl))]))
@@ -395,7 +395,7 @@
     (let ([n (bitwise-ior (bitwise-arithmetic-shift-left (char->integer char) (constant char-data-offset))
                           (constant type-char))])
       (constant-case string-char-bytes
-        [(4) (bytevector-u32-set! bv i n (constant native-endianness))]))]
+        [(4) (bytevector-u32-set! bv i n (native-endianness))]))]
    [(p delta char vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-char! bv offset char))]))
@@ -415,7 +415,7 @@
   (case-lambda
    [(bv i bigit)
     (constant-case bigit-bytes
-      [(4) (bytevector-u32-set! bv i bigit (constant native-endianness))])]
+      [(4) (bytevector-u32-set! bv i bigit (native-endianness))])]
    [(p delta bigit vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-bigit! bv offset bigit))]))

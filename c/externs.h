@@ -438,6 +438,7 @@ void S_longjmp(void *b, int v);
 #ifdef PORTABLE_BYTECODE
 /* pb.c */
 extern void S_pb_interp(ptr tc, void *bytecode);
+extern ptr *S_get_call_arena(ptr tc);
 #endif
 
 #ifdef WIN32
@@ -471,6 +472,11 @@ double S_random_state_next_double PROTO((ptr s));
 void S_random_state_init PROTO((ptr s, UINT x));
 IBOOL S_random_state_check PROTO((double x10, double x11, double x12,
                                   double x20, double x21, double x22));
+/* ffi.c */
+#ifdef PORTABLE_BYTECODE
+extern void S_ffi_call(ptr types, ptr proc, ptr *stack);
+extern ptr S_ffi_closure(ptr types, ptr proc);
+#endif
 
 /* statics.c */
 extern void scheme_statics();

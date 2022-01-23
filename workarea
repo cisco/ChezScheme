@@ -76,6 +76,7 @@ case "$Mhost" in
   ppc32nb) ;;
   ppc32osx) ;;
   arm64osx) ;;
+  tpb) ;;
   ta6fb) ;;
   ta6le) ;;
   ta6nb) ;;
@@ -295,6 +296,9 @@ fi
 (cd $W/s; forceworkln2 $M.def machine.def)
 if [ "$March" != "" ] ; then
   (cd $W/s; workln "$upupsrcdir"/s/$March.def $March.def)
+  if [ "$March" = "pb" ] ; then
+    (cd $W/s; workln "$upupsrcdir"/s/pbcommon.def pbcommon.def)
+  fi
 fi
 if [ "$Mos" != "" ] ; then
   (cd $W/s; workln "$upupsrcdir"/s/$Mos.def $Mos.def)

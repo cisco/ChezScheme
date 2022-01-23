@@ -2151,6 +2151,7 @@
   ($ftd-as-box? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($ftd-atomic-category [flags single-valued])
   ($ftd-compound? [sig [(sub-ptr) -> (boolean)]] [flags discard])
+  ($ftd-ffi-encode [flags single-valued])
   ($ftd-size [flags single-valued])
   ($ftd-union? [sig [(sub-ptr) -> (boolean)]] [flags discard])
   ($ftd-unsigned? [flags single-valued])

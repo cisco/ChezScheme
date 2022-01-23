@@ -23,8 +23,10 @@
       [(_ [else e ...]) #'(begin (void) e ...)]
       [(_) #'(void)])))
 
-(machine-case
- [(pb)]
+(meta-cond
+ [(and (pb?)
+       (not (guard (x [#t #f]) (eval '(foreign-callable void () void)))))
+  (void)]
  [else
 
 #;(define-syntax foreign-struct-mat
@@ -225,13 +227,24 @@
    ]
   [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx)
    (mat load-shared-object
-      (file-exists? foreign1.so)
+     (file-exists? foreign1.so)
       (begin (load-shared-object foreign1.so) #t)
       (begin (load-shared-object "libc.dylib") #t)
       #t
       (error? (load-shared-object 3))
     )
    ]
+  [(pb tpb pb32 tpb32)
+   (mat load-shared-object
+     (file-exists? foreign1.so)
+     (begin (load-shared-object foreign1.so) #t)
+     (let ([try-load (lambda (path)
+                       (guard (x [#t #f])
+                              (load-shared-object path)
+                              #t))])
+       (or (try-load "libc.so.7")
+           (try-load "libc.so.6")
+           (try-load "libc.dylib"))))]
   [else
    (mat foreign-procedure
       (error? (foreign-procedure "foo" () scheme-object))
@@ -1996,6 +2009,11 @@
   (eqv? (ftype-ref A (y) a) 0)
   (not (ff-locked-decr (ftype-&ref A (y) a)))
   (ff-locked-incr (ftype-&ref A (y) a))
+  (not (ftype-locked-incr! A (y) a))
+  (ftype-locked-decr! A (y) a)
+  (not (ftype-locked-decr! A (y) a))
+  (ftype-locked-incr! A (y) a)
+  (not (ftype-locked-incr! A (y) a))
 )
 
 (mat foreign-anonymous
@@ -2771,6 +2789,14 @@
          '(load-shared-object "msvcrt.dll")]
         [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx)
          '(load-shared-object "libc.dylib")]
+        [(pb tpb pb32 tpb32)
+         '(let ([try-load (lambda (path)
+                            (guard (x [#t #f])
+                                   (load-shared-object path)
+                                   #t))])
+            (or (try-load "libc.so.7")
+                (try-load "libc.so.6")
+                (try-load "libc.dylib")))]
         [else (error 'load-libc "unrecognized machine type ~s" (machine-type))]))
     (define varargs_df (foreign-procedure (__varargs_after 1) "varargs_df" (double int int) double))
     (define varargs_dfii (foreign-procedure (__varargs_after 2) "varargs_dfii" (double int int) double))
@@ -3050,10 +3076,16 @@
           (check-3 long t int 7 (+ 70 x) 700)
           (check-3 i64 t int 9 (+ 90 x) 900)
           (check-3 i8 t int 10 (+ 100 x) 1000))]))
-    (define malloc_at_boundary (foreign-procedure "malloc_at_boundary"
-                                                  (int) uptr))
-    (define free_at_boundary (foreign-procedure "free_at_boundary"
-                                                (uptr) void))
+    (machine-case
+     [(pb tpb pb32 tpb32)
+      ;; libffi doesn't write precisely
+      (define malloc_at_boundary (foreign-procedure "malloc" (int) uptr))
+      (define free_at_boundary (foreign-procedure "free" (uptr) void))]
+     [else
+      (define malloc_at_boundary (foreign-procedure "malloc_at_boundary"
+                                                    (int) uptr))
+      (define free_at_boundary (foreign-procedure "free_at_boundary"
+                                                  (uptr) void))])
     #t)
   (check i8 -11)
   (check u8 129)

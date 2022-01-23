@@ -509,6 +509,11 @@
 (define embedded?
   (lambda () #f))
 
+(define pb?
+  (if (memq (machine-type) '(pb tpb pb32 tpb32))
+      (lambda () #t)
+      (lambda () #f)))
+
 (define ($record->vector x)
   (let* ([rtd (#%$record-type-descriptor x)]
          [n (length (csv7:record-type-field-names rtd))]

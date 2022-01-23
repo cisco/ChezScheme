@@ -15,7 +15,7 @@
 
 (define dynamic-native-endianness?
   (case (machine-type)
-    [(pb) #t]
+    [(pb tpb pb32 tpb32) #t]
     [else #f]))
 
 (define test-endian-sensitive-cp0-expansion
@@ -37,7 +37,7 @@
                 arm32le tarm32le arm64le tarm64le arm64osx tarm64osx)
           'little]
          [(ppc32le tppc32le ppc32osx tppc32osx) 'big]
-         [(pb) (native-endianness)]
+         [(pb tpb pb32 tpb32) (native-endianness)]
          [else (errorf #f "unrecognized machine type")]))
 )
 

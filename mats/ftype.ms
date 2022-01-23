@@ -1030,7 +1030,7 @@
  ; ----------------
   (begin
     (meta-cond
-     [(eq? (machine-type) 'pb)
+     [(pb?)
       (define-ftype A (endian little (bits [x unsigned 3] [y unsigned 5])))]
      [else
       (define-ftype A (bits [x unsigned 3] [y unsigned 5]))])
@@ -1506,7 +1506,7 @@
         (syntax-case stx ()
           [(_ (define-ftype id t))
            (cond
-             [(eq? (machine-type) 'pb)
+             [(pb?)
               #'(define-ftype id (endian little t))]
              [else
               #'(define-ftype id t)])])))
@@ -2452,22 +2452,22 @@
 
   (eqv? (ftype-ref Bl (a) bl) -3.14)
   (or (not (eq? (native-endianness) 'little))
-      (eq? (machine-type) 'pb)
+      (pb?)
       (eqv? (ftype-ref D () bl) -3.14))
   (eqv? (ftype-ref Dl () bl) -3.14)
   (or (not (eq? (native-endianness) 'little))
-      (eq? (machine-type) 'pb)
+      (pb?)
       (eqv? (ftype-ref double () bl) -3.14))
   (error? ; invalid syntax
     (ftype-ref (endian little double) () bl))
 
   (eqv? (ftype-ref Bb (a) bb) -3.14)
   (or (not (eq? (native-endianness) 'big))
-      (eq? (machine-type) 'pb)
+      (pb?)
       (eqv? (ftype-ref D () bb) -3.14))
   (eqv? (ftype-ref Db () bb) -3.14)
   (or (not (eq? (native-endianness) 'big))
-      (eq? (machine-type) 'pb)
+      (pb?)
       (eqv? (ftype-ref double () bb) -3.14))
   (error? ; invalid syntax
     (ftype-ref (endian big double) () bb))
@@ -5613,7 +5613,7 @@
   (equal?
     (ftype-pointer-ftype (make-ftype-pointer A 0))
     (cond
-      [(eq? (machine-type) 'pb) '(endian little double)]
+      [(pb?) '(endian little double)]
       [else
        (case (native-endianness)
          [(big) '(endian swapped double)]
@@ -5623,7 +5623,7 @@
   (equal?
     (ftype-pointer-ftype (make-ftype-pointer B 0))
     (cond
-      [(eq? (machine-type) 'pb) '(endian big double)]
+      [(pb?) '(endian big double)]
       [else
        (case (native-endianness)
          [(big) 'double]

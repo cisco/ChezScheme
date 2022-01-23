@@ -3227,7 +3227,7 @@ static void send_and_receive_remote_sweeps(thread_gc *tgc) {
     if (((uptr)tgc->sweep_stack + len) > (uptr)tgc->sweep_stack_limit)
       enlarge_stack(tgc, &tgc->sweep_stack, &tgc->sweep_stack_start, &tgc->sweep_stack_limit, len);
 
-    memcpy(tgc->sweep_stack, tgc->receive_remote_sweep_stack_start, len);
+    memcpy(TO_VOIDP(tgc->sweep_stack), TO_VOIDP(tgc->receive_remote_sweep_stack_start), len);
     tgc->sweep_stack = (ptr)((uptr)tgc->sweep_stack + len);
     if ((uptr)tgc->sweep_stack > (uptr)tgc->sweep_stack_limit)
       abort();

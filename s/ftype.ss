@@ -1113,6 +1113,44 @@ ftype operators:
 	   'unsigned]
 	  [else 'integer])]
        [else 'integer])))
+  (set! $ftd-ffi-encode ;; for pb libffi binding
+    (lambda (x)
+      (cond
+        [(ftd-base? x)
+	 (case (ftd-base-type x)
+	   [(double double-float) (constant ffi-typerep-double)]
+	   [(float single-float) (constant ffi-typerep-float)]
+           [(integer-8) (constant ffi-typerep-sint8)]
+           [(unsigned-8) (constant ffi-typerep-uint8)]
+           [(integer-16 short) (constant ffi-typerep-sint16)]
+           [(unsigned-16 unsigned-short) (constant ffi-typerep-uint16)]
+           [(integer-32 int) (constant ffi-typerep-sint32)]
+           [(unsigned-32 unsigned-int) (constant ffi-typerep-uint32)]
+           [(integer-64) (constant ffi-typerep-sint64)]
+           [(unsigned-64) (constant ffi-typerep-uint64)]
+           [else (constant ffi-typerep-pointer)])]
+        [(ftd-struct? x)
+         (list->vector
+          (let struct-loop ([field* (ftd-struct-field* x)])
+            (cond
+              [(null? field*) '()]
+              [else (let* ([fld (car field*)]
+                           [sub-ftd (caddr fld)])
+                      (cons ($ftd-ffi-encode sub-ftd)
+                            (struct-loop (cdr field*))))])))]
+        [(ftd-union? x)
+         (let union-loop ([field* (ftd-union-field* x)])
+           (cond
+             [(null? field*) '()]
+             [else (let* ([fld (car field*)]
+                          [sub-ftd (cdr fld)])
+                     (cons ($ftd-ffi-encode sub-ftd)
+                           (union-loop (cdr field*))))]))]
+        [(ftd-array? x)
+         (let ([elem-ftd (ftd-array-ftd x)])
+           (cons ($ftd-ffi-encode elem-ftd)
+                 (ftd-array-length x)))]
+        [else (constant ffi-typerep-pointer)])))
   (set! $expand-fp-ftype ; for foreign-procedure, foreign-callable
     (lambda (who what r ftype)
       (indirect-ftd-pointer

@@ -214,6 +214,9 @@ void S_prim_init() {
     Sforeign_symbol("(cs)object_backreferences", (void *)S_object_backreferences);
     Sforeign_symbol("(cs)list_bits_ref", (void *)S_list_bits_ref);
     Sforeign_symbol("(cs)list_bits_set", (void *)S_list_bits_set);
+#ifdef PORTABLE_BYTECODE
+    Sforeign_symbol("(cs)find_callable_code_object", (void *)Sforeign_callable_code_object);
+#endif
 }
 
 static void s_instantiate_code_object() {
@@ -223,6 +226,9 @@ static void s_instantiate_code_object() {
     ptr pinfos;
     uptr a, m, n;
     iptr i, size;
+#ifdef PORTABLE_BYTECODE
+    ptr desc = (ptr)0;
+#endif
 
     old = S_get_scheme_arg(tc, 1);
     cookie = S_get_scheme_arg(tc, 2);
@@ -277,10 +283,20 @@ static void s_instantiate_code_object() {
            S_set_code_obj("fcallable", RELOC_TYPE(entry), new, a, proc, item_off);
         else
            S_set_code_obj("fcallable", RELOC_TYPE(entry), new, a, obj, item_off);
+
+#ifdef PORTABLE_BYTECODE
+        if (Svectorp(obj))
+          desc = obj;
+#endif
     }
     S_flush_instruction_cache(tc);
 
     S_thread_end_code_write(tc, 0, 0, NULL, 0);
+    
+#ifdef PORTABLE_BYTECODE
+    if (desc == (ptr)0) S_error_abort("did not find callable type description");
+    new = S_ffi_closure(desc, new);
+#endif
 
     AC0(tc) = new;
 }

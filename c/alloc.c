@@ -87,6 +87,11 @@ void S_alloc_init() {
 
         S_protect(&S_G.zero_length_bignum);
         S_G.zero_length_bignum = S_bignum(tc, 0, 0);
+
+#ifdef PORTABLE_BYTECODE
+        S_protect(&S_G.foreign_callables);
+        S_G.foreign_callables = Snil;
+#endif
     }
 }
 

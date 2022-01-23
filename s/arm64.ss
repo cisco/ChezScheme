@@ -3276,7 +3276,6 @@
                                            (not (eq? 'stack (cat-place result-cat))))]
                    [indirect-result? (and ftd-result? (not synthesize-first?))]
                    [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
-
                    [arg-regs (let ([regs (get-registers arg-cat* 'int)])
                                (if indirect-result?
                                    (cons %r8 regs)

@@ -35,7 +35,7 @@
 # define FLUSHCACHE
 #endif
 
-#if (machine_type == machine_type_pb)
+#if ((machine_type == machine_type_pb) || (machine_type == machine_type_tpb))
 # undef FLUSHCACHE
 #else
 # undef PORTABLE_BYTECODE_BIGENDIAN
