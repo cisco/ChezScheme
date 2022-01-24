@@ -25,22 +25,22 @@
 ;; flag for a specific condition, such as "overflow" or "equal", and
 ;; the branch variants are "branch if true" or "branch if false".
 
-;; Each 32-bit instruction has one of these formats, shown in byte
-;; order for a little-endian machine:
+;; Each 32-bit instruction has one of these formats, shown with low
+;; bit on the left (like byte order for a little-endian machine):
 ;;
 ;;     low byte                        high byte
 ;;        8          8          8          8 
 ;;  -----------------------------------------------
-;;  |    op    |      reg |      immed/reg        |
+;;  |    op    |    reg    |     immed/reg        |
 ;;  -----------------------------------------------
 ;;  -----------------------------------------------
-;;  |    op    | reg  reg |      immed/reg        |
+;;  |    op    | reg | reg |     immed/reg        |
 ;;  -----------------------------------------------
 ;;  -----------------------------------------------
-;;  |    op    | reg |          immed             | 
+;;  |    op    | reg |          immed             |
 ;;  -----------------------------------------------
 ;;  -----------------------------------------------
-;;  |    op    |              immed               |
+;;  |    op    |             immed                |
 ;;  -----------------------------------------------
 ;;
 ;; Integer and floating-point registers (up to 16 of each) are
@@ -980,7 +980,8 @@
       (emit-code (op dest offset code*)
         (constant pb-adr)
         (bitwise-ior (ax-ea-reg-code dest)
-                     (bitwise-arithmetic-shift offset 4)))))
+                     ;; offset is in instructions:
+                     (bitwise-arithmetic-shift offset (fx- 4 2))))))
 
   (define call-arena-op
     (lambda (op opcode reg delta code*)
@@ -1474,7 +1475,9 @@
            (lambda (offset)
              (let ([incr-offset (adjust-return-point-offset incr-offset l)])
                (let ([disp (fx- next-addr (fx- offset incr-offset))])
-                 (unless (<= (- (expt 2 19)) disp (sub1 (expt 2 19)))
+                 (unless (zero? (bitwise-and disp #b11))
+                   (sorry! who "displacement is not a multiple of the instruction size" disp))
+                 (unless (<= (- (expt 2 21)) disp (sub1 (expt 2 21)))
                    (sorry! who "displacement too large for adr ~s" disp))
                  (emit adr `(reg . ,dest) disp '()))))]
           [else

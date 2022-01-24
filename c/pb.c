@@ -709,7 +709,7 @@ void S_pb_interp(ptr tc, void *bytecode) {
     case pb_return:
       return; /* <--- not break */
     case pb_adr:
-      regs[INSTR_adr_dest(instr)] = (uptr)TO_PTR(next_ip) + INSTR_adr_imm(instr);
+      regs[INSTR_adr_dest(instr)] = (uptr)TO_PTR(next_ip) + (INSTR_adr_imm(instr) << 2);
       break;
     case pb_interp:
       {
