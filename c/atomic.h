@@ -97,7 +97,7 @@ FORCEINLINE int S_cas_any_fence(int load_acquire, volatile void *addr, void *old
 # define CAS_LOAD_ACQUIRE(a, old, new) S_cas_any_fence(1, a, old, new)
 # define CAS_STORE_RELEASE(a, old, new) S_cas_any_fence(0, a, old, new)
 #elif (__GNUC__ >= 5) || defined(__clang__)
-# define CAS_ANY_FENCE(a, old, new) __sync_bool_compare_and_swap(a, old, new)
+# define CAS_ANY_FENCE(a, old, new) __sync_bool_compare_and_swap((ptr *)(a), (ptr)(old), (ptr)(new))
 #elif defined(_MSC_VER)
 # if ptr_bits == 64
 #  define CAS_ANY_FENCE(a, old, new) (_InterlockedCompareExchange64((__int64 *)(a), (__int64)(new), (__int64)(old)) == (__int64)(old))
