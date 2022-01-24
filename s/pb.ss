@@ -1701,7 +1701,6 @@
                                           (max (constant ptr-bytes)
                                                ($ftd-size ftd)))))]
                       [(fp-void)
-                       (safe-assert (not in?))
                        (loop types
                              (cons (lambda () `(nop)) locs)
                              (cons (constant ffi-typerep-void)
