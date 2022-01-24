@@ -7,7 +7,8 @@
                   optimize-level)
          (only-in "scheme-lang.rkt"
                   current-expand
-                  with-source-path)
+                  with-source-path
+                  getprop)
          (submod "scheme-lang.rkt" callback)
          "syntax-mode.rkt"
          "r6rs-readtable.rkt"
@@ -255,7 +256,9 @@
               [(constant-case architecture [else e ...])
                (loop #`(begin e ...))]
               [(constant-case architecture [(arch ...) e ...] . _)
-               (memq (string->symbol target-machine) (syntax->datum #'(arch ...)))
+               (memq (or (getprop 'architecture '*constant*)
+                         (error "architecture is used before being defined"))
+                     (syntax->datum #'(arch ...)))
                (loop #`(begin e ...))]
               [(constant-case architecture _ . clauses)
                (loop #`(constant-case architecture . clauses))]
