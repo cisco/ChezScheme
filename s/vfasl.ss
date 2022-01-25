@@ -27,6 +27,15 @@
     [(_ target [(const ...) body ...] ...)
      #'(constant-case* target [(const ...) body ...] ... [else ($oops 'constant-case* "no matching case ~s" 'target)])]))
 
+(define-syntax (target-endianness stx)
+  (constant-case native-endianness
+    [(big) #'(quote big)]
+    [(little) #'(quote little)]
+    [(unknown)
+     ;; FIXME: need to know the target endianness, as
+     ;; opposed to the host machine's endianness at compile time
+     #'(native-endianness)]))
+
 ;; ************************************************************
 ;; Encode-time data structures                              */
 
@@ -351,8 +360,8 @@
   (case-lambda
    [(bv i uptr)
     (constant-case ptr-bytes
-      [(4) (bytevector-u32-set! bv i uptr (native-endianness))]
-      [(8) (bytevector-u64-set! bv i uptr (native-endianness))])]
+      [(4) (bytevector-u32-set! bv i uptr (target-endianness))]
+      [(8) (bytevector-u64-set! bv i uptr (target-endianness))])]
    [(p delta uptr vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-uptr! bv offset uptr))]))
@@ -362,8 +371,8 @@
   (case-lambda
    [(bv i)
     (constant-case ptr-bytes
-      [(4) (bytevector-u32-ref bv i (native-endianness))]
-      [(8) (bytevector-u64-ref bv i (native-endianness))])]
+      [(4) (bytevector-u32-ref bv i (target-endianness))]
+      [(8) (bytevector-u64-ref bv i (target-endianness))])]
    [(p delta vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (ref-uptr bv offset))]))
@@ -373,8 +382,8 @@
   (case-lambda
    [(bv i uptr)
     (constant-case ptr-bytes
-      [(4) (bytevector-s32-set! bv i uptr (native-endianness))]
-      [(8) (bytevector-s64-set! bv i uptr (native-endianness))])]
+      [(4) (bytevector-s32-set! bv i uptr (target-endianness))]
+      [(8) (bytevector-s64-set! bv i uptr (target-endianness))])]
    [(p delta uptr vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-iptr! bv offset uptr))]))
@@ -383,7 +392,7 @@
 (define set-double!
   (case-lambda
    [(bv i dbl)
-    (bytevector-ieee-double-set! bv i dbl (native-endianness))]
+    (bytevector-ieee-double-set! bv i dbl (target-endianness))]
    [(p delta dbl vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-double! bv offset dbl))]))
@@ -395,7 +404,7 @@
     (let ([n (bitwise-ior (bitwise-arithmetic-shift-left (char->integer char) (constant char-data-offset))
                           (constant type-char))])
       (constant-case string-char-bytes
-        [(4) (bytevector-u32-set! bv i n (native-endianness))]))]
+        [(4) (bytevector-u32-set! bv i n (target-endianness))]))]
    [(p delta char vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-char! bv offset char))]))
@@ -415,7 +424,7 @@
   (case-lambda
    [(bv i bigit)
     (constant-case bigit-bytes
-      [(4) (bytevector-u32-set! bv i bigit (native-endianness))])]
+      [(4) (bytevector-u32-set! bv i bigit (target-endianness))])]
    [(p delta bigit vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-bigit! bv offset bigit))]))
