@@ -254,7 +254,7 @@ static IBOOL destroy_thread(tc) ptr tc; {
       alloc_mutex_acquire();
 
      /* process remembered set before dropping allocation area */
-      S_scan_dirty((ptr *)EAP(tc), (ptr *)REAL_EAP(tc));
+      S_scan_dirty((ptr *)TO_VOIDP(EAP(tc)), (ptr *)TO_VOIDP(REAL_EAP(tc)));
 
      /* close off thread-local allocation */
       S_thread_start_code_write(tc, static_generation, 0, NULL, 0);
@@ -309,7 +309,7 @@ static IBOOL destroy_thread(tc) ptr tc; {
       THREAD_GC(tc)->next = free_thread_gcs;
       free_thread_gcs = THREAD_GC(tc);
 
-      free((void *)tc);
+      free(TO_VOIDP(tc));
       
       THREADTC(thread) = 0; /* mark it dead */
       status = 1;
@@ -340,7 +340,7 @@ ptr S_fork_thread(thunk) ptr thunk; {
 }
 
 static s_thread_rv_t start_thread(p) void *p; {
-  ptr tc = (ptr)p; ptr cp;
+  ptr tc = TO_PTR(p); ptr cp;
 
   s_thread_setspecific(S_tc_key, TO_VOIDP(tc));
 
@@ -502,7 +502,7 @@ static inline int s_thread_cond_timedwait(s_thread_cond_t *cond, s_thread_mutex_
 
 #endif /* FEATURE_WINDOWS */
 
-#define Srecord_ref(x,i) (((ptr *)((uptr)(x)+record_data_disp))[i])
+#define Srecord_ref(x,i) (((ptr *)TO_VOIDP(((uptr)(x)+record_data_disp)))[i])
 
 IBOOL S_condition_wait(c, m, t) s_thread_cond_t *c; scheme_mutex_t *m; ptr t; {
   ptr tc = get_thread_context();

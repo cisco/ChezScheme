@@ -1,3 +1,5 @@
+(define-constant architecture 'pb)
+
 (define-constant typedef-i8 "int8_t")
 (define-constant typedef-u8 "uint8_t")
 (define-constant typedef-i16 "int16_t")
@@ -15,7 +17,7 @@
 (define-constant max-float-alignment 8)
 (define-constant max-integer-alignment 8)
 
-(define-constant native-endianness 'unknown)
+(define-constant-default native-endianness 'unknown)
 
 (define-constant unaligned-floats #f)
 (define-constant unaligned-integers #f)

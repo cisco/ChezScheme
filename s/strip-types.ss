@@ -28,3 +28,26 @@
   (#{iptr stripfur0zx3-2} n)
   (#{single stripfur0zx3-3} n)
   (#{double stripfur0zx3-4} high low))
+
+
+;; cooperates better with auto-indent than `fasl-case`:
+(define-syntax (fasl-case* stx)
+  (syntax-case stx (else)
+    [(_ target [(op fld ...) body ...] ... [else e-body ...])
+     #'(fasl-case target [op (fld ...) body ...] ... [else e-body ...])]
+    [(_ target [(op fld ...) body ...] ...)
+     #'(fasl-case target [op (fld ...) body ...] ...)]))
+
+;; reverse quoting convention compared to `constant-case`:
+(define-syntax (constant-case* stx)
+  (syntax-case stx (else)
+    [(_ target [(const ...) body ...] ... [else e-body ...])
+     (with-syntax ([((val ...) ...)
+                    (map (lambda (consts)
+                           (map (lambda (const)
+                                  (lookup-constant const))
+                                consts))
+                         (datum ((const ...) ...)))])
+       #'(case target [(val ...) body ...] ... [else e-body ...]))]
+    [(_ target [(const ...) body ...] ...)
+     #'(constant-case* target [(const ...) body ...] ... [else ($oops 'constant-case* "no matching case ~s" 'target)])]))

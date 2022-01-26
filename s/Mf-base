@@ -127,7 +127,7 @@ patch = patch
 patchobj = patch.patch cpnanopass.patch cpprim.patch cprep.patch cpcheck.patch\
  cp0.patch cpvalid.patch cptypes.patch cpcommonize.patch cpletrec.patch\
  reloc.patch\
- compile.patch fasl.patch vfasl.patch syntax.patch env.patch\
+ compile.patch fasl.patch vfasl.patch pbchunk.patch syntax.patch env.patch\
  read.patch interpret.patch ftype.patch strip.patch\
  ubify.patch back.patch
 
@@ -150,7 +150,7 @@ basesrc =\
  interpret.ss cprep.ss cpcheck.ss cp0.ss cpvalid.ss  cptypes.ss cpcommonize.ss cpletrec.ss inspect.ss\
  enum.ss io.ss read.ss primvars.ss syntax.ss costctr.ss expeditor.ss\
  exceptions.ss pretty.ss env.ss\
- fasl.ss vfasl.ss reloc.ss pdhtml.ss strip.ss ftype.ss back.ss
+ fasl.ss vfasl.ss pbchunk.ss reloc.ss pdhtml.ss strip.ss ftype.ss back.ss
 
 baseobj = ${basesrc:%.ss=%.$m}
 
@@ -597,6 +597,7 @@ primvars.so setup.so mkheader.so env.so: cmacros.so priminfo.so primref.ss
 setup.so: debug.ss
 strip.so: strip-types.ss
 vfasl.so: strip-types.ss
+pbchunk.so: strip-types.ss
 
 ${patchobj}: ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss strip-types.ss env.ss fxmap.ss cptypes-lattice.ss 
 cpnanopass.$m cpnanopass.patch cpnanopass.so cpprim.$m cpprim.patch: nanopass.so np-languages.ss np-register.ss np-info.ss np-help.ss ${archincludes}
@@ -604,6 +605,7 @@ cptypes.$m: fxmap.ss cptypes-lattice.ss
 5_4.$m: ../unicode/unicode-char-cases.ss ../unicode/unicode-charinfo.ss
 strip.$m: strip-types.ss
 vfasl.$m: strip-types.ss
+pbchunk.$m: strip-types.ss
 
 ${Cheader}: mkheader.so ${macroobj} nanopass.so base-lang.ss expand-lang.ss primref.ss types.ss io-types.ss fasl-helpers.ss hashtable-types.ss
 	(if [ -r ${Cheader} ]; then mv -f ${Cheader} ${Cheader}.bak; fi)

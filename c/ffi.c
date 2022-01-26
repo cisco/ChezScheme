@@ -355,7 +355,7 @@ void S_ffi_call(ptr types, ptr proc, ptr *arena) {
   ffi_cif *cif = make_cif(types);
   iptr len = Svector_length(types), i;
   iptr n_args = len - ARG_TYPE_START_INDEX;
-  void *rvalue, **args = TO_VOIDP((uptr)TO_PTR(arena) + (n_args * 8));
+  void *rvalue, **args = TO_VOIDP((uptr)TO_PTR(arena) + ((n_args+1) * 8));
 
   if (Svector_ref(types, RET_IS_ARG_INDEX) != Sfalse) {
     rvalue = TO_VOIDP(*arena);

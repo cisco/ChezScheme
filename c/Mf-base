@@ -44,7 +44,8 @@ kernelsrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-011.c gc-
 
 kernelobj=${kernelsrc:%.c=%.$o} ${mdobj}
 
-kernelhdr=system.h types.h version.h globals.h externs.h segment.h atomic.h gc.c sort.h thread.h config.h compress-io.h itest.c nocurses.h popcount.h
+kernelhdr=system.h types.h version.h globals.h externs.h segment.h atomic.h gc.c sort.h thread.h config.h \
+ compress-io.h itest.c nocurses.h popcount.h pb.h
 
 mainsrc=main.c
 
@@ -76,6 +77,7 @@ gc-011.o gc-ocd.o: ${Include}/gc-ocd.inc
 gc-oce.o: ${Include}/gc-oce.inc
 gc-par.o: ${Include}/gc-par.inc
 gcwrapper.o: ${Include}/heapcheck.inc
+pb.o: pb.h
 
 ../zlib/zlib.h ../zlib/zconf.h: ../zlib/configure.log
 

@@ -1811,7 +1811,7 @@
                        (values (lambda (lvalue) `(set! ,lvalue ,%Cretval))
                                (list %Cretval))]))]
                  [get-prototype
-                  (lambda (type* must?)
+                  (lambda (type*)
                     (let* ([prototype 
                             (map (lambda (type)
                                    (nanopass-case (Ltype Type) type
@@ -1845,14 +1845,14 @@
                                      [(fp-fixnum) 'uptr]
                                      [(fp-u8*) 'void*]
                                      [(fp-void) 'void]
-                                     [else (if must?
+                                     [else (if (eq? (subset-mode) 'system)
                                                (sorry! who "unhandled type in prototype ~s" type)
                                                #f)]))
                                  type*)]
                            [a (assoc prototype prototypes)])
                       (cond
                         [(not a)
-                         (when must?
+                         (when (eq? (subset-mode) 'system)
                            (sorry! who "unsupported prototype ~a" prototype))
                          #f]
                         [else (cdr a)])))])
@@ -1860,7 +1860,7 @@
             (let* ([arg-type* (info-foreign-arg-type* info)]
                    [result-type (info-foreign-result-type info)])
               (let ([prototype (and (not (adjust-active? info))
-                                    (get-prototype (cons result-type arg-type*) #f))])
+                                    (get-prototype (cons result-type arg-type*)))])
                 (cond
                   [prototype
                    (let-values ([(locs arg-live*) (do-args/reg arg-type*)]

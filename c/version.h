@@ -35,8 +35,17 @@
 # define FLUSHCACHE
 #endif
 
-#if ((machine_type == machine_type_pb) || (machine_type == machine_type_tpb))
+#ifdef PORTABLE_BYTECODE
 # undef FLUSHCACHE
+# ifdef PORTABLE_BYTECODE_BIGENDIAN
+#  if fasl_endianness_is_little
+#   define PORTABLE_BYTECODE_SWAPENDIAN
+#  endif
+# else
+#  if fasl_endianness_is_big
+#   define PORTABLE_BYTECODE_SWAPENDIAN
+#  endif
+# endif
 #else
 # undef PORTABLE_BYTECODE_BIGENDIAN
 #endif
@@ -421,6 +430,10 @@ typedef char tputsputcchar;
 #endif
 #ifndef WRITE
 # define WRITE write
+#endif
+
+#ifdef PORTABLE_BYTECODE
+# undef WRITE_XOR_EXECUTE_CODE
 #endif
 
 #ifndef S_PROT_CODE

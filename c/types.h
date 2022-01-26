@@ -362,7 +362,7 @@ typedef struct {
   s_thread_mutex_t pmutex;
 } scheme_mutex_t;
 
-#define get_thread_context() (ptr)s_thread_getspecific(S_tc_key)
+#define get_thread_context() TO_PTR(s_thread_getspecific(S_tc_key))
 /* deactivate thread prepares the thread for a possible collection.
    if it's the last active thread, it signals one of the threads
    waiting on the collect condition, if any, so that a collection

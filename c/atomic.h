@@ -34,7 +34,7 @@
 #endif
   
 #if !defined(PTHREADS)
-# define CAS_ANY_FENCE(a, old, new) ((*(a) == (old)) ? (*(a) = (new), 1) : 0)
+# define CAS_ANY_FENCE(a, old, new) ((*(ptr *)(a) == TO_PTR(old)) ? (*(ptr)(a) = TO_PTR(new), 1) : 0)
 #elif defined(__arm64__) || defined(__aarch64__)
 FORCEINLINE int CAS_LOAD_ACQUIRE(volatile void *addr, void *old_val, void *new_val) {
   long ret;
@@ -97,7 +97,7 @@ FORCEINLINE int S_cas_any_fence(int load_acquire, volatile void *addr, void *old
 # define CAS_LOAD_ACQUIRE(a, old, new) S_cas_any_fence(1, a, old, new)
 # define CAS_STORE_RELEASE(a, old, new) S_cas_any_fence(0, a, old, new)
 #elif (__GNUC__ >= 5) || defined(__clang__)
-# define CAS_ANY_FENCE(a, old, new) __sync_bool_compare_and_swap((ptr *)(a), (ptr)(old), (ptr)(new))
+# define CAS_ANY_FENCE(a, old, new) __sync_bool_compare_and_swap((ptr *)(a), TO_PTR(old), TO_PTR(new))
 #elif defined(_MSC_VER)
 # if ptr_bits == 64
 #  define CAS_ANY_FENCE(a, old, new) (_InterlockedCompareExchange64((__int64 *)(a), (__int64)(new), (__int64)(old)) == (__int64)(old))
@@ -120,7 +120,7 @@ FORCEINLINE int S_cas_any_fence(volatile void *addr, void *old_val, void *new_va
 }
 # define CAS_ANY_FENCE(a, old, new) S_cas_any_fence(a, old, new)
 #else
-# define CAS_ANY_FENCE(a, old, new) ((*(a) == (old)) ? (*(a) = (new), 1) : 0)
+# define CAS_ANY_FENCE(a, old, new) ((*(ptr *)(a) == TO_PTR(old)) ? (*(ptr *)(a) = TO_PTR(new), 1) : 0)
 #endif
 
 #ifdef CAS_ANY_FENCE

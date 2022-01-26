@@ -452,6 +452,10 @@
         (export "int"  "Sscheme_program" "(const char *, int, const char *[])")
         (export "void" "Sscheme_deinit" "(void)")
         (export "void" "Sscheme_register_signal_registerer" "(void (*f)(int))")
+        (constant-case architecture
+          [(pb)
+           (export "void" "Sregister_pbchunks" "(void **, int, int)")]
+          [else (void)])
 
         (when-feature pthreads
         (nl) (comment "Thread support.")
@@ -977,6 +981,26 @@
           (print-field-disps "eq_hashtable" (let () (include "hashtable-types.ss") (record-type-descriptor eq-ht)))
           (print-field-disps "symbol_hashtable" (let () (include "hashtable-types.ss") (record-type-descriptor symbol-ht)))
           (print-field-disps "code_info" (let () (include "types.ss") (record-type-descriptor code-info))))
+
+        (nl)
+        (comment "derived endianness")
+        (case (constant native-endianness)
+          [(little)
+           (def "native_endianness_is_little" 1)
+           (def "native_endianness_is_big" 0)]
+          [(big)
+           (def "native_endianness_is_little" 0)
+           (def "native_endianness_is_big" 1)]
+          [else
+           (def "native_endianness_is_little" 0)
+           (def "native_endianness_is_big" 0)])
+        (case (constant fasl-endianness)
+          [(little)
+           (def "fasl_endianness_is_little" 1)
+           (def "fasl_endianness_is_big" 0)]
+          [else
+           (def "fasl_endianness_is_little" 0)
+           (def "fasl_endianness_is_big" 1)])
 
         (nl)
         (comment "predicates")

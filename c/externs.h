@@ -127,7 +127,7 @@ extern int S_fasl_intern_rtd(ptr *x);
 #ifdef X86_64
 extern void x86_64_set_popcount_present PROTO((ptr code));
 #endif
-#ifdef PORTABLE_BYTECODE_BIGENDIAN
+#ifdef PORTABLE_BYTECODE_SWAPENDIAN
 extern void S_swap_dounderflow_header_endian PROTO((ptr code));
 #endif
 

@@ -2,11 +2,7 @@
 (features)
 
 (define-constant architecture 'pb)
-(define-constant ptr-bits 64)
 
-(define-constant typedef-ptr "uint64_t") ; not "void *"
-(define-constant typedef-iptr "int64_t")
-(define-constant typedef-uptr "uint64_t")
-
+(include "pbcommon64.def")
 (include "pbcommon.def")
 (include "default.def")

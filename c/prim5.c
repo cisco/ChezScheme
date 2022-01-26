@@ -99,10 +99,13 @@ static ptr s_get_reloc PROTO((ptr co, IBOOL with_offsets));
 static s_thread_rv_t s_backdoor_thread_start PROTO((void *p));
 static iptr s_backdoor_thread PROTO((ptr p));
 static ptr s_threads PROTO((void));
-static void s_mutex_acquire PROTO((scheme_mutex_t *m));
-static ptr s_mutex_acquire_noblock PROTO((scheme_mutex_t *m));
-static void s_condition_broadcast PROTO((s_thread_cond_t *c));
-static void s_condition_signal PROTO((s_thread_cond_t *c));
+static void s_mutex_acquire PROTO((ptr m));
+static ptr s_mutex_acquire_noblock PROTO((ptr m));
+static void s_mutex_release PROTO((ptr m));
+static void s_condition_broadcast PROTO((ptr c));
+static void s_condition_signal PROTO((ptr c));
+static void s_condition_free PROTO((ptr c));
+static IBOOL s_condition_wait PROTO((ptr c, ptr m, ptr t));
 static void s_thread_preserve_ownership PROTO((ptr tc));
 #endif
 static void s_byte_copy(ptr src, iptr srcoff, ptr dst, iptr dstoff, iptr cnt);
@@ -1540,12 +1543,12 @@ static s_thread_rv_t s_backdoor_thread_start(p) void *p; {
   display("backdoor thread started\n")
   (void) Sactivate_thread();
   display("thread activated\n")
-  Scall0((ptr)Sunbox(p));
+  Scall0((ptr)Sunbox(TO_PTR(p)));
   (void) Sdeactivate_thread();
   display("thread deactivated\n")
   (void) Sactivate_thread();
   display("thread reeactivated\n")
-  Scall0((ptr)Sunbox(p));
+  Scall0((ptr)Sunbox(TO_PTR(p)));
   Sdestroy_thread();
   display("thread destroyed\n")
   s_thread_return;
@@ -1553,7 +1556,7 @@ static s_thread_rv_t s_backdoor_thread_start(p) void *p; {
 
 static iptr s_backdoor_thread(p) ptr p; {
   display("creating thread\n");
-  return s_thread_create(s_backdoor_thread_start, (void *)p);
+  return s_thread_create(s_backdoor_thread_start, TO_VOIDP(p));
 }
 
 static ptr s_threads() {
@@ -1564,7 +1567,8 @@ static ptr s_threads() {
   return ts;
 }
 
-static void s_mutex_acquire(m) scheme_mutex_t *m; {
+static void s_mutex_acquire(m_p) ptr m_p; {
+  scheme_mutex_t *m = TO_VOIDP(m_p);
   ptr tc = get_thread_context();
 
   if (m == &S_tc_mutex) {
@@ -1583,17 +1587,33 @@ static void s_mutex_acquire(m) scheme_mutex_t *m; {
   }
 }
 
-static ptr s_mutex_acquire_noblock(m) scheme_mutex_t *m; {
+static ptr s_mutex_acquire_noblock(m_p) ptr m_p; {
+  scheme_mutex_t *m = TO_VOIDP(m_p);
   return S_mutex_tryacquire(m) == 0 ? Strue : Sfalse;
 }
 
-static void s_condition_broadcast(s_thread_cond_t *c) {
+static void s_mutex_release(ptr m) {
+  return S_mutex_release(TO_VOIDP(m));
+}
+
+static void s_condition_broadcast(ptr c_p) {
+  s_thread_cond_t *c = TO_VOIDP(c_p);
   s_thread_cond_broadcast(c);
 }
 
-static void s_condition_signal(s_thread_cond_t *c) {
+static void s_condition_signal(ptr c_p) {
+  s_thread_cond_t *c = TO_VOIDP(c_p);
   s_thread_cond_signal(c);
 }
+
+static void s_condition_free(ptr c) {
+  return S_condition_free(TO_VOIDP(c));
+}
+
+static IBOOL s_condition_wait(ptr c, ptr m, ptr t) {
+  return S_condition_wait(TO_VOIDP(c), TO_VOIDP(m), t);
+}
+
 
 /* called with tc mutex held */
 static void s_thread_preserve_ownership(ptr tc) {
@@ -1675,13 +1695,13 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)backdoor_thread", (void *)s_backdoor_thread);
     Sforeign_symbol("(cs)threads", (void *)s_threads);
     Sforeign_symbol("(cs)mutex_acquire", (void *)s_mutex_acquire);
-    Sforeign_symbol("(cs)mutex_release", (void *)S_mutex_release);
+    Sforeign_symbol("(cs)mutex_release", (void *)s_mutex_release);
     Sforeign_symbol("(cs)mutex_acquire_noblock", (void *)s_mutex_acquire_noblock);
     Sforeign_symbol("(cs)make_condition", (void *)S_make_condition);
-    Sforeign_symbol("(cs)condition_free", (void *)S_condition_free);
+    Sforeign_symbol("(cs)condition_free", (void *)s_condition_free);
     Sforeign_symbol("(cs)condition_broadcast", (void *)s_condition_broadcast);
     Sforeign_symbol("(cs)condition_signal", (void *)s_condition_signal);
-    Sforeign_symbol("(cs)condition_wait", (void *)S_condition_wait);
+    Sforeign_symbol("(cs)condition_wait", (void *)s_condition_wait);
     Sforeign_symbol("(cs)thread_preserve_ownership", (void *)s_thread_preserve_ownership);
 #endif
     Sforeign_symbol("(cs)s_addr_in_heap", (void *)s_addr_in_heap);

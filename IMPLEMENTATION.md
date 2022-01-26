@@ -63,7 +63,7 @@ form. The build scripts do not convert boot files to vfasl format.
 Chez Scheme assigns a `machine-type` name to each platform it runs on.
 The `machine-type` name carries three pieces of information:
 
- * *whether the system threaded*: A `t` indicates that it is, and an
+ * *whether the system threaded*: `t` indicates that it is, and an
     absence indicates that it's not threaded;
 
  * *the hardware platform*: `i3` for x86, `a6` for x86_64, `arm32` for
@@ -74,16 +74,18 @@ The `machine-type` name carries three pieces of information:
 
 When you run "configure", it looks for boot and header files as the
 directory "boot/*machine-type*". (If it doesn't find them, then
-configuration cannot continue.)
+configuration cannot continue.) For information on `pb` machine types,
+see "Portable Bytecode" below.
 
 The supported machine types are listed in "cmacros.ss" and reflected
 by a "boot/*machine-type*" directory for boot and headers files and a
 combination of "s/*kind*.def" files to describe the platform. There
 may also be a "s/Mf-*machine-type*" makefile to select relevant files
 in "s", a "c/Mf-*machine-type*" makefile for configration in "c", and
-a "mats/Mf-*machine-type*" makefile to configure testing, but Unix
-machine types are handled by Mf-unix and variables configured in the
-"configure" and "workarea" scripts.
+a "mats/Mf-*machine-type*" makefile to configure testing. Files for
+Unix machine types can be generated from "s/unix.def" or "s/tunix.def"
+and "c/Mf-unix" with variables configured by the "configure" and
+"workarea" scripts.
 
 The "workarea" script in the root of the Chez Scheme project is used
 to generate a subdirectory with the appropriate contents to build for
@@ -1268,6 +1270,80 @@ the right notion of a quantity or property. If you need the host
 value, then there must be some function that provides the value. If
 you need the target machine's value, then it must be accessed using
 `constant`.
+
+# Portable Bytecode
+
+The "portable bytecode" virtual machine uses a 32-bit instruction set
+that is intepreted by a loop defined in "c/pb.c", where many of the
+instruction implementations are in "c/pb.h". The instruction set is
+custom, but inspired by Arm64. Of course, since the instructions are
+interpreted, it does not run nearly as fast a native code that Chez
+Scheme normally generates, but it runs fast enough to be useful for
+bootstraping a Chez Scheme build from one portable set of boot files.
+The pb machine type is also potentially useful in a setting that
+disallows code generation or where there's not yet a machine-code
+backend for Chez Scheme.
+
+A `machine-type` name for a pb build follows a variant of the normal
+conventions:
+
+ * *whether the system threaded*: `t` indicates that it is threaded;
+
+ * `pb`;
+
+ * *word side*: `64`, `32`, or blank for basic; and
+
+ * *endianness*: `l` for little-endian, `b` for big-endian, or blank
+    for basic.
+
+Compiled files (including boot files) for a basic pb build work on all
+platforms, while compiled files for a non-basic pb build have a
+specific word size and endianness for improved performance. Run
+"configure" with `--pb` for a basic build, or run "configure" with
+`--pbarch` for a non-basic build.
+
+A basic build can work on all platforms because it assumes a 64-bit
+representation of Scheme values. On a 32-bit platform, the kernel is
+compiled to use a 64-bit integer type for `ptr`, even though the high
+half of a `ptr` value will always be zeros. The `TO_VOIDP` and
+`TO_PTR` macros used in the kernel tell a C compiler that conversions
+between 64-bit `ptr`s and (potentially) 32-bit pointers are
+intentional. A basic build also avoids a compile-time assumption of
+endianness, turning any such Scheme-level decisions into a run-time
+branch. Bytecode instructions are stored as little endian in compiled
+code for a basic build; on a big-endian machine, the kernel rewrites
+instruction bytes to big-endian form while loading a fasl file, so the
+interpreter can decode instructions in native order.
+
+For a non-basic build, fragments of static Scheme code can be turned
+into C code to compile and plug back into the kernel. These fragments
+are called *pbchunks*. The `pbchunk-convert-file` function takes
+compiled Scheme code (as a boot or fasl file), generates C code for
+the chunks, and generates revised compiled code that contains
+references to the chunks via `pb-chunk` instructions. Calling the
+registration function in the generated C code registers chunks with
+the kernel as targets for `pb-chunk` instructions. Each chunk has a
+static index, so the revised compiled Scheme code must be used with
+exactly the C chunks that are generated at the same time; when
+multiple sets of chunks are used together, each needs to be created
+with non-overlapping index ranges. Orchestrating the generation of
+chunk files and linking/loading them into a kernel executable is
+currently outside the scope of the Chez Scheme build scripts.
+
+A `pb-chunk` instruction's payload is two integers: a 16-bit *index*
+and an 8-bit *subindex*. The *index* selects a registered C chunk
+function. The *subindex* is passed as the third argument to that
+function. Meanwhile, the first two arguments to the chunk C function
+are the machine state *ms* that lives in a thread context and the
+address *ip* of the `pb-chunk` instruction. The pb virtual registers
+are accessed via *ms*. The *ip* argument is useful for constructing
+relative addresses, such as the address of code that contains a
+relocatable reference. A C chunk function returns the address of pb
+code to jump to. A chunk function might return an address of Scheme
+function code to call that function, or it might return the address of
+code to go back to running in interpreted mode for the same code
+object where it started; that is, general jumps and bailing out of
+chunk mode are implemented in the same way.
 
 # Changing the Version Number
 

@@ -165,7 +165,7 @@
   (define $fixmediate-pred (make-pred-or immediate-pred 'fixnum 'bottom))
   (define maybe-fixnum-pred (make-pred-or false-rec 'fixnum 'bottom))
   (define eof/fixnum-pred (make-pred-or eof-rec 'fixnum 'bottom))
-  (define maybe-exact-integer-pred (make-pred-or false-rec 'fixnum 'bottom))
+  (define maybe-exact-integer-pred (make-pred-or false-rec 'exact-integer 'bottom))
   (define maybe-flonum-pred (make-pred-or false-rec 'flonum 'bottom))
   (define maybe-number-pred (make-pred-or false-rec 'number 'bottom))
   (define maybe-symbol-pred (make-pred-or false-rec 'symbol 'bottom))
@@ -545,9 +545,9 @@
           (cond
             [(check-constant-eqv? x dy)
              y]
-			[(fixnum? dy)
+			[(target-fixnum? dy)
   			 (union/fixnum x)]
-			[(bignum? dy)
+			[(target-bignum? dy)
   			 (union/bignum x)]
 		  	[(exact-integer? dy)
   			 (union/exact-integer x)]
@@ -700,7 +700,7 @@
 
   (define (intersect/fixnum x check? y)
      (cond
-       [(and check? (check-constant-is? x fixnum?))
+       [(and check? (check-constant-is? x target-fixnum?))
         x]
        [(or (eq? x 'fixnum)
             (eq? x 'exact-integer)
@@ -712,7 +712,7 @@
 
   (define (intersect/bignum x check? y)
      (cond
-       [(and check? (check-constant-is? x bignum?))
+       [(and check? (check-constant-is? x target-bignum?))
         x]
        [(or (eq? x 'bignum)
             (eq? x 'exact-integer)
@@ -790,9 +790,9 @@
           (cond
             [(check-constant-eqv? x dy)
              x]
-			[(fixnum? dy)
+			[(target-fixnum? dy)
   			 (intersect/fixnum x #f y)]
-			[(bignum? dy)
+			[(target-bignum? dy)
   			 (intersect/bignum x #f y)]
 		  	[(exact-integer? dy)
   			 (intersect/exact-integer x #f y)]

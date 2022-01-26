@@ -61,7 +61,7 @@ and then trying again with `./configure`. In the former case, you can
 use "auto.bootquick" instead of "<machine type>.bootquick".
 
 If you plan to build on multiple different machines and you don't have
-pbb bboot files, then it may be a good idea to generate pb boot files
+pbb boot files, then it may be a good idea to generate pb boot files
 via Racket:
 
   racket rktboot/main.rkt --machine pb

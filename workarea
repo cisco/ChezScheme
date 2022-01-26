@@ -41,7 +41,7 @@ fi
 Muni=""
 
 case "$M" in
-  pb) Mhost=$Mpbhost ;;
+  pb*|tpb*) Mhost=$Mpbhost ;;
   *) Mhost=$M ;;
 esac
 
@@ -76,7 +76,16 @@ case "$Mhost" in
   ppc32nb) ;;
   ppc32osx) ;;
   arm64osx) ;;
+  pb) ;;
+  pb64l) ;;
+  pb64b) ;;
+  pb32l) ;;
+  pb32b) ;;
   tpb) ;;
+  tpb64l) ;;
+  tpb64b) ;;
+  tpb32l) ;;
+  tpb32b) ;;
   ta6fb) ;;
   ta6le) ;;
   ta6nb) ;;
@@ -145,9 +154,28 @@ case "$Muni" in
         March=ppc32
         archincludes=ppc32.ss
         ;;
-    pb)
+    pb*)
         March=pb
         archincludes=pb.ss
+        Mword=64
+        case "$Muni" in
+            *64l)
+                Mword=64
+                Mend=little
+                ;;
+            *64b)
+                Mword=64
+                Mend=big
+                ;;
+            *32l)
+                Mword=32
+                Mend=little
+                ;;
+            *32b)
+                Mword=32
+                Mend=big
+                ;;
+        esac
         ;;
     *)
         March=""
@@ -280,24 +308,38 @@ fi
 if [ -e "$srcdir"/s/$M.def ] ; then
   (cd $W/s; workln "$upupsrcdir"/s/$M.def $M.def)
 else
-    # synthesize generic Unix .def file
+    # synthesize generic Unix or pb .def file
     if [ -h $W/s/$M.def ] ; then
         rm $W/s/$M.def
     fi
-    if [ "$M" = "$Muni" ] ; then
-        Munix=unix
+    if [ "$March" = "pb" ] ; then
+        if [ "$M" = "$Muni" ] ; then
+            Mpb=pbarch
+        else
+            Mpb=tpbarch
+        fi
+        sed -e 's/$(M)/'$M'/g'\
+            -e 's/$(March)/'$March'/g'\
+            -e 's/$(Mword)/'$Mword'/g'\
+            -e 's/$(Mend)/'$Mend'/g'\
+            "$srcdir"/s/${Mpb}.def > $W/s/$M.def
     else
-        Munix=tunix
+        if [ "$M" = "$Muni" ] ; then
+            Munix=unix
+        else
+            Munix=tunix
+        fi
+        sed -e 's/$(M)/'$M'/g'\
+            -e 's/$(March)/'$March'/g'\
+            "$srcdir"/s/${Munix}.def > $W/s/$M.def
     fi
-    sed -e 's/$(M)/'$M'/g'\
-        -e 's/$(March)/'$March'/g'\
-        "$srcdir"/s/${Munix}.def > $W/s/$M.def
 fi
 (cd $W/s; forceworkln2 $M.def machine.def)
 if [ "$March" != "" ] ; then
   (cd $W/s; workln "$upupsrcdir"/s/$March.def $March.def)
   if [ "$March" = "pb" ] ; then
     (cd $W/s; workln "$upupsrcdir"/s/pbcommon.def pbcommon.def)
+    (cd $W/s; workln "$upupsrcdir"/s/pbcommon$Mword.def pbcommon$Mword.def)
   fi
 fi
 if [ "$Mos" != "" ] ; then

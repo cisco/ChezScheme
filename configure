@@ -41,6 +41,7 @@ machs=$machs$sep2$last
 m=""
 w=""
 pb=no
+pbarch=no
 threads=yes
 nothreads=no
 libffi=no
@@ -84,6 +85,7 @@ Kernel=KernelLib
 installkerneltarget=installkernellib
 installzlibtarget=installzlib
 installlz4target=installlz4
+pbendian=l
 
 # On WSL, set OS to "Windows_NT" to create a Windows
 # build instead of a Linux (on Windows) build:
@@ -135,6 +137,7 @@ case "${CONFIG_UNAME}" in
     elif uname -a | egrep 'Power' > /dev/null 2>&1 ; then
       m64=ppc32osx
       tm64=tppc32osx
+      pbendian=b
       default_warning_flags=""
     fi
     installprefix=/usr/local
@@ -172,6 +175,7 @@ if [ "$unixsuffix" != "" ] ; then
     elif uname -a | egrep 'power|ppc' > /dev/null 2>&1 ; then
         m32=ppc32${unixsuffix}
         tm32=tppc32${unixsuffix}
+        pbendian=b
     elif uname -a | egrep 'armv|aarch64' > /dev/null 2>&1 ; then
         m32=arm32${unixsuffix}
         m64=arm64${unixsuffix}
@@ -205,6 +209,9 @@ while [ $# != 0 ] ; do
       ;;
     --pb)
       pb=yes
+      ;;
+    --pbarch)
+      pbarch=yes
       ;;
     --installprefix=*)
       installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
@@ -343,19 +350,18 @@ while [ $# != 0 ] ; do
   shift
 done
 
-if [ "$m" = "pb" ] ; then
-    echo "Don't select pb using -m or --machine, because pb needs the"
-    echo " machine as the kernel host machine. Instead, use --pb to select"
-    echo " a pb (portable bytecode) build."
-    exit 1
+if [ $pbarch = yes ] ; then
+    pb=yes
 fi
 
-if [ "$m" = "tpb" ] ; then
-    echo "Don't select tpb using -m or --machine, because tpb needs the"
-    echo " machine as the kernel host machine. Instead, use --pb plus"
-    echo " --threads to select a tpb (threaded portable bytecode) build."
-    exit 1
-fi
+case "$m" in
+    *pb*)
+        echo "Don't select pb using -m or --machine, because pb needs the"
+        echo " machine as the kernel host machine. Instead, use --pb or --pbarch"
+        echo " to select a pb (portable bytecode) build."
+        exit 1
+        ;;
+esac
 
 if [ "$bits" = "" ] ; then
   if uname -a | egrep 'amd64|x86_64|aarch64|arm64|ppc64|powerpc64' > /dev/null 2>&1 ; then
@@ -366,11 +372,15 @@ if [ "$bits" = "" ] ; then
 fi
 
 if [ "$threads" = "" ] ; then
-  if [ "$pb" = "yes" ] ; then
-    threads=no
-  else
-    threads=yes
-  fi
+    if [ "$pb" = "yes" ] ; then
+        if [ "$pbarch" = "yes" ] ; then
+            threads=yes
+        else
+            threads=no
+        fi
+    else
+        threads=yes
+    fi
 fi
 
 if [ $bits = 64 ] ; then
@@ -383,12 +393,13 @@ if [ "$m" = "" ] ; then
   machine_supplied=no
   if [ $pb = yes ] ; then
      m=pb
+     if [ $threads = yes ] ; then m=t$m ; fi
      if [ $bits = 64 ] ; then mpbhost=$m64 ; else mpbhost=$m32 ; fi
      flagsm=$mpbhost
      if [ "$mpbhost" = "" ] ; then
          echo "Could not infer current machine type."
          echo ""
-         echo "Event for a pb build, a machine type is needed to select C compiler"
+         echo "Even for a pb build, a machine type is needed to select C compiler"
          echo "and linker flags. You can use"
          echo "  $0 --pb -m=<machine type>"
          echo "to specify the available machine type, but since it wasn't inferred,"
@@ -407,10 +418,11 @@ else
   flagsm=$m
 fi
 
-if [ $threads = yes ] ; then
-  if [ $m = pb ] ; then
-    m=tpb
-  fi
+if [ $pbarch = yes ] ; then
+    m=pb$bits$pbendian
+    if [ $threads = yes ] ; then
+        m=t$m
+    fi
 fi
 
 if [ "$w" = "" ] ; then
@@ -441,6 +453,7 @@ if [ "$help" = "yes" ]; then
   echo "  --nothreads                       specify non-threaded version ($nothreads)"
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
   echo "  --pb                              specify pb (portable bytecode) version"
+  echo "  --pbarch                          specify pb with host word and endianness"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
   echo "  --disable-iconv                   disable iconv support"
@@ -568,7 +581,7 @@ fi
 
 # architecture-specific for Mf-unix
 case "${muni}" in
-  pb)
+  pb*)
       Cpu=PORTABLE_BYTECODE
       mdarchsrc=pb
       ;;

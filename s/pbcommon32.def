@@ -1,0 +1,5 @@
+(define-constant ptr-bits 32)
+
+(define-constant typedef-ptr "uint32_t") ; not "void *"
+(define-constant typedef-iptr "int32_t")
+(define-constant typedef-uptr "uint32_t")

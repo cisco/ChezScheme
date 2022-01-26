@@ -1,40 +1,9 @@
-;; vfasl conversion uses the 
-
+;; vfasl conversion uses the fasl parser from "strip.ss"; it creates
+;; an image of the memory that fasl_in from "fasl.c" would create
 
 (let ()
 
 (include "strip-types.ss")
-
-;; cooperates better with auto-indent than `fasl-case`:
-(define-syntax (fasl-case* stx)
-  (syntax-case stx (else)
-    [(_ target [(op fld ...) body ...] ... [else e-body ...])
-     #'(fasl-case target [op (fld ...) body ...] ... [else e-body ...])]
-    [(_ target [(op fld ...) body ...] ...)
-     #'(fasl-case target [op (fld ...) body ...] ...)]))
-
-;; reverse quoting convention compared to `constant-case`:
-(define-syntax (constant-case* stx)
-  (syntax-case stx (else)
-    [(_ target [(const ...) body ...] ... [else e-body ...])
-     (with-syntax ([((val ...) ...)
-                    (map (lambda (consts)
-                           (map (lambda (const)
-                                  (lookup-constant const))
-                                consts))
-                         (datum ((const ...) ...)))])
-       #'(case target [(val ...) body ...] ... [else e-body ...]))]
-    [(_ target [(const ...) body ...] ...)
-     #'(constant-case* target [(const ...) body ...] ... [else ($oops 'constant-case* "no matching case ~s" 'target)])]))
-
-(define-syntax (target-endianness stx)
-  (constant-case native-endianness
-    [(big) #'(quote big)]
-    [(little) #'(quote little)]
-    [(unknown)
-     ;; FIXME: need to know the target endianness, as
-     ;; opposed to the host machine's endianness at compile time
-     #'(native-endianness)]))
 
 ;; ************************************************************
 ;; Encode-time data structures                              */
@@ -109,8 +78,12 @@
 
                    #f)) ; installs-library-entry?
 
-;; Creates a vfasl image for the fasl content `v` (as read by "strip.ss")
+;; Creates a vfasl image for the fasl content `v` (as read by "strip.ss").
+;; The target endianness must be statically known.
 (define (to-vfasl v)
+  (constant-case native-endianness
+    [(unknown) ($oops 'vfasl "cannot vfasl with unknown endianness")]
+    [else (void)])
   (let ([v (ensure-reference v)]
         [vfi (new-vfasl-info)])
     ;; First pass: determine sizes
@@ -360,8 +333,8 @@
   (case-lambda
    [(bv i uptr)
     (constant-case ptr-bytes
-      [(4) (bytevector-u32-set! bv i uptr (target-endianness))]
-      [(8) (bytevector-u64-set! bv i uptr (target-endianness))])]
+      [(4) (bytevector-u32-set! bv i uptr (constant native-endianness))]
+      [(8) (bytevector-u64-set! bv i uptr (constant native-endianness))])]
    [(p delta uptr vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-uptr! bv offset uptr))]))
@@ -371,8 +344,8 @@
   (case-lambda
    [(bv i)
     (constant-case ptr-bytes
-      [(4) (bytevector-u32-ref bv i (target-endianness))]
-      [(8) (bytevector-u64-ref bv i (target-endianness))])]
+      [(4) (bytevector-u32-ref bv i (constant native-endianness))]
+      [(8) (bytevector-u64-ref bv i (constant native-endianness))])]
    [(p delta vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (ref-uptr bv offset))]))
@@ -382,8 +355,8 @@
   (case-lambda
    [(bv i uptr)
     (constant-case ptr-bytes
-      [(4) (bytevector-s32-set! bv i uptr (target-endianness))]
-      [(8) (bytevector-s64-set! bv i uptr (target-endianness))])]
+      [(4) (bytevector-s32-set! bv i uptr (constant native-endianness))]
+      [(8) (bytevector-s64-set! bv i uptr (constant native-endianness))])]
    [(p delta uptr vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-iptr! bv offset uptr))]))
@@ -392,7 +365,7 @@
 (define set-double!
   (case-lambda
    [(bv i dbl)
-    (bytevector-ieee-double-set! bv i dbl (target-endianness))]
+    (bytevector-ieee-double-set! bv i dbl (constant native-endianness))]
    [(p delta dbl vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-double! bv offset dbl))]))
@@ -404,7 +377,7 @@
     (let ([n (bitwise-ior (bitwise-arithmetic-shift-left (char->integer char) (constant char-data-offset))
                           (constant type-char))])
       (constant-case string-char-bytes
-        [(4) (bytevector-u32-set! bv i n (target-endianness))]))]
+        [(4) (bytevector-u32-set! bv i n (constant native-endianness))]))]
    [(p delta char vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-char! bv offset char))]))
@@ -424,7 +397,7 @@
   (case-lambda
    [(bv i bigit)
     (constant-case bigit-bytes
-      [(4) (bytevector-u32-set! bv i bigit (target-endianness))])]
+      [(4) (bytevector-u32-set! bv i bigit (constant native-endianness))])]
    [(p delta bigit vfi)
     (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
       (set-bigit! bv offset bigit))]))

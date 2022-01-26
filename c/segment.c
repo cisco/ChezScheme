@@ -152,7 +152,11 @@ void S_freemem(void *addr, iptr bytes, UNUSED IBOOL for_code) {
 #if defined(USE_MMAP)
 #include <sys/mman.h>
 #ifndef MAP_ANONYMOUS
-#define MAP_ANONYMOUS MAP_ANON
+# define MAP_ANONYMOUS MAP_ANON
+#endif
+#ifdef PORTABLE_BYTECODE
+# undef S_PROT_CODE
+# define S_PROT_CODE (PROT_WRITE | PROT_READ)
 #endif
 void *S_getmem(iptr bytes, IBOOL zerofill, IBOOL for_code) {
   void *addr;

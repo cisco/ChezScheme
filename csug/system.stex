@@ -1786,6 +1786,7 @@ as part of a binary-only package.
 \listlibraries
 \endentryheader
 
+\noindent
 This parameter can be set to \scheme{#f} or to a symbol. The realm of
 a procedure (or, more precisely, a procedure's code object) is
 accessible though the inspector.
@@ -1797,10 +1798,33 @@ accessible though the inspector.
 \listlibraries
 \endentryheader
 
+\noindent
 Converts a compiled file to one that may load more quickly, especially
 in the case of a boot file. The converted file is a boot file if
 \var{base-boots} is a list of strings, otherwise \var{base-boots} must
 be \scheme{#f} to create a non-boot file.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{pbchunk-convert-file}{\categoryprocedure}{(pbchunk-convert-file \var{in-path} \var{out-path} \var{c-paths} \var{c-names} \var{start-index})}
+\returns ending index as a nonnegative exact integer
+\listlibraries
+\endentryheader
+
+\noindent
+Converts a compiled file \var{in-path} for a \scheme{pb} machine
+variant to a compiled file \var{out-path} that uses C chunk
+functions written to the files in \var{c-paths}, where \var{c-paths}
+is a nonempty list of file names. Chunk code is distributed across the
+files to avoid making a single, over-large source C file. The
+\var{c-names} list provides a list of function names, one for each
+output file in \var{c-paths}, where each function name is defined as a
+function of no arguments to register the file's chunks with the
+system. This registration must be performed before the converted
+cmopiled code is run. Every set of chunks registered in this way must
+use a distinct index range, where \var{start-index} provides the
+starting index for this set, and the result value is one more than the
+index of the last chunk written to the \var{c-paths} sources.
 
 
 %----------------------------------------------------------------------------

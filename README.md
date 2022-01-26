@@ -80,7 +80,9 @@ Main additions to Chez Scheme in the Racket variant:
  * AArch64 support
 
  * Portable bytes (pb) support, which is mainly useful for
-   bootstrapping a build on any supported platform
+   bootstrapping a build on any supported platform, but can also be
+   linked with libffi for full functionality without code generation
+   or run-time code modification
 
  * Unboxed floating-point arithmetic and flvectors
 

@@ -2,71 +2,30 @@
 #include <string.h>
 #include <math.h>
 
-/* Interpreter for portable bytecode. See "pb.ss". */
+/* Interpreter for portable bytecode. See also "pb.ss", while
+   instruction implementations are mostly in "pb.h" */
+#include "pb.h"
 
-typedef uint32_t instruction_t;
+typedef uptr (*chunk_t)(machine_state *ms, uptr, int);
 
-#define INSTR_op(instr)       ((instr) & 0xFF)
+static chunk_t *chunks;
+static int num_chunks;
 
-#define INSTR_d_dest(instr)   (((instr) >> 8) & 0xF)
+void S_machine_init() { }
 
-#define INSTR_dr_dest(instr)  INSTR_d_dest(instr)
-#define INSTR_dr_reg(instr)   (((instr) >> 16) & 0xF)
+void Sregister_pbchunks(void **add_chunks, int start_index, int end_index) {
+  if (num_chunks < end_index) {
+    void *new_chunks = malloc(sizeof(void*) * end_index);
+    if (chunks) {
+      memcpy(new_chunks, chunks, num_chunks * sizeof(void*));
+      free(chunks);
+    }
+    chunks = new_chunks;
+    num_chunks = end_index;
+  }
 
-#define INSTR_di_dest(instr)  INSTR_d_dest(instr)
-#define INSTR_di_imm(instr)   (((int32_t)(instr)) >> 16)
-#define INSTR_di_imm_unsigned(instr) ((instr) >> 16)
-
-#define INSTR_adr_dest(instr) INSTR_di_dest(instr)
-#define INSTR_adr_imm(instr)  (((int32_t)(instr)) >> 12)
-
-#define INSTR_drr_dest(instr) INSTR_d_dest(instr)
-#define INSTR_drr_reg1(instr) (((instr) >> 12) & 0xF)
-#define INSTR_drr_reg2(instr) (((instr) >> 16) & 0xF)
-
-#define INSTR_dri_dest(instr) INSTR_d_dest(instr)
-#define INSTR_dri_reg(instr)  (((instr) >> 12) & 0xF)
-#define INSTR_dri_imm(instr)  (((int32_t)(instr)) >> 16)
-
-#define INSTR_i_imm(instr)    (((int32_t)(instr)) >> 8)
-
-#define SHIFT_MASK(v) ((v) & (ptr_bits-1))
-
-#define regs       (&PBREGS(tc, 0))
-#define fpregs     (&PBFPREGS(tc, 0))
-#define call_arena (&PBCALLARENA(tc, 0)) /* scratch space for libffi-based foreign calls, 
-                                            somewhat analogous to the C stack */
-
-enum {
-   Cretval = 9,
-   Carg1 = 9,
-   Carg2,
-   Carg3,
-   Carg4,
-   Carg5,
-   Carg6,
-   Carg7
-};
-
-enum {
-   Cfpretval = 1,
-   Cfparg1 = 1,
-   Cfparg2,
-   Cfparg3,
-   Cfparg4,
-   Cfparg5,
-   Cfparg6
-};
-
-void S_machine_init() {}
-
-#define SIGN_FLIP(r, a, b) ((~((a ^ b) | (r ^ ~b))) >> (ptr_bits-1))
-
-#if (__GNUC__ >= 5) || defined(__clang__)
-# define USE_OVERFLOW_INTRINSICS 1
-#else
-# define USE_OVERFLOW_INTRINSICS 0
-#endif
+  memcpy((void **)chunks + start_index, add_chunks, (end_index - start_index) * sizeof(void*));
+}
 
 #if 0
 # define TRACE(print, record) print
@@ -80,7 +39,10 @@ static instruction_t *call_from; static void *call_to;
 # define TRACE(print, record) /* empty */
 #endif
 
+#define COMMON_INSTR(x) x: do_ ## x(instr); break;
+
 void S_pb_interp(ptr tc, void *bytecode) {
+  machine_state * RESTRICT_PTR ms = (machine_state *)&PBREGS(tc, 0); /* assumes fields are together in `tc` */
   instruction_t *ip = (instruction_t *)bytecode, *next_ip, instr;
   int flag = 0;
 
@@ -95,577 +57,133 @@ void S_pb_interp(ptr tc, void *bytecode) {
     switch(INSTR_op(instr)) {
     case pb_link:
       /* same as pb_mov16_pb_zero_bits_pb_shift0, but with a promise
-         of collowing pb_mov16_pb_keep_bits_pb_shift1... with the same
+         of following pb_mov16_pb_keep_bits_pb_shift1... with the same
          destination */
-      regs[INSTR_di_dest(instr)] = ((uptr)INSTR_di_imm_unsigned(instr)
-                                    | ((uptr)INSTR_di_imm_unsigned(ip[1]) << 16)
-#if ptr_bits == 64      
-                                    | ((uptr)INSTR_di_imm_unsigned(ip[2]) << 32)
-                                    | ((uptr)INSTR_di_imm_unsigned(ip[3]) << 48)
-#endif
-                                    );
+      regs[INSTR_di_dest(instr)] = decode_relocation(instr, ip);
 #if ptr_bits == 64
       next_ip = ip + 4;
 #else
       next_ip = ip + 2;
 #endif
       break;
-    case pb_mov16_pb_zero_bits_pb_shift0:
-      regs[INSTR_di_dest(instr)] = (uptr)INSTR_di_imm_unsigned(instr);
-      break;
-    case pb_mov16_pb_zero_bits_pb_shift1:
-      regs[INSTR_di_dest(instr)] = (uptr)INSTR_di_imm_unsigned(instr) << 16;
-      break;
-    case pb_mov16_pb_zero_bits_pb_shift2:
-#if ptr_bits == 64      
-      regs[INSTR_di_dest(instr)] = (uptr)INSTR_di_imm_unsigned(instr) << 32;
-#else
-      regs[INSTR_di_dest(instr)] = 0;
-#endif
-      break;
-    case pb_mov16_pb_zero_bits_pb_shift3:
-#if ptr_bits == 64      
-      regs[INSTR_di_dest(instr)] = (uptr)INSTR_di_imm_unsigned(instr) << 48;
-#else
-      regs[INSTR_di_dest(instr)] = 0;
-#endif
-      break;
-    case pb_mov16_pb_keep_bits_pb_shift0:
-      regs[INSTR_di_dest(instr)] |= (uptr)INSTR_di_imm_unsigned(instr);
-      break;
-    case pb_mov16_pb_keep_bits_pb_shift1:
-      regs[INSTR_di_dest(instr)] |= (uptr)INSTR_di_imm_unsigned(instr) << 16;
-      break;
-    case pb_mov16_pb_keep_bits_pb_shift2:
-#if ptr_bits == 64      
-      regs[INSTR_di_dest(instr)] |= (uptr)INSTR_di_imm_unsigned(instr) << 32;
-#endif
-      break;
-    case pb_mov16_pb_keep_bits_pb_shift3:
-#if ptr_bits == 64      
-      regs[INSTR_di_dest(instr)] |= (uptr)INSTR_di_imm_unsigned(instr) << 48;
-#endif
-      break;
-    case pb_mov_pb_i_i:
-      regs[INSTR_dr_dest(instr)] = regs[INSTR_dr_reg(instr)];
-      break;
-    case pb_mov_pb_d_d:
-      fpregs[INSTR_dr_dest(instr)] = fpregs[INSTR_dr_reg(instr)];
-      break;
-    case pb_mov_pb_i_d:
-      fpregs[INSTR_dr_dest(instr)] = (double)(iptr)regs[INSTR_dr_reg(instr)];
-      break;
-    case pb_mov_pb_d_i:
-      regs[INSTR_dr_dest(instr)] = (iptr)fpregs[INSTR_dr_reg(instr)];
-      break;
+    case COMMON_INSTR(pb_mov16_pb_zero_bits_pb_shift0)
+    case COMMON_INSTR(pb_mov16_pb_zero_bits_pb_shift1)
+    case COMMON_INSTR(pb_mov16_pb_zero_bits_pb_shift2)
+    case COMMON_INSTR(pb_mov16_pb_zero_bits_pb_shift3)
+    case COMMON_INSTR(pb_mov16_pb_keep_bits_pb_shift0)
+    case COMMON_INSTR(pb_mov16_pb_keep_bits_pb_shift1)
+    case COMMON_INSTR(pb_mov16_pb_keep_bits_pb_shift2)
+    case COMMON_INSTR(pb_mov16_pb_keep_bits_pb_shift3)
+    case COMMON_INSTR(pb_mov_pb_i_i)
+    case COMMON_INSTR(pb_mov_pb_d_d)
+    case COMMON_INSTR(pb_mov_pb_i_d)
+    case COMMON_INSTR(pb_mov_pb_d_i)
 #if ptr_bits == 64
-    case pb_mov_pb_i_bits_d_bits:
-      memcpy(&fpregs[INSTR_dr_dest(instr)], &regs[INSTR_dr_reg(instr)], sizeof(double));
-      break;
-    case pb_mov_pb_d_bits_i_bits:
-      memcpy(&regs[INSTR_dr_dest(instr)], &fpregs[INSTR_dr_reg(instr)], sizeof(double));
-      break;
+    case COMMON_INSTR(pb_mov_pb_i_bits_d_bits)
+    case COMMON_INSTR(pb_mov_pb_d_bits_i_bits)
 #else
-    case pb_mov_pb_i_i_bits_d_bits:
-      {
-        uint64_t d;
-        d = regs[INSTR_drr_reg1(instr)] | ((uint64_t)regs[INSTR_drr_reg2(instr)] << 32);
-        memcpy(&fpregs[INSTR_drr_dest(instr)], &d, sizeof(double));
-      }
-      break;
-    case pb_mov_pb_d_lo_bits_i_bits:
-      {
-        uint64_t d;
-        memcpy(&d, &fpregs[INSTR_dr_reg(instr)], sizeof(double));
-        regs[INSTR_dr_dest(instr)] = d;
-      }
-      break;
-    case pb_mov_pb_d_hi_bits_i_bits:
-      {
-        uint64_t d;
-        memcpy(&d, &fpregs[INSTR_dr_reg(instr)], sizeof(double));
-        d >>= 32;
-        regs[INSTR_dr_dest(instr)] = d;
-      }
-      break;
+    case COMMON_INSTR(pb_mov_pb_i_i_bits_d_bits)
+    case COMMON_INSTR(pb_mov_pb_d_lo_bits_i_bits)
+    case COMMON_INSTR(pb_mov_pb_d_hi_bits_i_bits)
 #endif      
-    case pb_mov_pb_s_d:
-      {
-        float f;
-#ifdef PORTABLE_BYTECODE_BIGENDIAN
-        memcpy(&f, (char *)&fpregs[INSTR_dr_reg(instr)] + 4, sizeof(float));
-#else
-        memcpy(&f, &fpregs[INSTR_dr_reg(instr)], sizeof(float));
-#endif
-        fpregs[INSTR_dr_dest(instr)] = f;
-      }
-      break;
-    case pb_mov_pb_d_s:
-      {
-        float f;
-        f = fpregs[INSTR_dr_reg(instr)];
-#ifdef PORTABLE_BYTECODE_BIGENDIAN
-        memcpy((char *)&fpregs[INSTR_dr_dest(instr)] + 4, &f, sizeof(float));
-#else
-        memcpy(&fpregs[INSTR_dr_dest(instr)], &f, sizeof(float));
-#endif
-      }
-      break;
-    case pb_mov_pb_d_s_d:
-      {
-        float f;
-        f = fpregs[INSTR_dr_reg(instr)];
-        fpregs[INSTR_dr_dest(instr)] = (double)f;
-      }
-      break;
-    case pb_bin_op_pb_no_signal_pb_add_pb_register:
-      regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)];
-      break;
-    case pb_bin_op_pb_no_signal_pb_add_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] + (uptr)INSTR_dri_imm(instr);
-      break;
-    case pb_bin_op_pb_no_signal_pb_sub_pb_register:
-      regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] - regs[INSTR_drr_reg2(instr)];
-      break;
-    case pb_bin_op_pb_no_signal_pb_sub_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] - (uptr)INSTR_dri_imm(instr);
-      break;
-    case pb_bin_op_pb_no_signal_pb_mul_pb_register:
-      regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] * regs[INSTR_drr_reg2(instr)];
-      break;
-    case pb_bin_op_pb_no_signal_pb_mul_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = (uptr)regs[INSTR_dri_reg(instr)] * (uptr)INSTR_dri_imm(instr);
-      break;
-    case pb_bin_op_pb_no_signal_pb_div_pb_register:
-      regs[INSTR_drr_dest(instr)] = (iptr)regs[INSTR_drr_reg1(instr)] / (iptr)regs[INSTR_drr_reg2(instr)];
-      break;
-    case pb_bin_op_pb_no_signal_pb_div_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = (iptr)regs[INSTR_dri_reg(instr)] / (iptr)INSTR_dri_imm(instr);
-      break;
-    case pb_bin_op_pb_no_signal_pb_and_pb_register:
-      regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] & regs[INSTR_drr_reg2(instr)];
-      break;
-    case pb_bin_op_pb_no_signal_pb_and_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] & (uptr)INSTR_dri_imm(instr);
-      break;
-    case pb_bin_op_pb_no_signal_pb_ior_pb_register:
-      regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] | regs[INSTR_drr_reg2(instr)];
-      break;
-    case pb_bin_op_pb_no_signal_pb_ior_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] | (uptr)INSTR_dri_imm(instr);
-      break;
-    case pb_bin_op_pb_no_signal_pb_xor_pb_register:
-      regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] ^ regs[INSTR_drr_reg2(instr)];
-      break;
-    case pb_bin_op_pb_no_signal_pb_xor_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] ^ (uptr)INSTR_dri_imm(instr);
-      break;
-    case pb_bin_op_pb_no_signal_pb_lsl_pb_register:
-      regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] << SHIFT_MASK(regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_bin_op_pb_no_signal_pb_lsl_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] << SHIFT_MASK(INSTR_dri_imm(instr));
-      break;
-    case pb_bin_op_pb_no_signal_pb_lsr_pb_register:
-      regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] >> SHIFT_MASK(regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_bin_op_pb_no_signal_pb_lsr_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] >> SHIFT_MASK(INSTR_dri_imm(instr));
-      break;
-    case pb_bin_op_pb_no_signal_pb_asr_pb_register:
-      regs[INSTR_drr_dest(instr)] = (iptr)regs[INSTR_drr_reg1(instr)] >> SHIFT_MASK(regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_bin_op_pb_no_signal_pb_asr_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = (iptr)regs[INSTR_dri_reg(instr)] >> SHIFT_MASK(INSTR_dri_imm(instr));
-      break;
-    case pb_bin_op_pb_no_signal_pb_lslo_pb_register:
-#ifdef PORTABLE_BYTECODE_BIGENDIAN
-      regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] >> regs[INSTR_drr_reg2(instr)];
-#else
-      regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] << regs[INSTR_drr_reg2(instr)];
-#endif
-      break;
-    case pb_bin_op_pb_no_signal_pb_lslo_pb_immediate:
-#ifdef PORTABLE_BYTECODE_BIGENDIAN
-      regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] >> INSTR_dri_imm(instr);
-#else
-      regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] << INSTR_dri_imm(instr);
-#endif
-      break;
-    case pb_bin_op_pb_signal_pb_add_pb_register:
-      {
-#if USE_OVERFLOW_INTRINSICS
-        iptr a = (iptr)regs[INSTR_drr_reg1(instr)];
-        iptr b = (iptr)regs[INSTR_drr_reg2(instr)];
-        iptr r;
-        flag = __builtin_add_overflow(a, b, &r);
-        regs[INSTR_drr_dest(instr)] = (uptr)r;
-#else
-        uptr a = regs[INSTR_drr_reg1(instr)];
-        uptr b = regs[INSTR_drr_reg2(instr)];
-        uptr r = a + b;
-        regs[INSTR_drr_dest(instr)] = r;
-        flag = SIGN_FLIP(r, a, b);
-#endif
-      }
-      break;
-    case pb_bin_op_pb_signal_pb_add_pb_immediate:
-      {
-#if USE_OVERFLOW_INTRINSICS
-        iptr a = (iptr)regs[INSTR_dri_reg(instr)];
-        iptr b = INSTR_dri_imm(instr);
-        iptr r;
-        flag = __builtin_add_overflow(a, b, &r);
-        regs[INSTR_drr_dest(instr)] = (uptr)r;
-#else
-        uptr a = regs[INSTR_dri_reg(instr)];
-        uptr b = (uptr)INSTR_dri_imm(instr);
-        uptr r = a + b;
-        regs[INSTR_dri_dest(instr)] = r;
-        flag = SIGN_FLIP(r, a, b);
-#endif
-      }
-      break;
-    case pb_bin_op_pb_signal_pb_sub_pb_register:
-      {
-#if USE_OVERFLOW_INTRINSICS
-        iptr a = (iptr)regs[INSTR_drr_reg1(instr)];
-        iptr b = (iptr)regs[INSTR_drr_reg2(instr)];
-        iptr r;
-        flag = __builtin_sub_overflow(a, b, &r);
-        regs[INSTR_drr_dest(instr)] = (uptr)r;
-#else
-        uptr a = regs[INSTR_drr_reg1(instr)];
-        uptr b = regs[INSTR_drr_reg2(instr)];
-        uptr r = a - b;
-        regs[INSTR_drr_dest(instr)] = r;
-        flag = SIGN_FLIP(r, a, ~b);
-#endif
-      }
-      break;
-    case pb_bin_op_pb_signal_pb_sub_pb_immediate:
-      {
-#if USE_OVERFLOW_INTRINSICS
-        iptr a = (iptr)regs[INSTR_dri_reg(instr)];
-        iptr b = INSTR_dri_imm(instr);
-        iptr r;
-        flag = __builtin_sub_overflow(a, b, &r);
-        regs[INSTR_drr_dest(instr)] = (uptr)r;
-#else
-        uptr a = regs[INSTR_dri_reg(instr)];
-        uptr b = (uptr)INSTR_dri_imm(instr);
-        uptr r = a - b;
-        regs[INSTR_dri_dest(instr)] = r;
-        flag = SIGN_FLIP(r, a, ~b);
-#endif
-      }
-      break;
-    case pb_bin_op_pb_signal_pb_mul_pb_register:
-      {
-#if USE_OVERFLOW_INTRINSICS
-        iptr a = (iptr)regs[INSTR_drr_reg1(instr)];
-        iptr b = (iptr)regs[INSTR_drr_reg2(instr)];
-        iptr r;
-        flag = __builtin_mul_overflow(a, b, &r);
-        regs[INSTR_drr_dest(instr)] = (uptr)r;
-#else
-        uptr a = regs[INSTR_drr_reg1(instr)];
-        uptr b = regs[INSTR_drr_reg2(instr)];
-        uptr r = a * b;
-        regs[INSTR_drr_dest(instr)] = r;
-        if (b != 0) {
-          if (b == (uptr)-1)
-            flag = (a != r * (uptr)-1);
-          else
-            flag = ((iptr)a != (iptr)r / (iptr)b);
-        } else
-          flag = 0;
-#endif
-      }
-      break;
-    case pb_bin_op_pb_signal_pb_mul_pb_immediate:
-      {
-#if USE_OVERFLOW_INTRINSICS
-        iptr a = (iptr)regs[INSTR_dri_reg(instr)];
-        iptr b = INSTR_dri_imm(instr);
-        iptr r;
-        flag = __builtin_mul_overflow(a, b, &r);
-        regs[INSTR_drr_dest(instr)] = (uptr)r;
-#else
-        uptr a = regs[INSTR_dri_reg(instr)];
-        uptr b = (uptr)INSTR_dri_imm(instr);
-        uptr r = a * b;
-        regs[INSTR_dri_dest(instr)] = r;
-        if (b != 0) {
-          if (b == (uptr)-1)
-            flag = (a != r * (uptr)-1);
-          else
-            flag = ((iptr)a != (iptr)r / (iptr)b);
-        } else
-          flag = 0;
-#endif
-      }
-      break;
-    case pb_bin_op_pb_signal_pb_subz_pb_register:
-      {
-        iptr r = regs[INSTR_drr_reg1(instr)] - regs[INSTR_drr_reg2(instr)];
-        regs[INSTR_drr_dest(instr)] = r;
-        flag = (r == 0);
-      }
-      break;
-    case pb_bin_op_pb_signal_pb_subz_pb_immediate:
-      {
-        iptr r = regs[INSTR_dri_reg(instr)] - (uptr)INSTR_dri_imm(instr);
-        regs[INSTR_dri_dest(instr)] = r;
-        flag = (r == 0);
-      }
-      break;
-    case pb_bin_op_pb_signal_pb_subp_pb_register:
-      {
-        iptr r = regs[INSTR_drr_reg1(instr)] - regs[INSTR_drr_reg2(instr)];
-        regs[INSTR_drr_dest(instr)] = r;
-        flag = (r > 0);
-      }
-      break;
-    case pb_bin_op_pb_signal_pb_subp_pb_immediate:
-      {
-        iptr r = regs[INSTR_dri_reg(instr)] - (uptr)INSTR_dri_imm(instr);
-        regs[INSTR_dri_dest(instr)] = r;
-        flag = (r > 0);
-      }
-      break;
-    case pb_cmp_op_pb_eq_pb_register:
-      flag = regs[INSTR_dr_dest(instr)] == regs[INSTR_dr_reg(instr)];
-      break;
-    case pb_cmp_op_pb_eq_pb_immediate:
-      flag = regs[INSTR_di_dest(instr)] == (uptr)INSTR_di_imm(instr);
-      break;
-    case pb_cmp_op_pb_lt_pb_register:
-      flag = (iptr)regs[INSTR_dr_dest(instr)] < (iptr)regs[INSTR_dr_reg(instr)];
-      break;
-    case pb_cmp_op_pb_lt_pb_immediate:
-      flag = (iptr)regs[INSTR_di_dest(instr)] < (iptr)INSTR_di_imm(instr);
-      break;
-    case pb_cmp_op_pb_gt_pb_register:
-      flag = (iptr)regs[INSTR_dr_dest(instr)] > (iptr)regs[INSTR_dr_reg(instr)];
-      break;
-    case pb_cmp_op_pb_gt_pb_immediate:
-      flag = (iptr)regs[INSTR_di_dest(instr)] > (iptr)INSTR_di_imm(instr);
-      break;
-    case pb_cmp_op_pb_le_pb_register:
-      flag = (iptr)regs[INSTR_dr_dest(instr)] <= (iptr)regs[INSTR_dr_reg(instr)];
-      break;
-    case pb_cmp_op_pb_le_pb_immediate:
-      flag = (iptr)regs[INSTR_di_dest(instr)] <= (iptr)INSTR_di_imm(instr);
-      break;
-    case pb_cmp_op_pb_ge_pb_register:
-      flag = (iptr)regs[INSTR_dr_dest(instr)] >= (iptr)regs[INSTR_dr_reg(instr)];
-      break;
-    case pb_cmp_op_pb_ge_pb_immediate:
-      flag = (iptr)regs[INSTR_di_dest(instr)] >= (iptr)INSTR_di_imm(instr);
-      break;
-    case pb_cmp_op_pb_ab_pb_register:
-      flag = regs[INSTR_dr_dest(instr)] > regs[INSTR_dr_reg(instr)];
-      break;
-    case pb_cmp_op_pb_ab_pb_immediate:
-      flag = regs[INSTR_di_dest(instr)] > (uptr)INSTR_di_imm(instr);
-      break;
-    case pb_cmp_op_pb_bl_pb_register:
-      flag = regs[INSTR_dr_dest(instr)] < regs[INSTR_dr_reg(instr)];
-      break;
-    case pb_cmp_op_pb_bl_pb_immediate:
-      flag = regs[INSTR_di_dest(instr)] < (uptr)INSTR_di_imm(instr);
-      break;
-    case pb_cmp_op_pb_cs_pb_register:
-      flag = ((regs[INSTR_dr_dest(instr)] & regs[INSTR_dr_reg(instr)]) != 0);
-      break;
-    case pb_cmp_op_pb_cs_pb_immediate:
-      flag = ((regs[INSTR_di_dest(instr)] & (uptr)INSTR_di_imm(instr)) != 0);
-      break;
-    case pb_cmp_op_pb_cc_pb_register:
-      flag = ((regs[INSTR_dr_dest(instr)] & regs[INSTR_dr_reg(instr)]) == 0);
-      break;
-    case pb_cmp_op_pb_cc_pb_immediate:
-      flag = ((regs[INSTR_di_dest(instr)] & (uptr)INSTR_di_imm(instr)) == 0);
-      break;
-    case pb_fp_bin_op_pb_add_pb_register:
-      fpregs[INSTR_drr_dest(instr)] = fpregs[INSTR_drr_reg1(instr)] + fpregs[INSTR_drr_reg2(instr)];
-      break;
-    case pb_fp_bin_op_pb_sub_pb_register:
-      fpregs[INSTR_drr_dest(instr)] = fpregs[INSTR_drr_reg1(instr)] - fpregs[INSTR_drr_reg2(instr)];
-      break;
-    case pb_fp_bin_op_pb_mul_pb_register:
-      fpregs[INSTR_drr_dest(instr)] = fpregs[INSTR_drr_reg1(instr)] * fpregs[INSTR_drr_reg2(instr)];
-      break;
-    case pb_fp_bin_op_pb_div_pb_register:
-      fpregs[INSTR_drr_dest(instr)] = fpregs[INSTR_drr_reg1(instr)] / fpregs[INSTR_drr_reg2(instr)];
-      break;
-    case pb_un_op_pb_not_pb_register:
-      regs[INSTR_dr_dest(instr)] = ~(regs[INSTR_dr_reg(instr)]);
-      break;
-    case pb_un_op_pb_not_pb_immediate:
-      regs[INSTR_di_dest(instr)] = ~((uptr)(iptr)INSTR_di_imm(instr));
-      break;
-    case pb_fp_un_op_pb_sqrt_pb_register:
-      fpregs[INSTR_dr_dest(instr)] = sqrt(fpregs[INSTR_dr_reg(instr)]);
-      break;
-    case pb_fp_cmp_op_pb_eq_pb_register:
-      flag = fpregs[INSTR_dr_dest(instr)] == fpregs[INSTR_dr_reg(instr)];
-      break;
-    case pb_fp_cmp_op_pb_lt_pb_register:
-      flag = fpregs[INSTR_dr_dest(instr)] < fpregs[INSTR_dr_reg(instr)];
-      break;
-    case pb_fp_cmp_op_pb_le_pb_register:
-      flag = fpregs[INSTR_dr_dest(instr)] <= fpregs[INSTR_dr_reg(instr)];
-      break;
-    case pb_rev_op_pb_int16_pb_register:
-#if ptr_bits == 64
-      regs[INSTR_dr_dest(instr)] = ((uptr)((iptr)(regs[INSTR_dr_reg(instr)] << 56) >> 48)
-                                    | ((regs[INSTR_dr_reg(instr)] & 0xFF00) >> 8));
-#else
-      regs[INSTR_dr_dest(instr)] = ((uptr)((iptr)(regs[INSTR_dr_reg(instr)] << 24) >> 16)
-                                    | ((regs[INSTR_dr_reg(instr)] & 0xFF00) >> 8));
-#endif
-      break;
-    case pb_rev_op_pb_uint16_pb_register:
-      regs[INSTR_dr_dest(instr)] = (((regs[INSTR_dr_reg(instr)] & 0x00FF) << 8)
-                                    | ((regs[INSTR_dr_reg(instr)] & 0xFF00) >> 8));
-      break;
-    case pb_rev_op_pb_int32_pb_register:
-#if ptr_bits == 64
-      regs[INSTR_dr_dest(instr)] = ((uptr)((iptr)(regs[INSTR_dr_reg(instr)] << 56) >> 32)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0xFF000000) >> 24)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00FF0000) >> 8)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000FF00) << 8));
-#else
-      regs[INSTR_dr_dest(instr)] = ((regs[INSTR_dr_reg(instr)] << 24)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0xFF000000) >> 24)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00FF0000) >> 8)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000FF00) << 8));
-#endif
-      break;
-    case pb_rev_op_pb_uint32_pb_register:
-      regs[INSTR_dr_dest(instr)] = (((regs[INSTR_dr_reg(instr)] & (uptr)0x000000FF) << 24)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0xFF000000) >> 24)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00FF0000) >> 8)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000FF00) << 8));
-      break;
-    case pb_rev_op_pb_int64_pb_register:
-#if ptr_bits == 64
-      regs[INSTR_dr_dest(instr)] = (((regs[INSTR_dr_reg(instr)] & (uptr)0x00000000000000FF) << 56)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x000000000000FF00) << 40)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000000000FF0000) << 24)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00000000FF000000) << 8)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x000000FF00000000) >> 8)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000FF0000000000) >> 24)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00FF000000000000) >> 40)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0xFF00000000000000) >> 56));
-#else
-      regs[INSTR_dr_dest(instr)] = (((regs[INSTR_dr_reg(instr)] & (uptr)0x000000FF) << 24)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0xFF000000) >> 24)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00FF0000) >> 8)
-                                    | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000FF00) << 8));
-#endif
-      break;
-    case pb_ld_op_pb_int8_pb_register:
-      regs[INSTR_drr_dest(instr)] = *(int8_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_ld_op_pb_int8_pb_immediate:
-#if defined(__arm__)
-      /* Complicated load to avoid an internal compiler error from an old gcc on Raspbian: */
-      {
-        int8_t v;
-        memcpy(&v, TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)), sizeof(int8_t));
-        regs[INSTR_dri_dest(instr)] = v;
-      }
-#else
-      regs[INSTR_dri_dest(instr)] = *(int8_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr));
-#endif
-      break;
-    case pb_ld_op_pb_uint8_pb_register:
-      regs[INSTR_drr_dest(instr)] = *(uint8_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_ld_op_pb_uint8_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = *(uint8_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr));
-      break;
-    case pb_ld_op_pb_int16_pb_register:
-      regs[INSTR_drr_dest(instr)] = *(int16_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_ld_op_pb_int16_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = *(int16_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr));
-      break;
-    case pb_ld_op_pb_uint16_pb_register:
-      regs[INSTR_drr_dest(instr)] = *(uint16_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_ld_op_pb_uint16_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = *(uint16_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr));
-      break;
-    case pb_ld_op_pb_int32_pb_register:
-      regs[INSTR_drr_dest(instr)] = *(int32_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_ld_op_pb_int32_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = *(int32_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr));
-      break;
-    case pb_ld_op_pb_uint32_pb_register:
-      regs[INSTR_drr_dest(instr)] = *(uint32_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_ld_op_pb_uint32_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = *(uint32_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr));
-      break;
-    case pb_ld_op_pb_int64_pb_register:
-      regs[INSTR_drr_dest(instr)] = *(uptr *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_ld_op_pb_int64_pb_immediate:
-      regs[INSTR_dri_dest(instr)] = *(uptr *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr));
-      break;
-    case pb_ld_op_pb_double_pb_register:
-      fpregs[INSTR_drr_dest(instr)] = *(double *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_ld_op_pb_double_pb_immediate:
-      fpregs[INSTR_dri_dest(instr)] = *(double *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr));
-      break;
-    case pb_ld_op_pb_single_pb_register:
-      fpregs[INSTR_drr_dest(instr)] =  *(float *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]);
-      break;
-    case pb_ld_op_pb_single_pb_immediate:
-      fpregs[INSTR_dri_dest(instr)] = *(float *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr));
-      break;
-    case pb_st_op_pb_int8_pb_register:
-      *(char *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = (char)regs[INSTR_drr_dest(instr)];
-      break;
-    case pb_st_op_pb_int8_pb_immediate:
-      *(char *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = (char)regs[INSTR_dri_dest(instr)];
-      break;
-    case pb_st_op_pb_int16_pb_register:
-      *(short *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = (short)regs[INSTR_drr_dest(instr)];
-      break;
-    case pb_st_op_pb_int16_pb_immediate:
-      *(short *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = (short)regs[INSTR_dri_dest(instr)];
-      break;
-    case pb_st_op_pb_int32_pb_register:
-      *(int *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = (int)regs[INSTR_drr_dest(instr)];
-      break;
-    case pb_st_op_pb_int32_pb_immediate:
-      *(int *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = (int)regs[INSTR_dri_dest(instr)];
-      break;
-    case pb_st_op_pb_int64_pb_register:
-      *(uptr *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = regs[INSTR_drr_dest(instr)];
-      break;
-    case pb_st_op_pb_int64_pb_immediate:
-      *(uptr *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = regs[INSTR_dri_dest(instr)];
-      break;
-    case pb_st_op_pb_double_pb_register:
-      *(double *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = fpregs[INSTR_drr_dest(instr)];
-      break;
-    case pb_st_op_pb_double_pb_immediate:
-      *(double *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = fpregs[INSTR_dri_dest(instr)];
-      break;
-    case pb_st_op_pb_single_pb_register:
-      *(float *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = fpregs[INSTR_drr_dest(instr)];
-      break;
-    case pb_st_op_pb_single_pb_immediate:
-      *(float *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = fpregs[INSTR_dri_dest(instr)];
-      break;
+    case COMMON_INSTR(pb_mov_pb_s_d)
+    case COMMON_INSTR(pb_mov_pb_d_s)
+    case COMMON_INSTR(pb_mov_pb_d_s_d)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_add_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_add_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_sub_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_sub_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_mul_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_mul_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_div_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_div_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_and_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_and_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_ior_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_ior_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_xor_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_xor_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_lsl_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_lsl_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_lsr_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_lsr_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_asr_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_asr_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_lslo_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_no_signal_pb_lslo_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_signal_pb_add_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_signal_pb_add_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_signal_pb_sub_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_signal_pb_sub_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_signal_pb_mul_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_signal_pb_mul_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_signal_pb_subz_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_signal_pb_subz_pb_immediate)
+    case COMMON_INSTR(pb_bin_op_pb_signal_pb_subp_pb_register)
+    case COMMON_INSTR(pb_bin_op_pb_signal_pb_subp_pb_immediate)
+    case COMMON_INSTR(pb_cmp_op_pb_eq_pb_register)
+    case COMMON_INSTR(pb_cmp_op_pb_eq_pb_immediate)
+    case COMMON_INSTR(pb_cmp_op_pb_lt_pb_register)
+    case COMMON_INSTR(pb_cmp_op_pb_lt_pb_immediate)
+    case COMMON_INSTR(pb_cmp_op_pb_gt_pb_register)
+    case COMMON_INSTR(pb_cmp_op_pb_gt_pb_immediate)
+    case COMMON_INSTR(pb_cmp_op_pb_le_pb_register)
+    case COMMON_INSTR(pb_cmp_op_pb_le_pb_immediate)
+    case COMMON_INSTR(pb_cmp_op_pb_ge_pb_register)
+    case COMMON_INSTR(pb_cmp_op_pb_ge_pb_immediate)
+    case COMMON_INSTR(pb_cmp_op_pb_ab_pb_register)
+    case COMMON_INSTR(pb_cmp_op_pb_ab_pb_immediate)
+    case COMMON_INSTR(pb_cmp_op_pb_bl_pb_register)
+    case COMMON_INSTR(pb_cmp_op_pb_bl_pb_immediate)
+    case COMMON_INSTR(pb_cmp_op_pb_cs_pb_register)
+    case COMMON_INSTR(pb_cmp_op_pb_cs_pb_immediate)
+    case COMMON_INSTR(pb_cmp_op_pb_cc_pb_register)
+    case COMMON_INSTR(pb_cmp_op_pb_cc_pb_immediate)
+    case COMMON_INSTR(pb_fp_bin_op_pb_add_pb_register)
+    case COMMON_INSTR(pb_fp_bin_op_pb_sub_pb_register)
+    case COMMON_INSTR(pb_fp_bin_op_pb_mul_pb_register)
+    case COMMON_INSTR(pb_fp_bin_op_pb_div_pb_register)
+    case COMMON_INSTR(pb_un_op_pb_not_pb_register)
+    case COMMON_INSTR(pb_un_op_pb_not_pb_immediate)
+    case COMMON_INSTR(pb_fp_un_op_pb_sqrt_pb_register)
+    case COMMON_INSTR(pb_fp_cmp_op_pb_eq_pb_register)
+    case COMMON_INSTR(pb_fp_cmp_op_pb_lt_pb_register)
+    case COMMON_INSTR(pb_fp_cmp_op_pb_le_pb_register)
+    case COMMON_INSTR(pb_rev_op_pb_int16_pb_register)
+    case COMMON_INSTR(pb_rev_op_pb_uint16_pb_register)
+    case COMMON_INSTR(pb_rev_op_pb_int32_pb_register)
+    case COMMON_INSTR(pb_rev_op_pb_uint32_pb_register)
+    case COMMON_INSTR(pb_rev_op_pb_int64_pb_register)
+    case COMMON_INSTR(pb_ld_op_pb_int8_pb_register)
+    case COMMON_INSTR(pb_ld_op_pb_int8_pb_immediate)
+    case COMMON_INSTR(pb_ld_op_pb_uint8_pb_register)
+    case COMMON_INSTR(pb_ld_op_pb_uint8_pb_immediate)
+    case COMMON_INSTR(pb_ld_op_pb_int16_pb_register)
+    case COMMON_INSTR(pb_ld_op_pb_int16_pb_immediate)
+    case COMMON_INSTR(pb_ld_op_pb_uint16_pb_register)
+    case COMMON_INSTR(pb_ld_op_pb_uint16_pb_immediate)
+    case COMMON_INSTR(pb_ld_op_pb_int32_pb_register)
+    case COMMON_INSTR(pb_ld_op_pb_int32_pb_immediate)
+    case COMMON_INSTR(pb_ld_op_pb_uint32_pb_register)
+    case COMMON_INSTR(pb_ld_op_pb_uint32_pb_immediate)
+    case COMMON_INSTR(pb_ld_op_pb_int64_pb_register)
+    case COMMON_INSTR(pb_ld_op_pb_int64_pb_immediate)
+    case COMMON_INSTR(pb_ld_op_pb_double_pb_register)
+    case COMMON_INSTR(pb_ld_op_pb_double_pb_immediate)
+    case COMMON_INSTR(pb_ld_op_pb_single_pb_register)
+    case COMMON_INSTR(pb_ld_op_pb_single_pb_immediate)
+    case COMMON_INSTR(pb_st_op_pb_int8_pb_register)
+    case COMMON_INSTR(pb_st_op_pb_int8_pb_immediate)
+    case COMMON_INSTR(pb_st_op_pb_int16_pb_register)
+    case COMMON_INSTR(pb_st_op_pb_int16_pb_immediate)
+    case COMMON_INSTR(pb_st_op_pb_int32_pb_register)
+    case COMMON_INSTR(pb_st_op_pb_int32_pb_immediate)
+    case COMMON_INSTR(pb_st_op_pb_int64_pb_register)
+    case COMMON_INSTR(pb_st_op_pb_int64_pb_immediate)
+    case COMMON_INSTR(pb_st_op_pb_double_pb_register)
+    case COMMON_INSTR(pb_st_op_pb_double_pb_immediate)
+    case COMMON_INSTR(pb_st_op_pb_single_pb_register)
+    case COMMON_INSTR(pb_st_op_pb_single_pb_immediate)
     case pb_b_op_pb_fals_pb_register:
       if (!flag) {
         next_ip = (instruction_t *)TO_VOIDP(regs[INSTR_dr_reg(instr)]);
@@ -699,11 +217,11 @@ void S_pb_interp(ptr tc, void *bytecode) {
       TRACE(printf("jump %p -> %p\n", ip, next_ip), { jump_from = ip; jump_to = next_ip; });
       break;
     case pb_bs_op_pb_register:
-      next_ip = (instruction_t *)TO_VOIDP(*(uptr *)TO_VOIDP(regs[INSTR_dr_dest(instr)] + regs[INSTR_dr_reg(instr)]));
+      next_ip = (instruction_t *)TO_VOIDP(pb_bs_op_pb_register_addr(instr));
       TRACE(printf("jump %p -> %p\n", ip, next_ip), { jump_from = ip; jump_to = next_ip; });
       break;
     case pb_bs_op_pb_immediate:
-      next_ip = (instruction_t *)TO_VOIDP(*(uptr *)TO_VOIDP(regs[INSTR_di_dest(instr)] + INSTR_di_imm(instr)));
+      next_ip = (instruction_t *)TO_VOIDP(pb_bs_op_pb_immediate_addr(instr));
       TRACE(printf("jump %p -> %p\n", ip, next_ip), { jump_from = ip; jump_to = next_ip; });
       break;
     case pb_return:
@@ -752,6 +270,9 @@ void S_pb_interp(ptr tc, void *bytecode) {
           break;
         case pb_call_void_int32_int32:
           ((pb_void_int32_int32_t)proc)(regs[Carg1], regs[Carg2]);
+          break;
+        case pb_call_void_uint32_uint32:
+          ((pb_void_uint32_uint32_t)proc)(regs[Carg1], regs[Carg2]);
           break;
         case pb_call_void_uptr_uptr:
           ((pb_void_uptr_uptr_t)proc)(regs[Carg1], regs[Carg2]);
@@ -943,87 +464,20 @@ void S_pb_interp(ptr tc, void *bytecode) {
         }
       }
       break;
-    case pb_inc_pb_register:
-      {
-        uptr addr = regs[INSTR_dr_dest(instr)];
-        uptr old_r = *(uptr *)TO_VOIDP(addr);
-        uptr r = old_r + regs[INSTR_dr_reg(instr)];
-#     if defined(PTHREADS)
-        if (!CAS_ANY_FENCE(TO_VOIDP(addr), TO_VOIDP(old_r), TO_VOIDP(r)))
-          next_ip = ip;
-#     else
-        *(uptr *)TO_VOIDP(addr) = r;
-#     endif
-        flag = (r == 0);
-      }
-      break;
-    case pb_inc_pb_immediate:
-      {
-        uptr addr = regs[INSTR_dr_dest(instr)];
-        uptr old_r = *(uptr *)TO_VOIDP(addr);
-        uptr r = old_r + INSTR_di_imm(instr);
-#     if defined(PTHREADS)
-        if (!CAS_ANY_FENCE(TO_VOIDP(addr), TO_VOIDP(old_r), TO_VOIDP(r)))
-          next_ip = ip;
-#     else
-        *(uptr *)TO_VOIDP(addr) = r;
-#     endif
-        flag = (r == 0);
-      }
-      break;
-    case pb_lock:
-      {
-        uptr *l = TO_VOIDP(regs[INSTR_d_dest(instr)]);
-#     if defined(PTHREADS)
-        flag = CAS_ANY_FENCE(l, TO_VOIDP(0), TO_VOIDP(1));
-#     else
-        if (*l == 0) {
-          *l = 1;
-          flag = 1;
-        } else
-          flag = 0;
-#     endif
-      }
-      break;
-    case pb_cas:
-      {
-        uptr *l = TO_VOIDP(regs[INSTR_drr_dest(instr)]);
-        uptr old = regs[INSTR_drr_reg1(instr)];
-        uptr new = regs[INSTR_drr_reg2(instr)];
-#     if defined(PTHREADS)
-        flag = CAS_ANY_FENCE(l, TO_VOIDP(old), TO_VOIDP(new));
-#     else
-        if (*l == old) {
-          *l = new;
-          flag = 1;
-        } else
-          flag = 0;
-#     endif
-      }
-      break;
-    case pb_fence_pb_fence_store_store:
-      STORE_FENCE();
-      break;
-    case pb_fence_pb_fence_acquire:
-      ACQUIRE_FENCE();
-      break;
-    case pb_fence_pb_fence_release:
-      RELEASE_FENCE();
-      break;
-    case pb_call_arena_in:
-      *(ptr *)((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr)) = regs[INSTR_di_dest(instr)];
-      break;
-    case pb_fp_call_arena_in:
-      *(double *)((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr)) = fpregs[INSTR_di_dest(instr)];
-      break;
-    case pb_call_arena_out:
-      regs[INSTR_di_dest(instr)] = *(ptr *)((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr));
-      break;
-    case pb_fp_call_arena_out:
-      fpregs[INSTR_di_dest(instr)] = *(double *)((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr));
-      break;
-    case pb_stack_call:
-      S_ffi_call(regs[INSTR_dr_reg(instr)], regs[INSTR_dr_dest(instr)], (ptr *)call_arena);
+    case COMMON_INSTR(pb_inc_pb_register)
+    case COMMON_INSTR(pb_inc_pb_immediate)
+    case COMMON_INSTR(pb_lock)
+    case COMMON_INSTR(pb_cas)
+    case COMMON_INSTR(pb_fence_pb_fence_store_store)
+    case COMMON_INSTR(pb_fence_pb_fence_acquire)
+    case COMMON_INSTR(pb_fence_pb_fence_release)
+    case COMMON_INSTR(pb_call_arena_in)
+    case COMMON_INSTR(pb_fp_call_arena_in)
+    case COMMON_INSTR(pb_call_arena_out)
+    case COMMON_INSTR(pb_fp_call_arena_out)
+    case COMMON_INSTR(pb_stack_call)
+    case pb_chunk:
+      next_ip = TO_VOIDP((chunks[INSTR_ii_high(instr)])(ms, TO_PTR(ip), INSTR_ii_low(instr)));
       break;
     default:
       S_error_abort("illegal pb instruction");
