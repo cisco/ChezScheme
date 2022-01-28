@@ -556,6 +556,36 @@
                                `(let ()
                                   ,preamble
                                   (lambda (x) (when (,(car t) x) #t)))))
+                        (or (not check-self?)
+                            (cptypes-equivalent-expansion?
+                              `(let ()
+                                 ,preamble
+                                 (lambda (x) (when (and (,(car l) x) (,(car t) x)) (,(car l) x))))
+                              `(let ()
+                                 ,preamble
+                                 (lambda (x) (when (and (,(car l) x) (,(car t) x)) #t))))
+                            (cptypes-equivalent-expansion?
+                              `(let ()
+                                 ,preamble
+                                 (lambda (x) (when (and (,(car t) x) (,(car l) x)) (,(car l) x))))
+                              `(let ()
+                                 ,preamble
+                                 (lambda (x) (when (and (,(car t) x) (,(car l) x)) #t))))
+                            (cptypes-equivalent-expansion?
+                              `(let ()
+                                 ,preamble
+                                 (lambda (x) (when (or (,(car l) x) (,(car t) x)) (,(car t) x))))
+                              `(let ()
+                                 ,preamble
+                                 (lambda (x) (when (or (,(car l) x) (,(car t) x)) #t))))
+                            (cptypes-equivalent-expansion?
+                              `(let ()
+                                 ,preamble
+                                 (lambda (x) (when (or (,(car l) x) (,(car t) x)) (,(car t) x))))
+                              `(let ()
+                                 ,preamble
+                                 (lambda (x) (when (or (,(car t) x) (,(car l) x)) #t))))
+                            )
                         (loop (cdr t)))))
              (loop (cdr l))))))
 
@@ -1313,12 +1343,6 @@
     '(lambda (p) (define x (get-u8 p)) (unless (fixnum? x) (eq? x (eof-object))))
     '(lambda (p) (define x (get-u8 p)) (unless (fixnum? x) #t)))
   (cptypes-equivalent-expansion?
-    '(lambda (x) (when (or (fixnum? x) (bignum? x)) (or (fixnum? x) (bignum? x))))
-    '(lambda (x) (when (or (fixnum? x) (bignum? x)) #t)))
-  (cptypes-equivalent-expansion?
-    '(lambda (x) (when (or (fixnum? x) (bignum? x)) (or (bignum? x) (fixnum? x))))
-    '(lambda (x) (when (or (fixnum? x) (bignum? x)) #t)))
-  (cptypes-equivalent-expansion?
     '(lambda (x) (unless (char? x) (char? x)))
     '(lambda (x) (unless (char? x) #f)))
   (cptypes-equivalent-expansion?
@@ -1342,6 +1366,37 @@
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (eq? x #\A) (unless (char? x) 1)))
     '(lambda (x) (when (eq? x #\A) (unless (char? x) 2))))
+)
+
+(mat exact-integer
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) (or (fixnum? x) (bignum? x))))
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) (or (bignum? x) (fixnum? x))))
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (fixnum? x) (eq? x 7)) (fixnum? x)))
+    '(lambda (x) (when (or (fixnum? x) (eq? x 7)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (eq? x 7) (fixnum? x)) (fixnum? x)))
+    '(lambda (x) (when (or (eq? x 7) (fixnum? x)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (and (fixnum? x) (eq? x 7)) (eq? x 7)))
+    '(lambda (x) (when (and (fixnum? x) (eq? x 7)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (and (eq? x 7) (fixnum? x)) (eq? x 7)))
+    '(lambda (x) (when (and (eq? x 7) (fixnum? x)) #t)))
+  ; check that non-fixnum? is not lost
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (unless (fixnum? x) (unless (fixnum? x) x)))
+    '(lambda (x) (unless (fixnum? x) x)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x) (unless (fixnum? x) (unless (fixnum? x) x))))
+    '(lambda (x) (when (real? x) (unless (fixnum? x) x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (unless (fixnum? x) (when (real? x) (unless (fixnum? x) x))))
+    '(lambda (x) (unless (fixnum? x) (when (real? x) x))))
 )
 
 (mat cptypes-unreachable

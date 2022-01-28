@@ -43,7 +43,7 @@ Notes:
 
 
  - predicate: They may be:
-              * a symbol to indicate the type, like 'vector 'pair 'number
+              * a symbol to indicate the type, like 'vector 'pair 'flonum
                 (there are a few fake values, in particular 'bottom is used to
                  signal that there is an error)
               * a nanopass-quoted value that is okay-to-copy?, like
@@ -407,7 +407,7 @@ Notes:
     ; looks like an union of the fxmaps.
     ; [missing 'ptr] _and_ 'vector -> 'vector
     ; 'box _and_ 'vector -> 'bottom
-    ; 'number _and_ 'exact-integer -> 'exact-integer
+    ; 'number _and_ 'flonum -> 'flonum
     (define (pred-env-intersect/base types from base)
       (cond
         [(or (eq? types bottom-fxmap)
@@ -437,7 +437,7 @@ Notes:
     ; looks like an intersection of the fxmaps.
     ; [missing 'ptr] _or_ 'vector -> [missing 'ptr]
     ; 'box _or_ 'boolean -> [missing 'ptr]
-    ; 'number _or_ 'exact-integer -> 'number
+    ; 'number _or_ 'flonum -> 'number
     ; *Internals auxilary function. Does not check bottom-fxmap.*
     (define ($pred-env-union/from from base types new-base)
       ; Calculate the union of types and from, and intersect it with new-base
@@ -1120,24 +1120,24 @@ Notes:
       (define-specialize 2 atan
         [(n) (let ([r (get-type n)])
                (cond
-                 [(predicate-disjoint? r 'number)
+                 [(predicate-disjoint? r number-pred)
                   (values `(call ,preinfo ,pr ,n)
                           'bottom pred-env-bottom #f #f)]
                  [else
                   (values `(call ,preinfo ,pr ,n) ret 
-                          (pred-env-add/ref ntypes n 'number plxc) #f #f)]))]
+                          (pred-env-add/ref ntypes n number-pred plxc) #f #f)]))]
         [(x y) (let ([rx (get-type x)]
                      [ry (get-type y)])
                  (cond
-                   [(or (predicate-disjoint? rx 'real)
-                        (predicate-disjoint? ry 'real))
+                   [(or (predicate-disjoint? rx real-pred)
+                        (predicate-disjoint? ry real-pred))
                     (values `(call ,preinfo ,pr ,x ,y)
                             'bottom pred-env-bottom #f #f)]
                    [else
                     (values `(call ,preinfo ,pr ,x ,y) ret 
                             (pred-env-add/ref (pred-env-add/ref ntypes
-                                                                x 'real  plxc)
-                                              y 'real plxc)
+                                                                x real-pred plxc)
+                                              y real-pred plxc)
                              #f #f)]))])
 
       (define-specialize 2 char-name

@@ -34,6 +34,8 @@
    eof/char-pred
    maybe-char-pred
    maybe-symbol-pred
+   real-pred
+   number-pred
    $fixmediate-pred
    $list-pred ; immutable lists
    boolean-pred
@@ -54,13 +56,13 @@
    make-pred-$record/ref)
 
   (define-record-type pred-or
-    (fields imm nor rec)
-    (nongenerative #{pred-or nlomo7xtc1nguv2umpzwho0dt-0})
+    (fields imm nor exi rec)
+    (nongenerative #{pred-or nlomo7xtc1nguv2umpzwho0dt-1})
     (sealed #t))
 
   (define-record-type pred-immediate
     (fields mask)
-    (nongenerative #{pred-or m4e7t2fuam2my9kt17zpmxnzc-0})
+    (nongenerative #{pred-immediate m4e7t2fuam2my9kt17zpmxnzc-1})
     (sealed #t))
 
   (define-record-type pred-$record/rtd
@@ -138,7 +140,7 @@
         [(fx= y bwp-object-mask) bwp-rec]
         [(fx= y black-hole-object-mask) black-hole-rec]
         [(fx= y unbound-object-mask) unbound-rec]
-        [else ($oops 'mask->immediate-rec "invalid mask number ~s" y)]))  
+        [else ($oops 'mask->immediate-rec "invalid mask number* ~s" y)]))
 
     (define (build-pred-immediate mask x y)
       (cond
@@ -158,25 +160,27 @@
     (define true-immediate-pred (make-pred-immediate true-immediate-pred-mask))
   )
 
-  (define true-pred (make-pred-or true-immediate-pred 'normalptr '$record))
-  (define ptr-pred (make-pred-or immediate-pred 'normalptr '$record))
-  (define null-or-pair-pred (make-pred-or null-rec 'pair 'bottom))
-  (define $list-pred (make-pred-or null-rec '$list-pair 'bottom))
-  (define $fixmediate-pred (make-pred-or immediate-pred 'fixnum 'bottom))
-  (define maybe-fixnum-pred (make-pred-or false-rec 'fixnum 'bottom))
-  (define eof/fixnum-pred (make-pred-or eof-rec 'fixnum 'bottom))
-  (define maybe-exact-integer-pred (make-pred-or false-rec 'exact-integer 'bottom))
-  (define maybe-flonum-pred (make-pred-or false-rec 'flonum 'bottom))
-  (define maybe-number-pred (make-pred-or false-rec 'number 'bottom))
-  (define maybe-symbol-pred (make-pred-or false-rec 'symbol 'bottom))
-  (define maybe-procedure-pred (make-pred-or false-rec 'procedure 'bottom))
-  (define maybe-string-pred (make-pred-or false-rec 'string 'bottom))
-  (define eof/string-pred (make-pred-or eof-rec 'string 'bottom))
-  (define maybe-bytevector-pred (make-pred-or false-rec 'bytevector 'bottom))
-  (define eof/bytevector-pred (make-pred-or eof-rec 'bytevector 'bottom))
-  (define maybe-pair-pred (make-pred-or false-rec 'pair 'bottom))
-  (define maybe-normalptr-pred (make-pred-or false-rec 'normalptr 'bottom))
-  (define maybe-$record-pred (make-pred-or false-rec 'bottom '$record))
+  (define true-pred (make-pred-or true-immediate-pred 'normalptr 'exact-integer '$record))
+  (define ptr-pred (make-pred-or immediate-pred 'normalptr 'exact-integer '$record))
+  (define null-or-pair-pred (make-pred-or null-rec 'pair 'bottom 'bottom))
+  (define $list-pred (make-pred-or null-rec '$list-pair 'bottom 'bottom))
+  (define $fixmediate-pred (make-pred-or immediate-pred 'bottom 'fixnum 'bottom))
+  (define maybe-fixnum-pred (make-pred-or false-rec 'bottom 'fixnum 'bottom))
+  (define eof/fixnum-pred (make-pred-or eof-rec 'bottom 'fixnum 'bottom))
+  (define maybe-exact-integer-pred (make-pred-or false-rec 'bottom 'exact-integer 'bottom))
+  (define maybe-flonum-pred (make-pred-or false-rec 'flonum 'bottom 'bottom))
+  (define real-pred (make-pred-or 'bottom 'real* 'exact-integer 'bottom))
+  (define number-pred (make-pred-or 'bottom 'number* 'exact-integer 'bottom))
+  (define maybe-number-pred (make-pred-or false-rec 'number* 'exact-integer 'bottom))
+  (define maybe-symbol-pred (make-pred-or false-rec 'symbol 'bottom 'bottom))
+  (define maybe-procedure-pred (make-pred-or false-rec 'procedure 'bottom 'bottom))
+  (define maybe-string-pred (make-pred-or false-rec 'string 'bottom 'bottom))
+  (define eof/string-pred (make-pred-or eof-rec 'string 'bottom 'bottom))
+  (define maybe-bytevector-pred (make-pred-or false-rec 'bytevector 'bottom 'bottom))
+  (define eof/bytevector-pred (make-pred-or eof-rec 'bytevector 'bottom 'bottom))
+  (define maybe-pair-pred (make-pred-or false-rec 'pair 'bottom 'bottom))
+  (define maybe-normalptr-pred (make-pred-or false-rec 'normalptr 'bottom 'bottom))
+  (define maybe-$record-pred (make-pred-or false-rec 'bottom 'bottom '$record))
 
   ; This can be implemented with implies?
   ; but let's use the straightforward test.
@@ -338,12 +342,12 @@
       [flonum 'flonum]
       [sub-flonum '(bottom . flonum)]
       [maybe-flonum maybe-flonum-pred]
-      [real 'real]
-      [(integer rational) '(exact-integer . real)]
-      [(uinteger sub-integer) '(bottom . real)]
-      [cflonum '(flonum . number)]
-      [number 'number]
-      [sub-number '(bottom . number)]
+      [real real-pred]
+      [(integer rational) (cons 'exact-integer real-pred)]
+      [(uinteger sub-integer) (cons 'bottom real-pred)]
+      [cflonum '(flonum . number*)] ; only inexact numbers
+      [number number-pred]
+      [sub-number (cons 'bottom number-pred)]
       [maybe-number maybe-number-pred]
 
       [$record '$record]
@@ -440,94 +444,39 @@
        [else
         'normalptr]))
 
-  (define (union/fixnum x)
-    (cond 
- 	  [(check-constant-is? x target-fixnum?)
- 	   'fixnum]
-	  [(or (eq? x 'bignum)
-		   (eq? x 'exact-integer)
-		   (check-constant-is? x exact-integer?))
-	   'exact-integer]
-	  [(or (eq? x 'flonum)
-		   (eq? x 'real)
-		   (check-constant-is? x real?))
- 	   'real]
-	  [(or (eq? x 'number)
-		   (check-constant-is? x number?))
-	   'number]
-	  [else
-	   'normalptr]))
-
-  (define (union/bignum x)
-    (cond 
- 	  [(check-constant-is? x target-bignum?)
-	   'bignum]
-	  [(or (eq? x 'fixnum)
-	 	   (eq? x 'exact-integer)
-	 	   (check-constant-is? x exact-integer?))
-	   'exact-integer]
-	  [(or (eq? x 'flonum)
-		   (eq? x 'real)
-		   (check-constant-is? x real?))
-	   'real]
-	  [(or (eq? x 'number)
-		   (check-constant-is? x number?))
-	   'number]
-	  [else
-	   'normalptr]))
-
-  (define (union/exact-integer x)
-    (cond 
-	  [(or (eq? x 'fixnum)
-		   (eq? x 'bignum)
-		   (check-constant-is? x exact-integer?))
-	  'exact-integer]
-	  [(or (eq? x 'flonum)
-		   (eq? x 'real)
-		   (check-constant-is? x real?))
-	   'real]
-	  [(or (eq? x 'number)
-		   (check-constant-is? x number?))
-	   'number]
-	  [else
-	   'normalptr]))
-
   (define (union/flonum x)
     (cond 
- 	  [(or (check-constant-is? x flonum?))
+ 	  [(or (eq? x 'flonum)
+		   (check-constant-is? x flonum?))
 	   'flonum]
-	  [(or (eq? x 'real)
+	  [(or (eq? x 'real*)
 		   (check-constant-is? x real?))
-	   'real]
-	  [(or (eq? x 'number)
+	   'real*]
+	  [(or (eq? x 'number*)
 		   (check-constant-is? x number?))
-	   'number]
+	   'number*]
 	  [else
 	   'normalptr]))
 
   (define (union/real x)
     (cond 
-	  [(or (eq? x 'fixnum)
-		   (eq? x 'bignum)
-		   (eq? x 'exact-integer)
-		   (eq? x 'flonum)
+	  [(or (eq? x 'flonum)
+		   (eq? x 'real*)
 		   (check-constant-is? x real?))
-	   'real]
-	  [(or (eq? x 'number)
+	   'real*]
+	  [(or (eq? x 'number*)
 		   (check-constant-is? x number?))
-	   'number]
+	   'number*]
 	  [else
 	   'normalptr]))
 
   (define (union/number x)
 	(cond 
-	  [(or (eq? x 'fixnum)
-		   (eq? x 'bignum)
-		   (eq? x 'exact-integer)
-		   (eq? x 'flonum)
-		   (eq? x 'real)
+	  [(or (eq? x 'flonum)
+		   (eq? x 'real*)
+		   (eq? x 'number*)
 		   (check-constant-is? x number?))
-	   'number]
+	   'number*]
 	  [else
 	   'normalptr]))
 
@@ -545,12 +494,6 @@
           (cond
             [(check-constant-eqv? x dy)
              y]
-			[(target-fixnum? dy)
-  			 (union/fixnum x)]
-			[(target-bignum? dy)
-  			 (union/bignum x)]
-		  	[(exact-integer? dy)
-  			 (union/exact-integer x)]
 		  	[(flonum? dy)
   			 (union/flonum x)]
 			[(real? dy)
@@ -569,17 +512,11 @@
              'normalptr])])]
       [else
        (case y
-		 [(fixnum)
-  		  (union/fixnum x)]
-		 [(bignum)
-  		  (union/bignum x)]
-		 [(exact-integer)
-  		  (union/exact-integer x)]
 		 [(flonum)
   		  (union/flonum x)]
-		 [(real)
+		 [(real*)
   		  (union/real x)]
-		 [(number)
+		 [(number*)
   		  (union/number x)]
          [(gensym)
           (union/symbol x gensym? 'gensym)]
@@ -603,6 +540,39 @@
          [(flvector) (union/simple x flvector? y)] ; i.e. '#vfl()
          [else
           'normalptr])]))
+
+  (define (predicate-union/exact-integer x y)
+    (or (cond
+          [(eq? x y) y]
+          [(eq? x 'bottom) y]
+          [(eq? y 'bottom) x]
+          [(eq? y 'exact-integer) 'exact-integer]
+          [(eq? x 'exact-integer) 'exact-integer]
+          [(eq? y 'fixnum)
+           (and (check-constant-is? x target-fixnum?)
+                'fixnum)]
+          [(eq? y 'bignum)
+           (and (check-constant-is? x target-bignum?)
+                'bignum)]
+          [(eq? x 'fixnum)
+           (and (check-constant-is? y target-fixnum?)
+                'fixnum)]
+          [(eq? x 'bignum)
+           (and (check-constant-is? y target-bignum?)
+                'bignum)]
+          [else
+           (let ([dx (constant-value x)]
+                 [dy (constant-value y)])
+             (cond
+               [(eqv? dx dy)
+                y]
+               [(target-fixnum? dx)
+                (and (target-fixnum? dy)
+                     'fixnum)]
+               [else #;(target-bignum? dx)
+                (and (target-bignum? dy)
+                     'bignum)]))])
+        'exact-integer))
 
   (define (predicate-union/record x y)
     (cond
@@ -698,50 +668,13 @@
        [else
         'bottom]))
 
-  (define (intersect/fixnum x check? y)
-     (cond
-       [(and check? (check-constant-is? x target-fixnum?))
-        x]
-       [(or (eq? x 'fixnum)
-            (eq? x 'exact-integer)
-            (eq? x 'real)
-            (eq? x 'number))
-        y]
-       [else
-        'bottom]))
-
-  (define (intersect/bignum x check? y)
-     (cond
-       [(and check? (check-constant-is? x target-bignum?))
-        x]
-       [(or (eq? x 'bignum)
-            (eq? x 'exact-integer)
-            (eq? x 'real)
-            (eq? x 'number))
-        y]
-       [else
-        'bottom]))
-
-  (define (intersect/exact-integer x check? y)
-     (cond
-       [(and check? (or (check-constant-is? x exact-integer?)
-                        (eq? x 'fixnum)
-                        (eq? x 'bignum)))
-        x]
-       [(or (eq? x 'exact-integer)
-            (eq? x 'real)
-            (eq? x 'number))
-        y]
-       [else
-        'bottom]))
-
   (define (intersect/flonum x check? y)
      (cond
        [(and check? (check-constant-is? x flonum?))
         x]
        [(or (eq? x 'flonum)
-            (eq? x 'real)
-            (eq? x 'number))
+            (eq? x 'real*)
+            (eq? x 'number*))
         y]
        [else
         'bottom]))
@@ -749,29 +682,21 @@
   (define (intersect/real x check? y)
      (cond
        [(and check? (or (check-constant-is? x real?)
-                        (eq? x 'fixnum)
-                        (eq? x 'bignum)
-                        (eq? x 'exact-integer)
                         (eq? x 'flonum)))
         x]
-       [(or (eq? x 'real)
-            (eq? x 'number))
+       [(or (eq? x 'real*)
+            (eq? x 'number*))
         y]
        [else
         'bottom]))
 
   (define (intersect/number x check? y)
      (cond
-       [(and check? (eq? x 'fixnum))
-        x]
        [(and check? (or (check-constant-is? x number?)
-                        (eq? x 'fixnum)
-                        (eq? x 'bignum)
-                        (eq? x 'exact-integer)
                         (eq? x 'flonum)
-                        (eq? x 'real)))
+                        (eq? x 'real*)))
         x]
-       [(eq? x 'number)
+       [(eq? x 'number*)
         y]
        [else
         'bottom]))
@@ -790,12 +715,6 @@
           (cond
             [(check-constant-eqv? x dy)
              x]
-			[(target-fixnum? dy)
-  			 (intersect/fixnum x #f y)]
-			[(target-bignum? dy)
-  			 (intersect/bignum x #f y)]
-		  	[(exact-integer? dy)
-  			 (intersect/exact-integer x #f y)]
 		  	[(flonum? dy)
   			 (intersect/flonum x #f y)]
 			[(real? dy)
@@ -814,17 +733,11 @@
              'bottom])])]
       [else
        (case y
-		 [(fixnum)
-  		  (intersect/fixnum x #t y)]
-		 [(bignum)
-  		  (intersect/bignum x #t y)]
-		 [(exact-integer)
-  		  (intersect/exact-integer x #t y)]
 		 [(flonum)
   		  (intersect/flonum x #t y)]
-		 [(real)
+		 [(real*)
   		  (intersect/real x #t y)]
-		 [(number)
+		 [(number*)
   		  (intersect/number x #t y)]
          [(gensym)
           (intersect/symbol x gensym? 'gensym y)]
@@ -856,6 +769,33 @@
          [(flvector) (intersect/simple x flvector? 'flvector y)] ; i.e. '#vfl()
          [else
           'bottom])]))
+
+  (define (predicate-intersect/exact-integer x y)
+    (cond
+      [(eq? x y) x]
+      [(eq? y 'bottom) 'bottom]
+      [(eq? x 'bottom) 'bottom]
+      [(eq? y 'exact-integer) x]
+      [(eq? x 'exact-integer) y]
+      [(Lsrc? x)
+       (let ([dx (constant-value x)])
+         (if (cond
+               [(check-constant-eqv? y dx)
+                #t]
+               [(target-fixnum? dx)
+                (eq? y 'fixnum)]
+               [else #;(target-bignum? dx)
+                (eq? y 'bignum)])
+             x
+             'bottom))]
+      [else
+       (if (cond
+		     [(eq? x 'fixnum)
+              (check-constant-is? y target-fixnum?)]
+             [else #;(eq? x 'bignum)
+  		      (check-constant-is? y target-bignum?)])
+          y
+          'bottom)]))
 
   (define (intersect/record x y)
     (cond
@@ -947,14 +887,30 @@
        ($oops 'predicate-substract/immediate "invalid expression ~s" x)]))
 
   (define (predicate-substract/normal x y)
+    (if (predicate-implies?/normal x y)
+        'bottom
+         x))
+
+  (define (predicate-substract/exact-integer x y)
     (cond
       [(eq? x y) 'bottom]
-      [(predicate-implies?/normal x y) 'bottom]
+      [(eq? y 'exact-integer) 'bottom]
       [(eq? x 'exact-integer)
        (case y
          [(fixnum) 'bignum]
          [(bignum) 'fixnum]
-         [else x])]
+         [else 'exact-integer])]
+      [(Lsrc? x)
+       (let ([dx (constant-value x)])
+         (if (cond
+               [(Lsrc? y)
+                (eqv? dx (constant-value y))]
+               [(target-fixnum? dx)
+                (eq? y 'fixnum)]
+               [else #;(target-bignum? dx)
+                (eq? y 'bignum)])
+            'bottom
+            x))]
       [else x]))
 
   (define (predicate-substract/record x y)
@@ -990,7 +946,10 @@
       #;[(eq? x 'bottom) 'bottom]
       [(or (check-constant-is? x $immediate?)
            (pred-immediate? x))
-       'immediateC]
+       'immediate]
+      [(or (check-constant-is? x exact-integer?)
+           (memq x '(fixnum bignum exact-integer)))
+       'exact-integer]
       [(or (eq? x '$record)
            (pred-$record/rtd? x)
            (pred-$record/ref? x))
@@ -998,33 +957,43 @@
       [else
        'normalptr]))
 
+  (define (only-one i n e r)
+    (let loop ([l (list i n e r)]
+               [one 'bottom])
+      (cond
+        [(null? l)
+         one]
+        [(eq? (car l) 'bottom)
+         (loop (cdr l) one)]
+        [(eq? one 'bottom)
+         (loop (cdr l) (car l))]
+        [else
+         #f])))
+
   (define build-pred-or
     (case-lambda
-      [(i n r)
-       (build-pred-or i n r #f #f)]
-      [(i n r x)
-       (build-pred-or i n r x #f)]
-      [(i n r x y)
+      [(i n e r)
+       (build-pred-or i n e r #f #f)]
+      [(i n e r x)
+       (build-pred-or i n e r x #f)]
+      [(i n e r x y)
        (cond
          [(and x
                (eq? (pred-or-imm x) i)
                (eq? (pred-or-nor x) n)
+               (eq? (pred-or-exi x) e)
                (eq? (pred-or-rec x) r))
           x]
          [(and y
                (eq? (pred-or-imm y) i)
                (eq? (pred-or-nor y) n)
+               (eq? (pred-or-exi y) e)
                (eq? (pred-or-rec y) r))
           y]
-         [(eq? i 'bottom)
-          (cond
-            [(eq? n 'bottom) r]
-            [(eq? r 'bottom) n]
-            [else (make-pred-or i n r)])]
+         [(only-one i n e r)
+          => (lambda (x) x)]
          [else
-          (cond
-            [(and (eq? n 'bottom) (eq? r 'bottom)) i]
-            [else (make-pred-or i n r)])])]))
+          (make-pred-or i n e r)])]))
   
   ;If x and y are equivalent, they result must be eq? to y
   ;so it's easy to test in predicate-implies?.
@@ -1039,40 +1008,59 @@
        (let ()
          (define i (predicate-union/immediate (pred-or-imm x) (pred-or-imm y)))
          (define n (predicate-union/normal (pred-or-nor x) (pred-or-nor y)))
+         (define e (predicate-union/exact-integer (pred-or-exi x) (pred-or-exi y)))
          (define r (predicate-union/record (pred-or-rec x) (pred-or-rec y)))
-         (build-pred-or i n r y x))]
+         (build-pred-or i n e r y x))]
       [(pred-or? x)
        (case (predicate->class y)
-         [(immediateC)
+         [(immediate)
           (build-pred-or (predicate-union/immediate (pred-or-imm x) y)
                          (pred-or-nor x)
+                         (pred-or-exi x)
                          (pred-or-rec x)
                          x)]
          [(normalptr)
           (build-pred-or (pred-or-imm x)
                          (predicate-union/normal (pred-or-nor x) y)
+                         (pred-or-exi x)
+                         (pred-or-rec x)
+                         x)]
+         [(exact-integer)
+          (build-pred-or (pred-or-imm x)
+                         (pred-or-nor x)
+                         (predicate-union/exact-integer (pred-or-exi x) y)
                          (pred-or-rec x)
                          x)]
          [($record)
           (build-pred-or (pred-or-imm x)
                          (pred-or-nor x)
+                         (pred-or-exi x)
                          (predicate-union/record (pred-or-rec x) y)
                          x)])]
       [(pred-or? y)
        (case (predicate->class x)
-         [(immediateC)
+         [(immediate)
           (build-pred-or (predicate-union/immediate x (pred-or-imm y))
                          (pred-or-nor y)
+                         (pred-or-exi y)
                          (pred-or-rec y)
                          y)]
          [(normalptr)
           (build-pred-or (pred-or-imm y)
                          (predicate-union/normal x (pred-or-nor y))
+                         (pred-or-exi y)
+                         (pred-or-rec y)
+                         y)]
+         [(exact-integer)
+          (build-pred-or (pred-or-imm y)
+                         (pred-or-nor y)
+                         (predicate-union/exact-integer x (pred-or-exi y))
                          (pred-or-rec y)
                          y)]
          [($record)
           (build-pred-or (pred-or-imm y)
                          (pred-or-nor y)
+                         (pred-or-exi y)
                          (predicate-union/record x (pred-or-rec y))
                          y)])]
       [else
@@ -1082,27 +1070,33 @@
          (cond
            [(eq? cx cy)
             (case cx
-              [(immediateC)
+              [(immediate)
                (predicate-union/immediate x y)]
               [(normalptr)
                (predicate-union/normal x y)]
+              [(exact-integer)
+               (predicate-union/exact-integer x y)]
               [($record)
                (predicate-union/record x y)])]
            [else
             (let ()
               (define i (cond
-                          [(eq? cx 'immediateC) x]
-                          [(eq? cy 'immediateC) y]
+                          [(eq? cx 'immediate) x]
+                          [(eq? cy 'immediate) y]
                           [else 'bottom]))
               (define n (cond
                           [(eq? cx 'normalptr) x]
                           [(eq? cy 'normalptr) y]
                           [else 'bottom]))
+              (define e (cond
+                          [(eq? cx 'exact-integer) x]
+                          [(eq? cy 'exact-integer) y]
+                          [else 'bottom]))
               (define r (cond
                           [(eq? cx '$record) x]
                           [(eq? cy '$record) y]
                           [else 'bottom]))
-              (build-pred-or i n r))]))]))
+              (build-pred-or i n e r))]))]))
 
   ;The result may be bigger than the actual intersection 
   ;if there is no exact result, it must be at least included in x
@@ -1120,22 +1114,27 @@
        (let ()
          (define i (predicate-intersect/immediate (pred-or-imm x) (pred-or-imm y)))
          (define n (predicate-intersect/normal (pred-or-nor x) (pred-or-nor y)))
+         (define e (predicate-intersect/exact-integer (pred-or-exi x) (pred-or-exi y)))
          (define r (predicate-intersect/record (pred-or-rec x) (pred-or-rec y)))
-         (build-pred-or i n r x y))]
+         (build-pred-or i n e r x y))]
       [(pred-or? x)
        (case (predicate->class y)
-         [(immediateC)
+         [(immediate)
           (predicate-intersect/immediate (pred-or-imm x) y)]
          [(normalptr)
           (predicate-intersect/normal (pred-or-nor x) y)]
+         [(exact-integer)
+          (predicate-intersect/exact-integer (pred-or-exi x) y)]
          [($record)
           (predicate-intersect/record (pred-or-rec x) y)])]
       [(pred-or? y)
        (case (predicate->class x)
-         [(immediateC)
+         [(immediate)
           (predicate-intersect/immediate x (pred-or-imm y))]
          [(normalptr)
           (predicate-intersect/normal x (pred-or-nor y))]
+         [(exact-integer)
+          (predicate-intersect/exact-integer x (pred-or-exi y))]
          [($record)
           (predicate-intersect/record x (pred-or-rec y))])]
       [else
@@ -1147,10 +1146,12 @@
             'bottom]
            [else
             (case cx
-              [(immediateC)
+              [(immediate)
                (predicate-intersect/immediate x y)]
               [(normalptr)
                (predicate-intersect/normal x y)]
+              [(exact-integer)
+               (predicate-intersect/exact-integer x y)]
               [($record)
                (predicate-intersect/record x y)])]))]))
 
@@ -1171,25 +1172,31 @@
        (let ()
          (define i (predicate-substract/immediate (pred-or-imm x) (pred-or-imm y)))
          (define n (predicate-substract/normal (pred-or-nor x) (pred-or-nor y)))
+         (define e (predicate-substract/exact-integer (pred-or-exi x) (pred-or-exi y)))
          (define r (predicate-substract/record (pred-or-rec x) (pred-or-rec y)))
-         (build-pred-or i n r x))]
+         (build-pred-or i n e r x))]
       [(pred-or? x)
        (let ([i (pred-or-imm x)]
              [n (pred-or-nor x)]
+             [e (pred-or-exi x)]
              [r (pred-or-rec x)])
          (case (predicate->class y)
-           [(immediateC)
-            (build-pred-or (predicate-substract/immediate i y) n r x)]
+           [(immediate)
+            (build-pred-or (predicate-substract/immediate i y) n e r x)]
            [(normalptr)
-            (build-pred-or i (predicate-substract/normal n y) r x)]
+            (build-pred-or i (predicate-substract/normal n y) e r x)]
+           [(exact-integer)
+            (build-pred-or i n (predicate-substract/exact-integer e y) r x)]
            [($record)
-            (build-pred-or i n (predicate-substract/record r y) x)]))]
+            (build-pred-or i n e (predicate-substract/record r y) x)]))]
       [(pred-or? y)
        (case (predicate->class x)
-         [(immediateC)
+         [(immediate)
           (predicate-substract/immediate x (pred-or-imm y))]
          [(normalptr)
           (predicate-substract/normal x (pred-or-nor y))]
+         [(exact-integer)
+          (predicate-substract/exact-integer x (pred-or-exi y))]
          [($record)
           (predicate-substract/record x (pred-or-rec y))])]
       [else
@@ -1201,10 +1208,12 @@
             x]
            [else
             (case cx
-              [(immediateC)
+              [(immediate)
                (predicate-substract/immediate x y)]
               [(normalptr)
                (predicate-substract/normal x y)]
+              [(exact-integer)
+               (predicate-substract/exact-integer x y)]
               [($record)
                (predicate-substract/record x y)])]))]))
 )
