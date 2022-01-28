@@ -646,7 +646,7 @@ fi
 submod_instructions () {
     echo $1"; check out Git submodules using"
     echo "   git submodule init"
-    echo "   git submodule update"
+    echo "   git submodule update --depth 1"
     exit 1
 }
 
