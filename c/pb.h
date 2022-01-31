@@ -89,8 +89,8 @@ enum {
 #endif
 
 #ifndef RESTRICT_PTR
-/* `restrict` is available in C99 and later */
-# define RESTRICT_PTR restrict
+/* `restrict` is available in C99 and later, but we stick to C89 for now: */
+# define RESTRICT_PTR /* restrict */
 #endif
 
 /* ********************************************************************** */
