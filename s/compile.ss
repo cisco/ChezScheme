@@ -1823,7 +1823,7 @@
 
   (set-who! make-boot-file
     (lambda (outfn bootfile* . infn*)
-      (do-make-boot-file who outfn (machine-type) bootfile* infn*)))
+      (do-make-boot-file who outfn (constant machine-type-name) bootfile* infn*)))
 
   (set-who! $make-boot-file
     (lambda (outfn machine bootfile* . infn*)
@@ -1833,7 +1833,7 @@
    ; exported interface: machine-type implicit and requires one or more
    ; subordinate boot files
     (lambda (out bootfile . bootfiles)
-      (do-make-boot-header who out (machine-type) (cons bootfile bootfiles))))
+      (do-make-boot-header who out (constant machine-type-name) (cons bootfile bootfiles))))
 
   (set-who! $make-boot-header
     ; create boot loader (invoke) for entry into Scheme from C
