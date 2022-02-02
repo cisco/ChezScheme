@@ -1,0 +1,10 @@
+MAKEFLAGS += --no-print-directory
+
+.PHONY: build
+build:
+	(cd $(workarea)/c && $(MAKE))
+
+.PHONY: run
+run:
+	(cd $(workarea)/bin/$(m) && node scheme.js)
+

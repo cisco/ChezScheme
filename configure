@@ -85,7 +85,12 @@ Kernel=KernelLib
 installkerneltarget=installkernellib
 installzlibtarget=installzlib
 installlz4target=installlz4
+topMakefile=Makefile.in
 pbendian=l
+emscripten=no
+empetite=no
+emBootFiles=
+alwaysUseBootFile=
 
 # On WSL, set OS to "Windows_NT" to create a Windows
 # build instead of a Linux (on Windows) build:
@@ -213,6 +218,13 @@ while [ $# != 0 ] ; do
     --pbarch)
       pbarch=yes
       ;;
+    --emscripten)
+      emscripten=yes
+      CC="emcc"
+      LD="emld"
+      AR="emar"
+      RANLIB="emranlib"
+      ;;
     --installprefix=*)
       installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
       ;;
@@ -297,6 +309,13 @@ while [ $# != 0 ] ; do
       installzlibtarget=
       installlz4target=
       ;;
+    --emboot=*)
+      bootfilenames=`echo $1 | sed -e 's/^--emboot=//'`
+      emBootFiles="${emBootFiles} ${bootfilenames}"
+      ;;
+    --empetite)
+      empetite=yes
+      ;;
     CC=*)
       CC=`echo $1 | sed -e 's/^CC=//'`
       ;;
@@ -354,6 +373,16 @@ if [ $pbarch = yes ] ; then
     pb=yes
 fi
 
+if [ $emscripten = yes ] ; then
+    pb=yes
+    bits=32
+    if [ "$m" != "" ] ; then
+        echo "Don't combine --emscripten with -m or --machine"
+        exit 1
+    fi
+    m32=em
+fi
+
 case "$m" in
     *pb*)
         echo "Don't select pb using -m or --machine, because pb needs the"
@@ -406,7 +435,7 @@ if [ "$m" = "" ] ; then
          echo "probably your OS and architecture combination is not supported."
          exit 1
      fi
-  else      
+  else
     m=$defaultm
     flagsm=$m
   fi
@@ -426,7 +455,11 @@ if [ $pbarch = yes ] ; then
 fi
 
 if [ "$w" = "" ] ; then
-  w=$m
+    if [ $emscripten = yes ] ; then
+        w=em-$m
+    else
+        w=$m
+    fi
 fi
 
 if [ "$installbin" = "" ] ; then
@@ -473,6 +506,9 @@ if [ "$help" = "yes" ]; then
   echo "  --installpetitename=<petitename>  install with group ($installpetitename)"
   echo "  --installscriptname=<scriptname>  install with group ($installscriptname)"
   echo "  --toolprefix=<prefix>             prefix tool (compiler, linker, ...) names"
+  echo "  --emscripten                      build via emscripten (\"em\" tool prefix)"
+  echo "  --emboot=\"<file> ...\"             additional boot <file>s with emscripten"
+  echo "  --empetite                        omit \"scheme.boot\" with emscripten"
   echo "  --[no]gzip-man-pages              compress manual pages ($gzipmanpages)"
   echo "  --workarea=<pathname>             build directory ($w)"
   echo "  CC=<C compiler>                   C compiler"
@@ -511,6 +547,13 @@ fi
 
 optFlags=-O2
 
+if [ "$emscripten" = "yes" ]; then
+    flagsm=em
+    topMakefile=Makefile-em.in
+    disableiconv=yes
+    disablecurses=yes
+fi
+
 if [ "$cflagsset" = "no" -o "$addwarningflags" = "yes" ] ; then
     warningFlags="$default_warning_flags"
 else
@@ -526,6 +569,10 @@ case "${flagsm}" in
   *s2)
       threadFlags="-pthread"
       threadLibs="-lpthread"
+      ;;
+  em)
+      threadFlags="-pthread"
+      threadLibs=""
       ;;
   *)
       threadFlags=""
@@ -576,6 +623,9 @@ if [ "$cflagsset" = "no" ] ; then
     ppc32*)
         CFLAGS="-m32 ${optFlags}"
         ;;
+    em)
+        CFLAGS="${optFlags}"
+        ;;
   esac
 fi
 
@@ -609,9 +659,11 @@ esac
 
 # Add automatic thread compilation flags, unless suppressed by --disable-auto-flags
 if [ "$addflags" = "yes" ] ; then
-  if [ "$threadFlags" != "" ] ; then
-    CFLAGS="${CFLAGS} ${threadFlags}"
-  fi
+    if [ "$threads" = "yes" ] ; then
+        if [ "$threadFlags" != "" ] ; then
+            CFLAGS="${CFLAGS} ${threadFlags}"
+        fi
+    fi
 fi
 
 cursesLib=-lcurses
@@ -667,7 +719,7 @@ if [ "$addflags" = "yes" ] ; then
     *nt)
         LIBS="${LIBS} -lshell32 -luser32 -lole32 -lrpcrt4 -luuid"
         ;;
-    8qnx)
+    *qnx)
         if [ "$disableiconv" = "no" ]; then
             iconvLib="/usr/local/lib/libiconv.so"
         fi
@@ -713,7 +765,11 @@ mdcflags=
 mdldflags=
 mdlinkflags= 
 zlibConfigureFlags=
+zlibConfigureEnv=
+exeExtraDeps=
+exePreStep=":"
 exePostStep=":"
+exeSuffix=
 
 # compile flags for c/Mf-unix and mats/Mf-unix
 case "${flagsmuni}" in
@@ -768,24 +824,55 @@ case "${flagsmuni}" in
         mdlinkflags="-Wl,--export-dynamic"
         mdldflags="-mi386nto"
         ;;
+    em)
+        mdlinkflags="-s EXIT_RUNTIME=1 -s ALLOW_MEMORY_GROWTH=1"
+        ;;
 esac
 
-# post-link-executable step for c/Mf-unix
+# pre- and post-link-executable step for c/Mf-unix
 case "${flagsmuni}" in
     *nb)
         exePostStep='paxctl +m ${Scheme}'
+        ;;
+    em)
+        # emscripten linking to preload boot files
+        exeExtraDeps="$boofiles"
+        bootfiles="../boot/$m/petite.boot"
+        if [ "${empetite}" = "no" ] ; then
+            bootfiles="$bootfiles ../boot/$m/scheme.boot"
+        fi
+        bootfiles="$bootfiles $emBootFiles"
+        for f in $bootfiles ; do
+            if [ "${exePreStep}" = ":" ] ; then
+                exePreStep=
+            else
+                exePreStep="${exePreStep} && "
+            fi
+            exePreStep="${exePreStep}cp $f `basename $f`"
+            exeExtraDeps="${exeExtraDeps} $f"
+            mdlinkflags="${mdlinkflags} --preload-file `basename $f`"
+            alwaysUseBootFile="`basename $f .boot`"
+        done
+        exeSuffix=".html"
         ;;
 esac
 
 # zlib configure flags for c/Mf-unix
 case "${flagsmuni}" in
     a6*)
-        zlibConfigureFlags="--64"
+        # zlibConfigureFlags="--64"
+        ;;
+    em)
+        zlibConfigureEnv="CROSS_PREFIX=em uname=wasm-em"
         ;;
 esac
 
 if [ -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
-  echo "Configuring for $m"
+    if [ "$w" = "$m" ] ; then
+        echo "Configuring for $m"
+    else
+        echo "Configuring for $m in $w"
+    fi
 else
   if [ "$m" = "" ] ; then
       maybem="<machine type>"
@@ -848,7 +935,7 @@ fi
 sed -e 's/$(m)/'$m'/g'\
     -e 's/$(defaultm)/'$defaultm'/g'\
     -e 's/$(workarea)/'$w'/g'\
-  "$srcdir"/makefiles/Makefile.in > Makefile
+  "$srcdir"/makefiles/$topMakefile > Makefile
 
 mkdir -p csug
 sed -e 's/$(m)/'$m'/g'\
@@ -903,6 +990,10 @@ if [ "$pb" = "yes" ]; then
   fi
 fi
 
+if [ "$alwaysUseBootFile" != "" ]; then
+    echo '#define ALWAYS_USE_BOOT_FILE "'"$alwaysUseBootFile"'"' >> $w/c/next_config.h
+fi
+
 if [ ! -f "$w/c/config.h" ] ; then
    mv $w/c/next_config.h $w/c/config.h
 elif `cmp -s $w/c/next_config.h $w/c/config.h` ; then
@@ -929,8 +1020,12 @@ mdinclude=$mdinclude
 mdcppflags=$mdcppflags
 mdldflags=$mdldflags
 mdlinkflags=$mdlinkflags
+exeExtraDeps=$exeExtraDeps
+exePreStep=$exePreStep
 exePostStep=$exePostStep
-zlibConfigureFlags=
+exeSuffix=$exeSuffix
+zlibConfigureFlags=$zlibConfigureFlags
+zlibConfigureEnv=$zlibConfigureEnv
 CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS

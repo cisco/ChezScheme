@@ -58,7 +58,7 @@ static ptr lookup_dynamic PROTO((const char *s, ptr tbl));
 #endif
 static ptr lookup PROTO((const char *s));
 static ptr remove_foreign_entry PROTO((const char *s));
-static void *lookup_foreign_entry PROTO((const char *s));
+static ptr lookup_foreign_entry PROTO((const char *s));
 static ptr foreign_entries PROTO((void));
 static ptr foreign_static_table PROTO((void));
 static ptr foreign_dynamic_table PROTO((void));
@@ -271,8 +271,8 @@ void S_foreign_entry() {
     AC0(tc) = x;
 }
 
-static void *lookup_foreign_entry(s) const char *s; {
-  return ptr_to_addr(lookup(s));
+static ptr lookup_foreign_entry(s) const char *s; {
+  return lookup(s);
 }
 
 static ptr foreign_entries() {

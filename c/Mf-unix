@@ -14,12 +14,13 @@ ${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
 ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
 
-${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
+${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main} ${exeExtraDeps}
+	${exePreStep}
 	$C ${mdlinkflags} -o ${Scheme} ${Main} ${Kernel} ${KernelLinkLibs} ${LDFLAGS} ${LIBS}
 	${exePostStep}
 
 ../zlib/configure.log:
-	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ./configure ${zlibConfigureFlags})
+	(cd ../zlib; ${SetConfigEnv} CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ${zlibConfigureEnv} ./configure ${zlibConfigureFlags})
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
 	(cd ../lz4/lib; ${SetConfigEnv} CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ${MAKE} liblz4.a)

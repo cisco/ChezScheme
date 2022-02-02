@@ -115,6 +115,7 @@ case "$Mhost" in
   tppc32nb) ;;
   tppc32osx) ;;
   tarm64osx) ;;
+  em) ;;
   *) echo "unrecognized machine name: $Mhost"; exit 1 ;;
 esac
 

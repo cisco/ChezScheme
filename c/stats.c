@@ -309,6 +309,10 @@ void S_gettime(INT typeno, struct timespec *tp) {
 #endif
      /* fall back on getrusage if clock_gettime fails */
       {
+#ifdef __EMSCRIPTEN__
+        tp->tv_sec = 0;
+        tp->tv_nsec = 0;
+#else
         struct rusage rbuf;
 
         if (getrusage(RUSAGE_SELF,&rbuf) != 0)
@@ -319,6 +323,7 @@ void S_gettime(INT typeno, struct timespec *tp) {
           tp->tv_sec += 1;
           tp->tv_nsec -= 1000000000;
         }
+#endif
         return;
       }
     case time_duration:

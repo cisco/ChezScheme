@@ -498,7 +498,11 @@ static char *get_defaultheapdirs() {
 #endif
 
 static char *get_defaultheapdirs() {
+#if defined(__EMSCRIPTEN__)
+  return ".";
+#else
   return DEFAULT_HEAP_PATH;
+#endif
 }
 #endif /* WIN32 */
 
@@ -1105,6 +1109,10 @@ extern void Sregister_heap_file(UNUSED const char *path) {
 extern void Sbuild_heap(kernel, custom_init) const char *kernel; void (*custom_init) PROTO((void)); {
   ptr tc = Svoid; /* initialize to make gcc happy */
   ptr p;
+
+#if defined(ALWAYS_USE_BOOT_FILE)
+  kernel = ALWAYS_USE_BOOT_FILE;
+#endif
 
   switch (current_state) {
     case UNINITIALIZED:

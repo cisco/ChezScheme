@@ -22,7 +22,7 @@ Include=../boot/$m
 PetiteBoot=../boot/$m/petite.boot
 SchemeBoot=../boot/$m/scheme.boot
 Main=../boot/$m/main.$o
-Scheme=../bin/$m/scheme
+Scheme=../bin/$m/scheme${exeSuffix}
 
 # CFLAGS is propagated separately:
 SetConfigEnv = CC="${CC}" CPPFLAGS="${CPPFLAGS}" AR="${AR}" ARFLAGS="${ARFLAGS}" RANLIB="${RANLIB}"
