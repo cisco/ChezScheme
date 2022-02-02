@@ -2148,9 +2148,11 @@ static void s_free(uptr addr) {
 #ifdef FEATURE_ICONV
 #ifdef DISABLE_ICONV
 # define iconv_t int
-#define ICONV_OPEN(to, from) -1
-#define ICONV(cd, in, inb, out, outb) -1
-#define ICONV_CLOSE(cd) -1
+#define ICONV_OPEN(to, from) (use_sink(to), use_sink(from), -1)
+#define ICONV(cd, in, inb, out, outb) (use_sinki(cd), use_sink(in), use_sink(inb), use_sink(out), use_sink(outb), -1)
+#define ICONV_CLOSE(cd) (use_sinki(cd), -1)
+static void use_sink(UNUSED const void *p) { }
+static void use_sinki(UNUSED int i) { }
 #elif defined(WIN32)
 typedef void *iconv_t;
 typedef iconv_t (*iconv_open_ft)(const char *tocode, const char *fromcode);

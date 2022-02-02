@@ -374,6 +374,7 @@ typedef int tputsputcchar;
 #define NSECCTIME(sb) (sb).st_ctim.tv_nsec
 #define NSECMTIME(sb) (sb).st_mtim.tv_nsec
 #define ICONV_INBUF_TYPE char **
+#define UNUSED_SUB_INDEX , UNUSED int sub_index
 #endif
 
 /*****************************************/
@@ -485,6 +486,11 @@ typedef int tputsputcchar;
 # define NO_THREADS_UNUSED /* empty */
 #else
 # define NO_THREADS_UNUSED UNUSED
+#endif
+
+
+#ifndef UNUSED_SUB_INDEX
+# define UNUSED_SUB_INDEX /* empty */
 #endif
 
 #if defined(__has_feature)

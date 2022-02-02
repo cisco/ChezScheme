@@ -438,13 +438,16 @@
 (define (ensure-label i labels)
   (cond
     [(and (pair? labels)
-          (fx= i (label-to (car labels)) i))
+          (fx= i (label-to (car labels))))
      (let ([l (car labels)])
        (cons (make-label i
                          (fxmin i (label-min-from l))
                          (fxmax i (label-max-from l))
                          (cons i (label-all-from l)))
              (cdr labels)))]
+    [(and (pair? labels)
+          (fx> i (label-to (car labels))))
+     (cons (car labels) (ensure-label i (cdr labels)))]
     [else
      (cons (make-label i i i (list i))
            labels)]))
@@ -494,6 +497,7 @@
       (let ([chunklets
              ;; use `select-instruction-range` to partition the code into chunklets
              (let-values ([(headers labels) (gather-targets bv len)])
+               #;(fprintf o "/* labels: ~s */\n" (map (lambda (l) (format "0x~x" (label-to l))) labels))
                (let loop ([i 0] [relocs relocs] [headers headers] [labels labels])
                  (cond
                    [(fx= i len) '()]
@@ -772,7 +776,7 @@
 (define (emit-chunk-header o index sub-index? uses-flag?)
   (fprintf o "static uptr chunk_~a(MACHINE_STATE ms, uptr ip~a) {\n"
            index
-           (if sub-index? ", int sub_index" ""))
+           (if sub-index? ", int sub_index" " UNUSED_SUB_INDEX"))
   (when uses-flag?
     (fprintf o "  int flag;\n")))
 
