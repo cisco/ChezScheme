@@ -389,7 +389,7 @@ relative to the executable.
 
 EMSCRIPTEN
 
-To target WebAssembly via emscripten and `emcc`, use the
+To target WebAssembly via Emscripten and `emcc`, use the
 `--emscripten` flag:
 
  ./configure --emscripten
@@ -406,7 +406,7 @@ Boot files will be included in the result as preloads. Use
 `--empetite` to omit the compiler as the "scheme.boot" boot file,
 keeping only the runtime system as the "petite.boot" boot file.
 
-To build emscripten output that runs a specific program, compile the
+To build Emscripten output that runs a specific program, compile the
 program as a boot file that sets the `scheme-start` parameter, then
 supply that boot file's path to `./configure` using the `--emboot=...`
 flag. For example, suppose "demo.ss" contains the following:
@@ -431,7 +431,7 @@ Using that build, create a boot file "demo.boot":
  (compile-file "demo.ss" "demo.so")
  (make-boot-file "/tmp/demo.boot" (list "petite") "/tmp/demo.so")
 
-Finally, configure the emscript build to use "demo.boot":
+Finally, configure the Emscripten build to use "demo.boot":
 
  ./configure --pb --emscripten --emboot=demo.boot
  make

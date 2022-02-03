@@ -1382,7 +1382,7 @@ host platform), and it will not attempt to rebuild Scheme sources that
 are part of Chez Scheme.
 
 In the special case of using "boot/*machine-type*-*tag*" to target
-WebAssembly via emscripten, a boot file added via `ARGS` will be
+WebAssembly via Emscripten, a boot file added via `ARGS` will be
 included as a preload automatically and should not be listed again
 later with `--emboot`.
 

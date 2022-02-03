@@ -15,6 +15,7 @@ Supported platforms:
  * Solaris: x86, x86_64
  * Android: ARMv7, AArch64
  * iOS: AArch64
+ * WebAssembly via Emscripten (bytecode interpreter only)
 
 As a superset of the language described in the
 [Revised<sup>6</sup> Report on the Algorithmic Language Scheme](http://www.r6rs.org)
@@ -77,14 +78,10 @@ For more information on Chez Scheme, see the [Chez Scheme Project Page](https://
 
 Main additions to Chez Scheme in the Racket variant:
 
- * AArch64 support
+ * AArch64 code generation
 
- * Portable bytes (pb) support, which is mainly useful for
-   bootstrapping a build on any supported platform, but can also be
-   linked with libffi for full functionality without code generation
-   or run-time code modification
-
- * Unboxed floating-point arithmetic and flvectors
+ * Unboxed floating-point arithmetic, flvectors, and faster
+   multiplication and division for large exact numbers
 
  * Type reconstruction during optimization (especially for safe code)
 
@@ -97,4 +94,8 @@ Main additions to Chez Scheme in the Racket variant:
  * Ordered finalization, immobile (but collectable) objects,
    weak/ephemeron generic hash tables, and reference bytevectors
 
- * Faster multiplication and division for large exact numbers
+ * Portable bytecode (pb) mode, which is mainly useful for
+   bootstrapping a build on any platform, but can also be used on
+   platforms without native-code generation; can be compiled via
+   Emscripten, linked with libffi, and/or used with bytecode partially
+   compiled to C
