@@ -409,9 +409,14 @@ workdir $W/boot/$M
 (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/gc-par.inc gc-par.inc)
 (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/vfasl.inc vfasl.inc)
 (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/heapcheck.inc heapcheck.inc)
-for file in `(cd "$bootdir"/boot/"$Mboot" ; echo *.boot)` ; do
-    (cd $W/boot/$M ; workln "$upupupbootdir"/boot/$Mboot/$file $file)
-done
+if [ -e "$bootdir"/boot/"$Mboot" ] ; then
+    for file in `(cd "$bootdir"/boot/"$Mboot" ; echo *.boot)` ; do
+        (cd $W/boot/$M ; workln "$upupupbootdir"/boot/$Mboot/$file $file)
+    done
+    for file in `(cd "$bootdir"/boot/"$Mboot" ; echo *.c)` ; do
+        (cd $W/boot/$M ; workln "$upupupbootdir"/boot/$Mboot/$file $file)
+    done
+fi
 case $M in
   *nt)
     (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/mainmd.obj mainmd.obj)
@@ -425,9 +430,6 @@ case $M in
     (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/kernel.o kernel.o)
     ;;
 esac
-for file in `(cd "$bootdir"/boot/"$Mboot" ; echo *.c)` ; do
-    (cd $W/boot/$M ; workln "$upupupbootdir"/boot/$Mboot/$file $file)
-done
 
 workdir $W/bin
 workdir $W/bin/$M
