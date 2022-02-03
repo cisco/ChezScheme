@@ -11,8 +11,7 @@
 ;; platform.
 
 ;; The pb machine can be configured (through ".def") for 32-bit Scheme
-;; object representations and a specific endianness, but that's not
-;; the main intended use.
+;; object representations and a specific endianness.
 
 ;; In all configurations, the pb machine uses 32-bit instructions. The
 ;; fasl format of instructuctions is always little-endian, and the
@@ -24,6 +23,8 @@
 ;; signalling arithemtic, bitwise, and comparison operations set the
 ;; flag for a specific condition, such as "overflow" or "equal", and
 ;; the branch variants are "branch if true" or "branch if false".
+;; The intent is that a test is always immediately followed by a
+;; branch, and a branch is always immediately preceded by a test.
 
 ;; Each 32-bit instruction has one of these formats, shown with low
 ;; bit on the left (like byte order for a little-endian machine):
@@ -49,11 +50,22 @@
 ;; be the destination register. The long `immed` form is mainly for
 ;; branches. See "cmacros.ss" for the `op` constructions.
 
-;; Foreign-procedure calls are supported only for specific prototypes,
+;; Foreign-procedure calls always supported for specific prototypes,
 ;; which are generally the ones for functions implemented the Chez
 ;; Scheme kernel. Supported prototypes are specified in "cmacros.ss".
-;; Foreign callables are not supported. All foreign-call arguments and
-;; results are passed in registers.
+;; Foreign callables are not always supported. All foreign-call
+;; arguments and results are passed in registers for the
+;; always-supported set of protypoes.
+
+;; Foreign-call procedures and callables may be supported for other
+;; prototypes (e.g., depending on whether libffi is available). Those
+;; calls pass arguments and receive results in a special "arena"
+;; space, analogous to page-sized call stack.
+
+;; The `pb-literal` instruction could be considered variable-width, in
+;; that its is followed by the literal data to load into a register.
+;; Or `pb-literal` could be considered a combination load and jump to
+;; skip over the data.
 
 ;;; SECTION 1: registers
 
@@ -639,6 +651,9 @@
          (with-syntax ([emit-op (construct-name #'k "asmop-" #'op)])
            #'(emit-op op x ...))])))
 
+  (define-op nop     nop-op)
+  (define-op literal literal-op)
+
   (define-op mov   mov-op (constant pb-i->i))
   (define-op fpmov mov-op (constant pb-d->d))
 
@@ -723,6 +738,17 @@
   (define-op interp interp-op)
   (define-op ret    ret-op)
   (define-op adr    adr-op) ; use only for an address after an rpheader (or compact)
+
+  (define nop-op
+    (lambda (op code*)
+      (emit-code (op code*)
+        (constant pb-nop))))
+  
+  (define literal-op
+    (lambda (op dest code*)
+      (emit-code (op dest code*)
+        (constant pb-literal)
+        (ax-ea-reg-code dest))))
 
   (define movi-op
     (lambda (op keep? dest imm shift code*)
@@ -1095,13 +1121,13 @@
                 [(64) 8]
                 [(32) 4])])))
 
-  (define ax-mov64
-    (lambda (dest n code*)
-      (emit movzi dest (logand n #xffff) 0
-        (emit movki dest (logand (bitwise-arithmetic-shift-right n 16) #xffff) 1
-          (emit movki dest (logand (bitwise-arithmetic-shift-right n 32) #xffff) 2
-            (emit movki dest (logand (bitwise-arithmetic-shift-right n 48) #xffff) 3
-               code*))))))
+  (define ax-reloc
+    (lambda (dest code*)
+      (emit literal dest
+        (emit nop
+          (constant-case ptr-bits
+            [(64) (emit nop code*)]
+            [else code*])))))
 
   (define ax-movi
     (lambda (dest n code*) 
@@ -1137,7 +1163,7 @@
              [(imm) (n)
               (ax-movi dest n code*)]
              [(literal) stuff
-              (ax-mov64 dest 0
+              (ax-reloc dest
                 (asm-helper-relocation code* (cons 'pb-abs stuff)))]
              [(disp) (n breg)
               (safe-assert (signed16? n))
@@ -1531,13 +1557,13 @@
   (define asm-helper-jump
     (lambda (code* reloc)
       (let ([jmptmp (cons 'reg %ts)])
-        (ax-mov64 jmptmp 0
+        (ax-reloc jmptmp
           (emit b jmptmp
             (asm-helper-relocation code* reloc))))))
 
   (define asm-helper-call
     (lambda (code* jmptmp interp? reloc)
-      (ax-mov64 `(reg . ,jmptmp) 0
+      (ax-reloc `(reg . ,jmptmp)
         (let ([code* (asm-helper-relocation code* reloc)])
           (if interp?
               (emit interp `(reg . ,jmptmp) code*)

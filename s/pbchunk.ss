@@ -23,15 +23,16 @@
 ;; A chunklet represents a potential entry point into a code
 ;; object. It may have a prefix before the entry point that
 ;; is not generated as in C. A code object can have multiple
+;; chunklets or just one.
 (define-record-type chunklet
   (fields i        ; code offset for this start of this chunklet
           start-i  ; code offset for the entry point (= end-i if there's no entry)
           end-i    ; code offset aftet the end of this chunklet
           uses-flag? ; does the chunklet involve def-use pair of the branch flag
-          mode     ; #f or 'continue-only, where the latter means no entry here
-          relocs   ; list of offset
-          headers  ; list of (cons offset size)
-          labels)  ; list of `label`s
+          continue-only? ; only render if part of a larger chunk?
+          relocs   ; list of offset, none before this chunklet but maybe some after
+          headers  ; list of (cons offset size), none before this chunklet but maybe some after
+          labels)  ; list of `label`s, none before this chunklet but maybe some after
   (nongenerative))
 
 ;; A label within a chunklet, especially for interior branches
@@ -43,7 +44,7 @@
   (nongenerative))
 
 (define (fasl-pbchunk! who c-ofns reg-proc-names start-index entry* handle-entry finish-fasl-update)
-  ;; first print everything to a string port, and then we
+  ;; first print everything to a string port, and then
   ;; break up the string port into separate files
   (let-values ([(0-op get) (open-string-output-port)])
     (let* ([seen-table (make-eq-hashtable)]
@@ -279,6 +280,8 @@
         instr emit
         ;; every instruction implemented in "pb.c" needs to be here,
         ;; except for the `pb-chunk` instruction
+        [pb-nop nop]
+        [pb-literal literal]
         [pb-mov16-pb-zero-bits-pb-shift0 di/u]
         [pb-mov16-pb-zero-bits-pb-shift1 di/u]
         [pb-mov16-pb-zero-bits-pb-shift2 di/u]
@@ -475,7 +478,7 @@
 (define (empty-chunklet? c)
   (or (fx= (chunklet-start-i c)
            (chunklet-end-i c))
-      (eq? 'continue-only (chunklet-mode c))))
+      (chunklet-continue-only? c)))
 
 ;; Found a code object, maybe generate a chunk
 (define (chunk-code! name bv vreloc ci)
@@ -502,18 +505,17 @@
                  (cond
                    [(fx= i len) '()]
                    [else
-                    (let-values ([(start-i end-i uses-flag? mode)
+                    (let-values ([(start-i end-i uses-flag?)
                                   (select-instruction-range bv i len relocs headers labels)])
                       (when (fx= i end-i)
                         ($oops 'chunk-code "failed to make progress at ~a out of ~a" i len))
-                      (let ([mode (if (fx< (fx- end-i start-i)
-                                           (fx* min-chunk-len instr-bytes))
-                                      ;; the chunk would be too small to save us any time, so don't bother;
-                                      ;; a threshold greater than 1 also avoids code that wouldn't even
-                                      ;; use `ms` or `ip`:
-                                      'continue-only
-                                      mode)])
-                        (cons (make-chunklet i start-i end-i uses-flag? mode relocs headers labels)
+                      (let ([continue-only?
+                             ;; when the chunk would be too small to save us any time, so don't
+                             ;; bother make it stand-alone; a threshold greater than 1 also avoids
+                             ;; code that wouldn't even use `ms` or `ip`:
+                             (fx< (fx- end-i start-i)
+                                  (fx* min-chunk-len instr-bytes))])
+                        (cons (make-chunklet i start-i end-i uses-flag? continue-only? relocs headers labels)
                               (loop end-i
                                     (advance-relocs relocs end-i)
                                     (advance-headers headers end-i)
@@ -561,7 +563,7 @@
                     (emit-chunklet o bv
                                    (chunklet-i c) (chunklet-start-i c)
                                    (chunklet-relocs c) (chunklet-headers c) (chunklet-labels c)
-                                   (if (eq? 'continue-only (chunklet-mode c))
+                                   (if (chunklet-continue-only? c)
                                        (chunklet-end-i c)
                                        (chunklet-start-i c))
                                    (chunklet-end-i c)
@@ -663,11 +665,15 @@
                   [target-label (fx+ i instr-bytes delta)])
              (next/add-label (make-label target-label i i (list i)))))
 
+         (define (next/literal)
+           (loop (fx+ i instr-bytes (constant ptr-bytes)) headers labels))
+
          (define-syntax (dispatch stx)
-           (syntax-case stx (i/b adr)
+           (syntax-case stx (i/b adr literal)
              [(_ op i/b test) #'(next-branch)]
              [(_ op adr) #'(next/adr)]
-             [else #'(next)]))
+             [(_ op literal) #'(next/literal)]
+             [_ #'(next)]))
 
          (instruction-cases instr dispatch))])))
 
@@ -676,13 +682,13 @@
   (let loop ([i i] [relocs relocs] [headers headers] [labels labels] [start-i #f]
              [flag-ready? #f] [uses-flag? #f])
     (cond
-      [(fx= i len) (values (or start-i i) i uses-flag? #f)]
+      [(fx= i len) (values (or start-i i) i uses-flag?)]
       [(and (pair? headers)
             (fx= i (caar headers)))
        (cond
          [start-i
           ;; we want to start a new chunk after the header, so end this one
-          (values start-i i uses-flag? #f)]
+          (values start-i i uses-flag?)]
          [else
           (let* ([size (cdar headers)]
                  [i (+ i size)])
@@ -701,7 +707,7 @@
          [(< (label-min-from (car labels)) (or start-i i))
           ;; target from jump before this chunk
           (if start-i
-              (values start-i i uses-flag? #f)
+              (values start-i i uses-flag?)
               (loop i relocs headers (cdr labels) #f #f uses-flag?))]
          [(< (label-max-from (car labels)) i)
           ;; always a forward jump within this chunk
@@ -711,29 +717,21 @@
           ;; it's within the chunk, then check;
           ;; WARNING: this makes overall chunking not linear-time, but
           ;; it's probably ok in practice
-          (let-values ([(maybe-start-i end-i maybe-uses-flag? mode)
+          (let-values ([(maybe-start-i end-i maybe-uses-flag?)
                         (loop i relocs headers (cdr labels) start-i #f uses-flag?)])
             (cond
               [(fx>= maybe-start-i i)
                ;; chunk here or starts later, anyway
-               (values maybe-start-i end-i maybe-uses-flag? mode)]
+               (values maybe-start-i end-i maybe-uses-flag?)]
               [(fx< (label-max-from (car labels)) end-i)
                ;; backward jumps stay within chunk
-               (values maybe-start-i end-i maybe-uses-flag? mode)]
+               (values maybe-start-i end-i maybe-uses-flag?)]
               [else
                ;; not within chunk
-               (values start-i i uses-flag? #f)]))])]
+               (values start-i i uses-flag?)]))])]
       [(and (pair? relocs)
-            (fx= i (car relocs)))
-       ;; can't start a chunk at a relocation, since the relocation
-       ;; bytecode can't be rewritten, but can continue through a
-       ;; relocation load
-       (let ([next-i (fx+ i (fx* reloc-instrs instr-bytes))])
-         (cond
-           [start-i
-            (loop next-i (cdr relocs) headers labels start-i #f uses-flag?)]
-           [else
-            (values i next-i uses-flag? 'continue-only)]))]
+            (fx>= i (car relocs)))
+       ($oops 'pbchunk "landed at a relocation")]
       [else
        ;; if the instruction always has to trampoline back, then the instruction
        ;; after can start a chunk to resume
@@ -749,13 +747,21 @@
            (loop (fx+ i instr-bytes) relocs headers labels (or start-i i) #t uses-flag?))
          (define (stop-before)
            (if start-i
-               (values start-i i uses-flag? #f)
+               (values start-i i uses-flag?)
                (loop (fx+ i instr-bytes) relocs headers labels #f #f uses-flag?)))
          (define (stop-after)
-           (values (or start-i i) (fx+ i instr-bytes) uses-flag? #f))
+           (values (or start-i i) (fx+ i instr-bytes) uses-flag?))
+
+         (define (keep-literal)
+           (unless (and (pair? relocs)
+                        (fx= (fx+ i instr-bytes) (car relocs)))
+             ($oops 'pbchunk "no relocation after pb-literal"))
+           (let ([next-i (fx+ i instr-bytes (constant ptr-bytes))])
+             (loop next-i (cdr relocs) headers labels (or start-i i) #f uses-flag?)))
+
          (define-syntax (dispatch stx)
            (syntax-case stx (dri/x r/x n/x r/b i/b r/f dr/b di/b
-                                   dr/f di/f drr/f dri/f)
+                                   dr/f di/f drr/f dri/f literal nop)
              [(_ op dri/x) #'(stop-before)]
              [(_ op r/x) #'(stop-before)]
              [(_ op n/x) #'(stop-before)]
@@ -770,6 +776,8 @@
              [(_ op di/f) #'(keep-signalling)]
              [(_ op drr/f) #'(keep-signalling)]
              [(_ op dri/f) #'(keep-signalling)]
+             [(_ op literal) #'(keep-literal)]
+             [(_ op nop) #'($oops 'pbchunk "hit pb-nop; misplace relocation?")]
              [_ #'(keep #f)]))
          (instruction-cases instr dispatch))])))
 
@@ -899,7 +907,8 @@
              (syntax-case stx (di/u
                                di di/f dr dr/f
                                drr dri drr/f dri/f dri/c
-                               dri/x r r/f r/x i r/b i/b dr/b di/b n n/x adr)
+                               dri/x r r/f r/x i r/b i/b dr/b di/b n n/x
+                               adr literal nop)
                [(_ op di/u) #'(di-form '_op (instr-di-imm/unsigned instr))]
                [(_ op di) #'(di-form '_op (instr-di-imm instr))]
                [(_ op di/f) #'(di-form '_op (instr-di-imm instr))]
@@ -1007,21 +1016,22 @@
                                  (format "-0x~x" (fx- delta))
                                  (format "0x~x" delta))
                              (post))
-                    (next))])))
+                    (next))]
+               [(_ op literal)
+                #'(let ([dest (instr-di-dest instr)])
+                    (unless (and (pair? relocs)
+                                 (fx= (fx+ i instr-bytes) (car relocs)))
+                      ($oops 'pbchunk "no relocation after pb-literal?"))
+                    (fprintf o "~aload_from_relocation(~a, ip+code_rel(0x~x, 0x~x));~a\n"
+                             (pre)
+                             dest
+                             base-i
+                             (fx+ i instr-bytes)
+                             (post))
+                    (loop (fx+ i instr-bytes (constant ptr-bytes)) (cdr relocs) headers labels))]
+               [(_ op nop) #'($oops 'pbchunk "nop")])))
 
-         (cond
-           [(and (pair? relocs)
-                 (= i (car relocs)))
-            (let ([dest (instr-di-dest instr)])
-              (fprintf o "~aload_from_relocation(~a, ip+code_rel(0x~x, 0x~x));~a\n"
-                       (pre)
-                       dest
-                       base-i
-                       i
-                       (post)))
-            (loop (fx+ i (fx* reloc-instrs instr-bytes)) (cdr relocs) headers labels)]
-           [else
-            (instruction-cases instr emit)]))])))
+         (instruction-cases instr emit))])))
 
 (define (emit-foreign-call o instr)
   (let* ([proto-index (instr-dri-imm instr)]

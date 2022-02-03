@@ -3308,6 +3308,8 @@
     pb-fence-release)
 
   (define-pb-opcode
+    [pb-nop]
+    [pb-literal]
     [pb-mov16 pb-keeps pb-shifts]
     [pb-mov pb-move-types]
     [pb-bin-op pb-signals pb-binaries pb-argument-types]
@@ -3332,8 +3334,7 @@
     [pb-fp-call-arena-in] [pb-fp-call-arena-out]
     [pb-stack-call]
     [pb-fence pb-fences]
-    [pb-chunk] ; dispatch to C-implemented chunks
-    [pb-link]) ; used by linker
+    [pb-chunk]) ; dispatch to C-implemented chunks
 
   ;; Only foreign procedures that match specific prototypes are
   ;; supported, where each prototype must be handled in "pb.c"

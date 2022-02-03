@@ -60,13 +60,12 @@ void S_pb_interp(ptr tc, void *bytecode) {
     next_ip = ip + 1;
 
     switch(INSTR_op(instr)) {
-    case pb_link:
-      /* same as pb_mov16_pb_zero_bits_pb_shift0, but with a promise
-         of following pb_mov16_pb_keep_bits_pb_shift1... with the same
-         destination */
-      regs[INSTR_di_dest(instr)] = decode_relocation(instr, ip);
+    case pb_nop:
+      break;
+    case pb_literal:
+      regs[INSTR_di_dest(instr)] = *(ptr *)(ip + 1);
 #if ptr_bits == 64
-      next_ip = ip + 4;
+      next_ip = ip + 3;
 #else
       next_ip = ip + 2;
 #endif

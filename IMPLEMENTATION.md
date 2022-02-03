@@ -1403,8 +1403,6 @@ code to go back to running in interpreted mode for the same code
 object where it started; that is, general jumps and bailing out of
 chunk mode are implemented in the same way.
 
-
-
 # Changing the Version Number
 
 To change the version number:

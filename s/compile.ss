@@ -219,12 +219,12 @@
                           [(pb)
                            (record-case c
                              [(pb-abs) (n x)
-                              (let ([a1 (fx- a 16)]) ; movz, movk, movk, movk
+                              (let ([a1 (fx- a (constant ptr-bytes))]) ; nops
                                 (let ([x* (cons (mkcode x) x*)])
                                   (let ([r ($reloc (constant reloc-pb-abs) n (fx- a1 ra))])
                                     (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
                              [(pb-proc) (n x)
-                              (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, b/call
+                              (let ([a1 (fx- a (constant ptr-bytes) 4)]) ; nops, b/call
                                 (let ([x* (cons (mkcode x) x*)])
                                   (let ([r ($reloc (constant reloc-pb-proc) n (fx- a1 ra))])
                                     (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
@@ -468,11 +468,11 @@
                          [(pb)
                           (record-case c
                             [(pb-abs) (n x)
-                             (let ([a1 (fx- a 16)]) ; movz, movk, movk, movk
+                             (let ([a1 (fx- a (constant ptr-bytes))]) ; nops
                                (let ([r ($reloc (constant reloc-pb-abs) n (fx- a1 ra))])
                                  (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
                             [(pb-proc) (n x)
-                             (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, b/call
+                             (let ([a1 (fx- a (constant ptr-bytes) 4)]) ; nops, b/call
                                (let ([r ($reloc (constant reloc-pb-proc) n (fx- a1 ra))])
                                  (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
                             [else (c-assembler-output-error c)])]

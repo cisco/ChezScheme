@@ -1555,39 +1555,12 @@ ptr S_get_code_obj(typ, p, n, o) IFASLCODE typ; iptr n, o; ptr p; {
 
 #ifdef PORTABLE_BYTECODE
 
-/* Address pieces in a movz,movk,movk,movk sequence are upper 16 bits */
-#define ADDRESS_BITS_SHIFT 16
-#define ADDRESS_BITS_MASK  ((U32)0xFFFF0000)
-#define DEST_REG_MASK      0xF00
-
 static void pb_set_abs(void *address, uptr item) {
-  /* First word can have an arbitrary value due to vfasl offset
-     storage, so get the target register from the end: */
-#if ptr_bytes == 8  
-  int dest_reg = ((U32 *)address)[3] & DEST_REG_MASK;
-#else
-  int dest_reg = ((U32 *)address)[1] & DEST_REG_MASK;
-#endif
-
-  /* pb_link is the same as pb_mov16_pb_zero_bits_pb_shift0, but with
-     a promise of the subsequent instructions to load a full word */
-
-  ((U32 *)address)[0] = (pb_link | dest_reg | ((item & 0xFFFF) << ADDRESS_BITS_SHIFT));
-  ((U32 *)address)[1] = (pb_mov16_pb_keep_bits_pb_shift1 | dest_reg | (((item >> 16) & 0xFFFF) << ADDRESS_BITS_SHIFT));
-#if ptr_bytes == 8  
-  ((U32 *)address)[2] = (pb_mov16_pb_keep_bits_pb_shift2 | dest_reg | (((item >> 32) & 0xFFFF) << ADDRESS_BITS_SHIFT));
-  ((U32 *)address)[3] = (pb_mov16_pb_keep_bits_pb_shift3 | dest_reg | (((item >> 48) & 0xFFFF) << ADDRESS_BITS_SHIFT));
-#endif
+  *(uptr *)address = item;
 }
 
 static uptr pb_get_abs(void *address) {
-  return ((uptr)((((U32 *)address)[0] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT)
-          | ((uptr)((((U32 *)address)[1] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 16)
-#if ptr_bytes == 8          
-          | ((uptr)((((U32 *)address)[2] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 32)
-          | ((uptr)((((U32 *)address)[3] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 48)
-#endif
-          );
+  return *(uptr *)address;
 }
 
 #endif /* PORTABLE_BYTECODE */
