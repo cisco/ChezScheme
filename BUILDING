@@ -402,7 +402,7 @@ with `make run`. The default workarea name is prefixed with "em-", so
 output is written to "em-<machine type>/bin/"<machine type>",
 including "scheme.js" and "scheme.html".
 
-Boot files will are included in the result as preloads. Use
+Boot files will be included in the result as preloads. Use
 `--empetite` to omit the compiler as the "scheme.boot" boot file,
 keeping only the runtime system as the "petite.boot" boot file.
 
@@ -435,3 +435,16 @@ Finally, configure the emscript build to use "demo.boot":
 
  ./configure --pb --emscripten --emboot=demo.boot
  make
+
+
+CROSS-COMPILING SCHEME PROGRAMS
+
+Using
+
+  make <machine type>.bootquick
+
+creates a "boot" subdirectory for <machine type> containing boot file,
+and in the process create a cross-compilation patch file as
+"xc-<machine type>/s/xpatch". Loading that "xpatch" file into Chez
+Scheme for the current platform changes functions like `compile-file`
+and `make-boot-file` to generate code for the target <machine type>.

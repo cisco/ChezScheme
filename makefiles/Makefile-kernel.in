@@ -1,0 +1,11 @@
+MAKEFLAGS += --no-print-directory
+
+.PHONY: build
+build:
+	(cd $(workarea)/c && $(MAKE))
+
+.PHONY: run
+run:
+	env SCHEMEHEAPDIRS=$(workarea)/boot/$(m) $(workarea)/bin/$(m)/scheme
+
+

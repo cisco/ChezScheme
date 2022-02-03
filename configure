@@ -38,6 +38,17 @@ if [ "$srcdir" != "." ]; then
 fi
 machs=$machs$sep2$last
 
+case "$srcdir" in
+    /*)
+        upsrcdir=$srcdir
+        upupsrcdir=$srcdir
+        ;;
+    *)
+        upsrcdir=../$srcdir
+        upupsrcdir=../../$srcdir
+        ;;
+esac
+
 m=""
 w=""
 pb=no
@@ -200,6 +211,9 @@ while [ $# != 0 ] ; do
     --machine=*)
       m=`echo $1 | sed -e 's/^--machine=//'`
       ;;
+    --boot=*)
+      mboot=`echo $1 | sed -e 's/^--boot=//'`
+      ;;
     --threads)
       threads=yes
       ;;
@@ -315,6 +329,9 @@ while [ $# != 0 ] ; do
       ;;
     --empetite)
       empetite=yes
+      ;;
+    --start=*)
+      alwaysUseBootFile=`echo $1 | sed -e 's/^--start=//'`
       ;;
     CC=*)
       CC=`echo $1 | sed -e 's/^CC=//'`
@@ -454,11 +471,22 @@ if [ $pbarch = yes ] ; then
     fi
 fi
 
+if [ "$mboot" = "" ] ; then
+    mboot="$m"
+else
+    magain=`echo $mboot | sed -e 's/-.*//'`
+    if [ "$m" != "$magain" ]; then
+        echo "Machine $m is not consistent with boot directory $magain"
+        exit 1
+    fi
+    topMakefile=Makefile-kernel.in
+fi
+
 if [ "$w" = "" ] ; then
     if [ $emscripten = yes ] ; then
-        w=em-$m
+        w=em-$mboot
     else
-        w=$m
+        w=$mboot
     fi
 fi
 
@@ -487,6 +515,7 @@ if [ "$help" = "yes" ]; then
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
   echo "  --pb                              specify pb (portable bytecode) version"
   echo "  --pbarch                          specify pb with host word and endianness"
+  echo "  --emscripten                      build via emscripten (\"em\" tool prefix)"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
   echo "  --disable-iconv                   disable iconv support"
@@ -506,9 +535,10 @@ if [ "$help" = "yes" ]; then
   echo "  --installpetitename=<petitename>  install with group ($installpetitename)"
   echo "  --installscriptname=<scriptname>  install with group ($installscriptname)"
   echo "  --toolprefix=<prefix>             prefix tool (compiler, linker, ...) names"
-  echo "  --emscripten                      build via emscripten (\"em\" tool prefix)"
+  echo "  --boot=<machine type>-<tag>       build from prepared variant (e.g., pbchunk)"
   echo "  --emboot=\"<file> ...\"             additional boot <file>s with emscripten"
   echo "  --empetite                        omit \"scheme.boot\" with emscripten"
+  echo "  --start=<name>                    load <boot>.boot instead of <exe>.boot"
   echo "  --[no]gzip-man-pages              compress manual pages ($gzipmanpages)"
   echo "  --workarea=<pathname>             build directory ($w)"
   echo "  CC=<C compiler>                   C compiler"
@@ -842,6 +872,20 @@ case "${flagsmuni}" in
             bootfiles="$bootfiles ../boot/$m/scheme.boot"
         fi
         bootfiles="$bootfiles $emBootFiles"
+
+        # find any extra boot files that are in $mboot
+        if [ -f boot/$mboot/scheme.boot ] ; then
+            bootdir=.
+        else
+            bootdir="$srcdir"
+        fi
+        for file in `(cd "$bootdir"/boot/"$mboot" ; echo *.boot)` ; do
+            if [ "$file" != "petite.boot" -a "$file" != "scheme.boot" ] ; then
+               bootfiles="$bootfiles ../boot/$m/$file"
+            fi
+        done
+
+        # set up preload of all boot files
         for f in $bootfiles ; do
             if [ "${exePreStep}" = ":" ] ; then
                 exePreStep=
@@ -851,8 +895,11 @@ case "${flagsmuni}" in
             exePreStep="${exePreStep}cp $f `basename $f`"
             exeExtraDeps="${exeExtraDeps} $f"
             mdlinkflags="${mdlinkflags} --preload-file `basename $f`"
-            alwaysUseBootFile="`basename $f .boot`"
+            inferredAlwaysUseBootFile="`basename $f .boot`"
         done
+        if [ "$alwaysUseBootFile" = "" ] ; then
+            alwaysUseBootFile="$inferredAlwaysUseBootFile"
+        fi
         exeSuffix=".html"
         ;;
 esac
@@ -916,16 +963,7 @@ else
   exit 1
 fi
 
-case "$srcdir" in
-    /*)
-        upsrcdir=$srcdir
-        ;;
-    *)
-        upsrcdir=../$srcdir
-        ;;
-esac
-
-if "$srcdir"/workarea $m $w $mpbhost ; then
+if "$srcdir"/workarea $m $w $mpbhost $mboot ; then
     :
 else
     # not a recognized host, or other error
@@ -994,6 +1032,10 @@ if [ "$alwaysUseBootFile" != "" ]; then
     echo '#define ALWAYS_USE_BOOT_FILE "'"$alwaysUseBootFile"'"' >> $w/c/next_config.h
 fi
 
+if [ -f "$w/boot/$m/pbchunk_register.c" ]; then
+    echo "#define CALL_PBCHUNK_REGISTER 1" >> $w/c/next_config.h
+fi
+
 if [ ! -f "$w/c/config.h" ] ; then
    mv $w/c/next_config.h $w/c/config.h
 elif `cmp -s $w/c/next_config.h $w/c/config.h` ; then
@@ -1001,15 +1043,6 @@ elif `cmp -s $w/c/next_config.h $w/c/config.h` ; then
 else
    mv $w/c/next_config.h $w/c/config.h
 fi
-
-case "$srcdir" in
-    /*)
-        upupsrcdir=$srcdir
-        ;;
-    *)
-        upupsrcdir=../../$srcdir
-        ;;
-esac
 
 cat > $w/c/Mf-config << END
 upupsrcdir=$upupsrcdir

@@ -17,25 +17,27 @@
 
 srcdir=`dirname "$0"`
 
-if [ $# != 1 -a $# != 2  -a $# != 3 ]
-then
-    echo "Usage: workarea <machine-type> { <workarea name> <pb host machine-type> }"
+if [ $# != 1 -a $# != 2 -a $# != 3 -a $# != 4 ] ; then
+    echo "Usage: workarea <machine-type> { <workarea name> <pb host machine-type> <boot machine-name>}"
     exit 1
 fi
 
 # set M to machine type and W to workarea name
 M=$1
-if [ "$2" = "" ]
-then
+if [ "$2" = "" ] ; then
     W=$M
 else
     W=$2
 fi
-if [ "$3" != "" ]
-then
+if [ "$3" != "" ] ; then
    Mpbhost=$3
 else
    Mpbhost=""
+fi
+if [ "$4" != "" ] ; then
+   Mboot=$4
+else
+   Mboot="$M"
 fi
 
 Muni=""
@@ -223,10 +225,12 @@ case "$srcdir" in
         ;;
 esac
 
-if [ -f boot/$M/scheme.boot ] ; then
+if [ -f boot/$Mboot/scheme.boot ] ; then
+    bootdir=.
     upbootdir=..
     upupupbootdir=../../..
 else
+    bootdir=$srcdir
     upbootdir=$upsrcdir
     upupupbootdir=$upupupsrcdir
 fi
@@ -398,46 +402,32 @@ done
 
 workdir $W/boot
 workdir $W/boot/$M
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/scheme.h scheme.h)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/equates.h equates.h)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/gc-ocd.inc gc-ocd.inc)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/gc-oce.inc gc-oce.inc)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/gc-par.inc gc-par.inc)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/vfasl.inc vfasl.inc)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/heapcheck.inc heapcheck.inc)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/petite.boot petite.boot)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/scheme.boot scheme.boot)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/def.so def.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/edit.so edit.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/fact.so fact.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/fatfib.so fatfib.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/fib.so fib.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/freq.so freq.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/m4.so m4.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/macro.so macro.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/matrix.so matrix.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/object.so object.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/power.so power.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/rabbit.so rabbit.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/rsa.so rsa.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/scons.so scons.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/setof.so setof.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/unify.so unify.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/fft.so fft.so)
-(cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/compat.so compat.so)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/scheme.h scheme.h)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/equates.h equates.h)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/gc-ocd.inc gc-ocd.inc)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/gc-oce.inc gc-oce.inc)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/gc-par.inc gc-par.inc)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/vfasl.inc vfasl.inc)
+(cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/heapcheck.inc heapcheck.inc)
+for file in `(cd "$bootdir"/boot/"$Mboot" ; echo *.boot)` ; do
+    (cd $W/boot/$M ; workln "$upupupbootdir"/boot/$Mboot/$file $file)
+done
 case $M in
   *nt)
-    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/mainmd.obj mainmd.obj)
-    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/mainmt.obj mainmt.obj)
-    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/csv957md.lib csv957md.lib)
-    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/csv957mt.lib csv957mt.lib)
-    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/scheme.res scheme.res)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/mainmd.obj mainmd.obj)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/mainmt.obj mainmt.obj)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/csv957md.lib csv957md.lib)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/csv957mt.lib csv957mt.lib)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/scheme.res scheme.res)
     ;;
   *)
-    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/main.o main.o)
-    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$M/kernel.o kernel.o)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/main.o main.o)
+    (cd $W/boot/$M; workln "$upupupbootdir"/boot/$Mboot/kernel.o kernel.o)
     ;;
 esac
+for file in `(cd "$bootdir"/boot/"$Mboot" ; echo *.c)` ; do
+    (cd $W/boot/$M ; workln "$upupupbootdir"/boot/$Mboot/$file $file)
+done
 
 workdir $W/bin
 workdir $W/bin/$M

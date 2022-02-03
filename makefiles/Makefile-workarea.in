@@ -65,6 +65,9 @@ reset:
 	mkdir -p ../boot/$*
 	$(MAKE) -f Mf-boot $*.boot o=3 d=0 what=all
 
+%.bootpbchunk:
+	(cd s && $(MAKE) bootpbchunk PBCHUNKTARGET=$* ARGS="$(ARGS)")
+
 .PHONY: bintar
 bintar: build
 	(cd bintar && $(MAKE))

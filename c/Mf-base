@@ -42,7 +42,10 @@ kernelsrc=statics.c segment.c alloc.c symbol.c intern.c gcwrapper.c gc-011.c gc-
  number.c schsig.c io.c new-io.c print.c fasl.c vfasl.c stats.c foreign.c prim.c prim5.c flushcache.c\
  schlib.c thread.c expeditor.c scheme.c compress-io.c random.c ffi.c
 
-kernelobj=${kernelsrc:%.c=%.$o} ${mdobj}
+pbchunksrc:=$(subst ../boot/${m}/,,$(wildcard ../boot/${m}/*.c))
+pbchunkobj:=${pbchunksrc:%.c=%.$o}
+
+kernelobj=${kernelsrc:%.c=%.$o} ${mdobj} ${pbchunkobj}
 
 kernelhdr=system.h types.h version.h globals.h externs.h segment.h atomic.h gc.c sort.h thread.h config.h \
  compress-io.h itest.c nocurses.h popcount.h pb.h
@@ -64,6 +67,13 @@ ifeq ($(OS),Windows_NT)
 	cp -p "${upupsrcdir}"/c/$@ $@
 else
 	ln -s "${upupsrcdir}"/c/$@ $@
+endif
+
+${pbchunksrc}:
+ifeq ($(OS),Windows_NT)
+	cp -p ../boot/$m/$@ $@
+else
+	ln -s ../boot/$m/$@ $@
 endif
 
 scheme.o: itest.c

@@ -68,6 +68,12 @@ reset:
 auto.bootquick:
 	(cd $(workarea) && $(MAKE) $(defaultm).bootquick)
 
+# <machine>-<tag>.boot to repackage boot files for
+# <mactine> with pbchunk sources, including additional
+# boot files
+%.bootpbchunk:
+	(cd $(workarea) && $(MAKE) $*.bootpbchunk ARGS="$(ARGS)")
+
 # Supply ORIG=<dir> to build using existing at <dir>
 .PHONY: from-orig
 from-orig:

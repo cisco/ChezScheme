@@ -694,3 +694,8 @@ reset-one:
 .PHONY: run
 run:
 	env SCHEMEHEAPDIRS=../boot/$m/ ../bin/$m/scheme $(ARGS)
+
+.PHONY: bootpbchunk
+bootpbchunk:
+	mkdir -p ../../boot/$(PBCHUNKTARGET)
+	env SCHEMEHEAPDIRS=../boot/$m/ ../bin/$m/scheme --script "${upupsrcdir}/s/bootpbchunk.ss" "${upupsrcdir}" "$(PBCHUNKTARGET)" $(ARGS)

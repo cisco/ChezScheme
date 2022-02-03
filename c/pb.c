@@ -11,7 +11,12 @@ typedef uptr (*chunk_t)(machine_state *ms, uptr, int);
 static chunk_t *chunks;
 static int num_chunks;
 
+#ifdef CALL_PBCHUNK_REGISTER
+extern void pbchunk_register();
+void S_machine_init() { pbchunk_register(); }
+#else
 void S_machine_init() { }
+#endif
 
 void Sregister_pbchunks(void **add_chunks, int start_index, int end_index) {
   if (num_chunks < end_index) {

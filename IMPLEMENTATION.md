@@ -1317,18 +1317,76 @@ interpreter can decode instructions in native order.
 
 For a non-basic build, fragments of static Scheme code can be turned
 into C code to compile and plug back into the kernel. These fragments
-are called *pbchunks*. The `pbchunk-convert-file` function takes
-compiled Scheme code (as a boot or fasl file), generates C code for
-the chunks, and generates revised compiled code that contains
-references to the chunks via `pb-chunk` instructions. Calling the
-registration function in the generated C code registers chunks with
-the kernel as targets for `pb-chunk` instructions. Each chunk has a
-static index, so the revised compiled Scheme code must be used with
-exactly the C chunks that are generated at the same time; when
-multiple sets of chunks are used together, each needs to be created
-with non-overlapping index ranges. Orchestrating the generation of
-chunk files and linking/loading them into a kernel executable is
-currently outside the scope of the Chez Scheme build scripts.
+are called *pbchunks*.
+
+### pbchunk Builds
+
+The `pbchunk-convert-file` function takes compiled Scheme code (as a
+boot or fasl file), generates C code for the chunks, and generates
+revised compiled code that contains references to the chunks via
+`pb-chunk` instructions. Calling the registration function in the
+generated C code registers chunks with the kernel as targets for
+`pb-chunk` instructions. Each chunk has a static index, so the revised
+compiled Scheme code must be used with exactly the C chunks that are
+generated at the same time; when multiple sets of chunks are used
+together, each needs to be created with non-overlapping index ranges.
+
+Using
+
+```bash
+make <machine-type>-<tag>.bootpbchunk
+```
+
+creates a "boot/*machine-type*-*tag*" directory that contains adjusted
+versions of the boot files in "boot/*machine-type*" plus C code to
+implement chunks extracted from the boot files. For example,
+
+```bash
+make tpb64l-pbchunk.bootpbchunk
+```
+
+creates pbchunked boot files for the 64-bit, little-endian pb variant.
+
+If the current machine-type does not match *machine-type*, a
+`.bootpbchunk` target expects to be able to use a cross compiler, so
+create one if needed using
+
+```bash
+make <machine-type>.bootquick
+```
+
+A `.bootpbchunk` makefile target recognizes an `ARGS` variable to
+supply additional boot files. Start `ARGS` with `--petite` to extract
+pbchunks only from "petite.boot" (and not the compiler in
+"scheme.boot"), or start `ARGS` with `--only` to extract pbchunks only
+from additional supplied boot files. For example,
+
+```bash
+make tpb64l-demo.bootpbchunk ARGS="--only demo.boot"
+```
+
+extracts chunks only from "demo.boot" and includes the updated
+"demo.boot" alongside the "petite.boot" and "scheme.boot" boot files
+in "boot/tpb64l-demo".
+
+To build with the assembled pbchunk configuration, use
+
+```bash
+./configure --boot=<machine-type>-<tag> --pbarch
+```
+
+which configures a build using prepared "boot/*machine-type*-*tag*"
+files. A build configured this way supports only `make` for the kernel
+and `make run` (the latter assuming that the target build matches the
+host platform), and it will not attempt to rebuild Scheme sources that
+are part of Chez Scheme.
+
+In the special case of using "boot/*machine-type*-*tag*" to target
+WebAssembly via emscripten, a boot file added via `ARGS` will be
+included as a preload automatically and should not be listed again
+later with `--emboot`.
+
+### Internal pbchunk Protocol
 
 A `pb-chunk` instruction's payload is two integers: a 16-bit *index*
 and an 8-bit *subindex*. The *index* selects a registered C chunk
@@ -1344,6 +1402,8 @@ function code to call that function, or it might return the address of
 code to go back to running in interpreted mode for the same code
 object where it started; that is, general jumps and bailing out of
 chunk mode are implemented in the same way.
+
+
 
 # Changing the Version Number
 
