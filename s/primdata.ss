@@ -1571,7 +1571,7 @@
   (path-parent [sig [(pathname) -> (pathname)]] [flags true #;cp02])
   (path-rest [sig [(pathname) -> (pathname)]] [flags true #;cp02])
   (path-root [sig [(pathname) -> (pathname)]] [flags true #;cp02])
-  (pbchunk-convert-file [sig [(ptr ptr ptr ptr ufixnum) -> (ufixnum)]] [flags])
+  (pbchunk-convert-file [sig [(pathname pathname sub-list sub-list sub-ufixnum) -> (ufixnum)]] [flags])
   (phantom-bytevector? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (phantom-bytevector-length [sig [(phantom-bytevector) -> (uptr)]] [flags true])
   (port-bol? [sig [(textual-output-port) -> (boolean)]] [flags discard])
