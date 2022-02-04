@@ -367,10 +367,12 @@ Handling letrec and letrec*
                     (and (not (fld-mutable? fld))
                          (eq? (filter-foreign-type (fld-type fld)) 'scheme-object)))
                   (rtd-flds rtd)))))]
-      [(record-type ,rtd ,e) (Expr e)]
+      [(record-type ,rtd ,rtd-expr ,maybe-base-rtd (,e* ...) ,extra* ...) (Expr rtd-expr)]
       [(record-cd ,rcd ,rtd-expr ,e) (Expr e)]
       [(immutable-list (,[e* pure?*] ...) ,[e pure?])
        (values `(immutable-list (,e* ...) ,e) pure?)]
+      [(immutable-vector (,[e* pure?*] ...) ,[e pure?])
+       (values `(immutable-vector (,e* ...) ,e) pure?)]
       [,pr (values pr #t)]
       [(moi) (values ir #t)]
       [(pariah) (values ir #t)]

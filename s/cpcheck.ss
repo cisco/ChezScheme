@@ -202,6 +202,7 @@
                         ...)))))))]
       [(cte-optimization-loc ,box ,[e #f -> e]) e]
       [(immutable-list (,e* ...) ,[e]) e]
+      [(immutable-vector (,e* ...) ,[e]) e]
       [(moi) ir]
       [(pariah) ir]
       [(profile ,src) ir]

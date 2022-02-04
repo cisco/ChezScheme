@@ -7229,38 +7229,34 @@
   (lambda (x)
     (strip x empty-wrap)))
 
-(let ()
-  (set-who! generate-temporaries
-    (lambda (x)
-      (define push-outer
-        (lambda (x)
-          (if (syntax-object? x)
-              (syntax-case x ()
-                [() '()]
-                [(x . r) #'(x . r)]
-                [else x])
-              x)))
-      (define (gen-temp x)
-       (let ([x (syntax->datum x)])
-         (let ([x (if (symbol? x) (symbol->string x) x)])
-           (wrap (if (string? x) (gensym x) (gensym)) top-wrap))))
-      (let f ([fast x] [slow x])
-        (let ([fast (push-outer fast)])
-          (cond
-            [(null? fast) '()]
-            [(pair? fast)
-             (cons (gen-temp (car fast))
-               (let ([fast (push-outer (cdr fast))])
-                 (cond
-                   [(null? fast) '()]
-                   [(pair? fast)
-                    (cons (gen-temp (car fast))
-                      (let ([slow (push-outer slow)])
-                        (if (eq? fast slow)
-                            ($oops who "cyclic list structure ~s" x)
-                            (f (cdr fast) (cdr slow)))))]
-                   [else ($oops who "improper list structure ~s" x)])))]
-            [else ($oops who "improper list structure ~s" x)]))))))
+(set-who! generate-temporaries
+  (lambda (x)
+    (define strip-outer
+      (lambda (x)
+        (cond
+          [(syntax-object? x) (strip-outer (syntax-object-expression x))]
+          [(annotation? x) (annotation-stripped x)]
+          [else x])))
+    (define (gen-temp x)
+      (let ([x (if (id? x) (symbol->string (id-sym-name x)) (and (string? x) #f))])
+        (wrap (if x (gensym x) (gensym)) top-wrap)))
+    (let f ([fast x] [slow x])
+      (let ([fast (strip-outer fast)])
+        (cond
+          [(null? fast) '()]
+          [(pair? fast)
+           (cons (gen-temp (car fast))
+             (let ([fast (strip-outer (cdr fast))])
+               (cond
+                 [(null? fast) '()]
+                 [(pair? fast)
+                  (cons (gen-temp (car fast))
+                    (let ([slow (strip-outer slow)])
+                      (if (eq? fast slow)
+                          ($oops who "cyclic list structure ~s" x)
+                          (f (cdr fast) (cdr slow)))))]
+                 [else ($oops who "improper list structure ~s" x)])))]
+          [else ($oops who "improper list structure ~s" x)])))))
 
 (set-who! free-identifier=?
   (lambda (x y)
@@ -7283,6 +7279,10 @@
 (set! $distinct-bound-ids?
   (lambda (ids)
     (distinct-bound-ids? ids)))
+
+(set! $invalid-ids-error
+  (lambda (ids exp class)
+    (invalid-ids-error ids exp class)))
 
 (set-who! make-variable-transformer
   (lambda (proc)
@@ -8259,7 +8259,7 @@
                      #,(if (or (= (optimize-level) 3) (identifier? #'formals))
                            #'(lambda formals (vector ffml ...))
                            #`(case-lambda
-                               [formals (vector ffml ...)]
+                               [formals (immutable-vector ffml ...)]
                                [args #,($make-source-oops #'define-values
                                          "incorrect number of values from rhs"
                                          #'expr)])))))

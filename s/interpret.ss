@@ -46,7 +46,7 @@
     (- ($prelex (x)))
     (+ (c-var (x))
        (list-of-c-var (free))))
-  (Expr (e body rtd-expr)
+  (Expr (e body rtd-expr extra)
     (- (case-lambda preinfo cl ...)
        (call preinfo e0 e1 ...)
        (moi)

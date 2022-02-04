@@ -2301,3 +2301,67 @@
     record.ms, root-experr-compile-0-f-f-f
 - updated comments describing the new features
     record-defn.ss
+- fixed newly improved generate-temporaries so it doesn't loop
+  indefinitely on cycles in the elemenents of the input list.
+    syntax.ss,
+    8.mo, root-experr-compile-0-f-f-f
+- cp0 record-construct handlers now keep record-type wrappers when
+  propagating constants and refs.
+    cp0.ss
+- added immutable-vector primitiive along with cp0 handling of
+  fully (foldable) and partially static immutable vectors.
+    primdata.ss, cpnanopass.ss, base-lang.ss, cpcheck.ss, cpletrec.ss,
+    cpcommonize.ss, cprep.ss, prims.ss, cp0.ss,
+    5_6.ms, cp0.ms
+- define-values now uses an immutable vector rather than a mutable
+  vector to package the values.
+    syntax.ss
+- now working harder to determine the truth of the test part of an
+  if expression in order to eliminate the if itself.
+    cp0.ss,
+    cp0.ms
+- eliminated some code duplication in rfa and rfm helpers.
+    cp0.ss
+- now using compile-time (nongenerative) record types as proxies
+  for the run-time (generative) counterparts for defining record-type
+  accessors and mutators.  this improves cross-library optimization
+  of generative record types in general, and specifically breaks
+  an otherwise unresolvable cycle among the internal definitions
+  of a record type with methods for which cpvalid was inserting
+  valid checks and assignments.
+    record-defn.ss, record.ss, cp0.ss, primdata.ss,
+    record.ms
+- improved handling of records with methods.  Lsrc record-type form
+  now hosts base-rtd and extras, which cp0 now uses to inline methods
+  through vtable indirects when it can.  cp0 also propagates
+  record-type information through record forms, i.e., it no longer
+  drops the record-type wrapper around the record-type expression
+  that gets placed in the record form.  cp0's record? handler also
+  now recognizes record-types as records.
+    cp0.ss, base-lang.ss, cpletrec.ss, cpcommonize.ss, cprep.ss,
+    interpret.ss,
+    record.ms
+- fixed cp0 handler for $record to handle the case where the rtrd is
+  constant and all fields are immutable.  it was punting this case and
+  thus possibly disabling some optimization.
+    cp0.ss
+- added cp0 handler for $record-type-field-offsets.
+    cp0.ss
+- define-record-type now requires that all the ancestors of a new
+  type with methods must be known at cmompile time, i.e., must all
+  have been specified via parent rather than parent-rtd.  this
+  ensures we can determine the full set of methods that the type
+  inherits at expand time, hence the set of new generics that the
+  new type definition should bind.
+    record-defn.ss,
+    record.ms, root-experr-compile-0-f-f-f
+- interface methods now use an out-of-line $query-interface operator,
+  interfaces are now packaged in an immutable vector, and cp0 tries
+  to fold $query-interface at compile time when possible.
+    cp0.ss, record-defn.ss, primdata.ss,
+    record.ms
+- added open-interface as a friendly wrapper on $query-interface.
+    record-defn.ss, primdata.ss,
+    record.ms, root-experr-compile-0-f-f-f
+- updated patch files
+    patch-compile-0-f-t-f, patch-compile-0-t-f-f, patch-interpret-0-f-t-f

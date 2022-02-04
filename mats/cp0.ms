@@ -2673,6 +2673,26 @@
                  (begin (#2%write 'f) ($yyy))
                  (begin (#2%write 'g) ($zzz))))
              (begin (#2%write 'h) 3)))))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+      (expand/optimize
+        '(immutable-vector 1 2 3)))
+    ''#(1 2 3))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+      (expand/optimize
+        '(lambda (x)
+           (let ([v (begin (write 'a) (immutable-vector x 2 3))])
+             (list
+               (begin (write 'b) (vector-ref v 0))
+               (begin (write 'c) (vector-ref v 1))
+               (begin (write 'd) (vector-ref v 2)))))))
+    '(lambda (x)
+       (#2%write 'a)
+       (#2%list
+         (begin (#2%write 'b) x)
+         (begin (#2%write 'c) 2)
+         (begin (#2%write 'd) 3))))
  )
 
 (mat let-pushing
@@ -2886,4 +2906,54 @@
       (expand/optimize
         `(lambda (x) (= x x))) ; x could be +nan.0
       `(lambda (x) (($primitive ,(if (fx= (optimize-level) 3) 3 2) =) x x))))
+)
+
+(mat if
+  (equal?
+    (let ([f (lambda (x) (+ x 1))] [g (lambda (x) (+ x 2))])
+      (define (q1) (and f (f 3)))
+      (define (q2) (and g (g 7)))
+      (set! g values)
+      (list (q1) (q2)))
+    '(4 7))
+  (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+    (equivalent-expansion?
+      (expand/optimize
+        '(let ([f (lambda (x) (+ x 1))] [g (lambda (x) (+ x 2))])
+           (define (q1) (and f (f 3)))
+           (define (q2) (and g (g 7)))
+           (set! g values)
+           (list (q1) (q2))))
+      '(let ([g (lambda (x) (#2%+ 2 x))])
+         (set! g #2%values)
+         (#2%list 4 (if g (g 7) #f)))))
+  (equal?
+    (let ([x (list 3)]) (and x (car x)))
+    3)
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ([x (list 3)]) (and x (car x)))))
+    3)
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(lambda (x) (let ([p (list x)]) (and p (car p))))))
+    '(lambda (x) x))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(lambda (x) (let ([p (list x)]) (and p (list p))))))
+    '(lambda (x) (#2%list (#2%list x))))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-record-type a (fields x))
+           (let ([q (make-a 17)])
+             (if q q (list q))))))
+    '(#3%$record 
+       (#2%$make-record-type-descriptor #!base-rtd 'a #f #f #f #f
+         '#((immutable x)) 'define-record-type)
+       17))
 )

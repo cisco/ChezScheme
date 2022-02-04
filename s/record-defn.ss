@@ -110,18 +110,37 @@ products:
   - new (not inherited) method names are bound to method-dispatch procedures
 
 define-interface:
-  definition -> (define-interface interface-name <interface-clause> ...)
-                (define-interface (interface-name predicate-name) <interface-clause> ...)
+  definition -> (define-interface <interface-name> <interface-clause> ...)
+                (define-interface (<interface-name> <predicate-name>) <interface-clause> ...)
 
   <interface-clause> -> (parent <interface-name>)
                         (methods <interface-method-spec>*)
 
   <interface-method-spec> -> (<method-name> <formals>)
 
+  <interface-name> -> <identifier>
+  <predicate-name> -> <identifier>
+
 products:
   - the specified interface-name NAME is bound to interface information in the expand-time environment
   - NAME? (or other specified predicate name) is bound to a predicate procedure
   - new (not inherited) method names are bound to method-dispatch procedures
+
+open-interface:
+  definition -> (open-interface <interface-name> (<method-binding> ...) <object-expression>)
+
+  <method-binding> -> (<local-method-name> <interface-method-name>)
+
+  <object-expression> -> <expression>
+
+  <local-method-name> -> <identifier>
+  <interface-method-name> -> <identifier>
+
+products:
+  - each specified local method name is bound to the method named by the corresponding
+    interface-method-name in the specified interface, specialized to the object that
+    results from evaluating the given object expression.  The specialized method takes
+    the same arguments as the original method except for the leading object argument.
 |#
 
 (define require-nongenerative-clause
@@ -143,40 +162,42 @@ products:
                  (define pred (lambda (x) (and (vector? x) (eq? (vector-length x) n))))
                  (define accessor (lambda (x) (vector-ref x offset))) ...)))])))
 
-  (module ($make-drtinfo $drtinfo? $drtinfo-minfos $drtinfo-vtable-rtd $drtinfo-maybe-rtd $drtinfo-maybe-rcd
+  (module ($make-drtinfo $drtinfo? $drtinfo-minfos $drtinfo-base-rtd $drtinfo-maybe-ctrtd $drtinfo-maybe-rtd $drtinfo-maybe-rcd
            $drtinfo-rtd-expr $drtinfo-rcd-expr $drtinfo-interface-names $drtinfo-sealed?  $drtinfo-protocol?
            unwrap-drtinfo)
     (define-vector-record ($$make-drtinfo $$drtinfo?)
       $drtinfo-uid
-      $drtinfo-minfos
-      $drtinfo-vtable-rtd
+      $drtinfo-base-rtd
+      $drtinfo-maybe-ctrtd
       $drtinfo-maybe-rtd
       $drtinfo-maybe-rcd
       $drtinfo-rtd-expr
       $drtinfo-rcd-expr
       $drtinfo-interface-names
+      $drtinfo-minfos
       $drtinfo-sealed?
       $drtinfo-protocol?)
 
     (module ($make-drtinfo $drtinfo?)
       (define the-drtinfo-uid '#{drtinfo cb2hekodjsht6om8o8t9g00vq-0})
-      (define ($make-drtinfo minfos vtable-rtd maybe-rtd maybe-rcd rtd-expr rcd-expr interface-names sealed? protocol?)
-        ($$make-drtinfo (datum->syntax #'* the-drtinfo-uid) minfos vtable-rtd maybe-rtd maybe-rcd rtd-expr rcd-expr interface-names sealed? protocol?))
+      (define ($make-drtinfo base-rtd maybe-ctrtd maybe-rtd maybe-rcd rtd-expr rcd-expr interface-names minfos sealed? protocol?)
+        ($$make-drtinfo (datum->syntax #'* the-drtinfo-uid) base-rtd maybe-ctrtd maybe-rtd maybe-rcd rtd-expr rcd-expr interface-names minfos sealed? protocol?))
       (define $drtinfo?
         (lambda (x)
           (and ($$drtinfo? x) (eq? (syntax->datum ($drtinfo-uid x)) the-drtinfo-uid)))))
 
     (define (unwrap-drtinfo x)
       (syntax-case x ()
-        [#(uid (mimfo ...) vtable-rtd maybe-rtd maybe-rcd rtd-expr rcd-expr (iface-name ...) sealed? protocol?)
+        [#(uid base-rtd maybe-ctrtd maybe-rtd maybe-rcd rtd-expr rcd-expr (iface-name ...) (minfo ...) sealed? protocol?)
          #`#(uid
-             (mimfo ...)
-             #,(syntax->datum #'vtable-rtd)
+             #,(syntax->datum #'base-rtd)
+             #,(syntax->datum #'maybe-ctrtd)
              #,(syntax->datum #'maybe-rtd)
              #,(syntax->datum #'maybe-rcd)
              rtd-expr
              rcd-expr
              (iface-name ...)
+             (minfo ...)
              #,(syntax->datum #'sealed?)
              #,(syntax->datum #'protocol?))]
         [_ x])))
@@ -197,18 +218,27 @@ products:
 
     (define (unwrap-diinfo x)
       (syntax-case x ()
-        [#(uid rtd (mimfo ...))
+        [#(uid rtd (minfo ...))
          #`#(uid
              #,(syntax->datum #'rtd)
-             (mimfo ...))]
+             (minfo ...))]
         [_ x])))
 
-  (define-vector-record (make-minfo minfo?)
-    minfo-mname
-    minfo-hidden-mname
-    minfo-arity
-    minfo-formals
-    minfo-flat-formals)
+  (module (make-minfo minfo?
+           minfo-mname minfo-hidden-mname minfo-arity minfo-formals minfo-flat-formals
+           unwrap-minfos)
+    (define-vector-record (make-minfo minfo?)
+      minfo-mname
+      minfo-hidden-mname
+      minfo-arity
+      minfo-formals
+      minfo-flat-formals)
+    (define unwrap-minfos
+      (lambda (minfos)
+        ; need list/vector structure, with arity unwrapped
+        (with-syntax ([(#(mname hidden-name arity formals flat-formals) ...) minfos])
+          (with-syntax ([(arity ...) (syntax->datum #'(arity ...))])
+            #'(#(mname hidden-name arity formals flat-formals) ...))))))
 
   (define construct-name
     (lambda (template-identifier . args)
@@ -286,18 +316,6 @@ products:
           (if (free-id-member (car ls1) ls2)
               (free-id-union (cdr ls1) ls2)
               (cons (car ls1) (free-id-union (cdr ls1) ls2))))))
-
-  (define distinct-bound-ids?
-    (lambda (ids)
-      (define bound-id-member?
-         (lambda (x list)
-            (and (not (null? list))
-                 (or (bound-identifier=? x (car list))
-                     (bound-id-member? x (cdr list))))))
-      (let distinct? ((ids ids))
-        (or (null? ids)
-            (and (not (bound-id-member? (car ids) (cdr ids)))
-                 (distinct? (cdr ids)))))))
 
   (set! $trans-define-interface
     (lambda (x)
@@ -377,25 +395,15 @@ products:
                               #'#,($make-diinfo
                                     iface-rtd
                                     #`(#,@parent-minfos #,@%minfos))))
-                          ; this could be put out of line by abstracting over iface-rtd
-                          (define (qi ego)
-                            (let ([rtd (#3%record-rtd ego)])
-                              (let* ([v ($record-type-interfaces rtd)] [n (vector-length v)])
-                                (let loop ([i 0])
-                                  (and (fx< i n)
-                                       (let ([iface (vector-ref v i)])
-                                         (if (#3%record? iface '#,iface-rtd)
-                                           iface
-                                           (loop (fx+ i 1)))))))))
                           (define (qi! who ego)
-                            (or (and (or opt3 (record? ego)) (qi ego))
+                            (or (and (or opt3 (record? ego)) (#3%$query-interface '#,iface-rtd ego))
                                 (errorf who "not applicable to ~s" ego)))
                           (define #,pred-name
                             (lambda (x)
-                              (and (record? x) (qi x) #t)))
+                              (and (record? x) (#3%$query-interface '#,iface-rtd x) #t)))
                           (define generic-name
                             (let ([who 'generic-name]) ; can't ref generic-name pattern vble inside ... below
-                              (define method-accessor (csv7:record-field-accessor '#,iface-rtd generic-index))
+                              (define method-accessor (#3%csv7:record-field-accessor '#,iface-rtd generic-index))
                               ...
                               (case-lambda
                                 [(ego . generic-formals)
@@ -415,6 +423,56 @@ products:
            #'name
            (construct-name #'name #'name "?")
            #'(clause ...))]))))
+
+  (set! $query-interface
+    (lambda (iface-rtd ego)
+      (let ([rtd (#3%record-rtd ego)])
+        (let* ([v ($record-type-interfaces rtd)] [n (vector-length v)])
+          (let loop ([i 0])
+            (and (fx< i n)
+                 (let ([iface (vector-ref v i)])
+                   (if (#3%record? iface iface-rtd)
+                     iface
+                     (loop (fx+ i 1))))))))))
+
+  (set! $trans-open-interface
+    (lambda (x)
+      (syntax-case x ()
+        [(_ iface-name ([local-mname iface-mname] ...) obj-expr)
+         (lambda (env)
+           (let ([local-mname* #'(local-mname ...)])
+             (unless ($distinct-bound-ids? local-mname*)
+               ($invalid-ids-error local-mname* x "local method name"))
+             (let* ([diinfo (unwrap-diinfo (env #'iface-name))]
+                    [iface-rtd ($diinfo-rtd diinfo)])
+               (unless ($diinfo? diinfo) (syntax-error #'iface-name "unrecognized interface"))
+               (with-syntax ([(((generic-formals generic-flat-formals generic-index) ...) ...)
+                              (let ([x* (build-generic
+                                          (unwrap-minfos ($diinfo-minfos diinfo))
+                                          (enumerate (csv7:record-type-field-names iface-rtd)))])
+                                (map (lambda (iface-mname)
+                                       (let loop ([x* x*])
+                                         (when (null? x*) (syntax-error iface-mname "unrecognized interface method name"))
+                                         (syntax-case (car x*) ()
+                                           [(generic-name . stuff) 
+                                            (if (free-identifier=? #'generic-name iface-mname)
+                                                #'stuff
+                                                (loop (cdr x*)))])))
+                                     #'(iface-mname ...)))]
+                             [opt3 (= (optimize-level) 3)])
+                 #`(begin
+                     (define obj obj-expr)
+                     (define iface 
+                       (or (and (or opt3 (record? obj)) (#3%$query-interface '#,iface-rtd obj))
+                           (errorf 'iface-name "not implemented by ~s" obj)))
+                     (define local-mname
+                       (let ()
+                         (define method ((#3%csv7:record-field-accessor '#,iface-rtd generic-index) iface))
+                         ...
+                         (case-lambda
+                           [generic-formals (method obj . generic-flat-formals)]
+                           ...)))
+                     ...)))))])))
 
   (set! $trans-define-record-type
     (lambda (x)
@@ -443,15 +501,11 @@ products:
                                        (syntax-error x
                                          (format "no inherited ~s method for ~s in" 'mname 'rtname)))))))])
             #'(lambda (i formal ...)
+                ; NB: assuming i is a proper instance.  we should verify if we officially
+                ; allow users to access and call methods directly out of the vtable
                 (fluid-let-syntax ([ego (identifier-syntax i)])
                   super-definition
                   body)))))
-      (define unwrap-minfos
-        (lambda (minfos)
-         ; need list/vector structure, with arity unwrapped
-          (with-syntax ([(#(mname hidden-name arity formals flat-formals) ...) minfos])
-            (with-syntax ([(arity ...) (syntax->datum #'(arity ...))])
-              #'(#(mname hidden-name arity formals flat-formals) ...)))))
       (define build-interface-vtable
         (lambda (minfos)
           (lambda (iface)
@@ -511,9 +565,9 @@ products:
                           (list (reverse all-minfos)
                                 (reverse mlambdas)
                                 (reverse generics)
-                               ; We need to build a list of minfos that will actually be included in the rtd (vtable),
+                               ; build a list of minfos that will actually be included in the rtd/vtable
                                ; i.e., minfos that appear in this record-type and/or any parent record-type (but not in any interface).
-                               ; That list will match up with the vtable offsets.
+                               ; That list will match up with the rtd/vtable offsets.
                                 (let f ([possibly-included-minfos all-minfos] [included-minfos '()])
                                   (if (null? possibly-included-minfos)
                                       included-minfos
@@ -620,13 +674,14 @@ products:
                  (finish #'field-name public? #f #'accessor #f)]
                 [else (err "invalid field specifier")]))
             (parse-field0 x))
-          (define (parse-method x hidden)
+          (define (parse-method x)
             (syntax-case x ()
               [(name formals e1 e2 ...)
                (let-values ([(arity flat-formals) (parse-formals #'formals)])
-                 (make-method-desc
-                   (make-minfo #'name hidden arity #'formals flat-formals)
-                   #'(let () e1 e2 ...)))]))
+                 (let ([hidden (car (generate-temporaries (list #'name)))])
+                   (make-method-desc
+                     (make-minfo #'name hidden arity #'formals flat-formals)
+                     #'(let () e1 e2 ...))))]))
           (define-syntactic-monad Mclause %fields %methods %interface-names %parent %protocol
             %sealed? %opaque? %uid %prtd-expr %prcd-expr)
           (define parse-clauses
@@ -649,8 +704,7 @@ products:
                        (when (any-set? keys-seen (clause-key methods))
                          (syntax-error src "record-type definition has multiple methods clauses"))
                        (Mclause parse-clauses
-                         ([%methods (let ([ls #'(method ...)])
-                                      (map parse-method ls (generate-temporaries ls)))])
+                         ([%methods (map parse-method #'(method ...))])
                          (set-flags keys-seen (clause-key methods))
                          (cdr clause*)))]
                     [(implements iname ...)
@@ -735,20 +789,25 @@ products:
                          (set-flags keys-seen (clause-key parent-rtd))
                          (cdr clause*)))]
                     [_ (syntax-error (car clause*) "invalid define-record-type clause")]))))
-          (define (build-field-defn field-desc)
-            (let ([field-name (field-desc-name field-desc)]
-                  [accessor-name (field-desc-accessor field-desc)]
-                  [mutator-name (field-desc-mutator field-desc)])
-              #`(define-syntax #,field-name
-                  (make-variable-transformer
-                    (lambda (x)
-                      (syntax-case x (set!)
-                        [id (identifier? #'id) #'(#,accessor-name ego)]
-                        [(set! var val)
-                         #,(if mutator-name
-                               #`#'(#,mutator-name ego val)
-                               #`(syntax-error x "invalid assignment of immutable field"))]
-                        [(id e (... ...)) (identifier? #'id) #'((#,accessor-name ego) e (... ...))]))))))
+          (define (build-field-defn ctrtd)
+            (lambda (field-desc)
+              (let ([field-name (field-desc-name field-desc)]
+                    [index (field-desc-index field-desc)])
+                #`(module (#,field-name)
+                    (define get ($record-accessor/proxy '#,ctrtd #,index))
+                    #,@(if (field-desc-mutator field-desc)
+                           #`((define set ($record-mutator/proxy '#,ctrtd #,index)))
+                           '())
+                    (define-syntax #,field-name
+                      (make-variable-transformer
+                        (lambda (x)
+                          (syntax-case x (set!)
+                            [id (identifier? #'id) #'(get ego)]
+                            [(set! var val)
+                             #,(if (field-desc-mutator field-desc)
+                                   #'#'(set ego val)
+                                   #'(syntax-error x "invalid assignment of immutable field"))]
+                            [(id e (... ...)) (identifier? #'id) #'((get ego) e (... ...))]))))))))
           (call-with-values
             (lambda ()
               (Mclause parse-clauses
@@ -778,231 +837,217 @@ products:
                                            (unless ($diinfo? diinfo) (syntax-error x "unrecognized interface"))
                                            diinfo))
                                         %all-interface-names)]
-                     [%parent-minfos (if %parent (unwrap-minfos ($drtinfo-minfos %parent)) '())])
-                (if (and (null? %interfaces) (null? %methods) (null? %parent-minfos))
-                    ; this just a record definition
-                    ; construct plain record rtd at expand time iff:
-                    ;  - uid is not #f or definition is at top level
-                    ;  - %parent is #f or its rtd is not #f (implying it is a compile-time plain record), and
-                    ;  - %prtd-expr is #f.
-                    (with-syntax ([primlev (if (= (optimize-level) 3) 3 2)]
-                                  [((accessor-name accessor-index) ...)
-                                   (fold-right (lambda (field-desc ls)
-                                                 (if (field-desc-public? field-desc)
-                                                     `((,(field-desc-accessor field-desc) ,(field-desc-index field-desc)) ,@ls)
-                                                     ls))
-                                     '() %fields)]
-                                  [((mutator-name mutator-index) ...)
-                                   (fold-right (lambda (field-desc ls)
-                                                 (if (field-desc-public? field-desc)
-                                                     `((,(field-desc-mutator field-desc) ,(field-desc-index field-desc)) ,@ls)
-                                                     ls))
-                                     '() %mutable-fields)])
-                      (unless (distinct-bound-ids? `(,rtname ,make-name ,pred-name ,@#'(accessor-name ...) ,@#'(mutator-name ...)))
-                        (syntax-error src "record-type definition would result in duplicates among the record, constructor, predicate, accessor, and mutator names"))
-                      (if (and (or %uid ($syntax-top-level?))
-                               (if %parent ($drtinfo-maybe-rtd %parent) (not %prtd-expr)))
-                          (let ([rtd ($make-record-type-descriptor
-                                       #!base-rtd
-                                       (syntax->datum rtname)
-                                       (and %parent ($drtinfo-maybe-rtd %parent))
-                                       (syntax->datum %uid)
-                                       %sealed?
-                                       %opaque?
-                                       (list->vector (map syntax->datum (map field-desc-spec %fields)))
-                                       'define-record-type)])
-                            (if %protocol
-                                #`(begin
-                                    (define rcd
-                                      ($make-record-constructor-descriptor '#,rtd
+                     [%parent-minfos (if %parent (unwrap-minfos ($drtinfo-minfos %parent)) '())]
+                     [maybe-rtd 
+                       (and (and (null? %interfaces) (null? %methods) (null? %parent-minfos))
+                            (or %uid ($syntax-top-level?))
+                            (if %parent ($drtinfo-maybe-rtd %parent) (not %prtd-expr))
+                            ($make-record-type-descriptor
+                              #!base-rtd
+                              (syntax->datum rtname)
+                              (and %parent ($drtinfo-maybe-rtd %parent))
+                              (syntax->datum %uid)
+                              %sealed?
+                              %opaque?
+                              (list->vector (map syntax->datum (map field-desc-spec %fields)))
+                              'define-record-type))]
+                     [maybe-rcd
+                       (and (and maybe-rtd (not %protocol))
+                            ($make-record-constructor-descriptor maybe-rtd
+                              (and %parent ($drtinfo-maybe-rcd %parent))
+                              #f 'define-record-type))]
+                     ; ctrtd is used as a proxy in the creation of field accessors and mutators to avoid unnecessary
+                     ; checks accross library boundaries and to avoid creating unresolvable letrec* cycles among the
+                     ; methods, vtable, and field accessors of a record with methods.
+                     [maybe-ctrtd
+                       (or maybe-rtd
+                           (and (if %parent ($drtinfo-maybe-ctrtd %parent) (not %prtd-expr))
+                                ($make-record-type-descriptor
+                                  #!base-rtd
+                                  (syntax->datum rtname)
+                                  (and %parent ($drtinfo-maybe-ctrtd %parent))
+                                  #f
+                                  %sealed?
+                                  %opaque?
+                                  (list->vector (map syntax->datum (map field-desc-spec %fields)))
+                                  'define-record-type)))])
+                (with-syntax ([primlev (if (= (optimize-level) 3) 3 2)]
+                              [((accessor-name accessor-index) ...)
+                               (fold-right (lambda (field-desc ls)
+                                             (if (field-desc-public? field-desc)
+                                                 `((,(field-desc-accessor field-desc) ,(field-desc-index field-desc)) ,@ls)
+                                                 ls))
+                                 '() %fields)]
+                              [((mutator-name mutator-index) ...)
+                               (fold-right (lambda (field-desc ls)
+                                             (if (field-desc-public? field-desc)
+                                                 `((,(field-desc-mutator field-desc) ,(field-desc-index field-desc)) ,@ls)
+                                                 ls))
+                                 '() %mutable-fields)]
+                              [rtd (if maybe-rtd #`'#,maybe-rtd #'rtd)]
+                              [rcd (if maybe-rcd #`'#,maybe-rcd #'rcd)])
+                  (if (and (null? %interfaces) (null? %methods) (null? %parent-minfos))
+                      ; this just a record definition
+                      ; construct plain record rtd at expand time iff:
+                      ;  - uid is not #f or definition is at top level
+                      ;  - %parent is #f or its rtd is not #f (implying it is a compile-time plain record), and
+                      ;  - %prtd-expr is #f.
+                      (begin
+                        (unless ($distinct-bound-ids? `(,rtname ,make-name ,pred-name ,@#'(accessor-name ...) ,@#'(mutator-name ...)))
+                          (syntax-error src "record-type definition would result in duplicates among the record, constructor, predicate, accessor, and mutator names"))
+                        #`(begin
+                            #,(if maybe-rtd
+                                  #'(begin)
+                                  #`(define rtd
+                                      ($make-record-type-descriptor
+                                        #!base-rtd
+                                        '#,rtname
+                                        #,(if %parent ($drtinfo-rtd-expr %parent) %prtd-expr)
+                                        '#,%uid
+                                        #,%sealed?
+                                        #,%opaque?
+                                        '#,(list->vector (map field-desc-spec %fields))
+                                        'define-record-type)))
+                            #,(if maybe-rcd
+                                  #'(begin)
+                                  #`(define rcd
+                                      ($make-record-constructor-descriptor rtd
                                         #,(if %parent ($drtinfo-rcd-expr %parent) %prcd-expr)
                                         #,%protocol
-                                        'define-record-type))
-                                    (define-syntax #,rtname
-                                      (make-compile-time-value
-                                        #'#,($make-drtinfo
-                                              #'()
-                                              #!base-rtd
-                                              rtd
-                                              #f
-                                              #`'#,rtd
-                                              #'rcd
-                                              #'()
-                                              %sealed?
-                                              #t)))
-                                    (indirect-export #,rtname rcd)
-                                    (define #,make-name (($primitive primlev r6rs:record-constructor) rcd))
-                                    (define #,pred-name (($primitive primlev record-predicate) '#,rtd))
-                                    (define accessor-name (($primitive primlev record-accessor) '#,rtd accessor-index)) ...
-                                    (define mutator-name (($primitive primlev record-mutator) '#,rtd mutator-index)) ...)
-                                (let ([rcd ($make-record-constructor-descriptor rtd
-                                             (and %parent ($drtinfo-maybe-rcd %parent))
-                                             #f 'define-record-type)])
-                                  #`(begin
+                                        'define-record-type)))
+                            (define-syntax #,rtname
+                              (make-compile-time-value
+                                #'#,($make-drtinfo
+                                      #!base-rtd
+                                      maybe-ctrtd
+                                      maybe-rtd
+                                      maybe-rcd
+                                      #'rtd
+                                      #'rcd
+                                      #'() ; interface-names
+                                      #'() ; minfos
+                                      %sealed?
+                                      (and %protocol #t))))
+                            #,(if maybe-rtd #'(begin) #`(indirect-export #,rtname rtd))
+                            #,(if maybe-rcd #'(begin) #`(indirect-export #,rtname rcd))
+                            (define #,make-name (($primitive primlev r6rs:record-constructor) rcd))
+                            (define #,pred-name (($primitive primlev record-predicate) rtd))
+                            #,(let ([proxy (if maybe-ctrtd #`'#,maybe-ctrtd #'rtd)])
+                                (if (= (optimize-level) 3)
+                                    #`(begin
+                                        (define accessor-name ($record-accessor/proxy #,proxy accessor-index)) ...
+                                        (define mutator-name ($record-mutator/proxy #,proxy mutator-index)) ...)
+                                    #`(begin
+                                        (define accessor-name ($record-accessor/proxy #,proxy rtd accessor-index)) ...
+                                        (define mutator-name ($record-mutator/proxy #,proxy rtd mutator-index)) ...)))
+                            ))
+                      (begin
+                        (when %uid
+                          (syntax-error src "a record type with methods or interfaces cannot be nongenerative"))
+                        (unless maybe-ctrtd
+                          (syntax-error src "all ancestors of a record type with methods or interfaces must be specified statically, i.e., with parent rather than parent-rtd"))
+                        (unless ($distinct-bound-ids? (map field-desc-name %fields))
+                          (syntax-error src "duplicates among field names would cause ambiguity for references within methods"))
+                        (with-syntax ([(iface-name ...) %all-interface-names]
+                                      [(field-defn ...) (map (build-field-defn maybe-ctrtd) %fields)]
+                                      [((all-minfo ...) ((new-hidden-mname mlambda) ...) (generic ...) (included-minfo ...))
+                                       (process-methods rtname %interfaces %parent-minfos
+                                         (map method-desc-minfo %methods)
+                                         (map method-desc-body %methods))]
+                                      [self (datum->syntax rtname 'self)])
+                          (let ([%vtable-rtd (let ([parent-vtable-rtd
+                                                    (or (and %parent ($drtinfo-base-rtd %parent))
+                                                        #!base-rtd)])
+                                               (if (null? #'(generic ...))
+                                                   parent-vtable-rtd
+                                                   ($make-record-type-descriptor
+                                                     #!base-rtd
+                                                     'vtable-rtd
+                                                     parent-vtable-rtd
+                                                     (gensym "vtable-rtd")
+                                                     #f
+                                                     #f
+                                                     (vector-map
+                                                       (lambda (x) `(immutable ,(syntax->datum (minfo-mname x))))
+                                                       #'#(generic ...))
+                                                     'define-record-type)))])
+                            (with-syntax ([((generic-name (generic-formals generic-flat-formals generic-index) ...) ...)
+                                           (build-generic
+                                             #'(generic ...)
+                                             (let ([indices (enumerate (csv7:record-type-field-names %vtable-rtd))] [minfos #'(included-minfo ...)])
+                                               (let f ([indices (list-tail indices (- (length indices) (length minfos)))]
+                                                       [minfos minfos]
+                                                       [generics #'(generic ...)])
+                                                 (if (null? generics)
+                                                     '()
+                                                     (if (eq? (car generics) (car minfos))
+                                                         (cons (car indices) (f (cdr indices) (cdr minfos) (cdr generics)))
+                                                         (f (cdr indices) (cdr minfos) generics))))))])
+                              (unless ($distinct-bound-ids? `(,rtname ,make-name ,pred-name ,@#'(accessor-name ... mutator-name ...) ,@#'(generic-name ...)))
+                                (syntax-error src "record-type definition would result in duplicates among the record-type, constructor, predicate, accessor, mutator, and generic names"))
+                              (with-syntax ([((method-accessor ...) ...) (map generate-temporaries #'((generic-index ...) ...))])
+                                #`(begin
+                                    (module (#,rtname rtd/vtable rcd new-hidden-mname ...)
+                                      (define-syntax ego values)
+                                      (module (new-hidden-mname ...)
+                                        field-defn ...
+                                        (define-syntax self (identifier-syntax ego))
+                                        (define new-hidden-mname mlambda) ...)
+                                      (define rtd/vtable
+                                        (#3%$make-record-type-descriptor/interfaces
+                                          '#,%vtable-rtd
+                                          '#,rtname
+                                          #,(and %parent ($drtinfo-rtd-expr %parent))
+                                          #f
+                                          #,%sealed?
+                                          #,%opaque?
+                                          '#,(list->vector (map field-desc-spec %fields))
+                                          (immutable-vector #,@(map (build-interface-vtable #'(all-minfo ...)) %interfaces))
+                                          'define-record-type
+                                          #,@(map minfo-hidden-mname #'(included-minfo ...))))
+                                      (define rcd
+                                        (#3%$make-record-constructor-descriptor rtd/vtable
+                                          #,(and %parent ($drtinfo-rcd-expr %parent))
+                                          #,%protocol
+                                          'define-record-type))
                                       (define-syntax #,rtname
                                         (make-compile-time-value
                                           #'#,($make-drtinfo
-                                                #'()
-                                                #!base-rtd
-                                                rtd
-                                                rcd
-                                                #`'#,rtd
-                                                #`'#,rcd
-                                                #'()
+                                                %vtable-rtd
+                                                maybe-ctrtd
+                                                #f
+                                                #f
+                                                #'rtd/vtable
+                                                #'rcd
+                                                #'(iface-name ...)
+                                                #'(all-minfo ...)
                                                 %sealed?
-                                                #f)))
-                                      (define #,make-name (($primitive primlev r6rs:record-constructor) '#,rcd))
-                                      (define #,pred-name (($primitive primlev record-predicate) '#,rtd))
-                                      (define accessor-name (($primitive primlev record-accessor) '#,rtd accessor-index)) ...
-                                      (define mutator-name (($primitive primlev record-mutator) '#,rtd mutator-index)) ...))))
-                          #`(begin
-                              (define rtd
-                                ($make-record-type-descriptor
-                                  #!base-rtd
-                                  '#,rtname
-                                  #,(if %parent ($drtinfo-rtd-expr %parent) %prtd-expr)
-                                  '#,%uid
-                                  #,%sealed?
-                                  #,%opaque?
-                                  '#,(list->vector (map field-desc-spec %fields))
-                                  'define-record-type))
-                              (define rcd
-                                ($make-record-constructor-descriptor rtd
-                                  #,(if %parent ($drtinfo-rcd-expr %parent) %prcd-expr)
-                                  #,%protocol
-                                  'define-record-type))
-                              (define-syntax #,rtname
-                                (make-compile-time-value
-                                  #'#,($make-drtinfo
-                                        #'()
-                                        #!base-rtd
-                                        #f
-                                        #f
-                                        #'rtd
-                                        #'rcd
-                                        #'()
-                                        %sealed?
-                                        (and %protocol #t))))
-                              (indirect-export #,rtname rtd rcd)
-                              (define #,make-name (($primitive primlev r6rs:record-constructor) rcd))
-                              (define #,pred-name (($primitive primlev record-predicate) rtd))
-                              (define accessor-name (($primitive primlev record-accessor) rtd accessor-index)) ...
-                              (define mutator-name (($primitive primlev record-mutator) rtd mutator-index)) ...)))
-                    (with-syntax ([primlev (if (= (optimize-level) 3) 3 2)]
-                                  [opt3 (= (optimize-level) 3)]
-                                  [(iface-name ...) %all-interface-names]
-                                  [(accessor-name ...) (map field-desc-accessor %fields)]
-                                  [(accessor-index ...) (map field-desc-index %fields)]
-                                  [(mutator-name ...) (map field-desc-mutator %mutable-fields)]
-                                  [(mutator-index ...) (map field-desc-index %mutable-fields)]
-                                  [(field-defn ...) (map build-field-defn %fields)]
-                                  [(public-name ...)
-                                   (fold-left
-                                     (lambda (ls field-desc)
-                                       (if (field-desc-public? field-desc)
-                                           (cons (field-desc-accessor field-desc)
-                                             (let ([mutator (field-desc-mutator field-desc)])
-                                               (if mutator (cons mutator ls) ls)))
-                                           ls))
-                                     '()
-                                     %fields)]
-                                  [((all-minfo ...) ((new-hidden-mname mlambda) ...) (generic ...) (included-minfo ...))
-                                   (process-methods rtname %interfaces %parent-minfos
-                                     (map method-desc-minfo %methods)
-                                     (map method-desc-body %methods))]
-                                  [self (datum->syntax rtname 'self)])
-                      (when %uid (syntax-error src "a record type with methods or interfaces cannot be nongenerative"))
-                      (unless (distinct-bound-ids? `(,rtname ,make-name ,pred-name ,@#'(public-name ...)))
-                        (syntax-error src "record-type definition would result in duplicates among the record-type, constructor, predicate, accessor, and mutator names"))
-                      (let ([%vtable-rtd (let ([parent-vtable-rtd
-                                                (or (and %parent ($drtinfo-vtable-rtd %parent))
-                                                    #!base-rtd)])
-                                           (if (null? #'(generic ...))
-                                               parent-vtable-rtd
-                                               ($make-record-type-descriptor
-                                                 #!base-rtd
-                                                 'vtable-rtd
-                                                 parent-vtable-rtd
-                                                 (gensym "vtable-rtd")
-                                                 #f
-                                                 #f
-                                                 (vector-map
-                                                   (lambda (x) `(immutable ,(syntax->datum (minfo-mname x))))
-                                                   #'#(generic ...))
-                                                 'define-record-type)))])
-                        (with-syntax ([((generic-name (generic-formals generic-flat-formals generic-index) ...) ...)
-                                       (build-generic
-                                         #'(generic ...)
-                                         (let ([indices (enumerate (csv7:record-type-field-names %vtable-rtd))] [minfos #'(included-minfo ...)])
-                                           (let f ([indices (list-tail indices (- (length indices) (length minfos)))]
-                                                   [minfos minfos]
-                                                   [generics #'(generic ...)])
-                                             (if (null? generics)
-                                                 '()
-                                                 (if (eq? (car generics) (car minfos))
-                                                     (cons (car indices) (f (cdr indices) (cdr minfos) (cdr generics)))
-                                                     (f (cdr indices) (cdr minfos) generics))))))])
-                          (with-syntax ([((method-accessor ...) ...) (map generate-temporaries #'((generic-index ...) ...))])
-                             (unless (distinct-bound-ids? (map field-desc-name %fields))
-                               (syntax-error src "duplicates among field names would cause ambiguity for references within methods"))
-                            #`(begin
-                                (define protocol #,%protocol) ; should be scoped where it can't see fields, etc.
-                                (module (#,rtname vtable rcd accessors-and-mutators new-hidden-mname ...)
-                                  (define-syntax ego values)
-                                  field-defn ...
-                                  (module (new-hidden-mname ...)
-                                    (define-syntax self (identifier-syntax ego))
-                                    (define new-hidden-mname mlambda) ...)
-                                  (define vtable
-                                    ($make-record-type-descriptor/interfaces
-                                      '#,%vtable-rtd
-                                      '#,rtname
-                                      #,(if %parent ($drtinfo-rtd-expr %parent) %prtd-expr)
-                                      #f
-                                      #,%sealed?
-                                      #,%opaque?
-                                      '#,(list->vector (map field-desc-spec %fields))
-                                      (vector #,@(map (build-interface-vtable #'(all-minfo ...)) %interfaces))
-                                      'define-record-type
-                                      #,@(map minfo-hidden-mname #'(included-minfo ...))))
-                                  (module accessors-and-mutators (accessor-name ... mutator-name ...)
-                                    (define accessor-name (($primitive primlev record-accessor) vtable accessor-index)) ...
-                                    (define mutator-name (($primitive primlev record-mutator) vtable mutator-index)) ...)
-                                  (import accessors-and-mutators)
-                                  (define rcd
-                                    ($make-record-constructor-descriptor vtable
-                                      #,(if %parent ($drtinfo-rcd-expr %parent) %prcd-expr)
-                                      protocol
-                                      'define-record-type))
-                                  (define-syntax #,rtname
-                                    (make-compile-time-value
-                                      #'#,($make-drtinfo
-                                            #'(all-minfo ...)
-                                            %vtable-rtd
-                                            #f
-                                            #f
-                                            #'vtable
-                                            #'rcd
-                                            #'(iface-name ...)
-                                            %sealed?
-                                            (and %protocol #t))))
-                                  (indirect-export #,rtname vtable rcd new-hidden-mname ...))
-                                (define #,make-name (($primitive primlev r6rs:record-constructor) rcd))
-                                (define #,pred-name (($primitive primlev record-predicate) vtable))
-                                (define public-name (let () (import accessors-and-mutators) public-name)) ...
-                                (define generic-name
-                                  (let ([who 'generic-name]) ; can't ref generic-name pattern vble inside ... below
-                                    (define method-accessor (csv7:record-field-accessor '#,%vtable-rtd generic-index))
-                                    ...
-                                    (case-lambda
-                                      [(ego . generic-formals)
-                                       (unless (or opt3
-                                                   (and (#3%record? ego vtable)
-                                                        (#3%record? (#3%record-rtd ego) '#,%vtable-rtd)))
-                                         (errorf who "not applicable to ~s" ego))
-                                       ((method-accessor (#3%record-rtd ego)) ego . generic-flat-formals)]
-                                      ...)))
-                                ...))))))))))
+                                                (and %protocol #t))))
+                                      (indirect-export #,rtname rtd/vtable rcd new-hidden-mname ...))
+                                    (define #,make-name (($primitive primlev r6rs:record-constructor) rcd))
+                                    (define #,pred-name (($primitive primlev record-predicate) rtd/vtable))
+                                    #,(let ([proxy (if maybe-ctrtd #`'#,maybe-ctrtd #'rtd/vtable)])
+                                        (if (= (optimize-level) 3)
+                                            #`(begin
+                                                (define accessor-name ($record-accessor/proxy #,proxy accessor-index)) ...
+                                                (define mutator-name ($record-mutator/proxy #,proxy mutator-index)) ...)
+                                            #`(begin
+                                                (define accessor-name ($record-accessor/proxy #,proxy rtd/vtable accessor-index)) ...
+                                                (define mutator-name ($record-mutator/proxy #,proxy rtd/vtable mutator-index)) ...)))
+                                    (define generic-name
+                                      (let ([who 'generic-name]) ; can't ref generic-name pattern vble inside ... below
+                                        (define method-accessor (#3%csv7:record-field-accessor '#,%vtable-rtd generic-index))
+                                        ...
+                                        (case-lambda
+                                          [(ego . generic-formals)
+                                           #,@(if (= (optimize-level) 3)
+                                                  #'()
+                                                  #`((unless (and (#3%record? ego rtd/vtable)
+                                                                  (#3%record? (#3%record-rtd ego) '#,%vtable-rtd))
+                                                       (errorf who "not applicable to ~s" ego))))
+                                           ((method-accessor (#3%record-rtd ego)) ego . generic-flat-formals)]
+                                          ...)))
+                                    ...))))))))))))
         (syntax-case x ()
           [(_ name clause ...)
            (identifier? #'name)
@@ -1243,6 +1288,7 @@ products:
 (define-syntax sealed (lambda (x) (syntax-error x "misplaced aux keyword")))
 
 (define-syntax define-interface (lambda (x) ($trans-define-interface x)))
+(define-syntax open-interface (lambda (x) ($trans-open-interface x)))
 (define-syntax define-record-type (lambda (x) ($trans-define-record-type x)))
 (define-syntax type-descriptor (lambda (x) ($trans-record-type-descriptor x "type-descriptor")))
 (define-syntax record-type-descriptor (lambda (x) ($trans-record-type-descriptor x "record-type-descriptor")))

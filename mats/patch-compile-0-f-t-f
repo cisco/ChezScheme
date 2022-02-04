@@ -1,5 +1,5 @@
-*** patches-work-dir/errors-compile-0-f-f-f	2021-12-03 16:51:41.000000000 -0800
---- patches-work-dir/errors-compile-0-f-t-f	2021-12-03 16:51:41.000000000 -0800
+*** patches-work-dir/errors-compile-0-f-f-f	2022-02-03 16:55:57.000000000 -0800
+--- patches-work-dir/errors-compile-0-f-t-f	2022-02-03 16:55:57.000000000 -0800
 ***************
 *** 54,60 ****
   primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".
@@ -397,8 +397,8 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "unrecognized parent record type fratrat".
 ***************
-*** 7921,7939 ****
-  record.mo:Expected error in mat oop: "record-type definition has multiple method clauses (define-record-type foo (fields x y) (methods (show () (...))) (methods (get-x () x)))".
+*** 7921,7932 ****
+  record.mo:Expected error in mat oop: "record-type definition has multiple methods clauses (define-record-type foo (fields x y) (methods (show () (...))) (methods (get-x () x)))".
   record.mo:Expected error in mat oop: "invalid assignment of immutable field (set! x v)".
   record.mo:Expected error in mat oop: "variable blast-x-set! is not bound".
 ! record.mo:Expected error in mat oop: "#<record of type <q>> is not of type #<record type <r>>".
@@ -409,16 +409,9 @@
 ! record.mo:Expected error in mat oop: "#<record of type <r>> is not of type #<record type <s>>".
   record.mo:Expected error in mat oop: "record-rtd: #<e> is not a record".
   record.mo:Expected error in mat oop: "parent record type is sealed b".
-  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
-  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
-  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
-  record.mo:Expected error in mat oop: "define-record-type: unrecognized parent record type this-parent-should-be-undefined".
-! record.mo:Expected error in mat oop-contributed: "incorrect number of arguments to #<procedure>".
-  record.mo:Expected error in mat oop-contributed: "no inherited foo method for <a> in (super)".
-  record.mo:Expected error in mat oop-contributed: "multiple definitions for Repeat and other identifiers in body (let () (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) 0)".
-  record.mo:Expected error in mat oop-contributed: "record-type definition would result in duplicates among the record, constructor, predicate, accessor, and mutator names (define-record-type Vars (parent <root>) (fields (mutable i) (mutable i)) (protocol (lambda (...) (...))) (methods))".
---- 7921,7939 ----
-  record.mo:Expected error in mat oop: "record-type definition has multiple method clauses (define-record-type foo (fields x y) (methods (show () (...))) (methods (get-x () x)))".
+  record.mo:Expected error in mat oop: "all ancestors of a record type with methods or interfaces must be specified statically, i.e., with parent rather than parent-rtd (define-record-type b (parent-rtd (record-rtd (...)) #f) (methods (m2 () 23)))".
+--- 7921,7932 ----
+  record.mo:Expected error in mat oop: "record-type definition has multiple methods clauses (define-record-type foo (fields x y) (methods (show () (...))) (methods (get-x () x)))".
   record.mo:Expected error in mat oop: "invalid assignment of immutable field (set! x v)".
   record.mo:Expected error in mat oop: "variable blast-x-set! is not bound".
 ! record.mo:Expected error in mat oop: "<r>-mupu1: #<record of type <q>> is not of type #<record type <r>>".
@@ -429,10 +422,20 @@
 ! record.mo:Expected error in mat oop: "s$mupu2-set!: #<record of type <r>> is not of type #<record type <s>>".
   record.mo:Expected error in mat oop: "record-rtd: #<e> is not a record".
   record.mo:Expected error in mat oop: "parent record type is sealed b".
-  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
-  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
-  record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
+  record.mo:Expected error in mat oop: "all ancestors of a record type with methods or interfaces must be specified statically, i.e., with parent rather than parent-rtd (define-record-type b (parent-rtd (record-rtd (...)) #f) (methods (m2 () 23)))".
+***************
+*** 7936,7942 ****
   record.mo:Expected error in mat oop: "define-record-type: unrecognized parent record type this-parent-should-be-undefined".
+  record.mo:Expected error in mat oop: "unrecognized interface method name m2".
+  record.mo:Expected error in mat oop: "duplicate local method name foo in (open-interface <A> ((foo m1) (foo m2)) a)".
+! record.mo:Expected error in mat oop-contributed: "incorrect number of arguments to #<procedure>".
+  record.mo:Expected error in mat oop-contributed: "no inherited foo method for <a> in (super)".
+  record.mo:Expected error in mat oop-contributed: "multiple definitions for Repeat and other identifiers in body (let () (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) 0)".
+  record.mo:Expected error in mat oop-contributed: "record-type definition would result in duplicates among the record, constructor, predicate, accessor, and mutator names (define-record-type Vars (parent <root>) (fields (mutable i) (mutable i)) (protocol (lambda (...) (...))) (methods))".
+--- 7936,7942 ----
+  record.mo:Expected error in mat oop: "define-record-type: unrecognized parent record type this-parent-should-be-undefined".
+  record.mo:Expected error in mat oop: "unrecognized interface method name m2".
+  record.mo:Expected error in mat oop: "duplicate local method name foo in (open-interface <A> ((foo m1) (foo m2)) a)".
 ! record.mo:Expected error in mat oop-contributed: "incorrect number of arguments to #<procedure make-<a>>".
   record.mo:Expected error in mat oop-contributed: "no inherited foo method for <a> in (super)".
   record.mo:Expected error in mat oop-contributed: "multiple definitions for Repeat and other identifiers in body (let () (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) 0)".

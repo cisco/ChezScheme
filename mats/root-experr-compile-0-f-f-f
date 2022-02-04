@@ -7929,10 +7929,13 @@ record.mo:Expected error in mat oop: "#<record of type <r>> is not of type #<rec
 record.mo:Expected error in mat oop: "#<record of type <r>> is not of type #<record type <s>>".
 record.mo:Expected error in mat oop: "record-rtd: #<e> is not a record".
 record.mo:Expected error in mat oop: "parent record type is sealed b".
-record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
+record.mo:Expected error in mat oop: "all ancestors of a record type with methods or interfaces must be specified statically, i.e., with parent rather than parent-rtd (define-record-type b (parent-rtd (record-rtd (...)) #f) (methods (m2 () 23)))".
+record.mo:Expected error in mat oop: "all ancestors of a record type with methods or interfaces must be specified statically, i.e., with parent rather than parent-rtd (define-record-type b (parent-rtd (record-rtd (...)) #f) (methods (m2 () 23)))".
 record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
 record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
 record.mo:Expected error in mat oop: "define-record-type: unrecognized parent record type this-parent-should-be-undefined".
+record.mo:Expected error in mat oop: "unrecognized interface method name m2".
+record.mo:Expected error in mat oop: "duplicate local method name foo in (open-interface <A> ((foo m1) (foo m2)) a)".
 record.mo:Expected error in mat oop-contributed: "incorrect number of arguments to #<procedure>".
 record.mo:Expected error in mat oop-contributed: "no inherited foo method for <a> in (super)".
 record.mo:Expected error in mat oop-contributed: "multiple definitions for Repeat and other identifiers in body (let () (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) 0)".
@@ -8322,6 +8325,7 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat generate-temporaries: "incorrect argument count in call (generate-temporaries (quote (a b c)) (quote (d e f)))".
 8.mo:Expected error in mat generate-temporaries: "generate-temporaries: improper list structure (a b . c)".
 8.mo:Expected error in mat generate-temporaries: "generate-temporaries: cyclic list structure (a b c b c b ...)".
+8.mo:Expected error in mat generate-temporaries: "generate-temporaries: cyclic list structure (a b a b a b ...)".
 8.mo:Expected error in mat syntax->list: "syntax->list: invalid argument #<syntax a>".
 8.mo:Expected error in mat syntax->list: "syntax->list: invalid argument #<syntax (a b . e)>".
 8.mo:Expected error in mat syntax->vector: "syntax->vector: invalid argument #<syntax a>".

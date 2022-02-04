@@ -794,6 +794,10 @@
     (load "testfile.so")
     #t)
   (equal? $gt-x '(53 -10 . 17))
+ ; make sure generate-temporaries doesn't loop indefinitely on cycles
+  (error? ; cycle
+    (generate-temporaries (let ([x (list 'a 'b)]) (set-cdr! (cdr x) x) x)))
+  (= (length (generate-temporaries (let ([x (list 'a 'b 'c)]) (set-car! (cddr x) x) x))) 3)
 )
 
 (mat syntax->list

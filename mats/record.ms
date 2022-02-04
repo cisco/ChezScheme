@@ -9969,7 +9969,7 @@
       (let ([q (make-b 71)])
         (list (a? q) (b? q) (c? q) (a-x q) (m1 q) (m2 q)))))
 
-  (equal? ; okay if we don't try to call m1
+  (error? ; must fully specify ancestry of record-type w/methods using parent, not parent-rtd
     (let ()
       (define-record-type a (fields x) (methods (m1 () (* x 2))))
       (define-record-type b
@@ -9977,13 +9977,9 @@
           (record-rtd (make-a 0))
           #f)
         (methods (m2 () 23)))
-      (define-record-type c
-        (parent-rtd
-          (record-rtd (make-b 0))
-          #f))
+      (define-record-type c (parent b))
       (let ([q (make-b 71)])
-        (list (a? q) (b? q) (c? q) (a-x q) (m2 q))))
-    '(#t #t #f 71 23))
+        (list (a? q) (b? q) (c? q) (a-x q) (m2 q)))))
 
   ; extending a record type with a class is okay
   (equal?
@@ -10041,6 +10037,76 @@
       (define-record-type a (parent this-parent-should-be-undefined))
       (make-a)))
   (begin (print-record #t) (print-record))
+  (equal?
+    (let ()
+      (define-interface <A> (methods (m1 (x))))
+      (define-interface <B> (methods (m2 (x))))
+      (define-interface <C> (parent <A>) (methods (m3 (x))))
+      (define-record-type A
+        (implements <A>)
+        (fields x)
+        (methods [m1 (y) (list 'A 'm1 x y)]))
+      (define-record-type B
+        (implements <B>)
+        (fields x y)
+        (methods [m2 (z) (list 'B 'm2 x y z)]))
+      (define-record-type C
+        (implements <B> <C>)
+        (fields x y z)
+        (methods
+          [m1 (w) (list 'C 'm1 x y z w)]
+          [m2 (w) (list 'C 'm2 x y z w)]
+          [m3 (w) (list 'C 'm3 x y z w)]
+          [m4 (w) (list 'C 'm4 x y z w)]))
+      (define a (make-A 23))
+      (define b (make-B 31 47))
+      (define c (make-C 53 67 71))
+      (open-interface <A> ([a.m1 m1]) a)
+      (open-interface <B> ([b.m2 m2]) b)
+      (open-interface <C> ([c.m1 m1] [c.m3 m3]) c)
+      (open-interface <A> ([c.m1^ m1]) c)
+      (open-interface <B> ([c.m2^ m2]) c)
+      (list
+        (list (<A>? a) (<A>? b) (<A>? c))
+        (list (<B>? a) (<B>? b) (<B>? c))
+        (list (<C>? a) (<C>? b) (<C>? c))
+        (a.m1 3)
+        (b.m2 5)
+        (c.m1 7)
+        (c.m3 13)
+        (c.m1^ 17)
+        (c.m2^ 19)))
+    '((#t #f #t)
+      (#f #t #t)
+      (#f #f #t)
+      (A m1 23 3)
+      (B m2 31 47 5)
+      (C m1 53 67 71 7)
+      (C m3 53 67 71 13)
+      (C m1 53 67 71 17)
+      (C m2 53 67 71 19)))
+  (error? ; no method in interface
+    (let ()
+      (define-interface <A> (methods (m1 (x))))
+      (define-record-type A
+        (implements <A>)
+        (fields x)
+        (methods [m1 (y) (list 'A 'm1 x y)]))
+      (define a (make-A 23))
+      (open-interface <A> ([a.m1 m1] [a.m2 m2]) a)
+      (a.m1 3)))
+  (error? ; duplicate local method name
+    (let ()
+      (define-interface <A> (methods (m1 (x)) (m2 (y))))
+      (define-record-type A
+        (implements <A>)
+        (fields x)
+        (methods
+          [m1 (y) (list 'A 'm1 x y)]
+          [m2 (y) (list 'A 'm2 x y)]))
+      (define a (make-A 23))
+      (open-interface <A> ([foo m1] [foo m2]) a)
+      (foo 3)))
 )
 
 (mat oop-contributed
@@ -11784,4 +11850,98 @@
         (let ([r (make-rect)]) (get-h r))))
     0)
   (begin (print-record #t) (print-record))
+)
+
+(mat oop-cp0
+  (equal?
+    (let ()
+      (define-record-type a (fields x) (methods [m (y) (+ x y)]))
+      (m (make-a 17) 13))
+    30)
+  (equivalent-expansion? ; optimize-level 2 expansion of above
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-record-type a (fields x) (methods [m (y) (+ x y)]))
+           (m (make-a 17) 13))))
+    30)
+  (equivalent-expansion? ; optimize-level 3 expansion of above
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-record-type a (fields x) (methods [m (y) (+ x y)]))
+           (m (make-a 17) 13))))
+    30)
+  (equal?
+    (let ()
+      (define-record-type a (fields x) (methods [m (y) (+ x y)]))
+      (define-record-type b (parent a) (fields y))
+      (m (make-b 17 13) 11))
+    28)
+  (equivalent-expansion? ; optimize-level 2 expansion of above
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-record-type a (fields x) (methods [m (y) (+ x y)]))
+           (define-record-type b (parent a) (fields y))
+           (m (make-b 17 13) 11))))
+    28)
+  (equivalent-expansion? ; optimize-level 3 expansion of above
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-record-type a (fields x) (methods [m (y) (+ x y)]))
+           (define-record-type b (parent a) (fields y))
+           (m (make-b 17 13) 11))))
+    28)
+  (equal?
+    (let ()
+      (define-record-type a (fields x) (methods [m (y) (+ x y)]))
+      (define-record-type b (parent a) (fields y) (methods [m (z) (+ (super y) z)]))
+      (m (make-b 17 13) 11))
+    41)
+  (equivalent-expansion? ; optimize-level 2 expansion of above
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-record-type a (fields x) (methods [m (y) (+ x y)]))
+           (define-record-type b (parent a) (fields y) (methods [m (z) (+ (super y) z)]))
+           (m (make-b 17 13) 11))))
+    41)
+  (equivalent-expansion? ; optimize-level 3 expansion of above
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-record-type a (fields x) (methods [m (y) (+ x y)]))
+           (define-record-type b (parent a) (fields y) (methods [m (z) (+ (super y) z)]))
+           (m (make-b 17 13) 11))))
+    41)
+  (procedure?
+    (let ()
+      (define-record-type a (fields x) (methods [m (y) (+ x y)]))
+      (lambda (x) (m x 13))))
+  (equivalent-expansion? ; optimize-level 3 expansion of above
+    (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-record-type a (fields x) (methods [m (y) (+ x y)]))
+           (lambda (x) (m x 13)))))
+    `(lambda (x) ((#3%$object-ref 'scheme-object (#3%record-rtd x) ,fixnum?) x 13)))
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-interface i (methods (m1 (y))))
+           (define-record-type a (implements i) (fields x) (methods [m1 (y) (+ x y)]))
+           (m1 (make-a 17) 12))))
+    29)
+  (equivalent-expansion?
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-interface i (methods (m1 (y))))
+           (define-record-type a (implements i) (fields x) (methods [m1 (y) (+ x y)]))
+           (open-interface i ([a.m1 m1]) (make-a 17))
+           (a.m1 12))))
+    29)
 )

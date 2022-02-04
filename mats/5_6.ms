@@ -18,6 +18,23 @@
     (eq? (vector) '#())
  )
 
+(mat immutable-vector
+    (equal? (immutable-vector 1 2 3 4) (vector->immutable-vector '#(1 2 3 4)))
+    (eq? (immutable-vector) (vector->immutable-vector '#()))
+    (begin
+      (define (f x)
+        (let ([v (immutable-vector (begin (write 'a) (+ x 1)) (begin (write 'a) 2) (begin (write 'a) (cons 3 x)))])
+          (for-each write
+            (list
+              (begin (write 'b) (vector-ref v 0))
+              (begin (write 'b) (vector-ref v 1))
+              (begin (write 'b) (vector-ref v 2))))))
+      #t)
+    (equal?
+      (with-output-to-string (lambda () (f 7)))
+      "aaabbb82(3 . 7)")
+ )
+
 (mat make-vector
     (eqv? (vector-length (make-vector 10)) 10)
     (eqv? (vector-length (make-vector 100)) 100)

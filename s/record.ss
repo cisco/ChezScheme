@@ -432,10 +432,7 @@
                            ; comparison faster and prevents unwanted machine-dependent
                            ; matches like int and integer-32.  it also prevents
                            ; ptr and scheme-object from matching---c'est la vie.
-                            (eq? (fld-type fld1) (fld-type fld2))
-                           ; following is paranoid; overall size
-                           ; check should suffice
-                            #;(= (fld-byte fld1) (fld-byte fld2)))))
+                            (eq? (fld-type fld1) (fld-type fld2)))))
                    (and (= (length flds1) (length flds2))
                         (andmap same-field? flds1 flds2))))
                (let ()
@@ -723,55 +720,85 @@
 
     (let ()
       (define (rfa who rtd fld)
-        (let ((record-err (lambda (x) ($record-oops #f x rtd)))
-              (offset (fld-byte fld))
-              (ty (fld-type fld)))
-          (define-syntax ref
-            (syntax-rules ()
-              [(_ type bytes pred)
-               (rec accessor
-                 (lambda (x)
-                   (unless (record? x rtd) (record-err x))
-                   (#3%$object-ref 'type x offset)))]))
-          (record-datatype cases (filter-foreign-type ty) ref
-            ($oops who "unrecognized type ~s" ty))))
+        (let ([offset (fld-byte fld)] [ty (fld-type fld)])
+           (if rtd
+               (let ([record-err (lambda (x rtd) ($record-oops #f x rtd))])
+                 (define-syntax ref
+                   (syntax-rules ()
+                     [(_ type bytes pred)
+                      (rec accessor
+                        (lambda (x)
+                          (unless (record? x rtd) (record-err x rtd))
+                          (#3%$object-ref 'type x offset)))]))
+                 (record-datatype cases (filter-foreign-type ty) ref
+                   ($oops who "unrecognized type ~s" ty)))
+               (let ()
+                 (define-syntax ref
+                   (syntax-rules ()
+                     [(_ type bytes pred)
+                      (rec accessor
+                        (lambda (x)
+                          (#3%$object-ref 'type x offset)))]))
+                 (record-datatype cases (filter-foreign-type ty) ref
+                   ($oops who "unrecognized type ~s" ty))))))
       (set-who! #(csv7: record-field-accessor)
         (lambda (rtd field-spec)
           (rfa who rtd (find-fld who rtd field-spec))))
       (set-who! record-accessor
         (lambda (rtd field-spec)
-          (rfa who rtd (r6rs:find-fld who rtd field-spec)))))
+          (rfa who rtd (r6rs:find-fld who rtd field-spec))))
+      (set-who! $record-accessor/proxy
+        (case-lambda
+          [(proxy field-spec)
+           (rfa who #f (r6rs:find-fld who proxy field-spec))]
+          [(proxy rtd field-spec)
+           (rfa who rtd (r6rs:find-fld who proxy field-spec))])))
 
     (let ()
-      (define (rfm who rtd fld field-spec)
+      (define (rfm who proxy rtd fld field-spec)
         (if (fld-mutable? fld)
-            (let ((record-err (lambda (x t) ($record-oops #f x t)))
-                  (value-err (lambda (x t) ($oops #f "invalid value ~s for foreign type ~s" x t)))
-                  (offset (fld-byte fld))
-                  (ty (fld-type fld)))
-              (define-syntax set
-                (syntax-rules (scheme-object)
-                  [(_ scheme-object bytes pred)
-                   (rec mutator
-                     (lambda (x v)
-                       (unless (record? x rtd) (record-err x rtd))
-                       (#3%$object-set! 'scheme-object x offset v)))]
-                  [(_ type bytes pred)
-                   (rec mutator
-                     (lambda (x v)
-                       (unless (record? x rtd) (record-err x rtd))
-                       (unless (pred v) (value-err v ty))
-                       (#3%$object-set! 'type x offset v)))]))
-              (record-datatype cases (filter-foreign-type ty) set
-                ($oops who "unrecognized type ~s" ty)))
+            (let ([offset (fld-byte fld)] [ty (fld-type fld)])
+              (if rtd
+                  (let ([record-err (lambda (x rtd) ($record-oops #f x rtd))]
+                        [value-err (lambda (x ty) ($oops #f "invalid value ~s for foreign type ~s" x ty))])
+                    (define-syntax set
+                      (syntax-rules (scheme-object)
+                        [(_ scheme-object bytes pred)
+                         (rec mutator
+                           (lambda (x v)
+                             (unless (record? x rtd) (record-err x rtd))
+                             (#3%$object-set! 'scheme-object x offset v)))]
+                        [(_ type bytes pred)
+                         (rec mutator
+                            (lambda (x v)
+                              (unless (record? x rtd) (record-err x rtd))
+                              (unless (pred v) (value-err v ty))
+                              (#3%$object-set! 'type x offset v)))]))
+                    (record-datatype cases (filter-foreign-type ty) set
+                      ($oops who "unrecognized type ~s" ty)))
+                  (let ()
+                    (define-syntax set
+                      (syntax-rules ()
+                        [(_ type bytes pred)
+                         (rec mutator
+                           (lambda (x v)
+                             (#3%$object-set! 'type x offset v)))]))
+                    (record-datatype cases (filter-foreign-type ty) set
+                      ($oops who "unrecognized type ~s" ty)))))
             ($oops who "field ~s of ~s is immutable"
-              field-spec rtd)))
+              field-spec proxy)))
       (set-who! #(csv7: record-field-mutator)
         (lambda (rtd field-spec)
-          (rfm who rtd (find-fld who rtd field-spec) field-spec)))
+          (rfm who rtd rtd (find-fld who rtd field-spec) field-spec)))
       (set-who! record-mutator
         (lambda (rtd field-spec)
-          (rfm who rtd (r6rs:find-fld who rtd field-spec) field-spec))))
+          (rfm who rtd rtd (r6rs:find-fld who rtd field-spec) field-spec)))
+      (set-who! $record-mutator/proxy
+        (case-lambda
+          [(proxy field-spec)
+           (rfm who proxy #f (r6rs:find-fld who proxy field-spec) field-spec)]
+          [(proxy rtd field-spec)
+           (rfm who proxy rtd (r6rs:find-fld who proxy field-spec) field-spec)])))
 
     (set-who! #(csv7: record-field-accessible?)
      ; if this is ever made to do anything reasonable, revisit handlers in

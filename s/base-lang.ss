@@ -208,15 +208,17 @@
           (for-all fixnum? x))))
 
   (define maybe-string? (lambda (x) (or (eq? x #f) (string? x))))
+  (define maybe-record-type-descriptor? (lambda (x) (or (eq? x #f) (record-type-descriptor? x))))
 
   ; source language used by the passes leading up to the compiler or interpreter
   (define-language Lsrc
-    (nongenerative-id #{Lsrc czsa1fcfzdeh493n-3})
+    (nongenerative-id #{Lsrc czsa1fcfzdeh493n-5})
     (terminals
       (preinfo (preinfo))
       ($prelex (x))
       (datum (d))
       (record-type-descriptor (rtd))
+      (maybe-record-type-descriptor (maybe-base-rtd))
       (rcd (rcd))
       (source-object (src))
       (maybe-source-object (maybe-src))
@@ -228,7 +230,7 @@
       (maybe-string (name))
       (symbol (sym type))
       (primref (pr)))
-    (Expr (e body rtd-expr)
+    (Expr (e body rtd-expr extra)
       pr
       (moi)
       (ref maybe-src x)                                     => x
@@ -241,9 +243,10 @@
       (letrec ([x* e*] ...) body)
       (letrec* ([x* e*] ...) body)
       (call preinfo e0 e1 ...)                              => (e0 e1 ...)
-      (record-type rtd e)
+      (record-type rtd rtd-expr maybe-base-rtd (e* ...) extra* ...)
       (record-cd rcd rtd-expr e)
       (immutable-list (e* ...) e)
+      (immutable-vector (e* ...) e)
       (record rtd rtd-expr e* ...)
       (record-ref rtd type index e)
       (record-set! rtd type index e1 e2)

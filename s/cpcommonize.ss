@@ -39,7 +39,7 @@
     (define-language Lcommonize1 (extends Lsrc)
       (terminals
         (+ (fixnum (size))))
-      (Expr (e body rtd-expr)
+      (Expr (e body rtd-expr extra)
         (- (letrec ([x* e*] ...) body))
         (+ (letrec ([x* e* size] ...) body))))
 
@@ -47,7 +47,7 @@
       (terminals
         (- (fixnum (size)))
         (+ (binding (b helper-b))))
-      (Expr (e body rtd-expr)
+      (Expr (e body rtd-expr extra)
         (- (letrec ([x* e* size] ...) body))
         (+ (letrec (helper-b* ...) (b* ...) body))))
 
@@ -117,6 +117,8 @@
          (values `(cte-optimization-loc ,box ,e) size)]
         [(immutable-list (,[e* size*] ...) ,[e size])
          (values `(immutable-list (,e* ...) ,e) (apply fx+ size size*))]
+        [(immutable-vector (,[e* size*] ...) ,[e size])
+         (values `(immutable-vector (,e* ...) ,e) (apply fx+ size size*))]
         [(quote ,d) (values `(quote ,d) 1)]
         [(ref ,maybe-src ,x) (values `(ref ,maybe-src ,x) 1)]
         [,pr (values pr 1)]
