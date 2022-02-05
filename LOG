@@ -2308,7 +2308,7 @@
 - cp0 record-construct handlers now keep record-type wrappers when
   propagating constants and refs.
     cp0.ss
-- added immutable-vector primitiive along with cp0 handling of
+- added immutable-vector primitive along with cp0 handling of
   fully (foldable) and partially static immutable vectors.
     primdata.ss, cpnanopass.ss, base-lang.ss, cpcheck.ss, cpletrec.ss,
     cpcommonize.ss, cprep.ss, prims.ss, cp0.ss,
@@ -2365,3 +2365,14 @@
     record.ms, root-experr-compile-0-f-f-f
 - updated patch files
     patch-compile-0-f-t-f, patch-compile-0-t-f-f, patch-interpret-0-f-t-f
+- moved $diinfo? test above first reference to the diinfo in
+  $trans-open-interface.  added several define-interface and
+  open-interface syntax-error mats to catch this and other such
+  problems.
+    record-defn.ss,
+    record.ms, root-experr-compile-0-f-f-f, root-experr-compile-2-f-f-f
+- improved $query-interface optimization so that it optimizes to #f if
+  it can prove the interface rtd will not be found.  added a couple of
+  new mats to test the optimization.
+    cp0.ss,
+    record.ms

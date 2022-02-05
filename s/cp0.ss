@@ -2779,22 +2779,23 @@
               (let ([iface-rtd d])
                 (nanopass-case (Lsrc Expr) ego-e
                   [(record ,rtd0 (record-type ,rtd1 ,rtd-expr ,maybe-base-rtd (,e* ...) ,extra* ...) ,e0* ...)
-                   (let loop ([e* e*])
-                     (and (not (null? e*))
-                          (nanopass-case (Lsrc Expr) (car e*)
-                            [(ref ,maybe-src ,x) #t]
-                            [else #f])
-                          (or (nanopass-case (Lsrc Expr) (indirect-ref (car e*))
-                                [(record ,rtd ,rtd-expr ,e2* ...)
-                                 (guard
-                                   (let f ([rtd rtd])
-                                     (or (eq? rtd iface-rtd)
-                                         (let ([rtd (record-type-parent rtd)])
-                                           (and rtd (f rtd))))))
-                                 (residualize-seq '() (list x y) ctxt)
-                                 (car e*)]
-                                [else #f])
-                              (loop (cdr e*)))))]
+                   (let loop ([e* e*] [known-false? #t])
+                     (if (null? e*)
+                         (and known-false?
+                              (begin
+                                (residualize-seq '() (list x y) ctxt)
+                                false-rec))
+                         (nanopass-case (Lsrc Expr) (indirect-ref (car e*))
+                           [(record ,rtd ,rtd-expr ,e2* ...)
+                            (if (let f ([rtd rtd])
+                                  (or (eq? rtd iface-rtd)
+                                      (let ([rtd (record-type-parent rtd)])
+                                        (and rtd (f rtd)))))
+                                (begin
+                                  (residualize-seq '() (list x y) ctxt)
+                                  (car e*))
+                                (loop (cdr e*) known-false?))]
+                           [else (loop (cdr e*) #f)])))]
                   [else #f]))]
              [else #f]))])
 

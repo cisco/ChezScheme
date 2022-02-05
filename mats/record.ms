@@ -9459,11 +9459,36 @@
       (define-record-type baz (parent foo) (methods [bar () (super)]))
       (make-baz)))
 
+  (error? ; invalid syntax
+    (define-interface))
+  (error? ; invalid syntax
+    (define-interface (methods [m1 (x)])))
+  (error? ; invalid syntax
+    (define-interface rat israt?))
+  (error? ; invalid syntax
+    (define-interface (rat (israt?))))
+  (error? ; invalid syntax
+    (define-interface (rat (israt?))))
+  (error? ; invalid syntax
+    (define-interface ((rat) israt?)))
+  (error? ; invalid syntax
+    (define-interface (rat israt?) (methods . none)))
+  (error? ; invalid syntax
+    (define-interface (rat israt?) (methods a b c)))
+  (error? ; invalid syntax
+    (define-interface rat (mehtods)))
+  (error? ; invalid syntax
+    (define-interface rat (sealed #t)))
+  (error? ; invalid syntax
+    (define-interface rat (parent)))
+  (error? ; invalid syntax
+    (define-interface rat (parent p1 p2)))
+
   ; Verify that we can't define a generic for a method with the same name
   ; as an interface method, i.e., supply an implementation of an
   ; interface-inherited method with the wrong arity
   (begin
-    (define-interface bonk (methods [whack (a mole)]))
+    (define-interface (bonk isbonk?) (methods [whack (a mole)]))
     #t)
   (error? ; invalid arity for whack
     (define-record-type pewter
@@ -10037,6 +10062,46 @@
       (define-record-type a (parent this-parent-should-be-undefined))
       (make-a)))
   (begin (print-record #t) (print-record))
+  (error? ; invalid syntax
+    (open-interface))
+  (error? ; invalid syntax
+    (open-interface y))
+  (error? ; invalid syntax
+    (open-interface I y))
+  (error? ; invalid syntax
+    (open-interface I y ([m m])))
+  (error? ; invalid syntax
+    (open-interface I y ([m m]) x y))
+  (error? ; invalid syntax
+    (open-interface ([m m]) I x))
+  (error? ; invalid syntax
+    (open-interface I ([m 7]) y))
+  (error? ; invalid syntax
+    (open-interface I ([m1 m1] [7 m2]) y))
+  (error? ; unrecognized interface
+    (open-interface <probably-not-defined> ([m1 m1]) x))
+  (error? ; no method in interface
+    (let ()
+      (define-interface <A> (methods (m1 (x))))
+      (define-record-type A
+        (implements <A>)
+        (fields x)
+        (methods [m1 (y) (list 'A 'm1 x y)]))
+      (define a (make-A 23))
+      (open-interface <A> ([a.m1 m1] [a.m2 m2]) a)
+      (a.m1 3)))
+  (error? ; duplicate local method name
+    (let ()
+      (define-interface <A> (methods (m1 (x)) (m2 (y))))
+      (define-record-type A
+        (implements <A>)
+        (fields x)
+        (methods
+          [m1 (y) (list 'A 'm1 x y)]
+          [m2 (y) (list 'A 'm2 x y)]))
+      (define a (make-A 23))
+      (open-interface <A> ([foo m1] [foo m2]) a)
+      (foo 3)))
   (equal?
     (let ()
       (define-interface <A> (methods (m1 (x))))
@@ -10085,28 +10150,146 @@
       (C m3 53 67 71 13)
       (C m1 53 67 71 17)
       (C m2 53 67 71 19)))
-  (error? ; no method in interface
-    (let ()
-      (define-interface <A> (methods (m1 (x))))
-      (define-record-type A
-        (implements <A>)
-        (fields x)
-        (methods [m1 (y) (list 'A 'm1 x y)]))
-      (define a (make-A 23))
-      (open-interface <A> ([a.m1 m1] [a.m2 m2]) a)
-      (a.m1 3)))
-  (error? ; duplicate local method name
-    (let ()
-      (define-interface <A> (methods (m1 (x)) (m2 (y))))
-      (define-record-type A
-        (implements <A>)
-        (fields x)
-        (methods
-          [m1 (y) (list 'A 'm1 x y)]
-          [m2 (y) (list 'A 'm2 x y)]))
-      (define a (make-A 23))
-      (open-interface <A> ([foo m1] [foo m2]) a)
-      (foo 3)))
+  (equivalent-expansion? ; optimize-level 2 expansion of above
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+        '(let ()
+           (define-interface <A> (methods (m1 (x))))
+           (define-interface <B> (methods (m2 (x))))
+           (define-interface <C> (parent <A>) (methods (m3 (x))))
+           (define-record-type A
+             (implements <A>)
+             (fields x)
+             (methods [m1 (y) (list 'A 'm1 x y)]))
+           (define-record-type B
+             (implements <B>)
+             (fields x y)
+             (methods [m2 (z) (list 'B 'm2 x y z)]))
+           (define-record-type C
+             (implements <B> <C>)
+             (fields x y z)
+             (methods
+               [m1 (w) (list 'C 'm1 x y z w)]
+               [m2 (w) (list 'C 'm2 x y z w)]
+               [m3 (w) (list 'C 'm3 x y z w)]
+               [m4 (w) (list 'C 'm4 x y z w)]))
+           (define a (make-A 23))
+           (define b (make-B 31 47))
+           (define c (make-C 53 67 71))
+           (open-interface <A> ([a.m1 m1]) a)
+           (open-interface <B> ([b.m2 m2]) b)
+           (open-interface <C> ([c.m1 m1] [c.m3 m3]) c)
+           (open-interface <A> ([c.m1^ m1]) c)
+           (open-interface <B> ([c.m2^ m2]) c)
+           (list
+             (list (<A>? a) (<A>? b) (<A>? c))
+             (list (<B>? a) (<B>? b) (<B>? c))
+             (list (<C>? a) (<C>? b) (<C>? c))
+             (a.m1 3)
+             (b.m2 5)
+             (c.m1 7)
+             (c.m3 13)
+             (c.m1^ 17)
+             (c.m2^ 19)))))
+    `(letrec ,list? ; useless bindings that go away with three cp0 iterations
+       (#2%list (#2%list #t #f #t) (#2%list #f #t #t) (#2%list #f #f #t)
+         (#2%list 'A 'm1 23 3) (#2%list 'B 'm2 31 47 5)
+         (#2%list 'C 'm1 53 67 71 7) (#2%list 'C 'm3 53 67 71 13)
+         (#2%list 'C 'm1 53 67 71 17) (#2%list 'C 'm2 53 67 71 19))))
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (define-interface <A> (methods (m1 (x))))
+        (define-interface <B> (methods (m2 (x))))
+        (define-interface <C> (parent <A>) (methods (m3 (x))))
+        (define-record-type A
+          (implements <A>)
+          (fields x)
+          (methods [m1 (y) (list 'A 'm1 x y)]))
+        (define-record-type B
+          (implements <B>)
+          (fields x y)
+          (methods [m2 (z) (list 'B 'm2 x y z)]))
+        (define-record-type C
+          (implements <B> <C>)
+          (fields x y z)
+          (methods
+            [m1 (w) (list 'C 'm1 x y z w)]
+            [m2 (w) (list 'C 'm2 x y z w)]
+            [m3 (w) (list 'C 'm3 x y z w)]
+            [m4 (w) (list 'C 'm4 x y z w)]))
+        (define a (begin (write 1) (make-A 23)))
+        (define b (make-B 31 47))
+        (define c (begin (write 2) (make-C 53 67 71)))
+        (open-interface <A> ([a.m1 m1]) a)
+        (open-interface <B> ([b.m2 m2]) (begin (write 3) b))
+        (open-interface <C> ([c.m1 m1] [c.m3 m3]) c)
+        (open-interface <A> ([c.m1^ m1]) (begin (write 4) c))
+        (open-interface <B> ([c.m2^ m2]) c)
+        (write
+          (list
+            (list (<A>? (begin (write 6) a)) (<A>? b) (<A>? c))
+            (list (<B>? a) (<B>? b) (<B>? c))
+            (list (<C>? a) (<C>? b) (<C>? c))
+            ((begin (write 6) a.m1) 3)
+            (b.m2 5)
+            (c.m1 (begin (write 6) 7))
+            (c.m3 13)
+            (c.m1^ 17)
+            (c.m2^ 19)))))
+    "1234666((#t #f #t) (#f #t #t) (#f #f #t) (A m1 23 3) (B m2 31 47 5) (C m1 53 67 71 7) (C m3 53 67 71 13) (C m1 53 67 71 17) (C m2 53 67 71 19))")
+  (equivalent-expansion? ; optimize-level 2 expansion of above
+    (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+      (expand/optimize
+         '(let ()
+            (define-interface <A> (methods (m1 (x))))
+            (define-interface <B> (methods (m2 (x))))
+            (define-interface <C> (parent <A>) (methods (m3 (x))))
+            (define-record-type A
+              (implements <A>)
+              (fields x)
+              (methods [m1 (y) (list 'A 'm1 x y)]))
+            (define-record-type B
+              (implements <B>)
+              (fields x y)
+              (methods [m2 (z) (list 'B 'm2 x y z)]))
+            (define-record-type C
+              (implements <B> <C>)
+              (fields x y z)
+              (methods
+                [m1 (w) (list 'C 'm1 x y z w)]
+                [m2 (w) (list 'C 'm2 x y z w)]
+                [m3 (w) (list 'C 'm3 x y z w)]
+                [m4 (w) (list 'C 'm4 x y z w)]))
+            (define a (begin (write 1) (make-A 23)))
+            (define b (make-B 31 47))
+            (define c (begin (write 2) (make-C 53 67 71)))
+            (open-interface <A> ([a.m1 m1]) a)
+            (open-interface <B> ([b.m2 m2]) (begin (write 3) b))
+            (open-interface <C> ([c.m1 m1] [c.m3 m3]) c)
+            (open-interface <A> ([c.m1^ m1]) (begin (write 4) c))
+            (open-interface <B> ([c.m2^ m2]) c)
+            (write
+              (list
+                (list (<A>? (begin (write 6) a)) (<A>? b) (<A>? c))
+                (list (<B>? a) (<B>? b) (<B>? c))
+                (list (<C>? a) (<C>? b) (<C>? c))
+                ((begin (write 6) a.m1) 3)
+                (b.m2 5)
+                (c.m1 (begin (write 6) 7))
+                (c.m3 13)
+                (c.m1^ 17)
+                (c.m2^ 19))))))
+    `(letrec ,list? ; useless bindings that go away with three cp0 iterations
+       (#2%write 1)
+       (#2%write 2)
+       (#2%write 3)
+       (#2%write 4)
+       (#2%write
+         (#2%list (#2%list (begin (#2%write 6) #t) #f #t) (#2%list #f #t #t) (#2%list #f #f #t)
+           (begin (#2%write 6) (#2%list 'A 'm1 23 3)) (#2%list 'B 'm2 31 47 5)
+           (begin (#2%write 6) (#2%list 'C 'm1 53 67 71 7)) (#2%list 'C 'm3 53 67 71 13)
+           (#2%list 'C 'm1 53 67 71 17) (#2%list 'C 'm2 53 67 71 19)))))
 )
 
 (mat oop-contributed

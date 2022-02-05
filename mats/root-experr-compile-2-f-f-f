@@ -7904,6 +7904,18 @@ record.mo:Expected error in mat oop: "m1: not applicable to 17".
 record.mo:Expected error in mat oop: "arity not supported by base record-type method hit".
 record.mo:Expected error in mat oop: "a record type with methods or interfaces cannot be nongenerative (define-record-type b (parent a) (nongenerative) (methods (m1 (...) (...))))".
 record.mo:Expected error in mat oop: "no inherited bar method for baz in (super)".
+record.mo:Expected error in mat oop: "invalid syntax (define-interface)".
+record.mo:Expected error in mat oop: "invalid syntax (define-interface (methods (m1 (...))))".
+record.mo:Expected error in mat oop: "invalid define-interface clause israt?".
+record.mo:Expected error in mat oop: "invalid syntax (define-interface (rat (israt?)))".
+record.mo:Expected error in mat oop: "invalid syntax (define-interface (rat (israt?)))".
+record.mo:Expected error in mat oop: "invalid syntax (define-interface ((rat) israt?))".
+record.mo:Expected error in mat oop: "invalid define-interface clause (methods . none)".
+record.mo:Expected error in mat oop: "invalid method specifier c".
+record.mo:Expected error in mat oop: "invalid define-interface clause (mehtods)".
+record.mo:Expected error in mat oop: "invalid define-interface clause (sealed #t)".
+record.mo:Expected error in mat oop: "invalid define-interface clause (parent)".
+record.mo:Expected error in mat oop: "invalid define-interface clause (parent p1 p2)".
 record.mo:Expected error in mat oop: "arity not supported by interface method whack".
 record.mo:Expected error in mat oop: "arity not supported by interface method whack".
 record.mo:Expected error in mat oop: "arity not supported by interface method whack".
@@ -7934,7 +7946,17 @@ record.mo:Expected error in mat oop: "all ancestors of a record type with method
 record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
 record.mo:Expected error in mat oop: "m1: not applicable to #<record of type b>".
 record.mo:Expected error in mat oop: "define-record-type: unrecognized parent record type this-parent-should-be-undefined".
+record.mo:Expected error in mat oop: "invalid syntax (open-interface)".
+record.mo:Expected error in mat oop: "invalid syntax (open-interface y)".
+record.mo:Expected error in mat oop: "invalid syntax (open-interface I y)".
+record.mo:Expected error in mat oop: "invalid syntax (open-interface I y ((m m)))".
+record.mo:Expected error in mat oop: "invalid syntax (open-interface I y ((m m)) x y)".
+record.mo:Expected error in mat oop: "invalid syntax (open-interface ((m m)) I x)".
+record.mo:Expected error in mat oop: "invalid syntax (open-interface I ((m 7)) y)".
+record.mo:Expected error in mat oop: "invalid syntax (open-interface I ((m1 m1) (7 m2)) y)".
+record.mo:Expected error in mat oop: "unrecognized interface <probably-not-defined>".
 record.mo:Expected error in mat oop: "unrecognized interface method name m2".
+record.mo:Expected error in mat oop: "duplicate local method name foo in (open-interface <A> ((foo m1) (foo m2)) a)".
 record.mo:Expected error in mat oop-contributed: "incorrect number of arguments to #<procedure>".
 record.mo:Expected error in mat oop-contributed: "no inherited foo method for <a> in (super)".
 record.mo:Expected error in mat oop-contributed: "multiple definitions for Repeat and other identifiers in body (let () (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) (define-record-type Repeat (parent <root>) (fields) (protocol (...)) (methods)) 0)".

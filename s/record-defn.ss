@@ -329,7 +329,8 @@ products:
             (syntax-case x ()
               [(name formals)
                (let-values ([(arity flat-formals) (parse-formals #'formals)])
-                 (make-minfo #'name "ignored" arity #'formals flat-formals))]))
+                 (make-minfo #'name "ignored" arity #'formals flat-formals))]
+               [_ (syntax-error x "invalid method specifier")]))
           (define-syntactic-monad Mclause %minfos %parent)
           (define parse-clauses
             (Mclause lambda (keys-seen clause*)
@@ -439,13 +440,15 @@ products:
     (lambda (x)
       (syntax-case x ()
         [(_ iface-name ([local-mname iface-mname] ...) obj-expr)
+         (and (identifier? #'iface-name)
+              (andmap identifier? #'(local-mname ...)) 
+              (andmap identifier? #'(iface-mname ...)))
          (lambda (env)
-           (let ([local-mname* #'(local-mname ...)])
-             (unless ($distinct-bound-ids? local-mname*)
-               ($invalid-ids-error local-mname* x "local method name"))
-             (let* ([diinfo (unwrap-diinfo (env #'iface-name))]
-                    [iface-rtd ($diinfo-rtd diinfo)])
-               (unless ($diinfo? diinfo) (syntax-error #'iface-name "unrecognized interface"))
+           (unless ($distinct-bound-ids? #'(local-mname ...))
+             ($invalid-ids-error #'(local-mname ...) x "local method name"))
+           (let ([diinfo (unwrap-diinfo (env #'iface-name))])
+             (unless ($diinfo? diinfo) (syntax-error #'iface-name "unrecognized interface"))
+             (let ([iface-rtd ($diinfo-rtd diinfo)])
                (with-syntax ([(((generic-formals generic-flat-formals generic-index) ...) ...)
                               (let ([x* (build-generic
                                           (unwrap-minfos ($diinfo-minfos diinfo))
@@ -681,7 +684,8 @@ products:
                  (let ([hidden (car (generate-temporaries (list #'name)))])
                    (make-method-desc
                      (make-minfo #'name hidden arity #'formals flat-formals)
-                     #'(let () e1 e2 ...))))]))
+                     #'(let () e1 e2 ...))))]
+              [_ (syntax-error x "invalid method specifier")]))
           (define-syntactic-monad Mclause %fields %methods %interface-names %parent %protocol
             %sealed? %opaque? %uid %prtd-expr %prcd-expr)
           (define parse-clauses
