@@ -16,10 +16,10 @@
 ;;; r6rs features
 
 (define-symbol-flags* ([libraries (rnrs) (rnrs arithmetic bitwise)] [flags primitive proc])
-  (bitwise-not [sig [(sint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
-  (bitwise-and [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs])
-  (bitwise-ior [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs])
-  (bitwise-xor [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs])
+  (bitwise-not [sig [(sint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs cptypes2])
+  (bitwise-and [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs cptypes2])
+  (bitwise-ior [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs cptypes2])
+  (bitwise-xor [sig [(sint ...) -> (sint)]] [flags arith-op partial-folder safeongoodargs cptypes2])
   (bitwise-if [sig [(sint sint sint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
   (bitwise-bit-count [sig [(sint) -> (sint)]] [flags arith-op mifoldable discard safeongoodargs])
   (bitwise-length [sig [(sint) -> (uint)]] [flags arith-op mifoldable discard safeongoodargs])
