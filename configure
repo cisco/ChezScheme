@@ -963,7 +963,7 @@ else
   exit 1
 fi
 
-if "$srcdir"/workarea $m $w $mpbhost $mboot ; then
+if "$srcdir"/workarea $m $w "${mpbhost}" $mboot ; then
     :
 else
     # not a recognized host, or other error
