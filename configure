@@ -58,6 +58,7 @@ nothreads=no
 libffi=no
 temproot=""
 help=no
+forceworkarea=no
 gzipmanpages=yes
 installowner=""
 installgroup=""
@@ -238,6 +239,9 @@ while [ $# != 0 ] ; do
       LD="emld"
       AR="emar"
       RANLIB="emranlib"
+      ;;
+    --force)
+      forceworkarea=yes
       ;;
     --installprefix=*)
       installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
@@ -541,6 +545,7 @@ if [ "$help" = "yes" ]; then
   echo "  --start=<name>                    load <boot>.boot instead of <exe>.boot"
   echo "  --[no]gzip-man-pages              compress manual pages ($gzipmanpages)"
   echo "  --workarea=<pathname>             build directory ($w)"
+  echo "  --force                           configure even without boot files"
   echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   C preprocessor flags"
   echo "  CFLAGS=<C compiler flags>         C compiler flags"
@@ -914,12 +919,16 @@ case "${flagsmuni}" in
         ;;
 esac
 
+if [ "$w" = "$m" ] ; then
+    configuringin=""
+else
+    configuringin=" in $w"
+fi
+
 if [ -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
-    if [ "$w" = "$m" ] ; then
-        echo "Configuring for $m"
-    else
-        echo "Configuring for $m in $w"
-    fi
+    echo "Configuring for $m$configuringin"
+elif [ "$forceworkarea" = yes ] ; then
+    echo "Configuring for $m$configuringin despite missing boot files"
 else
   if [ "$m" = "" ] ; then
       maybem="<machine type>"

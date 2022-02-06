@@ -94,7 +94,7 @@ endif
 # that Scheme and SCHEMEHEAPDIRS are set by Mf-cross to point to the host Scheme
 # implementation
 Scheme = ../bin/$m/scheme${ExeSuffix}
-export SCHEMEHEAPDIRS=../boot/%m
+export SCHEMEHEAPDIRS=../boot/$m
 export CHEZSCHEMELIBDIRS=.
 
 # Define the libdirs separator character
@@ -693,9 +693,9 @@ reset-one:
 
 .PHONY: run
 run:
-	env SCHEMEHEAPDIRS=../boot/$m/ ../bin/$m/scheme $(ARGS)
+	env SCHEMEHEAPDIRS=${SCHEMEHEAPDIRS} ${Scheme} $(ARGS)
 
 .PHONY: bootpbchunk
 bootpbchunk:
 	mkdir -p ../../boot/$(PBCHUNKTARGET)
-	env SCHEMEHEAPDIRS=../boot/$m/ ../bin/$m/scheme --script "${upupsrcdir}/s/bootpbchunk.ss" "${upupsrcdir}" "$(PBCHUNKTARGET)" $(ARGS)
+	env SCHEMEHEAPDIRS=${SCHEMEHEAPDIRS} ${Scheme} --script "${upupsrcdir}/s/bootpbchunk.ss" "${upupsrcdir}" "$(PBCHUNKTARGET)" $(ARGS)

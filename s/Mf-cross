@@ -43,5 +43,7 @@ x$(xm).$(m):
 	$(MAKE) -f Mf-cross m=$(m) xm=$(xm) i=f o=3 d=0 xpatch
 	mv xpatch x$(xm).$(m)
 
+ifneq ($(SCHEMEHEAPDIRS),:)
 # Ensure that cross-compiling "nanopass.so" is rebuilt if the host compiler changed
-nanopass.so: ${SCHEME} ${SCHEMEHEAPDIRS}/petite.boot ${SCHEMEHEAPDIRS}/scheme.boot
+nanopass.so: ${Scheme} ${SCHEMEHEAPDIRS}/petite.boot ${SCHEMEHEAPDIRS}/scheme.boot
+endif
