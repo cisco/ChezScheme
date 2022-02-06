@@ -59,6 +59,9 @@ reset:
 %.boot:
 	(cd $(workarea) && $(MAKE) $*.boot)
 
+auto.boot:
+	(cd $(workarea) && $(MAKE) $(defaultm).boot)
+
 # <machine>.bootquick to build boot files for <machine>
 # with o=3 d=0 for the cross compiler, and only after
 # building the kernel for the configured machine
