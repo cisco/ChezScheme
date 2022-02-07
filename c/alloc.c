@@ -172,17 +172,17 @@ ptr S_compute_bytes_allocated(xg, xs) ptr xg; ptr xs; {
       n += S_G.bytes_of_space[g][s];
      /* add in bytes in active segments */
       next_loc = THREAD_GC(tc)->next_loc[g][s];
-      if (next_loc != FIX(0))
+      if (next_loc != FIX(0)) {
         amt = (uptr)next_loc - (uptr)THREAD_GC(tc)->base_loc[g][s];
-      else
-        amt = 0;
+        if (s != space_code) {
+          /* don't double-count eagerly counted part */
+          n += amt & (uptr)(bytes_per_segment - 1);
+        } else
+          n += amt;
+      }
       if (s == space_data) {
         /* don't count space used for bitmaks */
-        n += amt;
         n -= S_G.bitmask_overhead[g];
-      } else {
-        /* don't double-count eagerly counted part */
-        n += amt & (uptr)(bytes_per_segment - 1);
       }
     }
     if (g == S_G.max_nonstatic_generation)
@@ -1122,6 +1122,7 @@ ptr S_phantom_bytevector(sz) uptr sz; {
 }
 
 void S_phantom_bytevector_adjust(ph, new_sz) ptr ph; uptr new_sz; {
+  ptr tc = get_thread_context();
   uptr old_sz = PHANTOMLEN(ph);
   seginfo *si;
   IGEN g;
@@ -1135,5 +1136,9 @@ void S_phantom_bytevector_adjust(ph, new_sz) ptr ph; uptr new_sz; {
   S_adjustmembytes(new_sz - old_sz);
   PHANTOMLEN(ph) = new_sz;
 
+  maybe_queue_fire_collector(THREAD_GC(tc));
+
   tc_mutex_release();
+
+  S_maybe_fire_collector(THREAD_GC(tc));
 }
