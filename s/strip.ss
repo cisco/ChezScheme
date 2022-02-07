@@ -1009,24 +1009,25 @@
 
     (define-syntax cmp-case
       (lambda (x)
-        (define (make-clause t x-case)
+        (define (make-clause t x-case top-e)
           (lambda (variant arg* e)
             (with-syntax ([(arg1 ...) (map (lambda (x) (construct-name x x "1")) arg*)]
                           [(arg2 ...) (map (lambda (x) (construct-name x x "2")) arg*)]
                           [variant variant]
                           [e e]
                           [t t]
-                          [x-case x-case])
+                          [x-case x-case]
+                          [top-e top-e])
               #'[variant (arg1 ...)
                  (or (x-case t
                        [variant (arg2 ...) e]
                        [else #f])
-                     (fail 'variant))])))
+                     (fail 'variant top-e))])))
         (syntax-case x ()
           [(_ x-case e1 e2 [variant (arg ...) e] ...)
            #`(let ([t2 e2])
                (x-case e1
-                 #,@(map (make-clause #'t2 #'x-case) #'(variant ...) #'((arg ...) ...) #'(e ...))))])))
+                 #,@(map (make-clause #'t2 #'x-case #'e1) #'(variant ...) #'((arg ...) ...) #'(e ...))))])))
 
     (define-who vandmap
       (lambda (p v1 v2)
@@ -1054,7 +1055,8 @@
               [b (eq-hashtable-cell cmp-ht entry2 #f)])
           (or (and (eq? entry2 (cdr a))
                    (eq? entry1 (cdr b)))
-              (and (or (not (cdr a)) (fail 'sharing))
+              (and (or (not (cdr a)) (fail 'sharing1 entry1))
+                   (or (not (cdr b)) (fail 'sharing2 entry2))
                    (begin
                      (set-cdr! a entry2)
                      (set-cdr! b entry1)
@@ -1158,7 +1160,9 @@
            (unless (string? ifn2) ($oops who "~s is not a string" ifn2))
            (fluid-let ([fasl-who who]
                        [fasl-count 0]
-                       [fail (if error? (lambda (what) (bogus "~s comparison failed while comparing ~a and ~a" what ifn1 ifn2)) (lambda (what) #f))]
+                       [fail (if error?
+                                 (lambda (what where) (bogus "~s comparison failed while comparing ~a and ~a at ~s" what ifn1 ifn2 where))
+                                 (lambda (what where) #f))]
                        [eq-hashtable-warning-issued? #f])
              (call-with-port ($open-file-input-port who ifn1)
                (lambda (ip1)
