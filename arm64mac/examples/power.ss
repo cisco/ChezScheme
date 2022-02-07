@@ -1,0 +1,1 @@
+../../examples/power.ss

@@ -1,0 +1,70 @@
+# Makefile-workarea.in
+# Copyright 1984-2017 Cisco Systems, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+MAKEFLAGS += --no-print-directory
+PREFIX=
+
+.PHONY: build
+build:
+	(cd c && $(MAKE))
+	(cd s && $(MAKE) bootstrap)
+
+.PHONY: install
+install: build
+	$(MAKE) -f Mf-install
+
+.PHONY: uninstall
+uninstall:
+	$(MAKE) -f Mf-install uninstall
+
+.PHONY: test
+test: build
+	(cd mats && $(MAKE) allx)
+	@echo "test run complete.  check $(PREFIX)mats/summary for errors."
+
+.PHONY: coverage
+coverage:
+	rm -f s/bootstrap
+	(cd c && $(MAKE))
+	(cd s && $(MAKE) bootstrap p=t c=t)
+	(cd mats && $(MAKE) allx c=t)
+
+.PHONY: bootfiles
+bootfiles: build
+	$(MAKE) -f Mf-boot
+
+.PHONY: bintar
+bintar: build
+	(cd bintar && $(MAKE))
+
+.PHONY: rpm
+rpm: bintar
+	(cd rpm && $(MAKE))
+
+.PHONY: pkg
+pkg: bintar
+	(cd pkg && $(MAKE))
+
+.PHONY: clean
+clean:
+	rm -f petite.1 scheme.1
+	(cd s && $(MAKE) clean)
+	(cd c && $(MAKE) clean)
+	(cd mats && $(MAKE) clean)
+	(cd examples && $(MAKE) clean)
+	(cd bintar && $(MAKE) clean)
+	(cd rpm && $(MAKE) clean)
+	(cd pkg && $(MAKE) clean)
+	rm -f Make.out
