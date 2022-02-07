@@ -2514,7 +2514,6 @@
 (define-symbol-flags* ([libraries] [flags system-keyword])
   ($case [flags])
   ($chezscheme-csv7 [flags library-uid])
-  ($cost-center [flags])
   ($foreign-callable [flags])
   ($foreign-procedure [flags])
   ($import [flags])

@@ -13,7 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-(module ($cost-center)
+(let ()
   (if-feature pthreads
     (define-record-type ($cost-center $make-cost-center $cost-center?)
       (fields
