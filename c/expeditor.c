@@ -567,7 +567,7 @@ static int s_ee_write_char(wchar_t c) {
   return post_info.dwCursorPosition.X - pre_info.dwCursorPosition.X;
 }
 
-static int s_ee_char_width(wchar_t c)
+static int s_ee_char_width(UNUSED wchar_t c)
 {
   /* There's no `wcwidth` on Windows. An editor can gather results
      from `s_ee_write_char`, though. */
