@@ -1050,11 +1050,14 @@
 
     (define (fasl=? entry1 entry2)
       (let ([entry1 (follow-indirect entry1)] [entry2 (follow-indirect entry2)])
-        (let ([a (eq-hashtable-cell cmp-ht entry1 #f)])
-          (or (eq? entry2 (cdr a))
-              (and (not (cdr a))
+        (let ([a (eq-hashtable-cell cmp-ht entry1 #f)]
+              [b (eq-hashtable-cell cmp-ht entry2 #f)])
+          (or (and (eq? entry2 (cdr a))
+                   (eq? entry1 (cdr b)))
+              (and (or (not (cdr a)) (fail 'sharing))
                    (begin
                      (set-cdr! a entry2)
+                     (set-cdr! b entry1)
                      (cmp-case fasl-case entry1 entry2
                        [entry (situation fasl) (and (= situation1 situation2) (fasl=? fasl1 fasl2))]
                        [header (version machine dependencies)
