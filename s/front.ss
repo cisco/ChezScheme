@@ -269,5 +269,16 @@
     [(x env-spec records? compiling-a-file) ((current-expand) x env-spec records? compiling-a-file)]
     [(x env-spec records? compiling-a-file outfn) ((current-expand) x env-spec records? compiling-a-file outfn)]))
 
+(define-who eval-syntax-expanders-when
+   ($make-thread-parameter '(compile load eval)
+      (lambda (x)
+         (unless (let check ([x x] [l '(compile load eval visit revisit)])
+                    (or (null? x)
+                        (and (pair? x)
+                             (memq (car x) l)
+                             (check (cdr x) (remq (car x) l)))))
+            ($oops who "invalid eval-when list ~s" x))
+         x)))
+
 (define $compiler-is-loaded? #f)
 )

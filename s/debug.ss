@@ -13,6 +13,10 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+;; Beware of setting any parameters here that are defined in
+;; "back.ss", because those will not be set by the host "setup.so"
+;; when loading a cross-compiltion "xpatch" later for a cross build
+
 (current-eval interpret)
 
 (subset-mode 'system)
