@@ -1155,13 +1155,17 @@
       (rec fasl-file-equal?
         (case-lambda
           [(ifn1 ifn2) (fasl-file-equal? ifn1 ifn2 #f)]
-          [(ifn1 ifn2 error?)
+          [(ifn1 ifn2 error?) (fasl-file-equal? ifn1 ifn2 error? #f)]
+          [(ifn1 ifn2 error? detail?)
            (unless (string? ifn1) ($oops who "~s is not a string" ifn1))
            (unless (string? ifn2) ($oops who "~s is not a string" ifn2))
            (fluid-let ([fasl-who who]
                        [fasl-count 0]
                        [fail (if error?
-                                 (lambda (what where) (bogus "~s comparison failed while comparing ~a and ~a at ~s" what ifn1 ifn2 where))
+                                 (lambda (what where) (bogus "~s comparison failed while comparing ~a and ~a~a" what ifn1 ifn2
+                                                             (if detail?
+                                                                 (format " at ~s" where)
+                                                                 "")))
                                  (lambda (what where) #f))]
                        [eq-hashtable-warning-issued? #f])
              (call-with-port ($open-file-input-port who ifn1)

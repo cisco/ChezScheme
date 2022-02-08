@@ -1969,7 +1969,7 @@
   ($fasl-can-combine? [flags single-valued])
   ($fasl-pbchunk! [flags single-valued])
   ($fasl-enter [flags single-valued])
-  ($fasl-file-equal? [sig [(pathname pathname) (pathname pathname ptr) -> (boolean)]] [flags discard])
+  ($fasl-file-equal? [sig [(pathname pathname) (pathname pathname ptr) (pathname pathname ptr ptr) -> (boolean)]] [flags discard])
   ($fasl-out [flags single-valued])
   ($fasl-start [flags single-valued])
   ($fasl-table [flags single-valued])
