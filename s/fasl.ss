@@ -45,20 +45,27 @@
 
 (define-record-type table
   (fields (mutable count) (immutable hash)
-          (immutable external?-pred) (mutable external-count) (mutable externals))
+          (immutable external?-pred) (mutable external-count) (mutable externals)
+          (mutable bignums))
   (nongenerative)
   (sealed #t)
   (protocol
    (lambda (new)
      (case-lambda
-      [() (new 0 (make-eq-hashtable) #f 0 '())]
-      [(external?-pred) (new 0 (make-eq-hashtable) external?-pred 0 '())]))))
+      [() (new 0 (make-eq-hashtable) #f 0 '() #f)]
+      [(external?-pred) (new 0 (make-eq-hashtable) external?-pred 0 '() #f)]))))
 
 (define maybe-remake-rtd
   (lambda (rtd t)
     (if (eq? (machine-type) ($target-machine))
         rtd
         ($remake-rtd rtd (let () (include "layout.ss") compute-field-offsets)))))
+
+(define intern-bignum
+  (lambda (x t)
+    (when (not (table-bignums t))
+      (table-bignums-set! t (make-hashtable equal-hash equal?)))
+    (cdr (hashtable-cell (table-bignums t) x x))))
 
 (include "fasl-helpers.ss")
 
@@ -219,6 +226,7 @@
         [(symbol-hashtable? x) (bld-graph x t a? d #t bld-ht)]
         [($record? x) (bld-graph x t a? d #t bld-record)]
         [(box? x) (bld-graph x t a? d #t bld-box)]
+        [(bignum? x) (bld-graph (intern-bignum x t) t a? d #t bld-simple)]
         [else (bld-graph x t a? d #t bld-simple)])))
 
 (module (small-integer? large-integer?)
@@ -669,7 +677,7 @@
          [(stencil-vector? x) (wrf-graph x p t a? wrf-stencil-vector)]
          [(char? x) (wrf-char x p)]
          [(box? x) (wrf-graph x p t a? wrf-box)]
-         [(large-integer? x) (wrf-graph x p t a? wrf-large-integer)]
+         [(large-integer? x) (wrf-graph (if (bignum? x) (intern-bignum x t) x) p t a? wrf-large-integer)]
          [(ratnum? x) (wrf-graph x p t a? wrf-ratnum)]
          [(flonum? x) (wrf-flonum x p)]
          [($inexactnum? x) (wrf-graph x p t a? wrf-inexactnum)]
