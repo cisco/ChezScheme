@@ -123,7 +123,10 @@
       (and (integer? x) (exact? x))))
 
   (meta-cond
-    [(= (constant fixnum-bits) (fixnum-width))
+    [(or (eq? (constant fixnum-bits) (fixnum-width))
+         ;; make sure this case is selected for cross-compilation (as opposed
+         ;; to compilation of a patch file in preparation for cross compilation):
+         (eq? (constant machine-type-name) ($target-machine)))
      (define target-fixnum? fixnum?)
      (define target-bignum? bignum?)]
     [(< (constant fixnum-bits) (fixnum-width))

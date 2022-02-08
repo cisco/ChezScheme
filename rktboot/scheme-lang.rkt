@@ -705,6 +705,7 @@
            [(prelex-sticky-mask) prelex-sticky-mask]
            [(prelex-is-mask) prelex-is-mask]
            [(code-flag-lift-barrier) code-flag-lift-barrier]
+           [(machine-type-name) machine-type-name]
            [else (error 'constant "unknown: ~s" #'id)])]))
 
 (define $target-machine (make-parameter (string->symbol target-machine)))

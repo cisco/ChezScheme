@@ -37,6 +37,14 @@
           [`(include ,fn)
            (unless (equal? fn "machine.def")
              (read-constants-from-file fn))]
+          [`(define-machine-types . ,ms)
+           (hash-set! ht 'machine-type-alist
+                      (let ([target (string->symbol target-machine)])
+                        (for/list ([m (in-list ms)]
+                                   [i (in-naturals)])
+                          (when (eq? m target)
+                            (hash-set! ht 'machine-type i))
+                          (cons i m))))]
           [_ (void)])
         (loop)))))
 
@@ -59,6 +67,11 @@
         (apply + (map (lambda (e) (constant-eval e esc)) (cdr e)))]
        [(quote)
         (cadr e)]
+       [(cdr)
+        (cdr (constant-eval (cadr e) esc))]
+       [(assv)
+        (assv (constant-eval (cadr e) esc)
+              (constant-eval (caddr e) esc))]
        [else (esc)])]
     [else e]))
 
@@ -93,4 +106,5 @@
   prelex-is-mask
   scheme-version
   code-flag-lift-barrier
-  record-ptr-offset)
+  record-ptr-offset
+  machine-type-name)
