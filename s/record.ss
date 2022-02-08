@@ -641,18 +641,40 @@
                     [ancestry (rtd-ancestry rtd)]
                     [name (rtd-name rtd)]
                     [flags (rtd-flags rtd)]
-                    [flds (rtd-flds rtd)])
+                    [old-flds (rtd-flds rtd)])
                 (let-values ([(pm mpm flds size)
-                              (if (fixnum? flds)
+                              (if (fixnum? old-flds)
                                   (compute-field-offsets who
                                     (constant record-type-disp)
-                                    (fx+ flds 1) (rtd-mpm rtd))
+                                    (fx+ old-flds 1) (rtd-mpm rtd))
                                   (let ([fields (csv7:record-type-field-decls rtd)])
                                     (compute-field-offsets who
                                       (constant record-type-disp)
                                       (cons `(immutable scheme-object ,uid) fields))))])
+                  (define (share-with-remade-parent flds)
+                    (let ([old-parent (rtd-parent rtd)])
+                      (if (and old-parent
+                               (not (eq? old-parent #!base-rtd)))
+                          (let ([parent ($remake-rtd old-parent compute-field-offsets)])
+                            (let loop ([flds flds]
+                                       [old-flds old-flds]
+                                       [parent-flds (rtd-flds parent)]
+                                       [parent-old-flds (rtd-flds old-parent)])
+                              (cond
+                                [(null? parent-flds) flds]
+                                [else
+                                 (safe-assert (equal? (car flds) (car parent-flds)))
+                                 (safe-assert (equal? (car old-flds) (car parent-old-flds)))
+                                 (cons (if (eq? (car old-flds) (car parent-old-flds))
+                                           (car parent-flds)
+                                           (car flds))
+                                       (loop (cdr flds) (cdr old-flds) (cdr parent-flds) (cdr parent-old-flds)))])))
+                          flds)))
                   (let ([rtd (apply #%$record base-rtd ancestry size pm mpm name
-                               (if (pair? flds) (cdr flds) (fx- flds 1)) flags uid #f
+                               (if (pair? flds)
+                                   (share-with-remade-parent (cdr flds))
+                                   (fx- flds 1))
+                               flags uid #f
                                (let* ([n (length (rtd-flds ($record-type-descriptor base-rtd)))]
                                       [ls (list-tail (rtd-flds base-rtd) n)])
                                  (let f ([n n] [ls ls])
