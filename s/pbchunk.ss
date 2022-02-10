@@ -647,7 +647,7 @@
                 (let* ([after (fx+ i instr-bytes delta)]
                        [size (if (fx= 1 (fxand 1 (bytevector-u8-ref bv (fx- after
                                                                             (if (eq? (constant fasl-endianness) 'little)
-                                                                                8
+                                                                                (constant ptr-bytes)
                                                                                 1)))))
                                  (constant size-rp-compact-header)
                                  (constant size-rp-header))]

@@ -1,8 +1,6 @@
 (define-constant machine-type (constant machine-type-tpb))
 (features pthreads)
 
-(define-constant architecture 'pb)
-
 (include "pbcommon64.def")
 (include "pbcommon.def")
 (include "default.def")

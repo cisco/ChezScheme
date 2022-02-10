@@ -634,7 +634,7 @@ if [ "$cflagsset" = "no" ] ; then
         CFLAGS="-m64 ${optFlags}"
         ;;
     i3le)
-        CFLAGS="-m32 -msse2 ${optFlags}"
+        CFLAGS="-m32 -msse2 -mfpmath=sse ${optFlags}"
         ;;
     i3nt)
         CFLAGS="${optFlags}"

@@ -4,8 +4,6 @@
 (define-constant machine-type (constant machine-type-$(M)))
 (features iconv expeditor pthreads pbchunk)
 
-(define-constant architecture 'pb)
-
 (define-constant-default native-endianness '$(Mend))
 
 (include "pbcommon$(Mword).def")

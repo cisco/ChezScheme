@@ -2003,7 +2003,7 @@ static void swap_code_endian(octet *code, uptr len)
       octet d = code[3];
 #if fasl_endianness_is_little
       octet le_a = a, le_b = b, le_c = c, le_d = d;
-# define le_tag_offset -8
+# define le_tag_offset -ptr_bytes
 #else
       octet le_a = d, le_b = c, le_c = b, le_d = a;
 # define le_tag_offset -1
