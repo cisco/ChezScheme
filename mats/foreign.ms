@@ -3400,6 +3400,10 @@
     (eqv? $reftest-mem4 (bytevector-reference*-ref $reftest-bv (foreign-sizeof 'ptr))))
 
   (begin
+    ;; clear reference to `$reftest-mem4` before we free it:
+    (if (= (foreign-sizeof 'ptr) 8)
+        (bytevector-u64-native-set! $reftest-bv 8 0)
+        (bytevector-u32-native-set! $reftest-bv 4 0))
     (foreign-free $reftest-mem4)
     (define $reftest-flv (flvector 3.0 6.0 7.0))
     (bytevector-reference-set! $reftest-bv 0 $reftest-flv)
