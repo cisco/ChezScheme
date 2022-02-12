@@ -572,7 +572,7 @@ static void check_pointer(ptr *pp, IBOOL address_is_meaningful, IBOOL is_referen
   ptr p = *pp;
 
   if (is_reference)
-    p = S_reference_to_object(p);
+    p = S_maybe_reference_to_object(p);
 
   if (!FIXMEDIATE(p)) {
     seginfo *psi = MaybeSegInfo(ptr_get_segment(p));

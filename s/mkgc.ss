@@ -154,6 +154,7 @@
 ;;  - _tf_              : type word
 ;;  - _tg_              : target generation
 ;;  - _backreferences?_ : dynamic flag indicating whether backreferences are on
+;;  - _bytevector-pad?_ : whether a bytevector has a pad word in its header
 ;;
 ;; Stylistically, prefer constants and fields using the hyphenated
 ;; names from cmacros instead of the corresponding C name. Use C names
@@ -455,7 +456,9 @@
         (copy-type bytevector-type)
         (define len : uptr (Sbytevector_reference_length _))
         (trace-reference-ptrs bytevector-data len)
-        (pad (when (== (& len 1) 0)
+        (pad (when _bytevector-pad?_
+               (set! (* (cast ptr* (TO_VOIDP (+ (cast uptr _copy_) bytevector_pad_disp)))) (FIX 0))))
+        (pad (when (== (& len 1) (if _bytevector-pad?_ 1 0))
                (set! (INITBVREFIT _copy_ len) (FIX 0))))
         (count countof-bytevector)]
        [else
@@ -1869,6 +1872,13 @@
                      (statements body config))
                     (format "while (~a);"  (expression tst config))
                     (statements (cdr l) config)))]
+           [`(when _bytevector-pad?_ . ,body)
+            (statements (append
+                         (if (getprop 'bytevector-pad-disp '*constant* #f)
+                             body
+                             '())
+                         (cdr l))
+                        config)]
            [`(when ,tst . ,body)
             (statements (cons `(cond [,tst . ,body][else]) (cdr l))
                         config)]
@@ -1935,6 +1945,11 @@
          (if (lookup 'maybe-backreferences? config #f)
              "BACKREFERENCES_ENABLED"
              "0")]
+        [`(if _bytevector-pad?_ ,tru ,fls)
+         (let ([e (if (getprop 'bytevector-pad-disp '*constant* #f)
+                      tru
+                      fls)])
+           (expression e config protect? multiline?))]
         [`(just ,id)
          (hashtable-set! (lookup 'used config) id #t)
          (symbol->string id)]

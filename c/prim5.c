@@ -245,7 +245,19 @@ static ptr s_make_immobile_vector(uptr len, ptr fill) {
 
 static ptr s_make_reference_bytevector(uptr len) {
   ptr b = S_bytevector2(get_thread_context(), len, space_reference_array);
-  memset(&BVIT(b, 0), 0, len);
+
+  /* In case of a dirty sweep at the current allocation site, we need
+     to clear any padding bytes, either internal or for alignment */
+  len = (len + ptr_bytes - 1) >> log2_ptr_bytes;
+#ifdef bytevector_pad_disp
+  *(ptr *)TO_VOIDP((uptr)b+bytevector_pad_disp) = FIX(0);
+  if (len & 1) len++;
+#else
+  if (!(len & 1)) len++;
+#endif
+
+  memset(&BVIT(b, 0), 0, len << log2_ptr_bytes);
+
   return b;
 }
 
