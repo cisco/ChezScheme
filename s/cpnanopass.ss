@@ -4500,7 +4500,7 @@
                    (Scheme->C type toC t #f #f)])))
             (define C->Scheme
               ; ASSUMPTIONS: ac0, ac1, and xp are not C argument registers
-              (lambda (type fromC lvalue expects-unboxed? is-unboxed?)
+              (lambda (type fromC lvalue expects-unboxed? is-unboxed? for-return?)
                 (define integer->ptr
                  ; ac0 holds low 32-bits, ac1 holds high 32 bits, if needed
                   (lambda (width lvalue)
@@ -4578,7 +4578,7 @@
                   (if is-unboxed?
                       (fromC lvalue)
                       (%seq
-                       (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) #t))
+                       (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) for-return?))
                        ,(fromC (if expects-unboxed?
                                    (with-output-language (L13 Lvalue)
                                      (%mref ,%xp ,%zero ,(constant flonum-data-disp) fp))
@@ -4667,7 +4667,7 @@
                                          ;; was instead installed in the first argument.
                                          `(seq (set! ,maybe-lvalue ,(%constant svoid)) ,e)]
                                         [else
-                                         `(seq ,(C->Scheme result-type c-res maybe-lvalue #t unboxed?) ,e)])
+                                         `(seq ,(C->Scheme result-type c-res maybe-lvalue #t unboxed? #t) ,e)])
                                       e))))])
                     e
                     #;
@@ -4718,7 +4718,7 @@
                               [(real-register? '%cp) `(set! ,cp-save ,%cp)]
                               [else `(nop)])
                             ; convert arguments
-                            ,(fold-left (lambda (e x arg-type c-arg) `(seq ,(C->Scheme arg-type c-arg x #f #f) ,e))
+                            ,(fold-left (lambda (e x arg-type c-arg) `(seq ,(C->Scheme arg-type c-arg x #f #f #f) ,e))
                                (set-locs fv* frame-x*
                                  (set-locs (map (lambda (reg) (in-context Lvalue (%mref ,%tc ,(reg-tc-disp reg)))) reg*) reg-x*
                                    `(set! ,%ac0 (immediate ,(length arg-type*)))))
