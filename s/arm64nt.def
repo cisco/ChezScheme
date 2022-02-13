@@ -1,0 +1,5 @@
+(define-constant machine-type (constant machine-type-arm64nt))
+(features iconv expeditor windows)
+(include "arm64.def")
+(include "nt.def")
+(include "default.def")

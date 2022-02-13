@@ -31,7 +31,7 @@
 # define FLUSHCACHE
 #endif
 
-#if (defined(__arm__) || defined(__arm64__) || defined(__aarch64__))
+#if (defined(__arm__) || defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64))
 # define FLUSHCACHE
 #endif
 
@@ -165,7 +165,9 @@ typedef int tputsputcchar;
 typedef char *memcpy_t;
 struct timespec;
 #ifndef __MINGW32__
-# if defined(_WIN64)
+# if defined(_M_ARM64)
+#  define HAND_CODED_SETJMP_SIZE 32
+# elif defined(_WIN64)
 #  define HAND_CODED_SETJMP_SIZE 32
 # else
 #  define _setjmp setjmp

@@ -409,6 +409,7 @@
   arm32nb   tarm32nb
   ppc32nb   tppc32nb
   arm64nb   tarm64nb
+  arm64nt   tarm64nt
 )
 
 (include "machine.def")

@@ -1,0 +1,5 @@
+
+vsmach = x64_arm64
+vsdefs = /DAARCH64
+
+include Mf-nt

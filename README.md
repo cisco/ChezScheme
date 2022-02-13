@@ -6,7 +6,7 @@ listed at the end of this README.
 
 Supported platforms:
 
- * Windows: x86, x86_64
+ * Windows: x86, x86_64, AArch64
  * Mac OS: x86, x86_64, AArch64, PowerPC32
  * Linux: x86, x86_64, ARMv6, AArch64, PowerPC32
  * FreeBSD: x86, x86_64, ARMv6, AArch64, PowerPC32

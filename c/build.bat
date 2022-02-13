@@ -17,7 +17,7 @@ mkdir %WORKAREA%\bin\%M%
 echo #define SCHEME_SCRIPT "scheme-script" > %WORKAREA%\c\config.h
 
 cd %WORKAREA%\c
-nmake Makefile.%M%
+nmake /f Makefile.%M% %2
 cd ..\..
 
 goto donebuilding

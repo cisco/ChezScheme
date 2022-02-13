@@ -64,6 +64,7 @@ case "$Mhost" in
   arm64ob) ;;
   arm64nb) ;;
   arm64osx) ;;
+  arm64nt) ;;
   i3fb) ;;
   i3le) ;;
   i3nb) ;;
@@ -77,7 +78,6 @@ case "$Mhost" in
   ppc32ob) ;;
   ppc32nb) ;;
   ppc32osx) ;;
-  arm64osx) ;;
   pb) ;;
   pb64l) ;;
   pb64b) ;;
@@ -104,6 +104,7 @@ case "$Mhost" in
   tarm64ob) ;;
   tarm64nb) ;;
   tarm64osx) ;;
+  tarm64nt) ;;
   ti3fb) ;;
   ti3le) ;;
   ti3nb) ;;
@@ -116,7 +117,6 @@ case "$Mhost" in
   tppc32ob) ;;
   tppc32nb) ;;
   tppc32osx) ;;
-  tarm64osx) ;;
   em) ;;
   *) echo "unrecognized machine name: $Mhost"; exit 1 ;;
 esac
@@ -187,8 +187,7 @@ case "$Muni" in
 esac
 
 case "$Muniarch" in
-  a6nt) Mos=nt ;;
-  i3nt) Mos=nt ;;
+  *nt) Mos=nt ;;
   *) Mos="" ;;
 esac
 
@@ -283,6 +282,9 @@ else
   if [ "$Muni" != "" ] ; then
     (cd $W/c; workln "$upupsrcdir"/c/Mf-$Muni Mf-$Muni)
   fi
+  if [ "$Mos" != "" ] ; then
+    (cd $W/c; workln "$upupsrcdir"/c/Mf-$Mos Mf-$Mos)
+  fi
 fi
 (cd $W/c; workln "$upupsrcdir"/c/Mf-base Mf-base)
 if [ ! -e $W/c/config.h ] ; then
@@ -361,6 +363,9 @@ else
   (cd $W/mats; forceworkln Mf-$M Makefile)
   if [ "$Muni" != "" ] ; then
     (cd $W/mats; workln "$upupsrcdir"/mats/Mf-$Muni Mf-$Muni)
+  fi
+  if [ "$Mos" != "" ] ; then
+    (cd $W/mats; workln "$upupsrcdir"/mats/Mf-$Mos Mf-$Mos)
   fi
 fi
 if [ "$Mpbhost" != "" ] ; then

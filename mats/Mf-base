@@ -42,7 +42,9 @@
 
 include Mf-config
 
-ifeq (${OS},Windows_NT)
+ifeq (${MSYSTEM},MSYS)
+  MatsDir = $(shell cygpath -am .)
+else ifeq (${OS},Windows_NT)
   MatsDir = $(shell wslpath -am .)
 else
   MatsDir = $(abspath .)
@@ -65,12 +67,14 @@ endif
 # it where to find its boot files, and CHEZSCHEMELIBDIRS tells
 # it where to find libraries.
 Scheme = $(abspath ../bin/$m/scheme${ExeSuffix})
-ifeq ($(OS),Windows_NT)
+ifeq (${MSYSTEM},MSYS)
+  SchemePath = $(shell cygpath -am ../bin/$m/scheme${ExeSuffix})
+else ifeq ($(OS),Windows_NT)
   SchemePath = $(shell wslpath -am ../bin/$m/scheme${ExeSuffix})
 else
   SchemePath = ${Scheme}
+  export SCHEMEHEAPDIRS=.${dirsep}$(abspath ../boot)/%m
 endif
-export SCHEMEHEAPDIRS=.${dirsep}$(abspath ../boot)/%m
 export CHEZSCHEMELIBDIRS=.
 
 # Include is the directory holding scheme.h.
@@ -155,7 +159,9 @@ defaultc = f
 c = $(defaultc)
 
 # set of coverage files to load
-ifeq ($(OS),Windows_NT)
+ifeq (${MSYSTEM},MSYS)
+  coverage-files = $(shell cygpath -am ../boot/$m/petite.covin) $(shell cygpath -am ../boot/$m/scheme.covin)
+else ifeq ($(OS),Windows_NT)
   coverage-files = $(shell wslpath -am ../boot/$m/petite.covin) $(shell wslpath -am ../boot/$m/scheme.covin)
 else
   coverage-files = $(abspath ../boot/$m/petite.covin ../boot/$m/scheme.covin)
@@ -166,7 +172,9 @@ mats = primvars 3 4 5_1 5_2 5_3 5_4 5_5 bytevector thread profile\
  misc cp0 cptypes 5_6 5_7 5_8 6 io format 7 record hash enum 8 fx fl cfl foreign\
  ftype unix windows examples ieee date exceptions oop
 
-ifeq ($(OS),Windows_NT)
+ifeq (${MSYSTEM},MSYS)
+  Examples = $(shell cygpath -am ../examples)
+else ifeq ($(OS),Windows_NT)
   Examples = $(shell wslpath -am ../examples)
 else
   Examples = $(abspath ../examples)

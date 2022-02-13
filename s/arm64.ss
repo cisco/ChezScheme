@@ -2512,14 +2512,22 @@
                    ;; accumulate alignment from previous args so we can compute any
                    ;; needed padding and alignment after this next argument
                    [stack-align 0])
-          (let ([next-varargs-after (and varargs-after (if (fx> varargs-after 0) (fx- varargs-after 1) 0))])
+          (let ([next-varargs-after (and varargs-after (if (fx> varargs-after 0) (fx- varargs-after 1) 0))]
+                [fp-in-int? (constant-case machine-type-name
+                              [(arm64nt tarm64nt) (and varargs-after #t)]
+                              [else #f])])
             (if (null? types)
                 '()
                 (nanopass-case (Ltype Type) (car types)
                   [(fp-double-float)
                    (cond
-                     [(null? fp*)
+                     [(if fp-in-int? (null? int*) (null? fp*))
                       (cons (make-cat 'stack '() 8 0 #f) (loop (cdr types) int* '() next-varargs-after 0))]
+                     [fp-in-int?
+                      (cons (make-cat 'int (list (car int*)) 8 0 #f)
+                            (loop (cdr types) (rest-of int* 1 next-varargs-after) (rest-of fp* 0 next-varargs-after)
+                                  next-varargs-after
+                                  stack-align))]
                      [else
                       (cons (make-cat 'fp (list (car fp*)) 8 0 #f)
                             (loop (cdr types) (rest-of int* 0 next-varargs-after) (rest-of fp* 1 next-varargs-after)
@@ -2527,11 +2535,16 @@
                                   stack-align))])]
                   [(fp-single-float)
                    (cond
-                     [(null? fp*)
+                     [(if fp-in-int? (null? int*) (null? fp*))
                       (alignment-via-lookahead
                        4 (cdr types) stack-align varargs-after
                        (lambda (bytes pad stack-align)
                          (cons (make-cat 'stack '() bytes pad #f) (loop (cdr types) int* '() next-varargs-after stack-align))))]
+                     [fp-in-int?
+                      (cons (make-cat 'int (list (car int*)) 8 0 #f)
+                            (loop (cdr types) (rest-of int* 1 next-varargs-after) (rest-of fp* 0 next-varargs-after)
+                                  next-varargs-after
+                                  stack-align))]
                      [else
                       (cons (make-cat 'fp (list (car fp*)) 8 0 #f)
                             (loop (cdr types) (rest-of int* 0 next-varargs-after)(rest-of fp* 1 next-varargs-after)
@@ -2548,7 +2561,7 @@
                                         (fx<= num-members 4)
                                         (andmap float-member? members))])
                      (cond
-                       [doubles?
+                       [(and doubles? (not fp-in-int?))
                         ;; Sequence of up to 4 doubles that may fit in registers
                         (cond
                           [(fx>= (length fp*) num-members)
@@ -2561,7 +2574,7 @@
                            ;; Stop using fp registers, put on stack
                            (cons (make-cat 'stack '() size 0 #f)
                                  (loop (cdr types) int* '() next-varargs-after 0))])]
-                       [floats?
+                       [(and floats? (not fp-in-int?))
                         ;; Sequence of up to 4 floats that may fit in registers
                         (cond
                           [(fx>= (length fp*) num-members)
@@ -2737,6 +2750,18 @@
                   (lambda (fpreg)
                     (lambda (x) ; unboxed
                       `(set! ,fpreg ,(%inline double->single ,x))))]
+                 [load-double-into-int-reg
+                  (lambda (reg)
+                    (lambda (x) ; unboxed
+                      `(set! ,reg ,(%inline fpcastto ,x))))]
+                 [load-single-into-int-reg
+                  (lambda (reg)
+                    (lambda (x) ; unboxed
+                      ;; used only when arguments are not put in fp registers,
+                      ;; so ok to use `%Cfparg1`
+                      `(seq
+                        (set! ,%Cfparg1 ,(%inline double->single ,x))
+                        (set! ,reg ,(%inline fpcastto ,%Cfparg1)))))]
                  [load-boxed-double-reg
                   (lambda (fpreg fp-disp)
                     (lambda (x) ; address (always a var) of a flonum
@@ -2787,6 +2812,10 @@
                                   (loop types cats 
                                         (cons (load-double-reg (car (cat-regs cat))) locs)
                                         isp ind-sp)]
+                                 [(eq? 'int (cat-place cat))
+                                  (loop types cats 
+                                        (cons (load-double-into-int-reg (car (cat-regs cat))) locs)
+                                        isp ind-sp)]
                                  [else
                                   (loop types cats 
                                         (cons (load-double-stack isp) locs)
@@ -2796,6 +2825,10 @@
                                  [(eq? 'fp (cat-place cat))
                                   (loop types cats 
                                         (cons (load-single-reg (car (cat-regs cat))) locs)
+                                        isp ind-sp)]
+                                 [(eq? 'int (cat-place cat))
+                                  (loop types cats 
+                                        (cons (load-single-into-int-reg (car (cat-regs cat))) locs)
                                         isp ind-sp)]
                                  [else
                                   (loop types cats 
@@ -3100,6 +3133,10 @@
                               (loop types cats
                                     (cons (load-double-stack float-reg-offset) locs)
                                     int-reg-offset (fx+ float-reg-offset 8) stack-arg-offset)]
+                             [(int)
+                              (loop types cats
+                                    (cons (load-double-stack int-reg-offset) locs)
+                                    (fx+ int-reg-offset 8) float-reg-offset stack-arg-offset)]
                              [else
                               (loop types cats
                                     (cons (load-double-stack stack-arg-offset) locs)
@@ -3110,6 +3147,10 @@
                               (loop types cats
                                     (cons (load-single-stack float-reg-offset) locs)
                                     int-reg-offset (fx+ float-reg-offset 8) stack-arg-offset)]
+                             [(int)
+                              (loop types cats
+                                    (cons (load-single-stack int-reg-offset) locs)
+                                    (fx+ int-reg-offset 8) float-reg-offset stack-arg-offset)]
                              [else
                               (loop types cats
                                     (cons (load-single-stack stack-arg-offset) locs)

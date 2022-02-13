@@ -194,12 +194,12 @@ static void idiot_checks() {
   }
 #endif
 #endif
+#ifndef PORTABLE_BYTECODE
   if (sizeof(wchar_t) * 8 != wchar_bits) {
     fprintf(stderr, "sizeof(wchar_t) * 8 [%ld] != wchar_bits [%d]\n",
               (long)sizeof(wchar_t), wchar_bits);
     oops = 1;
   }
-#ifndef PORTABLE_BYTECODE
   if (sizeof(size_t) * 8 != size_t_bits) {
     fprintf(stderr, "sizeof(size_t) * 8 [%ld] != size_t_bits [%d]\n",
               (long)sizeof(size_t), size_t_bits);

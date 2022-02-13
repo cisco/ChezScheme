@@ -216,7 +216,7 @@
       (error? (load-shared-object 3))
     )
    ]
-  [(i3nt ti3nt a6nt ta6nt)
+  [(i3nt ti3nt a6nt ta6nt arm64nt tarm64nt)
    (mat load-shared-object
       (file-exists? foreign1.so)
       (begin (load-shared-object foreign1.so) #t)
@@ -2766,7 +2766,7 @@
           (fprintf to-stdin "'hello\n") ; should cause exception, then abort (via reset)
           (flush-output-port to-stdin)
           (let ([pid^ (machine-case
-                        [(i3nt ti3nt a6nt ta6nt) pid]
+                        [(i3nt ti3nt a6nt ta6nt arm64nt tarm64nt) pid]
                         [else ((foreign-procedure "waitpid" (int (* int) int) int) pid (make-ftype-pointer int 0) 0)])])
             (and
               (equal? s1 "Exception: oops 1")
@@ -2785,7 +2785,7 @@
          '(load-shared-object "libc.so.6")]
         [(i3fb ti3fb a6fb ta6fb)
          '(load-shared-object "libc.so.7")]
-        [(i3nt ti3nt a6nt ta6nt)
+        [(i3nt ti3nt a6nt ta6nt arm64nt tarm64nt)
          '(load-shared-object "msvcrt.dll")]
         [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx)
          '(load-shared-object "libc.dylib")]

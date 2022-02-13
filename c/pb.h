@@ -196,14 +196,14 @@ enum {
 #define do_pb_mov_pb_d_s(instr)                                         \
   do {                                                                  \
     float f;                                                            \
-    f = fpregs[INSTR_dr_reg(instr)];                                    \
+    f = (float)fpregs[INSTR_dr_reg(instr)];                             \
     memcpy(FP_REG_FLOAT_START(fpregs[INSTR_dr_dest(instr)]), &f, sizeof(float)); \
   } while (0)
 
 #define do_pb_mov_pb_d_s_d(instr)                 \
   do {                                            \
     float f;                                      \
-    f = fpregs[INSTR_dr_reg(instr)];              \
+    f = (float)fpregs[INSTR_dr_reg(instr)];       \
     fpregs[INSTR_dr_dest(instr)] = (double)f;     \
   } while (0)
 
@@ -674,10 +674,10 @@ enum {
   *(double *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = fpregs[INSTR_dri_dest(instr)]
 
 #define do_pb_st_op_pb_single_pb_register(instr) \
-  *(float *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = fpregs[INSTR_drr_dest(instr)]
+  *(float *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = (float)fpregs[INSTR_drr_dest(instr)]
 
 #define do_pb_st_op_pb_single_pb_immediate(instr) \
-  *(float *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = fpregs[INSTR_dri_dest(instr)]
+  *(float *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = (float)fpregs[INSTR_dri_dest(instr)]
 
 #if defined(PTHREADS)
 # define CAS_ANY_FENCE_SEQOK(addr, old_r, r) \

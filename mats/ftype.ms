@@ -563,6 +563,9 @@
                        [(i3nt ti3nt)
                         (system (format "set cl= && ~a\\..\\c\\vs.bat x86 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a"
                                   (patch-exec-path *mats-dir*) testfile.so testfile.c))]
+                       [(arm64nt tarm64nt)
+                        (system (format "set cl= && ~a\\..\\c\\vs.bat x64_arm64 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a"
+                                  (patch-exec-path *mats-dir*) testfile.so testfile.c))]
                        [(arm32le tarm32le arm64le tarm64le)
                         (system (format "cc -fPIC -shared -o ~a ~a" testfile.so testfile.c))]
                        [else ; this should work for most intel-based systems that use gcc...

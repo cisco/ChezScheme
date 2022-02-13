@@ -98,14 +98,14 @@ sed -e "s/Chez Scheme Version [0-9]\.[0-9]\(\.[0-9]\)* .* [0-9][0-9]*/Chez Schem
   ../scheme.1.in > scheme.1.in
 set maybeupdatedfiles = ($maybeupdatedfiles scheme.1.in)
 
-rm -f c/Makefile.{,t}{i3,a6}nt
-foreach fn (c/Makefile.{,t}{a6,i3}nt)
+rm -f c/Makefile.nt
+foreach fn (c/Makefile.nt)
   set maybeupdatedfiles = ($maybeupdatedfiles $fn)
   sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../$fn > $fn
 end
 
-rm -f mats/Mf-{,t}{i3,a6}nt
-foreach fn (mats/Mf-{,t}{a6,i3}nt)
+rm -f mats/Mf-nt
+foreach fn (mats/Mf-nt)
   set maybeupdatedfiles = ($maybeupdatedfiles $fn)
   sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/g" ../$fn > $fn
 end
