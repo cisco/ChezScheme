@@ -1156,7 +1156,9 @@
     (type-case x
       [(fixnum? bignum? ratnum?) #t]
       [(flonum?) (not (exceptional-flonum? x))]
-      [($inexactnum?) (fl= ($inexactnum-imag-part x) 0.0)]
+      [($inexactnum?)
+       (and (fl= ($inexactnum-imag-part x) 0.0)
+            (not (exceptional-flonum? ($inexactnum-real-part x))))]
       [else #f])))
 
 (set! real?
