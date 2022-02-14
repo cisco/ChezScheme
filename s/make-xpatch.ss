@@ -193,6 +193,24 @@
   (unless (file-exists? f)
     (mkdir f)))
 
+(define (file-append dest srcs)
+  (let ([o (open-file-output-port dest (file-options no-fail))])
+    (for-each (lambda (src)
+                (let ([i (open-file-input-port src)]
+                      [buf (make-bytevector 4096)])
+                  (let loop ()
+                    (let ([n (get-bytevector-n! i buf 0 (bytevector-length buf))])
+                      (unless (eof-object? n)
+                        (put-bytevector o buf 0 n)
+                        (loop))))
+                  (close-input-port i)))
+              srcs)
+    (close-output-port o)))
+
+(define xpatch-file "xpatch")
+
+(define lib-dirs (format "../nanopass~a~a." (#%$separator-character)  (#%$separator-character)))
+
 (define (configure)
   (reset-handler abort)
   (base-exception-handler (lambda (c) (fresh-line) (display-condition c) (newline) (reset)))
@@ -202,7 +220,7 @@
   (fasl-compressed #t)
   (generate-inspector-information #f)
   (subset-mode 'system)
-  (library-directories "../nanopass"))
+  (library-directories lib-dirs))
 
 (case (string->symbol phase)
   [(macro)
@@ -211,7 +229,7 @@
 
    (when (newer-tree?! "../nanopass" "nanopass_done")
      (compile-imported-libraries #t)
-     (library-directories "../nanopass")
+     (library-directories lib-dirs)
      (compile-library "../nanopass/nanopass.ss" "nanopass.so")
      (when (file-exists? "nanopass_done") (delete-file "nanopass_done"))
      (call-with-output-file "nanopass_done" (lambda (out) (void))))
@@ -238,8 +256,13 @@
                (compile-newer-file (replace obj ".patch" ".ss") obj))
              patchobjs)
 
+   (when (or newer? (not (file-exists? xpatch-file)))
+     (file-append xpatch-file patchobjs)
+     (newer! xpatch-file))
+
    (when (file-exists? "is_newer") (delete-file "is_newer"))
-   (when newer? (call-with-output-file "is_newer" (lambda (out) (void))))]
+   (when newer?
+     (call-with-output-file "is_newer" (lambda (out) (void))))]
   [(build)
    ;; If we compile anything, compile all together to have deterministic record names:
    (let ([srcs (append basesrcs
@@ -249,7 +272,7 @@
        (printf "Cross-compiling boot files...\n")
        ;; load patch
        (for-each load macroobjs)
-       (for-each load patchobjs)
+       (load xpatch-file)
        (configure)
        
        (for-each (lambda (src)
