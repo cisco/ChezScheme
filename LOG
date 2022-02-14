@@ -2259,3 +2259,5 @@
     BUILDING, c/vs.bat, wininstall/locate-vcredist.bat
 - make threaded foreign mats more robust
     mats/foreign.ms
+- fix rational-valued? for numbers with an exceptional real part
+    s/5_3.ss mats/5_1.ms

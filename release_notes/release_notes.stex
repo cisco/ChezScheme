@@ -1950,6 +1950,14 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{\protect\scheme{rational-valued?} and exceptional flonums (9.5.8)}
+
+The \scheme{rational-value?} function returned incorrect results when called on
+a value with an inexact zero imaginary part and real part that is an exceptional
+floating point value (i.e., an infinity or NaN).  For example,
+\scheme{(rational-valued? +inf.0+0.0i)} incorrectly returned \scheme{#t}, but now
+returns \scheme{#f}.
+
 \subsection{Calls to foreign-callable procedures may cause the process to terminate with
 error 0xC0000409 STATUS\_STACK\_BUFFER\_OVERRUN on 64-bit Windows (9.5.8)}
 
