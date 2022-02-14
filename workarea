@@ -122,9 +122,10 @@ case "$Mhost" in
 esac
 
 Muni=`echo $M | sed -e 's/^t//'`
+Mhostuni=`echo $Mhost | sed -e 's/^t//'`
 
 # If Mtype is set, then Mf-$Mtype is used,
-# otherwise Mf-$M and Mf-$Muni is used
+# otherwise Mf-$M and Mf-$Muni (or Mf-$Mhost and Mf-$Mhostuni) is used
 case "$Mhost" in
   *nt) ;;
   *) Mtype=unix ;;
@@ -186,7 +187,7 @@ case "$Muni" in
         ;;
 esac
 
-case "$Muniarch" in
+case "$Mhost" in
   *nt) Mos=nt ;;
   *) Mos="" ;;
 esac
@@ -277,10 +278,10 @@ if [ "$Mtype" != "" ] ; then
   (cd $W/c; workln "$upupsrcdir"/c/Mf-$Mtype Mf-$Mtype)
   (cd $W/c; forceworkln Mf-$Mtype Makefile)
 else
-  (cd $W/c; workln "$upupsrcdir"/c/Mf-$M Mf-$M)
-  (cd $W/c; forceworkln Mf-$M Makefile)
-  if [ "$Muni" != "" ] ; then
-    (cd $W/c; workln "$upupsrcdir"/c/Mf-$Muni Mf-$Muni)
+  (cd $W/c; workln "$upupsrcdir"/c/Mf-$Mhost Mf-$Mhost)
+  (cd $W/c; forceworkln Mf-$Mhost Makefile)
+  if [ "$Mhostuni" != "" ] ; then
+    (cd $W/c; workln "$upupsrcdir"/c/Mf-$Mhostuni Mf-$Mhostuni)
   fi
   if [ "$Mos" != "" ] ; then
     (cd $W/c; workln "$upupsrcdir"/c/Mf-$Mos Mf-$Mos)
@@ -293,7 +294,7 @@ fi
 if [ ! -e $W/c/Mf-config ] ; then
   touch $W/c/Mf-config
 fi
-case $M in
+case $Mhost in
   *nt)
     (cd $W/c; workln "$upupsrcdir"/c/vs.bat vs.bat)
     ;;
@@ -315,7 +316,8 @@ fi
 if [ -e "$srcdir"/s/$M.def ] ; then
   (cd $W/s; workln "$upupsrcdir"/s/$M.def $M.def)
 else
-    # synthesize generic Unix or pb .def file
+    # synthesize generic Unix or pb .def file;
+    # this process is duplicated in "s/make-xpatch.ss"
     if [ -h $W/s/$M.def ] ; then
         rm $W/s/$M.def
     fi
@@ -374,7 +376,7 @@ if [ "$Mpbhost" != "" ] ; then
 fi
 (cd $W/mats; workln "$upupsrcdir"/mats/Mf-base Mf-base)
 (cd $W/mats; workln "$upupsrcdir"/mats/Mf-exobj Mf-exobj)
-case $M in
+case $Mhost in
   *nt)
     (cd $W/mats; workln "$upupsrcdir"/mats/vs.bat vs.bat)
     ;;
@@ -501,7 +503,7 @@ upupsrcdir=$upupsrcdir
 m=$M
 END
 
-case $M in
+case $Mhost in
   *nt)
     (cd $W/c; make source > /dev/null 2>&1)
     (cd $W/s; make source > /dev/null 2>&1)

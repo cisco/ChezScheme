@@ -2363,6 +2363,7 @@
   ($seginfo [flags single-valued])
   ($seginfo-generation [flags single-valued])
   ($seginfo-space [flags single-valued])
+  ($separator-character [flags single-valued])
   ($set-code-byte! [flags single-valued])
   ($set-code-long! [flags single-valued])
   ($set-code-quad! [flags single-valued])

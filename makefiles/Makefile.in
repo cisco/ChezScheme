@@ -23,6 +23,10 @@ build:
 run:
 	env SCHEMEHEAPDIRS=$(workarea)/boot/$(m) $(workarea)/bin/$(m)/scheme
 
+.PHONY: kernel
+kernel:
+	(cd $(workarea) && $(MAKE) kernel)
+
 .PHONY: install
 install:
 	(cd $(workarea) && $(MAKE) install)

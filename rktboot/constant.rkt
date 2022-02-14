@@ -107,4 +107,5 @@
   scheme-version
   code-flag-lift-barrier
   record-ptr-offset
-  machine-type-name)
+  machine-type-name
+  architecture)

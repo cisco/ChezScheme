@@ -6313,6 +6313,11 @@ implementation notes:
       (unless (eq? $console-error-port $console-output-port)
         (register-open-file $console-error-port))))
 
+  (set! $separator-character
+    (constant-case architecture
+      [(pb) (foreign-procedure "(cs)s_separatorchar" () ptr)]
+      [else (if-feature windows (lambda () #\;) (lambda () #\:))]))
+
   ; utf8->string, etc., are in prims.ss, since they are used by
   ; foreign procedures argument and return values
 )

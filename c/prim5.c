@@ -128,6 +128,10 @@ static ptr s_iconv_to_string PROTO((uptr cd, ptr in, uptr i, uptr iend, ptr out,
 static ptr s_multibytetowidechar PROTO((unsigned cp, ptr inbv));
 static ptr s_widechartomultibyte PROTO((unsigned cp, ptr inbv));
 #endif
+#ifdef PORTABLE_BYTECODE
+static ptr s_separatorchar();
+#endif
+
 static ptr s_profile_counters PROTO((void));
 static ptr s_profile_release_counters PROTO((void));
 
@@ -1924,6 +1928,9 @@ void S_prim5_init() {
     Sforeign_symbol("(cs)s_multibytetowidechar", (void *)s_multibytetowidechar);
     Sforeign_symbol("(cs)s_widechartomultibyte", (void *)s_widechartomultibyte);
 #endif
+#ifdef PORTABLE_BYTECODE
+    Sforeign_symbol("(cs)s_separatorchar", (void *)s_separatorchar);
+#endif
     Sforeign_symbol("(cs)s_profile_counters", (void *)s_profile_counters);
     Sforeign_symbol("(cs)s_profile_release_counters", (void *)s_profile_release_counters);
 
@@ -2355,3 +2362,13 @@ static ptr s_widechartomultibyte(unsigned cp, ptr inbv) {
   return outbv;  
 }
 #endif /* WIN32 */
+
+#ifdef PORTABLE_BYTECODE
+static ptr s_separatorchar() {
+#ifdef WIN32
+  return Schar(';');
+#else
+  return Schar(':');
+#endif
+}
+#endif

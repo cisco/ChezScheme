@@ -5630,8 +5630,8 @@
    ; "stuff^...", ^ is ; under windows : otherwise
    ; stuff -> src-dir^^src-dir | src-dir
    ; ends with ^, tail is default-ls, otherwise ()
-    (define sep (if-feature windows #\; #\:))
-    (let ([n (string-length s)])
+    (let ([sep ($separator-character)]
+          [n (string-length s)])
       (define (s0 i)
         (if (fx= i n)
             '()

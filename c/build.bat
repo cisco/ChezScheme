@@ -6,11 +6,11 @@ set WORKAREA=%M%
 
 if "%WORKAREA%"=="" goto needargument
 
-xcopy /s /i /y c %WORKAREA%\c
-xcopy /s /i /y s %WORKAREA%\s
-xcopy /s /i /y boot %WORKAREA%\boot
-xcopy /s /i /y zlib %WORKAREA%\zlib
-xcopy /s /i /y lz4 %WORKAREA%\lz4
+xcopy /s /i /d /y c %WORKAREA%\c
+xcopy /s /i /d /y s %WORKAREA%\s
+xcopy /s /i /d /y boot %WORKAREA%\boot
+xcopy /s /i /d /y zlib %WORKAREA%\zlib
+xcopy /s /i /d /y lz4 %WORKAREA%\lz4
 
 mkdir %WORKAREA%\bin\%M%
 

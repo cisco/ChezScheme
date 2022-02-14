@@ -29,6 +29,10 @@ install:
 uninstall:
 	$(MAKE) -f Mf-install uninstall
 
+.PHONY: kernel
+kernel:
+	(cd c && $(MAKE))
+
 .PHONY: test
 test: build
 	(cd mats && $(MAKE) allx)

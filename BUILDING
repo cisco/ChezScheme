@@ -276,22 +276,34 @@ The makefile supports several targets:
 
 WINDOWS VIA COMMAND PROMPT
 
-To build on Windows with Microsoft Visual Studio, you'll need initial
-boot files for Chez Scheme. The simplest approach is to install Racket
-and run
+To build on Windows with Microsoft Visual Studio, make sure you've set
+up Microsoft Visual Studio command-line tools. The "c\vs.bat" script
+can help if you supply `amd64` for a 64-bit Intel build, `x86` for a
+32-bit Intel build, or `x64_arm64` for a 64-bit Arm build:
+
+  c\vs.bat amd64
+
+Next, you'll need boot files for the Chez Scheme target <machine type>,
+which is one of the following:
+
+ * ta6nt     (64-bit Intel threaded
+ * a6nt      (64-bit Intel non-threaded
+ * tarm64nt  (64-bit Arm threaded)
+ * arm64nt   (64-bit Arm non-threaded)
+ * ti3nt     (32-bit threaded)
+ * i3nt      (32-bit non-threaded)
+
+One approach to getting boot files is to install Racket and run (where
+you may have to supply the full path to your Racket installation):
 
   racket rktboot/main.rkt --machine <machine type>
 
-where the part after `--machine` is either `ta6nt` (64-bit threaded),
-`a6nt` (64-bit non-threaded), `ti3nt` (32-bit threaded), or `i3nt`
-(32-bit non-threaded). You may have to supply the full path to your
-Racket installation.
+Another approach is to build a pb Chez Scheme to take advantage of pb
+boot files, and then use that Chez Scheme to generate boot files for
+the target machine type:
 
-Next, make sure you've set up Microsoft Visual Studio command-line
-tools. The "c\vs.bat" script can help if you supply `amd64` for a
-64-bit build or `x86` for a 32-bit build:
-
-  c\vs.bat amd64
+ c\build.bat pb
+ s\boot.bat <machine type> pb
 
 Finally, run "c\build.bat" with the same <machine type> as when
 creating boot files:
