@@ -9211,8 +9211,8 @@
               (let ([t-hi (make-tmp 't-hi)])
                 `(let ([,t-hi (inline ,(make-info-kill* (reg-list %real-zero))
                                 ,%read-time-stamp-counter)])
-                   ,(u32xu32->ptr t-hi %real-zero)))])]
-             [(riscv64) (unsigned->ptr (%inline read-time-stamp-counter) 64)])
+                   ,(u32xu32->ptr t-hi %real-zero)))]
+             [(riscv64) (unsigned->ptr (%inline read-time-stamp-counter) 64)])])
 
         (define-inline 3 $read-performance-monitoring-counter
           [(e)
@@ -13946,6 +13946,7 @@
               (let* ([l (cadr funcrel)] [code ($c-func-code-record (local-label-func l))])
                 (record-case code
                   [(code) (func subtype free name arity-mask size code-list info)
+                   #;(printf "~a~n" who)
                    (set-car!
                      funcrel
                      (let ([offset (local-label-offset l)])
@@ -13959,6 +13960,9 @@
               (unless (libspec-label? l) (local-label-iteration-set! l 1))))
           (define LambdaBody
             (lambda (entry-block* block* func)
+              #;(printf "gencode: lambdabody~n")
+              #;(printf "L: ~a~n" (length entry-block*))
+              #;(printf "LL: ~a~n" (length block*))
               #;(when (#%$assembly-output)
                 (p-dot-graph block* (current-output-port))
                 (p-graph block* 'whatever (current-output-port) unparse-L16))
@@ -13967,7 +13971,8 @@
                 (fluid-let ([current-func func])
                   (let loop ([block* (reverse block*)] [chunk* '()] [offset 0])
                     (if (null? block*)
-                        (munge chunk* offset)
+                        (begin #;(printf "munge length: ~a~n" (length chunk*)) (munge chunk* offset)
+                                                                               )
                         (let ([block (car block*)])
                           (let-values ([(code* chunk* offset) (Block block chunk* offset)])
                             (let ([chunk (make-lchunk (block-label block) code*)])
@@ -13979,10 +13984,12 @@
                                 (loop (cdr block*) (cons chunk chunk*) offset)))))))))))
           (define Block
             (lambda (block chunk* offset)
+              #;(printf "gencode: block~n")
               (let f ([e* (block-effect* block)])
                 (if (null? e*)
                     (Exit block chunk* offset)
                     (let-values ([(code* chunk* offset) (f (cdr e*))])
+                      #;(printf "Block: ~a ~a~n" (length code*) (length chunk*))
                       (Effect (car e*) code* chunk* offset))))))
           (define Exit
             (lambda (block chunk* offset)
@@ -13993,6 +14000,7 @@
                     (touch-label! l)
                     (let ([chunk (asm-jump l offset)])
                       (values '() (cons chunk chunk*) (fx+ (chunk-size chunk) offset))))))
+              #;(printf "gencode: exit~n")
               (cond
                 [(goto-block? block) (do-goto (goto-block-next block))]
                 [(joto-block? block) (do-goto (joto-block-next block))]
@@ -14032,7 +14040,7 @@
                  (flush-output-port aop))
                (local-label-func l)))])
         (Lambda->func : CaseLambdaExpr (ir) -> * (func)
-          [(lambda ,info (,entry-block* ...) (,block* ...)) (make-$c-func)])
+          [(lambda ,info (,entry-block* ...) (,block* ...)) #;(printf "7")(make-$c-func)])
         ; the final version of code* (which has things resolved)
         (CaseLambdaExpr : CaseLambdaExpr (ir func) -> * ()
           [(lambda ,info (,entry-block* ...) (,block* ...))
@@ -14143,6 +14151,7 @@
 
       (define interface*->mask
         (lambda (i*)
+          #;(printf "interface*->mask~n")
           (fold-left (lambda (mask i)
                        (logor mask
                          (if (< i 0)
@@ -14822,6 +14831,7 @@
                             0
                             (fxvector-ref buckets base))
                         (let ([half (fxsrl len 1)])
+                          #;(printf "build-mask~n")
                           (logor
                             (bitwise-arithmetic-shift-left (f (fx+ base half) (fx- len half)) (fx* half bucket-width))
                             (f base half))))))))
@@ -15198,13 +15208,16 @@
                     (values (unwrap etree '() (Tail live tail)) tail))))
               (define-who handle-effect-inline
                 (lambda (effect-prim info new-effect* t* live)
+;;                  (printf "start to handle effect prim: ~s~n" effect-prim)
                   (unwrap (apply (primitive-handler effect-prim) info t*) new-effect* live)))
               (define-who handle-pred-inline
                 (lambda (pred-prim info t* live)
+;;                  (printf "start to handle pred prim: ~s~n" pred-prim)
                   (let-values ([(etree pred) (apply (primitive-handler pred-prim) info t*)])
                     (values (unwrap etree '() (Pred live pred)) pred))))
               (define-who handle-value-inline
                 (lambda (lvalue value-prim info new-effect* t* live)
+;;                  (printf "start to handle value prim: ~s~n" value-prim)
                   (unwrap (apply (primitive-handler value-prim) info lvalue t*) new-effect* live))))
             (define compute-overage
               (lambda (max-fs@call)
@@ -15320,6 +15333,7 @@
                         [else (sorry! who "unrecognized block ~s" block)])
                       (block-effect* block)))))
               block*)
+;;            (printf "finishing selection~n")
             `(dummy)))
 
         ; NB: try to reuse unspillables to reduce the number we create
@@ -15410,7 +15424,7 @@
           (define Effect*
             (lambda (e* unspillable*)
               (if (null? e*)
-                  (safe-assert (null? unspillable*))
+                  (safe-assert (null? unspillable*)) ;; error1
                   (Effect* (cdr e*)
                     (nanopass-case (L15d Effect) (car e*)
                       [(set! ,live-info ,x ,rhs)
@@ -15822,6 +15836,7 @@
            (let ([kspillable (length local*)] [kfv (fx+ max-fv0 1)] [kreg (vector-length regvec)])
              (fluid-let ([spillable* local*] [unspillable* '()] [max-fv max-fv0] [max-fs@call 0] [poison-cset (make-empty-cset kspillable)])
                (let* ([live-size (fx+ kfv kreg kspillable)] [varvec (make-vector live-size)])
+                 ;;@ (printf "live size: ~s~n" live-size)
                  ; set up var indices & varvec mapping from indices to vars
                  (fold-left (lambda (i x) (var-index-set! x i) (vector-set! varvec i x) (fx+ i 1)) 0 spillable*)
                  (do ([i 0 (fx+ i 1)]) ((fx= i kfv)) (let ([fv (get-fv i)] [i (fx+ i kspillable)]) (var-index-set! fv i) (vector-set! varvec i fv)))
@@ -15880,17 +15895,23 @@
                                (let* ([kunspillable (length unspillable*)] [unvarvec (make-vector kunspillable)])
                                  ; set up var indices & unvarvec mapping from indices to unspillables
                                  (fold-left (lambda (i x) (var-index-set! x i) (vector-set! unvarvec i x) (fx+ i 1)) 0 unspillable*)
+                                 #;(printf "pass 1~n")
                                  ; rerun intra-block live analysis and record (reg v spillable v unspillable) x unspillable conflicts
                                  (RApass unparse-L15d do-unspillable-conflict! kfv kspillable varvec live-size kunspillable unvarvec block*)
+                                 #;(printf "pass 2~n")
                                  #;(show-conflicts (info-lambda-name info) varvec unvarvec)
                                  (RApass unparse-L15d assign-registers! info varvec unvarvec)
+                                 #;(printf "pass 3~n")
                                  ; release the unspillable conflict sets
                                  (for-each (lambda (x) (var-unspillable-conflict*-set! x #f)) spillable*)
+                                 #;(printf "pass 4~n")
                                  (vector-for-each (lambda (x) (var-unspillable-conflict*-set! x #f)) regvec)
+                                 #;(printf "pass 5~n")
                                  #;(show-homes unspillable*)
                                  (if (everybody-home?)
                                      (let ([dummy (RApass unparse-L15e finalize-register-locations! dummy block*)])
-                                       ; release the spillable conflict sets
+                                        ; release the spillable conflict sets
+                                       #;(printf "pass 6~n")
                                        (vector-for-each (lambda (reg) (var-spillable-conflict*-set! reg #f)) regvec)
                                        (do ([i max-fv (fx- i 1)]) ((fx< i 0)) (var-spillable-conflict*-set! (get-fv i) #f))
                                        (let-values ([(dummy entry-block* block*)
@@ -15900,10 +15921,14 @@
                                                                   (block-printer unparse-L16 (info-lambda-name info) block*))
                                                            val*))
                                                        (list dummy entry-block* block*))])
+                                         #;(printf "pass 7~n")
                                          (safe-assert (andmap block-label (append entry-block* block*)))
+                                         #;(printf "pass 9~n")
                                          (safe-assert (lambda (b) (eq? (local-label-block (block-label b)) b)) (append entry-block* block*))
+                                         #;(printf "pass 10~n")
                                          `(lambda ,info (,entry-block* ...) (,block* ...))))
                                      (begin
+                                       #;(printf "pass 8~n")
                                        (for-each restore-block-info! block* bcache*)
                                        (vector-for-each var-spillable-conflict*-set! regvec saved-reg-csets)
                                        (for-each (lambda (x) (uvar-location-set! x #f)) spillable*)
@@ -15987,7 +16012,7 @@
         [(lambda ,info (,entry-block* ...) (,block* ...))
           (safe-assert (not (ormap block-seen? block*)))
           (safe-assert (not (null? entry-block*)))
-          (let loop ([b (car entry-block*)] [w* '()] [pariah* (cdr entry-block*)] [rblock* '()])
+          (let loop ([b (car entry-block*)] [w* '()] [pariah* (cdr entry-block*)] [rblock* '()])            
             (define next-worklist-entry
               (lambda (w* pariah* rblock*)
                 (if (null? w*)

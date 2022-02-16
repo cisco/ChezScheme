@@ -393,6 +393,42 @@ typedef char tputsputcchar;
 #define UNUSED __attribute__((__unused__))
 #endif
 
+#if (machine_type == machine_type_rv64le || machine_type == machine_type_trv64le)
+#if (machine_type == machine_type_trv64le)
+#define PTHREADS
+#endif
+#define NOBLOCK O_NONBLOCK
+#define LOAD_SHARED_OBJECT
+#define USE_MMAP
+#define MMAP_HEAP
+#define IEEE_DOUBLE
+#define LITTLE_ENDIAN_IEEE_DOUBLE
+#define LDEXP
+#define ARCHYPERBOLIC
+#define GETPAGESIZE() getpagesize()
+typedef char *memcpy_t;
+#define MAKE_NAN(x) { x = 0.0; x = x / x; }
+#define GETWD(x) getcwd((x),PATH_MAX)
+typedef int tputsputcchar;
+#define LOCKF
+#define DIRMARKERP(c) ((c) == '/')
+#ifndef DISABLE_X11
+#define LIBX11 "libX11.so"
+#endif
+#define LSEEK lseek64
+#define OFF_T off64_t
+#define _LARGEFILE64_SOURCE
+#define SECATIME(sb) (sb).st_atim.tv_sec
+#define SECCTIME(sb) (sb).st_ctim.tv_sec
+#define SECMTIME(sb) (sb).st_mtim.tv_sec
+#define NSECATIME(sb) (sb).st_atim.tv_nsec
+#define NSECCTIME(sb) (sb).st_ctim.tv_nsec
+#define NSECMTIME(sb) (sb).st_mtim.tv_nsec
+#define ICONV_INBUF_TYPE char **
+#define UNUSED __attribute__((__unused__))
+#endif
+
+
 /* defaults */
 
 #ifndef CHDIR

@@ -1,4 +1,4 @@
-;;; rv64le.def
+;;; trv64le.def
 
 #|
 from https://groups.google.com/g/chez-scheme/c/dz6nn-8KDQE
@@ -24,7 +24,7 @@ Anyway, any other allocable register is considered a potential arg.
 asm-arg-reg-cnt is the actual number of registers used for arguments.  Registers are used for the first asm-arg-reg-cnt arguments and additional arguments are passed on the stack.
 |#
 
-(define-constant machine-type (constant machine-type-rv64le))
+(define-constant machine-type (constant machine-type-trv64le))
 (define-constant architecture 'riscv64)
 (define-constant address-bits 64)
 (define-constant ptr-bits 64)
@@ -39,7 +39,7 @@ asm-arg-reg-cnt is the actual number of registers used for arguments.  Registers
 (define-constant max-float-alignment 8)
 (define-constant max-integer-alignment 8)
 
-(define-constant asm-arg-reg-max 17) ; must match the "free" regs in allocable
+(define-constant asm-arg-reg-max 15) ; must match the "free" regs in allocable(starting from %Carg1)
 (define-constant asm-arg-reg-cnt 8)
 
 (define-constant typedef-ptr "void *")

@@ -721,7 +721,7 @@
            (pr "                        : \"memory\", \"t0\")~%")
 
            (nl)
-           (pr "#define LCOKED_INCR(addr, ret) \\~%")
+           (pr "#define LOCKED_INCR(addr, ret) \\~%")
            (pr "  do { \\~%")
            (pr "    long _return_; \\~%")
            (pr "    __asm__ __volatile__ (\"li %0, 0\\n\\t\" \\~%")
@@ -741,7 +741,7 @@
            (pr "  } while (0)~%")
 
            (nl)
-           (pr "#define LCOKED_INCR(addr, ret) \\~%")
+           (pr "#define LOCKED_DECR(addr, ret) \\~%")
            (pr "  do { \\~%")
            (pr "    long _return_; \\~%")
            (pr "    __asm__ __volatile__ (\"li %0, 0\\n\\t\" \\~%")
