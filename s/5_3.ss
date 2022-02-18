@@ -34,7 +34,7 @@
       (float-type-case
          [(ieee) -1023]))
 
-   (define-constant float-precision-bits
+   (define-constant float-mantissa-bits
       (float-type-case
          [(ieee) 53]))
 
@@ -868,9 +868,10 @@
 (define fixnum-floatable-wlop?
   ;; floatable without loss of precision
   (lambda (x)
-    (if (<= (fixnum-width) (constant float-precision-bits))
+    (if (<= (- (fixnum-width) 1) (constant float-mantissa-bits))
         #t
-        (fx<= (- (expt 2 (constant float-precision-bits))) x (expt 2 (constant float-precision-bits))))))
+        (let ([hi (expt 2 (constant float-mantissa-bits))])
+          (fx<= (- hi) x hi)))))
 
 (define exact-inexact-compare?
    ; e is an exact number, i is a flonum
