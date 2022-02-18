@@ -13,6 +13,27 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(define interesting-numbers
+  (list 0 0.0 1 1.0 -1 -1.0 9007199254740992 9007199254740992.0 9007199254740993.0 9007199254740993 9007199254740992000 9007199254740992000.0 9007199254740993000.0 9007199254740993000 4.5035996273704996e-13 4.5035996273704994e-13 45035996273704996/100000000000000000000000000000 45035996273704994/100000000000000000000000000000))
+(define-syntax test-transitive
+  (syntax-rules ()
+    [(_ ?op ?x ?y ?z)
+     (let ([x ?x][y ?y][z ?z])
+       (let ([xy (?op x y)]
+             [yz (?op y z)])
+         (if (and xy yz)
+             (and (?op x z)
+                  (?op x y z))
+             #t)))]))
+(define (test-transitive-permutations op)
+  (andmap (lambda (x)
+            (andmap (lambda (y)
+                      (andmap (lambda (z)
+                                (test-transitive op x y z))
+                        interesting-numbers))
+              interesting-numbers))
+    interesting-numbers))
+
 (mat number-syntax
    (eqv? 0 (- (most-positive-fixnum) (most-positive-fixnum)))
    (eqv? 3 (1+ (1+ (1+ 0))))
@@ -1024,6 +1045,13 @@
     (not (= 2.0+1.0i 2.0+1.1i))
     (= 2-1/2i 2-1/2i)
     (= 2-1/2i 2.0-0.5i)
+    (test-transitive = 1 1.0 1)
+    (test-transitive = 1 2 3)
+    (test-transitive = 1 2 1)
+    (test-transitive = (expt 2 66) (inexact (expt 2 66)) (expt 2 66))
+    (test-transitive = 9007199254740992 9007199254740993.0 9007199254740993)
+    (test-transitive = 9007199254740992000 9007199254740993000.0 9007199254740993000)
+    (test-transitive-permutations =)
  )
 
 (mat <
@@ -1077,6 +1105,13 @@
     (error? (< 2+i 3))
     (error? (< 2 3+i))
     (guard (c [#t #t]) (< (#3%length (error #f "oops")) 0))
+    (test-transitive < 1 1.0 1)
+    (test-transitive < 1 2 3)
+    (test-transitive < 1 2 1)
+    (test-transitive < (expt 2 66) (inexact (expt 2 66)) (expt 2 66))
+    (test-transitive < 9007199254740992 9007199254740993.0 9007199254740993)
+    (test-transitive < 9007199254740992000 9007199254740993000.0 9007199254740993000)
+    (test-transitive-permutations <)
  )
 
 (mat <=
@@ -1129,6 +1164,13 @@
     (error? (<= 2.0+1.0i 3.0))
     (error? (<= 2+i 3))
     (error? (<= 2 3+i))
+    (test-transitive <= 1 1.0 1)
+    (test-transitive <= 1 2 3)
+    (test-transitive <= 1 2 1)
+    (test-transitive <= (expt 2 66) (inexact (expt 2 66)) (expt 2 66))
+    (test-transitive <= 9007199254740992 9007199254740993.0 9007199254740993)
+    (test-transitive <= 9007199254740992000 9007199254740993000.0 9007199254740993000)
+    (test-transitive-permutations <=)
  )
 
 (mat >
@@ -1181,6 +1223,13 @@
     (error? (> 2.0+1.0i 3.0))
     (error? (> 2+i 3))
     (error? (> 2 3+i))
+    (test-transitive > 1 1.0 1)
+    (test-transitive > 1 2 3)
+    (test-transitive > 1 2 1)
+    (test-transitive > (expt 2 66) (inexact (expt 2 66)) (expt 2 66))
+    (test-transitive > 9007199254740992 9007199254740993.0 9007199254740993)
+    (test-transitive > 9007199254740992000 9007199254740993000.0 9007199254740993000)
+    (test-transitive-permutations >)
  )
 
 (mat >=
@@ -1230,11 +1279,18 @@
     (not (>= -99999999999999999999999999999 99999999999999999999999999999))
     (>= 99999999999999999999999999999 99999999999999999999999999998)
     (not (>= 99999999999999999999999999998 99999999999999999999999999999))
-    (<= 99999999999999999999999999999 99999999999999999999999999999)
+    (>= 99999999999999999999999999999 99999999999999999999999999999)
     (error? (>= 2.0+1.0i 3.0))
     (error? (>= 2+i 3))
     (error? (>= 2 3+i))
     (guard (c [#t #t]) (not (>= (#3%length (error #f "oops")) 0)))
+    (test-transitive >= 1 1.0 1)
+    (test-transitive >= 1 2 3)
+    (test-transitive >= 1 2 1)
+    (test-transitive >= (expt 2 66) (inexact (expt 2 66)) (expt 2 66))
+    (test-transitive >= 9007199254740992 9007199254740993.0 9007199254740993)
+    (test-transitive >= 9007199254740992000 9007199254740993000.0 9007199254740993000)
+    (test-transitive-permutations >=)
  )
 
 
@@ -1277,6 +1333,13 @@
     (not (r6rs:= 2.0+1.0i 2.0+1.1i))
     (r6rs:= 2-1/2i 2-1/2i)
     (r6rs:= 2-1/2i 2.0-0.5i)
+    (test-transitive r6rs:= 1 1.0 1)
+    (test-transitive r6rs:= 1 2 3)
+    (test-transitive r6rs:= 1 2 1)
+    (test-transitive r6rs:= (expt 2 66) (inexact (expt 2 66)) (expt 2 66))
+    (test-transitive r6rs:= 9007199254740992 9007199254740993.0 9007199254740993)
+    (test-transitive r6rs:= 9007199254740992000 9007199254740993000.0 9007199254740993000)
+    (test-transitive-permutations r6rs:=)
  )
 
 (mat r6rs:<
@@ -1320,6 +1383,13 @@
     (error? (r6rs:< 2.0+1.0i 3.0))
     (error? (r6rs:< 2+i 3))
     (error? (r6rs:< 2 3+i))
+    (test-transitive r6rs:< 1 1.0 1)
+    (test-transitive r6rs:< 1 2 3)
+    (test-transitive r6rs:< 1 2 1)
+    (test-transitive r6rs:< (expt 2 66) (inexact (expt 2 66)) (expt 2 66))
+    (test-transitive r6rs:< 9007199254740992 9007199254740993.0 9007199254740993)
+    (test-transitive r6rs:< 9007199254740992000 9007199254740993000.0 9007199254740993000)
+    (test-transitive-permutations r6rs:<)
  )
 
 (mat r6rs:<=
@@ -1363,6 +1433,13 @@
     (error? (r6rs:<= 2.0+1.0i 3.0))
     (error? (r6rs:<= 2+i 3))
     (error? (r6rs:<= 2 3+i))
+    (test-transitive r6rs:<= 1 1.0 1)
+    (test-transitive r6rs:<= 1 2 3)
+    (test-transitive r6rs:<= 1 2 1)
+    (test-transitive r6rs:<= (expt 2 66) (inexact (expt 2 66)) (expt 2 66))
+    (test-transitive r6rs:<= 9007199254740992 9007199254740993.0 9007199254740993)
+    (test-transitive r6rs:<= 9007199254740992000 9007199254740993000.0 9007199254740993000)
+    (test-transitive-permutations r6rs:<=)
  )
 
 (mat r6rs:>
@@ -1406,6 +1483,13 @@
     (error? (r6rs:> 2.0+1.0i 3.0))
     (error? (r6rs:> 2+i 3))
     (error? (r6rs:> 2 3+i))
+    (test-transitive r6rs:> 1 1.0 1)
+    (test-transitive r6rs:> 1 2 3)
+    (test-transitive r6rs:> 1 2 1)
+    (test-transitive r6rs:> (expt 2 66) (inexact (expt 2 66)) (expt 2 66))
+    (test-transitive r6rs:> 9007199254740992 9007199254740993.0 9007199254740993)
+    (test-transitive r6rs:> 9007199254740992000 9007199254740993000.0 9007199254740993000)
+    (test-transitive-permutations r6rs:>)
  )
 
 (mat r6rs:>=
@@ -1446,10 +1530,17 @@
     (not (r6rs:>= -99999999999999999999999999999 99999999999999999999999999999))
     (r6rs:>= 99999999999999999999999999999 99999999999999999999999999998)
     (not (r6rs:>= 99999999999999999999999999998 99999999999999999999999999999))
-    (r6rs:<= 99999999999999999999999999999 99999999999999999999999999999)
+    (r6rs:>= 99999999999999999999999999999 99999999999999999999999999999)
     (error? (r6rs:>= 2.0+1.0i 3.0))
     (error? (r6rs:>= 2+i 3))
     (error? (r6rs:>= 2 3+i))
+    (test-transitive r6rs:>= 1 1.0 1)
+    (test-transitive r6rs:>= 1 2 3)
+    (test-transitive r6rs:>= 1 2 1)
+    (test-transitive r6rs:>= (expt 2 66) (inexact (expt 2 66)) (expt 2 66))
+    (test-transitive r6rs:>= 9007199254740992 9007199254740993.0 9007199254740993)
+    (test-transitive r6rs:>= 9007199254740992000 9007199254740993000.0 9007199254740993000)
+    (test-transitive-permutations r6rs:>=)
  )
 
 (mat +

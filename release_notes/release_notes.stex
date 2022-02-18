@@ -1950,6 +1950,20 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Certain mixed exact/inexact arithmetic comparisons (9.5.8)}
+
+The arithmetic comparison functions (\scheme{<}, \scheme{<=}, \scheme{=},
+\scheme{>=}, and \scheme{>}) are required to be transitive by the R6RS
+specification, but this property was not maintained for \scheme{<=},
+\scheme{=}, and \scheme{>=} comparisons between exact and inexact numbers
+in the range where fixnum precision is greater than flonum precision.  For
+example, the flonum representation of \scheme{9007199254740992.0} and
+\scheme{9007199254740993.0} is identical, but obviously
+\scheme{9007199254740992} and \scheme{9007199254740993} (which are fixnums
+on 64 bit systems) are not.  The arithmetic comparators now no longer
+convert comparisons of a fixnum and flonum to comparisons of two flonums
+when the fixnum cannot be converted without loss of precision.
+
 \subsection{\protect\scheme{rational-valued?} and exceptional flonums (9.5.8)}
 
 The \scheme{rational-value?} function returned incorrect results when called on

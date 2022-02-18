@@ -2261,3 +2261,8 @@
     mats/foreign.ms
 - fix rational-valued? for numbers with an exceptional real part
     s/5_3.ss mats/5_1.ms
+- change behavior of mixed exact/inexact arithmetic comparisons in
+  the range where fixnums have greater precision than flonums.  This
+  makes <=, =, and >= transitive as required by R6RS.  (< and > were
+  already transitive, but the behavior is changed to match.)
+    s/5_3.ss mats/5_3.ms
