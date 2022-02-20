@@ -646,12 +646,12 @@
   (test-disjoint/preamble/self preamble #f l))
 
 (mat cptypes-type-implies?
-  (test-chain '((lambda (x) (eq? x 0)) fixnum? #;exact-integer? real? number?))
-  (test-chain* '((lambda (x) (or (eq? x 0) (eq? x 10))) fixnum? #;exact-integer? real? number?))
+  (test-chain '((lambda (x) (eq? x 0)) fixnum? (lambda (x) (and (integer? x) (exact? x))) real? number?))
+  (test-chain* '((lambda (x) (or (eq? x 0) (eq? x 10))) fixnum? (lambda (x) (and (integer? x) (exact? x))) real? number?))
   (test-chain* '(fixnum? integer? real?))
   (test-chain* '(fixnum? exact? number?)) ; exact? may raise an error
   (test-chain* '(bignum? exact? number?)) ; exact? may raise an error
-  (test-chain '((lambda (x) (eqv? x (expt 256 100))) bignum? real? number?))
+  (test-chain '((lambda (x) (eqv? x (expt 256 100))) bignum? integer? real? number?))
   (test-chain '((lambda (x) (eqv? 0.0 x)) flonum? real? number?))
   (test-chain* '((lambda (x) (or (eqv? x 0.0) (eqv? x 3.14))) flonum? real? number?))
   (test-chain* '((lambda (x) (or (eq? x 0) (eqv? x 3.14))) real? number?))
@@ -672,6 +672,8 @@
   (test-disjoint '(pair? box? fixnum? flonum? (lambda (x) (eq? #t x))))
   (test-disjoint '((lambda (x) (eq? x 0)) (lambda (x) (eq? x 1)) flonum?))
   (test-disjoint '((lambda (x) (eqv? x 0.0)) (lambda (x) (eqv? x 1.0)) fixnum?))
+  (test-disjoint '(exact? inexact?))
+  (test-disjoint '(integer? ratnum?))
   (test-disjoint '((lambda (x) (eq? x 'banana)) (lambda (x) (eq? x 'apple))))
   (test-disjoint* '(list? record? vector?))
   (not (test-disjoint* '(list? null?)))
@@ -1375,6 +1377,12 @@
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (or (fixnum? x) (bignum? x)) (or (bignum? x) (fixnum? x))))
     '(lambda (x) (when (or (fixnum? x) (bignum? x)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) (and (integer? x) (exact? x))))
+    '(lambda (x) (when (or (fixnum? x) (bignum? x)) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (and (integer? x) (exact? x)) (or (fixnum? x) (bignum? x))))
+    '(lambda (x) (when (and (integer? x) (exact? x)) #t)))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (or (fixnum? x) (eq? x 7)) (fixnum? x)))
     '(lambda (x) (when (or (fixnum? x) (eq? x 7)) #t)))

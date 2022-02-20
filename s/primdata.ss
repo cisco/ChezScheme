@@ -96,8 +96,8 @@
   (fl<=? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments]) ; restricted to 2+ arguments
   (fl>? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments])  ; restricted to 2+ arguments
   (fl>=? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments]) ; restricted to 2+ arguments
-  (flinteger? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
-  (flzero? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
+  (flinteger? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs cptypes2])
+  (flzero? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs cptypes2])
   (flpositive? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
   (flnegative? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
   (flodd? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])
@@ -188,7 +188,7 @@
   (complex? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (real? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
   (rational? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
-  (integer? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs])
+  (integer? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard ieee r5rs cptypes2])
   (real-valued? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (rational-valued? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (integer-valued? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
