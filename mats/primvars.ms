@@ -300,13 +300,14 @@
                        [((in ...) ...) #`(((in ...) #,outs) ...)])))
                  (define do-entry
                    (lambda (x)
-                     (syntax-case x (feature sig flags ->)
+                     (syntax-case x (feature sig pred flags ->)
                        [(prim [feature f] . more)
                         (if (memq (datum f) feature*)
                             (do-entry #'(prim . more))
                             #'(void))]
                        [(prim [flags flag ...]) (do-entry #'(prim [sig] [flags flag ...]))]
-                       [(prim [sig [(in ...) ... -> (out ...)] ...] [flags flag ...])
+                       [(prim [sig sigs ...] [flags flag ...]) (do-entry #'(prim [sig sigs ...] [pred #f] [flags flag ...]))]
+                       [(prim [sig [(in ...) ... -> (out ...)] ...] [pred p] [flags flag ...])
                         (with-syntax ([(unprefixed . prim) (prim-name #'prim)])
                           (with-syntax ([((((in ...) (out ...)) ...) ...)
                                          (map ins-and-outs #'(((in ...) ...) ...) #'((out ...) ...))])

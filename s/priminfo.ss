@@ -14,11 +14,11 @@
 ;;; limitations under the License.
 
 (module priminfo (priminfo-unprefixed priminfo-libraries priminfo-mask priminfo-arity primvec get-priminfo
-                  priminfo-arguments-type priminfo-rest-type priminfo-last-type priminfo-result-type)
+                  priminfo-arguments-type priminfo-rest-type priminfo-last-type priminfo-result-type priminfo-pred-type)
   (define-record-type priminfo
     (nongenerative)
     (sealed #t)
-    (fields unprefixed libraries mask arity arguments-type rest-type last-type result-type))
+    (fields unprefixed libraries mask arity arguments-type rest-type last-type result-type pred-type))
 
   (define make-parameterlike box)
 
@@ -200,7 +200,7 @@
               ($oops 'prims "unexpected two values of last argument ~s and ~s in signature with ~s" found (car psig*) psignature*)]))))
 
   (define put-priminfo!
-    (lambda (prim unprefixed lib* mask sig*)
+    (lambda (prim unprefixed lib* mask sig* pred-type)
       (when (eq-hashtable-contains? prim-db prim)
         (warningf 'define-symbol-type "extra entry for ~s" prim))
       (unless (any-set? (prim-mask (or primitive system keyword system-keyword)) mask)
@@ -232,7 +232,8 @@
                            arguments-type
                            (and arguments-type (parsed-signature->rest-type psig*)) ; if arguments-type is confused, clean rest-type and last-type
                            (and arguments-type (parsed-signature->last-type psig*))
-                           result-type))))))
+                           result-type
+                           pred-type))))))
 
   (define-syntax define-symbol-flags*
     (lambda (x)
@@ -254,16 +255,19 @@
                  [((in ...) ...) #`(((in ...) #,outs) ...)])))
            (define do-entry
              (lambda (x)
-               (syntax-case x (feature sig flags ->)
+               (syntax-case x (feature sig flags pred ->)
                  [(prim [feature f] . more) #`(when-feature f #,(do-entry #'(prim . more)))]
-                 [(prim [flags flag ...]) (do-entry #'(prim [sig] [flags flag ...]))]
-                 [(prim [sig [(in ...) ... -> (out ...)] ...] [flags flag ...])
+                 [(prim [flags flag ...]) (do-entry #'(prim [sig] [pred #f] [flags flag ...]))]
+                 [(prim [pred p] [flags flag ...]) (do-entry #'(prim [sig] [pred p] [flags flag ...]))]
+                 [(prim [sig sigs ...] [flags flag ...])  (do-entry #'(prim [sig sigs ...] [pred #f] [flags flag ...]))]
+                 [(prim [sig [(in ...) ... -> (out ...)] ...] [pred p] [flags flag ...])
                   (with-syntax ([(unprefixed . prim) (prim-name #'prim)])
                     (with-syntax ([((((in ...) (out ...)) ...) ...)
                                    (map ins-and-outs #'(((in ...) ...) ...) #'((out ...) ...))])
                       #'(put-priminfo! 'prim 'unprefixed '(lib ...)
                           (prim-mask (or shared-flag ... flag ...))
-                          '([(in ...) . (out ...)] ... ...))))])))
+                          '([(in ...) . (out ...)] ... ...)
+                          'p)))])))
            #`(begin #,@(map do-entry #'(entry ...))))])))
 
   (include "primdata.ss")

@@ -17,13 +17,14 @@
   (include "primref.ss")
 
   (define record-prim!
-    (lambda (prim unprefixed flags arity arguments-type rest-type last-type result-type)
+    (lambda (prim unprefixed flags arity arguments-type rest-type last-type result-type pred-type)
       (unless (eq? unprefixed prim) ($sputprop prim '*unprefixed* unprefixed))
       ($sputprop prim '*flags* flags)
       (when arguments-type ($sputprop prim '*arguments-type* arguments-type))
       (when rest-type ($sputprop prim '*rest-type* rest-type))
       (when last-type ($sputprop prim '*last-type* last-type))
       (when result-type ($sputprop prim '*result-type* result-type))
+      (when pred-type ($sputprop prim '*pred-type* pred-type))
       (when (any-set? (prim-mask (or primitive system)) flags)
         ($sputprop prim '*prim2* (make-primref prim flags arity))
         ($sputprop prim '*prim3* (make-primref prim (fxlogor flags (prim-mask unsafe)) arity)))))
@@ -42,7 +43,8 @@
               '#,(datum->syntax #'* (vector-map priminfo-arguments-type v-info))
               '#,(datum->syntax #'* (vector-map priminfo-rest-type v-info))
               '#,(datum->syntax #'* (vector-map priminfo-last-type v-info))
-              '#,(datum->syntax #'* (vector-map priminfo-result-type v-info)))))))
+              '#,(datum->syntax #'* (vector-map priminfo-result-type v-info))
+              '#,(datum->syntax #'* (vector-map priminfo-pred-type v-info)))))))
 
   (for-each (lambda (x) (for-each (lambda (key) ($sremprop x key)) '(*prim2* *prim3* *flags* *unprefixed*))) (oblist))
   setup)

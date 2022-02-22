@@ -68,7 +68,8 @@
                    (define-values (flags sigs)
                      (for/fold ([flags group-flags] [sigs null]) ([spec (in-list specs)])
                        (match spec
-                         [`[sig ,sigs ...] (values flags sigs )]
+                         [`[sig ,sigs ...] (values flags sigs)]
+                         [`[pred ,pred] (values flags sigs)]
                          [`[flags ,flags ...] (values (append flags group-flags) sigs)]
                          [`[feature ,features ...] (values flags sigs)])))
                    (define plain-id (if (pair? id)

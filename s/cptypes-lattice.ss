@@ -65,10 +65,6 @@
    flonum-pred
    real-pred
    number-pred
-   exact-pred
-   inexact-pred
-   integer-pred
-   flinteger-pred
    flzero-pred
    $fixmediate-pred
    $list-pred ; immutable lists
@@ -201,6 +197,7 @@
            number*-pred real*-pred ratnum-pred
            flonum-pred flinteger-pred flzero-pred
            exact*-pred inexact-pred
+           exact-complex-pred inexact-complex-pred
            char-pred
            symbol-pred interned-symbol-pred uninterned-symbol-pred gensym-pred)
 
@@ -262,6 +259,8 @@
     (define flzero-pred (make-pred-multiplet flzero-mask))
     (define exact*-pred (make-pred-multiplet exact*-pred-mask))
     (define inexact-pred (make-pred-multiplet inexact-pred-mask))
+    (define exact-complex-pred (make-pred-multiplet exact-complex-mask))
+    (define inexact-complex-pred (make-pred-multiplet inexact-complex-mask))
     (define char-pred (make-pred-multiplet char-mask))
     (define symbol-pred (make-pred-multiplet symbol-pred-mask))
     (define interned-symbol-pred (make-pred-multiplet interned-symbol-mask))
@@ -292,6 +291,7 @@
   (define maybe-bytevector-pred (make-pred-or false-rec 'bottom 'bytevector 'bottom 'bottom))
   (define eof/bytevector-pred (make-pred-or eof-rec 'bottom 'bytevector 'bottom 'bottom))
   (define maybe-pair-pred (make-pred-or false-rec 'bottom 'pair 'bottom 'bottom))
+  (define maybe-port-pred (make-pred-or false-rec 'bottom 'port 'bottom 'bottom))
   (define maybe-symbol/string-pred (make-pred-or false-rec symbol-pred 'string 'bottom 'bottom))
   (define maybe-$record-pred (make-pred-or false-rec 'bottom 'bottom 'bottom '$record))
   (define maybe-char-pred (make-pred-or false-rec char-pred 'bottom 'bottom 'bottom))
@@ -466,17 +466,29 @@
       [rational (cons 'exact-integer real-pred)]
       [integer integer-pred]
       [(uinteger sub-integer) (cons 'bottom integer-pred)]
-      [(cflonum inexact-number) inexact-pred]
+      [inexact-number inexact-pred]
       [exact-number exact-pred]
+      [$inexactnum inexact-complex-pred]
+      [$exactnum exact-complex-pred]
+      [integer integer-pred]
+      [flinteger flinteger-pred]
       [number number-pred]
       [sub-number (cons 'bottom number-pred)]
       [maybe-number maybe-number-pred]
 
+      [port 'port]
+      [(textual-input-port textual-output-port textual-port
+        binary-input-port binary-output-port binary-port
+        input-port output-port file-port) '(bottom . port)]
+      [(sub-port) '(bottom . normalptr)]
+      [(maybe-textual-input-port maybe-textual-output-port
+        maybe-binary-input-port maybe-binary-output-port) (cons false-rec maybe-port-pred)]
+
       [$record '$record]
       [(record rtd) '(bottom . $record)] ; not sealed
       [(maybe-rtd) (cons false-rec maybe-$record-pred)]
-      [(transcoder textual-input-port textual-output-port binary-input-port binary-output-port) '(bottom . $record)]  ; opaque
-      [(maybe-transcoder maybe-textual-input-port maybe-textual-output-port maybe-binary-input-port maybe-binary-output-port input-port output-port) (cons false-rec maybe-$record-pred)]
+      [(transcoder) '(bottom . $record)]  ; opaque, sealed
+      [(maybe-transcoder) (cons false-rec maybe-$record-pred)]
       [(rcd sfd timeout) '(bottom . $record)] ; not opaque, sealed
       [(maybe-rcd maybe-sub-rcd maybe-sfd maybe-timeout) (cons false-rec maybe-$record-pred)]
 
