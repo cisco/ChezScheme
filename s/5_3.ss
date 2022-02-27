@@ -86,8 +86,8 @@
 (define schoolbook-intquotient (schemeop2 "(cs)ss_trunc"))
 (define schoolbook-intquotient-remainder (schemeop2 "(cs)ss_trunc_rem"))
 (define schoolbook-intremainder (schemeop2 "(cs)rem"))
+(define schoolbook-gcd (schemeop2 "(cs)gcd"))
 (define make-ratnum (schemeop2 "(cs)s_rational")) ; does not normalize, except detecting 1 as demoninator
-(define exgcd (schemeop2 "(cs)gcd"))
 
 (define $flsin (cflop1 "(cs)sin"))
 
@@ -233,22 +233,6 @@
        (fx>= ($bignum-length d) DIV-LIMIT)
        (fx>= (- ($bignum-length n) ($bignum-length d)) DIV-LIMIT)))
 
-(define integer/
-  (lambda (n d)
-    (cond
-      [(big-divide-bignums? n d)
-       (let* ([g (exgcd n d)]
-              [g (if ($bigpositive? d)
-                     g
-                     (- g))])
-         (if (or (fixnum? g)
-                 (fx< ($bignum-length g) DIV-LIMIT))
-             (make-ratnum (schoolbook-intquotient n g)
-                          (schoolbook-intquotient d g))
-             (make-ratnum (quotient&remainder/burnikel-ziegler n g #t #f)
-                          (quotient&remainder/burnikel-ziegler d g #t #f))))]
-      [else (schoolbook-integer/ n d)])))
-
 (define intquotient
   (lambda (n d)
     (cond
@@ -273,6 +257,39 @@
        (quotient&remainder/burnikel-ziegler n d #f #t)]
       [else
        (schoolbook-intremainder n d)])))
+
+(define integer-gcd
+  (let ([$bignum-trailing-zero-bits (foreign-procedure "(cs)s_big_trailing_zero_bits" (ptr) ptr)])
+    (lambda (n d)
+      (cond
+        [(and (bignum? n) (bignum? d))
+         (let* ([nz ($bignum-trailing-zero-bits n)]
+                [dz ($bignum-trailing-zero-bits d)]
+                [cz (fxmin nz dz)]
+                [n (abs (bitwise-arithmetic-shift-right n nz))]
+                [d (abs (bitwise-arithmetic-shift-right d dz))])
+           (define (gcd n d)
+             (cond
+               [(= n 0) d]
+               [else (gcd (intremainder d n) n)]))
+           (let ([g (if (< (if (bignum? n) ($bignum-length n) 0)
+                           (if (bignum? d) ($bignum-length d) 0))
+                        (gcd n d)
+                        (gcd d n))])
+             (bitwise-arithmetic-shift-left g cz)))]
+        [else (schoolbook-gcd n d)]))))
+
+(define integer/
+  (lambda (n d)
+    (cond
+      [(and (bignum? n) (bignum? d))
+       (let* ([g (integer-gcd n d)]
+              [g (if ($bigpositive? d)
+                     g
+                     (- g))])
+         (make-ratnum (intquotient n g)
+                      (intquotient d g)))]
+      [else (schoolbook-integer/ n d)])))
 
 (let ()
 
@@ -880,7 +897,7 @@
       [(and (fixnum? p) (fixnum? q))
        (integer/ (* y p) q)]
       [else
-       (let* ((gcd-rq (exgcd y q))
+       (let* ((gcd-rq (integer-gcd y q))
               (num (* p (intquotient y gcd-rq)))
               (den (intquotient q gcd-rq)))
          (if (eqv? den 1)
@@ -1349,7 +1366,7 @@
   (define (exlcm x1 x2)
     (if (or (eqv? x1 0) (eqv? x2 0))
         0
-        (* (abs x1) (/ (abs x2) (exgcd x1 x2)))))
+        (* (abs x1) (/ (abs x2) (integer-gcd x1 x2)))))
 
   (set-who! gcd
     (rec gcd
@@ -1359,11 +1376,11 @@
         [(x1 x2)
          (if (and (or (fixnum? x1) (bignum? x1))
                   (or (fixnum? x2) (bignum? x2)))
-             (exgcd x1 x2)
+             (integer-gcd x1 x2)
              (begin
                (unless (integer? x1) (noninteger-error who x1))
                (unless (integer? x2) (noninteger-error who x2))
-               (inexact (exgcd (exact x1) (exact x2)))))]
+               (inexact (integer-gcd (exact x1) (exact x2)))))]
         [(x1 x2 . xr)
          (let f ([x1 x1] [x2 x2] [xr xr])
            (let ([x1 (gcd x1 x2)])
@@ -2363,7 +2380,7 @@
 		    (q ($ratio-denominator x))
 		    (r ($ratio-numerator y))
 		    (s ($ratio-denominator y)))
-		(let ((d1 (exgcd q s)))
+		(let ((d1 (integer-gcd q s)))
 		  (if (eqv? d1 1)
 		      (make-ratnum (+ (* p s)
 				      (* r q))
@@ -2371,7 +2388,7 @@
 		      (let* ((s-prime (intquotient s d1))
 			     (t (+ (* p s-prime)
 				   (* r (intquotient q d1))))
-			     (d2 (exgcd d1 t))
+			     (d2 (integer-gcd d1 t))
 			     (num (intquotient t d2))
 			     (den (* (intquotient q d2)
 				     s-prime)))
@@ -2574,8 +2591,8 @@
 		    (s ($ratio-denominator y)))
 		(if (eq? x y)
 		    (make-ratnum (magnitude-squared p) (magnitude-squared q))     ;; already in lowest form
-		    (let* ((gcd-ps (exgcd p s))
-			   (gcd-rq (exgcd r q))
+		    (let* ((gcd-ps (integer-gcd p s))
+			   (gcd-rq (integer-gcd r q))
 			   (num (* (intquotient p gcd-ps) (intquotient r gcd-rq)))
 			   (den (* (intquotient q gcd-rq) (intquotient s gcd-ps))))
 		      (if (eqv? den 1)
@@ -2643,7 +2660,7 @@
 		      (let* ((s-prime (intquotient s d1))
 			     (t (- (* p s-prime)
 				   (* r (intquotient q d1))))
-			     (d2 (exgcd d1 t))
+			     (d2 (integer-gcd d1 t))
 			     (num (intquotient t d2))
 			     (den (* (intquotient q d2)
 				     s-prime)))
@@ -2734,8 +2751,8 @@
 		    (s ($ratio-numerator y)))
 		(if (eq? x y)
 		    1
-		    (let* ((gcd-ps (exgcd p s))
-			   (gcd-rq (exgcd r q))
+		    (let* ((gcd-ps (integer-gcd p s))
+			   (gcd-rq (integer-gcd r q))
 			   (num (* (intquotient p gcd-ps) (intquotient r gcd-rq)))
 			   (den (* (intquotient q gcd-rq) (intquotient s gcd-ps))))
 		      (if (negative? den)
