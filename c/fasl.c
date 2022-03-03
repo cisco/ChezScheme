@@ -1696,141 +1696,34 @@ static void sparc64_set_literal(address, item) void *address; uptr item; {
 
 static uptr riscv64_get_abs(void* address)
 {
-  I32 upper20, lower12;
-  octet op = *((I32 *)address + 1) & 0b1111111;
-  
-  if (op == ADDI_OP) { // 32-bit case
-    upper20 = *((I32 *)address) & 0xFFFFF000;
-    lower12 = *((I32 *)address + 1) >> 20;
-    
-    return (upper20 + lower12);
-  } else { // 64-bit
-    I64 up_upper20 = (*((I32 *)address) >> 12) & 0xFFFFF;
-    I32 low_upper20 = (*((I32 *)address + 1) >> 12) & 0xFFFFF;
-    I64 up_lower12 = (*((I32 *)address + 2) >> 20) & 0xFFF;
-    I32 low_lower12 = (*((I32 *)address + 3) >> 20) & 0xFFF;
-
-    return (((up_upper20 << 12) + up_lower12) << 32) + ((low_upper20 << 12) + low_lower12);
-  }
+  return *((I64 *)((I32 *)address + 3));
 }
 
 static uptr riscv64_get_jump(void* address)
 {
-  octet op = *((I32 *)address) & 0b1111111;
-  if (op == ADDI_OP) { // absolute addr
-    I32 low_upper20 = (*((I32 *)address + 1) >> 12) & 0xFFFFF;
-    I64 up_upper20 = (*((I32 *)address + 3) >> 12) & 0xFFFFF;
-    I64 up_lower12 = (*((I32 *)address + 4) >> 20) & 0xFFF;
-    I32 low_lower12 = (*((I32 *)address + 9) >> 20) & 0xFFF;
-
-    return (((up_upper20 << 12) + up_lower12) << 32) + ((low_upper20 << 12) + low_lower12);
-  } else if (op == AUIPC_OP) { // relative addr
-    I32 upper20, lower12;
-    upper20 = *((I32 *)address) & 0xFFFFF000;
-    lower12 = *((I32 *)address + 1) >> 20;
-  
-    return (uptr)((upper20 + lower12) + (I64)address);
-  }
-  else
-    S_error("", "error in riscv64_get_jump");     
+  return *((I64 *)((I32 *)address + 3));
 }
 
 static void riscv64_set_abs(void* address, uptr item)
 {
-  I32 upper20, lower12;
-  I64 itm = item;
   /*
-  U32 up_upper20 = ((item >> (32+12)) & 0xFFFFF);
-  U32 low_upper20 = ((item >> 12) & 0xFFFFF)+1;
-  U32 up_lower12 = ((item >> 32) & 0xFFF)+1;
-  U32 low_lower12 = item & 0xFFF;
-  */
-  
-  I32 up_upper20 = ((item >> 32) + 0x800) >> 12;
-  I32 low_upper20 = ((item & 0xFFFFFFFF) + 0x800) >> 12;
-  I32 up_lower12 = (item >> 32) - (up_upper20 << 12) + 1;
-  I32 low_lower12 = (item & 0xFFFFFFFF) - (low_upper20 << 12);
-
-  
-  if ((I32)itm == itm) {
-//    printf("relocating 32-bit abs: 0x%x at %p\n", (U32)item, address);
-//    upper20 = item & 0xFFFFF000;
-//    lower12 = item & 0x00000FFF;
-    upper20 = (itm + 0x800) >> 12;
-    lower12 = itm - (upper20 << 12);
- 
-    octet dest = (*((I32*)address + 1) >> 7) & 0b11111;
-    // lui
-    *((I32*)address) = (upper20 << 12) | (dest << 7) | LUI_OP;
-    // addi
-    *((I32*)address + 1) = (lower12 << 20) | (dest << 15) | (0b000 << 12) | (dest << 7) | ADDI_OP;
-    // nops
-    *((I32*)address + 2) = nop;
-    *((I32*)address + 3) = nop;
-    *((I32*)address + 4) = nop;
-    *((I32*)address + 5) = nop;
-  } else {
-    //    printf("relocating 64-bit abs: 0x%lx at %p\n", item, address);
-    // two lui
-    *((I32 *)address) = (up_upper20 << 12) | (*((I32 *)address) & 0xFFF);
-    *((I32 *)address + 1) = (low_upper20 << 12) | (*((I32 *)address + 1) & 0xFFF);
-    // two addi
-    *((I32 *)address + 2) = (up_lower12 << 20) | (*((I32 *)address + 2) & 0xFFFFF);
-    *((I32 *)address + 3) = (low_lower12 << 20) | (*((I32 *)address + 3) & 0xFFFFF);
-    //S_error("", "number larger than 32 bits not supported");
-  }
+    [0]auipc
+    [1]ld
+    [2]jal
+    [3]8-bytes of addr
+   */
+  (*((I64 *)((I32 *)address + 3))) = item;
 }
 
 static void riscv64_set_jump(void* address, uptr item, IBOOL callp)
 {
-  I32 upper20, lower12;
-  char reg = (*((I32 *)address + 1) >> 7) & 0b11111;
-  I64 disp = (I64)item - (I64)address; //;;@ todo addr right?
-/*  U32 up_upper20 = ((item >> (32+12)) & 0xFFFFF);
-  U32 low_upper20 = ((item >> 12) & 0xFFFFF)+1;
-  U32 up_lower12 = ((item >> 32) & 0xFFF)+1;
-  U32 low_lower12 = item & 0xFFF;
-*/
-  /* I32 low_upper20 = ((I64)item & 0xFFFFF000) >> 12; */
-  /* I32 up_upper20 = (((I64)item >> 32) & 0xFFFFF000) >> 12; */
-  /* I32 up_lower12 = ((I64)item >> 32) & 0xFFF; */
-  /* I32 low_lower12 = (I64)item & 0xFFF; */
-
-  I32 up_upper20 = ((item >> 32) + 0x800) >> 12;
-  I32 low_upper20 = ((item & 0xFFFFFFFF) + 0x800) >> 12;
-  I32 up_lower12 = (item >> 32) - (up_upper20 << 12) + 1;
-  I32 low_lower12 = (item & 0xFFFFFFFF) - (low_upper20 << 12);
-
-  
-  if ((I32)disp == disp) {
-//    printf("relocating 32-bit addr 0x%x at %p\n", (I32)item, address);
-//    upper20 = disp & 0xFFFFF000;
-//    lower12 = disp & 0x00000FFF;
-    upper20 = (disp + 0x800) >> 12;
-    lower12 = disp - (upper20 << 12);
-    // auipc
-    *((I32 *)address) = (upper20 << 12) | (reg << 7) | AUIPC_OP;
-    // jalr
-    *((I32 *)address + 1) = (lower12 << 20) | (reg << 15) | 0b000 << 12 | (callp ? 0b00001 : 0b00000) << 7 | 0b1100111;
-    *((I32 *)address + 2) = nop;
-    *((I32 *)address + 3) = nop;
-    *((I32 *)address + 4) = nop;
-    *((I32 *)address + 5) = nop;
-    *((I32 *)address + 6) = nop;
-    *((I32 *)address + 7) = nop;
-    *((I32 *)address + 8) = nop;
-    *((I32 *)address + 9) = nop;
-  }  else { // use absolute address
-//    printf("relocating 64-bit addr 0x%lx at %p\n", item, address);
-    // lui
-    *((I32 *)address + 1) = (low_upper20 << 12) | (*((I32 *)address + 1) & 0xFFF);
-    // lui
-    *((I32 *)address + 3) = (up_upper20 << 12) | (*((I32 *)address + 3) & 0xFFF);
-    // addi
-    *((I32 *)address + 4) = (up_lower12 << 20) | (*((I32 *)address + 4) & 0xFFFFF);
-    // jalr
-    *((I32 *)address + 9) = (low_lower12 << 20) | (*((I32 *)address + 9) & 0xFF000) | (callp ? 0b00001 : 0b00000) << 7 | 0b1100111;
-    //S_error("", "jump target longer than 2^32 not supported");
-  }    
+  /*
+    [0]auipc
+    [1]ld
+    [2]jal
+    [3]8-bytes of addr
+    [5]jalr
+  */
+  (*((I64 *)((I32 *)address + 3))) = item;
 }
 #endif /* RISCV64 */

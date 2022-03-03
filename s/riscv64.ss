@@ -553,22 +553,22 @@
     [(op (x ur) (y ur))
      `(asm ,info ,asm-flt ,x ,y)])
 
-  (define-instruction effect (fl+ fl- fl/ fl*)
-    [(op (x ur) (y ur) (z ur))
-     `(asm ,info ,(asm-flop-2 op) ,x ,y ,z)])
-
   (define-instruction value (trunc)
     [(op (z ur) (x ur))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-trunc ,x))])
+
+  (define-instruction effect (flsqrt)
+    [(op (x ur) (y ur)) `(asm ,info ,asm-flsqrt ,x ,y)])
+
+  (define-instruction effect (fl+ fl- fl/ fl*)
+    [(op (x ur) (y ur) (z ur))
+     `(asm ,info ,(asm-flop-2 op) ,x ,y ,z)])
 
   ;; pred all return multiple values
   (define-instruction pred (fl= fl< fl<=)
     [(op (x ur) (y ur))
      (let ([info (make-info-condition-code op #f #f)]) ;;@ todo check params
        (values '() `(asm ,info ,(asm-fl-relop info) ,x ,y)))])
-
-  (define-instruction effect (flsqrt)
-    [(op (x ur) (y ur)) `(asm ,info ,asm-flsqrt ,x ,y)])
 
   (define-instruction effect inc-cc-counter
     [(op (x ur) (w imm12 ur) (z imm12 ur)) ;;@ base offset val
@@ -844,6 +844,12 @@
   
   (define-op bne conditional-branch-op #b1100011 #b001) ; offset in multiples of 2 bytes
   (define-op beq conditional-branch-op #b1100011 #b000) ; offset in multiples of 2 bytes
+
+  (define-op const const-op)
+  (define const-op
+    (lambda (op n code*)
+      (emit-code-ha! (op code*)
+                 [0 n])))
   
   (define bin-op
     (lambda (op opcode funct3 funct7 dest rs1 rs2 code*)
@@ -886,7 +892,7 @@
     (lambda (op opcode funct3 src base imm12 code*)
       (safe-assert (signed12? (ax-imm-data imm12 op)))
       (emit-code (op src base imm12 code*)
-                 [25 (fxlogand #b1111111 (fxsrl (ax-imm-data imm12 op) 5))] ;; upper 7 bits of imm12
+                 [25 (fxlogand #b1111111 (ash (ax-imm-data imm12 op) -5))] ;; upper 7 bits of imm12
                  [20 (ax-ea-reg-code src)]
                  [15 (ax-ea-reg-code base)]
                  [12 funct3]
@@ -922,24 +928,25 @@
       (safe-assert (fxeven? (ax-imm-data imm13 op)))
       (let ([imm (/ (ax-imm-data imm13 op) 2)])
         (emit-code (op rs1 rs2 imm13 code*)
-                   [25 (fxlogor (fxsll (fxlogand (fxsrl imm 11) #b1) 6)
-                                (fxlogand (fxsrl imm 4) #b111111))]
+                   [25 (fxlogor (fxsll (fxlogand (ash imm -11) #b1) 6)
+                                (fxlogand (ash imm -4) #b111111))]
                    [20 (ax-ea-reg-code rs2)]
                    [15 (ax-ea-reg-code rs1)]
                    [12 funct3]
                    [7 (fxlogor (fxsll (fxlogand imm #b1111) 1)
-                               (fxlogand (fxsrl imm 10) #b1))]
+                               (fxlogand (ash imm -10) #b1))]
                    [0 opcode]))))
 
   (define jal-op ;;@ todo
     (lambda (op opcode dest imm20 code*)
+;;      (printf "~a~n" code*)
       (let ([imm (/ (ax-imm-data imm20 op) 2)])
 ;;        (safe-assert (signed20? imm))
         (emit-code (op dest imm20 code*)
-                   [31 (fxlogand (fxsrl imm 19) #b1)]
+                   [31 (fxlogand (ash imm -19) #b1)]
                    [21 (fxlogand imm #b1111111111)]
-                   [20 (fxlogand (fxsrl imm 10) #b1)]
-                   [12 (fxlogand (fxsrl imm 11) #xFF)]
+                   [20 (fxlogand (ash imm -10) #b1)]
+                   [12 (fxlogand (ash imm -11) #xFF)]
                    [7 (ax-ea-reg-code dest)]
                    [0 opcode]))))
 
@@ -987,6 +994,23 @@
         [(imm) ignore #t]
         [else #f])))
 
+
+  (define-syntax emit-code-ha!
+    (lambda (x)
+                                        ; NB: probably won't need emit-code to weed out #f
+      (define build-maybe-cons*
+        (lambda (e* e-ls)
+          (if (null? e*)
+              e-ls
+              #`(let ([t #,(car e*)] [ls #,(build-maybe-cons* (cdr e*) e-ls)])
+                  (if t (cons t ls) ls)))))
+      (syntax-case x ()
+        [(_ (op opnd ... ?code*) chunk ...)
+         (build-maybe-cons* #'((build quad (byte-fields chunk ...))) ;;@ long: all instructions are 32 bits
+                            #'(aop-cons* `(asm ,op ,opnd ...) ?code*))]
+        )))
+
+
   (define-syntax emit-code
     (lambda (x)
                                         ; NB: probably won't need emit-code to weed out #f
@@ -1015,7 +1039,14 @@
     (syntax-rules ()
       [(byte-fields (n e) ...)
        (andmap fixnum? (datum (n ...)))
-       (fx+ (fxsll e n) ...)]))
+       (+ (bitwise-arithmetic-shift-left e n) ...)
+
+
+       #;
+       (begin                           ;
+       (printf "~a~n" (quote (datum e ...))) ;
+       )
+       ]))
   
   (define shamt?
     (lambda (imm)
@@ -1032,28 +1063,22 @@
                               (fx- (expt 2 11) 1)))))
   (define unsigned20?
     (lambda (imm)
-      (and (fixnum? imm)
-           (not ($fxu< (- (expt 2 20) 1) imm)))))
-
+      (and (fixnum? imm) ($fxu< imm (expt 2 20)))))
   (define signed20?
     (lambda (imm)
       (and (fixnum? imm) (fx<= (fx- (expt 2 19))
                                imm
                                (fx- (expt 2 19) 1)))))
-
   (define signed32?
     (lambda (imm)
       (and (fixnum? imm) (fx<= (fx- (expt 2 31))
                                imm
                                (fx- (expt 2 31) 1)))))
-
   (define jump-disp?
     (lambda (x)
       (and (fixnum? x) 
            (fx<= (fx- (expt 2 31)) x (fx- (expt 2 31) 1))
            (not (fxlogtest x #b11))))) ;; 4-byte aligned
-
-
   ;; currently 32 bits is enough
   (define cond-jump-disp?
     (lambda (x)
@@ -1061,7 +1086,6 @@
            (fx<= (- (expt 2 12))
                  x
                  (- (expt 2 12) 1))))) ;; 13 bits
-
   ;; see RISC-V ABI
   (define upper20
     (lambda (x)
@@ -1609,50 +1633,59 @@
         (safe-assert (signed20? upper))
         (emit lui dest upper
               (emit addi dest dest lower code*)))))
-  (define ax-mov64
-    (lambda (dest n code*)
-      (let* ([up (ash n -32)] ;; calculation sync with linker, overflow bits are truncated
-             [low (logand n #xFFFFFFFF)]
-             [up-upper (upper20 up)]
-             [up-lower (add1 (lower12 up))]
-             [low-upper (upper20 low)]
-             [low-lower (lower12 low)])
-        (emit lui %jump up-upper
-              (emit addi %jump %jump up-lower
-               (emit lui dest low-upper
-                     (emit slli %jump %jump 32
-                           (emit addi dest dest low-lower
-                                      (emit add dest dest %jump code*)))))))))
+  #;
+  (define ax-mov64                      ;
+  (lambda (dest n code*)                ;
+  (let* ([up (ash n -32)] ;; calculation sync with linker, overflow bits are truncated ;
+  [low (logand n #xFFFFFFFF)]           ;
+  [up-upper (upper20 up)]               ;
+  [up-lower (add1 (lower12 up))]        ;
+  [low-upper (upper20 low)]             ;
+  [low-lower (lower12 low)])            ;
+  (emit lui %jump up-upper              ;
+  (emit addi %jump %jump up-lower       ;
+  (emit lui dest low-upper              ;
+  (emit slli %jump %jump 32             ;
+  (emit addi dest dest low-lower        ;
+  (emit add dest dest %jump code*)))))))))
 
 
   ;;@ todo take care of special case 0x100000000
-  (define ax-mov64-reloc
+ #;
+  (define ax-mov64                      ;
+  (lambda (dest n code*)                ;
+  (let* ([up (ash n -32)] ;; calculation sync with linker, overflow bits are truncated ;
+  [low (logand n #xFFFFFFFF)]           ;
+  [up-upper (upper20 up)]               ;
+  [up-lower (add1 (lower12 up))]        ;
+  [low-upper (upper20 low)]             ;
+  [low-lower (lower12 low)])            ;
+  #;                                    ;
+  (unless (unsigned20? up-upper)  ; ;   ;
+  (printf "up: ~a ~a ~a~n" n up up-upper) ; ; ;
+  (when (= (ash (ash n -32) 32) n) ; ;  ;
+  (printf "yes: ~a~n" n)))              ;
+  #;                                    ;
+  (unless (unsigned20? low-upper) (printf "low: ~a ~a ~a~n" n low low-upper) ; ; ;
+  (when (= (ash (ash n -32) 32) n) ; ;  ;
+  (printf "yes: ~a~n" n)))              ;
+                                        ;
+        ;;(unless (unsigned12? low-lower) (printf "low12: ~a ~a ~a ~n" n low low-lower)) ;
+        ;;(unless (unsigned12? up-lower) (printf "up12: ~a ~a ~a ~n" n up up-lower)) ;
+  (emit lui %jump up-upper ;; use %jump as the temporary[reloc] ;
+  (emit lui dest low-upper                   ;; [reloc] ;
+  (emit addi %jump %jump up-lower      ;; [reloc] ;
+  (emit addi dest dest low-lower ;; [reloc] ;
+  (emit slli %jump %jump 32             ;
+  (emit add dest dest %jump code*)))))))))
+
+  (define ax-mov64
     (lambda (dest n code*)
-      (let* ([up (ash n -32)] ;; calculation sync with linker, overflow bits are truncated
-             [low (logand n #xFFFFFFFF)]
-             [up-upper (upper20 up)]
-             [up-lower (add1 (lower12 up))]
-             [low-upper (upper20 low)]
-             [low-lower (lower12 low)])
-       #;
-        (unless (unsigned20? up-upper)  ;
-        (printf "up: ~a ~a ~a~n" n up up-upper) ;
-        (when (= (ash (ash n -32) 32) n) ;
-        (printf "yes: ~a~n" n)))
-        #;
-        (unless (unsigned20? low-upper) (printf "low: ~a ~a ~a~n" n low low-upper) ;
-        (when (= (ash (ash n -32) 32) n) ;
-        (printf "yes: ~a~n" n)))
-        
-        ;;(unless (unsigned12? low-lower) (printf "low12: ~a ~a ~a ~n" n low low-lower))
-        ;;(unless (unsigned12? up-lower) (printf "up12: ~a ~a ~a ~n" n up up-lower))
-        (emit lui %jump up-upper ;; use %jump as the temporary[reloc]
-              (emit lui dest low-upper                   ;; [reloc]
-                    (emit addi %jump %jump up-lower      ;; [reloc]
-                          (emit addi dest dest low-lower ;; [reloc]
-                                (emit slli %jump %jump 32
-                                      (emit add dest dest %jump code*)))))))))
-  
+      (emit auipc dest 0
+            (emit ld dest dest 12
+                  (emit jal %real-zero 12
+                        `((quad . ,n) (unquote-splicing code*)))))))
+
   (define-who asm-move
     (lambda (code* dest src)
                                         ; move pseudo instruction used by set! case in select-instruction
@@ -1671,7 +1704,7 @@
                            (ax-mov32 dest n code*)
                            (ax-mov64 dest n code*)))]
                   [(literal) stuff
-                   (ax-mov64-reloc dest 0
+                   (ax-mov64 dest 0
                              (asm-helper-relocation code* (cons 'riscv64-abs stuff)))]
                   [(disp) (n breg)
                    (safe-assert (signed12? n))
@@ -1722,16 +1755,7 @@
       (let ([sp (cons 'reg %sp)])
         (emit fld %Cfpretval sp 0
               (emit addi sp sp 8 code*)))))
-  
-  (define asm-direct-jump
-    (lambda (l offset)
-      (asm-helper-jump '() (make-funcrel 'riscv64-jump l offset))))
-
-  (define asm-literal-jump
-    (lambda (info)
-      (asm-helper-jump '()
-                       `(riscv64-jump ,(info-literal-offset info) (,(info-literal-type info) ,(info-literal-addr info))))))
-  
+    
   (define asm-condition-code
     (lambda (info)
       (rec asm-check-flag-internal
@@ -1774,7 +1798,7 @@
                                         ; doesn't get dropped.  this also has some chance of being the right size
                                         ; for the final branch instruction.
                      (emit auipc %jump 0
-                           (emit jalr `(reg . ,%real-zero) %jump 0 '()))]))))
+                           (emit jalr %real-zero %jump 0 '()))]))))
 
   ;; OF/CF/ZF/SF
   ;; (bvs) # jump on overflow (OF=1)
@@ -1835,9 +1859,9 @@
                         (if (cond-jump-disp? (+ disp2 4))
                             (emit beq `(reg . ,%cond) `(reg . ,%real-zero) (+ disp2 4) '())
                             (emit beq `(reg . ,%cond) `(reg . ,%real-zero) 8
-                                   (emit jal `(reg . ,%real-zero) 12 ;; fall through
-                                         (emit auipc `(reg . ,%jump) (upper20 (+ disp2 8)) ;; 2 instr below
-                                               (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) (lower12 (+ disp2 8)) '())))))]
+                                  (emit jal `(reg . ,%real-zero) 12 ;; fall through
+                                        (emit auipc `(reg . ,%jump) (upper20 (+ disp2 8)) ;; 2 instr below
+                                              (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) (lower12 (+ disp2 8)) '())))))]
                        ;; normal
                        [(fx= disp2 0)
                         (safe-assert (signed32? disp1))
@@ -1849,14 +1873,24 @@
                                               (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) (lower12 (+ disp1 8)) '())))))]
                        ;; others
                        [else
-                        (safe-assert (signed32? disp1)
-                                     (signed32? disp2))
+                        (safe-assert (signed32? (+ disp1 16))
+                                     (signed32? (+ disp2 8)))
+;;                        (printf "cond others: disp: ~a, disp2: ~a~n" disp1 disp2)
                         (emit bne `(reg . ,%cond) `(reg . ,%real-zero) 8
                               (emit jal `(reg . ,%real-zero) 12
                                     (emit auipc `(reg . ,%jump) (upper20 (+ disp1 16)) ;; 4 instr below
                                           (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) (lower12 (+ disp1 16))
                                                 (emit auipc `(reg . ,%jump) (upper20 (+ disp2 8)) ;; 2 instr below
                                                       (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) (lower12 (+ disp2 8)) '()))))))])))))
+
+  (define asm-direct-jump
+    (lambda (l offset)
+      (asm-helper-jump '() (make-funcrel 'riscv64-jump l offset))))
+
+  (define asm-literal-jump
+    (lambda (info)
+      (asm-helper-jump '()
+                       `(riscv64-jump ,(info-literal-offset info) (,(info-literal-type info) ,(info-literal-addr info))))))
 
   (define asm-library-jump
     (lambda (l)
@@ -1955,19 +1989,13 @@
     (lambda (code* reloc) ;;@ todo need saving %cond?
       (let ([zero `(reg . ,%real-zero)]
             [sp `(reg . ,%sp)]
-            [cond `(reg . ,%cond)]
             [jump `(reg . ,%jump)])
-        (emit addi sp sp -8
-              (emit lui jump 0 ; reloc[low]
-                    (emit sd cond sp 0 ;; save %cond
-                          (emit lui cond 0 ; reloc[up]
-                                (emit addi cond cond 0 ; reloc
-                                      (emit slli cond cond 32 
-                                            (emit add jump jump cond
-                                                  (emit ld cond sp 0 ;; restore %cond
-                                                        (emit addi sp sp 8
-                                                              (emit jalr %real-zero jump 0 ; reloc
-                                                                    (asm-helper-relocation code* reloc))))))))))))))
+        (emit auipc jump 0
+              (emit ld jump jump 12
+                    (emit jal zero 12
+                          `((quad . 0)
+                            (unquote-splicing (emit jalr zero jump 0
+                                                    (asm-helper-relocation code* reloc))))))))))
 
   (define asm-helper-call ;; need to save ra
     (lambda (code* reloc save-ra? tmp)
@@ -1981,22 +2009,15 @@
                             (p (emit ld ra sp 0
                                      (emit addi sp sp 8 code*))))))              
               (p code*))))
-      (let ([zero `(reg . ,%real-zero)]
-            [sp `(reg . ,%sp)]
-            [cond `(reg . ,%cond)])
+      (let ([zero `(reg . ,%real-zero)])
         (maybe-save-ra code*
                        (lambda (code*)
-                         (emit addi sp sp -8
-                               (emit lui tmp 0 ; reloc
-                                     (emit sd cond sp 0
-                                           (emit lui cond 0 ; reloc
-                                                 (emit addi cond cond 0 ; reloc
-                                                       (emit slli cond cond 32 
-                                                             (emit add tmp tmp cond
-                                                                   (emit ld cond sp 0
-                                                                         (emit addi sp sp 8
-                                                                               (emit jalr %ra tmp 0 ; reloc
-                                                                                     (asm-helper-relocation code* reloc))))))))))))))))
+                         (emit auipc tmp 0
+                               (emit ld tmp tmp 12
+                                     (emit jal zero 12
+                                           `((quad . 0)
+                                             (unquote-splicing (emit jalr %ra tmp 0
+                                                               (asm-helper-relocation code* reloc))))))))))))
 
   (define asm-kill
     (lambda (code* dest)
@@ -2469,12 +2490,12 @@
                                                                    [else (lambda (lvalue) `(set! ,lvalue ,%Cretval))])))))))))))
 
     #|
-    stack layout:                       ; ; ;
-    sp+256: incoming stack args         ; ; ;
-    sp+248: active state   8            ; ; ;
-    sp+240: &-return space 8            ; ; ;
-    sp+112: saved reg args(int and float) x10-x17, f10-f17 8*16=128 ; ; ;
-    sp+0:   callee-saved regs: ra, x2, x8, x9, x18-x27     8*14=112 ;;@ todo need to save fp regs? f8-f9 f18-f27 ; ; ;
+    stack layout:                       ; ; ; ; ;
+    sp+256: incoming stack args         ; ; ; ; ;
+    sp+248: active state   8            ; ; ; ; ;
+    sp+240: &-return space 8            ; ; ; ; ;
+    sp+112: saved reg args(int and float) x10-x17, f10-f17 8*16=128 ; ; ; ; ;
+    sp+0:   callee-saved regs: ra, x2, x8, x9, x18-x27     8*14=112 ;;@ todo need to save fp regs? f8-f9 f18-f27 ; ; ; ; ;
     |#
 
   
