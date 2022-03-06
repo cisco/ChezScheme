@@ -69,7 +69,7 @@
                  (case-lambda
                    [(x*) (cons* t ... x*)]
                    [(x* p) (values (cons* t ... x*) p)]))))])))
-  
+
   (define lmem? mref?)
 
   (define mem?
@@ -88,7 +88,7 @@
    (define mref->mref
     (lambda (a k)
       (define return
-        (lambda (x0 x1 imm)                                       
+        (lambda (x0 x1 imm)
           (safe-assert (or (eq? x1 %zero) (eqv? imm 0)))
           (k (with-output-language (L15d Triv) `(mref ,x0 ,x1 ,imm)))))
       (nanopass-case (L15c Triv) a
@@ -751,7 +751,7 @@
                     asm-enter asm-sll asm-srl asm-sra asm-flsqrt asm-trunc asm-flt
                     asm-cas asm-relop asm-fl-relop asm-flop-2 asm-save-flrv asm-restore-flrv
                     asm-direct-jump asm-indirect-jump asm-literal-jump asm-condition-code
-                    asm-jump asm-conditional-jump asm-library-jump 
+                    asm-jump asm-conditional-jump asm-library-jump
                     asm-get-tc asm-activate-thread asm-deactivate-thread asm-unactivate-thread
                     asm-push asm-pop asm-return asm-c-return asm-data-label asm-kill
                     asm-rp-header asm-fl-load/cvt asm-fl-store/cvt asm-fl-load/store
@@ -776,7 +776,7 @@
         [(k op x ...)
          (with-syntax ([emit-op (construct-name #'k "asmop-" #'op)])
            #'(emit-op op x ...))])))
-  
+
   (define-op add bin-op #b0110011 #b000 #b0000000)
   (define-op sub bin-op #b0110011 #b000 #b0100000)
   (define-op mul bin-op #b0110011 #b000 #b0000001)
@@ -802,14 +802,14 @@
   (define-op fcvt.d.l bin-op #b1010011 #b111 #b1101001) ; #b111: dynamic rounding mode
   (define-op fcvt.s.d bin-op #b1010011 #b111 #b0100000) ; #b111: dynamic rounding mode
   (define-op fcvt.d.s bin-op #b1010011 #b111 #b0100001) ; #b111: dynamic rounding mode
-  
+
   (define-op addi  bin-imm-op  #b0010011 #b000)
   (define-op andi  bin-imm-op  #b0010011 #b111)
   (define-op ori   bin-imm-op  #b0010011 #b110)
   (define-op xori  bin-imm-op  #b0010011 #b100)
   (define-op sltiu bin-imm-op  #b0010011 #b011)
   (define-op jalr  bin-imm-op  #b1100111 #b000)
-  
+
   (define-op flw bin-imm-op #b0000111 #b010)
   (define-op fld bin-imm-op #b0000111 #b011)
   (define-op ld  bin-imm-op #b0000011 #b011)
@@ -823,14 +823,14 @@
   (define-op slli shift-imm-op #b0010011 #b001 #b000000)
   (define-op srli shift-imm-op #b0010011 #b101 #b000000)
   (define-op srai shift-imm-op #b0010011 #b101 #b010000)
-  
+
   (define-op fsw store-op #b0100111 #b010)
   (define-op fsd store-op #b0100111 #b011)
   (define-op sd  store-op #b0100011 #b011)
   (define-op sw  store-op #b0100011 #b010)
   (define-op sh  store-op #b0100011 #b001)
   (define-op sb  store-op #b0100011 #b000)
-  
+
   (define-op lr.d atomic-op #b0101111 #b00010)
   (define-op sc.d atomic-op #b0101111 #b00011)
 
@@ -841,7 +841,7 @@
   (define-op rdtime counter-op #b1110011 #xC01) ; counter number 0xC01
 
   (define-op jal jal-op #b1101111) ; offset in multiples of 2 bytes
-  
+
   (define-op bne conditional-branch-op #b1100011 #b001) ; offset in multiples of 2 bytes
   (define-op beq conditional-branch-op #b1100011 #b000) ; offset in multiples of 2 bytes
 
@@ -850,7 +850,7 @@
     (lambda (op n code*)
       (emit-code-ha! (op code*)
                  [0 n])))
-  
+
   (define bin-op
     (lambda (op opcode funct3 funct7 dest rs1 rs2 code*)
       (let ([rs2 (case op
@@ -1600,7 +1600,7 @@
                                    [(fl=) (emit feq.d cond flreg1 flreg2 '())]
                                    [(fl<) (emit flt.d cond flreg1 flreg2 '())]
                                    [(fl<=) (emit fle.d cond flreg1 flreg2 '())]
-                                   [else (sorry! who "unrecognized op ~s" op)])))))                
+                                   [else (sorry! who "unrecognized op ~s" op)])))))
                  (asm-conditional-jump info l1 l2 offset))))))
 
   (define asm-read-performance-monitoring-counter
@@ -1747,15 +1747,15 @@
   (define asm-save-flrv
     (lambda (code*)
       (let ([sp (cons 'reg %sp)]) ;;@ todo check if offset is aligned
-        (emit addi sp sp -8
+        (emit addi sp sp -16
               (emit fsd %Cfpretval sp 0 code*)))))
 
   (define asm-restore-flrv
     (lambda (code*)
       (let ([sp (cons 'reg %sp)])
         (emit fld %Cfpretval sp 0
-              (emit addi sp sp 8 code*)))))
-    
+              (emit addi sp sp 16 code*)))))
+
   (define asm-condition-code
     (lambda (info)
       (rec asm-check-flag-internal
@@ -1771,9 +1771,9 @@
                             (let ([disp (fx- next-addr (fx- offset incr-offset) -8)])
                               (cond
                                [(signed32? disp)
-                                (Trivit (dest)                                     
+                                (Trivit (dest)
                                         (emit auipc dest (upper20 disp)
-                                              (emit addi dest dest (lower12 disp) '())))]                               
+                                              (emit addi dest dest (lower12 disp) '())))]
                                [else #f])))]
                          [else #f])
                         ;;@ (label-ref ...) is processed by (make-funcrel) in (Trivit-rand), that is, into a 'literal form
@@ -1942,7 +1942,7 @@
                        (emit ld `(reg . ,%jump) %scratch 0
                              (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) 0 '())))]
                 [else (sorry! who "unexpected src ~s" src)]))))
-  
+
   (define asm-get-tc
     (let ([target `(riscv64-call 0 (entry ,(lookup-c-entry get-thread-context)))])
       (lambda (code* dest tmp . ignore) ;; retval is put into %Cretval automatically
@@ -1967,15 +1967,15 @@
     (lambda (code* x)
       (Trivit (x)
               (let ([sp `(reg . ,%sp)])
-                (emit addi sp sp -8
+                (emit addi sp sp -16
                       (emit sd x sp 0 code*))))))
-    
+
   (define asm-pop
     (lambda (code* dest)
       (Trivit (dest)
               (let ([sp `(reg . ,%sp)])
                 (emit ld dest sp 0
-                      (emit addi sp sp 8 code*))))))              
+                      (emit addi sp sp 16 code*))))))
 
   (define asm-return
     (lambda ()
@@ -1984,7 +1984,7 @@
   (define asm-c-return
     (lambda (info)
       (emit jalr `(reg . ,%real-zero) %ra 0 '())))
-  
+
   (define asm-helper-jump ;; no need to save ra
     (lambda (code* reloc) ;;@ todo need saving %cond?
       (let ([zero `(reg . ,%real-zero)]
@@ -2004,10 +2004,10 @@
           (if save-ra?
               (let ([sp `(reg . ,%sp)]
                     [ra `(reg . ,%ra)])
-                (emit addi sp sp -8 ;; save %ra on the stack
+                (emit addi sp sp -16 ;; save %ra on the stack
                       (emit sd ra sp 0
                             (p (emit ld ra sp 0
-                                     (emit addi sp sp 8 code*))))))              
+                                     (emit addi sp sp 16 code*))))))
               (p code*))))
       (let ([zero `(reg . ,%real-zero)])
         (maybe-save-ra code*
@@ -2031,7 +2031,7 @@
     (lambda (code* l offset func code-size)
       (let ([rel (make-funcrel 'abs l offset)])
         (cons* rel (aop-cons* `(asm "mrv point:" ,rel) code*)))))
-  
+
   (define asm-rp-header
     (let ([mrv-error `(abs ,(constant code-data-disp)
                            (library-code ,(lookup-libspec values-error)))])

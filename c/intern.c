@@ -294,17 +294,17 @@ ptr S_intern_sc(const string_char *name, iptr n, ptr name_str) {
   }
 
   /* if (name_str == Sfalse) */ name_str = mkstring(name, n);
-   if(Sstringp(name_str)){
+/*   if(Sstringp(name_str)){
  printf("S_intern_sc: ");
  for(int i = 0; i < Sstring_length(name_str); i++)
  {
        printf("%c", Sstring_ref(name_str, i));
  }
  printf("\n");
- }
+ }*/
   sym = S_symbol(name_str);
   INITSYMHASH(sym) = FIX(hc);
-  printf("sym addr: %p\n", sym);
+  //printf("sym addr: %p\n", sym);
   oblist_insert(sym, idx, 0);
 
   tc_mutex_release()
