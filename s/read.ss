@@ -1141,7 +1141,7 @@
              (rd-fix-graph (vector-ref x m) rd-set-vector-tail! x m))))]
       [($record? x)
        (let ((d ($record-type-descriptor x)))
-         (do ([fields (csv7:record-type-field-indices d) (cdr fields)]
+         (do ([fields ($record-type-field-indices d) (cdr fields)]
               [i 0 (+ i 1)])
              ((null? fields))
            (when (csv7:record-field-accessible? d i)
@@ -1165,7 +1165,7 @@
           (let* ((dr (car wl))
                  (rtd (delayed-record-rtd dr))
                  (vals (delayed-record-vals dr))
-                 (fields (csv7:record-type-field-indices rtd)))
+                 (fields ($record-type-field-indices rtd)))
             (if (andmap
                   (lambda (f v)
                     (or (not (delayed-record? v))
@@ -1700,12 +1700,7 @@
                  (let ([dir (car dir*)])
                    (if (or (string=? dir "") (string=? dir "."))
                        name
-                       (format (if (directory-separator?
-                                     (string-ref dir
-                                       (fx- (string-length dir) 1)))
-                                   "~a~a"
-                                   "~a/~a")
-                         dir name))))
+                       (path-build dir name))))
                (search name (cdr dir*)))))
     (let ([name (source-file-descriptor-name sfd)])
       (and (string? name)
@@ -1883,7 +1878,6 @@
       (unless (and (list? x) (andmap string? x))
         ($oops 'source-directories "invalid path list ~s" x))
       x)))
-
 
 (define record-reader
   (case-lambda

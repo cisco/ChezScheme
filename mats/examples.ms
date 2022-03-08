@@ -13,50 +13,50 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-;;; define *examples-directory* in Makefile
 (define-syntax examples-mat
   (syntax-rules ()
     [(_ name (file ...) expr ...)
      (begin
        (mat name
          (begin
-           (parameterize ((source-directories (cons *examples-directory* (source-directories))))
-             (load (format "~a/~a.ss" *examples-directory* file))
-             ...)
+           (load (find-source (format "~a.ss" file)))
+           ...
            #t)
          expr ...)
        (mat name
          (begin
-           (parameterize ((source-directories (cons *examples-directory* (source-directories))))
-             (load (format "~a/~a.so" *examples-directory* file))
-             ...
-             #t))
+           (load (find-source (format "~a.so" file)))
+           ...
+           #t)
          expr ...))]))
 
 (define load-example
    (case-lambda
       [(str)
-       (load (format "~a/~a.ss" *examples-directory* str))
+       (load (find-source (format "~a.ss" str)))
        #t]
       [(str eval)
-       (load (format "~a/~a.ss" *examples-directory* str) eval)
+       (load (find-source (format "~a/~a.ss" str)) eval)
        #t]))
 
-(define (example-file file) (format "~a/~a" *mats-dir* file))
+(define (example-file file) (find-source file))
 
 (define file=?
    (lambda (fn1 fn2)
       (let ([p1 (open-input-file fn1)] [p2 (open-input-file fn2)])
          (let loop ()
-            (let ([c1 (read-char p1)] [c2 (read-char p2)])
-               (if (eof-object? c1)
-                   (begin
-                     (close-port p1)
-                     (close-port p2)
-                     (eof-object? c2))
-                   (and (not (eof-object? c2))
-                        (char=? c1 c2)
-                        (loop))))))))
+            (let cloop ([c1 (read-char p1)] [c2 (read-char p2)])
+              ;; discard CR characters to avoid Unix-vs.-Windows issues
+              (cond
+                [(eqv? c1 #\return) (cloop (read-char p1) c2)]
+                [(eqv? c2 #\return) (cloop c1 (read-char p2))]
+                [(eof-object? c1)
+                 (close-port p1)
+                 (close-port p2)
+                 (eof-object? c2)]
+                [else (and (not (eof-object? c2))
+                           (char=? c1 c2)
+                           (loop))]))))))
 
 (examples-mat def-edit ("def" "edit")
    (begin (def fact (lambda (x) (if (zero? x) 1 (* x (fact ( x 1))))))

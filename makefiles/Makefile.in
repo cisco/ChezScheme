@@ -1,119 +1,102 @@
-# Makefile.in
-# Copyright 1984-2017 Cisco Systems, Inc.
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-# http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# The `configure` script adjusts the next line:
+workarea=$(w)
 
-MAKEFLAGS += --no-print-directory
+include $(workarea)/Mf-config
+
+ZUO=bin/zuo
 
 .PHONY: build
-build:
-	(cd $(workarea) && $(MAKE) build)
+build: $(ZUO)
+	$(ZUO) $(workarea) MAKE="$(MAKE)"
 
 .PHONY: run
-run:
-	env SCHEMEHEAPDIRS=$(workarea)/boot/$(m) $(workarea)/bin/$(m)/scheme
+run: $(ZUO)
+	$(ZUO) $(workarea) run
 
 .PHONY: kernel
-kernel:
-	(cd $(workarea) && $(MAKE) kernel)
+kernel: $(ZUO)
+	$(ZUO) $(workarea) kernel MAKE="$(MAKE)"
 
 .PHONY: install
-install:
-	(cd $(workarea) && $(MAKE) install)
+install: $(ZUO)
+	$(ZUO) $(workarea) install MAKE="$(MAKE)"
 
 .PHONY: uninstall
-uninstall:
-	(cd $(workarea) && $(MAKE) uninstall)
+uninstall: $(ZUO)
+	$(ZUO) $(workarea) uninstall MAKE="$(MAKE)"
 
 .PHONY: test
-test:
-	(cd $(workarea) && $(MAKE) test PREFIX=$(workarea)/)
+test: $(ZUO)
+	$(ZUO) $(workarea) test MAKE="$(MAKE)"
 
 .PHONY: test-some
-test-some:
-	(cd $(workarea) && $(MAKE) test-some PREFIX=$(workarea)/)
+test-some: $(ZUO)
+	$(ZUO) $(workarea) test-some MAKE="$(MAKE)"
 
 .PHONY: test-more
-test-more:
-	(cd $(workarea) && $(MAKE) test-more PREFIX=$(workarea)/)
+test-more: $(ZUO)
+	$(ZUO) $(workarea) test-more MAKE="$(MAKE)"
 
 .PHONY: coverage
-coverage:
-	(cd $(workarea) && $(MAKE) coverage)
+coverage: $(ZUO)
+	$(ZUO) $(workarea) coverage MAKE="$(MAKE)"
 
 .PHONY: bootfiles
-bootfiles:
-	(cd $(workarea) && $(MAKE) bootfiles)
+bootfiles: $(ZUO)
+	$(ZUO) $(workarea) bootfiles MAKE="$(MAKE)"
 
 .PHONY: reset
-reset:
-	(cd $(workarea) && $(MAKE) reset)
+reset: $(ZUO)
+	$(ZUO) $(workarea) reset MAKE="$(MAKE)"
 
 # <machine>.boot to build boot files for <machine>
-%.boot:
-	(cd $(workarea) && $(MAKE) $*.boot)
+%.boot: $(ZUO)
+	$(ZUO) $(workarea) boot $* MAKE="$(MAKE)"
 
-auto.boot:
-	(cd $(workarea) && $(MAKE) $(defaultm).boot)
+auto.boot: $(ZUO)
+	$(ZUO) $(workarea) boot MAKE="$(MAKE)"
 
 # <machine>.bootquick to build boot files for <machine>
 # with o=3 d=0 for the cross compiler, and only after
 # building the kernel for the configured machine
-%.bootquick:
-	(cd $(workarea) && $(MAKE) $*.bootquick)
+%.bootquick: $(ZUO)
+	$(ZUO) $(workarea) bootquick $* MAKE="$(MAKE)"
 
-auto.bootquick:
-	(cd $(workarea) && $(MAKE) $(defaultm).bootquick)
+auto.bootquick: $(ZUO)
+	$(ZUO) $(workarea) bootquick MAKE="$(MAKE)"
 
 # <machine>-<tag>.boot to repackage boot files for
-# <mactine> with pbchunk sources, including additional
+# <machine> with pbchunk sources, including additional
 # boot files
-%.bootpbchunk:
-	(cd $(workarea) && $(MAKE) $*.bootpbchunk ARGS="$(ARGS)")
+%.bootpbchunk: $(ZUO)
+	$(ZUO) $(workarea) bootpbchunk $* $(ARGS) MAKE="$(MAKE)"
 
 # Supply ORIG=<dir> to build using existing at <dir>
 .PHONY: from-orig
-from-orig:
-	(cd $(m)/s && $(MAKE) -f Mf-cross m=$(m) xm=$(m) base=$(ORIG)/$(m))
-	$(MAKE) build
+from-orig: $(ZUO)
+	$(ZUO) $(workarea) from-orig $(ORIG) MAKE="$(MAKE)"
 
 .PHONY: docs
-docs: build
-	(cd csug && $(MAKE) m=$(m))
-	(cd release_notes && $(MAKE) m=$(m))
+docs: build $(ZUO)
+	$(ZUO) $(workarea) docs MAKE="$(MAKE)"
 
 .PHONY: bintar
-bintar:
-	(cd $(workarea) && $(MAKE) bintar)
+bintar: $(ZUO)
+	$(ZUO) $(workarea) bintar MAKE="$(MAKE)"
 
 .PHONY: rpm
-rpm:
-	(cd $(workarea) && $(MAKE) rpm)
+rpm: $(ZUO)
+	$(ZUO) $(workarea) rpm MAKE="$(MAKE)"
 
 .PHONY: pkg
-pkg:
-	(cd $(workarea) && $(MAKE) pkg)
+pkg: $(ZUO)
+	$(ZUO) $(workarea) pkg MAKE="$(MAKE)"
 
 .PHONY: clean
-clean:
-	(cd $(workarea) && $(MAKE) clean)
+clean: $(ZUO)
+	$(ZUO) $(workarea) clean MAKE="$(MAKE)"
+	rm -f bin/zuo
 
-.PHONY: distclean
-distclean:
-	(cd csug && if [ -e Makefile ] ; then $(MAKE) reallyreallyclean ; fi)
-	rm -f csug/Makefile
-	(cd release_notes && if [ -e Makefile ] ; then $(MAKE) reallyreallyclean ; fi)
-	rm -f release_notes/Makefile
-	rm -rf $(workarea)
-	rm -f Makefile
-	rm -f Make.out
+$(ZUO): $(srcdir)/zuo/zuo.c
+	mkdir -p bin
+	$(HOSTCC) -DZUO_LIB_PATH='"'"../zuo/lib"'"' -o $(ZUO) $(srcdir)/zuo/zuo.c

@@ -9923,8 +9923,8 @@
       (lambda (who path dir* all-ext*)
         (let-values ([(src-path obj-path obj-exists?)
                       (default-library-search-handler who path dir* all-ext*)])
-          (assert (equal? src-path "src2/lib.ss"))
-          (assert (equal? obj-path "obj/lib.so"))
+          (assert (equal? src-path (path-build "src2" "lib.ss")))
+          (assert (equal? obj-path (path-build "obj" "lib.so")))
           (assert obj-exists?)
           (values src-path obj-path obj-exists?))))
     '(printf "~a\n" (let () (import (lib)) a))))
@@ -9981,8 +9981,8 @@
         (let-values ([(src-path obj-path obj-exists?)
                       (default-library-search-handler who path dir* all-ext*)])
           ;; user reordered library-directories since compiling the wpo file
-          (assert (equal? src-path "src1/lib.ss"))
-          (assert (equal? obj-path "obj/lib.wpo"))
+          (assert (equal? src-path (path-build "src1" "lib.ss")))
+          (assert (equal? obj-path (path-build "obj" "lib.wpo")))
           (assert obj-exists?))
         ;; ... we install a new handler that returns the object file instead
         (library-search-handler
@@ -10499,7 +10499,9 @@
     (separate-eval
       '(compile-imported-libraries #t)
       '(load-program "testdir/cil19C.ss"))
-    "compiling testdir/cil19B.ss with output to testdir/cil19B.so\ncompiling testdir/cil19A.ss with output to testdir/cil19A.so\n18\n")
+    (format
+     "compiling testdir~acil19B.ss with output to testdir~acil19B.so\ncompiling testdir~acil19A.ss with output to testdir~acil19A.so\n18\n"
+     (directory-separator) (directory-separator) (directory-separator) (directory-separator)))
   (file-exists? "testdir/cil19A.so")
   (file-exists? "testdir/cil19B.so")
   (equal?
@@ -10528,7 +10530,9 @@
     (separate-eval
       '(compile-imported-libraries #t)
       '(load-program "testdir/cil19C.ss"))
-    "compiling testdir/cil19A.ss with output to testdir/cil19A.so\ncompiling testdir/cil19B.ss with output to testdir/cil19B.so\n24\n")
+    (format
+     "compiling testdir~acil19A.ss with output to testdir~acil19A.so\ncompiling testdir~acil19B.ss with output to testdir~acil19B.so\n24\n"
+     (directory-separator) (directory-separator) (directory-separator) (directory-separator)))
   (equal?
     (separate-eval
       '(compile-imported-libraries #t)
@@ -10561,7 +10565,9 @@
     (separate-eval
       '(compile-imported-libraries #t)
       '(load-program "testdir/cil19C.ss"))
-    "compiling testdir/cil19A.ss with output to testdir/cil19A.so\ncompiling testdir/cil19B.ss with output to testdir/cil19B.so\n28\n")
+    (format
+     "compiling testdir~acil19A.ss with output to testdir~acil19A.so\ncompiling testdir~acil19B.ss with output to testdir~acil19B.so\n28\n"
+    (directory-separator) (directory-separator) (directory-separator) (directory-separator)))
   (equal?
     (separate-eval
       '(compile-imported-libraries #t)
@@ -10580,7 +10586,9 @@
     (separate-eval
       '(compile-imported-libraries #t)
       '(load-program "testdir/cil19C.ss"))
-    "compiling testdir/cil19A.ss with output to testdir/cil19A.so\ncompiling testdir/cil19B.ss with output to testdir/cil19B.so\n36\n")
+    (format
+     "compiling testdir~acil19A.ss with output to testdir~acil19A.so\ncompiling testdir~acil19B.ss with output to testdir~acil19B.so\n36\n"
+     (directory-separator) (directory-separator) (directory-separator) (directory-separator)))
   (equal?
     (separate-eval
       '(compile-imported-libraries #t)
@@ -10932,7 +10940,7 @@
             (load-program "testfile-tlp11.so")))
         dep8))
     '("332211\n" ((testfile-tlp9))))
-  (equal? (library-object-filename '(testfile-tlp9)) "testfile-tlp9.so")
+  (path-equal? (library-object-filename '(testfile-tlp9)) "testfile-tlp9.so")
  ; make sure internal module bindings are properly set up before
  ; the body forms are processed
   (begin
@@ -11230,17 +11238,17 @@
       'replace)
     (separate-compile 'li5)
     #t)
-  (equal?
+  (path-equal?
     (parameterize ([compile-imported-libraries #t])
       (eval '(let () (import (testfile-li3)) x))
       (library-object-filename '(testfile-li3)))
-    "testfile-li3.so")
+     "testfile-li3.so")
   (equal?
     (parameterize ([compile-imported-libraries #f])
       (eval '(let () (import (testfile-li4)) x))
       (library-object-filename '(testfile-li4)))
     #f)
-  (equal?
+  (path-equal?
     (begin
       (eval '(let () (import (testfile-li5)) x))
       (library-object-filename '(testfile-li5)))
@@ -11666,7 +11674,7 @@
                    (call-with-values (lambda () (locate-source (source-object-sfd source) (source-object-bfp source))) vector)
                    (call-with-values (lambda () (locate-source (source-object-sfd source) (source-object-efp source))) vector)))])
       (load "testfile.ss"))
-    '(#("testfile.ss" 2 12) . #("testfile.ss" 2 13)))
+    (cons (vector (find-source "testfile.ss") 2 12) (vector (find-source "testfile.ss") 2 13)))
   (equal?
     (let ([sfd (source-file-descriptor (source-file-descriptor-path sfd) (source-file-descriptor-checksum sfd) )])
       (let ([source (make-source-object sfd 2 3)])
@@ -11678,7 +11686,7 @@
                        (call-with-values (lambda () (locate-source (source-object-sfd source) (source-object-bfp source))) vector)
                        (call-with-values (lambda () (locate-source (source-object-sfd source) (source-object-efp source))) vector)))])
           (load "testfile.ss"))))
-    '(#("testfile.ss" 2 12) . #("testfile.ss" 2 13)))
+    (cons (vector (find-source "testfile.ss") 2 12) (vector (find-source "testfile.ss") 2 13)))
 
   (error? ; not a source object
    (locate-source-object-source "spam" #t #t))

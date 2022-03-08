@@ -10,8 +10,9 @@
   (error who "missing target"))
 
 (define srcdir (car args))
-(define target (cadr args))
-(define args (cddr args))
+(define destdir (cadr args))
+(define target (caddr args))
+(define args (cdddr args))
 
 (define scheme? (and (pair? args)
                      (equal? "--scheme" (car args))))
@@ -54,7 +55,7 @@
                     [(eqv? #\- (car l)) '()]
                     [else (cons (car l) (loop (cdr l)))]))))
 
-(define src (let ([p (string-append "../../boot/" src-target)])
+(define src (let ([p (string-append destdir "/boot/" src-target)])
               (if (file-directory? p)
                   p
                   (string-append srcdir "/" src-target))))
@@ -63,7 +64,7 @@
   (error who "cannot find base bootfiles for ~s" src-target))
 
 (define xpatch (and (not (equal? src-target (symbol->string (machine-type))))
-                    (format "../../xc-~a/s/xpatch" src-target)))
+                    (format "~a/xc-~a/s/xpatch" destdir src-target)))
 (unless (or (not xpatch)
             (file-exists? xpatch))
   (error who "cannot find cross patch file ~s" xpatch))
@@ -73,7 +74,7 @@
               (error who "file not found: ~s" f)))
           more-boots)
 
-(define dest (string-append "../../boot/" target))
+(define dest (string-append destdir "/boot/" target))
 
 (for-each (lambda (f)
             (delete-file (string-append dest "/" f)))
@@ -121,6 +122,24 @@
 
 (when xpatch
   (load xpatch))
+
+(let ([o (open-file-output-port (string-append dest "/" "Mf-config")
+                                (file-options no-fail)
+                                (buffer-mode block)
+                                (current-transcoder))])
+  (fprintf o "extraBootFiles=~a\n"
+           (apply string-append
+                  (map (lambda (path) (format "\"~a\" " (path-last path)))
+                       more-boots)))
+  (fprintf o "extraCSources=~a~a\n"
+           (apply string-append
+                  (apply append
+                         (map (lambda (src-boot)
+                                (let ([name (extract-boot-name src-boot)])
+                                  (many (string-append "pbchunk_" name "~a.c "))))
+                              src-boots)))
+           "pbchunk_register.c")
+  (close-port o))
 
 (let loop ([src-boots src-boots]
            [dest-boots dest-boots]

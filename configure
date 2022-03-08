@@ -38,17 +38,6 @@ if [ "$srcdir" != "." ]; then
 fi
 machs=$machs$sep2$last
 
-case "$srcdir" in
-    /*)
-        upsrcdir=$srcdir
-        upupsrcdir=$srcdir
-        ;;
-    *)
-        upsrcdir=../$srcdir
-        upupsrcdir=../../$srcdir
-        ;;
-esac
-
 m=""
 w=""
 pb=no
@@ -75,6 +64,7 @@ disableiconv=no
 addflags=yes
 addwarningflags=no
 default_warning_flags="-Wpointer-arith -Wall -Wextra -Wno-implicit-fallthrough"
+: ${HOSTCC:="gcc -O2"}
 : ${CC:="gcc"}
 : ${CPPFLAGS:=""}
 : ${CFLAGS:=""}
@@ -85,28 +75,19 @@ default_warning_flags="-Wpointer-arith -Wall -Wextra -Wno-implicit-fallthrough"
 : ${ARFLAGS:="rc"}
 : ${RANLIB:="ranlib"}
 : ${WINDRES:="windres"}
-zlibset=no
-zlibInc=-I../zlib
-LZ4Inc=-I../lz4/lib
-zlibDep=../zlib/libz.a
-LZ4Dep=../lz4/lib/liblz4.a
-zlibLib=../zlib/libz.a
-LZ4Lib=../lz4/lib/liblz4.a
-zlibHeaderDep="../zlib/zconf.h ../zlib/zlib.h"
-LZ4HeaderDep="../lz4/lib/lz4.h ../lz4/lib/lz4frame.h"
+zlibLib=
+LZ4Lib=
 Kernel=KernelLib
-installkerneltarget=installkernellib
-installzlibtarget=installzlib
-installlz4target=installlz4
-topMakefile=Makefile.in
+buildKernelOnly=no
 pbendian=l
 emscripten=no
 empetite=no
-emBootFiles=
+moreBootFiles=
+preloadBootFiles=
 alwaysUseBootFile=
 
-# On WSL, set OS to "Windows_NT" to create a Windows
-# build instead of a Linux (on Windows) build:
+# On WSL, set OS to "Windows_NT" (as already set in MSYS2) to create a
+# Windows build instead of a Linux (on Windows) build:
 if [ "$OS" = "Windows_NT" ] ; then
     CONFIG_UNAME="CYGWIN_NT-"
 else
@@ -240,13 +221,6 @@ while [ $# != 0 ] ; do
       LD="emld"
       AR="emar"
       RANLIB="emranlib"
-      if [ "$zlibset" = "no" ]; then
-        zlibLib=
-        zlibInc=
-        zlibDep=
-        zlibHeaderDep=
-        installzlibtarget=
-      fi
       ;;
     --force)
       forceworkarea=yes
@@ -321,23 +295,13 @@ while [ $# != 0 ] ; do
       ;;
     --libkernel)
       Kernel=KernelLib
-      installkerneltarget=installkernellib
-      if [ "$zlibInc" != "" ]; then
-          installzlibtarget=installzlib
-      fi
-      if [ "$LZ4Inc" != "" ]; then
-          installlz4target=installlz4
-      fi
       ;;
     --kernelobj)
       Kernel=KernelO
-      installkerneltarget=installkernelobj
-      installzlibtarget=
-      installlz4target=
       ;;
     --emboot=*)
       bootfilenames=`echo $1 | sed -e 's/^--emboot=//'`
-      emBootFiles="${emBootFiles} ${bootfilenames}"
+      moreBootFiles="${moreBootFiles} ${bootfilenames}"
       ;;
     --empetite)
       empetite=yes
@@ -378,18 +342,9 @@ while [ $# != 0 ] ; do
       ;;
     ZLIB=*)
       zlibLib=`echo $1 | sed -e 's/^ZLIB=//'`
-      zlibInc=
-      zlibDep=
-      zlibHeaderDep=
-      installzlibtarget=
-      zlibset=yes
       ;;
     LZ4=*)
       LZ4Lib=`echo $1 | sed -e 's/^LZ4=//'`
-      LZ4Inc=
-      LZ4Dep=
-      LZ4HeaderDep=
-      installlz4target=
       ;;
     *)
       echo "option '$1' unrecognized or missing an argument; try $0 --help"
@@ -431,6 +386,12 @@ if [ "$bits" = "" ] ; then
 fi
 
 if [ "$threads" = "" ] ; then
+    defaultthreads=yes
+else
+    defaultthreads=$threads
+fi
+
+if [ "$threads" = "" ] ; then
     if [ "$pb" = "yes" ] ; then
         if [ "$pbarch" = "yes" ] ; then
             threads=yes
@@ -443,9 +404,9 @@ if [ "$threads" = "" ] ; then
 fi
 
 if [ $bits = 64 ] ; then
-  if [ $threads = yes ] ; then defaultm=$tm64 ; else defaultm=$m64 ; fi
+  if [ $defaultthreads = yes ] ; then defaultm=$tm64 ; else defaultm=$m64 ; fi
 else
-  if [ $threads = yes ] ; then defaultm=$tm32 ; else defaultm=$m32 ; fi
+  if [ $defaultthreads = yes ] ; then defaultm=$tm32 ; else defaultm=$m32 ; fi
 fi
 
 if [ "$m" = "" ] ; then
@@ -492,7 +453,7 @@ else
         echo "Machine $m is not consistent with boot directory $magain"
         exit 1
     fi
-    topMakefile=Makefile-kernel.in
+    buildKernelOnly=yes
 fi
 
 if [ "$w" = "" ] ; then
@@ -593,7 +554,7 @@ optFlags=-O2
 
 if [ "$emscripten" = "yes" ]; then
     flagsm=em
-    topMakefile=Makefile-em.in
+    buildKernelOnly=yes
     disableiconv=yes
     disablecurses=yes
 fi
@@ -668,42 +629,13 @@ if [ "$cflagsset" = "no" ] ; then
         CFLAGS="-m32 ${optFlags}"
         ;;
     em)
-        if [ "$zlibset" = "no" ]; then
-          CFLAGS="-s USE_ZLIB=1 ${optFlags}"
-        else
-          CFLAGS="${optFlags}"
+        if [ "$zlibLib" = "" ]; then
+          zlibLib="-s USE_ZLIB=1"
         fi
+        CFLAGS="${optFlags}"
         ;;
   esac
 fi
-
-# architecture-specific for Mf-unix
-case "${muni}" in
-  pb*)
-      Cpu=PORTABLE_BYTECODE
-      mdarchsrc=pb
-      ;;
-  a6*)
-      Cpu=X86_64
-      mdarchsrc=i3le
-      ;;
-  i3*)
-      Cpu=I386
-      mdarchsrc=i3le
-      ;;
-  arm32*)
-      Cpu=ARMV6
-      mdarchsrc=arm32le
-      ;;
-  arm64*)
-      Cpu=AARCH64
-      mdarchsrc=arm32le
-      ;;
-  ppc32*)
-      Cpu=PPC32
-      mdarchsrc=ppc32
-      ;;
-esac
 
 # Add automatic thread compilation flags, unless suppressed by --disable-auto-flags
 if [ "$addflags" = "yes" ] ; then
@@ -724,7 +656,6 @@ fi
 
 if [ "$disableiconv" = "yes" ]; then
     iconvLib=
-    CPPFLAGS="${CPPFLAGS} -DDISABLE_ICONV"
 else
     iconvLib="-liconv"
 fi
@@ -786,6 +717,10 @@ submod_instructions () {
     exit 1
 }
 
+if [ ! -f "$srcdir"/zuo/configure ] ; then
+    submod_instructions 'Source in "zuo" is missing'
+fi
+
 if [ ! -f "$srcdir"/nanopass/nanopass.ss ] ; then
     submod_instructions 'Source in "nanopass" is missing'
 fi
@@ -811,11 +746,10 @@ mdinclude=
 mdcppflags=
 mdcflags=
 mdldflags=
-mdlinkflags= 
-zlibConfigureFlags=
+mdlinkflags=
 zlibConfigureEnv=
+zlibConfigureFlags=
 exeExtraDeps=
-exePreStep=":"
 exePostStep=":"
 exeSuffix=
 
@@ -880,55 +814,27 @@ esac
 # pre- and post-link-executable step for c/Mf-unix
 case "${flagsmuni}" in
     *nb)
-        exePostStep='paxctl +m ${Scheme}'
+        exePostStep='paxctl +m'
         ;;
     em)
-        # emscripten linking to preload boot files
-        exeExtraDeps="$boofiles"
-        bootfiles="../boot/$m/petite.boot"
-        if [ "${empetite}" = "no" ] ; then
-            bootfiles="$bootfiles ../boot/$m/scheme.boot"
-        fi
-        bootfiles="$bootfiles $emBootFiles"
-
-        # find any extra boot files that are in $mboot
-        if [ -f boot/$mboot/scheme.boot ] ; then
-            bootdir=.
+        if [ "$empetite" == yes ]; then
+            preloadBootFiles="$w/boot/$m/petite.boot"
         else
-            bootdir="$srcdir"
+            preloadBootFiles="$w/boot/$m/petite.boot $w/boot/$m/scheme.boot"
         fi
-        for file in `(cd "$bootdir"/boot/"$mboot" ; echo *.boot)` ; do
-            if [ "$file" != "petite.boot" -a "$file" != "scheme.boot" ] ; then
-               bootfiles="$bootfiles ../boot/$m/$file"
-            fi
-        done
-
-        # set up preload of all boot files
-        for f in $bootfiles ; do
-            if [ "${exePreStep}" = ":" ] ; then
-                exePreStep=
-            else
-                exePreStep="${exePreStep} && "
-            fi
-            exePreStep="${exePreStep}cp $f `basename $f`"
-            exeExtraDeps="${exeExtraDeps} $f"
-            mdlinkflags="${mdlinkflags} --preload-file `basename $f`"
-            inferredAlwaysUseBootFile="`basename $f .boot`"
-        done
-        if [ "$alwaysUseBootFile" = "" ] ; then
-            alwaysUseBootFile="$inferredAlwaysUseBootFile"
-        fi
+        preloadBootFiles="$preloadBootFiles $moreBootFiles"
         exeSuffix=".html"
         ;;
 esac
 
 # zlib configure flags for c/Mf-unix
 case "${flagsmuni}" in
-    a6*)
-        # zlibConfigureFlags="--64"
-        ;;
     em)
-        zlibConfigureEnv="CROSS_PREFIX=em uname=wasm-em"
+        if  [ "$zlibLib" = "" ]; then
+            zlibLib="-s USE_ZLIB=1"
+            # not used, but this is how we might build our own zlib:
+            zlibConfigureEnv="CROSS_PREFIX=em uname=wasm-em"
+        fi
         ;;
 esac
 
@@ -985,102 +891,48 @@ else
   exit 1
 fi
 
-if "$srcdir"/workarea $m $w "${mpbhost}" $mboot ; then
-    :
-else
-    # not a recognized host, or other error
-    exit 1
-fi
+case "$srcdir" in
+    /*)
+        upsrcdir=$srcdir
+        ;;
+    *)
+        upsrcdir=../$srcdir
+        ;;
+esac
 
-sed -e 's/$(m)/'$m'/g'\
-    -e 's/$(defaultm)/'$defaultm'/g'\
-    -e 's/$(workarea)/'$w'/g'\
-  "$srcdir"/makefiles/$topMakefile > Makefile
+# Makefile to build and launch Zuo
+sed -e 's/$(w)/'$w'/g'\
+    "$srcdir"/makefiles/Makefile.in > Makefile
 
-mkdir -p csug
-sed -e 's/$(m)/'$m'/g'\
-    -e "s;^srcdir = .*\$;srcdir = $upsrcdir/csug;"\
-    "$srcdir"/makefiles//Makefile-csug.in > csug/Makefile
+mkdir -p $w
 
-mkdir -p release_notes
-sed -e 's/$(m)/'$m'/g'\
-    "$srcdir"/makefiles//Makefile-release_notes.in > release_notes/Makefile
+# Stub Zuo script to lanch the real one, using "Makefile"
+# to locate the workarea:
+cp "$srcdir"/makefiles/buildmain.zuo main.zuo
 
-cat "$srcdir"/makefiles/Makefile-workarea.in > $w/Makefile
+# Some idea, but in the workarea, so it refers to "workarea.zuo" here:
+cp "$srcdir"/makefiles/workmain.zuo $w/main.zuo
 
-sed -e 's/$(m)/'$m'/g'\
-    -e 's/$(m)/'$m'/g'\
-    -e 's/$(workarea)/'$w'/g'\
-    "$srcdir"/makefiles/Mf-boot.in > $w/Mf-boot
-
-sed -e "s;^m=none\$;m=$m;"\
-    -e "s;^InstallBin=.*\$;InstallBin=$installbin;"\
-    -e "s;^InstallLib=.*\$;InstallLib=$installlib;"\
-    -e "s;^InstallMan=.*\$;InstallMan=$installman/man1;"\
-    -e "s;^InstallOwner=.*\$;InstallOwner=$installowner;"\
-    -e "s;^InstallGroup=.*\$;InstallGroup=$installgroup;"\
-    -e "s;^TempRoot=.*;TempRoot=$temproot;"\
-    -e "s;^GzipManPages=.*$;GzipManPages=$gzipmanpages;"\
-    -e "s;^InstallSchemeName=.*$;InstallSchemeName=$installschemename;"\
-    -e "s;^InstallPetiteName=.*$;InstallPetiteName=$installpetitename;"\
-    -e "s;^InstallScriptName=.*$;InstallScriptName=$installscriptname;"\
-    -e "s;^InstallKernelTarget=.*$;InstallKernelTarget=$installkerneltarget;"\
-    -e "s;^InstallZlibTarget=.*$;InstallZlibTarget=$installzlibtarget;"\
-    -e "s;^InstallLZ4Target=.*$;InstallLZ4Target=$installlz4target;"\
-    "$srcdir"/makefiles/Mf-install.in > $w/Mf-install
-
-cat > $w/c/next_config.h << END
-#define SCHEME_SCRIPT "$installscriptname"
-#ifndef WIN32
-#define DEFAULT_HEAP_PATH "$installlib/csv%v/%m"
-#endif
-END
-
-if [ "$disablecurses" = "yes" ]; then
-  echo '#define DISABLE_CURSES' >> $w/c/next_config.h
-fi
-
-if [ "$disablex11" = "yes" ]; then
-  echo '#define DISABLE_X11' >> $w/c/next_config.h
-fi
-
-if [ "$pb" = "yes" ]; then
-  if [ "$libffi" = "yes" ]; then
-    echo '#define ENABLE_LIBFFI' >> $w/c/next_config.h
-  fi
-fi
-
-if [ "$alwaysUseBootFile" != "" ]; then
-    echo '#define ALWAYS_USE_BOOT_FILE "'"$alwaysUseBootFile"'"' >> $w/c/next_config.h
-fi
-
-if [ -f "$w/boot/$m/pbchunk_register.c" ]; then
-    echo "#define CALL_PBCHUNK_REGISTER 1" >> $w/c/next_config.h
-fi
-
-if [ ! -f "$w/c/config.h" ] ; then
-   mv $w/c/next_config.h $w/c/config.h
-elif `cmp -s $w/c/next_config.h $w/c/config.h` ; then
-   rm $w/c/next_config.h
-else
-   mv $w/c/next_config.h $w/c/config.h
-fi
-
-cat > $w/c/Mf-config << END
-upupsrcdir=$upupsrcdir
+# The content of "$w/Makefile" records configuration decisions,
+# and the Zuo build script takes it from there
+cat > $w/Mf-config << END
+srcdir=$srcdir
+upsrcdir=$upsrcdir
 m=$m
-Cpu=$Cpu
-mdarchsrc=$mdarchsrc
+defaultm=$defaultm
+mboot=$mboot
+buildKernelOnly=$buildKernelOnly
 mdinclude=$mdinclude
 mdcppflags=$mdcppflags
+mdcflags=$mdcflags
 mdldflags=$mdldflags
 mdlinkflags=$mdlinkflags
 exeExtraDeps=$exeExtraDeps
-exePreStep=$exePreStep
 exePostStep=$exePostStep
 exeSuffix=$exeSuffix
-zlibConfigureFlags=$zlibConfigureFlags
 zlibConfigureEnv=$zlibConfigureEnv
+zlibConfigureFlags=
+HOSTCC=$HOSTCC
 CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS
@@ -1093,27 +945,26 @@ RANLIB=$RANLIB
 WINDRES=$WINDRES
 cursesLib=$cursesLib
 ncursesLib=$ncursesLib
-zlibInc=$zlibInc
-LZ4Inc=$LZ4Inc
-zlibDep=$zlibDep
-LZ4Dep=$LZ4Dep
 zlibLib=$zlibLib
 LZ4Lib=$LZ4Lib
-zlibHeaderDep=$zlibHeaderDep
-LZ4HeaderDep=$LZ4HeaderDep
 warningFlags=$warningFlags
-KernelCFlags=$KernelCFlags
-Kernel=\${${Kernel}}
-KernelLinkDeps=\${${Kernel}LinkDeps}
-KernelLinkLibs=\${${Kernel}LinkLibs}
-C=\${CC} \${CPPFLAGS} \${CFLAGS} \${warningFlags}
-END
+Kernel=$Kernel
+installscriptname=$installscriptname
+disablecurses=$disablecurses
+disableiconv=$disableiconv
+disablex11=$disablex11
+enablelibffi=$libffi
+preloadBootFiles=$preloadBootFiles
+alwaysUseBootFile=$alwaysUseBootFile
 
-cat > $w/mats/Mf-config << END
-upupsrcdir=$upupsrcdir
-m=$m
-mdcflags=$mdcflags
-CC=$CC
-CPPFLAGS=$CPPFLAGS
-CFLAGS=$CFLAGS
+InstallBin=$installbin
+InstallLib=$installlib
+InstallMan=$installman/man1
+InstallOwner=$installowner
+InstallGroup=$installgroup
+TempRoot=$temproot
+GzipManPages=$gzipmanpages
+InstallSchemeName=$installschemename
+InstallPetiteName=$installpetitename
+InstallScriptName=$installscriptname
 END

@@ -38,7 +38,9 @@
                 arm32le tarm32le arm64le tarm64le arm64osx tarm64osx)
           'little]
          [(ppc32le tppc32le ppc32osx tppc32osx) 'big]
-         [(pb tpb pb32 tpb32) (native-endianness)]
+         [(pb tpb) (native-endianness)]
+         [(pb64l tpb64l pb32l tpb32l) 'little]
+         [(pb64b tpb64b pb32b tpb32b) 'big]
          [else (errorf #f "unrecognized machine type")]))
 )
 
@@ -11322,7 +11324,7 @@
                                                  (cons (bitwise-and i 255)
                                                        (loop (+ i 1)))))))
     (round-trip-bytevector-compress 
-      (call-with-port (open-file-input-port (format "~a/prettytest.ss" *mats-dir*)) get-bytevector-all))
+      (call-with-port (open-file-input-port (find-source "prettytest.ss")) get-bytevector-all))
     (error?
      ;; Need at least 8 bytes for result size
      (bytevector-uncompress '#vu8()))

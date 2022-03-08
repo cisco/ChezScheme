@@ -1971,7 +1971,7 @@
 )
 
 (mat $fasl-file-equal?
-  (let ([fn (format "~a/fatfib.ss" *examples-directory*)])
+  (let ([fn (find-source "fatfib.ss")])
     (parameterize ([generate-inspector-information #t])
       (compile-file fn "testfile-fatfib1.so"))
     (parameterize ([generate-inspector-information #t])
@@ -4647,6 +4647,7 @@
 )
 
 (unless (memq (machine-type) '(arm32le tarm32le arm64le tarm64le arm64osx tarm64osx ; timestamp counter tends to be priviledged on Arm
+				       arm64nt tarm64nt
                                        pb)) ; doesn't increment for pb
   (mat $read-time-stamp-counter
 

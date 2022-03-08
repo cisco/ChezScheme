@@ -1,6 +1,5 @@
-srcdir = $(srcdir)
-m = $(m)
-Scheme=../$m/bin/$m/scheme -b ../$m/boot/$m/petite.boot -b ../$m/boot/$m/scheme.boot
+# srcdir and m are added before
+Scheme=../bin/$m/scheme -b ../boot/$m/petite.boot -b ../boot/$m/scheme.boot
 STEXLIB=$(srcdir)/../stex
 installdir=/tmp/csug9.5
 INSTALL=../$m/installsh

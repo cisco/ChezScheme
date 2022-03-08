@@ -39,7 +39,7 @@
          record-type-field-names
          record-type-field-indices
          csv7:record-type-field-names
-         csv7:record-type-field-indices
+         $record-type-field-indices
          csv7:record-type-field-decls
          record-writer
          $object-ref)
@@ -523,7 +523,7 @@
      (map fld-name (hash-ref rtd-fields rtd))]))
 
 ;; all fields, including from parent
-(define (csv7:record-type-field-indices rtd)
+(define ($record-type-field-indices rtd)
   (cond
     [(base-rtd? rtd)
      (for/list ([f (in-list base-rtd-fields)]
@@ -550,7 +550,7 @@
 (define (record-type-field-indices rtd)
   (cond
     [(base-rtd? rtd)
-     (list->vector (csv7:record-type-field-indices rtd))]
+     (list->vector ($record-type-field-indices rtd))]
     [else
      (define-values (r-name init-cnt auto-cnt ref set immutables super skipped?)
        (struct-type-info rtd))

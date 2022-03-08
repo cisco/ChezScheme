@@ -1,3 +1,0 @@
-m = tarm64nt
-
-!INCLUDE Makefile.arm64nt

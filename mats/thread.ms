@@ -1356,7 +1356,7 @@
     '(3.4 -4))
   ($thread-check)
   (begin
-    (load-shared-object (format "~a/foreign1.so" *mats-dir*))
+    (load-shared-object (find-source "foreign1.so"))
     #t)
   (equal?
     (let ()

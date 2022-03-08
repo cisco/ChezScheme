@@ -18,7 +18,7 @@ PREREQUISITES
 
 On Unix variants:
 
- * GNU Make
+ * Make [where GNU make is needed for some extra things, like docs]
  * GCC, Clang, or a similarly capable compiler
  * Header files and libraries for ncurses   [unless --disable-curses]
  * Header files and libraries for X windows [unless --disable-x11]
@@ -26,11 +26,6 @@ On Unix variants:
 On Windows:
 
  * Microsoft Visual Studio 2022, 2019, 2017, or 2015
-
- or
-
- * Bash/WSL, MinGW/MSYS, or Cygwin with bash, git, grep, make, sed,
-   etc.
 
 
 GETTING STARTED
@@ -41,9 +36,8 @@ Chez Scheme machine type, which can be used to build for native
 machine types, or you may have to create initial boot files using
 Racket.
 
-In you're on Windows, see the WINDOWS VIA COMMAND PROMPT or WINDOWS
-VIA SHELL section later in this file. Otherwise, to get further
-instructions, try running
+In you're on Windows, see the WINDOWS VIA COMMAND PROMPT section later
+in this file. Otherwise, to get further instructions, try running
 
   ./configure
   make
@@ -61,7 +55,7 @@ and then trying again with `./configure`. In the former case, you can
 use "auto.bootquick" instead of "<machine type>.bootquick".
 
 If you plan to build on multiple different machines and you don't have
-pbb boot files, then it may be a good idea to generate pb boot files
+pb boot files, then it may be a good idea to generate pb boot files
 via Racket:
 
   racket rktboot/main.rkt --machine pb
@@ -126,13 +120,14 @@ directory):
 
  * "Makefile" in the root (top level) directory.
 
+ * "main.zuo" in the root (top level) directory.
+
  * A workarea as a subdirectory named for the machine type (e.g.,
    "ta6le" for threaded 64-bit linux). The workarea is a mirror of the
    root directory, with subdirectories named "c", "s", and so on.
    Compilation takes place in the workarea.
 
- * Within the workarea, the files "Makefile", "Mf-install", "Mf-boot",
-   etc.
+ * Within the workarea, the files "Mf-config" and "main.zuo".
 
 The "configure" script recognizes various options for controlling the
 type of build and the installation location. For example,
@@ -141,23 +136,37 @@ type of build and the installation location. For example,
 specifies the installation root. Run `./configure --help` for
 information on the supported options.
 
+The generated makefile mostly just ensures that a `zuo` executable is
+built in a `bin` directory, and then it defers the actual build work
+to `zuo`, which uses the "main.zuo" file. If you have `zuo` installed,
+you can use `zuo` directly instead of `make`. In general, instead of
+the command `make X` to build target `X` as described below, you can
+use `zuo . X` (or `bin/zuo . X` after `bin/zuo` is built).
+
 The makefile supports several targets:
 
  * `make` or `make build`
 
    Compiles and links the C sources to produce the executable, then
-   bootstraps the Scheme sources. Bootstrapping involves using the
-   freshly built scheme executable along with initial boot files to
-   compile the Scheme sources. If the new boot files are equivalent to
-   the old boot files, the system is bootstrapped. Otherwise, the new
-   boot files are used to create a newer set, and those are compared.
-   If this succeeds, the system is bootstrapped. Otherwise, the make
-   fails --- which should not happen, unless the initial boot files
-   are incorrect or become out of sync with the sources.
+   (except for cross builds) bootstraps the Scheme sources.
+
+   Bootstrapping involves using the freshly built scheme executable
+   along with initial boot files to compile the Scheme sources. If the
+   new boot files are equivalent to the old boot files, the system is
+   bootstrapped. Otherwise, the new boot files are used to create a
+   newer set, and those are compared. If this succeeds, the system is
+   bootstrapped. Otherwise, the make fails --- which should not
+   happen, unless the initial boot files are incorrect or become out
+   of sync with the sources.
 
    When you make a modification to the system that causes the C side
    to get out of sync with the Scheme side so that the build fails,
-   the simplest approach is to re-bootstrapp via Racket.
+   the simplest approach is to re-bootstrap via Racket.
+
+ * `make kernel`
+
+   Compiles just the C sources to produce the executable so that
+   running can use existing bootfiles.
 
  * `make run`
 
@@ -169,14 +178,17 @@ The makefile supports several targets:
      env SCHEMEHEAPDIRS=<workarea>/boot/<machine type> \
          <workarea>/bin/<machine type>/scheme
 
-   or this through the `-b` command-line flag, which requires
-   absolute paths:
+   or through the `-B` command-line flag, which requires absolute
+   paths:
 
      <workarea>/bin/<machine type>/scheme \
-       -b /path/to/<workarea>/boot/<machine type>/petite.boot \
-       -b /path/to/<workarea>/boot/<machine type>/scheme.boot
+       -B <workarea>/boot/<machine type>/petite.boot \
+       -B <workarea>/boot/<machine type>/scheme.boot
 
    Note that <workarea> and <machine type> are typically the same.
+
+   If you use `zuo . run`, then additional arguments after `run` are
+   passed along as arguments to `scheme`.
 
  * `sudo make install`
 
@@ -191,15 +203,14 @@ The makefile supports several targets:
    "configure" is writable by the current user, then `sudo` is not
    necessary.
 
- * `make test`
+ * `make test`  (or `zuo . -j <jobs> test`)
 
    Runs the build plus runs a set of test programs in various
    different ways, e.g., with different compiler options. It can take
    on the order of an hour, depending on the speed of the machine.
 
-   At the end of a complete run, the summary recorded in
-   "<workarea>/mats/summary" is shown. It should contain one line per
-   test configuration, something like this:
+   At the end of a complete run, a summary is shown. It should contain
+   one line per test configuration, something like this:
 
      -------- o=0 --------
      -------- o=3 --------
@@ -214,8 +225,11 @@ The makefile supports several targets:
      -------- o=0 ehc=t eoc=f --------
      -------- o=3 ehc=t eval=interpret --------
 
-   If there is anything else in "<workarea>/mats/summary", something
-   unexpected occurred. See "IMPLEMENTATION.md" for more information.
+   If there is anything else in the output, something unexpected
+   occurred. See "IMPLEMENTATION.md" for more information.
+
+   To run test sets in parallel, use `zuo` instead of `make`, and
+   supply the `-j` flag between `.` and `test`.
 
  * `make <machine type>.boot` or `make <machine type>.bootquick`
 
@@ -228,6 +242,11 @@ The makefile supports several targets:
    machine type, and it compile the cross compiler in unsafe mode. So,
    `bootquick` is faster, but `boot` is more helpful during
    development.
+
+   When using `zuo`, instead of encodig <machine type> in the target
+   name, there are `boot` and bootquick` targets that take arguments.
+   So, the corresponding commands as `zuo . boot <machine-type>` and
+   `zuo . bootquick <machine-type>`.
 
  * `make bootfiles`
 
@@ -266,26 +285,19 @@ The makefile supports several targets:
 
  * `make clean`
 
-   Removes binaries from the workarea.
-
- * `make distclean`
-   
-    Removes "nanopass", "Makefile", built documentation, and all
-    workareas.
+   Removes all built elements from the workarea, and then removes
+   `bin/zuo`.
 
 
 WINDOWS VIA COMMAND PROMPT
 
-To build on Windows with Microsoft Visual Studio, make sure you've set
-up Microsoft Visual Studio command-line tools. The "c\vs.bat" script
-can help if you supply `amd64` for a 64-bit Intel build, `x86` for a
-32-bit Intel build, or `x64_arm64` for a 64-bit Arm build:
+To build on Windows with Microsoft Visual Studio, use
 
-  c\vs.bat amd64
+  build.bat <machine type>
 
-Next, you'll need boot files for the Chez Scheme target <machine type>,
-which is one of the following:
+where <machine type> is one of the following:
 
+ * pb        (portable bytecode, usually for bootstrapping)
  * ta6nt     (64-bit Intel threaded
  * a6nt      (64-bit Intel non-threaded
  * tarm64nt  (64-bit Arm threaded)
@@ -293,60 +305,88 @@ which is one of the following:
  * ti3nt     (32-bit threaded)
  * i3nt      (32-bit non-threaded)
 
-One approach to getting boot files is to install Racket and run (where
-you may have to supply the full path to your Racket installation):
-
-  racket rktboot/main.rkt --machine <machine type>
-
-Another approach is to build a pb Chez Scheme to take advantage of pb
-boot files, and then use that Chez Scheme to generate boot files for
-the target machine type:
-
- c\build.bat pb
- s\boot.bat <machine type> pb
-
-Finally, run "c\build.bat" with the same <machine type> as when
-creating boot files:
-
-  c\build.bat <machine type>
-
-The resulting executable in "<machine type>\bin\<machine type>" relies
-on generated boot files in "..\boot\<machine type>" relative to the
-executable.
-
-
-WINDOWS VIA SHELL
-
-Building Chez Scheme under 64-bit Windows with Bash/WSL, MinGW/MSYS,
-or Cygwin follows the instructions in GETTING STARTED above, except
-that `make install` and `make uninstall` are not supported.
-Alternatively, the main Chez Scheme executable can be built from the
-Windows command line or cross-compiled using MinGW as described
-further below.
-
-On Bash/WSL, the build directory must be in a location with a Windows
-path such as /mnt/c, and the `OS` environment variable must be set to
-`Windows_NT` to indicate a build for Windows, as opposed to a build
-for Linux on Windows:
-
-  env OS=Windows_NT ./configure
-  env OS=Windows_NT make
-
-The generated executables "scheme.exe" and "petite.exe" are in
-"<machine type>\bin\<machine type>", and each relies on generated boot
-files in "..\boot\<machine type>" relative to the executable.
-
 If you're using Visual Studio 2022 or 2019, install "Desktop
 development with C++" on the "Workloads" tabs and the "C++ 20[xx]
 Redistributable MSMs" on the "Individual components" tab under the
-"Compilers, build tools, and runtimes" section.
+"Compilers, build tools, and runtimes" section. If you have not yet
+set up Microsoft Visual Studio command-line tools, `build.bat` will
+run `c/vs.bat` to try to find and set up command-line tools
+automatically for <machine type>.
 
-The executables are dynamically linked against the Microsoft Visual
-C++ run-time library vcruntime140.dll. If you distribute the
-executables to a different system, be sure to include the
-redistributable run-time library.
+The generated executables "scheme.exe" and "petite.exe" are in
+"<machine type>\bin\<machine type>", and each relies on generated boot
+files in "..\boot\<machine type>" relative to the executable. The
+executables are dynamically linked against the Microsoft Visual C++
+run-time library vcruntime140.dll. If you distribute the executables
+to a different system, be sure to include the redistributable run-time
+library.
 
-To create an installer:
+You'll need boot files already for the Chez Scheme target to build.
+One reason to build pb, for example, is that a distribution may
+include pb boot files, and then a pb build can be used to create other
+boot files. Another approach to getting boot files is to install
+Racket and run (where you may have to supply the full path to your
+Racket installation):
+
+  racket rktboot/main.rkt --machine <machine type>
+
+The `build.bat` script creates and uses an `nmake`-compatible makefile
+to build `zuo.exe` as its first step. You can use `zuo` to drive
+targets described in DETAILS above, but you must explicitly set up
+Microsoft Visual Studio command-line tools (perhaps using `c/vs.bat`).
+For example, to get from pb boot files to a ta6nt build:
+
+ c\vs.bat x64
+ build.bat pb /kernel
+ zuo . bootquick ta6nt
+ build.bat ta6nt
+
+But default `build.bat` not only builds the "scheme.exe" executable,
+it also builds DLLs and libraries to support four linking
+combinations: Scheme as a DLL versus a static library, and using the C
+runtime system as a DLL versus a statically linked C runtime library.
+
+The `build.bat` script accepts some options that can be specified
+after <machine type>:
+
+ * `/none`
+
+   Configures for a machine type, including creating the
+   `nmake`-compable "Makefile", but does not build.
+
+ * `/kernel`
+
+   Builds just the "scheme.exe" executable without rebuilding boot
+   files.
+
+ * `/only`
+
+   Builds just the "scheme.exe" executable and boot files, instead of
+   also building DLLs and library variants.
+
+ * '/dll'
+
+   Specifies that "scheme.exe" should use the Scheme kernel compiled
+   as a DLL "csv<vers>.dll", which normally should be included in the
+   same directory as "scheme.exe". This is the default.
+
+ * '/exe'
+
+   Specifies that "scheme.exe" should statically link the Scheme
+   kernel, instead of relying on a separate "csv<vers>.dll".
+
+ * `/MD`
+
+   Specifies that "scheme.exe" (and its DLL, if any) use the
+   multi-threaded C runtime as a DLL. This is the default.
+
+ * `/MT`
+
+   Specifies that "scheme.exe" (and its DLL, if any) should statically
+   link to the multi-threaded C runtime.
+
+To create an installer you will need to use WSL or MSYS2 after
+building with `build.bat`:
 
   cd wininstall
   make workareas
@@ -378,7 +418,7 @@ Unset the `TZ` environment variable before running the tests, because
 the Cygwin values are incompatible with the Microsoft C Runtime
 Library.
 
-Use 'make test' described above to run the tests.
+Use `zuo . test` described above to run the tests.
 
 
 WINDOWS VIA CROSS-COMPILER
@@ -388,15 +428,7 @@ MinGW, specify suitable build tools to configure, perhaps using
 --toolprefix= like this:
 
  ./configure -m=ta6nt --toolprefix=x86_64-w64-mingw32-
-
-Then, make with "c/Mf-<machine type>" while supplying `cross=t` and
-`o=o`, possibly like this:
-
-  (cd ta6nt/c && make -f Mf-ta6nt cross=t o=o)
-
-The executable is written to <machine type>/bin/<machine type>, and it
-should be installed with boot files in ../boot/<machine type>/
-relative to the executable.
+ make kernel
 
 
 EMSCRIPTEN
@@ -441,7 +473,7 @@ machine for the target machine type, probably like this:
 Using that build, create a boot file "demo.boot":
 
  (compile-file "demo.ss" "demo.so")
- (make-boot-file "/tmp/demo.boot" (list "petite") "/tmp/demo.so")
+ (make-boot-file "demo.boot" (list "petite") "demo.so")
 
 Finally, configure the Emscripten build to use "demo.boot":
 
@@ -454,6 +486,10 @@ CROSS-COMPILING SCHEME PROGRAMS
 Using
 
   make <machine type>.bootquick
+
+or
+
+  zuo . bootquick <machine type>
 
 creates a "boot" subdirectory for <machine type> containing boot file,
 and in the process create a cross-compilation patch file as

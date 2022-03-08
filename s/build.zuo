@@ -1,0 +1,626 @@
+#lang zuo
+(require "../makefiles/lib.zuo"
+         "machine.zuo"
+         (only-in "../examples/build.zuo"
+                  [targets-at examples-targets-at]))
+
+(provide-targets targets-at)
+
+(define default-options
+  (hash
+   ;; o determines the optimize level
+   'o "3"
+
+   ;; d is the debug level at which the system should be built
+   'd "0"
+
+   ;; cl determines the commonization level (empty means the default)
+   'cl ""
+
+   ;; i determines whether inspector-information is generated (t/f)
+   'i "f"
+
+   ;; cp0 determines the number of cp0 (source optimizer) iterations run
+   'cp0 "2"
+
+   ;; fc determines whether fasl objects are compressed (t/f)
+   'fc "t"
+
+   ;; xf determines the compression format (empty means the default)
+   'xf ""
+
+   ;; xl determine the compression level (empty means the default)
+   'xl ""
+
+   ;; p (xp) determines whether source profiling is enabled (t/f)
+   'p "f"
+   'xp "f"
+
+   ;; bp (xpb) determines whether binary profiling is enabled (t/f)
+   'bp "f"
+   'xbp "f"
+
+   ;; c determines whether covin files are generated (t/f)
+   'c "f"
+
+   ;; loadspd determines whether source-profile data is loaded (t/f)
+   'loadspd "f"
+
+   ;; dumpspd determines whether source-profile data is dumped (t/f)
+   'dumpspd "f"
+
+   ;; loadbpd determines whether binary-profile data is loaded (t/f)
+   'loadbpd "f"
+
+   ;; dumpbpd determines whether binary-profile data is dumped (t/f)
+   'dumpbpd "f"
+
+   ;; compile determines the entry point for compilng files another
+   ;; useful value for this is "compile-with-asm", defined in
+   ;; "debug.ss"
+   'compile "compile-file"
+
+   ;; pdhtml determines whether profile-dump-html is called at the end
+   ;; of a build (t/f)
+   'pdhtml "f"
+
+   ;; gac determines whether cost-center allocation counts are generated (t/f)
+   'gac "f"
+
+   ;; gic determines whether cost-center instruction counts are generated (t/f)
+   'gic "f"
+
+   ;; pps determines whether pass timings are printed (t/f)
+   'pps "f"))
+
+;; The `compiler-compiler-options` argument overrides certain `var` and config-file
+;; options for building preamble files, which is useful for compiling a cross-compiler
+;; in safe mode (but having the final cross-built compiler built in unsafe mode)
+(define (targets-at at-dir [vars (hash)] [compiler-compiler-options (hash)])
+  (define config (config-file->hash (at-dir "../Mf-config") vars))
+  (define lookup (make-lookup config))
+  (define opt (make-opt-lookup config default-options))
+  (define ccopt (make-opt-lookup (foldl (lambda (key vars)
+                                          (hash-set vars key (hash-ref compiler-compiler-options key)))
+                                        config
+                                        (hash-keys compiler-compiler-options))
+                                 default-options))
+
+  (define options-t (input-data-target 'options (cons (relevant-config opt default-options)
+                                                      compiler-compiler-options)))
+
+  (define m (lookup 'm))
+  (define host-m (or (lookup 'hostm) m))
+  (define host-workarea (let ([host-workarea (lookup 'hostworkarea)])
+                          (if (equal? host-workarea "")
+                              ""
+                              ((make-at-dir (at-dir "..")) (or host-workarea ".")))))
+  (define host-scheme (lookup 'hostscheme))
+  (define arch (m->arch m))
+  (define arch.ss (~a (arch->backend arch) ".ss"))
+
+  (define mach-src+dep+more-srcs (get-machine-files m arch))
+
+  (define (at-boot s) (at-dir (build-path "../boot/" m s)))
+
+  (define petite.boot (at-boot (or (lookup 'PETITE_BOOT) "petite.boot")))
+  (define scheme.boot (at-boot (or (lookup 'SCHEME_BOOT) "scheme.boot")))
+
+  (define scheme.h (at-boot "scheme.h"))
+  (define equates.h (at-boot "equates.h"))
+  (define gc-ocd.inc (at-boot "gc-ocd.inc"))
+  (define gc-oce.inc (at-boot "gc-oce.inc"))
+  (define gc-par.inc (at-boot "gc-par.inc"))
+  (define heapcheck.inc (at-boot "heapcheck.inc"))
+
+  ;; putting cpnanopass.patch early for maximum make --jobs=2 benefit
+  (define patch-names
+    (list "patch.patch" "cpnanopass.patch" "cpprim.patch" "cprep.patch" "cpcheck.patch"
+          "cp0.patch" "cpvalid.patch" "cptypes.patch" "cpcommonize.patch" "cpletrec.patch"
+          "reloc.patch"
+          "compile.patch" "fasl.patch" "vfasl.patch" "pbchunk.patch" "syntax.patch" "env.patch"
+          "read.patch" "interpret.patch" "ftype.patch" "strip.patch"
+          "ubify.patch" "back.patch"))
+
+  ;; ordering constraints in "petite.boot":
+  ;;  first: library, prims, mathprims, front, 5_?
+  ;;  last: back
+  ;;  newhash before read
+  ;;  io before read
+  ;;  event before 4
+  ;;  ftype after syntax
+  ;;  layout and record before strnum (first define-record)
+  ;;  date before 7
+  ;; (there may be other constraints as well)
+
+  (define base-names
+    (list "library.ss" "prims.ss" "mathprims.ss" "record.ss" "5_1.ss" "5_2.ss" "5_3.ss"
+          "strnum.ss" "bytevector.ss" "5_4.ss" "5_6.ss" "5_7.ss"
+          "event.ss" "4.ss" "front.ss" "foreign.ss" "6.ss" "print.ss" "newhash.ss"
+          "format.ss" "date.ss" "7.ss" "cafe.ss" "trace.ss" "engine.ss"
+          "interpret.ss" "cprep.ss" "cpcheck.ss" "cp0.ss" "cpvalid.ss" "cptypes.ss"
+          "cpcommonize.ss" "cpletrec.ss" "inspect.ss"
+          "enum.ss" "io.ss" "read.ss" "primvars.ss" "syntax.ss" "costctr.ss" "expeditor.ss"
+          "exceptions.ss" "pretty.ss" "env.ss"
+          "fasl.ss" "vfasl.ss" "pbchunk.ss" "reloc.ss" "pdhtml.ss" "strip.ss" "ftype.ss" "back.ss"))
+
+  (define base-srcs (map at-source base-names))
+
+  (define base-objs
+    (map (lambda (s) (at-dir (path-replace-extension s (~a "." m))))
+         base-names))
+
+  (define compiler-names
+    (list "cpnanopass.ss" "cpprim.ss" "compile.ss" "cback.ss"))
+
+  (define compiler-srcs
+    (map at-source compiler-names))
+
+  (define compiler-objs
+    (map (lambda (s) (at-dir (path-replace-extension s (~a "." m))))
+         compiler-names))
+
+  (define type-src-files
+    ;; files that are `include`d by other files:
+    (list "base-lang.ss" "expand-lang.ss" "primref.ss" "types.ss" "io-types.ss"
+          "fasl-helpers.ss" "hashtable-types.ss" "strip-types.ss"))
+  (define type-srcs
+    (map at-source type-src-files))
+
+  (define cpnanopass-src-files
+    ;; files that are `include`d by "cpnanopass.ss" and "cpprim.ss"
+    (list arch.ss "np-languages.ss" "fxmap.ss" "cptypes-lattice.ss"
+          "np-register.ss" "np-info.ss" "np-help.ss"))
+  (define cpnanopass-srcs
+    (map at-source cpnanopass-src-files))
+
+  (define unicode-src-names
+    '("../unicode/unicode-char-cases.ss"
+      "../unicode/unicode-charinfo.ss"))
+  (define unicode-srcs
+    (map at-source unicode-src-names))
+
+  (define included-srcs
+    ;; all files that are `include`d by other files:
+    (append (map at-source
+                 (list "debug.ss" "primdata.ss" "layout.ss"))
+            (append type-srcs
+                    cpnanopass-srcs)))
+
+  (define other-srcs
+    ;; files that are used to initialize the compiler
+    (map at-source
+         (list "cmacros.ss" "priminfo.ss" "setup.ss" "env.ss"
+               "mkheader.ss" "mkgc.ss")))
+
+  (define all-srcs
+    (append base-srcs
+            compiler-srcs
+            included-srcs
+            other-srcs))
+
+  (define profile-dump-source "source.pd")
+  (define profile-dump-block "block.pd")
+
+  (define-values (call-with-scheme run-scheme/status run-scheme)
+    (make-run-scheme at-source at-dir lookup
+                     host-scheme host-workarea host-m
+                     (list (at-source "../unicode"))
+                     (list (cons (at-source "../nanopass")
+                                 (at-dir ".")))))
+
+  (define (cp0+gc-control)
+    `((run-cp0 (lambda (cp0 x)
+                 (do ([i ,(opt 'cp0 'integer) (fx- i 1)] [x x (cp0 x)])
+                     ((fx= i 0) x))))
+      (collect-trip-bytes (expt 2 24))
+      (collect-request-handler (lambda () (collect 0 1)))
+      (collect 1 2)))
+
+  ;; Script to compile the final version of file, where a certain
+  ;; amount of configuration is in a file that is loaded before this
+  ;; script
+  (define (make-final-compile-script srcs dests asm? finish-steps)
+    ;; Generate expressions for Chez Scheme to eval:
+    `((reset-handler abort)
+      (optimize-level ,(opt 'o 'integer))
+      (debug-level ,(opt 'd 'integer))
+      (commonization-level (or ,(opt 'cl 'integer) (commonization-level)))
+      (fasl-compressed ,(opt 'fc))
+      (compress-format (or ,(opt 'xf 'symbol) (compress-format)))
+      (compress-level (or ,(opt 'xl 'integer) (compress-level)))
+      (when ,(opt 'p) (compile-profile 'source))
+      (when ,(opt 'bp) (compile-profile 'block))
+      (when ,(opt 'loadspd) (profile-load-data ,profile-dump-source))
+      (when ,(opt 'loadbpd) (profile-load-data ,profile-dump-block))
+      (generate-inspector-information ,(opt 'i))
+      (generate-allocation-counts ,(opt 'gac))
+      (generate-instruction-counts ,(opt 'gic))
+      (when ,asm? (print-gensym 'pretty/suffix))
+      (,(string->symbol "#%$enable-pass-timing") ,(opt 'pps))
+      (generate-covin-files ,(opt 'c))
+      ,@(cp0+gc-control)
+      ,@(map (lambda (dest)
+               `(begin (delete-file ,(path-replace-extension dest ".covin")) (void)))
+             dests)
+      (time (let ()
+              ,@(map (lambda (src dest)
+                       `(begin
+			  (collect 1 2)
+			  (,(if asm? 'compile-with-asm (opt 'compile 's-exp)) ,src ,dest ',(string->symbol m))))
+                     srcs
+                     dests)))
+      (printf "    ~a bytes peak memory use~n" (maximum-memory-bytes))
+      ,@finish-steps
+      (when ,(opt 'pdhtml) (profile-dump-html))
+      (when ,(opt 'dumpspd) (profile-dump-data ,profile-dump-source))
+      (when ,(opt 'dumpbpd) (profile-dump-data ,profile-dump-block))))
+
+  (define (make-compile-single-script src dest asm?)
+    (make-final-compile-script (list src) (list dest) asm? '()))
+
+  (define (make-compile-at-once-script base-srcs base-dests petite.boot-file
+                                       compiler-srcs compiler-dests scheme.boot-file)
+    (make-final-compile-script
+     (append base-srcs compiler-srcs) (append base-dests compiler-dests) #f
+     `((when ,(opt 'pps) (,(string->symbol "#%$print-pass-stats")))
+       ,@(make-bootfile-step-script petite.boot '() base-dests)
+       ,@(make-bootfile-step-script scheme.boot '("petite") compiler-dests))))
+
+  (define (make-bootfile-step-script .boot pre-boots dests)
+    `((begin (delete-file ,(path-replace-extension .boot ".covin")) (void))
+      (,(string->symbol "#%$make-boot-file") ,.boot ',(string->symbol m) ',pre-boots ,@dests)))
+
+  (define (make-bootfile-script .boot pre-boots dests)
+    `((reset-handler abort)
+      (generate-covin-files ,(opt 'c))
+      ,@(make-bootfile-step-script .boot pre-boots dests)))
+
+  ;; Script to compile the version of a file used to compile the final versions
+  (define (make-compiler-compile-script src dest mode)
+    `((reset-handler abort)
+      (base-exception-handler (lambda (c) (fresh-line) (display-condition c) (newline) (reset)))
+      (keyboard-interrupt-handler (lambda () (display "interrupted---aborting\n") (reset)))
+      (optimize-level ,(ccopt 'o 'integer))
+      (debug-level ,(ccopt 'd 'integer))
+      (commonization-level (or ,(opt 'cl 'integer) (commonization-level)))
+      (fasl-compressed ,(opt 'fc))
+      (compress-format (or ,(opt 'xf 'symbol) (compress-format)))
+      (compress-level (or ,(opt 'xl 'integer) (compress-level)))
+      (generate-inspector-information ,(ccopt 'i))
+      ,@(cond
+          [(eq? mode 'normal)
+           `((subset-mode 'system)
+             (compile-file , src , dest))]
+          [(eq? mode 'patch)
+           `(,@(cp0+gc-control)
+             (time (compile-file ,src ,dest ',(string->symbol host-m)))
+             (printf "    ~a bytes peak memory use~n" (maximum-memory-bytes)))]
+          [(eq? mode 'library)
+           `((compile-library ,src ,dest))])))
+
+  (define (cat srcs dest)
+    (let ([s (apply ~a (map file->string srcs))])
+      (display-to-file s dest :truncate)))
+
+  ;; Create a `:target` for files like "cmacros.so", which are compiled
+  ;; to compile the compiler
+  (define (compilation-preamble-target .so deps loads)
+    (define .ss (at-source (path-replace-extension (file-name-from-path .so) ".ss")))
+    `[:target ,.so (,.ss ,@deps ,@loads)
+              ,(lambda (path token)
+                 (run-scheme path
+                             (make-compiler-compile-script .ss path 'normal)
+                             loads))])
+
+  ;; Create a `:depend` line for a file that `include`s other files
+  (define (include-dep name src-names)
+    `[:depend (,(at-dir (~a name "." m)) ,(at-dir (~a name ".so")) ,(at-dir (~a name ".patch")))
+              ,(map at-source src-names)])
+
+  (define (run-scheme-header-script dest make-script mk.so*)
+    (define tmp (~a dest ".next"))
+    (define tmp-h (cleanable-file tmp))
+    (mkdir-p (path-only tmp))
+    (run-scheme dest
+                `((reset-handler abort)
+                  ,@(make-script tmp))
+                (append macro-objs mk.so*))
+    (if (and (file-exists? dest)
+             (equal? (file->string dest)
+                     (file->string tmp)))
+        (rm tmp)
+        (mv tmp dest))
+    (cleanable-cancel tmp-h))
+
+  (define (look-for-fixpoint n rebuild)
+    (define sbb (build-path (path-only petite.boot) "sbb"))
+    (define scb (build-path (path-only scheme.boot) "scb"))
+    (let loop ([i 0])
+      (cond
+        [(= i n) (error (~a "failed to arrive at a fixpoint"
+                            (let ([o (opt 'o 'integer)])
+                              (if (equal? o 3)
+                                  o
+                                  (~a " (not unexpected with o=" o ")")))))]
+        [(and (file-exists? petite.boot)
+              (file-exists? scheme.boot))
+         (mv petite.boot sbb)
+         (mv scheme.boot scb)
+         (cp sbb petite.boot)
+         (cp scb scheme.boot)
+         (rebuild)
+         (define result
+           (run-scheme/status "fixpoint check"
+                              `((reset-handler abort)
+                                (base-exception-handler (lambda (c) (fresh-line) (display-condition c) (newline) (reset)))
+                                (begin
+                                  (,(string->symbol "#%$fasl-file-equal?") ,sbb ,petite.boot #t)
+                                  (,(string->symbol "#%$fasl-file-equal?") ,scb ,scheme.boot #t)
+                                  (void)))
+                              `("-B" ,sbb)))
+         (cond
+           [(= result 0)
+            (mv sbb petite.boot)
+            (mv scb scheme.boot)
+            (alert "done (unchanged after rebuild)")]
+           [else
+            (rm sbb)
+            (rm scb)
+            (loop (+ i 1))])]
+        [else
+         (rebuild)
+         (loop (+ i 1))])))
+
+  (define (pretty-clean)
+    (map rm* (append
+              (filter (let ([gs (map (lambda (sfx) (glob->matcher (~a "*." sfx))) (list m "patch" "so" "covin" "asm" "html"))])
+                        (lambda (f)
+                          (ormap (lambda (g) (g f)) gs)))
+                      (ls* (at-dir ".")))
+              (map at-dir
+                   (list "xpatch" "nanopass")))))
+
+  (define (profile-clean)
+    (pretty-clean)
+    (rm* (at-dir profile-dump-source))
+    (rm* (at-dir profile-dump-block)))
+
+  (define (clean)
+    (profile-clean)
+    (rm* (at-dir "bootstrap")))
+
+  (define machine.def (at-dir "machine.def"))
+  (define cmacros.so (at-dir "cmacros.so"))
+  (define primvars.so (at-dir "primvars.so"))
+  (define priminfo.so (at-dir "priminfo.so"))
+  (define env.so (at-dir "env.so"))
+  (define setup.so (at-dir "setup.so"))
+  (define mkheader.so (at-dir "mkheader.so"))
+  (define mkgc.so (at-dir "mkgc.so"))
+
+  (define macro-objs
+    (list cmacros.so priminfo.so primvars.so env.so setup.so))
+
+  (define nanopass.ss (at-source "../nanopass/nanopass.ss"))
+  (define nanopass.so (at-dir "nanopass.so"))
+
+  (define output-headers
+    (list scheme.h equates.h gc-ocd.inc gc-oce.inc gc-par.inc heapcheck.inc))
+
+  (define (add-patchfile l)
+    (if (string=? m host-m)
+        l
+        (append l (list (at-dir "xpatch")))))
+
+  (define the-targets
+    (make-targets
+     `(;; The default target builds object files individually:
+       [:target default (,petite.boot ,scheme.boot ,@output-headers) ,void]
+
+       ;; These targets rebuild boot files in all-at-once mode, but
+       ;; independent of whether dependencies changed:
+       [:target all (bootall ,@output-headers)
+                ,void]
+       [:target bootall (,@all-srcs ,@(add-patchfile macro-objs) ,nanopass.so ,@type-srcs
+                                    ,@cpnanopass-srcs ,@unicode-srcs)
+                ,(lambda (token)
+                   (mkdir-p (at-boot "."))
+                   (run-scheme "all at once"
+                               (make-compile-at-once-script base-srcs base-objs petite.boot
+                                                            compiler-srcs compiler-objs scheme.boot)
+                               (add-patchfile macro-objs)))
+                :quiet]
+
+       ;; The `bootstrap` target uses a "bootstrap" stamp file to trigger a separate `build` run,
+       ;; and it iterates up to three times to find a fixpoint
+       [:target ,(at-dir "bootstrap") (,options-t ,@all-srcs)
+                ,(lambda (path token)
+                   (look-for-fixpoint 3 (lambda () (build (find-target "bootall" the-targets) token)))
+                   (build (map (lambda (file) (find-target file the-targets))
+                               (list scheme.h equates.h gc-ocd.inc gc-oce.inc gc-par.inc heapcheck.inc))
+                          token)
+                   (fd-close (fd-open-output path :truncate)))]
+
+       ;; The `profiled` target goes through the involved process of
+       ;; building a profile-optimized boot file
+       [:target profiled ()
+                ,(lambda (token)
+                   (profile-clean)
+                   (build (find-target "all" (targets-at at-dir (hash-set vars
+                                                                          'p "t")))
+                          token)
+                   (pretty-clean)
+                   (build (find-target (~a "io." m) (targets-at at-dir (hash-set vars
+                                                                                 'dumpspd "t")))
+                          token)
+                   (pretty-clean)
+                   (mkdir-p (at-boot "profile"))
+                   (build (find-target "all" (targets-at at-dir (hash-set* vars
+                                                                           'loadspd "t"
+                                                                           'bp "t"
+                                                                           'PETITE_BOOT "profile/petite.boot"
+                                                                           'SCHEME_BOOT "profile/scheme.boot")))
+                          token)
+                   (pretty-clean)
+                   (build (find-target (~a "io." m) (targets-at at-dir (hash-set* vars
+                                                                                  'loadspd "t"
+                                                                                  'dumpbpd "t"
+                                                                                  'SCHEMEHEAPDIRS (build-path host-workarea "boot" host-m "profile"))))
+                          token)
+                   (rm* (at-boot "profile"))
+                   (pretty-clean)
+                   (build (find-target "all" (targets-at at-dir (hash-set* vars
+                                                                           'loadspd "t"
+                                                                           'loadbpd "t")))
+                          token))]
+
+       ;; The usual `clean` target:
+       [:target clean ()
+                ,(lambda (token)
+                   (clean))]
+
+       ;; The `reset` target discards the results in "boot" and puts back links to (or copies of)
+       ;; to the versions that were used to seed the build
+       [:target reset ()
+                ,(lambda (token)
+                   (let ([targets ((dynamic-require (at-source "../workmain.zuo") 'targets-at) (make-at-dir (at-dir "..")))])
+                     (build (find-target "reset" targets))))]
+
+       ;; The `run` target runs the built `scheme`, and extra arguments provided after the target
+       ;; are passed along to `scheme`
+       [:target run ()
+                ,(lambda (token . args)
+                   (call-with-scheme
+                    (lambda (scheme.exe env)
+                      (process scheme.exe args (hash 'env env
+                                                     'exec? (eq? 'unix (system-type)))))))
+                :command]
+
+       [:target examples ()
+                ,(lambda (token)
+                   (mkdir-p (at-dir "../examples"))
+                   (build (find-target "all" (examples-targets-at (make-at-dir (at-dir "../examples")) vars))
+                          token))]
+
+       ;; Internal targets ----------------------------------------
+
+       [:target ,machine.def (,(input-data-target 'machine m)
+                              ,@(map at-source (cons (caar mach-src+dep+more-srcs)
+                                                     (cdr mach-src+dep+more-srcs))))
+                ,(lambda (dest token)
+                   ((cdar mach-src+dep+more-srcs) dest token))]
+
+       ,(compilation-preamble-target cmacros.so (list machine.def (at-source "layout.ss") options-t)
+                                     (list))
+
+       ,(compilation-preamble-target priminfo.so (list (at-source "primdata.ss"))
+                                     (list cmacros.so))
+
+       ,(compilation-preamble-target env.so (list (at-source "primref.ss"))
+                                     (list cmacros.so priminfo.so))
+
+       ,(compilation-preamble-target primvars.so (list (at-source "primref.ss"))
+                                     (list cmacros.so priminfo.so))
+
+       ,(compilation-preamble-target setup.so (list (at-source "primref.ss") (at-source "debug.ss"))
+                                     (list cmacros.so priminfo.so))
+
+       ,(compilation-preamble-target mkheader.so type-srcs
+                                     (list cmacros.so priminfo.so primvars.so env.so))
+
+       ,(compilation-preamble-target mkgc.so type-srcs
+                                     (list cmacros.so priminfo.so primvars.so env.so mkheader.so))
+       [:target ,nanopass.so ,(cons nanopass.ss
+                                    (let ([np-dir (at-source "../nanopass/nanopass")])
+                                      (map (lambda (p) (build-path np-dir p)) (ls np-dir))))
+                ,(lambda (path token)
+                   (run-scheme path
+                               (make-compiler-compile-script nanopass.ss path 'library)
+                               (list "--compile-imported-libraries")))]
+
+       ,@(map (lambda (src obj)
+                `[:target ,obj ,(list* src nanopass.so (append macro-objs type-srcs))
+                          ,(lambda (obj token)
+                             (run-scheme obj
+                                         (make-compile-single-script src obj #f)
+                                         macro-objs))])
+              (append base-srcs compiler-srcs)
+              (append base-objs compiler-objs))
+
+       ,@(map (lambda (name)
+                (let ([src (at-source (path-replace-extension name ".ss"))]
+                      [obj (at-dir name)])
+                  `[:target ,obj ,(list* src nanopass.so (append macro-objs type-srcs))
+                            ,(lambda (obj token)
+                               (run-scheme obj
+                                           (make-compiler-compile-script src obj 'patch)
+                                           macro-objs))]))
+              patch-names)
+
+       [:target ,(at-dir "xpatch") ,(map at-dir patch-names)
+                ,(lambda (path token)
+                   (cat (map at-dir patch-names) path))]
+
+       ,(include-dep "cptypes" (list "fxmap.ss" "cptypes-lattice.ss"))
+       ,(include-dep "5_4" unicode-src-names)
+       ,(include-dep "strip" (list "strip-types.ss"))
+       ,(include-dep "vfasl" (list "strip-types.ss"))
+       ,(include-dep "pbchunk" (list "strip-types.ss"))
+       ,(include-dep "cpnanopass" cpnanopass-src-files)
+       ,(include-dep "cpprim" cpnanopass-src-files)
+
+       [:target ,petite.boot ,(add-patchfile base-objs)
+                ,(lambda (petite.boot token)
+                   (run-scheme petite.boot
+                               (make-bootfile-script petite.boot '() base-objs)
+                               (add-patchfile macro-objs)))
+                :precious]
+
+       [:target ,scheme.boot ,(add-patchfile compiler-objs)
+                ,(lambda (scheme.boot token)
+                   (run-scheme scheme.boot
+                               (make-bootfile-script scheme.boot '("petite") compiler-objs)
+                               (add-patchfile macro-objs)))
+                :precious]
+
+       [:target ,scheme.h (,mkheader.so ,@macro-objs)
+                ,(lambda (scheme.h token)
+                   (run-scheme-header-script scheme.h
+                                             (lambda (tmp)
+                                               `((mkscheme.h ,tmp ',(string->symbol m))))
+                                             (list mkheader.so)))]
+       [:target ,equates.h (,mkheader.so ,@macro-objs)
+                ,(lambda (equates.h token)
+                   (run-scheme-header-script equates.h
+                                             (lambda (tmp) `((mkequates.h ,tmp)))
+                                             (list mkheader.so)))]
+       ,@(map (lambda (gc.inc mkgc.inc)
+                `[:target ,gc.inc (,mkgc.so ,@macro-objs)
+                          ,(lambda (gc.inc token)
+                             (rm* gc.inc)
+                             (run-scheme-header-script gc.inc
+                                                       (lambda (tmp) `((,mkgc.inc ,tmp)))
+                                                       (list mkheader.so mkgc.so)))])
+              (list gc-ocd.inc gc-oce.inc gc-par.inc heapcheck.inc)
+              (list 'mkgc-ocd.inc 'mkgc-oce.inc 'mkgc-par.inc 'mkheapcheck.inc))
+
+       [:target bootpbchunk ()
+                ,(lambda (token dest . args)
+                   (mkdir-p (at-dir "../../boot" dest))
+                   (run-scheme dest
+                               '()
+                               (list* "--script"
+                                      (at-source "bootpbchunk.ss")
+                                      (at-source "..")
+                                      (at-dir "../..")
+                                      dest
+                                      args)))
+                :command]
+
+       ;; keep "_zuo.db" and "_zuo_tc.db" here instead of in "boot" directories
+       [:db-dir ,(at-dir ".")]
+
+       #;(end-make-targets))))
+
+  the-targets)

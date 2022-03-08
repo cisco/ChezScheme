@@ -1,0 +1,31 @@
+#lang zuo
+
+(provide get-version
+         get-dll-version)
+
+(define (get-version)
+  (let* ([str (file->string (at-source "../s/cmacros.ss"))]
+         [def "(define-constant scheme-version #x"]
+         [end (- (string-length str) (string-length def))])
+    (let loop ([i 0])
+      (cond
+        [(> i end) (error "did not find version in cmacro.ss")]
+        [(and (= (string-ref str i) (string-ref def 0))
+              (string=? (substring str i (+ i (string-length def))) def))
+         (let ([hex (substring str
+                               (+ i (string-length def))
+                               (+ i (string-length def) 8))])
+           (define (hex-digit-val c) (cond
+                                       [(>= c (char "a")) (+ (- c (char "a") 10))]
+                                       [(>= c (char "A")) (+ (- c (char "A") 10))]
+                                       [else (- c (char "0"))]))
+           (define (hex-val i) (+ (* 16 (hex-digit-val (string-ref hex i)))
+                                  (hex-digit-val (string-ref hex (+ i 1)))))
+           (list (hex-val 0) (hex-val 2) (hex-val 4) (hex-val 6)))]
+        [else (loop (+ i 1))]))))
+
+(define (get-dll-version)
+  (let ([l (get-version)])
+    (~a (list-ref l 0) (list-ref l 1) (list-ref l 2))))
+
+

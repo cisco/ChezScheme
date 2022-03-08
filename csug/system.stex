@@ -969,7 +969,8 @@ pretty-prints each expression before evaluating it.
 \index{\scheme{source-directories}}%
 The parameter \scheme{source-directories} (Section~\ref{SECTSYSTEMSOURCE})
 determines the set of directories searched for source files not identified
-by absolute path names.
+by absolute path names or paths that start with \scheme{./} (or \scheme{.\}
+under Windows) or \scheme{../} (or \scheme{..\} under Windows).
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -1013,7 +1014,8 @@ The expression passed to \var{eval-proc} might be an annotation
 \index{\scheme{source-directories}}%
 The parameter \scheme{source-directories} (Section~\ref{SECTSYSTEMSOURCE})
 determines the set of directories searched for source files not identified
-by absolute path names.
+by absolute path names or paths that start with \scheme{./} (or \scheme{.\}
+under Windows) or \scheme{../} (or \scheme{..\} under Windows).
 
 %----------------------------------------------------------------------------
 
@@ -1163,7 +1165,8 @@ the code in the supporting file.
 \index{\scheme{source-directories}}%
 The parameter \scheme{source-directories} (Section~\ref{SECTSYSTEMSOURCE})
 determines the set of directories searched for source files not identified
-by absolute path names.
+by absolute path names or paths that start with \scheme{./} (or \scheme{.\}
+under Windows) or \scheme{../} (or \scheme{..\} under Windows).
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -1198,7 +1201,8 @@ information to resolve top-level bindings.
 \index{\scheme{source-directories}}%
 The parameter \scheme{source-directories} (Section~\ref{SECTSYSTEMSOURCE})
 determines the set of directories searched for source files not identified
-by absolute path names.
+by absolute path names or paths that start with \scheme{./} (or \scheme{.\}
+under Windows) or \scheme{../} (or \scheme{..\} under Windows).
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -2528,7 +2532,8 @@ file is opened in the interactive inspector.
 
 The default value is the list \scheme{(".")}, which means source files
 will be found only in or relative to the current directory, unless named
-with an absolute path.
+with an absolute path or a path that starts with \scheme{./} (or \scheme{.\}
+under Windows) or \scheme{../} (or \scheme{..\} under Windows).
 
 This parameter is never altered by the system, with one exception.
 The expander temporarily adds (via \scheme{parameterize}) the directory

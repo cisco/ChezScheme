@@ -577,8 +577,26 @@ static BOOL WINAPI handle_signal(DWORD dwCtrlType) {
   return(FALSE);
 }
 
+#if defined(_M_ARM64) && !defined(PORTABLE_BYTECODE)
+static LONG WINAPI fault_handler(LPEXCEPTION_POINTERS e) {
+  if (e->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
+    ptr tc = get_thread_context();
+    if (THREAD_GC(tc)->during_alloc)
+      S_error_abort("nonrecoverable invalid memory reference");
+    else
+      S_error_reset("invalid memory reference");
+  }
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+#endif
+
 static void init_signal_handlers() {
   SetConsoleCtrlHandler(handle_signal, TRUE);
+#if defined(_M_ARM64) && !defined(PORTABLE_BYTECODE)
+  /* On Arm64, the absence of unwind info means that the `__try`...`__catch`
+     in "scheme.c" doesn't get a chance to handle exceptions. */
+  AddVectoredExceptionHandler(TRUE, fault_handler);
+#endif
 }
 #else /* WIN32 */
 

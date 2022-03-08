@@ -1,0 +1,4 @@
+#lang zuo
+;; installed as the "main.zuo" in a build directory
+(define config (config-file->hash (at-source "Makefile")))
+(void (module->hash (at-source (hash-ref config 'workarea) "main.zuo")))

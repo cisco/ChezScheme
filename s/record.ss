@@ -861,7 +861,7 @@
             ($oops who "~s is a record type descriptor with anonymous fields" rtd)
             (list->vector (map (lambda (x) (fld-name x)) flds))))))
 
-  (set-who! #(csv7: record-type-field-indices)
+  (set-who! $record-type-field-indices
     (lambda (rtd)
       (unless (record-type-descriptor? rtd)
         ($oops who "~s is not a record type descriptor" rtd))

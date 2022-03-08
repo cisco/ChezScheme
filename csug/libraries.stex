@@ -1026,6 +1026,7 @@ the object file is missing, older than the corresponding source file,
 older than any source files included (via \index{\scheme{include}}\scheme{include}) when the
 object file was created, or itself requires a library that has or must
 be recompiled, as described in Section~\ref{SECTUSELIBRARIES}.
+The \scheme{library-timestamp-mode} parameter controls the meaining of ``older.''
 The default initial value of this parameter is \scheme{#f}.
 It can be set to \scheme{#t} via the command-line option
 \index{\scheme{--compile-imported-libraries} command-line option}\scheme{--compile-imported-libraries}.
@@ -1093,6 +1094,22 @@ The procedure returns three values:
 the file-system path of the library source file or \scheme{#f} if not found,
 the file-system path of the corresponding object file, which may be \scheme{#f},
 and a boolean that is true if the object file exists.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{library-timestamp-mode}{\categorythreadparameter}{library-timstamp-mode}
+\listlibraries
+\endentryheader
+
+The value of parameter must be either \scheme{'modification-time} (the
+default) or \scheme{'exists}. If it is \scheme{'modification-time},
+the timestamp of library source and object files is obtained with
+\scheme{file-modification-time} to determine whether a file is older
+than the other. If the parameter's value is \scheme{'exists}, then all
+files that exist are considered to have the same age. This parameter's
+value can be set to \scheme{'exists} via the command-line option
+\index{\scheme{--disable-library-timestamps} command-line option}\scheme{--disable-library-timestamps}.
+
 
 \section{Library Inspection\label{SECTLIBRARYINSPECTION}}
 

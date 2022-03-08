@@ -520,5 +520,17 @@
                  (substring s (skip-sep s (fx+ i 1) n) n)]
                 [else (loop (fx+ i 1))]))
             (substring s (skip-sep s base n) n)))))
+
+  (set-who! path-build
+    (lambda (dir fn)
+      (unless (string? dir) ($oops who "~s is not a string" dir))
+      (unless (string? fn) ($oops who "~s is not a string" fn))
+      (format
+       (if (directory-separator?
+            (string-ref dir
+                        (fx- (string-length dir) 1)))
+           "~a~a"
+           (string-append "~a" (string (directory-separator)) "~a"))
+       dir fn)))
 )
 )

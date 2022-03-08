@@ -1,0 +1,82 @@
+#lang zuo
+(require "../makefiles/version.zuo"
+         "../makefiles/lib.zuo"
+         "../makefiles/install.zuo")
+
+(provide make-bintar)
+
+(define (make-bintar at-dir m)
+  (define config (config-file->hash (at-dir "Mf-config")))
+
+  (define version (let ([l (get-version)])
+                    (~a (list-ref l 0) "." (list-ref l 1) "." (list-ref l 2))))
+
+  (mkdir-p (at-dir "bintar"))
+  (define R (at-dir "bintar" (~a "csv" version)))
+  (define tarball (at-dir "bintar" (~a "csv" version "-" m ".tar.gz")))
+
+  (rm* R)
+  (mkdir-p R)
+
+  (define (immediate name)
+    (cp/ln (at-source ".." name) (build-path R name)))
+
+  (immediate "LICENSE")
+  (immediate "NOTICE")
+  (immediate "scheme.1.in")
+  (cp/ln (at-source "../makefiles" "installsh") (build-path R "installsh"))
+
+  (let ([o (fd-open-output (build-path R "Makefile"))])
+    (install at-dir (hash) #f o)
+    (fd-close o))
+
+  (immediate "examples")
+
+  (mkdir-p (build-path R "boot" m))
+  (define (boot-link p)
+    (cp/ln (at-dir "boot" m p) (build-path R "boot" m p)))
+
+  (boot-link "scheme.h")
+  (boot-link "scheme.boot")
+  (boot-link "petite.boot")
+  (boot-link "revision")
+  (cond
+    [(glob-match? "*nt" m)
+     (boot-link "csv957md.lib")
+     (boot-link "csv957mt.lib")
+     (boot-link "mainmd.obj")
+     (boot-link "mainmt.obj")
+     (boot-link "scheme.res")]
+    [else
+     (boot-link "main.o")
+     (cond
+       [(equal? (hash-ref config 'Kernel #f) "KernelLib")
+        (boot-link "libkernel.a")
+        (when (equal? (hash-ref config 'zlibLib #f) "")
+          (mkdir-p (build-path R "zlib"))
+          (cp/ln (at-dir "zlib/libz.a") (build-path R "zlib/libz.a")))
+        (when (equal? (hash-ref config 'LZ4Lib #f) "")
+          (mkdir-p (build-path R "lz4/lib"))
+          (cp/ln (at-dir "lz4/lib/liblz4.a") (build-path R "lz4/lib/liblz4.a")))]
+       [else
+        (boot-link "kernel.o")])])
+
+  (mkdir-p (build-path R "bin" m))
+  (define (bin-link p)
+    (cp/ln (at-dir "bin" m p) (build-path R "bin" m p)))  
+
+  (cond
+    [(glob-match? "*nt" m)
+     (bin-link "scheme.exe")
+     (bin-link "csv957.dll")
+     (bin-link "csv957.lib")
+     (bin-link "vcruntime140.lib")]
+    [else
+     (bin-link "scheme")])
+
+  (shell/wait (build-shell "tar -czhf"
+                           (string->shell (file-name-from-path tarball))
+                           (string->shell (file-name-from-path R)))
+              (hash 'dir (path-only tarball)))
+
+  (rm* R))

@@ -181,7 +181,8 @@
                         (x v ...))
                       (+ v ...)))))))))
 
-(define foreign1.so (format "~a/foreign1.so" *mats-dir*))
+(define foreign1.so (find-source "foreign1.so"))
+(printf "found ~s in ~s\n" foreign1.so (source-directories))
 
 (machine-case
   [(i3ob ti3ob a6ob ta6ob a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx)
@@ -2551,7 +2552,7 @@
         (let ()
           (define *m*)
           (define *k*)
-          (define ip (open-file-input-port (format "~a/mat.ss" *mats-dir*)))
+          (define ip (open-file-input-port (find-source "mat.ss")))
           (define-ftype foo (function (fixnum fixnum) fixnum))
           (define f
             (lambda (n m)

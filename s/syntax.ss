@@ -4798,12 +4798,8 @@
         (lambda (dir rpath ext)
           (if (or (string=? dir "") (string=? dir "."))
               (format "~a~a" rpath ext)
-              (format
-                (if (directory-separator? (string-ref dir (fx- (string-length dir) 1)))
-                    "~a~a~a"
-                    "~a/~a~a")
-                dir rpath ext))))
-      (let ([rpath (format "~a~{/~a~}" (car path) (cdr path))])
+              (path-build dir (format "~a~a" rpath ext)))))
+      (let ([rpath (fold-left (lambda (dir elem) (path-build dir (symbol->string elem))) (symbol->string (car path)) (cdr path))])
         (let dloop ([dir* (if (path-absolute? rpath)
                               (with-message (format "ignoring library-directories since ~s is absolute" rpath)
                                 '(("" . "")))
@@ -4965,8 +4961,8 @@
             (with-message "object file is out-of-date"
               (with-message (format "loading source file ~s" src-path)
                 (do-load-library src-path 'load))))
-          (let ([obj-path-mod-time (file-modification-time obj-path)])
-            (if (time>=? obj-path-mod-time (file-modification-time src-path))
+          (let ([obj-path-mod-time (library-modification-time obj-path)])
+            (if (time>=? obj-path-mod-time (library-modification-time src-path))
                 ; NB: combine with $maybe-compile-file
                 (let ([rcinfo (guard (c [else (with-message (with-output-to-string
                                                               (lambda ()
@@ -4987,7 +4983,7 @@
                                       (lambda (x)
                                         (lambda ()
                                           (and (file-exists? x)
-                                               (time<=? (file-modification-time x) obj-path-mod-time))))))))
+                                               (time<=? (library-modification-time x) obj-path-mod-time))))))))
                                (recompile-info-include-req* rcinfo))))
                       ; NB: calling load-deps insures that we'll reload obj-path if one of
                       ; the deps has to be reloaded, but it will miss other libraries that might have
@@ -5150,6 +5146,12 @@
          (do-lookup (datum (dir-id ... file-id)) #'file-id (datum version-ref))]
         [_ (syntax-error name "invalid library reference")])))
 
+  (define library-modification-time
+    (lambda (fn)
+      (if (eq? (library-timestamp-mode) 'modification-time)
+          (file-modification-time fn)
+          (make-time 'time-utc 0 0))))
+
   (set! import-notify
     ($make-thread-parameter #f
       (lambda (x) (and x #t))))
@@ -5180,7 +5182,14 @@
     (lambda ()
       (list-loaded-libraries)))
 
-
+  (set-who! library-timestamp-mode
+    ($make-thread-parameter 'modification-time
+      (lambda (x)
+        (unless (or (eq? x 'modification-time)
+                    (eq? x 'exists))
+          ($oops who "~s is not a timestamp mode" x))
+        x)))
+  
   (set! expand-omit-library-invocations
     ($make-thread-parameter #f
       (lambda (v) (and v #t))))
@@ -5556,8 +5565,8 @@
                  e1 e2 ...)]))
           (unless $compiler-is-loaded? ($oops '$maybe-compile-file "compiler is not loaded"))
           (if (file-exists? ofn)
-              (let ([ofn-mod-time (file-modification-time ofn)])
-                (if (time>=? ofn-mod-time (with-new-who who (lambda () (file-modification-time ifn))))
+              (let ([ofn-mod-time (library-modification-time ofn)])
+                (if (time>=? ofn-mod-time (with-new-who who (lambda () (library-modification-time ifn))))
                     (with-message "object file is not older"
                       (let ([rcinfo (guard (c [else (with-message (with-output-to-string
                                                                     (lambda ()
@@ -5577,7 +5586,7 @@
                                           (lambda (x)
                                             (lambda ()
                                               (and (file-exists? x)
-                                                   (time<=? (file-modification-time x) ofn-mod-time))))))))
+                                                   (time<=? (library-modification-time x) ofn-mod-time))))))))
                                    (recompile-info-include-req* rcinfo)))
                             (if (compile-imported-libraries)
                                 (guard (c [(and ($recompile-condition? c) (eq? ($recompile-importer-path c) #f))
@@ -5596,7 +5605,7 @@
                                             [else
                                               (let-values ([(src-path obj-path obj-exists?) (library-search who path (library-directories) (library-extensions))])
                                                 (and obj-exists?
-                                                     (time<=? (file-modification-time obj-path) ofn-mod-time)))])))
+                                                     (time<=? (library-modification-time obj-path) ofn-mod-time)))])))
                                       (recompile-info-import-req* rcinfo))
                                     #f
                                     (handler ifn ofn)))

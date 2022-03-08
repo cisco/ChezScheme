@@ -96,6 +96,7 @@ int main(int argc, const char *argv[]) {
   int debug_on_exception = 0;
   int import_notify = 0;
   int compile_imported_libraries = 0;
+  int exists_timestamp_mode = 0;
 #ifdef FEATURE_EXPEDITOR
   int expeditor_enable = 1;
   const char *expeditor_history_file = "";  /* use "" for default location */
@@ -238,6 +239,8 @@ int main(int argc, const char *argv[]) {
         libdirs = argv[n];
       } else if (strcmp(arg,"--compile-imported-libraries") == 0) {
         compile_imported_libraries = 1;
+      } else if (strcmp(arg,"--disable-library-timestamps") == 0) {
+        exists_timestamp_mode = 1;
       } else if (strcmp(arg,"--program") == 0) {
         if (++n == argc) {
           (void) fprintf(stderr,"%s requires argument\n", arg);
@@ -350,6 +353,9 @@ int main(int argc, const char *argv[]) {
   }
   if (compile_imported_libraries != 0) {
     CALL1("compile-imported-libraries", Strue);
+  }
+  if (exists_timestamp_mode != 0) {
+    CALL1("library-timestamp-mode", Sstring_to_symbol("exists"));
   }
 #ifdef FEATURE_EXPEDITOR
  /* Senable_expeditor must be called before Scheme_start/Scheme_script (if at all) */

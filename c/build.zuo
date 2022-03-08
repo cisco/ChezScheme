@@ -1,0 +1,570 @@
+#lang zuo
+(require "../makefiles/lib.zuo"
+         "../makefiles/version.zuo"
+         "lib.zuo")
+
+(provide-targets targets-at)
+
+(define (targets-at at-dir [vars (hash)])
+  (define config (win-config (config-file->hash (at-dir "../Mf-config") vars)))
+  (define lookup (make-lookup config))
+
+  (define m (hash-ref config 'm))
+  (define mboot (hash-ref config 'mboot m))
+
+  (define (at-mach file)
+    (at-dir (build-path "../boot" m file)))
+
+  (define arch (m->arch m))
+
+  (define (or-windows .c)
+    (if (for-windows? config)
+	"windows.c"
+	.c))
+  (define (add-windows l)
+    (if (and (for-windows? config)
+             (not (member "windows.c" l)))
+        (cons "windows.c" l)
+        l))
+  (define (or-windows-lib lib)
+    (if (eq? 'windows (system-type))
+        (build-path ".." (if (as-scheme-dll? config) "bin" "boot") m 
+                    (~a (or (lookup 'kernelLibName)
+                            (~a "csv" (get-dll-version) (if (as-runtime-dll? config) "md" "mt")))
+                        ".lib"))
+        lib))
+
+  (define cpu+arch.c
+    (cond
+      [(string=? arch "a6")
+       (cons "X86_64"
+             (or-windows "i3le.c"))]
+      [(string=? arch "i3")
+       (cons "I386"
+             (or-windows "i3le.c"))]
+      [(string=? arch "arm32")
+       (cons "ARMV6"
+             "arm32le.c")]
+      [(string=? arch "arm64")
+       (cons "AARCH64"
+             (or-windows "arm32le.c"))]
+      [(string=? arch "ppc32")
+       (cons "PPC32"
+             "ppc32.c")]
+      [(glob-match? "pb*" "pb")
+       (cons "PORTABLE_BYTECODE"
+             "pb.c")]
+      [else (error "unrecognized arch")]))
+  (define cpu (car cpu+arch.c))
+  (define arch.c (cdr cpu+arch.c))
+
+  (define c-config-file
+    (at-dir "config.h"))
+  (define c-config-keys
+    '(disablecurses disablex11 enablelibffi alwaysUseBootFile preloadBootFiles))
+
+  ;; sources for "kernel.o":
+  (define kernel-src-files
+    (add-windows
+     (list "statics.c" "segment.c" "alloc.c" "symbol.c" "intern.c"
+           "gcwrapper.c" "gc-011.c" "gc-par.c" "gc-ocd.c" "gc-oce.c"
+           "number.c" "schsig.c" "io.c" "new-io.c" "print.c" "fasl.c" "vfasl.c"
+           "stats.c" "foreign.c" "prim.c" "prim5.c" "flushcache.c"
+           "schlib.c" "thread.c" "expeditor.c" "scheme.c" "compress-io.c"
+           "random.c" "ffi.c"
+           arch.c)))
+  (define kernel-srcs
+    ((add-extra-c-sources at-dir mboot)
+     (map at-source kernel-src-files)))
+  (define kernel-srcobjs
+    (map (lambda (o) (at-dir (.c->.o (file-name-from-path o))))
+         kernel-srcs))
+
+  (define kernel-asm-files
+    (if (and (eq? 'windows (system-type))
+             (glob-match? "*nt" (or (lookup 'defaultm) m)))
+	(cond
+	 [(string=? arch "a6")
+	  (list "a6nt-jump.asm")]
+	 [(string=? arch "arm64")
+	  (list "arm64nt-jump.asm")]
+	 [else '()])
+	'()))
+  (define kernel-asms
+    (map at-source kernel-asm-files))
+  (define kernel-asmobjs
+    (map at-dir (map .c->.o (append kernel-asm-files))))
+  
+  (define kernel-objs
+    (append kernel-srcobjs kernel-asmobjs))
+
+  ;; every kernel object depends on these:
+  (define kernel-hdrs
+    (append
+     (map at-source
+          (list "system.h" "types.h" "version.h" "globals.h" "externs.h" "segment.h"
+                "atomic.h" "thread.h" "sort.h" "compress-io.h"
+                "nocurses.h" "popcount.h"))
+     (list c-config-file)
+     (map at-mach
+          (list "equates.h"
+                "scheme.h"))))
+
+  (define res-file (at-dir "../boot" m "scheme.res"))
+  
+  (define main-src-files
+    '("main.c"))
+  (define main-srcs
+    (map at-source main-src-files))
+  (define main-objs
+    (if (eq? 'windows (system-type))
+        (map (windows-main-dest at-dir m config) main-src-files)
+        (map (lambda (name) (at-dir "../boot" m (.c->.o name))) main-src-files)))
+
+  (define main-hdrs
+    (list (at-mach "scheme.h")
+          c-config-file))
+
+  (define gc-wrap (list (at-source "gc.c")))
+
+  (define exe (at-dir (build-path "../bin" m (if (for-windows? config)
+                                                 "scheme.exe"
+                                                 (config-.exe config "scheme")))))
+  (define kernel-lib (at-dir (or-windows-lib (build-path "../boot" m (.a "kernel")))))
+  (define kernel.o (at-dir (build-path "../boot" m "kernel.o")))
+  (define kernel-dep (if (equal? (lookup 'Kernel) "KernelO")
+                         kernel.o
+                         kernel-lib))
+
+  (define zlib-dir (at-dir (~a "../zlib" (lib-build-suffix config))))
+  (define lz4-dir (at-dir (~a "../lz4" (lib-build-suffix config))))
+
+  (define zlib-lib (build-path zlib-dir (.a (~a (if (eq? 'windows (system-type)) "zlib" "z")))))
+  (define lz4-lib (build-path lz4-dir (.a (~a "lib/" (if (eq? 'windows (system-type)) "liblz4" "lz4")))))
+
+  (define lz4-files (map at-source
+                         ;; LZ4 is simple enough that we can list all
+                         ;; the files that matter:
+                         (list "../lz4/lib/lz4.h" "../lz4/lib/lz4frame.h"
+                               "../lz4/lib/lz4.c" "../lz4/lib/lz4frame.c"
+                               "../lz4/lib/lz4hc.c" "../lz4/lib/xxhash.c")))
+
+  (define zlib-system-lib (let ([lib (or (lookup 'zlibLib) "")])
+                            (and (not (equal? lib "")) lib)))
+  (define lz4-system-lib (let ([lib (or (lookup 'LZ4Lib) "")])
+                           (and (not (equal? lib "")) lib)))
+
+  (define lib-deps (append (if zlib-system-lib '() (list zlib-lib))
+                           (if lz4-system-lib '() (list lz4-lib))))
+  (define res-deps (if (eq? 'windows (system-type)) (list res-file) '()))
+
+  (define preload-files (get-preload-files config at-dir mboot))
+
+  (define (compile-one .c .o)
+    (c-compile .o .c
+               (let* ([config (config-define config cpu)]
+                      [config (config-merge config 'CPPFLAGS (or (lookup 'mdinclude) ""))]
+                      [config (config-merge config 'CFLAGS (or (lookup 'warningFlags) ""))]
+                      [config (config-include config
+                                              (at-dir (build-path "../boot" m))
+                                              (at-dir ".")
+                                              (at-source "."))]
+                      [config (if zlib-system-lib
+                                  config
+                                  (config-include config
+                                                  zlib-dir))]
+                      [config (if (equal? (or (lookup 'LZ4Lib) "") "")
+                                  (config-include config
+                                                  (build-path lz4-dir "lib"))
+                                  config)])
+                 config)))
+
+  (define (config-to-env)
+    (let ([config
+           ;; Merge `CPPFLAGS` to `CFLAGS`, because `CPPFLAGS` is less widely
+           ;; recognized, including by zlib and LZ4 configure
+           (let ([cppflags (hash-ref config 'CPPFLAGS "")])
+             (if (equal? cppflags "")
+                 config
+                 (hash-set config 'CFLAGS
+                           (build-shell (hash-ref config 'CFLAGS "")
+                                        cppflags))))])
+      (foldl (lambda (key env)
+               (let ([v (hash-ref config key #f)])
+                 (if v
+                     (replace (cons (~a key) v)
+                              env)
+                     env)))
+             (hash-ref (runtime-env) 'env)
+             '(CC CFLAGS AR ARFLAGS RANLIB LDFLAGS))))
+
+  (define (add-to-env vars env)
+    (foldl (lambda (var=val env)
+             (replace (glob-split "=*" var=val)
+                      env))
+           env
+           (shell->strings vars)))
+
+  (make-targets
+   `([:target build (,exe revision)
+              ,void]
+
+     [:target ,exe (,kernel-dep ,@main-objs ,@res-deps ,@preload-files)
+              ,(lambda (path token)
+                 (mkdir-p (path-only path))
+                 (c-link path
+                         (append main-objs
+                                 res-deps
+                                 (append
+                                  (list kernel-dep)
+                                  (if zlib-system-lib '() (list zlib-lib))
+                                  (if lz4-system-lib '() (list lz4-lib))))
+                         (let* ([config (config-merge (add-preloads config preload-files)
+                                                      'LDFLAGS
+                                                      (or (lookup 'mdlinkflags) ""))]
+                                [config (if zlib-system-lib
+                                            (config-merge config 'LIBS zlib-system-lib)
+                                            config)]
+                                [config (if lz4-system-lib
+                                            (config-merge config 'LIBS lz4-system-lib)
+                                            config)])
+                           (exe-config arch config)))
+                 (cond
+                   [(eq? 'windows (system-type))
+                    (shell/wait "mt -manifest"
+                                (string->shell (at-source "scheme.exe.manifest"))
+                                (string->shell (~a "-outputresource:" path ";1")))]
+                   [else
+                    (define post (lookup 'exePostStep))
+                    (when post
+                      (shell/wait post (string->shell exe)))]))]
+
+     ;; for Windows linking variants:
+     [:target lib (,kernel-dep ,@main-objs)
+              ,void]
+
+     [:target ,kernel-lib (,@res-deps ,@lib-deps ,@kernel-objs)
+              ,(lambda (path token)
+                 (cond
+                   [(and (eq? 'windows (system-type))
+                         (as-scheme-dll? config))
+                    (mkdir-p (at-dir "../bin" m))
+                    (c-compile (path-replace-extension kernel-lib ".dll")
+                               ;; ".lib" is also generated
+                               (append kernel-objs lib-deps res-deps)
+                               (config-merge config 'LDFLAGS
+                                             "/LD"))]
+                   [else
+                    (c-ar path
+                          kernel-objs
+                          config)]))]
+
+     [:target ,kernel.o (,@kernel-objs ,@lib-deps)
+              ,(lambda (path token)
+                 (mkdir-p (path-only path))
+                 (shell/wait (lookup 'LD)
+                             "-r"
+                             "-X"
+                             (or (lookup 'mdldflags) "")
+                             "-o" (string->shell path)
+                             (apply build-shell (map string->shell kernel-objs))
+                             (lookup 'LDFLAGS)
+                             (string->shell (or zlib-system-lib zlib-lib))
+                             (string->shell (or lz4-system-lib lz4-lib))
+                             (lookup 'LIBS)))]
+
+     [:target ,zlib-lib ,(source-tree (at-source "../zlib"))
+              ,(lambda (path token)
+                 (cp* (at-source "../zlib") zlib-dir)
+		 (cond
+		  [(eq? 'windows (system-type))
+		   ((dynamic-require (at-source "winlib.zuo") 'build-zlib) zlib-dir (as-runtime-dll? config))]
+		  [else
+                   (define configure-command
+                     (build-shell "./configure" (hash-ref config 'zlibConfigureFlags "")))
+                   (cond
+                     [(for-windows? config)
+                      ;; configure cross-compile for windows
+                      (display-to-file
+                       (~a "all:\n"
+                           (build-shell "\t$(MAKE) -f win32/Makefile.gcc"
+                                        (string->shell (~a "CC=" (hash-ref config 'CC)))
+                                        (string->shell (~a "CFLAGS=" (hash-ref config 'CFLAGS)))
+                                        (string->shell (~a "AR=" (hash-ref config 'AR)))
+                                        (string->shell (~a "RANLIB=" (hash-ref config 'RANLIB)))
+                                        (string->shell (~a "RC=" (hash-ref config 'WINDRES))))
+                           "\n")
+                       (build-path zlib-dir "Makefile")
+                       :truncate)]
+                     [else
+                      (shell/wait configure-command
+                                  (hash 'dir zlib-dir
+                                        'env (add-to-env
+                                              (hash-ref config 'zlibConfigureEnv "")
+                                              (config-to-env))
+                                        'desc "libz configure"))])
+                   (shell/wait (hash-ref config 'MAKE "make")
+                               (hash 'dir zlib-dir
+                                     'desc "zlib make"))]))]
+
+     [:target ,lz4-lib (,@lz4-files)
+              ,(lambda (path token)
+                 (define lz4-lib-dir (build-path lz4-dir "lib"))
+                 (cp* (at-source "../lz4") lz4-dir)
+		 (cond
+		  [(eq? 'windows (system-type))
+		   ((dynamic-require (at-source "winlib.zuo") 'build-lz4) lz4-lib-dir config)]
+		  [else
+                   (shell/wait (hash-ref config 'MAKE "make") "liblz4.a"
+                               (hash 'dir lz4-lib-dir
+                                     'env (config-to-env)
+                                     'desc "lz4 make"))]))]
+
+     ,@(map (lambda (.c .o)
+              `[:target ,.o (,.c ,@kernel-hdrs ,@lib-deps)
+                        ,(lambda (.o target)
+                           (compile-one .c .o))])
+            kernel-srcs kernel-srcobjs)
+
+     ,@(map (lambda (.asm .o)
+              `[:target ,.o (,.asm)
+                        ,(lambda (.o target)
+                           (cond
+                             [(string=? arch "arm64")
+                              (shell/wait "armasm64 -o"
+                                          (string->shell .o)
+                                          (string->shell .asm))]
+                             [(string=? arch "a6")
+                              (shell/wait "ml64 /c /Cx /Fo"
+                                          (string->shell .o)
+                                          (string->shell .asm))]
+                             [else (error "don't know how to assemble")]))])
+            kernel-asms kernel-asmobjs)
+
+     ,@(map (lambda (.c .o)
+              `[:target ,.o (,.c ,@main-hdrs)
+                        ,(lambda (.o target)
+                           (compile-one .c .o))])
+            main-srcs main-objs)
+
+     [:depend ,(.c->.o "scheme.c") (,(at-source "itest.c"))]
+     [:depend ,(.c->.o "gc-011.c") (,@gc-wrap ,(at-mach "gc-ocd.inc"))]
+     [:depend ,(.c->.o "gc-ocd.c") (,@gc-wrap ,(at-mach "gc-ocd.inc"))]
+     [:depend ,(.c->.o "gc-oce.c") (,@gc-wrap ,(at-mach "gc-oce.inc"))]
+     [:depend ,(.c->.o "gc-par.c") (,@gc-wrap ,(at-mach "gc-par.inc"))]
+     [:depend ,(.c->.o "gcwrapper.c") (,(at-mach "heapcheck.inc"))]
+
+     [:depend ,(.c->.o "pb.c") (,(at-source "pb.h"))]
+
+     [:target ,res-file (,(at-source "scheme.rc"))
+              ,(lambda (path token)
+                 (rm* res-file)
+                 (shell/wait "rc -r /fo" (string->shell res-file)
+                             "-DWIN32" (string->shell (at-source "scheme.rc"))))]
+
+     [:target ,c-config-file (,(input-data-target 'c-config
+                                                  (cons c-config-keys
+                                                        (map (lambda (key) (hash-ref config key #f))
+                                                             c-config-keys))))
+              ,(lambda (path token)
+                 (define (line s) (if s (~a s "\n") ""))
+                 (define s
+                   (~a (line (and (equal? (hash-ref config 'disableiconv #f) "yes")
+                                  "#define DISABLE_ICONV"))
+                       (line (and (equal? (hash-ref config 'disablecurses #f) "yes")
+                                  "#define DISABLE_CURSES"))
+                       (line (and (equal? (hash-ref config 'disablex11 #f) "yes")
+                                  "#define DISABLE_X11"))
+                       (line (and (equal? (hash-ref config 'enablelibffi #f) "yes")
+                                  "#define ENABLE_LIBFFI"))
+                       (line (let ([alwaysUseBootFile
+                                    (or (and (not (equal? (hash-ref config 'alwaysUseBootFile "") "")))
+                                        (infer-always-use-boot-file preload-files))])
+                               (and alwaysUseBootFile
+                                    (~a "#define ALWAYS_USE_BOOT_FILE " (~s alwaysUseBootFile)))))
+                       (line (and (need-pbchunk-register? config at-dir mboot)
+                                  "#define CALL_PBCHUNK_REGISTER"))))
+                 (display-to-file s path :truncate))]
+
+     [:target run ()
+              ,(lambda (token . args)
+                 (define-values (call-with-scheme run-scheme/status run-scheme)
+                   (make-run-scheme at-source at-dir lookup
+                                    #f (at-dir "..") m))
+                 (call-with-scheme
+                  (lambda (scheme.exe env)
+                    (process scheme.exe args (hash 'env env
+                                                   'exec? (eq? 'unix (system-type)))))))
+              :command]
+
+     [:target revision ()
+              ,(lambda (token)
+                 (let loop ([r (path->complete-path (at-source "."))])
+                   (cond
+                     [(directory-exists? (build-path r ".git"))
+                      ;; This step takes a while compared to other things in a no-change build
+                      (define p (shell "git describe --always --match=\"\" --abbrev=40 --dirty"
+                                       (hash 'stdout 'pipe)))
+                      (define rev (fd-read (hash-ref p 'stdout) eof))
+                      (process-wait (hash-ref p 'process))
+                      (fd-close (hash-ref p 'stdout))
+                      (display-to-file rev (at-mach "revision") :truncate)]
+                     [else
+                      (define l (split-path r))
+                      (when (car l)
+                        (loop (car l)))])))]
+
+     ;; keep "_zuo.db" and "_zuo_tc.db" here instead of in "boot" and "bin" directories
+     [:db-dir ,(at-dir ".")]
+
+     [:target clean ()
+              ,(lambda (token)
+                 (map rm* kernel-objs))]
+
+     #;(end-make-targets))))
+
+(define (win-config config)
+  (cond
+    [(eq? 'windows (system-type))
+     (let* ([config (hash-set config 'CFLAGS
+                              (~a "/nologo"
+                                  (if (as-runtime-dll? config)
+                                      " /MD"
+                                      " /MT")
+                                  (if (as-scheme-dll? config)
+                                      ""
+                                      " /DSCHEME_STATIC")
+                                  " /Ox /W3 /Zi /DUSE_ANSI_PROTOTYPES /DWIN32 /D_CRT_SECURE_NO_WARNINGS"
+                                  (if (glob-match? "pb*" (hash-ref config 'm))
+                                      " /DFEATURE_WINDOWS"
+                                      "")))]
+            [config (hash-set config 'LDFLAGS (if (as-runtime-dll? config) "/MD" "/MT"))]
+            [config (hash-set config 'LIBS "rpcrt4.lib ole32.lib advapi32.lib User32.lib")])
+       config)]
+    [else config]))
+
+(define (exe-config arch config)
+  (cond
+    [(eq? 'windows (system-type))
+     (cond
+       [(string=? arch "arm64")
+        (config-merge config 'LDFLAGS
+                      "/link /STACK:0x1000000")]
+       [(string=? arch "a6")
+        (config-merge config 'LDFLAGS
+                      "/link /STACK:0x1000000")]
+       [(string=? arch "arm64")
+        (config-merge config 'LDFLAGS
+                      "/link /STACK:0x800000")]
+       [else config])]
+    [else config]))
+
+;; /MD vs. /MT
+(define (as-runtime-dll? config)
+  (equal? (hash-ref config 'runtimeAs #f)
+          "dll"))
+
+;; Link in one ".exe", or depend on ".dll"?
+(define (as-scheme-dll? config)
+  (not (equal? (hash-ref config 'linkAs #f)
+               "exe")))
+
+(define (for-windows? config)
+  (or (eq? 'windows (system-type))
+      (glob-match? "*nt" (hash-ref config 'm))
+      (glob-match? "*nt" (or (hash-ref config 'defaultm #f) ""))))
+
+(define (lib-build-suffix config)
+  (if (eq? 'windows (system-type))
+      (~a (if (as-runtime-dll? config)
+              "md"
+              "mt")
+          (if (as-scheme-dll? config)
+              "d"
+              "s"))
+      ""))
+
+(define (windows-main-dest at-dir m config)
+  (lambda (name)
+    (if (as-scheme-dll? config)
+        (at-dir "../boot" m (path-replace-extension
+                             name
+                             (if (as-runtime-dll? config)
+                                 "md.obj"
+                                 "mt.obj")))
+        (at-dir (.c->.o name)))))
+
+(define (config-.exe config name)
+  (let ([suffix (hash-ref config 'exeSuffix "")])
+    (if (string=? suffix "")
+        (.exe name)
+        (~a name suffix))))
+
+(define (get-preload-files config at-dir mboot)
+  (define preload-files
+    (map (lambda (path)
+           (at-dir "../.." path))
+         (shell->strings (hash-ref config 'preloadBootFiles ""))))
+  (cond
+    [(null? preload-files) '()]
+    [else
+     (append
+      preload-files
+      ;; There may be extra boot files at the soure directory, such as
+      ;; ones written by a bootpbchunk action; currently just assuming
+      ;; that all should be preloaded
+      (let ()
+        (define boot-src-dir (find-boot-src-dir at-dir mboot))
+        (define config-file (build-path boot-src-dir "Mf-config"))
+        (if (file-exists? config-file)
+            (map (lambda (name)
+                   (build-path boot-src-dir name))
+                 (shell->strings (hash-ref (config-file->hash config-file) 'extraBootFiles "")))
+            '())))]))
+  
+(define (add-preloads config preloads)
+  (cond
+    [(null? preloads)
+     config]
+    [else
+     (config-merge config
+                   'LDFLAGS
+                   (apply build-shell
+                          (map string->shell
+                               (apply append
+                                      (map (lambda (file)
+                                             (list "--preload-file"
+                                                   (~a file "@" (file-name-from-path file))))
+                                           preloads)))))]))
+
+(define (infer-always-use-boot-file preload-files)
+  (define name (and (pair? preload-files)
+                    (file-name-from-path (car (reverse preload-files)))))
+  (and name
+       (glob-match? "*.boot" name)
+       (substring name 0 (- (string-length name) 5))))
+
+(define (find-boot-src-dir at-dir mboot)
+  (define here-boot-src-dir (at-dir ".." ".." "boot" mboot))
+  (if (directory-exists? here-boot-src-dir)
+      here-boot-src-dir
+      (at-source "../boot" mboot)))
+
+(define (add-extra-c-sources at-dir mboot)
+  (define boot-src-dir (find-boot-src-dir at-dir mboot))
+  (define config-file (build-path boot-src-dir "Mf-config"))
+  (lambda (l)
+     (if (file-exists? config-file)
+         (append
+          l
+          (map (lambda (name)
+                 (build-path boot-src-dir name))
+               (shell->strings (hash-ref (config-file->hash config-file) 'extraCSources ""))))
+         l)))
+
+(define (need-pbchunk-register? config at-dir mboot)
+  (define boot-src-dir (find-boot-src-dir at-dir mboot))
+  (define config-file (build-path boot-src-dir "Mf-config"))
+  (and (file-exists? config-file)
+       (member "pbchunk_register.c"
+               (shell->strings (hash-ref (config-file->hash config-file) 'extraCSources "")))))

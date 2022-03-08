@@ -15,7 +15,8 @@
 
 ;;; sections 6-1 and 6-2:
 
-(define prettytest.ss (format "~a/prettytest.ss" *mats-dir*))
+(define prettytest.ss (find-source "prettytest.ss"))
+(define build-area-testfile.ss (path-build-normal (current-directory) "testfile.ss"))
 
 (mat current-input-port
    (port? (current-input-port))
@@ -2765,7 +2766,7 @@
   (equal?
     (parameterize ([source-directories '("." "../examples")])
       (with-source-path 'test "fatfib.ss" list))
-    '("../examples/fatfib.ss"))
+    (list (format "../examples~afatfib.ss" (directory-separator))))
   (equal?
     (parameterize ([source-directories '("." "../examples")])
       (with-source-path 'test "./fatfib.ss" list))
@@ -2779,13 +2780,13 @@
     (call-with-values
       (lambda () (((inspect/object fatfib) 'code) 'source-path))
       list)
-    '("../examples/fatfib.ss" 16 4))
+    (list (format "../examples~afatfib.ss" (directory-separator)) 16 4))
   (equal? 
     (parameterize ([source-directories '("." "../examples")])
       (call-with-values
         (lambda () (((inspect/object fatfib) 'code) 'source-path))
         list))
-    '("../examples/fatfib.ss" 16 4))
+    (list (format "../examples~afatfib.ss" (directory-separator)) 16 4))
   (begin
     (load "../examples/fatfib.ss" compile)
     (procedure? fatfib))
@@ -2817,7 +2818,7 @@
       (call-with-values
         (lambda () (((inspect/object fatfib) 'code) 'source-path))
         list))
-    (list (format "~a/examples/fatfib.ss" (parameterize ([cd ".."]) (cd))) 16 4))
+    (list (format "~a~aexamples/fatfib.ss" (parameterize ([cd ".."]) (cd)) (directory-separator)) 16 4))
   (equal?
     (parameterize ([cd ".."] [source-directories '("examples")])
       (call-with-values
@@ -3072,6 +3073,10 @@
   )
 
 (mat filesystem-operations2 (parameters [current-directory *mats-dir*])
+  (begin
+    ;; we expct this to be newer than "mat.ss":
+    (close-port (open-output-file build-area-testfile.ss 'truncate))
+    #t)
   (if (or (windows?) (embedded?))
       (fixnum? (get-mode "mat.ss"))
       (let ([m (get-mode "mat.ss")])
@@ -3088,8 +3093,8 @@
        (eqv? (get-mode "../mats") (get-mode "../mats/.")))
   ; access times are unreliable on contemporary file systems
   (time? (file-access-time "mat.ss"))
-  (time<=? (file-change-time "mat.ss") (file-change-time "mat.so"))
-  (time<=? (file-modification-time "mat.ss") (file-modification-time "mat.so"))
+  (time<=? (file-change-time "mat.ss") (file-change-time build-area-testfile.ss))
+  (time<=? (file-modification-time "mat.ss") (file-modification-time build-area-testfile.ss))
   (equal?
     (list (time? (file-access-time "../mats"))
           (time? (file-change-time "../mats"))
@@ -3116,10 +3121,14 @@
       (and (time? (file-access-time "\\\\?\\c:\\"))
            (time? (file-change-time "\\\\?\\c:\\"))
            (time? (file-modification-time "\\\\?\\c:\\"))))
+  ;; We don't create links anymore, so these don't work as-is:
+  #;
   (or (windows?) (embedded?)
       (time=? (file-access-time "Makefile") (file-access-time "Mf-unix")))
+  #;
   (or (windows?) (embedded?)
       (time=? (file-change-time "Makefile") (file-change-time "Mf-unix")))
+  #;
   (or (windows?) (embedded?)
       (time=? (file-modification-time "Makefile") (file-modification-time "Mf-unix")))
 )

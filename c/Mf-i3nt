@@ -1,8 +1,0 @@
-Cpu ?= I386
-unim = i3nt
-vsmach = x86
-
-# For cross-compilation:
-MORE_CFLAGS = -D__MINGW_USE_VC2005_COMPAT
-
-include Mf-nt

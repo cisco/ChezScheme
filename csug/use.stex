@@ -828,6 +828,8 @@ Otherwise, the expander loads the source file.
 (Loading the source file actually causes the code to be compiled,
 assuming the default value of \scheme{current-eval}, but the compiled
 code is not saved to an object file.)
+The \scheme{library-timestamp-mode} parameter controls the meaining of ``older''
+for comparing library sources and object files.
 An exception is raised during this process if a
 source or object file exists but is not readable or if an object
 file cannot be created.
@@ -1736,6 +1738,8 @@ shortcuts to run the executable.
     & ~~set library extensions\\
 \scheme{--compile-imported-libraries}
     & ~~compile libraries before loading\\
+\scheme{--disable-library-timestamps}
+    & ~~do not check modification dates on library sources\\
 \scheme{--import-notify}
     & ~~enable import search messages\\
 \scheme{--optimize-level 0 | 1 | 2 | 3}
@@ -1803,8 +1807,9 @@ the Scheme system, including the interpreter, compiler, and most
 libraries.
 Boot
 files may be specified explicitly on the command
-line via \scheme{-b} (relative to installation directory) or \scheme{-B} (relative to current directory)
-options or implicitly.
+line via \scheme{-b} (relative to installation directory unless absolute or
+starting with a \scheme{.} or \scheme{..} path element) or \scheme{-B}
+(relative to current directory unless absolute) options or implicitly.
 In the simplest case, no \scheme{-b}
 options
 are given and the necessary boot

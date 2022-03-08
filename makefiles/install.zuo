@@ -1,0 +1,243 @@
+#lang zuo
+(require "version.zuo")
+
+(provide install)
+
+;; Installation steps are written in a way that can run immediately
+;; or that can be rendered as commands in a makefile-shaped script
+
+(define (install at-workarea [vars (hash)] [uninstall? #f] [script-to #f])
+  (define config (config-file->hash (at-workarea "Mf-config") vars))
+  (define (lookup key) (hash-ref config key #f))
+
+  (define (out-raw s)
+    (fd-write script-to s))
+  (define (out s)
+    (out-raw (~a "\n" s)))
+
+  (define-syntax (define-var stx)
+    `(define ,(cadr stx) (let ([v (or (lookup ',(cadr stx))
+                                      ,(list-ref stx 2))])
+                           (cond
+                             [script-to
+                              (out (~a ',(cadr stx) "=" v))
+                              (~a "${" ',(cadr stx) "}")]
+                             [else v]))))
+  (define-syntax (define-now-var stx)
+    `(define ,(cadr stx) (or (lookup ',(cadr stx))
+                             ,(list-ref stx 2))))
+
+  (define m (lookup 'm))
+
+  ;; The following variables determine where the executables, boot files,
+  ;; example programs, and manual pages are installed.
+
+  ;; executable directory
+  (define-var InstallBin "/usr/bin")
+
+  ;; library directory
+  (define-var InstallLib "/usr/lib")
+
+  ;; man page directory
+  (define-var InstallMan "/usr/man/man1")
+
+  ;; installation owner
+  (define-var InstallOwner "")
+
+  ;; installation group
+  (define-var InstallGroup "")
+
+  ;; Files are actually installed at ${TempRoot}${InstallBin},
+  ;; ${TempRoot}${InstallLib}, and ${TempRoot}${InstallMan}.
+  ;; This useful for testing the install process and for building
+  ;; installation scripts
+  (define-var TempRoot "")
+
+  ;; compress man pages?
+  (define-var GzipManPages "yes")
+
+  ;; executable names
+  (define-var InstallSchemeName "scheme")
+  (define-var InstallPetiteName "petite")
+  (define-var InstallScriptName "scheme-script")
+
+  ;; Whether to install "kernel.o" or "libkernel.a"
+  (define-now-var Kernel "KernelLib") ; or "KernelO"
+
+  ;; Empty lib vars mean install libz.a and liblz4.a
+  (define-now-var zlibLib "")
+  (define-now-var LZ4Lib "")
+
+  ;; Everything after here is derived from the configuration
+
+  (define Version (let ([l (get-version)])
+                    (~a "csv" (list-ref l 0) "." (list-ref l 1) "." (list-ref l 2) "." (list-ref l 3))))
+
+  (define (build-path* . elems)
+    (if script-to
+        (string-join elems "/")
+        (apply build-path elems)))
+  
+  (define (at-workarea* . elems)
+    (if script-to
+        (apply build-path* elems)
+        (apply at-workarea elems)))
+
+  (define (at-source* . elems)
+    (if script-to
+        (apply build-path* (if (glob-match? "../*" (car elems))
+                               (cons (substring (car elems) 3) (cdr elems))
+                               elems))
+        (apply at-source elems)))
+
+  (define (guard* a cmp b . body)
+    (cond
+      [script-to
+       (out (~a "\tif [ \"" a "\" " cmp " \"" b "\" ] ; then \\"))
+       (for-each (lambda (t)
+                   (t)
+                   (out-raw ";\\"))
+                 body)
+       (out "\t fi")]
+      [else
+       (when (if (string=? cmp "=")
+                 (string=? a b)
+               (not (string=? a b)))
+         (for-each (lambda (t) (t)) body))]))
+
+  (define Include (at-workarea* "boot" m))
+  (define PetiteBoot (at-workarea* "boot" m "petite.boot"))
+  (define SchemeBoot (at-workarea* "boot" m "scheme.boot"))
+  (define Revision (at-workarea* "boot" m "revision"))
+  (define Scheme (at-workarea* "bin" m "scheme"))
+  (define InstallLibExamples (build-path* InstallLib Version "examples"))
+  (define InstallLibBin (build-path* InstallLib Version m))
+
+  (define (prefix-path prefix path)
+    (cond
+      [(string=? prefix "") path]
+      [script-to (~a prefix path)]
+      [else
+       (apply build-path (cons prefix (let loop ([path path] [accum '()])
+                                        (define l (split-path path))
+                                        (if (not (car l))
+                                            accum
+                                            (loop (car l) (cons (cdr l) accum))))))]))
+
+  (define Bin (prefix-path TempRoot InstallBin))
+  (define Lib (prefix-path TempRoot (build-path InstallLib Version)))
+  (define LibExamples (prefix-path TempRoot InstallLibExamples))
+  (define LibBin (prefix-path TempRoot InstallLibBin))
+  (define Man (prefix-path TempRoot InstallMan))
+  (define PetitePath (build-path* Bin InstallPetiteName))
+  (define SchemePath (build-path* Bin InstallSchemeName))
+  (define SchemeScriptPath (build-path* Bin InstallScriptName))
+
+  (struct literal (content))
+
+  (define (shell/wait* . args)
+    (let ([args (map (lambda (arg)
+                       (if (literal? arg)
+                           (literal-content arg)
+                           (if script-to
+                               arg
+                               (string->shell arg))))
+                     args)])
+      (if script-to
+          (out (~a "\t" (apply build-shell args)))
+          (shell/wait (apply build-shell args)))))
+
+  (define (quoted* s)
+    (if script-to
+        (~a "\"" s "\"")
+        s))
+  
+  (define (I . args)
+    (apply shell/wait*
+           (list* (at-source* "./installsh")
+                  "-o" (quoted* InstallOwner) "-g" (quoted* InstallGroup)
+                  args)))
+  (define (rm-f f)
+    (shell/wait* "rm" "-f" f))
+  (define (rm-rf d)
+    (shell/wait* "rm" "-rf" d))
+  (define (ln-f from to)
+    (shell/wait* "ln" "-f" from to))
+
+  (when (or (not uninstall?) script-to)
+    (when script-to (out "\ninstall:"))
+    (for-each (lambda (d)
+                (I "-d" "-m" "755" d))
+              (list Lib LibBin LibExamples Bin Man))
+
+    ;; bin
+    (rm-f SchemePath)
+    (rm-f PetitePath)
+    (rm-f SchemeScriptPath)
+    (I "-m" "555" Scheme SchemePath)
+    (ln-f SchemePath PetitePath)
+    (ln-f SchemePath SchemeScriptPath)
+
+    ;; lib
+    (I "-m" "444" PetiteBoot (build-path* LibBin "petite.boot"))
+    (guard* InstallPetiteName "!=" "petite"
+            (lambda ()
+              (rm-f (build-path* LibBin (~a InstallPetiteName ".boot"))))
+            (lambda ()
+              (ln-f (build-path* LibBin "petite.boot") (build-path* LibBin (~a InstallPetiteName ".boot")))))
+    (I "-m" "444" SchemeBoot (build-path* LibBin "scheme.boot"))
+    (guard* InstallSchemeName "!=" "scheme"
+            (lambda ()
+              (rm-f (build-path* LibBin (~a InstallSchemeName ".boot"))))
+            (lambda ()
+              (ln-f (build-path* LibBin "scheme.boot") (build-path* LibBin (~a InstallSchemeName ".boot")))))
+    (ln-f (build-path* LibBin "scheme.boot") (build-path* LibBin (~a InstallScriptName ".boot")))
+    (I "-m" "444" (build-path* Include "main.o") LibBin)
+    (I "-m" "444" (build-path* Include "scheme.h") LibBin)
+    (I "-m" "444" Revision (build-path* LibBin "revision"))
+
+    ;; man
+    (shell/wait* "sed"
+                 "-e" (quoted* (~a "s;{InstallBin};" InstallBin ";g"))
+                 "-e" (quoted* (~a "s;{InstallLibExamples};" InstallLibExamples ";g"))
+                 "-e" (quoted* (~a "s;{InstallLibBin};" InstallLibBin ";g"))
+                 "-e" (quoted* (~a "s;{InstallPetiteName};" InstallPetiteName ";g"))
+                 "-e" (quoted* (~a "s;{InstallSchemeName};" InstallSchemeName ";g"))
+                 "-e" (quoted* (~a "s;{InstallScriptName};" InstallScriptName ";g"))
+                 (at-source* "../scheme.1.in")
+                 (literal ">")
+                 (at-workarea* "scheme.1"))
+    (for-each (lambda (manpage)
+                (I "-m" "444" (at-workarea* "scheme.1") manpage)
+                (guard* GzipManPages "=" "yes"
+                        (lambda () (shell/wait* "gzip" "-f" manpage))))
+              (list (build-path* Man (~a InstallSchemeName ".1"))
+                    (build-path* Man (~a InstallPetiteName ".1"))))
+
+    (let ([kernel (if (string=? Kernel "KernelO") "kernel.o" "libkernel.a")])
+      (I "-m" "444" (build-path* Include kernel) LibBin))
+
+    (when (string=? Kernel "KernelLib")
+      (when (string=? zlibLib "")
+        (I "-m" "444" (at-workarea* "zlib/libz.a") LibBin))
+      (when (string=? LZ4Lib "")
+        (I "-m" "444" (at-workarea* "lz4/lib/liblz4.a") LibBin)))
+
+    (apply I (list* "-m" "444" (append
+                                (map (lambda (n) (at-source* "../examples" n))
+                                     (ls (at-source "../examples")))
+                                (list LibExamples)))))
+
+  (when (or uninstall? script-to)
+    (when script-to (out "\nuninstall:"))
+    (rm-rf Lib)
+    (rm-f PetitePath)
+    (rm-f SchemePath)
+    (rm-f SchemeScriptPath)
+    (rm-f (build-path* Man (~a InstallPetiteName ".1")))
+    (rm-f (build-path* Man (~a InstallPetiteName ".1.gz")))
+    (rm-f (build-path* Man (~a InstallSchemeName ".1")))
+    (rm-f (build-path* Man (~a InstallSchemeName ".1.gz"))))
+
+  (when script-to
+    (out "")))

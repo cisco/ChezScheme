@@ -4595,10 +4595,7 @@
 (mat ht
   (begin
     (display-string (separate-eval `(parameterize ([source-directories
-                                                     (list
-                                                       ,*mats-dir*
-                                                       ,(format "~a/../s" *mats-dir*)
-                                                       ,(format "~a/../../s" *mats-dir*))])
-                                      (load "ht.ss"))))
+                                                    ',(source-directories)])
+                                      (load ,(find-source "ht.ss")))))
     #t)
 )

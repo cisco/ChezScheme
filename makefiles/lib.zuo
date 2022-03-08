@@ -1,0 +1,154 @@
+#lang zuo
+
+(provide cp/ln
+         m->arch
+         define-values
+         hash-set*
+         for-each*
+         unique
+         file->lines
+         make-lookup
+         make-opt-lookup
+         make-run-scheme
+         relevant-config)
+
+(define-syntax (define-values stx)
+  (unless (and (list? stx) (= 3 (length stx))) (bad-syntax stx))
+  (define vals-id (string->uninterned-symbol "vals"))
+  `(,(quote-syntax begin)
+    (,(quote-syntax define) ,vals-id ,(list-ref stx 2))
+    ,@(let loop ([ids (cadr stx)] [index 0])
+        (cond
+          [(null? ids) '()]
+          [else
+           (cons `(,(quote-syntax define) ,(car ids) (,(quote-syntax list-ref) ,vals-id ,index))
+                 (loop (cdr ids) (+ index 1)))]))))
+  
+(define (cp/ln src dest)
+  (if (eq? 'windows (system-type))
+      (cp src dest)
+      (begin
+        (when (file-exists? dest) (rm dest))
+        (symlink (find-relative-path (path-only dest) src) dest))))
+
+(define (m->arch m)
+  (let* ([uni (if (= (char "t") (string-ref m 0))
+                  (substring m 1)
+                  m)])
+    (or (ormap (lambda (arch)
+                 (and (>= (string-length uni) (string-length arch))
+                      (string=? (substring uni 0 (string-length arch)) arch)
+                      arch))
+               '("a6" "i3" "arm64" "arm32" "ppc32" "pb"))
+        (error "could not extract architecture" m))))
+
+(define (hash-set* ht . keys+vals)
+  (let loop ([ht ht] [keys+vals keys+vals])
+    (if (null? keys+vals)
+        ht
+        (loop (hash-set ht (car keys+vals) (cadr keys+vals))
+              (cddr keys+vals)))))
+
+(define (for-each* list proc) (for-each proc list))
+
+(define (unique l)
+  (cond
+    [(null? l) '()]
+    [(member (car l) (cdr l)) (unique (cdr l))]
+    [else (cons (car l) (unique (cdr l)))]))
+
+(define (file->lines file)
+  (string-split (file->string file) "\n"))
+
+(define (make-lookup config)
+  (lambda (key)
+    (hash-ref config key #f)))
+
+(define (make-opt-lookup options default-options)
+  (lambda (key [format 'boolean])
+    (let ([cv (or (hash-ref options key #f)
+                  (hash-ref default-options key))])
+      (cond
+        [(eq? format 'raw) cv]
+        [(eq? format 'boolean)
+         (cond
+           [(equal? cv "t") #t]
+           [(equal? cv "f") #f]
+           [else (error (~a "value for " key " is not \"t\" or \"f\"")
+                        cv)])]
+        [(eq? format 'integer)
+         (if (string=? cv "")
+             #f
+             (or (string->integer cv)
+                 (error (~a "value for " key " is not an integer")
+                        cv)))]
+        [(eq? format 'symbol)
+         (if (string=? cv "")
+             #f
+             (string->symbol cv))]
+        [(eq? format 's-exp)
+         (if (string=? cv "")
+             #f
+             (car (string-read cv)))]
+        [else (error "unknown format" format)]))))
+
+(define (make-run-scheme at-source at-dir lookup
+                         host-scheme host-workarea host-m
+                         [extra-source-dirs '()]
+                         [extra-library-dirs '()])
+  (define (call-with-scheme k)
+    (define scheme.exe (or host-scheme
+                           (build-path host-workarea "bin" host-m (.exe "scheme"))))
+    (define env (if (or (lookup 'SCHEMEHEAPDIRS)
+                        (not (equal? host-workarea "")))
+                    (cons
+                     (cons "SCHEMEHEAPDIRS" (path->complete-path
+                                             (or (lookup 'SCHEMEHEAPDIRS)
+                                                 (build-path host-workarea "boot" host-m))))
+                     (hash-ref (runtime-env) 'env))
+                    (hash-ref (runtime-env) 'env)))
+    (k scheme.exe env))
+
+  (define (run-scheme/status what script inputs [options (hash)])
+    (call-with-scheme
+     (lambda (scheme.exe env)
+       (displayln (~a "running " scheme.exe " to build " what))
+       (define p (process scheme.exe "-q" inputs
+                          (hash 'stdin 'pipe
+                                'stdout (or (hash-ref options 'stdout #f)
+                                            (fd-open-output 'stdout))
+                                'stderr (or (hash-ref options 'stderr #f)
+                                            (fd-open-output 'stderr))
+                                'env env)))
+       (define to (hash-ref p 'stdin))
+       (fd-write to (~s `(source-directories '(,(at-dir ".")
+                                               ,(at-source ".")
+                                               ,@extra-source-dirs))))
+       (fd-write to (~s `(library-directories '(,@extra-library-dirs
+                                                ,(cons (at-source ".")
+                                                       (at-dir "."))))))
+       (fd-write to (string-join (map ~s script)))
+       (fd-close to)
+       (thread-process-wait (hash-ref p 'process))
+       (process-status (hash-ref p 'process)))))
+
+  (define (run-scheme what script inputs [options (hash)])
+    (unless (= 0 (run-scheme/status what script inputs options))
+      (error "failed")))
+
+  (list call-with-scheme
+        run-scheme/status
+        run-scheme))
+
+(define (relevant-config opt default-options)
+  ;; Note options that are non-default:
+  (foldl (lambda (k relevant-config)
+           (let* ([default-v (hash-ref default-options k)]
+                  [v (opt k 'raw)])
+             (cond
+               [(not (equal? v default-v))
+                (alert (~a "using " k "=" v))
+                (hash-set relevant-config k v)]
+               [else relevant-config])))
+         (hash)
+         (hash-keys default-options)))

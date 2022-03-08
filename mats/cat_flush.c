@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef WIN32
+#if defined(_MSC_VER) || defined(__MINGW32__)
 #include <io.h>
 #include <fcntl.h>
 #endif
@@ -24,7 +24,7 @@
 int main() {
   int c;
 
-#ifdef WIN32
+#if defined(_MSC_VER) || defined(__MINGW32__)
   _setmode(_fileno(stdin), O_BINARY);
   _setmode(_fileno(stdout), O_BINARY);
 #endif

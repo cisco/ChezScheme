@@ -1,7 +1,0 @@
-
-Cpu ?= X86_64
-unim = a6nt
-msvcjump = a6nt-jump.asm
-vsmach = amd64
-
-include Mf-nt

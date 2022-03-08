@@ -1,0 +1,16 @@
+
+# Mf-config include is written above by "build.bat"
+
+build: zuo.exe
+       .\zuo.exe
+
+kernel: zuo.exe
+       .\zuo.exe . kernel
+
+all-dlls: zuo.exe
+	 .\zuo.exe . all-dlls
+
+zuo.exe: "$(srcdir)\..\zuo\zuo.c"
+	cl.exe /O2 /Fe:pre_zuo.exe "$(srcdir)\..\zuo\zuo.c"
+	.\pre_zuo.exe -X "$(srcdir)\..\zuo\lib" "$(srcdir)\makefiles\libpath.zuo" "$(srcdir)\..\zuo"
+	cl.exe /O2 /Fe:zuo.exe zuo.c

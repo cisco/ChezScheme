@@ -95,13 +95,7 @@
                          (and (not (string=? rest path))
                               (pathloop rest)))
                        (or (find-source-file
-                             (let* ((dir (car dir*)) (n (string-length dir)))
-                               (format (if (and (fx> n 0)
-                                                (directory-separator?
-                                                  (string-ref dir (fx- n 1))))
-                                           "~a~a"
-                                           "~a/~a")
-                                 dir path))
+                             (path-build (car dir*) path)
                              line)
                            (dirloop (cdr dir*))))))))
          (inspect-error "Cannot open ~a" path))]))
@@ -2095,7 +2089,7 @@
         (let* ((rtd ($record-type-descriptor x))
                (fields (if (record-type-named-fields? rtd)
                            (csv7:record-type-field-names rtd)
-                           (csv7:record-type-field-indices rtd))))
+                           ($record-type-field-indices rtd))))
           (define check-field
             (lambda (f)
               (unless (or (and (symbol? f) (memq f fields))

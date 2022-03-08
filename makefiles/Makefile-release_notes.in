@@ -1,6 +1,6 @@
-m = $(m)
-Scheme=../$m/bin/$m/scheme -b ../$m/boot/$m/petite.boot -b ../$m/boot/$m/scheme.boot
-STEXLIB=../stex
+# srcdir and m are added before
+Scheme=../bin/$m/scheme -b ../boot/$m/petite.boot -b ../boot/$m/scheme.boot
+STEXLIB=$(srcdir)/../stex
 installdir=/tmp/csv9
 INSTALL=../$m/installsh
 
@@ -21,6 +21,9 @@ bib =
 # index=yes
 
 include $(STEXLIB)/Mf-stex
+
+srcs = $(x).stex releasenotes.cls releasenotes.hcls \
+  macros.stex releasenotes.css scheme.sty
 
 # define or override suffixes here
 
@@ -44,7 +47,7 @@ install: $x.pdf $x.html
 
 # define any dependencies here
 
-$(x).firstrun: macros.tex
+$(x).firstrun: macros.tex $(srcs)
 
 # define cleanup targets here:
 
@@ -53,3 +56,10 @@ $(x).clean:
 $(x).reallyclean:
 
 $(x).reallyreallyclean:
+
+$(srcs):
+ifeq ($(OS),Windows_NT)
+	cp -p "${srcdir}"/$@ $@
+else
+	ln -s "${srcdir}"/$@ $@
+endif

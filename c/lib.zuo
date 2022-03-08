@@ -1,0 +1,30 @@
+#lang zuo
+
+(provide replace
+         glob-split
+
+         source-tree)
+
+(define (replace a alist)
+  (define old-a (assoc (car a) alist))
+  (cons a (if old-a (remove old-a alist) alist)))
+
+(define (glob-split glob str)
+  (define match? (glob->matcher glob))
+  (let loop ([i 0])
+    (cond
+      [(= i (string-length str)) #f]
+      [(match? (substring str i)) (cons (substring str 0 i) (substring str i))]
+      [else (loop (+ i 1))])))
+
+(define (source-tree dir)
+  (let loop ([dir dir] [accum '()])
+    (foldl (lambda (e-name accum)
+             (define e (build-path dir e-name))
+             (define type (hash-ref (stat e) 'type))
+             (cond
+               [(eq? type 'file) (cons (input-file-target e) accum)]
+               [(eq? type 'dir) (loop e accum)]
+               [else accum]))
+           accum
+           (ls dir))))

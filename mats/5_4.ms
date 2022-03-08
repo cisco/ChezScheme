@@ -992,7 +992,7 @@
   (error? (string-normalize-nfkc "hello" "goodbye"))
   (error? (string-normalize-nfkc 'ouch))
   (begin
-    (load (format "~a/../unicode/unicode-data.ss" *mats-dir*))
+    (load (find-source "../unicode/unicode-data.ss"))
     #t)
   (let ()
     (import (unicode-data))
@@ -1014,7 +1014,7 @@
     (let ([data (map (lambda (x) (map conv (list-head x 5)))
                      (filter (lambda (x) (>= (length x) 5))
                        (get-unicode-data
-                         (format "~a/../unicode/UNIDATA/NormalizationTest.txt" *mats-dir*))))])
+                         (find-source "../unicode/UNIDATA/NormalizationTest.txt"))))])
       (define NFD string-normalize-nfd)
       (define NFKD string-normalize-nfkd)
       (define NFC string-normalize-nfc)

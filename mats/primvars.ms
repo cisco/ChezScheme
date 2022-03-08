@@ -19,12 +19,12 @@
       (memq x
         '(equivalent-expansion? mat-run mat mat/cf
            mat-file mat-output for-each-mat enable-cp0 windows? embedded? pb?
-           *examples-directory* *scheme* *mats-dir*
+           *scheme* *mats-dir*
            *fuzz* ~= fl~= cfl~= == nan pi +pi +pi/2 +pi/4 -pi -pi/2 -pi/4 +e -e
            separate-eval-tools separate-compile separate-eval run-script patch-exec-path $record->vector
            $cat_flush
            test-cp0-expansion
-           mkfile rm-rf touch
+           mkfile rm-rf touch find-source path-build-normal path-equal?
            heap-check-interval
            preexisting-profile-dump-entry?
            coverage-table record-run-coverage load-coverage-files combine-coverage-files coverage-percent
@@ -168,7 +168,7 @@
                   (syntax-case x ()
                     [(k ?path)
                      (string? (datum ?path))
-                     (let ([s-path (format "~a/../s/~a" *mats-dir* (datum ?path))])
+                     (let ([s-path (find-source (datum ?path))])
                        (datum->syntax #'k `(include ,s-path)))])))
               (include-from-s "primref.ss"))
             (let ([primref2 (#%$sgetprop x '*prim2* #f)] [primref3 (#%$sgetprop x '*prim3* #f)])
@@ -263,8 +263,7 @@
         ;    warning conditions, non-violation conditions, and invalid memory references.
         (meta define feature*
           (call-with-port
-            (open-input-file (let ([fn (format "../s/~a.def" (machine-type))])
-                               (if (file-exists? fn) fn (format "../~a" fn))))
+            (open-input-file (find-source "machine.def"))
             (lambda (ip)
               (let loop ()
                 (let ([x (read ip)])
@@ -675,9 +674,14 @@
                             (car bad**)))
                         (loop (cdr good*) (cdr bad**) (cons (car good*) rgood*)))))))
               (map car in*/out**))))
-        (meta-cond
-          [(file-exists? "../s/primdata.ss") (include "../s/primdata.ss")]
-          [else (include "../../s/primdata.ss")])
+        (define-syntax include-from-s
+          (lambda (x)
+            (syntax-case x ()
+              [(k ?path)
+               (string? (datum ?path))
+               (let ([s-path (find-source (datum ?path))])
+                 (datum->syntax #'k `(include ,s-path)))])))
+        (include-from-s "primdata.ss")
         #t))
 )
 

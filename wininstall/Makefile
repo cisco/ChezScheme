@@ -22,10 +22,10 @@ vcredist.wxs: locate-vcredist.bat
 
 .PHONY: workareas
 workareas:
-	cd ..; ./configure -m=a6nt; $(MAKE) -C a6nt
-	cd ..; ./configure -m=i3nt; $(MAKE) -C i3nt
-	cd ..; ./configure -m=ta6nt; $(MAKE) -C ta6nt
-	cd ..; ./configure -m=ti3nt; $(MAKE) -C ti3nt
+	cd ..; cmd.exe /c build.bat a6nt
+	cd ..; cmd.exe /c build.bat i3nt
+	cd ..; cmd.exe /c build.bat ta6nt
+	cd ..; cmd.exe /c build.bat ti3nt
 
 .PHONY: clean
 clean:

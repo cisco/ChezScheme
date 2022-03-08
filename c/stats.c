@@ -520,13 +520,13 @@ static long adjust_time_zone(ptr dtvec, struct tm *tmxp, ptr given_tzoff) {
     }
   }
 #else
-# if defined(SOLARIS)
+# if defined(SOLARIS) || defined(sun)
   tzoff = timezone;
 # else
   tzoff = tmxp->tm_gmtoff;
 # endif
   if (given_tzoff == Sfalse) {
-# if defined(__linux__) || defined(SOLARIS)
+# if defined(__linux__) || defined(SOLARIS) || defined(sun)
     /* Linux and Solaris set `tzname`: */
     tz_name = Sstring_utf8(tzname[tmxp->tm_isdst], -1);
 # else

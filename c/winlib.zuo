@@ -1,0 +1,26 @@
+#lang zuo
+
+(provide build-zlib
+	 build-lz4)
+
+(define (build-zlib zlib-dir dll?)
+  (define options (hash 'dir zlib-dir))
+  (shell/wait (~a "nmake /nologo -f win32/Makefile.msc AR=\"link /lib\""
+		  (if dll?
+		      ""
+		      " CFLAGS=\"-nologo -MT -O2\"")
+		  " zlib.lib")
+	      options))
+
+(define (build-lz4 lz4-lib-dir config)
+  (define .cs (map (lambda (.c)
+		     (build-path lz4-lib-dir .c))
+		   '("lz4.c" "lz4frame.c" "lz4hc.c" "xxhash.c")))
+  (define .os (map .c->.o .cs))
+  (map (lambda (.c .o)
+	 (c-compile .o .c config))
+       .cs
+       .os)
+  (c-ar (build-path lz4-lib-dir "liblz4.lib")
+	.os
+	config))

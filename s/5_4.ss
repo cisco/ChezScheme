@@ -224,8 +224,8 @@
 ;;; DEALINGS IN THE SOFTWARE. 
 
 (let ()
-  (include "../unicode/unicode-char-cases.ss")
-  (include "../unicode/unicode-charinfo.ss")
+  (include "unicode-char-cases.ss")
+  (include "unicode-charinfo.ss")
 
   (define char-error
     (lambda (who what)

@@ -20,7 +20,7 @@
 ; are enabled in io.ss
 (define (custom-port-warning? x) #t)
 
-(define prettytest.ss (format "~a/prettytest.ss" *mats-dir*))
+(define prettytest.ss (find-source "prettytest.ss"))
 
 (mat port-operations
   (error? (close-port cons))

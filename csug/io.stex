@@ -3780,6 +3780,16 @@ The preferred directory separator is \scheme{#\\} for Windows and
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{path-build}{\categoryprocedure}{(path-build \var{dir-path} \var{path})}
+\returns a combined path
+\listlibraries
+\endentryheader
+
+Combines \var{dir-path} and \var{path}, adding a directory separator
+between them if needed.
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{path-first}{\categoryprocedure}{(path-first \var{path})}
 \formdef{path-rest}{\categoryprocedure}{(path-rest \var{path})}
 \formdef{path-last}{\categoryprocedure}{(path-last \var{path})}

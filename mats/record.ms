@@ -759,7 +759,7 @@
          (lambda (stx)
            (syntax-case stx ()
              [(k path)
-              #`(#,(datum->syntax #'k 'orig-include) #,(format "~a/../s/~a" *mats-dir* (datum path)))])))
+              #`(#,(datum->syntax #'k 'orig-include) #,(find-source (datum path)))])))
        (include "machine.def")
      ; all this work for two constants:
       (define $fd-unaligned-integers (constant unaligned-integers))

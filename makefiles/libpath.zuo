@@ -1,0 +1,18 @@
+#lang zuo
+
+(command-line
+ :args
+ (srcdir)
+ (lambda (accum)
+   (define norm-srcdir (apply build-path (explode-path srcdir)))
+   (define lines (string-split (file->string (build-path srcdir "zuo.c"))
+			       "\n"))
+   (define out (fd-open-output "zuo.c" :truncate))
+   (for-each
+    (let ([def? (glob->matcher "# define ZUO_LIB_PATH*")])
+      (lambda (line)
+	(if (def? line)
+	    (fd-write out (~a "# define ZUO_LIB_PATH " (~s (build-path norm-srcdir "lib")) "\n"))
+	    (fd-write out (~a line "\n")))))
+    lines)
+   (fd-close out)))

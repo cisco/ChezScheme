@@ -1,0 +1,82 @@
+#lang zuo
+(require "../makefiles/lib.zuo")
+
+(provide arch->backend
+         get-machine-files)
+
+(define (arch->backend arch)
+  (cond
+    [(string=? arch "a6") "x86_64"]
+    [(string=? arch "i3") "x86"]
+    [else arch]))
+
+;; Get or synthesize a "machine.def" file and supporting files,
+;; returns
+;;    (list (cons dep-name build) dep-input-name ...)
+(define (get-machine-files m arch)
+  (define threaded? (= (char "t") (string-ref m 0)))
+  (define uni (if threaded? (substring m 1) m))
+  (cond
+    [(string=? arch "pb")
+     (append (let ([mk (lambda (name)
+                         (cons name (lambda (dest token)
+                                      (cp/ln (at-source name) dest))))])
+               (cond
+                 [(string=? m "pb") (list (mk "pb.def")
+                                          "pbcommon64.def")]
+                 [(string=? m "tpb") (list (mk "tpb.def")
+                                           "pbcommon64.def")]
+                 [else
+                  (define word (substring uni 2 4))
+                  (define endian (let ([end (substring uni (- (string-length uni) 1))])
+                                   (cond
+                                     [(string=? end "l") "little"]
+                                     [(string=? end "b") "big"]
+                                     [else (error "cannot extract endianness" m)])))
+                  (list (let ([name (if threaded? "tpbarch.def" "pbarch.def")])
+                          (cons name (lambda (dest token)
+                                       (fill-template (at-source name) dest
+                                                      (hash 'M m 'March arch
+                                                            'Mword word 'Mend endian)))))
+                        (~a "pbcommon" word ".def"))]))
+             (list "pbcommon.def"
+                   "default.def"))]
+    [else
+     (define os (substring uni (string-length arch)))
+     (define m.def (~a m ".def"))
+     (define arch.def (~a arch ".def"))
+     (define os.def (~a os ".def"))
+     (define src (at-source m.def))
+     (cons (if (file-exists? src)
+               (cons m.def
+                     (lambda (dest token)
+                       (cp/ln src dest)))
+               (let ([src (if threaded? "tunix.def" "unix.def")])
+                 (cons src
+                       (lambda (dest token)
+                         (fill-template (at-source src) dest
+                                        (hash 'M m 'March arch))))))
+           (append
+            (list "default.def"
+                  arch.def)
+            (if (file-exists? (at-source os.def))
+                (list os.def)
+                '())))]))
+
+(define (fill-template src dest vars)
+  (define s (file->string src))
+  (define new-s (let loop ([i 0] [start 0])
+                  (cond
+                    [(= i (string-length s)) (substring s start i)]
+                    [(= (char "$") (string-ref s i))
+                     (let ([var (substring s (+ i 2)
+                                           (let loop ([i (+ i 2)])
+                                             (if (= (char ")") (string-ref s i))
+                                                 i
+                                                 (loop (+ i 1)))))])
+                       (~a (substring s start i)
+                           (hash-ref vars (string->symbol var))
+                           (let ([i (+ i 3 (string-length var))])
+                             (loop i i))))]
+                    [else (loop (+ i 1) start)])))
+  (display-to-file new-s dest :truncate))

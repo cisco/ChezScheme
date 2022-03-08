@@ -2,6 +2,7 @@
 .*.sw?
 .sw?
 /Makefile
+/main.zuo
 /TAGS
 /bin/
 /boot/

@@ -1,0 +1,8 @@
+#lang zuo
+;; installed as "main.zuo" in a workarea
+(define config (config-file->hash (at-source "Mf-config")))
+(build/command-line* (dynamic-require ((make-at-dir (at-source ".."))
+                                       (hash-ref config 'srcdir)
+                                        "build.zuo")
+                                      'targets-at)
+                     at-source)

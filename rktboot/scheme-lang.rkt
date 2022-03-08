@@ -86,7 +86,7 @@
          record-type-field-names
          record-type-field-indices
          csv7:record-type-field-names
-         csv7:record-type-field-indices
+         $record-type-field-indices
          csv7:record-type-field-decls
          (rename-out [record-rtd $record-type-descriptor])
          record?
@@ -347,7 +347,8 @@
 (define-syntax include
   (lambda (stx)
     (syntax-case stx ()
-      [(form p) #'(r:include-at/relative-to form form p)])))
+      [(form p)
+       #'(r:include-at/relative-to form form p)])))
 
 ;; If we have to avoid `read-syntax`:
 #;
@@ -1168,7 +1169,10 @@
 (define who 'some-who)
 
 (define (with-source-path who name procedure)
-  (procedure name))
+  (procedure (if (or (equal? name "unicode-char-cases.ss")
+                     (equal? name "unicode-charinfo.ss"))
+                 (string-append "../unicode/" name)
+                 name)))
 
 (define ($make-source-oops . args) #f)
 

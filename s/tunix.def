@@ -1,5 +1,5 @@
 ;; This template is turned into a machine-specific ".def" file
-;; by the `workarea` script
+;; by the `machine.def` script
 
 (define-constant machine-type (constant machine-type-$(M)))
 (features iconv expeditor pthreads)
