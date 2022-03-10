@@ -16,6 +16,7 @@
 /ppc*/
 /tppc*/
 /xc-*/
+/em-*/
 *.*run
 /csug/math/csug/
 /csug/Makefile

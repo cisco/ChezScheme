@@ -85,6 +85,7 @@ default_warning_flags="-Wpointer-arith -Wall -Wextra -Wno-implicit-fallthrough"
 : ${ARFLAGS:="rc"}
 : ${RANLIB:="ranlib"}
 : ${WINDRES:="windres"}
+zlibset=no
 zlibInc=-I../zlib
 LZ4Inc=-I../lz4/lib
 zlibDep=../zlib/libz.a
@@ -239,6 +240,13 @@ while [ $# != 0 ] ; do
       LD="emld"
       AR="emar"
       RANLIB="emranlib"
+      if [ "$zlibset" = "no" ]; then
+        zlibLib=
+        zlibInc=
+        zlibDep=
+        zlibHeaderDep=
+        installzlibtarget=
+      fi
       ;;
     --force)
       forceworkarea=yes
@@ -374,6 +382,7 @@ while [ $# != 0 ] ; do
       zlibDep=
       zlibHeaderDep=
       installzlibtarget=
+      zlibset=yes
       ;;
     LZ4=*)
       LZ4Lib=`echo $1 | sed -e 's/^LZ4=//'`
@@ -659,7 +668,11 @@ if [ "$cflagsset" = "no" ] ; then
         CFLAGS="-m32 ${optFlags}"
         ;;
     em)
-        CFLAGS="${optFlags}"
+        if [ "$zlibset" = "no" ]; then
+          CFLAGS="-s USE_ZLIB=1 ${optFlags}"
+        else
+          CFLAGS="${optFlags}"
+        fi
         ;;
   esac
 fi
