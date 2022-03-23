@@ -2157,18 +2157,7 @@
 
   (when-threaded
     (begin
-      (define $threads (foreign-procedure "(cs)threads" () scheme-object))
-      (define $nthreads 1)
-      (define $yield
-        (let ([t (make-time 'time-duration 1000 0)])
-          (lambda () (sleep t))))
-      (define $thread-check
-        (lambda ()
-          (let ([ls ($threads)])
-            (unless (= $nthreads (length ls))
-              (errorf #f "extra threads running ~s" ls))
-            (collect))
-          #t))
+      (include "thread-check.ss")
       ($thread-check)))
 
   (when-threaded

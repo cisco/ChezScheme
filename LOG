@@ -2266,3 +2266,6 @@
   makes <=, =, and >= transitive as required by R6RS.  (< and > were
   already transitive, but the behavior is changed to match.)
     s/5_3.ss mats/5_3.ms
+- consolidate the $thread-check code in misc.ms and thread.ms, keeping
+  the thread.ms version of the code since it is more recent
+    mats/misc.ms mats/thread-check.ss mats/thread.ms

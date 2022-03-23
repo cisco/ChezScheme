@@ -333,11 +333,14 @@
           (at-source "../s")
           (at-dir "../examples")
           (at-source "../examples")))
+  (define (library-directories)
+    (list (at-dir ".")))
 
   (define-values (call-with-scheme run-scheme/status run-scheme)
     (make-run-scheme at-source at-dir lookup
                      #f (at-dir "..") m
-                     (source-directories)))
+                     (source-directories)
+                     (library-directories)))
 
   (define (make-config-script opt)
     `((optimize-level ,(opt 'o 'integer))
@@ -652,6 +655,7 @@
                                     `(source-directories ',(list* (at-dir ".")
                                                                   (at-source ".")
                                                                   (source-directories)))
+                                    `(library-directories ',(library-directories))
                                     `(load ,(at-dir "mat.so"))
                                     (make-one-mat-script opt (at-dir ".") which)))))
                    (alert (~a "Writing script to run " which " at " path))
