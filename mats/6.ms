@@ -691,11 +691,7 @@
     #t)
   (call-with-input-file "testfile.ss"
     (lambda (p)
-      (let ([s (make-string 100)])
-        (and
-          (= (block-read p s (string-length s)) 6)
-          (string=? (substring s 0 6) "hello\n")
-          (eof-object? (read-char p))))))
+      (string=? (get-string-all p) "hello\n")))
   (begin
     (with-output-to-file "testfile.ss"
       (lambda ()
@@ -716,11 +712,7 @@
     #t)
   (call-with-input-file "testfile.ss"
     (lambda (p)
-      (let ([s (make-string 100)])
-        (and
-          (= (block-read p s (string-length s)) 6)
-          (string=? (substring s 0 6) "a\n\nbc\n")
-          (eof-object? (read-char p))))))
+      (string=? (get-string-all p) "a\n\nbc\n")))
  )
 
 (mat char-ready?

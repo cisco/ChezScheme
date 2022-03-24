@@ -2379,3 +2379,7 @@
 - avoid implicit fallthrough warnings
     c/scheme.c c/schsig.c c/Mf-a6le c/Mf-a6osx c/Mf-arm32le c/Mf-i3le c/Mf-i3osx
     c/Mf-ppc32le c/Mf-ta6le c/Mf-ta6osx c/Mf-ti3le c/Mf-ti3osx c/Mf-tppc32le
+- use simpler get-string-all in fresh-line mats where the expected result
+  from block-read relied on the input-port's buffer size
+    mats/6.ms mats/patch-interpret-0-f-f-f mats/patch-interpret-0-f-t-f
+    mats/patch-interpret-3-f-f-f mats/patch-interpret-3-f-t-f
