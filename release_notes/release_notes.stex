@@ -2632,6 +2632,17 @@ by macros) into code to be compiled via \scheme{compile-file},
 Ftype-pointer fields are not supported, since storing addresses
 in fasl files does not generally make sense.
 
+\subsection{New transcoded port buffer-size parameters}
+
+The new parameter \scheme{transcoded-port-buffer-size} specifies the size
+of the string buffer that is allocated when creating a new transcoded port.
+If the underlying binary port implements \scheme{port-position},
+a transcoded input port allocates an internal fxvector the same size
+as its string buffer for use by \scheme{port-position}.
+The new parameter \scheme{make-codec-buffer} can be used to supply an appropriately
+sized internal bytevector buffer for the codec used by a new transcoded port.
+The size of these string and bytevector buffers was previously hardcoded at 1024.
+
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 

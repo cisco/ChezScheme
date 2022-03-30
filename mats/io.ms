@@ -544,6 +544,9 @@
       (error? (errorf 'close-port "iconv CP1252 codec cannot encode #\\newline with eol-style ls"))
       (error? (errorf 'close-port "latin-1 codec cannot encode #\\newline with eol-style ls")))
     (mat iconv-codec
+      (parameters
+       [transcoded-port-buffer-size 1 (transcoded-port-buffer-size)]
+       [make-codec-buffer (lambda (bp) (make-bytevector 4)) (make-codec-buffer)])
       (error? ; invalid codec
         (iconv-codec -73))
       (error? ; unsupported encoding
@@ -815,6 +818,9 @@
               get-string-all)
             "\nhello l\x0;ambda:\n!\n")))
       (error? ; encoding error
+        ;; When transcoded-port-buffer-size is small, we may attribute the
+        ;; encoding error to display-string or newline. At the default buffer
+        ;; size we attribute the error to close-port.
         (let-values ([(bp get) (open-bytevector-output-port)])
           (define codec (iconv-codec "CP1252"))
           (define transcoder
@@ -1039,6 +1045,9 @@
                   t)))
             s)))
       (error? ; encoding error
+        ;; When transcoded-port-buffer-size is 1, we attribute the encoding
+        ;; error to newline. At other buffer sizes, we attribute the error
+        ;; to close-port.
         (let ()
           (define transcoder
             (make-transcoder (latin-1-codec)
@@ -2136,6 +2145,165 @@
         (read-char ip)
         (= q (custom-port-buffer-size)))))
 )
+
+(mat transcoded-port-buffer-size
+  (let ([x (transcoded-port-buffer-size)])
+    (and (fixnum? x) (> x 0)))
+  (error? (transcoded-port-buffer-size 1024 15))
+  (error? (transcoded-port-buffer-size 'shoe))
+  (error? (transcoded-port-buffer-size 0))
+  (error? (transcoded-port-buffer-size -15))
+  (error? (transcoded-port-buffer-size (+ (most-positive-fixnum) 1)))
+  (error? (transcoded-port-buffer-size 1024.0))
+  (parameterize ([transcoded-port-buffer-size (* (transcoded-port-buffer-size) 2)])
+    (let ([ip (transcoded-port (open-bytevector-input-port (string->utf8 "howdy"))
+                (make-transcoder (utf-8-codec)))])
+      (= (transcoded-port-buffer-size)
+         (string-length (port-input-buffer ip)))))
+  (let ()
+    ;; Codecs used to rely on transcoded port buffer size being <= codec buffer
+    ;; size when constructing ioffsets for transcoded input port. Check that we
+    ;; no longer make that assumption.
+    (define (check-buffers codec-buf-size tp-buf-size)
+      (define (check-codec codec)
+        (let* ([tx (make-transcoder (codec))]
+               [src-bv
+                (string->bytevector
+                 ;; Chez Scheme handles Unicode string literals just fine, but
+                 ;; the mats generate prettytest.ss from sources including this
+                 ;; file and clause 1 of the string-ports mat fails if we
+                 ;; include exotic characters here, so use escape characters.
+                 (string-append
+                  "abcde"
+                  ;; utf-8 2-byte
+                  "\x3B1;\x3B2;\x3B3;\x3B4;\x3B5;"
+                  ;; utf-8 3-byte
+                  "\x24B6;\x24B7;\x24B8;\x24B9;\x24BA;\x24BB;"
+                  ;; utf-8 4-byte
+                  "\x1F311;\x1F312;\x1F313;\x1F314;\x1F315;\x1F316;\x1F317;\x1F318;")
+                 tx)]
+               [min-codec-buffer-size 4]
+               [bp
+                (let ([pos 0])
+                  (make-custom-binary-input-port "foo"
+                    (lambda (bv s c)
+                      (let loop ([i s])
+                        (unless (eq? i (+ s c))
+                          (bytevector-u8-set! bv i
+                            (bytevector-u8-ref src-bv
+                              (modulo pos (bytevector-length src-bv))))
+                          (set! pos (+ pos 1))
+                          (loop (+ 1 i))))
+                      c)
+                    #f #f #f))]
+               [tp
+                (parameterize ([transcoded-port-buffer-size tp-buf-size]
+                               [make-codec-buffer
+                                (lambda (bp)
+                                  (make-bytevector
+                                   (max min-codec-buffer-size codec-buf-size)))])
+                  (transcoded-port bp tx))]
+               [tp-buf (textual-port-input-buffer tp)])
+          (let lp ([n (max codec-buf-size tp-buf-size)])
+            (when (> n 0)
+              (let ([c (get-string-n! tp tp-buf 0 (string-length tp-buf))])
+                (unless (eof-object? c)
+                  (lp (- n c))))))))
+      (check-codec latin-1-codec)
+      (check-codec utf-8-codec)
+      (check-codec utf-16-codec))
+    ;; Originally, codec-buffer-size and transcoded-port-buffer-size were both
+    ;; hardcoded to 1024; the latter could be 1 for unbuffered port, but was
+    ;; still less than codec-buffer-size. So try cases where one is larger than
+    ;; the other.
+    (check-buffers 1024 (+ 1024 128))
+    (check-buffers 1024 (- 1024 128))
+    (check-buffers 128 200)
+    (check-buffers 200 128)
+    (check-buffers 1 27) ;; will use min-codec-buffer-size
+    (check-buffers 27 1)
+    #t)
+)
+
+(mat make-codec-buffer
+  (let ([bv ((make-codec-buffer) (make-custom-binary-output-port "sink" (lambda (bv s c) c) #f #f #f))])
+    (and (mutable-bytevector? bv)
+         (>= (bytevector-length bv) 4)))
+  (error? (make-codec-buffer (lambda (bp) (make-bytevector 4)) "extra arg"))
+  (error? (make-codec-buffer 'shoe))
+  (andmap
+   (lambda (codec)
+     ;; transcoded output port uses our buffer at some point
+     (let* ([pass? #f]
+            [expected-bv (make-bytevector 128)]
+            [bop
+             (parameterize ([custom-port-buffer-size 1])
+               (make-custom-binary-output-port "sink"
+                 (lambda (bv s c)
+                   (set! pass? (or pass? (eq? bv expected-bv)))
+                   c)
+                 #f #f #f))]
+            [op (parameterize ([make-codec-buffer (lambda (bp) expected-bv)])
+                  (transcoded-port bop (make-transcoder (codec))))])
+       (display-string "\x1F311;" op)
+       (flush-output-port op)
+       pass?))
+   (list latin-1-codec utf-8-codec utf-16-codec))
+  (andmap
+   (lambda (codec)
+     ;; transcoded input port uses our buffer at some point
+     (let* ([pass? #f]
+            [expected-bv (make-bytevector 128)]
+            [bip (make-custom-binary-input-port "empty"
+                   (lambda (bv s c)
+                     (set! pass? (or pass? (eq? bv expected-bv)))
+                     0)
+                   #f #f #f)]
+            [ip (parameterize ([make-codec-buffer (lambda (bp) expected-bv)])
+                  (transcoded-port bip (make-transcoder (codec))))])
+       (read-char ip)
+       pass?))
+   (list latin-1-codec utf-8-codec utf-16-codec))
+  (error?
+   (parameterize ([make-codec-buffer (rec bad1 (lambda (bp) 404))])
+     (transcoded-port (make-custom-binary-input-port "empty" (lambda (bv s c) 0) #f #f #f)
+       (native-transcoder))))
+  (error?
+   (parameterize ([make-codec-buffer (rec bad2 (lambda (bp) (make-bytevector 3)))])
+     (transcoded-port (make-custom-binary-input-port "empty" (lambda (bv s c) 0) #f #f #f)
+       (native-transcoder))))
+  (error?
+   (parameterize ([make-codec-buffer
+                   (rec bad3
+                     (lambda (bp)
+                       (bytevector->immutable-bytevector (make-bytevector 4))))])
+     (transcoded-port (make-custom-binary-input-port "empty" (lambda (bv s c) 0) #f #f #f)
+       (native-transcoder))))
+  (and
+   ;; Be careful about reusing a port's input buffer as the codec buffer.
+   ;; Consider these examples using bytevector-input-ports.
+   ;;
+   ;; First we stage a decode-eof-error where input bv1 ends with an incomplete
+   ;; two-byte utf-8 encoding. Similar cases exist for 3- and 4-byte encodings.
+   ;; In each case, the codec saves the available prefix by mutating the front
+   ;; of the codec buffer before trying to get more bytes. This mutation is
+   ;; detectable so it is generally unsafe to reuse the bytevector as the codec
+   ;; buffer if the user still has access to that bytevector.
+   (let* ([bv1 (bytevector #x61 #x62 #x63 #x64 #xc2)]
+          [bv2 (bytevector-copy bv1)])
+     (parameterize ([make-codec-buffer (lambda (bp) bv1)])
+       (bytevector->string bv1 (native-transcoder)))
+     (not (equal? bv1 bv2)))
+   ;; Here the two-byte encoding is complete so bv1 is unchanged. Since we
+   ;; cannot know a priori that the encoding is valid, it is not safe to reuse
+   ;; the bytevector for the codec buffer in general because the user may still
+   ;; have access to the bytevector.
+   (let* ([bv1 (bytevector #x61 #x62 #x63 #x64 #xc2 #xa7)]
+          [bv2 (bytevector-copy bv1)])
+     (parameterize ([make-codec-buffer (lambda (bp) bv1)])
+       (bytevector->string bv1 (native-transcoder)))
+     (equal? bv1 bv2)))
+  )
 
 (mat compress-parameters
   (error? ; unsupported format
@@ -3402,6 +3570,9 @@
 )
 
 (mat utf-16-codec
+  (parameters
+   [transcoded-port-buffer-size 1 (transcoded-port-buffer-size)]
+   [make-codec-buffer (lambda (bp) (make-bytevector 4)) (make-codec-buffer)])
   (error? (r6rs:utf-16-codec #f))
   (error? (utf-16-codec #f))
  ; test decoding
@@ -3520,6 +3691,9 @@
 )
 
 (mat utf-16-BOMs
+  (parameters
+   [transcoded-port-buffer-size 1 (transcoded-port-buffer-size)]
+   [make-codec-buffer (lambda (bp) (make-bytevector 4)) (make-codec-buffer)])
   (let ()
     (define utf-16-tx (make-transcoder (utf-16-codec) (eol-style none) (error-handling-mode raise)))
     (and
@@ -3846,6 +4020,9 @@
 )
 
 (mat encode/decode-consistency
+  (parameters
+   [transcoded-port-buffer-size 1 (transcoded-port-buffer-size)]
+   [make-codec-buffer (lambda (bp) (make-bytevector 4)) (make-codec-buffer)])
  ; verify that encoding/decoding is consistent (but not necessarily correct)
  ; crank up loop bounds to stress test
   (let ()
@@ -4535,7 +4712,11 @@
                                (make-transcoder (utf-8-codec) 'none))])
         (put-string op s)
         (get)))
+    ;; test w/ default transcoded-port-buffer-size
     (let () (import (bv2string)) (main utf8->string string->utf8))
+    ;; test w/ minimum transcoded-port-buffer-size
+    (parameterize ([transcoded-port-buffer-size 1])
+      (let () (import (bv2string)) (main utf8->string string->utf8)))
     #t)
 )
 

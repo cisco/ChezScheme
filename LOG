@@ -2383,3 +2383,11 @@
   from block-read relied on the input-port's buffer size
     mats/6.ms mats/patch-interpret-0-f-f-f mats/patch-interpret-0-f-t-f
     mats/patch-interpret-3-f-f-f mats/patch-interpret-3-f-t-f
+- add transcoded-port-buffer-size parameter to permit control over the size of
+  the string buffer and ioffsets fxvector, if any, for a transcoded port.
+  add make-codec-buffer to allow control over the internal codec bytevector
+  buffer for a transcoded port. extend mats to cover different buffer sizes.
+    csug/io.stex mats/io.ms mats/patch-compile-0-t-f-f
+    mats/patch-interpret-0-f-f-f mats/patch-interpret-0-f-t-f
+    mats/root-experr-compile-0-f-f-f mats/root-experr-compile-2-f-f-f
+    release_notes/release_notes.stex s/io.ss s/primdata.ss

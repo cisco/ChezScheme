@@ -7242,6 +7242,21 @@ io.mo:Expected error in mat port-operations3: "port-file-descriptor: oops is not
 io.mo:Expected error in mat port-operations3: "port-file-descriptor: #<input port string> is not a file port".
 io.mo:Expected error in mat iconv-codec: "iconv-codec: -73 is not a string".
 io.mo:Expected error in mat iconv-codec: "transcoded-port: unsupported encoding almost certainly bogus".
+io.mo:Expected error in mat iconv-codec: "display-string: iconv CP1252 codec cannot encode #\x3BB".
+io.mo:Expected error in mat iconv-codec: "newline: iconv CP1252 codec cannot encode #\newline with eol-style ls".
+io.mo:Expected error in mat iconv-codec: "newline: latin-1 codec cannot encode #\newline with eol-style ls".
+io.mo:Expected error in mat iconv-codec: "iconv-codec: -73 is not a string".
+io.mo:Expected error in mat iconv-codec: "transcoded-port: unsupported encoding almost certainly bogus".
+io.mo:Expected error in mat iconv-codec: "display-string: iconv CP1252 codec cannot encode #\x3BB".
+io.mo:Expected error in mat iconv-codec: "newline: iconv CP1252 codec cannot encode #\newline with eol-style ls".
+io.mo:Expected error in mat iconv-codec: "newline: latin-1 codec cannot encode #\newline with eol-style ls".
+io.mo:Expected error in mat iconv-codec: "iconv-codec: -73 is not a string".
+io.mo:Expected error in mat iconv-codec: "transcoded-port: unsupported encoding almost certainly bogus".
+io.mo:Expected error in mat iconv-codec: "close-port: iconv CP1252 codec cannot encode #\x3BB".
+io.mo:Expected error in mat iconv-codec: "close-port: iconv CP1252 codec cannot encode #\newline with eol-style ls".
+io.mo:Expected error in mat iconv-codec: "close-port: latin-1 codec cannot encode #\newline with eol-style ls".
+io.mo:Expected error in mat iconv-codec: "iconv-codec: -73 is not a string".
+io.mo:Expected error in mat iconv-codec: "transcoded-port: unsupported encoding almost certainly bogus".
 io.mo:Expected error in mat iconv-codec: "close-port: iconv CP1252 codec cannot encode #\x3BB".
 io.mo:Expected error in mat iconv-codec: "close-port: iconv CP1252 codec cannot encode #\newline with eol-style ls".
 io.mo:Expected error in mat iconv-codec: "close-port: latin-1 codec cannot encode #\newline with eol-style ls".
@@ -7430,6 +7445,17 @@ io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: 0
 io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: -15 is not a positive fixnum".
 io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: <int> is not a positive fixnum".
 io.mo:Expected error in mat custom-port-buffer-size: "custom-port-buffer-size: 1024.0 is not a positive fixnum".
+io.mo:Expected error in mat transcoded-port-buffer-size: "incorrect argument count in call (transcoded-port-buffer-size 1024 15)".
+io.mo:Expected error in mat transcoded-port-buffer-size: "transcoded-port-buffer-size: shoe is not a positive fixnum".
+io.mo:Expected error in mat transcoded-port-buffer-size: "transcoded-port-buffer-size: 0 is not a positive fixnum".
+io.mo:Expected error in mat transcoded-port-buffer-size: "transcoded-port-buffer-size: -15 is not a positive fixnum".
+io.mo:Expected error in mat transcoded-port-buffer-size: "transcoded-port-buffer-size: <int> is not a positive fixnum".
+io.mo:Expected error in mat transcoded-port-buffer-size: "transcoded-port-buffer-size: 1024.0 is not a positive fixnum".
+io.mo:Expected error in mat make-codec-buffer: "incorrect argument count in call (make-codec-buffer (lambda (bp) (make-bytevector 4)) "extra arg")".
+io.mo:Expected error in mat make-codec-buffer: "make-codec-buffer: shoe is not a procedure".
+io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure bad1> did not return a mutable bytevector of length at least four".
+io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure bad2> did not return a mutable bytevector of length at least four".
+io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure bad3> did not return a mutable bytevector of length at least four".
 io.mo:Expected error in mat compress-parameters: "compress-format: foo is not a supported format".
 io.mo:Expected error in mat compress-parameters: "compress-format: "gzip" is not a supported format".
 io.mo:Expected error in mat compress-parameters: "compress-level: foo is not a supported level".
@@ -7540,6 +7566,12 @@ io.mo:Expected error in mat get/put-datum: "incorrect argument count in call (pu
 io.mo:Expected error in mat get/put-datum: "incorrect argument count in call (put-datum (current-output-port) (quote a) (quote a))".
 io.mo:Expected error in mat get/put-datum: "put-datum: #<input port string> is not a textual output port".
 io.mo:Expected error in mat get/put-datum: "put-datum: #<binary output port bytevector> is not a textual output port".
+io.mo:Expected error in mat utf-16-codec: "incorrect argument count in call (utf-16-codec #f)".
+io.mo:Expected error in mat utf-16-codec: "utf-16-codec: invalid endianness #f".
+io.mo:Expected error in mat utf-16-codec: "incorrect argument count in call (utf-16-codec #f)".
+io.mo:Expected error in mat utf-16-codec: "utf-16-codec: invalid endianness #f".
+io.mo:Expected error in mat utf-16-codec: "incorrect argument count in call (utf-16-codec #f)".
+io.mo:Expected error in mat utf-16-codec: "utf-16-codec: invalid endianness #f".
 io.mo:Expected error in mat utf-16-codec: "incorrect argument count in call (utf-16-codec #f)".
 io.mo:Expected error in mat utf-16-codec: "utf-16-codec: invalid endianness #f".
 io.mo:Expected error in mat to-fold-or-not-to-fold: "get-datum: invalid character name #\newLine at char 0 of #<input port string>".
