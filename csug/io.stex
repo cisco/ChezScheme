@@ -420,6 +420,34 @@ Its initial value is the value of the \scheme{native-transcoder} procedure.
 \listlibraries
 \endentryheader
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{transcoded-port-buffer-size}{\categorythreadparameter}{transcoded-port-buffer-size}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\scheme{transcoded-port-buffer-size} is a parameter that specifies the size
+of the string buffer that is allocated when creating a new transcoded port.
+The value of this parameter must be a positive fixnum.
+When transcoding a binary input port that implements \scheme{port-position},
+a transcoded input port maintains an fxvector the same size as
+its string buffer to support \scheme{port-position} on the transcoded port.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{make-codec-buffer}{\categorythreadparameter}{make-codec-buffer}
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+The value of \scheme{make-codec-buffer} must be a procedure.
+The procedure is invoked with the binary port \var{bp} when
+\scheme{transcoded-port} is called with a buffered port \var{bp}.
+The procedure must return a mutable bytevector of length at least four.
+The behavior of \scheme{transcoded-port} and its callers is unspecified if a
+continuation captured within the \scheme{make-codec-buffer} procedure is invoked
+multiple times.
 
 \section{Port Operations\label{SECTPORTOPERATIONS}}
 
@@ -1165,10 +1193,7 @@ port is returned, as with \scheme{get-output-string}.
 buffer created when the buffer mode is not \scheme{none} for a port
 created by one of the file open operations, e.g., \scheme{open-input-file}
 or \scheme{open-file-output-port}.
-When called with no arguments, the parameter returns the
-current buffer size.
-When called with a positive fixnum \var{k},
-it sets the current buffer size to \var{k}.
+The value of this parameter must be a positive fixnum.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -1205,10 +1230,7 @@ returns \scheme{#t}.
 \noindent
 \scheme{custom-port-buffer-size} is a parameter that determines the sizes
 of the buffers associated with newly created custom ports.
-When called with no arguments, the parameter returns the
-current buffer size.
-When called with a positive fixnum \var{k},
-it sets the current buffer size to \var{k}.
+The value of this parameter must be a positive fixnum.
 
 \section{Input Operations\label{SECTIOINPUT}}
 
