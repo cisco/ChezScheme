@@ -152,7 +152,7 @@ executable once the shell has transferred control.
 
 \scheme{process} is similar to \scheme{open-process-ports}, but less
 general.
-It does not return a port from which the subproces's standard error output
+It does not return a port from which the subprocess's standard error output
 can be read, and it always creates textual ports.
 It returns a list of three values rather than the four separate values
 of \scheme{open-process-ports}.

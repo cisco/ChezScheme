@@ -155,7 +155,7 @@ Nothing special is done by \scheme{define-integrable} to maintain lexical
 scoping, since lexical scoping is maintained automatically by the
 expander.
 
-{\ChezScheme} integrate locally defined procedures automatically when it is
+{\ChezScheme} integrates locally defined procedures automatically when it is
 appropriate to do so.
 It cannot integrate procedures defined at top-level,
 however, since code that assigns top-level variables can be introduced

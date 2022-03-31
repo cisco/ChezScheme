@@ -336,7 +336,7 @@ read via the transcoder appears at the beginning of the underlying data
 stream or file only if the binary port passed to \scheme{transcoded-port}
 is positioned at the start of the data stream or file.
 When the transcoder can determine this is the case, it sets a flag that
-causes \scheme{set-port-position!}) to position the port beyond the BOM if
+causes \scheme{set-port-position!} to position the port beyond the BOM if
 an attempt is made to reposition the port to the start of the data stream
 or file, so that the BOM is preserved.
 
@@ -3225,7 +3225,7 @@ common control structures, e.g., around \scheme{let} bindings and
 
 Chez Scheme extends the syntax of identifiers as described in
 Section~\ref{SECTINTROSYNTAX}, except within a set of forms prefixed by
-\scheme{#!r6rs} (which is implied by in a library or top-level program).
+\scheme{#!r6rs} (which is implied in a library or top-level program).
 
 When this parameter is set to false (the default), identifiers in the
 extended set are printed with hex scalar value escapes as necessary to

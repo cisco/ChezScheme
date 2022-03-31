@@ -1118,7 +1118,7 @@ See the description below of variable inspector objects.
 \var{n} must be nonnegative and less than the length of the procedure.
 
 \insmsg{procedure}{\scheme{'eval} \var{expr}}
-evaluates expr and returns its value.
+evaluates \var{expr} and returns its value.
 The values of the procedure's free variables are bound within the
 evaluated expression to
 identifiers of the form \%$n$, where $n$ is the location number
@@ -1152,7 +1152,7 @@ See the description below of variable inspector objects.
 \var{n} must be nonnegative and less than the length of the continuation.
 
 \insmsg{continuation}{\scheme{'eval} \var{expr}}
-evaluates expr and returns its value.
+evaluates \var{expr} and returns its value.
 The values of frame locations are bound within the
 evaluated expression to
 identifiers of the form \%$n$, where $n$ is the location number
