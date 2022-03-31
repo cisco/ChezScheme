@@ -640,7 +640,7 @@ Continuing the above example:
 The initial call to \scheme{G} returns \scheme{#f}, since the pairs bound
 to \scheme{x} and \scheme{y} are the
 only object registered with \scheme{G}, and the pairs are still accessible
-through those binding.
+through those bindings.
 When \scheme{collect} is called, the objects shift into the inaccessible group.
 The two calls to \scheme{G} therefore return the pair previously bound to
 \scheme{x} and the representative of the pair previously bound to \scheme{y},

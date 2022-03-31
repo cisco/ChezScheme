@@ -1670,7 +1670,7 @@ myecho hello world
 \endschemedisplay
 
 \parheader{Distributing the Application}
-Distributing an application involves can be as simple as creating a
+Distributing an application can be as simple as creating a
 distribution package that includes the following items:
 
 \begin{itemize}

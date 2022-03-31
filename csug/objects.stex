@@ -1872,7 +1872,7 @@ cell ;=> (#(a b c) . 3)
 \endentryheader
 
 \noindent
-Identitcal to the Revised$^6$ Report counterpart, but allowing an optional
+Identical to the Revised$^6$ Report counterpart, but allowing an optional
 \var{size} argument.
 If \var{size} is specified, then it must be an exact, nonnegative integer, and the
 result vector contains no more than \var{size} elements.
@@ -1931,7 +1931,7 @@ not be created.
 \endentryheader
 
 \noindent
-Identitcal to the Revised$^6$ Report counterpart, but allowing an optional
+Identical to the Revised$^6$ Report counterpart, but allowing an optional
 \var{size} argument.
 If \var{size} is specified, then it must be an exact, nonnegative integer, and the
 result vectors contain no more than \var{size} elements.
@@ -2027,7 +2027,7 @@ key in the hashtable (directly or indirectly) without preventing garbage collect
 reclaiming the key, because keys are paired with values using ephemeron pairs.
 
 A copy of an ephemeron eq or eqv hashtable created by
-\scheme{hashtable-copy} is also an ephemeron table, and an inaccesible
+\scheme{hashtable-copy} is also an ephemeron table, and an inaccessible
 key can be dropped from an immutable ephemeron hashtable in the same
 way as for an immutable weak hashtable.
 
@@ -2691,7 +2691,7 @@ the hash procedure associated with \var{rtd}, if any, otherwise \scheme{#f}.
 The procedure \var{hash-proc} should accept two arguments, the
 instance for which it should compute a hash value and a hash procedure
 to use to compute hash values for arbitrary fields of the instance,
-and it return a nonnegative exact integer.
+and it returns a nonnegative exact integer.
 A record type's hash procedure should produce the same hash value
 for any two instances the record type's equality procedure considers
 equal.
