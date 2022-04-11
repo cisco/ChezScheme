@@ -2282,3 +2282,5 @@
     c/thread.c mats/foreign3.c s/mkheader.ss
 - update lz4 to version 1.9.3
     configure
+- update zlib to version 1.2.12 (which fixes CVE-2018-25032)
+    configure c/Mf-*le

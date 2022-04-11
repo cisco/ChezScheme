@@ -290,7 +290,7 @@
                      [(for-windows? config)
                       ;; configure cross-compile for windows
                       (display-to-file
-                       (~a "all:\n"
+                       (~a "static:\n"
                            (build-shell "\t$(MAKE) -f win32/Makefile.gcc"
                                         (string->shell (~a "CC=" (hash-ref config 'CC)))
                                         (string->shell (~a "CFLAGS=" (hash-ref config 'CFLAGS)))
@@ -308,6 +308,7 @@
                                               (config-to-env))
                                         'desc "libz configure"))])
                    (shell/wait (hash-ref config 'MAKE "make")
+                               "static"
                                (hash 'dir zlib-dir
                                      'desc "zlib make"))]))]
 
