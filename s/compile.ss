@@ -215,6 +215,24 @@
                                   (let ([r ($reloc (constant reloc-riscv64-call) n (fx- a1 ra))])
                                     (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
                              [else (c-assembler-output-error c)])]
+                          [(la64)
+                           (record-case c
+                             [(la64-abs) (n x)
+                              (let ([a1 (fx- a 20)])
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-la64-abs) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [(la64-jump) (n x)
+                              (let ([a1 (fx- a 24)])
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-la64-jump) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [(la64-call) (n x)
+                              (let ([a1 (fx- a 24)])
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-la64-call) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [else (c-assembler-output-error c)])]
                           [else (c-assembler-output-error c)])]))))
              p))]
       [else (c-assembler-output-error x)]))
@@ -278,9 +296,9 @@
                           (record-case x
                             [(ppc32-abs ppc32-call ppc32-jump) (n x) (build x)]
                             [else (void)])]
-                         [(riscv64)
+                         [(la64)
                           (record-case x
-                            [(riscv64-abs riscv64-call riscv64-jump) (n x) (build x)]
+                            [(la64-abs la64-call la64-jump) (n x) (build x)]
                             [else (void)])])]))
                   code-list)])))]))))
 
@@ -444,6 +462,21 @@
                             [(riscv64-call) (n x)
                              (let ([a1 (fx- a 24)])
                                (let ([r ($reloc (constant reloc-riscv64-call) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [else (c-assembler-output-error c)])]
+                         [(la64)
+                          (record-case c
+                            [(la64-abs) (n x)
+                             (let ([a1 (fx- a 20)])
+                               (let ([r ($reloc (constant reloc-la64-abs) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [(la64-jump) (n x)
+                             (let ([a1 (fx- a 24)])
+                               (let ([r ($reloc (constant reloc-la64-jump) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [(la64-call) (n x)
+                             (let ([a1 (fx- a 24)])
+                               (let ([r ($reloc (constant reloc-la64-call) n (fx- a1 ra))])
                                  (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
                             [else (c-assembler-output-error c)])]
                          [else (c-assembler-output-error c)])]))))))]

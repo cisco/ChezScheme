@@ -262,6 +262,12 @@ static uptr riscv64_get_abs PROTO((void *address));
 static void riscv64_set_jump PROTO((void *address, uptr item, IBOOL callp));
 static uptr riscv64_get_jump PROTO((void *address));
 #endif /* RISCV64 */
+#ifdef LA64
+static void la64_set_abs PROTO((void *address, uptr item));
+static uptr la64_get_abs PROTO((void *address));
+static void la64_set_jump PROTO((void *address, uptr item, IBOOL callp));
+static uptr la64_get_jump PROTO((void *address));
+#endif /* LA64 */
 
 static double s_nan;
 
@@ -1285,6 +1291,17 @@ void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; p
       riscv64_set_jump(address, item, 1);
       break;
 #endif /* RISCV64 */
+#ifdef LA64
+    case reloc_la64_abs:
+            la64_set_abs(address, item);
+            break;
+    case reloc_la64_jump:
+            la64_set_jump(address, item, 0);
+            break;
+    case reloc_la64_call:
+            la64_set_jump(address, item, 1);
+            break;
+#endif /* LA64 */
     default:
             S_error1(who, "invalid relocation type ~s", FIX(typ));
     }
@@ -1358,6 +1375,15 @@ ptr S_get_code_obj(typ, p, n, o) IFASLCODE typ; iptr n, o; ptr p; {
       item = riscv64_get_jump(address);
       break;
 #endif /* RISCV64 */
+#ifdef LA64 //@ todo
+    case reloc_la64_abs:
+            item = la64_get_abs(address);
+            break;
+    case reloc_la64_jump:
+    case reloc_la64_call:
+            item = la64_get_jump(address);
+            break;
+#endif /* LA64 */
         default:
             S_error1("", "invalid relocation type ~s", FIX(typ));
             return (ptr)0 /* not reached */;
@@ -1727,3 +1753,38 @@ static void riscv64_set_jump(void* address, uptr item, IBOOL callp)
   (*((I64 *)((I32 *)address + 3))) = item;
 }
 #endif /* RISCV64 */
+
+#ifdef LA64 //@ todo
+static uptr la64_get_abs(void* address)
+{
+        return *((I64 *)((I32 *)address + 3));
+}
+
+static uptr la64_get_jump(void* address)
+{
+        return *((I64 *)((I32 *)address + 3));
+}
+
+static void la64_set_abs(void* address, uptr item)
+{
+        /*
+          [0]pcaddi
+          [1]ld.d
+          [2]b
+          [3]8-bytes of addr
+        */
+        (*((I64 *)((I32 *)address + 3))) = item;
+}
+
+static void la64_set_jump(void* address, uptr item, IBOOL callp)
+{
+        /*
+          [0]pcaddi
+          [1]ld.d
+          [2]b
+          [3]8-bytes of addr
+          [5]jilr
+        */
+        (*((I64 *)((I32 *)address + 3))) = item;
+}
+#endif /* LA64 */

@@ -1,0 +1,4 @@
+m = tla64le
+archincludes = la64.ss
+
+include Mf-base

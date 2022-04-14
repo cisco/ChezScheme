@@ -6597,7 +6597,7 @@
           (define-inline 3 flsqrt
             [(e)
              (constant-case architecture
-               [(x86 x86_64 arm32 riscv64) (bind #f (e) (build-flop-1 %flsqrt e))]
+               [(x86 x86_64 arm32 riscv64 la64) (bind #f (e) (build-flop-1 %flsqrt e))]
                [(ppc32) #f])])
 
           (define-inline 3 flround
@@ -9212,7 +9212,7 @@
                 `(let ([,t-hi (inline ,(make-info-kill* (reg-list %real-zero))
                                 ,%read-time-stamp-counter)])
                    ,(u32xu32->ptr t-hi %real-zero)))]
-             [(riscv64) (unsigned->ptr (%inline read-time-stamp-counter) 64)])])
+             [(riscv64 la64) (unsigned->ptr (%inline read-time-stamp-counter) 64)])])
 
         (define-inline 3 $read-performance-monitoring-counter
           [(e)
@@ -9228,7 +9228,7 @@
                    (%inline logor ,(%inline sll ,%rdx (immediate 32)) ,%rax)
                    64))]
              [(arm32 ppc32) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 32)]
-             [(riscv64)
+             [(riscv64 la64)
               (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 64)])])
 
     )) ; expand-primitives module

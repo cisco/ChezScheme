@@ -86,6 +86,11 @@ case "${CONFIG_UNAME}" in
       m64=rv64le
       tm32=""
       tm64=trv64le
+    elif uname -a | grep 'loongarch64' > /dev/null 2>&1 ; then
+        m32=""
+        m64=la64le
+        tm32=""
+        tm64=tla64le
     fi
     installprefix=/usr
     installmansuffix=share/man
