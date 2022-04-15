@@ -80,6 +80,10 @@ from-orig: $(ZUO)
 docs: build $(ZUO)
 	$(ZUO) $(workarea) docs MAKE="$(MAKE)"
 
+.PHONY: docs-install
+install-docs: build $(ZUO)
+	$(ZUO) $(workarea) install-docs MAKE="$(MAKE)"
+
 .PHONY: bintar
 bintar: $(ZUO)
 	$(ZUO) $(workarea) bintar MAKE="$(MAKE)"

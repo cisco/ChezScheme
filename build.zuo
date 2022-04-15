@@ -139,6 +139,19 @@
                          vars))
            token))
 
+  (define (build-docs token target)
+    (check-not-kernel-only)
+    (define (do-doc name)
+      (mkdir-p (at-dir name))
+      (define mf (~a "m=" m "\n"
+                     "srcdir=" (find-relative-path (at-dir name) (at-source name)) "\n"
+                     (file->string (at-source (~a "makefiles/Makefile-" name ".in")))))
+      (display-to-file mf (at-dir name "Makefile") :truncate)
+      (shell/wait "make" target
+                  (hash 'dir (at-dir name))))
+    (do-doc "csug")
+    (do-doc "release_notes"))
+
   (define (clean-links dir)
     (for-each (lambda (p)
                 (cond
@@ -263,17 +276,12 @@
 
        [:target docs (build)
                 ,(lambda (token)
-                   (check-not-kernel-only)
-                   (define (do-doc name)
-                     (mkdir-p (at-dir name))
-                     (define mf (~a "m=" m "\n"
-                                    "srcdir=" (find-relative-path (at-dir name) (at-source name)) "\n"
-                                    (file->string (at-source (~a "makefiles/Makefile-" name ".in")))))
-                     (display-to-file mf (at-dir name "Makefile") :truncate)
-                     (shell/wait "make"
-                                 (hash 'dir (at-dir name))))
-                   (do-doc "csug")
-                   (do-doc "release_notes"))]
+                   (build-docs token ""))]
+
+       [:target install-docs (build)
+                ,(lambda (token)
+                   (build-docs token "install"))]
+
 
        [:target rpm ()
                 ,(lambda (token)

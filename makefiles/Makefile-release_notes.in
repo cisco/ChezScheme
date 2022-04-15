@@ -2,7 +2,7 @@
 Scheme=../bin/$m/scheme -b ../boot/$m/petite.boot -b ../boot/$m/scheme.boot
 STEXLIB=$(srcdir)/../stex
 installdir=/tmp/csv9
-INSTALL=../$m/installsh
+INSTALL=$(srcdir)/../makefiles/installsh
 
 # define default document pathname here
 # override on command line with 'make x=newdoc'
