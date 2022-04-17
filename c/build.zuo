@@ -17,6 +17,8 @@
 
   (define arch (m->arch m))
 
+  (define msvc? (is-msvc? config))
+
   (define (or-windows .c)
     (if (for-windows? config)
 	"windows.c"
@@ -27,7 +29,7 @@
         (cons "windows.c" l)
         l))
   (define (or-windows-lib lib)
-    (if (eq? 'windows (system-type))
+    (if msvc? 
         (build-path ".." (if (as-scheme-dll? config) "bin" "boot") m 
                     (~a (or (lookup 'kernelLibName)
                             (~a "csv" (get-dll-version) (if (as-runtime-dll? config) "md" "mt")))
@@ -81,14 +83,16 @@
          kernel-srcs))
 
   (define kernel-asm-files
-    (if (and (eq? 'windows (system-type))
-             (glob-match? "*nt" (or (lookup 'defaultm) m)))
+    (if (glob-match? "*nt" (or (lookup 'defaultm) m))
 	(cond
-	 [(string=? arch "a6")
-	  (list "a6nt-jump.asm")]
-	 [(string=? arch "arm64")
-	  (list "arm64nt-jump.asm")]
-	 [else '()])
+          [(and msvc?
+                (string=? arch "a6"))
+           (list "a6nt-jump.asm")]
+          [(string=? arch "arm64")
+           (if msvc?
+               (list "arm64nt-jump.asm")
+               (list "arm64nt-jump.S"))]
+          [else '()])
 	'()))
   (define kernel-asms
     (map at-source kernel-asm-files))
@@ -117,7 +121,7 @@
   (define main-srcs
     (map at-source main-src-files))
   (define main-objs
-    (if (eq? 'windows (system-type))
+    (if msvc?
         (map (windows-main-dest at-dir m config) main-src-files)
         (map (lambda (name) (at-dir "../boot" m (.c->.o name))) main-src-files)))
 
@@ -139,8 +143,8 @@
   (define zlib-dir (at-dir (~a "../zlib" (lib-build-suffix config))))
   (define lz4-dir (at-dir (~a "../lz4" (lib-build-suffix config))))
 
-  (define zlib-lib (build-path zlib-dir (.a (~a (if (eq? 'windows (system-type)) "zlib" "z")))))
-  (define lz4-lib (build-path lz4-dir (.a (~a "lib/" (if (eq? 'windows (system-type)) "liblz4" "lz4")))))
+  (define zlib-lib (build-path zlib-dir (.a (~a (if msvc? "zlib" "z")))))
+  (define lz4-lib (build-path lz4-dir (.a (~a "lib/" (if msvc? "liblz4" "lz4")))))
 
   (define lz4-files (map at-source
                          ;; LZ4 is simple enough that we can list all
@@ -156,7 +160,7 @@
 
   (define lib-deps (append (if zlib-system-lib '() (list zlib-lib))
                            (if lz4-system-lib '() (list lz4-lib))))
-  (define res-deps (if (eq? 'windows (system-type)) (list res-file) '()))
+  (define res-deps (if msvc? (list res-file) '()))
 
   (define preload-files (get-preload-files config at-dir mboot))
 
@@ -230,7 +234,7 @@
                                             config)])
                            (exe-config arch config)))
                  (cond
-                   [(eq? 'windows (system-type))
+                   [msvc?
                     (shell/wait "mt -manifest"
                                 (string->shell (at-source "scheme.exe.manifest"))
                                 (string->shell (~a "-outputresource:" path ";1")))]
@@ -246,7 +250,7 @@
      [:target ,kernel-lib (,@res-deps ,@lib-deps ,@kernel-objs)
               ,(lambda (path token)
                  (cond
-                   [(and (eq? 'windows (system-type))
+                   [(and msvc?
                          (as-scheme-dll? config))
                     (mkdir-p (at-dir "../bin" m))
                     (c-compile (path-replace-extension kernel-lib ".dll")
@@ -277,7 +281,7 @@
               ,(lambda (path token)
                  (cp* (at-source "../zlib") zlib-dir)
 		 (cond
-		  [(eq? 'windows (system-type))
+		  [msvc?
 		   ((dynamic-require (at-source "winlib.zuo") 'build-zlib) zlib-dir (as-runtime-dll? config))]
 		  [else
                    (define configure-command
@@ -312,7 +316,7 @@
                  (define lz4-lib-dir (build-path lz4-dir "lib"))
                  (cp* (at-source "../lz4") lz4-dir)
 		 (cond
-		  [(eq? 'windows (system-type))
+		  [msvc?
 		   ((dynamic-require (at-source "winlib.zuo") 'build-lz4) lz4-lib-dir config)]
 		  [else
                    (shell/wait (hash-ref config 'MAKE "make") "liblz4.a"
@@ -331,9 +335,13 @@
                         ,(lambda (.o target)
                            (cond
                              [(string=? arch "arm64")
-                              (shell/wait "armasm64 -o"
-                                          (string->shell .o)
-                                          (string->shell .asm))]
+                              (if msvc?
+                                  (shell/wait "armasm64 -o"
+                                              (string->shell .o)
+                                              (string->shell .asm))
+                                  (c-compile .o
+                                             .asm
+                                             config))]
                              [(string=? arch "a6")
                               (shell/wait "ml64 /c /Cx /Fo"
                                           (string->shell .o)
@@ -423,9 +431,12 @@
 
      #;(end-make-targets))))
 
+(define (is-msvc? config)
+  (eq? 'windows (system-type)))
+
 (define (win-config config)
   (cond
-    [(eq? 'windows (system-type))
+    [(is-msvc? config)
      (let* ([config (hash-set config 'CFLAGS
                               (~a "/nologo"
                                   (if (as-runtime-dll? config)
@@ -445,7 +456,7 @@
 
 (define (exe-config arch config)
   (cond
-    [(eq? 'windows (system-type))
+    [(is-msvc? config)
      (cond
        [(string=? arch "arm64")
         (config-merge config 'LDFLAGS
@@ -470,12 +481,12 @@
                "exe")))
 
 (define (for-windows? config)
-  (or (eq? 'windows (system-type))
+  (or (is-msvc? config)
       (glob-match? "*nt" (hash-ref config 'm))
       (glob-match? "*nt" (or (hash-ref config 'defaultm #f) ""))))
 
 (define (lib-build-suffix config)
-  (if (eq? 'windows (system-type))
+  (if (is-msvc? config)
       (~a (if (as-runtime-dll? config)
               "md"
               "mt")

@@ -47,7 +47,7 @@
 # endif
 #elif defined(__arm64__) || defined(__aarch64__)
 FORCEINLINE int CAS_LOAD_ACQUIRE(volatile void *addr, void *old_val, void *new_val) {
-  long ret;
+  I64 ret;
   __asm__ __volatile__ ("mov %0, #0\n\t"
                         "0:\n\t"
                         "ldaxr x12, [%1, #0]\n\t"
@@ -65,7 +65,7 @@ FORCEINLINE int CAS_LOAD_ACQUIRE(volatile void *addr, void *old_val, void *new_v
 }
 /* same as above, but ldaxr -> ldxr and stxr -> stlxr */
 FORCEINLINE int CAS_STORE_RELEASE(volatile void *addr, void *old_val, void *new_val) {
-  long ret;
+  I64 ret;
   __asm__ __volatile__ ("mov %0, #0\n\t"       
                         "0:\n\t"
                         "ldxr x12, [%1, #0]\n\t"

@@ -518,7 +518,7 @@ typedef struct thread_gc {
 
 #define main_sweeper_index maximum_parallel_collect_threads
 
-#ifdef __MINGW32__
+#if defined(__MINGW32__) && !defined(HAND_CODED_SETJMP_SIZE)
 /* With MinGW on 64-bit Windows, setjmp/longjmp is not reliable. Using
    __builtin_setjmp/__builtin_longjmp is reliable, but
    __builtin_longjmp requires 1 as its second argument. So, allocate

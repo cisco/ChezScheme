@@ -431,8 +431,8 @@ extern void S_call_any_results PROTO((void));
 
 #ifdef HAND_CODED_SETJMP_SIZE
 /* w64setjmp.S */
-int S_setjmp(void *b);
-void S_longjmp(void *b, int v);
+extern int S_setjmp(void *b);
+extern NORETURN void S_longjmp(void *b, int v);
 #endif
 
 #ifdef PORTABLE_BYTECODE
