@@ -64,7 +64,6 @@ disableiconv=no
 addflags=yes
 addwarningflags=no
 default_warning_flags="-Wpointer-arith -Wall -Wextra -Wno-implicit-fallthrough"
-: ${HOSTCC:="gcc -O2"}
 : ${CC:="gcc"}
 : ${CPPFLAGS:=""}
 : ${CFLAGS:=""}
@@ -319,6 +318,9 @@ while [ $# != 0 ] ; do
       CFLAGS=`echo $1 | sed -e 's/^CFLAGS=//'`
       cflagsset=yes
       ;;
+    HOSTCC=*)
+      HOSTCC=`echo $1 | sed -e 's/^HOSTCC=//'`
+      ;;
     LD=*)
       LD=`echo $1 | sed -e 's/^LD=//'`
       ;;
@@ -519,6 +521,7 @@ if [ "$help" = "yes" ]; then
   echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   C preprocessor flags"
   echo "  CFLAGS=<C compiler flags>         C compiler flags"
+  echo "  HOSTCC=<C compiler>               C compiler and flags for host"
   echo "  LD=<linker>                       linker"
   echo "  LDFLAGS=<linker flags>            additional linker flags"
   echo "  LIBS=<libraries>                  additional libraries"
@@ -635,6 +638,10 @@ if [ "$cflagsset" = "no" ] ; then
         CFLAGS="${optFlags}"
         ;;
   esac
+fi
+
+if [ "$HOSTCC" = "" ] ; then
+    HOSTCC="${CC} ${CFLAGS}"
 fi
 
 # Add automatic thread compilation flags, unless suppressed by --disable-auto-flags
