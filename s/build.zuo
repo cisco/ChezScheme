@@ -434,7 +434,7 @@
 
        ;; The `bootstrap` target uses a "bootstrap" stamp file to trigger a separate `build` run,
        ;; and it iterates up to three times to find a fixpoint
-       [:target ,(at-dir "bootstrap") (,options-t ,@all-srcs)
+       [:target ,(at-dir "bootstrap") (,options-t ,machine.def ,@all-srcs)
                 ,(lambda (path token)
                    (look-for-fixpoint 3 (lambda () (build (find-target "bootall" the-targets) token)))
                    (build (map (lambda (file) (find-target file the-targets))

@@ -10,6 +10,21 @@
     [(string=? arch "i3") "x86"]
     [else arch]))
 
+(define (arch+os->time_t-bits arch os)
+  (cond
+    [(string=? os "nb")
+     ;; NetBSD 6.0 and later:
+     64]
+    [(string=? os "ob")
+     ;; OpenBSD 5.5 and later:
+     64]
+    [else
+     (cond
+       [(string=? arch "i3") 32]
+       [(string=? arch "ppc32") 32]
+       [(string=? arch "arm32") 32]
+       [else 64])]))
+
 ;; Get or synthesize a "machine.def" file and supporting files,
 ;; returns
 ;;    (list (cons dep-name build) dep-input-name ...)
@@ -46,6 +61,7 @@
      (define m.def (~a m ".def"))
      (define arch.def (~a arch ".def"))
      (define os.def (~a os ".def"))
+     (define time_t-bits (arch+os->time_t-bits arch os))
      (define src (at-source m.def))
      (cons (if (file-exists? src)
                (cons m.def
@@ -55,7 +71,8 @@
                  (cons src
                        (lambda (dest token)
                          (fill-template (at-source src) dest
-                                        (hash 'M m 'March arch))))))
+                                        (hash 'M m 'March arch
+                                              'Mtimet time_t-bits))))))
            (append
             (list "default.def"
                   arch.def)
