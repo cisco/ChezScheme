@@ -36,7 +36,15 @@
                                        (cond
                                          [(regexp-match? #rx"32" target-machine) "32"]
                                          [(regexp-match? #rx"64" target-machine) "64"]
-                                         [else "?"]))])
+                                         [else "?"]))]
+               [s (regexp-replace* #rx"[$][(]Mtimet[)]" s
+                                       (cond
+                                         [(regexp-match? #rx"nb$" target-machine) "64"]
+                                         [(regexp-match? #rx"ob$" target-machine) "64"]
+                                         [(regexp-match? #rx"i3" target-machine) "32"]
+                                         [(regexp-match? #rx"ppc32" target-machine) "32"]
+                                         [(regexp-match? #rx"arm32" target-machine) "32"]
+                                         [else "64"]))])
           (open-input-string s))])]
     [else
      (open-input-file (build-path* dir filename))]))
