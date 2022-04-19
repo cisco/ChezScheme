@@ -28,7 +28,7 @@ MDMain = ..\boot\$m\mainmd.obj
 ResFile = ..\boot\$m\scheme.res
 
 # We use MD so that we can link with and load DLLs built against msvcrxxx.dll
-CFLAGS=/nologo /Ox /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+CFLAGS=/nologo /Ox /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
 MDCFLAGS=$(CFLAGS) /MD
 MTCFLAGS=$(CFLAGS) /MT
 DLLLDFLAGS=/debug:full /machine:X64 /nologo
@@ -37,7 +37,7 @@ DLLLDFLAGS=/debug:full /machine:X64 /nologo
 EXELDFLAGS=/debug:full /machine:X64 /incremental:no /nologo /STACK:0x1000000
 
 # use following flags for debugging
-# CFLAGS=/nologo /Od /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+# CFLAGS=/nologo /Od /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
 # MDCFLAGS=$(CFLAGS) /MDd
 # MTCFLAGS=$(CFLAGS) /MTd
 

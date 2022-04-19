@@ -51,10 +51,10 @@
 #endif /* PTHREADS */
 
 /* locally defined functions */
-static ptr new_open_output_fd_helper PROTO((const char *filename, INT mode,
+static ptr new_open_output_fd_helper(const char *filename, INT mode,
              INT flags, INT no_create, INT no_fail, INT no_truncate,
-             INT append, INT lock, INT replace, INT compressed));
-static INT lockfile PROTO((INT fd));
+             INT append, INT lock, INT replace, INT compressed);
+static INT lockfile(INT fd);
 static int is_valid_zlib_length(iptr count);
 static int is_valid_lz4_length(iptr count);
 

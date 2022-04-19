@@ -17,7 +17,7 @@
 #include "system.h"
 
 /* locally defined functions */
-static void maybe_fire_collector PROTO((void));
+static void maybe_fire_collector(void);
 
 void S_alloc_init(void) {
     ISPC s; IGEN g; UINT i;

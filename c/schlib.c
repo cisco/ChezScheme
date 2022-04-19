@@ -17,7 +17,7 @@
 #include "system.h"
 
 /* locally defined functions */
-static ptr S_call PROTO((ptr tc, ptr cp, iptr argcnt));
+static ptr S_call(ptr tc, ptr cp, iptr argcnt);
 
 /* Sinteger_value is in number.c */
 

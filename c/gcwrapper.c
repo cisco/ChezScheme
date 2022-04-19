@@ -17,13 +17,13 @@
 #include "system.h"
 
 /* locally defined functions */
-static IBOOL memqp PROTO((ptr x, ptr ls));
-static IBOOL remove_first_nomorep PROTO((ptr x, ptr *pls, IBOOL look));
-static void segment_tell PROTO((uptr seg));
-static void check_heap_dirty_msg PROTO((char *msg, ptr *x));
-static IBOOL dirty_listedp PROTO((seginfo *x, IGEN from_g, IGEN to_g));
-static void check_dirty_space PROTO((ISPC s));
-static void check_dirty PROTO((void));
+static IBOOL memqp(ptr x, ptr ls);
+static IBOOL remove_first_nomorep(ptr x, ptr *pls, IBOOL look);
+static void segment_tell(uptr seg);
+static void check_heap_dirty_msg(char *msg, ptr *x);
+static IBOOL dirty_listedp(seginfo *x, IGEN from_g, IGEN to_g);
+static void check_dirty_space(ISPC s);
+static void check_dirty(void);
 
 static IBOOL checkheap_noisy;
 

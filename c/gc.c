@@ -49,45 +49,45 @@
 
 /* locally defined functions */
 #ifndef NO_DIRTY_NEWSPACE_POINTERS
-static void record_new_dirty_card PROTO((ptr *ppp, IGEN to_g));
+static void record_new_dirty_card(ptr *ppp, IGEN to_g);
 #endif /* !NO_DIRTY_NEWSPACE_POINTERS */
 #ifndef NO_LOCKED_OLDSPACE_OBJECTS
-static ptr append_bang PROTO((ptr ls1, ptr ls2));
-static uptr count_unique PROTO((ptr ls));
-static uptr list_length PROTO((ptr ls));
-static ptr dosort PROTO((ptr ls, uptr n));
-static ptr domerge PROTO((ptr l1, ptr l2));
-static IBOOL search_locked PROTO((ptr p));
+static ptr append_bang(ptr ls1, ptr ls2);
+static uptr count_unique(ptr ls);
+static uptr list_length(ptr ls);
+static ptr dosort(ptr ls, uptr n);
+static ptr domerge(ptr l1, ptr l2);
+static IBOOL search_locked(ptr p);
 #endif /* !NO_LOCKED_OLDSPACE_OBJECTS */
-static IGEN copy PROTO((ptr pp, seginfo *si, ptr *ppp FORMAL_CTGS));
-static void sweep_locked_ptrs PROTO((ptr *p, iptr n FORMAL_CTGS));
-static void sweep_locked PROTO((ptr tc, ptr p, IBOOL sweep_pure FORMAL_CTGS));
-static ptr copy_stack PROTO((ptr old, iptr *length, iptr clength FORMAL_CTGS));
-static void resweep_weak_pairs PROTO((ONLY_FORMAL_CTGS));
-static void forward_or_bwp PROTO((ptr *pp, ptr p));
-static void sweep_generation PROTO((ptr tc FORMAL_CTGS));
+static IGEN copy(ptr pp, seginfo *si, ptr *ppp FORMAL_CTGS);
+static void sweep_locked_ptrs(ptr *p, iptr n FORMAL_CTGS);
+static void sweep_locked(ptr tc, ptr p, IBOOL sweep_pure FORMAL_CTGS);
+static ptr copy_stack(ptr old, iptr *length, iptr clength FORMAL_CTGS);
+static void resweep_weak_pairs(ONLY_FORMAL_CTGS);
+static void forward_or_bwp(ptr *pp, ptr p);
+static void sweep_generation(ptr tc FORMAL_CTGS);
 #ifndef NO_LOCKED_OLDSPACE_OBJECTS
-static iptr size_object PROTO((ptr p));
+static iptr size_object(ptr p);
 #endif /* !NO_LOCKED_OLDSPACE_OBJECTS */
-static iptr sweep_typed_object PROTO((ptr p, IGEN from_g FORMAL_CTGS));
-static void sweep_symbol PROTO((ptr p, IGEN from_g FORMAL_CTGS));
-static void sweep_port PROTO((ptr p, IGEN from_g FORMAL_CTGS));
-static void sweep_thread PROTO((ptr p FORMAL_CTGS));
-static void sweep_continuation PROTO((ptr p FORMAL_CTGS));
-static void sweep_stack PROTO((uptr base, uptr size, uptr ret FORMAL_CTGS));
-static void sweep_record PROTO((ptr x, IGEN from_g FORMAL_CTGS));
-static IGEN sweep_dirty_record PROTO((ptr x, IGEN youngest FORMAL_CTGS));
-static void sweep_code_object PROTO((ptr tc, ptr co FORMAL_CTGS));
-static void record_dirty_segment PROTO((IGEN from_g, IGEN to_g, seginfo *si));
-static void sweep_dirty PROTO((ONLY_FORMAL_CTGS));
-static void resweep_dirty_weak_pairs PROTO((ONLY_FORMAL_CTGS));
-static void add_ephemeron_to_pending PROTO((ptr p));
-static void add_trigger_ephemerons_to_repending PROTO((ptr p));
-static void check_trigger_ephemerons PROTO((seginfo *si));
-static void check_ephemeron PROTO((ptr pe, IBOOL add_to_trigger FORMAL_CTGS));
-static void check_pending_ephemerons PROTO((ONLY_FORMAL_CTGS));
-static IGEN check_dirty_ephemeron PROTO((ptr pe, IGEN youngest FORMAL_CTGS));
-static void clear_trigger_ephemerons PROTO(());
+static iptr sweep_typed_object(ptr p, IGEN from_g FORMAL_CTGS);
+static void sweep_symbol(ptr p, IGEN from_g FORMAL_CTGS);
+static void sweep_port(ptr p, IGEN from_g FORMAL_CTGS);
+static void sweep_thread(ptr p FORMAL_CTGS);
+static void sweep_continuation(ptr p FORMAL_CTGS);
+static void sweep_stack(uptr base, uptr size, uptr ret FORMAL_CTGS);
+static void sweep_record(ptr x, IGEN from_g FORMAL_CTGS);
+static IGEN sweep_dirty_record(ptr x, IGEN youngest FORMAL_CTGS);
+static void sweep_code_object(ptr tc, ptr co FORMAL_CTGS);
+static void record_dirty_segment(IGEN from_g, IGEN to_g, seginfo *si);
+static void sweep_dirty(ONLY_FORMAL_CTGS);
+static void resweep_dirty_weak_pairs(ONLY_FORMAL_CTGS);
+static void add_ephemeron_to_pending(ptr p);
+static void add_trigger_ephemerons_to_repending(ptr p);
+static void check_trigger_ephemerons(seginfo *si);
+static void check_ephemeron(ptr pe, IBOOL add_to_trigger FORMAL_CTGS);
+static void check_pending_ephemerons(ONLY_FORMAL_CTGS);
+static IGEN check_dirty_ephemeron(ptr pe, IGEN youngest FORMAL_CTGS);
+static void clear_trigger_ephemerons();
 
 #define OLDSPACE(x) (SPACE(x) & space_old)
 

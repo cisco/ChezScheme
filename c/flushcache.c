@@ -27,8 +27,6 @@ typedef struct {
 
 static uptr max_gap;
 
-static ptr make_mod_range PROTO((uptr start, uptr end));
-
 static ptr make_mod_range(uptr start, uptr end) {
   ptr bv = S_bytevector(sizeof(mod_range));
   mod_range_start(bv) = start;
