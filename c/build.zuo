@@ -445,7 +445,7 @@
                                   (if (as-scheme-dll? config)
                                       ""
                                       " /DSCHEME_STATIC")
-                                  " /Ox /W3 /Zi /DUSE_ANSI_PROTOTYPES /DWIN32 /D_CRT_SECURE_NO_WARNINGS"
+                                  " /Ox /W3 /Zi /DWIN32 /D_CRT_SECURE_NO_WARNINGS"
                                   (if (glob-match? "pb*" (hash-ref config 'm))
                                       " /DFEATURE_WINDOWS"
                                       "")))]

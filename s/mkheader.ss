@@ -64,7 +64,7 @@
       [(name args rhs) (pr "#define ~a~a ~a~%" name args rhs)]))
   (define export
     (lambda (tresult name targs)
-      (pr "EXPORT ~a ~a PROTO(~a);~%" tresult name targs)))
+      (pr "EXPORT ~a ~a~a;~%" tresult name targs)))
   (define &ref
     (lambda (cast x disp)
       (format "(~aTO_VOIDP((uptr)(~a)~:[+~;-~]~d))" cast x (fx< disp 0) (abs disp))))
@@ -198,9 +198,6 @@
            (pr "#include <stdint.h>\n")]
           [else (void)])
 
-        (nl) (comment "Enable function prototypes by default.")
-        (pr "#ifndef PROTO~%#define PROTO(x) x~%#endif~%")
-  
         (nl) (comment "Specify declaration of exports.")
         (pr "#ifdef _WIN32~%")
         (pr "#  if __cplusplus~%")
@@ -429,7 +426,7 @@
           [else
            (comment "Warning: Sforeign_callable_entry_point(x) returns a pointer into x.")
            (def "Sforeign_callable_entry_point(x)"
-                (&ref "(void (*) PROTO((void)))" "x" ($ code-data-disp)))
+                (&ref "(void (*)(void))" "x" ($ code-data-disp)))
            (def "Sforeign_callable_code_object(x)"
                 (&ref "(ptr)" "x" (- ($ code-data-disp))))])
   

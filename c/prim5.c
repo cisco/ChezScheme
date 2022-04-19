@@ -21,119 +21,120 @@
 #include <sys/stat.h>
 #include <limits.h>
 #include <ctype.h>
+#include <math.h>
 
 /* locally defined functions */
-static INT s_errno PROTO((void));
-static IBOOL s_addr_in_heap PROTO((uptr x));
-static IBOOL s_ptr_in_heap PROTO((ptr x));
-static ptr s_generation PROTO((ptr x));
-static iptr s_fxmul PROTO((iptr x, iptr y));
-static iptr s_fxdiv PROTO((iptr x, iptr y));
-static ptr s_trunc_rem PROTO((ptr x, ptr y));
-static ptr s_fltofx PROTO((ptr x));
-static ptr s_weak_pairp PROTO((ptr p));
-static ptr s_ephemeron_cons PROTO((ptr car, ptr cdr));
-static ptr s_ephemeron_pairp PROTO((ptr p));
-static ptr s_box_immobile PROTO((ptr p));
-static ptr s_make_immobile_vector PROTO((uptr len, ptr fill));
-static ptr s_make_immobile_bytevector PROTO((uptr len));
-static ptr s_make_reference_bytevector PROTO((uptr len));
-static ptr s_make_immobile_reference_bytevector PROTO((uptr len));
-static ptr s_reference_bytevectorp PROTO((ptr p));
-static ptr s_reference_star_address_object PROTO((ptr p));
-static ptr s_bytevector_reference_star_ref PROTO((ptr p, uptr offset));
-static ptr s_oblist PROTO((void));
-static ptr s_bigoddp PROTO((ptr n));
-static ptr s_float PROTO((ptr x));
-static ptr s_decode_float PROTO((ptr x));
+static INT s_errno(void);
+static IBOOL s_addr_in_heap(uptr x);
+static IBOOL s_ptr_in_heap(ptr x);
+static ptr s_generation(ptr x);
+static iptr s_fxmul(iptr x, iptr y);
+static iptr s_fxdiv(iptr x, iptr y);
+static ptr s_trunc_rem(ptr x, ptr y);
+static ptr s_fltofx(ptr x);
+static ptr s_weak_pairp(ptr p);
+static ptr s_ephemeron_cons(ptr car, ptr cdr);
+static ptr s_ephemeron_pairp(ptr p);
+static ptr s_box_immobile(ptr p);
+static ptr s_make_immobile_vector(uptr len, ptr fill);
+static ptr s_make_immobile_bytevector(uptr len);
+static ptr s_make_reference_bytevector(uptr len);
+static ptr s_make_immobile_reference_bytevector(uptr len);
+static ptr s_reference_bytevectorp(ptr p);
+static ptr s_reference_star_address_object(ptr p);
+static ptr s_bytevector_reference_star_ref(ptr p, uptr offset);
+static ptr s_oblist(void);
+static ptr s_bigoddp(ptr n);
+static ptr s_float(ptr x);
+static ptr s_decode_float(ptr x);
 #ifdef segment_t2_bits
-static void s_show_info PROTO((FILE *out));
+static void s_show_info(FILE *out);
 #endif
-static void s_show_chunks PROTO((FILE *out, ptr sorted_chunks));
-static ptr sort_chunks PROTO((ptr ls, uptr n));
-static ptr merge_chunks PROTO((ptr ls1, ptr ls2));
-static ptr sorted_chunk_list PROTO((void));
-static void s_showalloc PROTO((IBOOL show_dump, const char *outfn));
-static ptr s_system PROTO((const char *s));
-static ptr s_process PROTO((char *s, IBOOL stderrp));
-static I32 s_chdir PROTO((const char *inpath));
+static void s_show_chunks(FILE *out, ptr sorted_chunks);
+static ptr sort_chunks(ptr ls, uptr n);
+static ptr merge_chunks(ptr ls1, ptr ls2);
+static ptr sorted_chunk_list(void);
+static void s_showalloc(IBOOL show_dump, const char *outfn);
+static ptr s_system(const char *s);
+static ptr s_process(char *s, IBOOL stderrp);
+static I32 s_chdir(const char *inpath);
 #ifdef GETWD
-static char *s_getwd PROTO((void));
+static char *s_getwd(void);
 #endif
-static ptr s_set_code_byte PROTO((ptr p, ptr n, ptr x));
-static ptr s_set_code_word PROTO((ptr p, ptr n, ptr x));
-static ptr s_set_code_long PROTO((ptr p, ptr n, ptr x));
-static void s_set_code_long2 PROTO((ptr p, ptr n, ptr h, ptr l));
-static ptr s_set_code_quad PROTO((ptr p, ptr n, ptr x));
-static ptr s_set_reloc PROTO((ptr p, ptr n, ptr e));
-static ptr s_flush_instruction_cache PROTO((void));
-static ptr s_make_code PROTO((iptr flags, iptr free, ptr name, ptr arity_mark, iptr n, ptr info, ptr pinfos));
-static ptr s_make_reloc_table PROTO((ptr codeobj, ptr n));
-static ptr s_make_closure PROTO((ptr offset, ptr codeobj));
-static ptr s_fxrandom PROTO((ptr n));
-static ptr s_flrandom PROTO((ptr x));
-static U32 s_random_seed PROTO((void));
-static void s_set_random_seed PROTO((U32 x));
-static ptr s_intern PROTO((ptr x));
-static ptr s_intern2 PROTO((ptr x, ptr n));
-static ptr s_strings_to_gensym PROTO((ptr pname_str, ptr uname_str));
-static ptr s_intern3 PROTO((ptr x, ptr n, ptr m));
-static ptr s_delete_file PROTO((const char *inpath));
-static ptr s_delete_directory PROTO((const char *inpath));
-static ptr s_rename_file PROTO((const char *inpath1, const char *inpath2));
-static ptr s_mkdir PROTO((const char *inpath, INT mode));
-static ptr s_chmod PROTO((const char *inpath, INT mode));
-static ptr s_getmod PROTO((const char *inpath, IBOOL followp));
-static ptr s_path_atime PROTO((const char *inpath, IBOOL followp));
-static ptr s_path_ctime PROTO((const char *inpath, IBOOL followp));
-static ptr s_path_mtime PROTO((const char *inpath, IBOOL followp));
-static ptr s_fd_atime PROTO((INT fd));
-static ptr s_fd_ctime PROTO((INT fd));
-static ptr s_fd_mtime PROTO((INT fd));
-static IBOOL s_fd_regularp PROTO((INT fd));
-static void s_nanosleep PROTO((ptr sec, ptr nsec));
-static ptr s_set_collect_trip_bytes PROTO((ptr n));
-static void c_exit PROTO((I32 status));
-static ptr s_get_reloc PROTO((ptr co, IBOOL with_offsets));
+static ptr s_set_code_byte(ptr p, ptr n, ptr x);
+static ptr s_set_code_word(ptr p, ptr n, ptr x);
+static ptr s_set_code_long(ptr p, ptr n, ptr x);
+static void s_set_code_long2(ptr p, ptr n, ptr h, ptr l);
+static ptr s_set_code_quad(ptr p, ptr n, ptr x);
+static ptr s_set_reloc(ptr p, ptr n, ptr e);
+static ptr s_flush_instruction_cache(void);
+static ptr s_make_code(iptr flags, iptr free, ptr name, ptr arity_mark, iptr n, ptr info, ptr pinfos);
+static ptr s_make_reloc_table(ptr codeobj, ptr n);
+static ptr s_make_closure(ptr offset, ptr codeobj);
+static ptr s_fxrandom(ptr n);
+static ptr s_flrandom(ptr x);
+static U32 s_random_seed(void);
+static void s_set_random_seed(U32 x);
+static ptr s_intern(ptr x);
+static ptr s_intern2(ptr x, ptr n);
+static ptr s_strings_to_gensym(ptr pname_str, ptr uname_str);
+static ptr s_intern3(ptr x, ptr n, ptr m);
+static ptr s_delete_file(const char *inpath);
+static ptr s_delete_directory(const char *inpath);
+static ptr s_rename_file(const char *inpath1, const char *inpath2);
+static ptr s_mkdir(const char *inpath, INT mode);
+static ptr s_chmod(const char *inpath, INT mode);
+static ptr s_getmod(const char *inpath, IBOOL followp);
+static ptr s_path_atime(const char *inpath, IBOOL followp);
+static ptr s_path_ctime(const char *inpath, IBOOL followp);
+static ptr s_path_mtime(const char *inpath, IBOOL followp);
+static ptr s_fd_atime(INT fd);
+static ptr s_fd_ctime(INT fd);
+static ptr s_fd_mtime(INT fd);
+static IBOOL s_fd_regularp(INT fd);
+static void s_nanosleep(ptr sec, ptr nsec);
+static ptr s_set_collect_trip_bytes(ptr n);
+static void c_exit(I32 status);
+static ptr s_get_reloc(ptr co, IBOOL with_offsets);
 #ifdef PTHREADS
-static s_thread_rv_t s_backdoor_thread_start PROTO((void *p));
-static iptr s_backdoor_thread PROTO((ptr p));
-static ptr s_threads PROTO((void));
-static void s_mutex_acquire PROTO((ptr m));
-static ptr s_mutex_acquire_noblock PROTO((ptr m));
-static void s_mutex_release PROTO((ptr m));
-static void s_condition_broadcast PROTO((ptr c));
-static void s_condition_signal PROTO((ptr c));
-static void s_condition_free PROTO((ptr c));
-static IBOOL s_condition_wait PROTO((ptr c, ptr m, ptr t));
-static void s_thread_preserve_ownership PROTO((ptr tc));
+static s_thread_rv_t s_backdoor_thread_start(void *p);
+static iptr s_backdoor_thread(ptr p);
+static ptr s_threads(void);
+static void s_mutex_acquire(ptr m);
+static ptr s_mutex_acquire_noblock(ptr m);
+static void s_mutex_release(ptr m);
+static void s_condition_broadcast(ptr c);
+static void s_condition_signal(ptr c);
+static void s_condition_free(ptr c);
+static IBOOL s_condition_wait(ptr c, ptr m, ptr t);
+static void s_thread_preserve_ownership(ptr tc);
 #endif
 static void s_byte_copy(ptr src, iptr srcoff, ptr dst, iptr dstoff, iptr cnt);
 static void s_ptr_copy(ptr src, iptr srcoff, ptr dst, iptr dstoff, iptr cnt);
-static ptr s_tlv PROTO((ptr x));
-static void s_stlv PROTO((ptr x, ptr v));
-static void s_test_schlib PROTO((void));
-static void s_breakhere PROTO((ptr x));
-static IBOOL s_interactivep PROTO((void));
-static IBOOL s_same_devicep PROTO((INT fd1, INT fd2));
-static uptr s_malloc PROTO((iptr n));
-static void s_free PROTO((uptr n));
+static ptr s_tlv(ptr x);
+static void s_stlv(ptr x, ptr v);
+static void s_test_schlib(void);
+static void s_breakhere(ptr x);
+static IBOOL s_interactivep(void);
+static IBOOL s_same_devicep(INT fd1, INT fd2);
+static uptr s_malloc(iptr n);
+static void s_free(uptr n);
 #ifdef FEATURE_ICONV
-static ptr s_iconv_open PROTO((const char *tocode, const char *fromcode));
-static void s_iconv_close PROTO((uptr cd));
-static ptr s_iconv_from_string PROTO((uptr cd, ptr in, uptr i, uptr iend, ptr out, uptr o, uptr oend));
-static ptr s_iconv_to_string PROTO((uptr cd, ptr in, uptr i, uptr iend, ptr out, uptr o, uptr oend));
+static ptr s_iconv_open(const char *tocode, const char *fromcode);
+static void s_iconv_close(uptr cd);
+static ptr s_iconv_from_string(uptr cd, ptr in, uptr i, uptr iend, ptr out, uptr o, uptr oend);
+static ptr s_iconv_to_string(uptr cd, ptr in, uptr i, uptr iend, ptr out, uptr o, uptr oend);
 #endif
 #ifdef WIN32
-static ptr s_multibytetowidechar PROTO((unsigned cp, ptr inbv));
-static ptr s_widechartomultibyte PROTO((unsigned cp, ptr inbv));
+static ptr s_multibytetowidechar(unsigned cp, ptr inbv);
+static ptr s_widechartomultibyte(unsigned cp, ptr inbv);
 #endif
 #ifdef PORTABLE_BYTECODE
 static ptr s_separatorchar();
 #endif
 
-static ptr s_profile_counters PROTO((void));
-static ptr s_profile_release_counters PROTO((void));
+static ptr s_profile_counters(void);
+static ptr s_profile_release_counters(void);
 
 #ifdef WIN32
 # define WIN32_UNUSED UNUSED
@@ -271,7 +272,7 @@ static ptr s_make_immobile_reference_bytevector(uptr len) {
   return b;  
 }
 
-static ptr s_reference_bytevectorp(p) ptr p; {
+static ptr s_reference_bytevectorp(ptr p) {
   seginfo *si;
   return (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->space == space_reference_array ? Strue : Sfalse;
 }
@@ -1000,8 +1001,7 @@ static ptr s_flush_instruction_cache() {
     return Svoid;
 }
 
-static ptr s_make_code(flags, free, name, arity_mark, n, info, pinfos)
-                       iptr flags, free, n; ptr name, arity_mark, info, pinfos; {
+static ptr s_make_code(iptr flags, iptr free, ptr name, ptr arity_mark, iptr n, ptr info, ptr pinfos) {
     ptr co;
     ptr tc = get_thread_context();
 
@@ -1098,7 +1098,7 @@ static ptr s_strings_to_gensym(ptr pname_str, ptr uname_str) {
                    pname_str, uname_str);
 }
 
-ptr S_uninterned(x) ptr x; {
+ptr S_uninterned(ptr x) {
   ptr sym;
   static uptr hc;
 
@@ -1393,38 +1393,19 @@ static void c_exit(I32 status) {
     exit(status);
 }
 
-#if defined(__STDC__) || defined(USE_ANSI_PROTOTYPES)
-#include <math.h>
-#else /* defined(__STDC__) || defined(USE_ANSI_PROTOTYPES) */
-extern double sin(), cos(), tan(), asin(), acos(), atan(), atan2();
-extern double sinh(), cosh(), tanh(), exp(), log(), pow(), sqrt();
-extern double floor(), ceil(), round(), trunc(), HYPOT();
-#ifdef ARCHYPERBOLIC
-extern double asinh(), acosh(), atanh();
-#endif /* ARCHHYPERBOLIC */
-#ifdef LOG1P
-extern double log1p();
-#endif /* LOG1P */
-#endif /* defined(__STDC__) || defined(USE_ANSI_PROTOTYPES) */
+static double s_mod(double x, double y) { return fmod(x, y); }
 
-static double s_mod PROTO((double x, double y));
-static double s_mod(x, y) double x, y; { return fmod(x, y); }
+static double s_exp(double x) { return exp(x); }
 
-static double s_exp PROTO((double x));
-static double s_exp(x) double x; { return exp(x); }
+static double s_log(double x) { return log(x); }
 
-static double s_log PROTO((double x));
-static double s_log(x) double x; { return log(x); }
+static double s_log2(double x, double y) { return log(x) / log(y); }
 
-static double s_log2 PROTO((double x, double y));
-static double s_log2(x, y) double x, y; { return log(x) / log(y); }
-
-static double s_pow PROTO((double x, double y));
 #if (machine_type == machine_type_i3fb || machine_type == machine_type_ti3fb)
 #include <ieeefp.h>
 /* freebsd's pow delivers precise results for integer inputs, e.g.,
  * 10.0^21.0, only with * extended-precision (80-bit) floats */
-static double s_pow(x, y) double x, y; {
+static double s_pow(double x, double y) {
   fp_prec_t p;
   p = fpgetprec();
   if (p != FP_PE) {
@@ -1439,78 +1420,56 @@ static double s_pow(x, y) double x, y; {
 #elif defined(MACOSX)
 /* intel macosx delivers precise results for integer inputs, e.g.,
  * 10.0^21.0, only with long double version of pow */
-static double s_pow(x, y) double x, y; { return powl(x, y); }
+static double s_pow(double x, double y) { return powl(x, y); }
 #else /* i3fb/ti3fb */
-static double s_pow(x, y) double x, y; { return pow(x, y); }
+static double s_pow(double x, double y) { return pow(x, y); }
 #endif /* i3fb/ti3fb */
 
-static double s_sqrt PROTO((double x));
-static double s_sqrt(x) double x; { return sqrt(x); }
+static double s_sqrt(double x) { return sqrt(x); }
 
-static double s_sin PROTO((double x));
-static double s_sin(x) double x; { return sin(x); }
+static double s_sin(double x) { return sin(x); }
 
-static double s_cos PROTO((double x));
-static double s_cos(x) double x; { return cos(x); }
+static double s_cos(double x) { return cos(x); }
 
-static double s_tan PROTO((double x));
-static double s_tan(x) double x; { return tan(x); }
+static double s_tan(double x) { return tan(x); }
 
-static double s_asin PROTO((double x));
-static double s_asin(x) double x; { return asin(x); }
+static double s_asin(double x) { return asin(x); }
 
-static double s_acos PROTO((double x));
-static double s_acos(x) double x; { return acos(x); }
+static double s_acos(double x) { return acos(x); }
 
-static double s_atan PROTO((double x));
-static double s_atan(x) double x; { return atan(x); }
+static double s_atan(double x) { return atan(x); }
 
-static double s_atan2 PROTO((double x, double y));
-static double s_atan2(x, y) double x, y; { return atan2(x, y); }
+static double s_atan2(double x, double y) { return atan2(x, y); }
 
-static double s_sinh PROTO((double x));
-static double s_sinh(x) double x; { return sinh(x); }
+static double s_sinh(double x) { return sinh(x); }
 
-static double s_cosh PROTO((double x));
-static double s_cosh(x) double x; { return cosh(x); }
+static double s_cosh(double x) { return cosh(x); }
 
-static double s_tanh PROTO((double x));
-static double s_tanh(x) double x; { return tanh(x); }
+static double s_tanh(double x) { return tanh(x); }
 
-static double s_floor PROTO((double x));
-static double s_floor(x) double x; { return floor(x); }
+static double s_floor(double x) { return floor(x); }
 
-static double s_ceil PROTO((double x));
-static double s_ceil(x) double x; { return ceil(x); }
+static double s_ceil(double x) { return ceil(x); }
 
-static double s_round PROTO((double x));
-static double s_round(x) double x; { return rint(x); }
+static double s_round(double x) { return rint(x); }
 
-static double s_trunc PROTO((double x));
-static double s_trunc(x) double x; { return trunc(x); }
+static double s_trunc(double x) { return trunc(x); }
 
-static double s_hypot PROTO((double x, double y));
-static double s_hypot(x, y) double x, y; { return HYPOT(x, y); }
+static double s_hypot(double x, double y) { return HYPOT(x, y); }
 
 #ifdef ARCHYPERBOLIC
-static double s_asinh PROTO((double x));
-static double s_asinh(x) double x; { return asinh(x); }
+static double s_asinh(double x) { return asinh(x); }
 
-static double s_acosh PROTO((double x));
-static double s_acosh(x) double x; { return acosh(x); }
+static double s_acosh(double x) { return acosh(x); }
 
-static double s_atanh PROTO((double x));
-static double s_atanh(x) double x; { return atanh(x); }
+static double s_atanh(double x) { return atanh(x); }
 #endif /* ARCHHYPERBOLIC */
 
 #ifdef LOG1P
-static double s_log1p PROTO((double x));
-static double s_log1p(x) double x; { return log1p(x); }
+static double s_log1p(double x) { return log1p(x); }
 #endif /* LOG1P */
 
-static ptr s_getenv PROTO((char *name));
-
-static ptr s_getenv(name) char *name; {
+static ptr s_getenv(char *name) {
 #ifdef WIN32
   char *s = Sgetenv(name);
 #else /* WIN32 */
@@ -1527,7 +1486,6 @@ static ptr s_getenv(name) char *name; {
   }
 }
 
-static void s_putenv PROTO((char *name, char *value));
 static void s_putenv(char *name, char *value) {
 #ifdef WIN32
   wchar_t* namew;

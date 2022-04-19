@@ -17,15 +17,15 @@
 #include "system.h"
 
 /* locally defined functions */
-static void install_library_entry PROTO((ptr n, ptr x));
-static void scheme_install_library_entry PROTO((void));
-static void create_library_entry_vector PROTO((void));
-static void create_c_entry_vector PROTO((void));
-static void s_instantiate_code_object PROTO((void));
-static void s_link_code_object PROTO((ptr co, ptr objs));
-static IBOOL s_check_heap_enabledp PROTO((void));
-static void s_enable_check_heap PROTO((IBOOL b));
-static uptr s_check_heap_errors PROTO((void));
+static void install_library_entry(ptr n, ptr x);
+static void scheme_install_library_entry(void);
+static void create_library_entry_vector(void);
+static void create_c_entry_vector(void);
+static void s_instantiate_code_object(void);
+static void s_link_code_object(ptr co, ptr objs);
+static IBOOL s_check_heap_enabledp(void);
+static void s_enable_check_heap(IBOOL b);
+static uptr s_check_heap_errors(void);
 
 static void install_library_entry(ptr n, ptr x) {
     if (!Sfixnump(n) || UNFIX(n) < 0 || UNFIX(n) >= library_entry_vector_size)

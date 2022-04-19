@@ -17,28 +17,28 @@
 #include "system.h"
 
 /* locally defined functions */
-static void pimmediate PROTO((ptr x));
-static void pbox PROTO((ptr x));
-static void pclo PROTO((ptr x));
-static void pcode PROTO((ptr x));
-static void pcons PROTO((ptr x));
-static void pfile PROTO((ptr x));
-static void pinexactnum PROTO((ptr x));
-static IBOOL exact_real_negativep PROTO((ptr x));
-static void pexactnum PROTO((ptr x));
-static void prat PROTO((ptr x));
-static void pchar PROTO((ptr x));
-static void pstr PROTO((ptr x));
-static void psym PROTO((ptr x));
-static void pvec PROTO((ptr x));
-static void pfxvector PROTO((ptr x));
-static void pflvector PROTO((ptr x));
-static void pbytevector PROTO((ptr x));
-static void pflonum PROTO((ptr x));
-static void pflodat PROTO((double x));
-static void pfixnum PROTO((ptr x));
-static void pbignum PROTO((ptr x));
-static void wrint PROTO((ptr x));
+static void pimmediate(ptr x);
+static void pbox(ptr x);
+static void pclo(ptr x);
+static void pcode(ptr x);
+static void pcons(ptr x);
+static void pfile(ptr x);
+static void pinexactnum(ptr x);
+static IBOOL exact_real_negativep(ptr x);
+static void pexactnum(ptr x);
+static void prat(ptr x);
+static void pchar(ptr x);
+static void pstr(ptr x);
+static void psym(ptr x);
+static void pvec(ptr x);
+static void pfxvector(ptr x);
+static void pflvector(ptr x);
+static void pbytevector(ptr x);
+static void pflonum(ptr x);
+static void pflodat(double x);
+static void pfixnum(ptr x);
+static void pbignum(ptr x);
+static void wrint(ptr x);
 
 void S_print_init(void) {}
 

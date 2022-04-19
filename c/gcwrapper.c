@@ -18,12 +18,12 @@
 #include "popcount.h"
 
 /* locally defined functions */
-static void segment_tell PROTO((uptr seg));
-static void check_heap_dirty_msg PROTO((char *msg, ptr *x));
-static IBOOL dirty_listedp PROTO((seginfo *x, IGEN from_g, IGEN to_g));
-static void check_dirty_space PROTO((ISPC s));
-static void check_dirty PROTO((void));
-static void check_locked_object PROTO((ptr p, IBOOL locked, IGEN g, IBOOL aftergc, IGEN mcg));
+static void segment_tell(uptr seg);
+static void check_heap_dirty_msg(char *msg, ptr *x);
+static IBOOL dirty_listedp(seginfo *x, IGEN from_g, IGEN to_g);
+static void check_dirty_space(ISPC s);
+static void check_dirty(void);
+static void check_locked_object(ptr p, IBOOL locked, IGEN g, IBOOL aftergc, IGEN mcg);
 
 static IBOOL checkheap_noisy;
 

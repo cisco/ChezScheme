@@ -36,17 +36,17 @@ Low-level Memory management strategy:
 #include "sort.h"
 #include <sys/types.h>
 
-static void out_of_memory PROTO((void));
-static void initialize_seginfo PROTO((seginfo *si, thread_gc *creator, ISPC s, IGEN g));
-static seginfo *allocate_segments PROTO((uptr nreq, IBOOL for_code));
-static void expand_segment_table PROTO((uptr base, uptr end, seginfo *si));
-static void contract_segment_table PROTO((uptr base, uptr end));
-static void add_to_chunk_list PROTO((chunkinfo *chunk, chunkinfo **pchunk_list));
-static seginfo *sort_seginfo PROTO((seginfo *si, uptr n));
-static seginfo *merge_seginfo PROTO((seginfo *si1, seginfo *si2));
+static void out_of_memory(void);
+static void initialize_seginfo(seginfo *si, thread_gc *creator, ISPC s, IGEN g);
+static seginfo *allocate_segments(uptr nreq, IBOOL for_code);
+static void expand_segment_table(uptr base, uptr end, seginfo *si);
+static void contract_segment_table(uptr base, uptr end);
+static void add_to_chunk_list(chunkinfo *chunk, chunkinfo **pchunk_list);
+static seginfo *sort_seginfo(seginfo *si, uptr n);
+static seginfo *merge_seginfo(seginfo *si1, seginfo *si2);
 
 #if defined(WRITE_XOR_EXECUTE_CODE)
-static void enable_code_write PROTO((ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *hint, uptr hint_len));
+static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *hint, uptr hint_len);
 #endif
 
 void S_segment_init(void) {

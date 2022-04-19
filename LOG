@@ -2275,3 +2275,8 @@
     c/number.c c/ppc32.c c/ppc32le.c c/prim.c c/prim5.c c/print.c c/scheme.c
     c/schlib.c c/schsig.c c/segment.c c/statics.c c/stats.c c/symbol.c
     c/thread.c c/windows.c mats/foreign1.c
+- Eliminate PROTO macro from scheme.h
+    boot/*/scheme.h c/Makefile.* c/alloc.c c/externs.h c/fasl.c c/flushcache.c
+    c/foreign.c c/gc.c c/gcwrapper.c c/intern.c c/io.c c/new-io.c c/number.c
+    c/prim.c c/prim5.c c/print.c c/scheme.c c/schlib.c c/schsig.c c/segment.c
+    c/thread.c mats/foreign3.c s/mkheader.ss

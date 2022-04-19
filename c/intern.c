@@ -17,11 +17,11 @@
 #include "system.h"
 
 /* locally defined functions */
-static void oblist_insert PROTO((ptr sym, iptr idx, IGEN g));
-static iptr hash PROTO((const unsigned char *s, iptr n));
-static iptr hash_sc PROTO((const string_char *s, iptr n));
-static iptr hash_uname PROTO((const string_char *s, iptr n));
-static ptr mkstring PROTO((const string_char *s, iptr n));
+static void oblist_insert(ptr sym, iptr idx, IGEN g);
+static iptr hash(const unsigned char *s, iptr n);
+static iptr hash_sc(const string_char *s, iptr n);
+static iptr hash_uname(const string_char *s, iptr n);
+static ptr mkstring(const string_char *s, iptr n);
 
 #define OBINDEX(hc, len) ((hc) & ((len) - 1))
 #define MIN_OBLIST_LENGTH 4096

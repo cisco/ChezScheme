@@ -40,9 +40,9 @@ static heap_state current_state = UNINITIALIZED;
 /* INITIALIZATION SUPPORT */
 
 /* locally defined functions */
-static void main_init PROTO((void));
-static void idiot_checks PROTO((void));
-static INT run_script PROTO((const char *who, const char *scriptfile, INT argc, const char *argv[], IBOOL programp));
+static void main_init(void);
+static void idiot_checks(void);
+static INT run_script(const char *who, const char *scriptfile, INT argc, const char *argv[], IBOOL programp);
 
 extern void scheme_include(void);
 
@@ -365,8 +365,8 @@ static void idiot_checks(void) {
 /* SUPPORT FOR CALLING INTO SCHEME */
 
 /* locally defined functions */
-static ptr boot_call PROTO((ptr tc, ptr p, INT n));
-static void check_ap PROTO((ptr tc));
+static ptr boot_call(ptr tc, ptr p, INT n);
+static void check_ap(ptr tc);
 
 /* arguments and ac0 set up */
 static ptr boot_call(ptr tc, ptr p, INT n) {
@@ -412,7 +412,7 @@ void S_generic_invoke(ptr tc, ptr code) {
     hdr.entry = (caddr_t)&CODEIT(code,0);
     hdr.toc = (caddr_t)0;
     hdr.static_link = (caddr_t)0;
-    (*((void (*) PROTO((ptr)))(void *)&hdr))(tc);
+    (*((void (*)(ptr))(void *)&hdr))(tc);
 #elif defined(PPCNT)
   /* under NT, function headers contain no static link */
     struct {I32 entry, toc;} hdr;
@@ -433,7 +433,7 @@ void S_generic_invoke(ptr tc, ptr code) {
     p(tc);
 #elif defined(WIN32) && !defined(__MINGW32__)
     __try {
-      (*((void (*) PROTO((ptr)))(void *)&CODEIT(code,0)))(tc);
+      (*((void (*)(ptr))(void *)&CODEIT(code,0)))(tc);
     }
     __except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ?
              EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
@@ -444,7 +444,7 @@ void S_generic_invoke(ptr tc, ptr code) {
             S_error_reset("invalid memory reference");
     }
 #else
-    (*((void (*) PROTO((ptr)))(void *)&CODEIT(code,0)))(tc);
+    (*((void (*)(ptr))(void *)&CODEIT(code,0)))(tc);
 #endif
 }
 
@@ -452,9 +452,9 @@ void S_generic_invoke(ptr tc, ptr code) {
 /* MISCELLANEOUS HELPERS */
 
 /* locally defined functions */
-static IBOOL next_path PROTO((char *path, const char *name, const char *ext, const char **sp, const char **dsp));
-static const char *path_last PROTO((const char *path));
-static char *get_defaultheapdirs PROTO((void));
+static IBOOL next_path(char *path, const char *name, const char *ext, const char **sp, const char **dsp);
+static const char *path_last(const char *path);
+static char *get_defaultheapdirs(void);
 
 static const char *path_last(const char *p) {
   const char *s;
@@ -613,11 +613,11 @@ typedef struct {
 static boot_desc bd[MAX_BOOT_FILES];
 
 /* locally defined functions */
-static octet get_u8 PROTO((INT fd));
-static uptr get_uptr PROTO((INT fd, uptr *pn));
-static INT get_string PROTO((INT fd, char *s, iptr max, INT *c));
-static void load PROTO((ptr tc, iptr n, IBOOL base));
-static void check_boot_file_state PROTO((const char *who));
+static octet get_u8(INT fd);
+static uptr get_uptr(INT fd, uptr *pn);
+static INT get_string(INT fd, char *s, iptr max, INT *c);
+static void load(ptr tc, iptr n, IBOOL base);
+static void check_boot_file_state(const char *who);
 
 static IBOOL check_boot(int fd, IBOOL verbose, const char *path) {
   uptr n = 0;

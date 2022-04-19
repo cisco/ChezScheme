@@ -25,33 +25,33 @@
 #include "system.h"
 
 /* locally defined functions */
-static ptr copy_normalize PROTO((ptr tc, const bigit *p, iptr len, IBOOL sign));
-static IBOOL abs_big_lt PROTO((ptr x, ptr y, iptr xl, iptr yl));
-static IBOOL abs_big_eq PROTO((ptr x, ptr y, iptr xl, iptr yl));
-static ptr big_negate PROTO((ptr tc, ptr x));
-static ptr big_add_pos PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL sign));
-static ptr big_add_neg PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL sign));
-static ptr big_add PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys));
-static ptr big_mul PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL sign));
-static void big_short_trunc PROTO((ptr tc, ptr x, bigit s, iptr xl, IBOOL qs, IBOOL rs, ptr *q, ptr *r));
-static void big_trunc PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL qs, IBOOL rs, ptr *q, ptr *r));
-static INT normalize PROTO((bigit *xp, bigit *yp, iptr xl, iptr yl));
-static bigit quotient_digit PROTO((ptr tc, bigit *xp, bigit *yp, iptr yl));
-static bigit qhat PROTO((bigit *xp, bigit *yp));
-static ptr big_short_gcd PROTO((ptr tc, ptr x, bigit y, iptr xl));
-static ptr big_gcd PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl));
-static ptr s_big_ash PROTO((ptr tc, bigit *xp, iptr xl, IBOOL sign, iptr cnt));
-static double big_short_floatify PROTO((ptr tc, ptr x, bigit s, iptr xl, IBOOL sign));
-static double big_floatify PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL sign));
-static double floatify_normalize PROTO((bigit *p, iptr e, IBOOL sign, IBOOL sticky));
-static double floatify_ratnum PROTO((ptr tc, ptr x));
-static ptr big_logbitp PROTO((iptr n, ptr x, iptr xl, IBOOL xs));
-static ptr big_logbit0 PROTO((ptr tc, ptr origx, iptr n, ptr x, iptr xl, IBOOL xs));
-static ptr big_logbit1 PROTO((ptr tc, ptr origx, iptr n, ptr x, iptr xl, IBOOL xs));
-static ptr big_logtest PROTO((ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys));
-static ptr big_logand PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys));
-static ptr big_logor PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys));
-static ptr big_logxor PROTO((ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys));
+static ptr copy_normalize(ptr tc, const bigit *p, iptr len, IBOOL sign);
+static IBOOL abs_big_lt(ptr x, ptr y, iptr xl, iptr yl);
+static IBOOL abs_big_eq(ptr x, ptr y, iptr xl, iptr yl);
+static ptr big_negate(ptr tc, ptr x);
+static ptr big_add_pos(ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL sign);
+static ptr big_add_neg(ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL sign);
+static ptr big_add(ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys);
+static ptr big_mul(ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL sign);
+static void big_short_trunc(ptr tc, ptr x, bigit s, iptr xl, IBOOL qs, IBOOL rs, ptr *q, ptr *r);
+static void big_trunc(ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL qs, IBOOL rs, ptr *q, ptr *r);
+static INT normalize(bigit *xp, bigit *yp, iptr xl, iptr yl);
+static bigit quotient_digit(ptr tc, bigit *xp, bigit *yp, iptr yl);
+static bigit qhat(bigit *xp, bigit *yp);
+static ptr big_short_gcd(ptr tc, ptr x, bigit y, iptr xl);
+static ptr big_gcd(ptr tc, ptr x, ptr y, iptr xl, iptr yl);
+static ptr s_big_ash(ptr tc, bigit *xp, iptr xl, IBOOL sign, iptr cnt);
+static double big_short_floatify(ptr tc, ptr x, bigit s, iptr xl, IBOOL sign);
+static double big_floatify(ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL sign);
+static double floatify_normalize(bigit *p, iptr e, IBOOL sign, IBOOL sticky);
+static double floatify_ratnum(ptr tc, ptr x);
+static ptr big_logbitp(iptr n, ptr x, iptr xl, IBOOL xs);
+static ptr big_logbit0(ptr tc, ptr origx, iptr n, ptr x, iptr xl, IBOOL xs);
+static ptr big_logbit1(ptr tc, ptr origx, iptr n, ptr x, iptr xl, IBOOL xs);
+static ptr big_logtest(ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys);
+static ptr big_logand(ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys);
+static ptr big_logor(ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys);
+static ptr big_logxor(ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys);
 
 /* use w/o trailing semicolon */
 #define PREPARE_BIGNUM(tc,x,l)\

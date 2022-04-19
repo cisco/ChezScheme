@@ -51,21 +51,21 @@
 #endif /* LOAD_SHARED_OBJECT */
 
 /* locally defined functions */
-static iptr symhash PROTO((const char *s));
-static ptr lookup_static PROTO((const char *s));
+static iptr symhash(const char *s);
+static ptr lookup_static(const char *s);
 #ifdef LOAD_SHARED_OBJECT
-static ptr lookup_dynamic PROTO((const char *s, ptr tbl));
+static ptr lookup_dynamic(const char *s, ptr tbl);
 #endif
-static ptr lookup PROTO((const char *s));
-static ptr remove_foreign_entry PROTO((const char *s));
-static ptr lookup_foreign_entry PROTO((const char *s));
-static ptr foreign_entries PROTO((void));
-static ptr foreign_static_table PROTO((void));
-static ptr foreign_dynamic_table PROTO((void));
-static ptr bvstring PROTO((const char *s));
+static ptr lookup(const char *s);
+static ptr remove_foreign_entry(const char *s);
+static ptr lookup_foreign_entry(const char *s);
+static ptr foreign_entries(void);
+static ptr foreign_static_table(void);
+static ptr foreign_dynamic_table(void);
+static ptr bvstring(const char *s);
 
 #ifdef LOAD_SHARED_OBJECT
-static void load_shared_object PROTO((const char *path));
+static void load_shared_object(const char *path);
 #endif /* LOAD_SHARED_OBJECT */
 
 #ifdef HPUX

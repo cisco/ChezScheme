@@ -20,8 +20,8 @@ static thread_gc *free_thread_gcs;
 
 /* locally defined functions */
 #ifdef PTHREADS
-static s_thread_rv_t start_thread PROTO((void *tc));
-static IBOOL destroy_thread PROTO((ptr tc));
+static s_thread_rv_t start_thread(void *tc);
+static IBOOL destroy_thread(ptr tc);
 #endif
 
 void S_thread_init(void) {

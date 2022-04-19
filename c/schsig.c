@@ -18,12 +18,12 @@
 #include <setjmp.h>
 
 /* locally defined functions */
-static void split PROTO((ptr k, ptr *s));
-static void reset_scheme PROTO((void));
-static NORETURN void do_error PROTO((iptr type, const char *who, const char *s, ptr args));
-static void handle_call_error PROTO((ptr tc, iptr type, ptr x));
-static void init_signal_handlers PROTO((void));
-static void keyboard_interrupt PROTO((ptr tc));
+static void split(ptr k, ptr *s);
+static void reset_scheme(void);
+static NORETURN void do_error(iptr type, const char *who, const char *s, ptr args);
+static void handle_call_error(ptr tc, iptr type, ptr x);
+static void init_signal_handlers(void);
+static void keyboard_interrupt(ptr tc);
 
 static void (*register_modified_signal)(int);
 
@@ -602,10 +602,10 @@ static void init_signal_handlers(void) {
 
 #include <signal.h>
 
-static void handle_signal PROTO((INT sig, siginfo_t *si, void *data));
-static IBOOL enqueue_scheme_signal PROTO((ptr tc, INT sig));
-static ptr allocate_scheme_signal_queue PROTO((void));
-static void forward_signal_to_scheme PROTO((INT sig));
+static void handle_signal(INT sig, siginfo_t *si, void *data);
+static IBOOL enqueue_scheme_signal(ptr tc, INT sig);
+static ptr allocate_scheme_signal_queue(void);
+static void forward_signal_to_scheme(INT sig);
 
 #define RESET_SIGNAL {\
     sigset_t set;\

@@ -196,49 +196,49 @@
 */
 
 /* locally defined functions */
-static IGEN copy PROTO((thread_gc *tgc, ptr pp, seginfo *si, ptr *dest));
-static IGEN mark_object PROTO((thread_gc *tgc, ptr pp, seginfo *si));
-static void sweep PROTO((thread_gc *tgc, ptr p, IGEN from_g));
-static void sweep_in_old PROTO((thread_gc *tgc, ptr p));
-static void sweep_object_in_old PROTO((thread_gc *tgc, ptr p));
-static IBOOL object_directly_refers_to_self PROTO((ptr p));
-static ptr copy_stack PROTO((thread_gc *tgc, ptr old, iptr *length, iptr clength));
-static void resweep_weak_pairs PROTO((seginfo *oldweakspacesegments));
-static void forward_or_bwp PROTO((ptr *pp, ptr p));
-static void sweep_generation PROTO((thread_gc *tgc));
-static iptr sweep_from_stack PROTO((thread_gc *tgc));
-static void enlarge_stack PROTO((thread_gc *tgc, ptr *stack, ptr *stack_start, ptr *stack_limit, uptr grow_at_least));
-static uptr size_object PROTO((ptr p));
-static iptr sweep_typed_object PROTO((thread_gc *tgc, ptr p, IGEN from_g));
-static void sweep_symbol PROTO((thread_gc *tgc, ptr p, IGEN from_g));
-static void sweep_port PROTO((thread_gc *tgc, ptr p, IGEN from_g));
-static void sweep_thread PROTO((thread_gc *tgc, ptr p));
-static void sweep_continuation PROTO((thread_gc *tgc, ptr p, IGEN from_g));
-static void sweep_record PROTO((thread_gc *tgc, ptr x, IGEN from_g));
-static IGEN sweep_dirty_record PROTO((thread_gc *tgc, ptr x, IGEN youngest));
-static IGEN sweep_dirty_port PROTO((thread_gc *tgc, ptr x, IGEN youngest));
-static IGEN sweep_dirty_symbol PROTO((thread_gc *tgc, ptr x, IGEN youngest));
-static void sweep_code_object PROTO((thread_gc *tgc, ptr co, IGEN from_g));
-static void record_dirty_segment PROTO((IGEN from_g, IGEN to_g, seginfo *si));
-static void setup_sweep_dirty PROTO((thread_gc *tgc));
-static uptr sweep_dirty_segments PROTO((thread_gc *tgc, seginfo **dirty_segments));
-static void resweep_dirty_weak_pairs PROTO((thread_gc *tgc));
-static void mark_untyped_data_object PROTO((thread_gc *tgc, ptr p, uptr len, seginfo *si));
-static void add_pending_guardian PROTO((ptr gdn, ptr tconc));
-static void add_trigger_guardians_to_recheck PROTO((ptr ls));
-static void add_ephemeron_to_pending PROTO((thread_gc *tgc, ptr p));
-static void add_trigger_ephemerons_to_pending PROTO((thread_gc *tgc, ptr p));
-static void check_triggers PROTO((thread_gc *tgc, seginfo *si));
-static void check_ephemeron PROTO((thread_gc *tgc, ptr pe));
-static void check_pending_ephemerons PROTO((thread_gc *tgc));
-static int check_dirty_ephemeron PROTO((thread_gc *tgc, ptr pe, int youngest));
-static void finish_pending_ephemerons PROTO((thread_gc *tgc, seginfo *si));
+static IGEN copy(thread_gc *tgc, ptr pp, seginfo *si, ptr *dest);
+static IGEN mark_object(thread_gc *tgc, ptr pp, seginfo *si);
+static void sweep(thread_gc *tgc, ptr p, IGEN from_g);
+static void sweep_in_old(thread_gc *tgc, ptr p);
+static void sweep_object_in_old(thread_gc *tgc, ptr p);
+static IBOOL object_directly_refers_to_self(ptr p);
+static ptr copy_stack(thread_gc *tgc, ptr old, iptr *length, iptr clength);
+static void resweep_weak_pairs(seginfo *oldweakspacesegments);
+static void forward_or_bwp(ptr *pp, ptr p);
+static void sweep_generation(thread_gc *tgc);
+static iptr sweep_from_stack(thread_gc *tgc);
+static void enlarge_stack(thread_gc *tgc, ptr *stack, ptr *stack_start, ptr *stack_limit, uptr grow_at_least);
+static uptr size_object(ptr p);
+static iptr sweep_typed_object(thread_gc *tgc, ptr p, IGEN from_g);
+static void sweep_symbol(thread_gc *tgc, ptr p, IGEN from_g);
+static void sweep_port(thread_gc *tgc, ptr p, IGEN from_g);
+static void sweep_thread(thread_gc *tgc, ptr p);
+static void sweep_continuation(thread_gc *tgc, ptr p, IGEN from_g);
+static void sweep_record(thread_gc *tgc, ptr x, IGEN from_g);
+static IGEN sweep_dirty_record(thread_gc *tgc, ptr x, IGEN youngest);
+static IGEN sweep_dirty_port(thread_gc *tgc, ptr x, IGEN youngest);
+static IGEN sweep_dirty_symbol(thread_gc *tgc, ptr x, IGEN youngest);
+static void sweep_code_object(thread_gc *tgc, ptr co, IGEN from_g);
+static void record_dirty_segment(IGEN from_g, IGEN to_g, seginfo *si);
+static void setup_sweep_dirty(thread_gc *tgc);
+static uptr sweep_dirty_segments(thread_gc *tgc, seginfo **dirty_segments);
+static void resweep_dirty_weak_pairs(thread_gc *tgc);
+static void mark_untyped_data_object(thread_gc *tgc, ptr p, uptr len, seginfo *si);
+static void add_pending_guardian(ptr gdn, ptr tconc);
+static void add_trigger_guardians_to_recheck(ptr ls);
+static void add_ephemeron_to_pending(thread_gc *tgc, ptr p);
+static void add_trigger_ephemerons_to_pending(thread_gc *tgc, ptr p);
+static void check_triggers(thread_gc *tgc, seginfo *si);
+static void check_ephemeron(thread_gc *tgc, ptr pe);
+static void check_pending_ephemerons(thread_gc *tgc);
+static int check_dirty_ephemeron(thread_gc *tgc, ptr pe, int youngest);
+static void finish_pending_ephemerons(thread_gc *tgc, seginfo *si);
 static void init_fully_marked_mask(thread_gc *tgc, IGEN g);
 static void copy_and_clear_list_bits(thread_gc *tgc, seginfo *oldspacesegments);
 
 #ifdef ENABLE_OBJECT_COUNTS
 static uptr total_size_so_far();
-static uptr list_length PROTO((ptr ls));
+static uptr list_length(ptr ls);
 #endif
 static uptr target_generation_space_so_far(thread_gc *tgc);
 
@@ -456,7 +456,7 @@ static int num_sweepers;
 # define parallel_sweep_dirty_and_generation(tgc) do { sweep_dirty(tgc); sweep_generation(tgc); } while (0)
 # define send_and_receive_remote_sweeps(tgc) do { } while (0)
 # define teardown_sweepers() do { } while (0)
-static void sweep_dirty PROTO((thread_gc *tgc));
+static void sweep_dirty(thread_gc *tgc);
 
 # define PARALLEL_UNUSED    /* empty */
 # define NO_PARALLEL_UNUSED UNUSED
