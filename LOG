@@ -2280,3 +2280,5 @@
     c/foreign.c c/gc.c c/gcwrapper.c c/intern.c c/io.c c/new-io.c c/number.c
     c/prim.c c/prim5.c c/print.c c/scheme.c c/schlib.c c/schsig.c c/segment.c
     c/thread.c mats/foreign3.c s/mkheader.ss
+- update lz4 to version 1.9.3
+    configure
