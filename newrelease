@@ -133,7 +133,10 @@ sed -e "s/scheme-version #x......../scheme-version #x$VNUM/" ../s/cmacros.ss > s
 set maybeupdatedfiles = ($maybeupdatedfiles s/cmacros.ss)
 
 mkdir release_notes
-sed -e "s/thisversion{Version [^ ]*}/thisversion{Version $R}/" ../release_notes/release_notes.stex > release_notes/release_notes.stex
+sed -e "s/thisversion{Version [^ ]*}/thisversion{Version $R}/" \
+    -e "s/pubmonth{.*}/pubmonth{`date +%B`}/" \
+    -e "s/pubyear{.*}/pubyear{`date +%Y`}/" \
+  ../release_notes/release_notes.stex > release_notes/release_notes.stex
 set maybeupdatedfiles = ($maybeupdatedfiles release_notes/release_notes.stex)
 
 mkdir csug
