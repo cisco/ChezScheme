@@ -65,8 +65,7 @@ is <tt>(<i>irritant</i>&nbsp;...)</tt>.
 
 <p>
 <tt><i>who</i></tt> must be a string, a symbol, or <tt>#f</tt> identifying the procedure
-or syntactic form reporting the warning upon whose behalf the warning is being
-reported.
+or syntactic form reporting the warning.
 It is usually best to identify a procedure the programmer has called rather
 than some other procedure the programmer may not be aware is involved in
 carrying out the operation.
@@ -906,7 +905,7 @@ procedures <a name="./system:s40"></a><tt>eval</tt>, <tt>load</tt>, and
 <a name="./system:s41"></a><tt>compile</tt>.
 (In <i>Petite&nbsp;Chez&nbsp;Scheme</i>, it is initially bound to the value of
 <a name="./system:s42"></a><tt>interpret</tt>.)
-The evaluation procedureshould expect one or two arguments: an object
+The evaluation procedure should expect one or two arguments: an object
 to evaluate and an optional environment.
 The second argument might be an annotation
 (Section&nbsp;<a href="./syntax.html#g109">11.11</a>).
@@ -1088,7 +1087,7 @@ A library search path must be a suitable argument for
 
 <p>
 <tt>verify-loadability</tt> verifies, without actually loading any
-code or definining any libraries, whether the object files named
+code or defining any libraries, whether the object files named
 by the specified pathnames and their library dependencies, direct
 or indirect, are present, readable, and mutually compatible.
 The type of dependencies for each named object file is determined
@@ -1104,7 +1103,7 @@ of the programs and libraries found in the object file named by the
 pathname.
 
 <p>
-If <tt>verify-loadabilty</tt> finds a problem, such as a missing
+If <tt>verify-loadability</tt> finds a problem, such as a missing
 library dependency or compilation-instance mismatch, it raises an
 exception with an appropriate condition.
 Otherwise, it returns an unspecified value.
@@ -5789,10 +5788,10 @@ It is typically used only for system debugging.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2021 Cisco Systems, Inc.<br>
+Copyright &copy; 2022 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised November 2021 for Chez Scheme Version 9.5.6<br>
+Revised April 2022 for Chez Scheme Version 9.5.8<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

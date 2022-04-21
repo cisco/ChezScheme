@@ -168,7 +168,7 @@ executable once the shell has transferred control.
 <p>
 <tt>process</tt> is similar to <tt>open-process-ports</tt>, but less
 general.
-It does not return a port from which the subproces's standard error output
+It does not return a port from which the subprocess's standard error output
 can be read, and it always creates textual ports.
 It returns a list of three values rather than the four separate values
 of <tt>open-process-ports</tt>.
@@ -1734,9 +1734,9 @@ takes two arguments, a wide character and an integer, and returns an
 integer.
 The ftype <tt>A</tt> is simply an array of 10 <tt>wchar_t</tt> values,
 and its size will be 10 times the size of a single <tt>wchar_t</tt>.
-The ftype <tt>E</tt> is a structure with five fields: an integer
+The ftype <tt>E</tt> is a structure with six fields: an integer
 <tt>a</tt>, a double-float <tt>b</tt>, an array <tt>c</tt>, a
-union <tt>d</tt>, and a pointer <tt>e</tt>.
+union <tt>d</tt>, a pointer <tt>e</tt>, and a pointer <tt>f</tt>.
 The array <tt>c</tt> is an array of 25 structs, each of which
 contains a short integer, a long integer, and a <tt>A</tt> array.
 The size of the <tt>c</tt> array will be 25 times the size of a
@@ -1882,6 +1882,7 @@ The <tt>native</tt> specifier can be used to force a return
 back to <tt>native</tt> representation.
 Each <tt>endian</tt> form affects only ftypes nested syntactically
 within it and not nested within a closer <tt>endian</tt> form.
+The endianness of an ftype is fixed once it is defined.
 
 <p>
 The total size <i>n</i> of the fields within an ftype bits form must
@@ -4628,10 +4629,10 @@ server:<br>
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2021 Cisco Systems, Inc.<br>
+Copyright &copy; 2022 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised November 2021 for Chez Scheme Version 9.5.6<br>
+Revised April 2022 for Chez Scheme Version 9.5.8<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>

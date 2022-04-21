@@ -399,7 +399,7 @@ read via the transcoder appears at the beginning of the underlying data
 stream or file only if the binary port passed to <tt>transcoded-port</tt>
 is positioned at the start of the data stream or file.
 When the transcoder can determine this is the case, it sets a flag that
-causes <tt>set-port-position!</tt>) to position the port beyond the BOM if
+causes <tt>set-port-position!</tt> to position the port beyond the BOM if
 an attempt is made to reposition the port to the start of the data stream
 or file, so that the BOM is preserved.
 
@@ -3446,7 +3446,7 @@ common control structures, e.g., around <tt>let</tt> bindings and
 
 <p>Chez Scheme extends the syntax of identifiers as described in
 Section&nbsp;<a href="./intro.html#g1">1.1</a>, except within a set of forms prefixed by
-<tt>#!r6rs</tt> (which is implied by in a library or top-level program).
+<tt>#!r6rs</tt> (which is implied in a library or top-level program).
 
 <p>
 When this parameter is set to false (the default), identifiers in the
@@ -4925,10 +4925,10 @@ subprocess is terminated.
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2021 Cisco Systems, Inc.<br>
+Copyright &copy; 2022 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised November 2021 for Chez Scheme Version 9.5.6<br>
+Revised April 2022 for Chez Scheme Version 9.5.8<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
