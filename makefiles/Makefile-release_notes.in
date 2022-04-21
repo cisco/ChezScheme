@@ -1,7 +1,9 @@
-# srcdir and m are added before
+srcdir=oops-missing-srcdir
+installdir=oops-missing-installdir
+m=oops-missing-m
+STEXLIB=oops-missing-stexlib
+# Zuo overrides the above variables when running `make`
 Scheme=../bin/$m/scheme -b ../boot/$m/petite.boot -b ../boot/$m/scheme.boot
-STEXLIB=$(srcdir)/../stex
-installdir=/tmp/csv9
 INSTALL=$(srcdir)/../makefiles/installsh
 
 # define default document pathname here

@@ -139,19 +139,49 @@
                          vars))
            token))
 
-  (define (build-docs token target)
-    (check-not-kernel-only)
-    (define (do-doc name)
-      (mkdir-p (at-dir name))
-      (define mf (~a "m=" m "\n"
-                     "srcdir=" (find-relative-path (at-dir name) (at-source name)) "\n"
-                     (file->string (at-source (~a "makefiles/Makefile-" name ".in")))))
-      (display-to-file mf (at-dir name "Makefile") :truncate)
-      (shell/wait (hash-ref config 'MAKE "make")
+  (define stexlib
+    (let ((found (assoc "STEXLIB" (hash-ref (runtime-env) 'env))))
+      (if found
+          (cdr found)
+          (at-source "stex"))))
+  (define stex-sources
+    (source-tree stexlib))
+
+  (define doc-project-names
+    ;; happily, the name of the subdirectory is the same as
+    ;; value assigned to `x` in the corresponding makefile
+    '("csug" "release_notes"))
+  (define doc-install-dir-keys
+    ;; in parallel to doc-project-names
+    '(InstallCSUG InstallReleaseNotes))
+  (define (targets-for-doc name install-dir-key)
+    (define mf-in (at-source "makefiles" (~a "Makefile-" name ".in")))
+    (define mf-out (at-dir name "Makefile"))
+    (define name-sym (string->symbol name))
+    (define (run-make target)
+      (check-not-kernel-only)
+      (define (->rel-shell pth)
+        (string->shell (find-relative-path (at-dir name) pth)))
+      (shell/wait "make"
+                  (~a "m=" m)
+                  (~a "srcdir=" (->rel-shell (at-source name)))
+                  (~a "installdir="
+                      (->rel-shell (hash-ref config install-dir-key)))
+                  (~a "STEXLIB=" (->rel-shell stexlib))
                   target
                   (hash 'dir (at-dir name))))
-    (do-doc "csug")
-    (do-doc "release_notes"))
+    `([:target ,mf-out (,mf-in)
+               ,(lambda (path token)
+                  (mkdir-p (at-dir name))
+                  (cp mf-in mf-out))]
+      [:target ,name-sym (,mf-out
+                          ,@(source-tree (at-source name))
+                          ,@stex-sources)
+               ,(lambda (token . args)
+                  (run-make ""))]
+      [:target ,(string->symbol (~a "install-" name)) (,name-sym)
+               ,(lambda (token . args)
+                  (run-make "install"))]))
 
   (define (clean-links dir)
     (for-each (lambda (p)
@@ -275,13 +305,13 @@
                    (build (map (lambda (f) (find-target f the-targets)) boot-files)
                           token))]
 
-       [:target docs (build)
-                ,(lambda (token)
-                   (build-docs token ""))]
-
-       [:target install-docs (build)
-                ,(lambda (token)
-                   (build-docs token "install"))]
+       ,@(apply append (map targets-for-doc
+                            doc-project-names
+                            doc-install-dir-keys))
+       [:target docs (csug release_notes)
+                ,void]
+       [:target install-docs (install-csug install-release_notes)
+                ,void]
 
 
        [:target rpm ()

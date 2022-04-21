@@ -80,9 +80,25 @@ from-orig: $(ZUO)
 docs: build $(ZUO)
 	$(ZUO) $(workarea) docs MAKE="$(MAKE)"
 
-.PHONY: docs-install
+.PHONY: csug
+csug: build $(ZUO)
+	$(ZUO) $(workarea) csug MAKE="$(MAKE)"
+
+.PHONY: release_notes
+release_notes: build $(ZUO)
+	$(ZUO) $(workarea) release_notes MAKE="$(MAKE)"
+
+.PHONY: install-docs
 install-docs: build $(ZUO)
 	$(ZUO) $(workarea) install-docs MAKE="$(MAKE)"
+
+.PHONY: install-csug
+install-csug: build $(ZUO)
+	$(ZUO) $(workarea) install-csug MAKE="$(MAKE)"
+
+.PHONY: install-release_notes
+install-release_notes: build $(ZUO)
+	$(ZUO) $(workarea) install-release_notes MAKE="$(MAKE)"
 
 .PHONY: bintar
 bintar: $(ZUO)
