@@ -147,7 +147,8 @@
                      "srcdir=" (find-relative-path (at-dir name) (at-source name)) "\n"
                      (file->string (at-source (~a "makefiles/Makefile-" name ".in")))))
       (display-to-file mf (at-dir name "Makefile") :truncate)
-      (shell/wait "make" target
+      (shell/wait (hash-ref config 'MAKE "make")
+                  target
                   (hash 'dir (at-dir name))))
     (do-doc "csug")
     (do-doc "release_notes"))
@@ -287,7 +288,7 @@
                 ,(lambda (token)
                    (mkdir-p (at-dir "rpm"))
                    (cp/ln (at-source "rpm/Makefile") (at-dir "rpm/Makefile"))
-                   (shell/wait "make"
+                   (shell/wait (hash-ref config 'MAKE "make")
                                (hash 'dir (at-dir "rpm"))))]
 
        [:target pkg ()
@@ -295,7 +296,7 @@
                    (mkdir-p (at-dir "pkg"))
                    (cp/ln (at-source "pkg/Makefile") (at-dir "pkg/Makefile"))
                    (cp/ln (at-source "pkg/rmpkg") (at-dir "pkg/rmpkg"))
-                   (shell/wait "make"
+                   (shell/wait (hash-ref config 'MAKE "make")
                                (hash 'dir (at-dir "pkg"))))]
 
        ,@(if (eq? 'windows (system-type))
