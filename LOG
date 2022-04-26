@@ -2304,3 +2304,5 @@
     csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
     wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
     wininstall/ta6nt.wxs wininstall/ti3nt.wxs
+- fix arm32le compilation systems using musl libc
+    c/arm32le.c
