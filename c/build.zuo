@@ -272,10 +272,8 @@
                              (or (lookup 'mdldflags) "")
                              "-o" (string->shell path)
                              (apply build-shell (map string->shell kernel-objs))
-                             (lookup 'LDFLAGS)
                              (string->shell (or zlib-system-lib zlib-lib))
-                             (string->shell (or lz4-system-lib lz4-lib))
-                             (lookup 'LIBS)))]
+                             (string->shell (or lz4-system-lib lz4-lib))))]
 
      [:target ,zlib-lib ,(source-tree (at-source "../zlib"))
               ,(lambda (path token)
