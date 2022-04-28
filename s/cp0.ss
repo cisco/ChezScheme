@@ -969,9 +969,15 @@
             (boolean? obj)
             (null? obj)
             (eqv? obj "")
+            (eqv? obj (string->immutable-string ""))
             (eqv? obj '#())
+            (eqv? obj (vector->immutable-vector '#()))
             (eqv? obj '#vu8())
+            (eqv? obj (bytevector->immutable-bytevector '#vu8()))
             (eqv? obj '#vfx())
+            ; no null-immutable-fxvector
+            (eqv? obj '#vfl())
+            ; no null-immutable-flvector
             (eq? obj (void))
             (eof-object? obj)
             (bwp-object? obj)

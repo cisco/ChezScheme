@@ -1177,7 +1177,7 @@
   (bytevector [sig [(u8/s8 ...) -> (bytevector)]] [flags alloc cp02])
   (bytevector->s8-list [sig [(bytevector) -> (list)]] [flags alloc])
   (bytevector-truncate! [sig [(bytevector length) -> (bytevector)]] [flags true])
-  (bytevector->immutable-bytevector [sig [(bytevector) -> (bytevector)]] [flags alloc])
+  (bytevector->immutable-bytevector [sig [(bytevector) -> (bytevector)]] [flags alloc safeongoodargs])
   (bytevector-reference-ref [sig [(sub-bytevector sub-index) -> (ptr)]] [flags mifoldable discard])
   (bytevector-reference*-ref [sig [(sub-bytevector sub-index) -> (ptr)]] [flags mifoldable discard])
   (bytevector-reference-set! [sig [(sub-bytevector sub-index sub-ptr) -> (void)]] [flags true])
