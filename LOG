@@ -2306,3 +2306,6 @@
     wininstall/ta6nt.wxs wininstall/ti3nt.wxs
 - fix arm32le compilation systems using musl libc
     c/arm32le.c
+- added install-docs target for make and corresponding configuration
+  options: --installdoc, --installcsug, and --installreleasenotes
+    configure makefiles/Makefile.in
