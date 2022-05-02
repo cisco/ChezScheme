@@ -1296,7 +1296,7 @@ Compiled files (including boot files) for a basic pb build work on all
 platforms, while compiled files for a non-basic pb build have a
 specific word size and endianness for improved performance. Run
 "configure" with `--pb` for a basic build, or run "configure" with
-`--pbarch` for a non-basic build.
+`--pbarch` or `-m=<pb-machine-type>` for a non-basic build.
 
 A basic build can work on all platforms because it assumes a 64-bit
 representation of Scheme values. On a 32-bit platform, the kernel is
@@ -1368,7 +1368,7 @@ in "boot/tpb64l-demo".
 To build with the assembled pbchunk configuration, use
 
 ```bash
-./configure --boot=<machine-type>-<tag> --pbarch
+./configure --boot=<machine-type>-<tag> -m=<machine-type>
 ```
 
 which configures a build using prepared "boot/*machine-type*-*tag*"

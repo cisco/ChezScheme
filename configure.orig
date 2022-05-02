@@ -383,8 +383,8 @@ if [ $emscripten = yes ] ; then
 fi
 
 case "$m" in
-    pb)
-        echo "Don't select pb using -m or --machine, because pb prefers to use the"
+    *pb*)
+        echo "Don't select pb using -m or --machine, because pb needs the"
         echo " machine as the kernel host machine. Instead, use --pb or --pbarch"
         echo " to select a pb (portable bytecode) build."
         exit 1
@@ -431,7 +431,14 @@ if [ "$m" = "" ] ; then
      if [ $bits = 64 ] ; then mpbhost=$m64 ; else mpbhost=$m32 ; fi
      flagsm=$mpbhost
      if [ "$mpbhost" = "" ] ; then
-         flagsm=unknown
+         echo "Could not infer current machine type."
+         echo ""
+         echo "Even for a pb build, a machine type is needed to select C compiler"
+         echo "and linker flags. You can use"
+         echo "  $0 --pb -m=<machine type>"
+         echo "to specify the available machine type, but since it wasn't inferred,"
+         echo "probably your OS and architecture combination is not supported."
+         exit 1
      fi
   else
     m=$defaultm
@@ -502,12 +509,12 @@ if [ "$help" = "yes" ]; then
   echo ""
   echo "Options (defaults shown in parens):"
   echo "  --machine=<machine type>          explicitly specify machine type ($m)"
-  echo "  -m=<machine type>                 same as --machine=<machine type> ($m)"
+  echo "  -m=<machine type>                 same as --machine <machine type> ($m)"
   echo "  --threads                         specify threaded version ($threads)"
   echo "  --nothreads                       specify non-threaded version ($nothreads)"
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
   echo "  --pb                              specify pb (portable bytecode) version"
-  echo "  --pbarch                          specify pb with inferred word and endianness"
+  echo "  --pbarch                          specify pb with host word and endianness"
   echo "  --emscripten                      build via emscripten (\"em\" tool prefix)"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
@@ -914,7 +921,7 @@ else
       echo "Alternatively, since no directory in "'"boot"'" exists for $m,"
       echo "you can try using Racket v7.1 or later with"
   fi
-  echo "  racket rktboot/main.rkt --machine=$maybem"
+  echo "  racket rktboot/main.rkt --machine $maybem"
   echo "to create the boot files, and then try $0 again."
   exit 1
 fi
