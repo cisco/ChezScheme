@@ -25,7 +25,8 @@
 /*****************************************/
 /* Architectures                         */
 
-#if (defined(__powerpc__) || defined(__POWERPC__)) && !defined(__powerpc64__)
+#if ((defined(__powerpc__) || defined(__POWERPC__)) && !defined(__powerpc64__)) \
+ || defined(__sparc__)
 # define PORTABLE_BYTECODE_BIGENDIAN
 # define BIG_ENDIAN_IEEE_DOUBLE
 # define FLUSHCACHE

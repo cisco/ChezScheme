@@ -370,24 +370,24 @@ void S_ffi_call(ptr types, ptr proc, ptr *arena) {
       /* adjust arguments that are not ptr-sized or not encoded as doubles/iptrs */
       switch(UNFIX(type)) {
 #   ifdef PORTABLE_BYTECODE_BIGENDIAN
-      case ffi_typered_uint8:
-      case ffi_typered_sint8:
+      case ffi_typerep_uint8:
+      case ffi_typerep_sint8:
         {
           U8 s;
           s = *arena;
           memcpy(arena, &s, sizeof(U8));
         }
         break;
-      case ffi_typered_uint16:
-      case ffi_typered_sint16:
+      case ffi_typerep_uint16:
+      case ffi_typerep_sint16:
         {
           U16 s;
           s = *arena;
           memcpy(arena, &s, sizeof(U16));
         }
         break;
-      case ffi_typered_uint32:
-      case ffi_typered_sint32:
+      case ffi_typerep_uint32:
+      case ffi_typerep_sint32:
         {
           U32 s;
           s = *arena;
@@ -446,28 +446,28 @@ void S_ffi_call(ptr types, ptr proc, ptr *arena) {
       /* adjust arguments that are not ptr-sized or not encoded as doubles/iptrs */
       switch(UNFIX(ret_type)) {
 #   ifdef PORTABLE_BYTECODE_BIGENDIAN
-      case ffi_typered_uint8:
-      case ffi_typered_sint8:
+      case ffi_typerep_uint8:
+      case ffi_typerep_sint8:
         {
           U8 s;
-          memcpy(&s, arena_start, &s, sizeof(U8));
-          *arena = (ptr)s;
+          memcpy(&s, arena_start, sizeof(U8));
+          *arena_start = (ptr)s;
         }
         break;
-      case ffi_typered_uint16:
-      case ffi_typered_sint16:
+      case ffi_typerep_uint16:
+      case ffi_typerep_sint16:
         {
           U16 s;
-          memcpy(&s, arena_start, &s, sizeof(U16));
-          *arena = (ptr)s;
+          memcpy(&s, arena_start, sizeof(U16));
+          *arena_start = (ptr)s;
         }
         break;
-      case ffi_typered_uint32:
-      case ffi_typered_sint32:
+      case ffi_typerep_uint32:
+      case ffi_typerep_sint32:
         {
           U32 s;
-          memcpy(&s, arena_start, &s, sizeof(U32));
-          *arena = (ptr)s;
+          memcpy(&s, arena_start, sizeof(U32));
+          *arena_start = (ptr)s;
         }
         break;
 #   endif

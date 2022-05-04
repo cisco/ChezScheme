@@ -150,11 +150,13 @@ static ptr fixtest = FIX(-1);
 static void idiot_checks(void) {
   IBOOL oops = 0;
 
+#ifndef PORTABLE_BYTECODE
   if (bytes_per_segment < S_pagesize) {
     fprintf(stderr, "bytes_per_segment (%x) < S_pagesize (%lx)\n",
               bytes_per_segment, (long)S_pagesize);
     oops = 1;
   }
+#endif
   if (sizeof(iptr) != sizeof(ptr)) {
     fprintf(stderr, "sizeof(iptr) [%ld] != sizeof(ptr) [%ld]\n",
               (long)sizeof(iptr), (long)sizeof(ptr));
