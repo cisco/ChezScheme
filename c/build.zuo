@@ -431,7 +431,7 @@
      #;(end-make-targets))))
 
 (define (is-msvc? config)
-  (eq? 'windows (system-type)))
+  (eq? 'windows (hash-ref (runtime-env) 'toolchain-type)))
 
 (define (win-config config)
   (cond
@@ -451,6 +451,9 @@
             [config (hash-set config 'LDFLAGS (if (as-runtime-dll? config) "/MD" "/MT"))]
             [config (hash-set config 'LIBS "rpcrt4.lib ole32.lib advapi32.lib User32.lib")])
        config)]
+    [(and (eq? 'windows (system-type))
+          (glob-match? "pb*" (hash-ref config 'm)))
+     (config-merge config 'CFLAGS "-DFEATURE_WINDOWS")]
     [else config]))
 
 (define (exe-config arch config)

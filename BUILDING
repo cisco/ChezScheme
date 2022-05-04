@@ -291,6 +291,11 @@ The makefile supports several targets:
 
 WINDOWS VIA COMMAND PROMPT
 
+To build on Windows with MSYS2 and MinGW gcc or Clang, follow the same
+instructions as for Unix above, but the result will be a native
+Windows build. Cygwin as a compilation target is not currently
+support.
+
 To build on Windows with Microsoft Visual Studio, use
 
   build.bat <machine type>
