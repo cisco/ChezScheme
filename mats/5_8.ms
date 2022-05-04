@@ -59,7 +59,9 @@
   (begin
     (collect 0)
     (let ([g1 (gensym)])
-      (and (box-cas! bx2 'banana g1)
+      (and (let loop ()
+             (or (box-cas! bx2 'banana g1)
+                 (loop)))
            (begin
              (collect 0)
              (eq? g1 (unbox bx2))))))
