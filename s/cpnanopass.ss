@@ -5341,10 +5341,9 @@
                                                                (fx+ (constant code-data-disp) (constant size-rp-header)))))])
                                        ,(do-call 1)))))))))]
            [(dounderflow)
-            (let ([Lret (make-local-label 'Lret)] [Lmvreturn (make-local-label 'Lmvreturn)])
+            (let ([Lret (make-aligned-label 'Lret)] [Lmvreturn (make-local-label 'Lmvreturn)])
               `(lambda ,(make-named-info-lambda 'winder-dummy '()) 0 ()
                  ,(%seq
-                    ; (asm align)
                     (label ,Lret)
                     (rp-header ,Lmvreturn 0 0)
                     (set! ,(make-arg-opnd 1) ,%ac0)
@@ -6581,13 +6580,11 @@
                      [else `(nop)])
                   ,(do-call)))]
            [(invoke)
-            (let ([Lret (make-local-label 'Lret)]
+            (let ([Lret (make-aligned-label 'Lret)]
                   [Lexit (make-local-label 'Lexit)]
                   [Lmvreturn (make-local-label 'Lmvreturn)])
               `(lambda ,(make-info "invoke" '()) 0 ()
                  ,(%seq
-                    ; TODO: add alignment
-                    #;(asm align) ; must start aligned or align below may fail
                     ,(%inline invoke-prelude)
                     ,(restore-scheme-state
                        (in %ac0 %cp scheme-args)
@@ -6599,7 +6596,6 @@
                                                                 [(1) (constant ptr-bytes)]))))
                     (set! ,%ref-ret (label-ref ,Lret ,(constant size-rp-header)))
                     (tail ,(do-call)) ; argcnt already in ac0
-                    #;(asm align)
                     (label ,Lret)
                     (rp-header ,Lmvreturn ,(* 2 (constant ptr-bytes)) 1) ; cchain is live at sfp[ptr-bytes]
                     (set! ,(ref-reg %ac1) (immediate 1)) ; single-value as expected
@@ -7976,6 +7972,15 @@
           (let ([stuff (list offset l)])
             (set! funcrel* (cons stuff funcrel*))
             (cons reloc stuff))))
+
+      ;; If unaligned integer access is not allowed, then we may need to
+      ;; add nops to ensure that return-address data is word-aligned
+      (define aligned?
+        (constant-case align-rpheader
+          [(#f) (lambda (n) #t)]
+          [else (lambda (n)
+                  (fx= 0 (fxand n (fx- (constant ptr-bytes) 1))))]))
+
      ; TODO: generate code forward => backward and thread through a machine-state
      ; record that says what each register contains, including the condition-code
      ; register, so that we can avoid redundant loads and tests.  For example,
@@ -8073,48 +8078,89 @@
           ;; to a larger encoding, and so on.
           (define-who munge
             (lambda (c* size)
+              (define align-chunk
+                (constant-case align-rpheader
+                  [(#f) #f]
+                  [else
+                   ;; We're assuming that a single nop instruction is enough to
+                   ;; bring things into alignment, since the issue is normally
+                   ;; on a 64-bit RISC machine with 32-bit instructions
+                   (asm-nop)]))
               (define (munge-pass c* iteration)
                 (define get-local-label-offset
                   (lambda (l)
                     (local-label-iteration-set! l iteration)
                     (local-label-offset l)))
-                (let f ([rc* (reverse c*)] [c* '()] [offset 0])
+                (let f ([rc* (reverse c*)] [c* '()] [offset 0] [align 'none])
                   (if (null? rc*)
-                      (values c* offset)
+                      (constant-case align-rpheader
+                        [(#f) (values c* offset)]
+                        [else (cond
+                                [(or munge-recur?
+                                     (eq? align 'none)
+                                     (if (eq? align 'even)
+                                         (aligned? offset)
+                                         (not (aligned? offset))))
+                                 (values c* offset)]
+                                [else
+                                 ;; add no-op chunk for alignment:
+                                 (values (cons align-chunk c*) (fx+ offset (chunk-size align-chunk)))])])
                       (let ([c (car rc*)] [rc* (cdr rc*)])
                         (cond
+                          [(eq? c align-chunk)
+                           ;; drop alignment chunk created by an earlier pass
+                           (f rc* c* offset align)]
                           [(lchunk? c)
                            (let ([l (lchunk-l c)] [offset (fx+ offset (chunk-size c))])
-                             (when l
-                               (unless (eq? (get-local-label-offset l) offset)
-                                 (local-label-offset-set! l offset)
-                                 (when (fx= (local-label-iteration l) iteration)
-                                   (set! munge-recur? #t))))
-                             (f rc* (cons c c*) offset))]
+                             (let* ([need-align? (constant-case align-rpheader
+                                                   [(#f) #f]
+                                                   [else (cond
+                                                           [(not (aligned-label? l)) #f]
+                                                           [(eq? align 'none) #f]
+                                                           [(eq? align 'even) (not (aligned? offset))]
+                                                           [else (aligned? offset)])])]
+                                    [offset (if need-align?
+                                                (fx+ offset (chunk-size align-chunk))
+                                                offset)])
+                               (when l
+                                 (unless (eq? (get-local-label-offset l) offset)
+                                   (local-label-offset-set! l offset)
+                                   (when (fx= (local-label-iteration l) iteration)
+                                     (set! munge-recur? #t))))
+                               (f rc*
+                                  (if need-align? (list* c align-chunk c*) (cons c c*))
+                                  offset
+                                  (constant-case align-rpheader
+                                    [(#f) 'none]
+                                    [else
+                                     (cond
+                                       [(or need-align? (not (aligned-label? l))) align]
+                                       [(aligned? offset) 'even]
+                                       [else 'odd])]))))]
                           [(gchunk? c)
                            (let ([l (gchunk-l c)])
-                             (if (and (eq? (get-local-label-offset l) (gchunk-laddr c))
-                                      (eq? (gchunk-next-offset c) offset))
-                                 (f rc* (cons c c*) (fx+ offset (chunk-size c)))
-                                 (let ([c (asm-jump l offset)])
-                                   (f rc* (cons c c*) (fx+ offset (chunk-size c))))))]
+                             (let ([c (if (and (eq? (get-local-label-offset l) (gchunk-laddr c))
+                                               (eq? (gchunk-next-offset c) offset))
+                                          c
+                                          (asm-jump l offset))])
+                               (f rc* (cons c c*) (fx+ offset (chunk-size c)) align)))]
                           [(cgchunk? c)
                            (let ([l1 (cgchunk-l1 c)] [l2 (cgchunk-l2 c)])
-                             (if (and (or (libspec-label? l1) (eq? (get-local-label-offset l1) (cgchunk-laddr1 c)))
-                                      (or (libspec-label? l2) (eq? (get-local-label-offset l2) (cgchunk-laddr2 c)))
-                                      (eq? (cgchunk-next-offset c) offset))
-                                 (f rc* (cons c c*) (fx+ offset (chunk-size c)))
-                                 (let ([c (asm-conditional-jump (cgchunk-info c) l1 l2 offset)])
-                                   (f rc* (cons c c*) (fx+ offset (chunk-size c))))))]
+                             (let ([c (if (and (or (libspec-label? l1) (eq? (get-local-label-offset l1) (cgchunk-laddr1 c)))
+                                               (or (libspec-label? l2) (eq? (get-local-label-offset l2) (cgchunk-laddr2 c)))
+                                               (eq? (cgchunk-next-offset c) offset))
+                                          c
+                                          (asm-conditional-jump (cgchunk-info c) l1 l2 offset))])
+                               (f rc* (cons c c*) (fx+ offset (chunk-size c)) align)))]
                           [(rachunk? c)
                            (let ([c (let ([l (rachunk-l c)])
                                       (if (and (eq? (get-local-label-offset l) (rachunk-laddr c))
                                                (eq? (rachunk-next-offset c) offset))
                                           c
                                           (asm-return-address (rachunk-dest c) l (rachunk-incr-offset c) offset)))])
-                             (f rc* (cons c c*) (fx+ offset (chunk-size c))))]
+                             (f rc* (cons c c*) (fx+ offset (chunk-size c)) align))]
                           ; NB: generic test, so must be last!
-                          [(chunk? c) (f rc* (cons c c*) (fx+ offset (chunk-size c)))]
+                          [(chunk? c) (f rc* (cons c c*) (fx+ offset (chunk-size c)) align)]
                           [else (sorry! who "unexpected chunk ~s" c)])))))
               (define (asm-fixup-opnd x)
                 (define-syntax tc-offset-map
@@ -8162,15 +8208,25 @@
                                           [else (values trace* (fx+ (asm-size code) offset))])))))])
                   trace*))
               (define (extract-code c*)
+                (define orig-c* c*)
                 (let f ([c* c*])
                   (if (null? c*)
                       '()
-                      (let ([c (car c*)])
-                        (let ([code (append (chunk-code* (car c*)) (f (cdr c*)))])
-                          (if (and aop (lchunk? c))
-                              (let ([l (lchunk-l c)])
-                                (if l (cons `(label ,l) code) code))
-                              code))))))
+                      (let* ([c (car c*)]
+                             [size (chunk-size c)]
+                             [code (append (chunk-code* c) (f (cdr c*)))])
+                        (if (and aop (lchunk? c))
+                            (let ([l (lchunk-l c)])
+                              (if l (cons `(label ,l) code) code))
+                            code)))))
+              (constant-case align-rpheader
+                [(#t) (unless munge-recur?
+                        ;; munge at least once if needed for alignment
+                        (when (ormap (lambda (c) (and (lchunk? c)
+                                                      (aligned-label? (lchunk-l c))))
+                                     c*)
+                          (set! munge-recur? #t)))]
+                [else (void)])
               (let f ([c* c*] [size size] [iteration 2])
                 (if munge-recur?
                     (begin

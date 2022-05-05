@@ -598,7 +598,7 @@
                      asm-call-arena asm-stack-call
                      asm-inc! asm-lock! asm-cas! asm-fence
                      asm-fpop-2 asm-fpsqrt asm-c-simple-call
-                     asm-return asm-c-return asm-size
+                     asm-return asm-c-return asm-size asm-nop
                      asm-enter asm-foreign-call asm-foreign-callable
                      asm-kill
                      signed16?)
@@ -1582,6 +1582,10 @@
   (define asm-kill
     (lambda (code* dest)
       code*))
+
+  (define asm-nop
+    (lambda ()
+      (make-chunk (emit nop '()))))
 
   (module (asm-foreign-call asm-foreign-callable)
     (define int-argument-regs (lambda () (list %Carg1 %Carg2 %Carg3 %Carg4 %Carg5 %Carg6 %Carg7)))

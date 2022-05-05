@@ -748,6 +748,8 @@
                                                                                  now-uses-flag?)))
          (define (keep-signalling)
            (loop (fx+ i instr-bytes) relocs headers labels (or start-i i) #t uses-flag?))
+         (define (skip)
+           (loop (fx+ i instr-bytes) relocs headers labels (or start-i i) flag-ready? uses-flag?))
          (define (stop-before)
            (if start-i
                (values start-i i uses-flag?)
@@ -780,8 +782,7 @@
              [(_ op drr/f) #'(keep-signalling)]
              [(_ op dri/f) #'(keep-signalling)]
              [(_ op literal) #'(keep-literal)]
-             [(_ op nop) #'($oops 'pbchunk "hit pb-nop; misplaced relocation or incorrect endianness?")]
-             [_ #'(keep #f)]))
+             [_ #'(skip)]))
          (instruction-cases instr dispatch))])))
 
 (define (emit-chunk-header o index sub-index? uses-flag?)
@@ -1032,7 +1033,7 @@
                              (fx+ i instr-bytes)
                              (post))
                     (loop (fx+ i instr-bytes (constant ptr-bytes)) (cdr relocs) headers labels))]
-               [(_ op nop) #'($oops 'pbchunk "nop")])))
+               [(_ op nop) #'(next)])))
 
          (instruction-cases instr emit))])))
 

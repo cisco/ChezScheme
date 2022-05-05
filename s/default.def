@@ -37,6 +37,8 @@
                                                   3
                                                   1))
 
+(define-constant-default align-rpheader #f)
+
 ;; instruction availability (defaults to unavailable)
 (define-constant-default integer-divide-instruction #f)
 (define-constant-default popcount-instruction #f)

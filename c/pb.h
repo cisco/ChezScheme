@@ -799,7 +799,7 @@ enum {
 /* Support for generated chunks */
 
 #define load_from_relocation(dest, ip) \
-  regs[dest] = *(ptr *)TO_VOIDP(ip)
+  regs[dest] = (ptr)LOAD_UNALIGNED_UPTR(ip)
 
 #define load_code_relative(dest, ip) \
   regs[dest] = ip

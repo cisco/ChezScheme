@@ -71,6 +71,7 @@
     local-label-trap-check local-label-trap-check-set!
     direct-call-label? make-direct-call-label
     direct-call-label-referenced direct-call-label-referenced-set!
+    aligned-label? make-aligned-label
     return-point-label? make-return-point-label
     return-point-label-compact? return-point-label-compact?-set!
     Lsrc Lsrc? Ltype Ltype? unparse-Ltype unparse-Lsrc
@@ -326,12 +327,12 @@
         (fprintf p "#<info>"))))
 
   (define-record-type label
-    (nongenerative #{var n93q6qho9id46fha8itaytldd-6})
+    (nongenerative #{label n93q6qho9id46fha8itaytldd-6})
     (fields name))
 
   (define-record-type libspec-label
     (parent label)
-    (nongenerative #{var n93q6qho9id46fha8itaytldd-7})
+    (nongenerative #{label n93q6qho9id46fha8itaytldd-7})
     (sealed #t)
     (fields libspec live-reg*)
     (protocol
@@ -343,7 +344,7 @@
   ; different purposes in different passes.
   (define-record-type local-label
     (parent label)
-    (nongenerative #{var n93q6qho9id46fha8itaytldd-8})
+    (nongenerative #{label n93q6qho9id46fha8itaytldd-8})
     (fields (mutable func) (mutable offset) (mutable iteration) (mutable block)
       ; following used by place-overflow-and-trap-check pass
       (mutable overflow-check) (mutable trap-check))
@@ -354,7 +355,7 @@
 
   (define-record-type direct-call-label
     (parent local-label)
-    (nongenerative #{var n93q6qho9id46fha8itaytldd-9})
+    (nongenerative #{label n93q6qho9id46fha8itaytldd-9})
     (sealed #t)
     (fields (mutable referenced))
     (protocol
@@ -362,9 +363,17 @@
         (lambda (name)
           ((pargs->new name) #f)))))
 
-  (define-record-type return-point-label
+  (define-record-type aligned-label
     (parent local-label)
-    (nongenerative #{var n93q6qho9id46fha8itaytldd-10})
+    (nongenerative #{label n93q6qho9id46fha8itaytlxx-12})
+    (protocol
+      (lambda (pargs->new)
+        (lambda (name)
+          ((pargs->new name))))))
+
+  (define-record-type return-point-label
+    (parent aligned-label)
+    (nongenerative #{label n93q6qho9id46fha8itaytlxx-10})
     (sealed #t)
     (fields (mutable compact?))
     (protocol

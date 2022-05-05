@@ -3,3 +3,5 @@
 (define-constant-default typedef-ptr "uint64_t") ; not "void *"
 (define-constant-default typedef-iptr "int64_t")
 (define-constant-default typedef-uptr "uint64_t")
+
+(define-constant align-rpheader #t)

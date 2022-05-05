@@ -1385,7 +1385,7 @@ void S_set_code_obj(char *who, IFASLCODE typ, ptr p, iptr n, ptr x, iptr o) {
     item = (uptr)x + o;
     switch (typ) {
         case reloc_abs:
-            *(uptr *)address = item;
+            STORE_UNALIGNED_UPTR(address, item);
             break;
 #ifdef PORTABLE_BYTECODE
         case reloc_pb_abs:
@@ -1478,7 +1478,7 @@ ptr S_get_code_obj(IFASLCODE typ, ptr p, iptr n, iptr o) {
     address = TO_VOIDP((uptr)p + n);
     switch (typ) {
         case reloc_abs:
-            item = *(uptr *)address;
+            item = LOAD_UNALIGNED_UPTR(address);
             break;
 #ifdef PORTABLE_BYTECODE
         case reloc_pb_abs:
@@ -1556,11 +1556,11 @@ ptr S_get_code_obj(IFASLCODE typ, ptr p, iptr n, iptr o) {
 #ifdef PORTABLE_BYTECODE
 
 static void pb_set_abs(void *address, uptr item) {
-  *(uptr *)address = item;
+  STORE_UNALIGNED_UPTR(address, item);
 }
 
 static uptr pb_get_abs(void *address) {
-  return *(uptr *)address;
+  return LOAD_UNALIGNED_UPTR(address);
 }
 
 #endif /* PORTABLE_BYTECODE */

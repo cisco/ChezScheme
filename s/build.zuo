@@ -100,6 +100,8 @@
   (define arch.ss (~a (arch->backend arch) ".ss"))
 
   (define mach-src+dep+more-srcs (get-machine-files m arch))
+  (define machine-def-inputs (map at-source (cons (caar mach-src+dep+more-srcs)
+                                                  (cdr mach-src+dep+more-srcs))))
 
   (define (at-boot s) (at-dir (build-path "../boot/" m s)))
 
@@ -505,13 +507,12 @@
 
        ;; Internal targets ----------------------------------------
 
-       [:target ,machine.def (,(input-data-target 'machine m)
-                              ,@(map at-source (cons (caar mach-src+dep+more-srcs)
-                                                     (cdr mach-src+dep+more-srcs))))
+       [:target ,machine.def (,(input-data-target 'machine m) ,@machine-def-inputs)
                 ,(lambda (dest token)
                    ((cdar mach-src+dep+more-srcs) dest token))]
 
-       ,(compilation-preamble-target cmacros.so (list machine.def (at-source "layout.ss") options-t)
+       ,(compilation-preamble-target cmacros.so (append machine-def-inputs
+                                                        (list machine.def (at-source "layout.ss") options-t))
                                      (list))
 
        ,(compilation-preamble-target priminfo.so (list (at-source "primdata.ss"))

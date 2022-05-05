@@ -67,7 +67,7 @@ void S_pb_interp(ptr tc, void *bytecode) {
     case pb_nop:
       break;
     case pb_literal:
-      regs[INSTR_di_dest(instr)] = *(ptr *)(ip + 1);
+      regs[INSTR_di_dest(instr)] = (ptr)LOAD_UNALIGNED_UPTR(ip + 1);
 #if ptr_bits == 64
       next_ip = ip + 3;
 #else

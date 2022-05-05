@@ -14,17 +14,6 @@
  * limitations under the License.
  */
 
-#ifdef WIN32
-# undef FORCEINLINE
-# ifndef __MINGW32__
-#  define FORCEINLINE static __forceinline
-# else
-#  define FORCEINLINE static __attribute__((__always_inline__)) inline
-# endif
-#else
-#define FORCEINLINE static inline
-#endif
-
 /* segment_info */
 
 #define SEGMENT_T1_SIZE ((uptr)1<<segment_t1_bits)
