@@ -317,7 +317,7 @@ as long as the lock is allocated in memory shared by the processes.
 
 A lock is simply a word-sized integer, i.e., an \scheme{iptr} or
 \scheme{uptr} foreign type (Section~\ref{SECTFOREIGNDATA}) with the native
-endiannes of the target machine, possibly part of a larger structure
+endianness of the target machine, possibly part of a larger structure
 defined using \scheme{define-ftype} (page~\pageref{defn:define-ftype}).
 It must be explicitly allocated in memory that resides outside the Scheme
 heap and, when appropriate, explicitly deallocated.

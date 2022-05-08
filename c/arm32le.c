@@ -38,14 +38,16 @@ void S_doflush(uptr start, uptr end) {
   __clear_cache((char *)start, (char *)end);
 }
 
-void S_machine_init() {
+void S_machine_init(void) {
   int l1_dcache_line_size, l1_icache_line_size;
 
-  if ((l1_dcache_line_size = sysconf(_SC_LEVEL1_DCACHE_LINESIZE)) <= 0) {
+#ifdef _SC_LEVEL1_DCACHE_LINESIZE
+  if ((l1_dcache_line_size = sysconf(_SC_LEVEL1_DCACHE_LINESIZE)) <= 0)
+#endif
     l1_dcache_line_size = DEFAULT_L1_MAX_CACHE_LINE_SIZE;
-  }
-  if ((l1_icache_line_size = sysconf(_SC_LEVEL1_ICACHE_LINESIZE)) <= 0) {
+#ifdef _SC_LEVEL1_ICACHE_LINESIZE
+  if ((l1_icache_line_size = sysconf(_SC_LEVEL1_ICACHE_LINESIZE)) <= 0)
+#endif
     l1_icache_line_size = DEFAULT_L1_MAX_CACHE_LINE_SIZE;
-  }
   l1_max_cache_line_size = l1_dcache_line_size > l1_icache_line_size ? l1_dcache_line_size : l1_icache_line_size;
 }

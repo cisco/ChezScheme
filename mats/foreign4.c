@@ -142,13 +142,11 @@ EXPORT double call_in_unknown_thread(double (*proc)(double arg), double arg, int
   proc_and_arg->n_times = n_times;
 
   if (do_fork) {
+    if (do_deactivate) Sdeactivate_thread();
     if (!os_thread_create(&t, in_thread, proc_and_arg)) {
-      if (do_deactivate)
-        Sdeactivate_thread();
       os_thread_join(t);
-      if (do_deactivate)
-        Sactivate_thread();
     }
+    if (do_deactivate) Sactivate_thread();
   } else {
     in_thread(proc_and_arg);
   }
@@ -167,7 +165,7 @@ EXPORT unsigned spin_a_while(int amt, unsigned a, unsigned b)
 
   /* A loop that the compiler is unlikely to optimize away */
   for (i = 0; i < amt; i++) {
-    a = a + 1;
+    a = a + b;
     b = b + a;
   }
 

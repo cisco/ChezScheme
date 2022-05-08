@@ -17,7 +17,7 @@
 #include "system.h"
 
 /* locally defined functions */
-static ptr S_call PROTO((ptr tc, ptr cp, iptr argcnt));
+static ptr S_call(ptr tc, ptr cp, iptr argcnt);
 
 /* Sinteger_value is in number.c */
 
@@ -25,29 +25,29 @@ static ptr S_call PROTO((ptr tc, ptr cp, iptr argcnt));
 
 /* Sinteger64_value is in number.c */
 
-void Sset_box(x, y) ptr x, y; {
+void Sset_box(ptr x, ptr y) {
     SETBOXREF(x, y);
 }
 
-void Sset_car(x, y) ptr x, y; {
+void Sset_car(ptr x, ptr y) {
     SETCAR(x, y);
 }
 
-void Sset_cdr(x, y) ptr x, y; {
+void Sset_cdr(ptr x, ptr y) {
     SETCDR(x, y);
 }
 
-void Svector_set(x, i, y) ptr x; iptr i; ptr y; {
+void Svector_set(ptr x, iptr i, ptr y) {
     SETVECTIT(x, i, y);
 }
 
 /* Scons is in alloc.c */
 
-ptr Sstring_to_symbol(s) const char *s; {
+ptr Sstring_to_symbol(const char *s) {
     return S_intern((const unsigned char *)s);
 }
 
-ptr Ssymbol_to_string(x) ptr x; {
+ptr Ssymbol_to_string(ptr x) {
   ptr name = SYMNAME(x);
   if (Sstringp(name))
     return name;
@@ -61,7 +61,7 @@ ptr Ssymbol_to_string(x) ptr x; {
 
 /* Sflonum is in alloc.c */
 
-ptr Smake_vector(n, x) iptr n; ptr x; {
+ptr Smake_vector(iptr n, ptr x) {
     ptr p; iptr i;
 
     p = S_vector(n);
@@ -69,7 +69,7 @@ ptr Smake_vector(n, x) iptr n; ptr x; {
     return p;
 }
 
-ptr Smake_fxvector(n, x) iptr n; ptr x; {
+ptr Smake_fxvector(iptr n, ptr x) {
     ptr p; iptr i;
 
     p = S_fxvector(n);
@@ -77,7 +77,7 @@ ptr Smake_fxvector(n, x) iptr n; ptr x; {
     return p;
 }
 
-ptr Smake_bytevector(n, x) iptr n; int x; {
+ptr Smake_bytevector(iptr n, int x) {
     ptr p; iptr i;
 
     p = S_bytevector(n);
@@ -85,7 +85,7 @@ ptr Smake_bytevector(n, x) iptr n; int x; {
     return p;
 }
 
-ptr Smake_string(n, c) iptr n; int c; {
+ptr Smake_string(iptr n, int c) {
     ptr p; iptr i;
 
     p = S_string((char *)NULL, n);
@@ -93,15 +93,15 @@ ptr Smake_string(n, c) iptr n; int c; {
     return p;
 }
 
-ptr Smake_uninitialized_string(n) iptr n; {
+ptr Smake_uninitialized_string(iptr n) {
     return S_string((char *)NULL, n);
 }
 
-ptr Sstring(s) const char *s; {
+ptr Sstring(const char *s) {
     return S_string(s, -1);
 }
 
-ptr Sstring_of_length(s, n) const char *s; iptr n; {
+ptr Sstring_of_length(const char *s, iptr n) {
     return S_string(s, n);
 }
 
@@ -117,7 +117,7 @@ ptr Sstring_of_length(s, n) const char *s; iptr n; {
 
 /* Sunsigned64 is in number.c */
 
-ptr Stop_level_value(x) ptr x; {
+ptr Stop_level_value(ptr x) {
   ptr tc = get_thread_context();
   IBOOL enabled = (DISABLECOUNT(tc) == 0);
   if (enabled) DISABLECOUNT(tc) = FIX(UNFIX(DISABLECOUNT(tc)) + 1);
@@ -126,7 +126,7 @@ ptr Stop_level_value(x) ptr x; {
   return x;
 }
 
-void Sset_top_level_value(x, y) ptr x, y; {
+void Sset_top_level_value(ptr x, ptr y) {
   ptr tc = get_thread_context();
   IBOOL enabled = (DISABLECOUNT(tc) == 0);
   if (enabled) DISABLECOUNT(tc) = FIX(UNFIX(DISABLECOUNT(tc)) + 1);
@@ -137,20 +137,20 @@ void Sset_top_level_value(x, y) ptr x, y; {
 #include <setjmp.h>
 
 /* consider rewriting these to avoid multiple calls to get_thread_context */
-ptr Scall0(cp) ptr cp; {
+ptr Scall0(ptr cp) {
     ptr tc = get_thread_context();
     S_initframe(tc,0);
     return S_call(tc, cp, 0);
 }
 
-ptr Scall1(cp, x1) ptr cp, x1; {
+ptr Scall1(ptr cp, ptr x1) {
     ptr tc = get_thread_context();
     S_initframe(tc, 1);
     S_put_arg(tc, 1, x1);
     return S_call(tc, cp, 1);
 }
 
-ptr Scall2(cp, x1, x2) ptr cp, x1, x2; {
+ptr Scall2(ptr cp, ptr x1, ptr x2) {
     ptr tc = get_thread_context();
     S_initframe(tc, 2);
     S_put_arg(tc, 1, x1);
@@ -158,7 +158,7 @@ ptr Scall2(cp, x1, x2) ptr cp, x1, x2; {
     return S_call(tc, cp, 2);
 }
 
-ptr Scall3(cp, x1, x2, x3) ptr cp, x1, x2, x3; {
+ptr Scall3(ptr cp, ptr x1, ptr x2, ptr x3) {
     ptr tc = get_thread_context();
     S_initframe(tc, 3);
     S_put_arg(tc, 1, x1);
@@ -167,12 +167,12 @@ ptr Scall3(cp, x1, x2, x3) ptr cp, x1, x2, x3; {
     return S_call(tc, cp, 3);
 }
 
-void Sinitframe(n) iptr n; {
+void Sinitframe(iptr n) {
     ptr tc = get_thread_context();
     S_initframe(tc, n);
 }
 
-void S_initframe(tc, n) ptr tc; iptr n; {
+void S_initframe(ptr tc, iptr n) {
   /* check for and handle stack overflow */
     if ((ptr *)SFP(tc) + n + 2 > (ptr *)ESP(tc))
         S_overflow(tc, (n+2)*sizeof(ptr));
@@ -181,24 +181,24 @@ void S_initframe(tc, n) ptr tc; iptr n; {
     SFP(tc) = (ptr)((ptr *)SFP(tc) + 2);
 }
 
-void Sput_arg(i, x) iptr i; ptr x; {
+void Sput_arg(iptr i, ptr x) {
     ptr tc = get_thread_context();
     S_put_arg(tc, i, x);
 }
 
-void S_put_arg(tc, i, x) ptr tc; iptr i; ptr x; {
+void S_put_arg(ptr tc, iptr i, ptr x) {
     if (i <= asm_arg_reg_cnt)
         REGARG(tc, i) = x;
     else
         FRAME(tc, i - asm_arg_reg_cnt) = x;
 }
 
-ptr Scall(cp, argcnt) ptr cp; iptr argcnt; {
+ptr Scall(ptr cp, iptr argcnt) {
     ptr tc = get_thread_context();
     return S_call(tc, cp, argcnt);
 }
 
-static ptr S_call(tc, cp, argcnt) ptr tc; ptr cp; iptr argcnt; {
+static ptr S_call(ptr tc, ptr cp, iptr argcnt) {
     AC0(tc) = (ptr)argcnt;
     AC1(tc) = cp;
     S_call_help(tc, 1, 0);
@@ -206,7 +206,7 @@ static ptr S_call(tc, cp, argcnt) ptr tc; ptr cp; iptr argcnt; {
 }
 
 /* args are set up, argcnt in ac0, closure in ac1 */
-void S_call_help(tc_in, singlep, lock_ts) ptr tc_in; IBOOL singlep; IBOOL lock_ts; {
+void S_call_help(ptr tc_in, IBOOL singlep, IBOOL lock_ts) {
   /* declaring code and tc volatile should be unnecessary, but it quiets gcc
      and avoids occasional invalid memory violations on Windows */
   void *jb; volatile ptr code;
@@ -267,18 +267,18 @@ void S_call_help(tc_in, singlep, lock_ts) ptr tc_in; IBOOL singlep; IBOOL lock_t
     CP(tc) = code;
 }
 
-void S_call_one_result() {
+void S_call_one_result(void) {
     ptr tc = get_thread_context();
     S_call_help(tc, 1, 1);
 }
 
-void S_call_any_results() {
+void S_call_any_results(void) {
     ptr tc = get_thread_context();
     S_call_help(tc, 0, 1);
 }
 
 /* cchain = ((jb . (co . maybe-co)) ...) */
-void S_return() {
+void S_return(void) {
     ptr tc = get_thread_context();
     ptr xp, yp;
 

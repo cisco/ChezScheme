@@ -7,6 +7,18 @@ set Applications=%ProgramFiles%
 :: Set up Visual Studio command line environment variables given a
 :: machine type, e.g., amd64 or x86.
 
+:: Visual Studio 2022 Enterprise
+set BATDIR=%ProgramW6432%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build
+if exist "%BATDIR%\vcvarsall.bat" goto found
+
+:: Visual Studio 2022 Professional
+set BATDIR=%ProgramW6432%\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build
+if exist "%BATDIR%\vcvarsall.bat" goto found
+
+:: Visual Studio 2022 Community
+set BATDIR=%ProgramW6432%\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build
+if exist "%BATDIR%\vcvarsall.bat" goto found
+
 :: Visual Studio 2019 Enterprise
 set BATDIR=%Applications%\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build
 if exist "%BATDIR%\vcvarsall.bat" goto found
@@ -43,7 +55,7 @@ if exist "%BATDIR%\vcvarsall.bat" goto found
 set BATDIR=%VS140COMNTOOLS%..\..\VC
 if exist "%BATDIR%\vcvarsall.bat" goto found
 
-echo Visual Studio 2017 or 2015 must be installed.
+echo Visual Studio 2022, 2019, 2017, or 2015 must be installed.
 exit 1
 
 :found

@@ -31,7 +31,7 @@ EXPORT int idid(int x) {
     return id(id(x));
 }
 
-EXPORT int ididid(x) int x; {
+EXPORT int ididid(int x) {
     return idid(id(x));
 }
 

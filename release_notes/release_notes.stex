@@ -1,9 +1,9 @@
 \documentclass{releasenotes}
 
-\thisversion{Version 9.5.7}
+\thisversion{Version 9.5.9}
 \thatversion{Version 8.4}
-\pubmonth{November}
-\pubyear{2021}
+\pubmonth{April}
+\pubyear{2022}
 
 \begin{document}
 
@@ -58,12 +58,12 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Basic ftypes can be referenced, even if shadowed by syntactic binding (9.5.7)}
+\subsection{Basic ftypes can be referenced, even if shadowed by syntactic binding (9.5.8)}
 
 Previously, it was possible to interfere with the definition of ftypes by
 creating a syntactic binding for one of the built-in types, such as
 \scheme{integer-32}, \scheme{float}, etc.
-As of 9.5.7, syntactic bindings that do not bind an ftype descriptor are no
+As of 9.5.8, syntactic bindings that do not bind an ftype descriptor are no
 longer considered when defining ftypes.
 
 This change also allows a base ftype to be bound using `define-ftype`, though
@@ -185,7 +185,7 @@ The \scheme{compress-level} parameter can now take on the new value
 \subsection{Combining object files (9.5.4)}
 
 In previous versions of Chez Scheme, multiple object files could
-be combined by concatinating them into a single file.  To support faster
+be combined by concatenating them into a single file.  To support faster
 object file loading and loadability verification (described later in this
 document), recompile information and information about libraries and
 top-level programs within an object file is now placed at the top of the
@@ -197,7 +197,7 @@ top of the combined file.
 
 The new procedure \scheme{invoke-library} can be used to force
 the evaluation of a library's body expressions (variable definition
-right-hand sides and initialization expresisons) before they might
+right-hand sides and initialization expressions) before they might
 otherwise be needed.
 It is generally useful only for libraries whose body expressions
 have side effects.
@@ -365,7 +365,7 @@ name of the desired library, the \var{directories} is a list of source and
 object directory pairs in the form returned by \scheme{library-directories},
 and the \var{extensions} parameter is a list of source and object extension
 pairs in the form returned by \scheme{library-extensions}.
-The default vaue of the \scheme{library-search-handler} is the newly exposed
+The default value of the \scheme{library-search-handler} is the newly exposed
 \scheme{default-library-search-handler} procedure.
 
 \subsection{Ftype guardians (9.5.1)}
@@ -435,7 +435,7 @@ vector.
 
 A new \scheme{__collect_safe} foreign-procedure convention, which can
 be combined with other conventions, causes a foreign-procedure call to
-deactive the current thread during the call so that other threads can
+deactivate the current thread during the call so that other threads can
 perform a garbage collection. Similarly, the \scheme{__collect_safe}
 convention modifier for callables causes the current thread to be
 activated on entry to the callable, and the activation state is
@@ -566,7 +566,7 @@ clock time function for the current date and time.
 
 Chez Scheme extends the syntax of identifiers as described in the
 introduction to the Chez Scheme User's Guide, except within forms prefixed
-by \scheme{#!r6rs}, which is implied by in a library or top-level program.
+by \scheme{#!r6rs}, which is implied in a library or top-level program.
 Prior to Version~9.5, the printer always printed such identifiers using
 hex scalar value escapes as necessary to render them with valid R6RS identifier syntax.
 When the new parameter \scheme{print-extended-identifiers} is set
@@ -603,7 +603,7 @@ The total size of the fields within an ftype \scheme{bits} can now be
 Object counting (see \scheme{object-counts} below) is now enabled for
 all collections targeting the static generation.
 
-\subsection{Support for off-line profile profile-dump processing (9.3.2)}
+\subsection{Support for off-line profile-dump processing (9.3.2)}
 
 Previously, the output of \scheme{profile-dump} was not specified.
 It is now specified to be a list of source-object, profile-count pairs.
@@ -1950,6 +1950,34 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Certain mixed exact/inexact arithmetic comparisons (9.5.8)}
+
+The arithmetic comparison functions (\scheme{<}, \scheme{<=}, \scheme{=},
+\scheme{>=}, and \scheme{>}) are required to be transitive by the R6RS
+specification, but this property was not maintained for \scheme{<=},
+\scheme{=}, and \scheme{>=} comparisons between exact and inexact numbers
+in the range where fixnum precision is greater than flonum precision.  For
+example, the flonum representation of \scheme{9007199254740992.0} and
+\scheme{9007199254740993.0} is identical, but obviously
+\scheme{9007199254740992} and \scheme{9007199254740993} (which are fixnums
+on 64 bit systems) are not.  The arithmetic comparators now no longer
+convert comparisons of a fixnum and flonum to comparisons of two flonums
+when the fixnum cannot be converted without loss of precision.
+
+\subsection{\protect\scheme{rational-valued?} and exceptional flonums (9.5.8)}
+
+The \scheme{rational-value?} function returned incorrect results when called on
+a value with an inexact zero imaginary part and real part that is an exceptional
+floating point value (i.e., an infinity or NaN).  For example,
+\scheme{(rational-valued? +inf.0+0.0i)} incorrectly returned \scheme{#t}, but now
+returns \scheme{#f}.
+
+\subsection{Calls to foreign-callable procedures may cause the process to terminate with
+error 0xC0000409 STATUS\_STACK\_BUFFER\_OVERRUN on 64-bit Windows (9.5.8)}
+
+A interaction bug between Microsoft's longjmp on 64-bit Windows and foreign-callable stack
+frames has been fixed.
+
 \subsection{Calls to \protect\scheme{printf} may cause an invalid memory reference at
 compile time (9.5.8)}
 
@@ -2081,7 +2109,7 @@ invoked without invoking the code for \scheme{(C)}.
 We address this by adding explicit dependencies between \scheme{(A)} and all
 the binary libraries that precede it and all of the other libraries clustered
 with \scheme{(A)} and \scheme{(A)}, such that no matter which library clustered
-with \scheme{(A)} is invoked firts, \scheme{(A)} will be invoked, causing all
+with \scheme{(A)} is invoked first, \scheme{(A)} will be invoked, causing all
 binary libraries that precede \scheme{(A)} to be invoked.
 It is also possible for a similar problem to exist between clusters, where
 invoking a later cluster may invoke an earlier cluster without invoking the
@@ -2289,7 +2317,7 @@ the \scheme{#e} prefix, even if R6RS requires an exact result, i.e.,
 even if they have no decimal point, exponent, or mantissa width.
 
 Ratios with an exponent, like \scheme{1/2e10}, are non-standard and
-now cause cause the procedure \scheme{string->number} imported from
+now cause the procedure \scheme{string->number} imported from
 \scheme{(rnrs)} to return \scheme{#f}.
 When the reader encounters a ratio followed by an exponent while in R6RS
 mode (i.e., when reading a library or top-level program and not following
@@ -2795,7 +2823,7 @@ our tests.)
 \subsection{New compiler back-end (8.9.1, 8.9.2, 8.9.5)}
 
 Versions starting with 8.9.1 employ a new compiler back end that is
-structured as a series of nanopassees and replaces the old linear-time
+structured as a series of nanopasses and replaces the old linear-time
 register allocator with a graph-coloring register allocator.
 Compilation with the new back end is substantially slower (up to a factor
 of two) than with the old back end, while code generated with the new

@@ -146,35 +146,35 @@ EXPORT double s1d1s2s3(float s1, double d1, float s2, float s3) {
 
 /* support for testing foreign-callable */
 EXPORT ptr Sinvoke2(ptr code, ptr x1, iptr x2) {
-    return (*((ptr (*) PROTO((ptr, iptr)))Sforeign_callable_entry_point(code)))(x1, x2);
+    return (*((ptr (*)(ptr, iptr))Sforeign_callable_entry_point(code)))(x1, x2);
 }
 
 EXPORT ptr Sargtest(iptr f, int x1, int x2, iptr x3, double x4, float x5, char *x6) {
-    return (*((ptr (*) PROTO((int, int, iptr, double, float, char *)))f))(x1, x2, x3, x4, x5, x6);
+    return (*((ptr (*)(int, int, iptr, double, float, char *))f))(x1, x2, x3, x4, x5, x6);
 }
 
 EXPORT ptr Sargtest2(iptr f, short x1, int x2, char x3, double x4, short x5, char x6) {
-    return (*((ptr (*) PROTO((short, int, char, double, short, char)))f))(x1, x2, x3, x4, x5, x6);
+    return (*((ptr (*)(short, int, char, double, short, char))f))(x1, x2, x3, x4, x5, x6);
 }
 
 EXPORT int Srvtest_int32(ptr code, ptr x1) {
-    return (*((int (*) PROTO((ptr)))Sforeign_callable_entry_point(code)))(x1);
+    return (*((int (*)(ptr))Sforeign_callable_entry_point(code)))(x1);
 }
 
 EXPORT unsigned Srvtest_uns32(ptr code, ptr x1) {
-    return (*((unsigned (*) PROTO((ptr)))Sforeign_callable_entry_point(code)))(x1);
+    return (*((unsigned (*)(ptr))Sforeign_callable_entry_point(code)))(x1);
 }
 
 EXPORT float Srvtest_single(ptr code, ptr x1) {
-    return (*((float (*) PROTO((ptr)))Sforeign_callable_entry_point(code)))(x1);
+    return (*((float (*)(ptr))Sforeign_callable_entry_point(code)))(x1);
 }
 
 EXPORT double Srvtest_double(ptr code, ptr x1) {
-    return (*((double (*) PROTO((ptr)))Sforeign_callable_entry_point(code)))(x1);
+    return (*((double (*)(ptr))Sforeign_callable_entry_point(code)))(x1);
 }
 
 EXPORT char Srvtest_char(ptr code, ptr x1) {
-    return (*((char (*) PROTO((ptr)))Sforeign_callable_entry_point(code)))(x1);
+    return (*((char (*)(ptr))Sforeign_callable_entry_point(code)))(x1);
 }
 
 #ifdef WIN32
@@ -183,7 +183,7 @@ EXPORT int __stdcall sum_stdcall(int a, int b) {
 }
 
 EXPORT ptr Sinvoke2_stdcall(ptr code, ptr x1, iptr x2) {
-    return (*((ptr (__stdcall *) PROTO((ptr, iptr)))Sforeign_callable_entry_point(code)))(x1, x2);
+    return (*((ptr (__stdcall *)(ptr, iptr))Sforeign_callable_entry_point(code)))(x1, x2);
 }
 
 typedef int (__stdcall *comfunc) (void *, int);

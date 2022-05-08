@@ -1,5 +1,5 @@
-Building Chez Scheme Version 9.5.7
-Copyright 1984-2021 Cisco Systems, Inc.
+Building Chez Scheme Version 9.5.9
+Copyright 1984-2022 Cisco Systems, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -222,6 +222,11 @@ The make file supports several targets:
   installation.  If your system has a vim installation, then it might
   contain an rgb.txt in $VIMRUNTIME.
 
+'sudo make install-docs'
+  builds the documentation as with 'make docs' and installs it. If the installcsug and
+  installreleasenotes directories used with './configure' are writable by the current
+  user, then 'sudo' is not necessary.
+
 'make clean'
   removes binaries from the workarea.
 
@@ -270,15 +275,15 @@ env OS=Windows_NT make
 Prerequisites:
 
 * Bash/WSL, MinGW/MSYS, or Cygwin with bash, git, grep, make, sed, etc.
-* Microsoft Visual Studio 2019, 2017, or 2015
+* Microsoft Visual Studio 2022, 2019, 2017, or 2015
 * WiX Toolset (for making an install)
 
 Be sure that git config core.autocrlf is set to false.
 
-If you're using Visual Studio 2019, install "Desktop development with C++"
-on the "Workloads" tabs and the "C++ 2019 Redistributable MSMs" on the
-"Individual components" tab under the "Compilers, build tools, and runtimes"
-section.
+If you're using Visual Studio 2022 or 2019, install "Desktop
+development with C++" on the "Workloads" tabs and the "C++ 2022 [or
+2019] Redistributable MSMs" on the "Individual components" tab under
+the "Compilers, build tools, and runtimes" section.
 
 To run Chez Scheme or Petite Chez Scheme from a Windows command prompt,
 set PATH:

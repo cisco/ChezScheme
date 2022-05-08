@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version = 9.5.7
+version = 9.5.9
 release = 1
 m := $(shell find ../bin/* -type d | xargs basename)
 arch := $(shell if test "$(m)" == "i3le" ; then echo i686 ; elif test "$(m)" == "a6le" ; then echo x86_64 ; else echo UNKNOWN ; fi)

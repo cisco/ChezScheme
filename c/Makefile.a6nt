@@ -17,18 +17,18 @@ m = a6nt
 
 # following have to use \ for directory separator
 SchemeInclude = ..\boot\$m
-KernelDll = ..\bin\$m\csv957.dll
-KernelLib = ..\bin\$m\csv957.lib
-MTKernelLib = ..\boot\$m\csv957mt.lib
-MDKernelLib = ..\boot\$m\csv957md.lib
-KernelExp = ..\bin\$m\csv957.exp
+KernelDll = ..\bin\$m\csv959.dll
+KernelLib = ..\bin\$m\csv959.lib
+MTKernelLib = ..\boot\$m\csv959mt.lib
+MDKernelLib = ..\boot\$m\csv959md.lib
+KernelExp = ..\bin\$m\csv959.exp
 Exec = ..\bin\$m\scheme.exe
 MTMain = ..\boot\$m\mainmt.obj
 MDMain = ..\boot\$m\mainmd.obj
 ResFile = ..\boot\$m\scheme.res
 
 # We use MD so that we can link with and load DLLs built against msvcrxxx.dll
-CFLAGS=/nologo /Ox /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+CFLAGS=/nologo /Ox /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
 MDCFLAGS=$(CFLAGS) /MD
 MTCFLAGS=$(CFLAGS) /MT
 DLLLDFLAGS=/debug:full /machine:X64 /nologo
@@ -37,7 +37,7 @@ DLLLDFLAGS=/debug:full /machine:X64 /nologo
 EXELDFLAGS=/debug:full /machine:X64 /incremental:no /nologo /STACK:0x1000000
 
 # use following flags for debugging
-# CFLAGS=/nologo /Od /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DUSE_ANSI_PROTOTYPES /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+# CFLAGS=/nologo /Od /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DX86_64 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
 # MDCFLAGS=$(CFLAGS) /MDd
 # MTCFLAGS=$(CFLAGS) /MTd
 
@@ -70,15 +70,15 @@ $(KernelLib) $(MTKernelLib) $(MDKernelLib): $(SchemeInclude)/equates.h $(SchemeI
 $(KernelLib) $(MTKernelLib) $(MDKernelLib): ..\zlib/zconf.h ..\zlib/zlib.h
 $(KernelLib) $(MTKernelLib) $(MDKernelLib): ../lz4/lib/lz4.h ../lz4/lib/lz4frame.h
 
-$(MTKernelLib): $(csrc) $(MTZlibLib) $(MTLZ4Lib)
+$(MTKernelLib): $(csrc) $(MTZlibLib) $(MTLZ4Lib) a6nt-jump.obj
 	-del /f $(MTKernelLib)
 	cl /DSCHEME_STATIC /c $(MTCFLAGS) $(csrc)
-	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(MTZlibLib) $(MTLZ4Lib)
+	link /lib /nologo -out:$(MTKernelLib) $(cobj) $(MTZlibLib) $(MTLZ4Lib) a6nt-jump.obj
 
-$(MDKernelLib): $(csrc) $(MDZlibLib) $(MDLZ4Lib)
+$(MDKernelLib): $(csrc) $(MDZlibLib) $(MDLZ4Lib) a6nt-jump.obj
 	-del /f $(MDKernelLib)
 	cl /DSCHEME_STATIC /c $(MDCFLAGS) $(csrc)
-	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(MDZlibLib) $(MDLZ4Lib)
+	link /lib /nologo -out:$(MDKernelLib) $(cobj) $(MDZlibLib) $(MDLZ4Lib) a6nt-jump.obj
 
 # nmake builds Dll twice if we list it with $(KernelLib) below
 $(KernelDll): $(KernelLib)
@@ -89,11 +89,11 @@ $(KernelDll): $(KernelLib)
 # conflicts with other dlls.  use 'depends <exefile>' to check.
 # we no longer attempt to rebase other the CRT dll since it
 # has already been signed.
-$(KernelLib): $(ResFile) $(csrc) $(MDZlibLib) $(MDLZ4Lib)
+$(KernelLib): $(ResFile) $(csrc) $(MDZlibLib) $(MDLZ4Lib) a6nt-jump.obj
 	-del /f $(KernelLib)
 	-del /f $(KernelDll)
 	cl /c $(MDCFLAGS) $(csrc)
-	link -dll -out:$(KernelDll) $(DLLLDFLAGS) $(ResFile) $(cobj) $(MDZlibLib) $(MDLZ4Lib) $(SystemLib)
+	link -dll -out:$(KernelDll) $(DLLLDFLAGS) $(ResFile) $(cobj) $(MDZlibLib) $(MDLZ4Lib) $(SystemLib) a6nt-jump.obj
 	editbin /nologo /rebase:base=0x67480000 $(KernelDll)
 
 $(MTMain): main.c
@@ -145,7 +145,10 @@ $(MDLZ4Lib) $(MTLZ4Lib): ../lz4/lib/lz4.c ../lz4/lib/lz4frame.c ../lz4/lib/lz4hc
         cl /c /Fo../lz4/lib/xxhashmt.obj $(MTCFLAGS) ../lz4/lib/xxhash.c
         lib /OUT:$(MTLZ4Lib) ../lz4/lib/lz4mt.obj ../lz4/lib/lz4framemt.obj ../lz4/lib/lz4hcmt.obj ../lz4/lib/xxhashmt.obj
 
+a6nt-jump.obj: a6nt-jump.asm
+	ml64 /nologo /W3 /Zi /c a6nt-jump.asm
+
 clean:
-	-del /f $(cobj) main.obj $(KernelExp)
+	-del /f $(cobj) main.obj $(KernelExp) a6nt-jump.obj
 	-del /f mtscheme.exe
 	-del /f mdscheme.exe

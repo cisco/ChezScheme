@@ -51,10 +51,10 @@
 #endif /* PTHREADS */
 
 /* locally defined functions */
-static ptr new_open_output_fd_helper PROTO((const char *filename, INT mode,
+static ptr new_open_output_fd_helper(const char *filename, INT mode,
              INT flags, INT no_create, INT no_fail, INT no_truncate,
-             INT append, INT lock, INT replace, INT compressed));
-static INT lockfile PROTO((INT fd));
+             INT append, INT lock, INT replace, INT compressed);
+static INT lockfile(INT fd);
 static int is_valid_zlib_length(iptr count);
 static int is_valid_lz4_length(iptr count);
 
@@ -817,7 +817,7 @@ ptr S_set_fd_length(ptr file, ptr length, IBOOL gzflag) {
   return flag ? S_strerror(errno) : Strue;
 }
 
-void S_new_io_init() {
+void S_new_io_init(void) {
   if (S_boot_time) {
     S_set_symbol_value(S_intern((const unsigned char *)"$c-bufsiz"), Sinteger(SBUFSIZ));
   }

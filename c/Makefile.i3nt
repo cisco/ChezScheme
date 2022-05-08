@@ -17,18 +17,18 @@ m = i3nt
 
 # following have to use \ for directory separator
 SchemeInclude = ..\boot\$m
-KernelDll = ..\bin\$m\csv957.dll
-KernelLib = ..\bin\$m\csv957.lib
-MTKernelLib = ..\boot\$m\csv957mt.lib
-MDKernelLib = ..\boot\$m\csv957md.lib
-KernelExp = ..\bin\$m\csv957.exp
+KernelDll = ..\bin\$m\csv959.dll
+KernelLib = ..\bin\$m\csv959.lib
+MTKernelLib = ..\boot\$m\csv959mt.lib
+MDKernelLib = ..\boot\$m\csv959md.lib
+KernelExp = ..\bin\$m\csv959.exp
 Exec = ..\bin\$m\scheme.exe
 MTMain = ..\boot\$m\mainmt.obj
 MDMain = ..\boot\$m\mainmd.obj
 ResFile = ..\boot\$m\scheme.res
 
 # We use MD so that we can link with and load DLLs built against msvcrxxx.dll
-CFLAGS=/nologo /fp:precise /Ox /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DUSE_ANSI_PROTOTYPES /DI386 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+CFLAGS=/nologo /fp:precise /Ox /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DI386 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
 MDCFLAGS=$(CFLAGS) /MD
 MTCFLAGS=$(CFLAGS) /MT
 DLLLDFLAGS=/debug:full /machine:ix86 /nologo
@@ -36,7 +36,7 @@ DLLLDFLAGS=/debug:full /machine:ix86 /nologo
 EXELDFLAGS=/debug:full /machine:ix86 /incremental:no /nologo /STACK:0x800000
 
 # use following flags for debugging
-# CFLAGS=/nologo /fp:precise /Od /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DUSE_ANSI_PROTOTYPES /DI386 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
+# CFLAGS=/nologo /fp:precise /Od /W3 /Zi /I$(SchemeInclude) /I..\zlib /I..\lz4\lib /DI386 /DWIN32 /D_CRT_SECURE_NO_WARNINGS
 # MDCFLAGS=$(CFLAGS) /MDd
 # MTCFLAGS=$(CFLAGS) /MTd
 

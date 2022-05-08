@@ -1,4 +1,4 @@
-VERSION := 9.5.7
+VERSION := 9.5.9
 WIXEXTENSIONS := -ext WixUIExtension -ext WixBalExtension
 export MSYS_NO_PATHCONV=1
 

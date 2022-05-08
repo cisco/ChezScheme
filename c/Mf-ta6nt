@@ -19,7 +19,7 @@ Cpu = X86_64
 clib=
 o = obj
 mdobj=windows.$o
-mdsrc=windows.c Makefile.$m cs.ico scheme.rc make.bat
+mdsrc=a6nt-jump.asm windows.c Makefile.$m cs.ico scheme.rc make.bat
 mdclean=vs.bat make.bat scheme.res ../bin/$m/*.exp mtscheme.exe* mdscheme.exe*
 cross=f
 

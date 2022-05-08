@@ -16,13 +16,13 @@
 
 \centerline{}\vfill
 
-\textbf{\copyright~2021 Cisco Systems, Inc.}
+\textbf{\copyright~2022 Cisco Systems, Inc.}
 
 Licensed under the Apache License Version 2.0\\
 http://www.apache.org/licenses/LICENSE-2.0
 
 % NB: also update corresponding notice in csug.stex
-Revised \revisiondate~for Chez Scheme Version 9.5.7.
+Revised \revisiondate~for Chez Scheme Version 9.5.9.
 
 \medskip\noindent
 Cisco and the Cisco logo are trademarks or registered trademarks

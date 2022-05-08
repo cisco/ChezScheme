@@ -40,7 +40,7 @@ ${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
 	$C -rdynamic -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
 
 ../zlib/configure.log:
-	(cd ../zlib; ./configure)
+	(cd ../zlib; CFLAGS="${CFLAGS} -fPIC" ./configure)
 
 ../lz4/lib/liblz4.a: ${LZ4Sources}
 	(cd ../lz4/lib; ${MAKE} liblz4.a)

@@ -1,8 +1,8 @@
 #include "winver.h"
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 9,5,7,0
- PRODUCTVERSION 9,5,7,0
+ FILEVERSION 9,5,9,0
+ PRODUCTVERSION 9,5,9,0
  FILEFLAGSMASK 0x3fL
  FILEFLAGS 0x0L
  FILEOS VOS__WINDOWS32
@@ -12,13 +12,13 @@ VS_VERSION_INFO VERSIONINFO
  BLOCK "StringFileInfo" {
   BLOCK "04090000" {
    VALUE "CompanyName", "Cisco Systems, Inc."
-   VALUE "FileDescription", "Chez Scheme Version 9.5.7"
-   VALUE "FileVersion", "9.5.7"
+   VALUE "FileDescription", "Chez Scheme Version 9.5.9"
+   VALUE "FileVersion", "9.5.9"
    VALUE "InternalName", "scheme.exe"
-   VALUE "LegalCopyright", "Copyright 1984-2021 Cisco Systems, Inc.  Licensed under the Apache License, Version 2.0."
+   VALUE "LegalCopyright", "Copyright 1984-2022 Cisco Systems, Inc.  Licensed under the Apache License, Version 2.0."
    VALUE "OriginalFilename", "scheme.exe"
    VALUE "ProductName", "Chez Scheme"
-   VALUE "ProductVersion", "9.5.7"
+   VALUE "ProductVersion", "9.5.9"
   }
  }
  BLOCK "VarFileInfo" {
