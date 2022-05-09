@@ -2309,3 +2309,8 @@
 - added install-docs target for make and corresponding configuration
   options: --installdoc, --installcsug, and --installreleasenotes
     configure makefiles/Makefile.in
+- fixed a bug in `char-` that lead to returning a large positive integer
+  result when the second argument had a value greater than the first.
+  It now returns a negative number in this situation.
+    cpnanopass.ss
+    5_4.ms root-experr-* patch-*
