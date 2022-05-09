@@ -2,6 +2,7 @@
 (require (only-in "s/build.zuo"
                   [targets-at s-targets-at]
                   base-src-names
+                  macro-src-names
                   other-src-names)
          (only-in "c/build.zuo"
                   [targets-at c-targets-at])
@@ -264,6 +265,7 @@
                                        (rule (append host-boot-files
                                                      (map (lambda (n) (at-source "s" n))
                                                           (append base-src-names
+                                                                  macro-src-names
                                                                   other-src-names)))
                                              (lambda ()
                                                (cross-build-boot token args (hash) '("all")))))

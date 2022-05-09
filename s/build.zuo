@@ -6,6 +6,7 @@
 
 (provide-targets targets-at)
 (provide base-src-names
+         macro-src-names
          other-src-names)
 
 (define default-options
@@ -75,8 +76,9 @@
    ;; pps determines whether pass timings are printed (t/f)
    'pps "f"))
 
-;; putting cpnanopass.patch early for maximum make --jobs=2 benefit
+;; Note: `raco cross` looks for this definition:
 (define patch-names
+  ;; putting cpnanopass.patch early for maximum make --jobs=2 benefit
   (list "patch.patch" "cpnanopass.patch" "cpprim.patch" "cprep.patch" "cpcheck.patch"
         "cp0.patch" "cpvalid.patch" "cptypes.patch" "cpcommonize.patch" "cpletrec.patch"
         "reloc.patch"
@@ -95,6 +97,7 @@
 ;;  date before 7
 ;; (there may be other constraints as well)
 
+;; Note: `rktboot` looks for this definition:
 (define base-src-names
   (list "library.ss" "prims.ss" "mathprims.ss" "record.ss" "5_1.ss" "5_2.ss" "5_3.ss"
         "strnum.ss" "bytevector.ss" "5_4.ss" "5_6.ss" "5_7.ss"
@@ -106,9 +109,16 @@
         "exceptions.ss" "pretty.ss" "env.ss"
         "fasl.ss" "vfasl.ss" "pbchunk.ss" "reloc.ss" "pdhtml.ss" "strip.ss" "ftype.ss" "back.ss"))
 
+;; Note: `raco cross` looks for this definition:
+(define macro-src-names
+  (list "cmacros.ss" "priminfo.ss" "setup.ss" "env.ss"))
+
 (define other-src-names
-  (list "cmacros.ss" "priminfo.ss" "setup.ss" "env.ss"
-        "mkheader.ss" "mkgc.ss"))
+  (list "mkheader.ss" "mkgc.ss"))
+
+;; Note: `rktboot` looks for this definition:
+(define compiler-names
+  (list "cpnanopass.ss" "cpprim.ss" "compile.ss" "cback.ss"))
 
 ;; The `compiler-compiler-options` argument overrides certain `var` and config-file
 ;; options for building preamble files, which is useful for compiling a cross-compiler
@@ -158,9 +168,6 @@
     (map (lambda (s) (at-dir (path-replace-extension s (~a "." m))))
          base-src-names))
 
-  (define compiler-names
-    (list "cpnanopass.ss" "cpprim.ss" "compile.ss" "cback.ss"))
-
   (define compiler-srcs
     (map at-source compiler-names))
 
@@ -198,7 +205,8 @@
   (define other-srcs
     ;; files that are used to initialize the compiler
     (map at-source
-         other-src-names))
+         (append macro-src-names
+                 other-src-names)))
 
   (define all-srcs
     (append base-srcs
