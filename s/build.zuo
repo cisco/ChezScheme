@@ -5,6 +5,8 @@
                   [targets-at examples-targets-at]))
 
 (provide-targets targets-at)
+(provide base-src-names
+         other-src-names)
 
 (define default-options
   (hash
@@ -73,6 +75,41 @@
    ;; pps determines whether pass timings are printed (t/f)
    'pps "f"))
 
+;; putting cpnanopass.patch early for maximum make --jobs=2 benefit
+(define patch-names
+  (list "patch.patch" "cpnanopass.patch" "cpprim.patch" "cprep.patch" "cpcheck.patch"
+        "cp0.patch" "cpvalid.patch" "cptypes.patch" "cpcommonize.patch" "cpletrec.patch"
+        "reloc.patch"
+        "compile.patch" "fasl.patch" "vfasl.patch" "pbchunk.patch" "syntax.patch" "env.patch"
+        "read.patch" "interpret.patch" "ftype.patch" "strip.patch"
+        "ubify.patch" "back.patch"))
+
+;; ordering constraints in "petite.boot":
+;;  first: library, prims, mathprims, front, 5_?
+;;  last: back
+;;  newhash before read
+;;  io before read
+;;  event before 4
+;;  ftype after syntax
+;;  layout and record before strnum (first define-record)
+;;  date before 7
+;; (there may be other constraints as well)
+
+(define base-src-names
+  (list "library.ss" "prims.ss" "mathprims.ss" "record.ss" "5_1.ss" "5_2.ss" "5_3.ss"
+        "strnum.ss" "bytevector.ss" "5_4.ss" "5_6.ss" "5_7.ss"
+        "event.ss" "4.ss" "front.ss" "foreign.ss" "6.ss" "print.ss" "newhash.ss"
+        "format.ss" "date.ss" "7.ss" "cafe.ss" "trace.ss" "engine.ss"
+        "interpret.ss" "cprep.ss" "cpcheck.ss" "cp0.ss" "cpvalid.ss" "cptypes.ss"
+        "cpcommonize.ss" "cpletrec.ss" "inspect.ss"
+        "enum.ss" "io.ss" "read.ss" "primvars.ss" "syntax.ss" "costctr.ss" "expeditor.ss"
+        "exceptions.ss" "pretty.ss" "env.ss"
+        "fasl.ss" "vfasl.ss" "pbchunk.ss" "reloc.ss" "pdhtml.ss" "strip.ss" "ftype.ss" "back.ss"))
+
+(define other-src-names
+  (list "cmacros.ss" "priminfo.ss" "setup.ss" "env.ss"
+        "mkheader.ss" "mkgc.ss"))
+
 ;; The `compiler-compiler-options` argument overrides certain `var` and config-file
 ;; options for building preamble files, which is useful for compiling a cross-compiler
 ;; in safe mode (but having the final cross-built compiler built in unsafe mode)
@@ -115,42 +152,11 @@
   (define gc-par.inc (at-boot "gc-par.inc"))
   (define heapcheck.inc (at-boot "heapcheck.inc"))
 
-  ;; putting cpnanopass.patch early for maximum make --jobs=2 benefit
-  (define patch-names
-    (list "patch.patch" "cpnanopass.patch" "cpprim.patch" "cprep.patch" "cpcheck.patch"
-          "cp0.patch" "cpvalid.patch" "cptypes.patch" "cpcommonize.patch" "cpletrec.patch"
-          "reloc.patch"
-          "compile.patch" "fasl.patch" "vfasl.patch" "pbchunk.patch" "syntax.patch" "env.patch"
-          "read.patch" "interpret.patch" "ftype.patch" "strip.patch"
-          "ubify.patch" "back.patch"))
-
-  ;; ordering constraints in "petite.boot":
-  ;;  first: library, prims, mathprims, front, 5_?
-  ;;  last: back
-  ;;  newhash before read
-  ;;  io before read
-  ;;  event before 4
-  ;;  ftype after syntax
-  ;;  layout and record before strnum (first define-record)
-  ;;  date before 7
-  ;; (there may be other constraints as well)
-
-  (define base-names
-    (list "library.ss" "prims.ss" "mathprims.ss" "record.ss" "5_1.ss" "5_2.ss" "5_3.ss"
-          "strnum.ss" "bytevector.ss" "5_4.ss" "5_6.ss" "5_7.ss"
-          "event.ss" "4.ss" "front.ss" "foreign.ss" "6.ss" "print.ss" "newhash.ss"
-          "format.ss" "date.ss" "7.ss" "cafe.ss" "trace.ss" "engine.ss"
-          "interpret.ss" "cprep.ss" "cpcheck.ss" "cp0.ss" "cpvalid.ss" "cptypes.ss"
-          "cpcommonize.ss" "cpletrec.ss" "inspect.ss"
-          "enum.ss" "io.ss" "read.ss" "primvars.ss" "syntax.ss" "costctr.ss" "expeditor.ss"
-          "exceptions.ss" "pretty.ss" "env.ss"
-          "fasl.ss" "vfasl.ss" "pbchunk.ss" "reloc.ss" "pdhtml.ss" "strip.ss" "ftype.ss" "back.ss"))
-
-  (define base-srcs (map at-source base-names))
+  (define base-srcs (map at-source base-src-names))
 
   (define base-objs
     (map (lambda (s) (at-dir (path-replace-extension s (~a "." m))))
-         base-names))
+         base-src-names))
 
   (define compiler-names
     (list "cpnanopass.ss" "cpprim.ss" "compile.ss" "cback.ss"))
@@ -192,8 +198,7 @@
   (define other-srcs
     ;; files that are used to initialize the compiler
     (map at-source
-         (list "cmacros.ss" "priminfo.ss" "setup.ss" "env.ss"
-               "mkheader.ss" "mkgc.ss")))
+         other-src-names))
 
   (define all-srcs
     (append base-srcs

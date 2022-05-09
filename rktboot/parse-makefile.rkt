@@ -30,7 +30,7 @@
            [(list? c)
             (ormap loop c)]
            [else #f])))
-     (define bases (extract-list 'base-names))
+     (define bases (extract-list 'base-src-names))
      (define compilers (extract-list 'compiler-names))
      (values bases compilers))))
 

@@ -1,6 +1,8 @@
 #lang zuo
 (require (only-in "s/build.zuo"
-                  [targets-at s-targets-at])
+                  [targets-at s-targets-at]
+                  base-src-names
+                  other-src-names)
          (only-in "c/build.zuo"
                   [targets-at c-targets-at])
          "makefiles/lib.zuo")
@@ -259,7 +261,10 @@
                           [else boot-files]))
                       (build (target (at-boot (car boot-file-names))
                                      (lambda (path token)
-                                       (rule host-boot-files
+                                       (rule (append host-boot-files
+                                                     (map (lambda (n) (at-source "s" n))
+                                                          (append base-src-names
+                                                                  other-src-names)))
                                              (lambda ()
                                                (cross-build-boot token args (hash) '("all")))))
                                      (hash 'co-outputs (map at-boot (cdr boot-file-names))))
@@ -280,6 +285,14 @@
                                (cross-build-boot/safe+examples token (list mach)))
                              (unique (append (ls (at-source "boot"))
                                              (ls (at-dir "../boot"))))))]
+
+       [:target bootpbchunk ()
+                ,(lambda (token . args)
+                   (build (command-target->target (find-target "bootpbchunk"
+                                                               (s-targets-at (make-at-dir (at-dir "s")) vars))
+                                                  args)
+                          token))
+                :command]
 
        [:target test-some (build) ,(lambda (token) (run-tests token "test-some"))]
        [:target test (build) ,(lambda (token) (run-tests token "test"))]

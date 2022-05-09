@@ -48,7 +48,7 @@ static instruction_t *call_from; static void *call_to;
 # define TRACE(print, record) /* empty */
 #endif
 
-#define COMMON_INSTR(x) x: do_ ## x(instr); break;
+#define COMMON_INSTR(x) x: doi_ ## x(instr); break;
 
 void S_pb_interp(ptr tc, void *bytecode) {
   machine_state * RESTRICT_PTR ms = (machine_state *)&PBREGS(tc, 0); /* assumes fields are together in `tc` */
@@ -225,11 +225,11 @@ void S_pb_interp(ptr tc, void *bytecode) {
       TRACE(printf("jump %p -> %p\n", ip, next_ip), { jump_from = ip; jump_to = next_ip; });
       break;
     case pb_bs_op_pb_register:
-      next_ip = (instruction_t *)TO_VOIDP(pb_bs_op_pb_register_addr(instr));
+      next_ip = (instruction_t *)TO_VOIDP(geti_pb_bs_op_pb_register_addr(instr));
       TRACE(printf("jump %p -> %p\n", ip, next_ip), { jump_from = ip; jump_to = next_ip; });
       break;
     case pb_bs_op_pb_immediate:
-      next_ip = (instruction_t *)TO_VOIDP(pb_bs_op_pb_immediate_addr(instr));
+      next_ip = (instruction_t *)TO_VOIDP(geti_pb_bs_op_pb_immediate_addr(instr));
       TRACE(printf("jump %p -> %p\n", ip, next_ip), { jump_from = ip; jump_to = next_ip; });
       break;
     case pb_return:

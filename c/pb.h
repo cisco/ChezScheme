@@ -97,86 +97,128 @@ enum {
 /* Implementations for instructions that can be used either within the
    interpreter loop or within a generated chunk. */
 
-#define do_pb_mov16_pb_zero_bits_pb_shift0(instr) \
-  regs[INSTR_di_dest(instr)] = (uptr)INSTR_di_imm_unsigned(instr)
+#define doi_pb_mov16_pb_zero_bits_pb_shift0(instr) \
+  do_pb_mov16_pb_zero_bits_pb_shift0(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+#define do_pb_mov16_pb_zero_bits_pb_shift0(dest, imm_unsigned) \
+  regs[dest] = (uptr)imm_unsigned
 
-#define do_pb_mov16_pb_zero_bits_pb_shift1(instr) \
-  regs[INSTR_di_dest(instr)] = (uptr)INSTR_di_imm_unsigned(instr) << 16
+#define doi_pb_mov16_pb_zero_bits_pb_shift1(instr) \
+  do_pb_mov16_pb_zero_bits_pb_shift1(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+#define do_pb_mov16_pb_zero_bits_pb_shift1(dest, imm_unsigned) \
+  regs[dest] = (uptr)imm_unsigned << 16
 
 #if ptr_bits == 64      
-# define do_pb_mov16_pb_zero_bits_pb_shift2(instr) \
-  regs[INSTR_di_dest(instr)] = (uptr)INSTR_di_imm_unsigned(instr) << 32
+# define doi_pb_mov16_pb_zero_bits_pb_shift2(instr) \
+   do_pb_mov16_pb_zero_bits_pb_shift2(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+# define do_pb_mov16_pb_zero_bits_pb_shift2(dest, imm_unsigned) \
+  regs[dest] = (uptr)imm_unsigned << 32
 #else
-# define do_pb_mov16_pb_zero_bits_pb_shift2(instr) \
-  regs[INSTR_di_dest(instr)] = 0
+# define doi_pb_mov16_pb_zero_bits_pb_shift2(instr) \
+   do_pb_mov16_pb_zero_bits_pb_shift2(INSTR_di_dest(instr))
+# define do_pb_mov16_pb_zero_bits_pb_shift2(dest) \
+  regs[dest] = 0
 #endif
 
 #if ptr_bits == 64      
-# define do_pb_mov16_pb_zero_bits_pb_shift3(instr) \
-  regs[INSTR_di_dest(instr)] = (uptr)INSTR_di_imm_unsigned(instr) << 48
+# define doi_pb_mov16_pb_zero_bits_pb_shift3(instr) \
+   do_pb_mov16_pb_zero_bits_pb_shift3(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+# define do_pb_mov16_pb_zero_bits_pb_shift3(dest, imm_unsigned) \
+  regs[dest] = (uptr)imm_unsigned << 48
 #else
-# define do_pb_mov16_pb_zero_bits_pb_shift3(instr) \
-  regs[INSTR_di_dest(instr)] = 0
+# define doi_pb_mov16_pb_zero_bits_pb_shift3(instr) \
+   do_pb_mov16_pb_zero_bits_pb_shift3(INSTR_di_dest(instr))
+# define do_pb_mov16_pb_zero_bits_pb_shift3(dest) \
+  regs[dest] = 0
 #endif
 
-#define do_pb_mov16_pb_keep_bits_pb_shift0(instr) \
-  regs[INSTR_di_dest(instr)] |= (uptr)INSTR_di_imm_unsigned(instr)
+#define doi_pb_mov16_pb_keep_bits_pb_shift0(instr) \
+  do_pb_mov16_pb_keep_bits_pb_shift0(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+#define do_pb_mov16_pb_keep_bits_pb_shift0(dest, imm_unsigned) \
+  regs[dest] |= (uptr)imm_unsigned
 
-#define do_pb_mov16_pb_keep_bits_pb_shift1(instr) \
-  regs[INSTR_di_dest(instr)] |= (uptr)INSTR_di_imm_unsigned(instr) << 16
+#define doi_pb_mov16_pb_keep_bits_pb_shift1(instr) \
+  do_pb_mov16_pb_keep_bits_pb_shift1(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+#define do_pb_mov16_pb_keep_bits_pb_shift1(dest, imm_unsigned) \
+  regs[dest] |= (uptr)imm_unsigned << 16
 
 #if ptr_bits == 64      
-# define do_pb_mov16_pb_keep_bits_pb_shift2(instr) \
-  regs[INSTR_di_dest(instr)] |= (uptr)INSTR_di_imm_unsigned(instr) << 32
+# define doi_pb_mov16_pb_keep_bits_pb_shift2(instr) \
+   do_pb_mov16_pb_keep_bits_pb_shift2(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+# define do_pb_mov16_pb_keep_bits_pb_shift2(dest, imm_unsigned) \
+  regs[dest] |= (uptr)imm_unsigned << 32
 #else
-# define do_pb_mov16_pb_keep_bits_pb_shift2(instr) \
+# define doi_pb_mov16_pb_keep_bits_pb_shift2(instr) \
+   do_pb_mov16_pb_keep_bits_pb_shift2()
+# define do_pb_mov16_pb_keep_bits_pb_shift2() \
   do { } while (0)
 #endif
 
 #if ptr_bits == 64      
-# define do_pb_mov16_pb_keep_bits_pb_shift3(instr) \
-  regs[INSTR_di_dest(instr)] |= (uptr)INSTR_di_imm_unsigned(instr) << 48
+# define doi_pb_mov16_pb_keep_bits_pb_shift3(instr) \
+   do_pb_mov16_pb_keep_bits_pb_shift3(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+# define do_pb_mov16_pb_keep_bits_pb_shift3(dest, imm_unsigned) \
+  regs[dest] |= (uptr)imm_unsigned << 48
 #else
-# define do_pb_mov16_pb_keep_bits_pb_shift3(instr) \
+# define doi_pb_mov16_pb_keep_bits_pb_shift3(instr) \
+   do_pb_mov16_pb_keep_bits_pb_shift3()
+# define do_pb_mov16_pb_keep_bits_pb_shift3() \
   do { } while (0)
 #endif
 
-#define do_pb_mov_pb_i_i(instr) \
-  regs[INSTR_dr_dest(instr)] = regs[INSTR_dr_reg(instr)]
+#define doi_pb_mov_pb_i_i(instr) \
+  do_pb_mov_pb_i_i(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_mov_pb_i_i(dest, reg) \
+  regs[dest] = regs[reg]
 
-#define do_pb_mov_pb_d_d(instr) \
-  fpregs[INSTR_dr_dest(instr)] = fpregs[INSTR_dr_reg(instr)]
+#define doi_pb_mov_pb_d_d(instr) \
+  do_pb_mov_pb_d_d(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_mov_pb_d_d(dest, reg) \
+  fpregs[dest] = fpregs[reg]
 
-#define do_pb_mov_pb_i_d(instr) \
-  fpregs[INSTR_dr_dest(instr)] = (double)(iptr)regs[INSTR_dr_reg(instr)]
+#define doi_pb_mov_pb_i_d(instr) \
+  do_pb_mov_pb_i_d(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_mov_pb_i_d(dest, reg) \
+  fpregs[dest] = (double)(iptr)regs[reg]
 
-#define do_pb_mov_pb_d_i(instr) \
-  regs[INSTR_dr_dest(instr)] = (iptr)fpregs[INSTR_dr_reg(instr)]
+#define doi_pb_mov_pb_d_i(instr) \
+  do_pb_mov_pb_d_i(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_mov_pb_d_i(dest, reg) \
+  regs[dest] = (iptr)fpregs[reg]
 
 #if ptr_bits == 64
-# define do_pb_mov_pb_i_bits_d_bits(instr) \
-  memcpy(&fpregs[INSTR_dr_dest(instr)], &regs[INSTR_dr_reg(instr)], sizeof(double))
-# define do_pb_mov_pb_d_bits_i_bits(instr) \
-  memcpy(&regs[INSTR_dr_dest(instr)], &fpregs[INSTR_dr_reg(instr)], sizeof(double))
+# define doi_pb_mov_pb_i_bits_d_bits(instr) \
+   do_pb_mov_pb_i_bits_d_bits(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+# define do_pb_mov_pb_i_bits_d_bits(dest, reg) \
+  memcpy(&fpregs[dest], &regs[reg], sizeof(double))
+# define doi_pb_mov_pb_d_bits_i_bits(instr) \
+   do_pb_mov_pb_d_bits_i_bits(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+# define do_pb_mov_pb_d_bits_i_bits(dest, reg) \
+  memcpy(&regs[dest], &fpregs[reg], sizeof(double))
 #else
-# define do_pb_mov_pb_i_i_bits_d_bits(instr)                            \
+# define doi_pb_mov_pb_i_i_bits_d_bits(instr) \
+   do_pb_mov_pb_i_i_bits_d_bits(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+# define do_pb_mov_pb_i_i_bits_d_bits(dest, reg1, reg2) \
   do {                                                                  \
     uint64_t d;                                                         \
-    d = regs[INSTR_drr_reg1(instr)] | ((uint64_t)regs[INSTR_drr_reg2(instr)] << 32); \
-    memcpy(&fpregs[INSTR_drr_dest(instr)], &d, sizeof(double));         \
+    d = regs[reg1] | ((uint64_t)regs[reg2] << 32); \
+    memcpy(&fpregs[dest], &d, sizeof(double));         \
   } while (0)
-# define do_pb_mov_pb_d_lo_bits_i_bits(instr)                     \
-  do {                                                            \
-    uint64_t d;                                                   \
-    memcpy(&d, &fpregs[INSTR_dr_reg(instr)], sizeof(double));     \
-    regs[INSTR_dr_dest(instr)] = d;                               \
+# define doi_pb_mov_pb_d_lo_bits_i_bits(instr) \
+   do_pb_mov_pb_d_lo_bits_i_bits(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+# define do_pb_mov_pb_d_lo_bits_i_bits(dest, reg) \
+  do {                                            \
+    uint64_t d;                                   \
+    memcpy(&d, &fpregs[reg], sizeof(double));     \
+    regs[dest] = d;                               \
   } while (0)
-#define do_pb_mov_pb_d_hi_bits_i_bits(instr)                      \
-  do {                                                            \
-    uint64_t d;                                                   \
-    memcpy(&d, &fpregs[INSTR_dr_reg(instr)], sizeof(double));     \
-    d >>= 32;                                                     \
-    regs[INSTR_dr_dest(instr)] = d;                               \
+#define doi_pb_mov_pb_d_hi_bits_i_bits(instr) \
+  do_pb_mov_pb_d_hi_bits_i_bits(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_mov_pb_d_hi_bits_i_bits(dest, reg) \
+  do {                                            \
+    uint64_t d;                                   \
+    memcpy(&d, &fpregs[reg], sizeof(double));     \
+    d >>= 32;                                     \
+    regs[dest] = d;                               \
   } while (0)
 #endif
 
@@ -186,498 +228,718 @@ enum {
 # define FP_REG_FLOAT_START(p) &(p)
 #endif
 
-#define do_pb_mov_pb_s_d(instr)                                         \
+#define doi_pb_mov_pb_s_d(instr) \
+  do_pb_mov_pb_s_d(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_mov_pb_s_d(dest, reg)                                     \
   do {                                                                  \
     float f;                                                            \
-    memcpy(&f, FP_REG_FLOAT_START(fpregs[INSTR_dr_reg(instr)]), sizeof(float)); \
-    fpregs[INSTR_dr_dest(instr)] = f;                                   \
+    memcpy(&f, FP_REG_FLOAT_START(fpregs[reg]), sizeof(float));         \
+    fpregs[dest] = f;                                                   \
   } while (0)
 
-#define do_pb_mov_pb_d_s(instr)                                         \
+#define doi_pb_mov_pb_d_s(instr) \
+  do_pb_mov_pb_d_s(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_mov_pb_d_s(dest, reg)                                     \
   do {                                                                  \
     float f;                                                            \
-    f = (float)fpregs[INSTR_dr_reg(instr)];                             \
-    memcpy(FP_REG_FLOAT_START(fpregs[INSTR_dr_dest(instr)]), &f, sizeof(float)); \
+    f = (float)fpregs[reg];                                             \
+    memcpy(FP_REG_FLOAT_START(fpregs[dest]), &f, sizeof(float));        \
   } while (0)
 
-#define do_pb_mov_pb_d_s_d(instr)                 \
-  do {                                            \
-    float f;                                      \
-    f = (float)fpregs[INSTR_dr_reg(instr)];       \
-    fpregs[INSTR_dr_dest(instr)] = (double)f;     \
+#define doi_pb_mov_pb_d_s_d(instr) \
+  do_pb_mov_pb_d_s_d(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_mov_pb_d_s_d(dest, reg) \
+  do {                                \
+    float f;                          \
+    f = (float)fpregs[reg];           \
+    fpregs[dest] = (double)f;         \
   } while (0)
 
-#define do_pb_bin_op_pb_no_signal_pb_add_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]
+#define doi_pb_bin_op_pb_no_signal_pb_add_pb_register(instr) \
+  do_pb_bin_op_pb_no_signal_pb_add_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_no_signal_pb_add_pb_register(dest, reg1, reg2) \
+  regs[dest] = regs[reg1] + regs[reg2]
 
-#define do_pb_bin_op_pb_no_signal_pb_add_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] + (uptr)INSTR_dri_imm(instr)
+#define doi_pb_bin_op_pb_no_signal_pb_add_pb_immediate(instr) \
+  do_pb_bin_op_pb_no_signal_pb_add_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_no_signal_pb_add_pb_immediate(dest, reg, imm) \
+  regs[dest] = regs[reg] + (uptr)imm
 
-#define do_pb_bin_op_pb_no_signal_pb_sub_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] - regs[INSTR_drr_reg2(instr)]
+#define doi_pb_bin_op_pb_no_signal_pb_sub_pb_register(instr) \
+  do_pb_bin_op_pb_no_signal_pb_sub_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_no_signal_pb_sub_pb_register(dest, reg1, reg2) \
+  regs[dest] = regs[reg1] - regs[reg2]
 
-#define do_pb_bin_op_pb_no_signal_pb_sub_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] - (uptr)INSTR_dri_imm(instr)
+#define doi_pb_bin_op_pb_no_signal_pb_sub_pb_immediate(instr) \
+  do_pb_bin_op_pb_no_signal_pb_sub_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_no_signal_pb_sub_pb_immediate(dest, reg, imm) \
+  regs[dest] = regs[reg] - (uptr)imm
 
-#define do_pb_bin_op_pb_no_signal_pb_mul_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] * regs[INSTR_drr_reg2(instr)]
+#define doi_pb_bin_op_pb_no_signal_pb_mul_pb_register(instr) \
+  do_pb_bin_op_pb_no_signal_pb_mul_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_no_signal_pb_mul_pb_register(dest, reg1, reg2) \
+  regs[dest] = regs[reg1] * regs[reg2]
 
-#define do_pb_bin_op_pb_no_signal_pb_mul_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = (uptr)regs[INSTR_dri_reg(instr)] * (uptr)INSTR_dri_imm(instr)
+#define doi_pb_bin_op_pb_no_signal_pb_mul_pb_immediate(instr) \
+  do_pb_bin_op_pb_no_signal_pb_mul_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_no_signal_pb_mul_pb_immediate(dest, reg, imm) \
+  regs[dest] = (uptr)regs[reg] * (uptr)imm
 
-#define do_pb_bin_op_pb_no_signal_pb_div_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = (iptr)regs[INSTR_drr_reg1(instr)] / (iptr)regs[INSTR_drr_reg2(instr)]
+#define doi_pb_bin_op_pb_no_signal_pb_div_pb_register(instr) \
+  do_pb_bin_op_pb_no_signal_pb_div_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_no_signal_pb_div_pb_register(dest, reg1, reg2) \
+  regs[dest] = (iptr)regs[reg1] / (iptr)regs[reg2]
 
-#define do_pb_bin_op_pb_no_signal_pb_div_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = (iptr)regs[INSTR_dri_reg(instr)] / (iptr)INSTR_dri_imm(instr)
+#define doi_pb_bin_op_pb_no_signal_pb_div_pb_immediate(instr) \
+  do_pb_bin_op_pb_no_signal_pb_div_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_no_signal_pb_div_pb_immediate(dest, reg, imm) \
+  regs[dest] = (iptr)regs[reg] / (iptr)imm
 
-#define do_pb_bin_op_pb_no_signal_pb_and_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] & regs[INSTR_drr_reg2(instr)]
+#define doi_pb_bin_op_pb_no_signal_pb_and_pb_register(instr) \
+  do_pb_bin_op_pb_no_signal_pb_and_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_no_signal_pb_and_pb_register(dest, reg1, reg2) \
+  regs[dest] = regs[reg1] & regs[reg2]
 
-#define do_pb_bin_op_pb_no_signal_pb_and_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] & (uptr)INSTR_dri_imm(instr)
+#define doi_pb_bin_op_pb_no_signal_pb_and_pb_immediate(instr) \
+  do_pb_bin_op_pb_no_signal_pb_and_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_no_signal_pb_and_pb_immediate(dest, reg, imm) \
+  regs[dest] = regs[reg] & (uptr)imm
 
-#define do_pb_bin_op_pb_no_signal_pb_ior_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] | regs[INSTR_drr_reg2(instr)]
+#define doi_pb_bin_op_pb_no_signal_pb_ior_pb_register(instr) \
+  do_pb_bin_op_pb_no_signal_pb_ior_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_no_signal_pb_ior_pb_register(dest, reg1, reg2) \
+  regs[dest] = regs[reg1] | regs[reg2]
 
-#define do_pb_bin_op_pb_no_signal_pb_ior_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] | (uptr)INSTR_dri_imm(instr)
+#define doi_pb_bin_op_pb_no_signal_pb_ior_pb_immediate(instr) \
+  do_pb_bin_op_pb_no_signal_pb_ior_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_no_signal_pb_ior_pb_immediate(dest, reg, imm) \
+  regs[dest] = regs[reg] | (uptr)imm
 
-#define do_pb_bin_op_pb_no_signal_pb_xor_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] ^ regs[INSTR_drr_reg2(instr)]
+#define doi_pb_bin_op_pb_no_signal_pb_xor_pb_register(instr) \
+  do_pb_bin_op_pb_no_signal_pb_xor_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_no_signal_pb_xor_pb_register(dest, reg1, reg2) \
+  regs[dest] = regs[reg1] ^ regs[reg2]
 
-#define do_pb_bin_op_pb_no_signal_pb_xor_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] ^ (uptr)INSTR_dri_imm(instr)
+#define doi_pb_bin_op_pb_no_signal_pb_xor_pb_immediate(instr) \
+  do_pb_bin_op_pb_no_signal_pb_xor_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_no_signal_pb_xor_pb_immediate(dest, reg, imm) \
+  regs[dest] = regs[reg] ^ (uptr)imm
 
-#define do_pb_bin_op_pb_no_signal_pb_lsl_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] << SHIFT_MASK(regs[INSTR_drr_reg2(instr)])
+#define doi_pb_bin_op_pb_no_signal_pb_lsl_pb_register(instr) \
+  do_pb_bin_op_pb_no_signal_pb_lsl_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_no_signal_pb_lsl_pb_register(dest, reg1, reg2) \
+  regs[dest] = regs[reg1] << SHIFT_MASK(regs[reg2])
 
-#define do_pb_bin_op_pb_no_signal_pb_lsl_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] << SHIFT_MASK(INSTR_dri_imm(instr))
+#define doi_pb_bin_op_pb_no_signal_pb_lsl_pb_immediate(instr) \
+  do_pb_bin_op_pb_no_signal_pb_lsl_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_no_signal_pb_lsl_pb_immediate(dest, reg, imm) \
+  regs[dest] = regs[reg] << SHIFT_MASK(imm)
 
-#define do_pb_bin_op_pb_no_signal_pb_lsr_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] >> SHIFT_MASK(regs[INSTR_drr_reg2(instr)])
+#define doi_pb_bin_op_pb_no_signal_pb_lsr_pb_register(instr) \
+  do_pb_bin_op_pb_no_signal_pb_lsr_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_no_signal_pb_lsr_pb_register(dest, reg1, reg2) \
+  regs[dest] = regs[reg1] >> SHIFT_MASK(regs[reg2])
 
-#define do_pb_bin_op_pb_no_signal_pb_lsr_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] >> SHIFT_MASK(INSTR_dri_imm(instr))
+#define doi_pb_bin_op_pb_no_signal_pb_lsr_pb_immediate(instr) \
+  do_pb_bin_op_pb_no_signal_pb_lsr_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_no_signal_pb_lsr_pb_immediate(dest, reg, imm) \
+  regs[dest] = regs[reg] >> SHIFT_MASK(imm)
 
-#define do_pb_bin_op_pb_no_signal_pb_asr_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = (iptr)regs[INSTR_drr_reg1(instr)] >> SHIFT_MASK(regs[INSTR_drr_reg2(instr)])
+#define doi_pb_bin_op_pb_no_signal_pb_asr_pb_register(instr) \
+  do_pb_bin_op_pb_no_signal_pb_asr_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_no_signal_pb_asr_pb_register(dest, reg1, reg2) \
+  regs[dest] = (iptr)regs[reg1] >> SHIFT_MASK(regs[reg2])
 
-#define do_pb_bin_op_pb_no_signal_pb_asr_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = (iptr)regs[INSTR_dri_reg(instr)] >> SHIFT_MASK(INSTR_dri_imm(instr))
+#define doi_pb_bin_op_pb_no_signal_pb_asr_pb_immediate(instr) \
+  do_pb_bin_op_pb_no_signal_pb_asr_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_no_signal_pb_asr_pb_immediate(dest, reg, imm) \
+  regs[dest] = (iptr)regs[reg] >> SHIFT_MASK(imm)
 
 #ifdef PORTABLE_BYTECODE_BIGENDIAN
-# define do_pb_bin_op_pb_no_signal_pb_lslo_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] >> regs[INSTR_drr_reg2(instr)]
+# define doi_pb_bin_op_pb_no_signal_pb_lslo_pb_register(instr) \
+   do_pb_bin_op_pb_no_signal_pb_lslo_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+# define do_pb_bin_op_pb_no_signal_pb_lslo_pb_register(dest, reg1, reg2) \
+  regs[dest] = regs[reg1] >> regs[reg2]
 #else
-# define do_pb_bin_op_pb_no_signal_pb_lslo_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = regs[INSTR_drr_reg1(instr)] << regs[INSTR_drr_reg2(instr)]
+# define doi_pb_bin_op_pb_no_signal_pb_lslo_pb_register(instr) \
+   do_pb_bin_op_pb_no_signal_pb_lslo_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+# define do_pb_bin_op_pb_no_signal_pb_lslo_pb_register(dest, reg1, reg2) \
+  regs[dest] = regs[reg1] << regs[reg2]
 #endif
 
 #ifdef PORTABLE_BYTECODE_BIGENDIAN
-# define do_pb_bin_op_pb_no_signal_pb_lslo_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] >> INSTR_dri_imm(instr)
+# define doi_pb_bin_op_pb_no_signal_pb_lslo_pb_immediate(instr) \
+   do_pb_bin_op_pb_no_signal_pb_lslo_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+# define do_pb_bin_op_pb_no_signal_pb_lslo_pb_immediate(dest, reg, imm) \
+  regs[dest] = regs[reg] >> imm
 #else
-# define do_pb_bin_op_pb_no_signal_pb_lslo_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = regs[INSTR_dri_reg(instr)] << INSTR_dri_imm(instr);
+# define doi_pb_bin_op_pb_no_signal_pb_lslo_pb_immediate(instr) \
+   do_pb_bin_op_pb_no_signal_pb_lslo_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+# define do_pb_bin_op_pb_no_signal_pb_lslo_pb_immediate(dest, reg, imm) \
+  regs[dest] = regs[reg] << imm;
 #endif
 
 #if USE_OVERFLOW_INTRINSICS
-# define do_pb_bin_op_pb_signal_pb_add_pb_register(instr) \
-  do {                                                    \
-    iptr a = (iptr)regs[INSTR_drr_reg1(instr)];           \
-    iptr b = (iptr)regs[INSTR_drr_reg2(instr)];           \
-    iptr r;                                               \
-    flag = __builtin_add_overflow(a, b, &r);              \
-    regs[INSTR_drr_dest(instr)] = (uptr)r;                \
+# define doi_pb_bin_op_pb_signal_pb_add_pb_register(instr) \
+   do_pb_bin_op_pb_signal_pb_add_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+# define do_pb_bin_op_pb_signal_pb_add_pb_register(dest, reg1, reg2) \
+  do {                                                               \
+    iptr a = (iptr)regs[reg1];                                       \
+    iptr b = (iptr)regs[reg2];                                       \
+    iptr r;                                                          \
+    flag = __builtin_add_overflow(a, b, &r);                         \
+    regs[dest] = (uptr)r;                                            \
   } while (0)
 #else
-# define do_pb_bin_op_pb_signal_pb_add_pb_register(instr) \
-  do {                                                    \
-    uptr a = regs[INSTR_drr_reg1(instr)];                 \
-    uptr b = regs[INSTR_drr_reg2(instr)];                 \
-    uptr r = a + b;                                       \
-    regs[INSTR_drr_dest(instr)] = r;                      \
-    flag = SIGN_FLIP(r, a, b);                            \
+# define doi_pb_bin_op_pb_signal_pb_add_pb_register(instr) \
+   do_pb_bin_op_pb_signal_pb_add_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+# define do_pb_bin_op_pb_signal_pb_add_pb_register(dest, reg1, reg2) \
+  do {                                                               \
+    uptr a = regs[reg1];                                             \
+    uptr b = regs[reg2];                                             \
+    uptr r = a + b;                                                  \
+    regs[dest] = r;                                                  \
+    flag = SIGN_FLIP(r, a, b);                                       \
   } while (0)
 #endif
 
 #if USE_OVERFLOW_INTRINSICS
-# define do_pb_bin_op_pb_signal_pb_add_pb_immediate(instr)       \
+# define doi_pb_bin_op_pb_signal_pb_add_pb_immediate(instr) \
+   do_pb_bin_op_pb_signal_pb_add_pb_immediate(INSTR_drr_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+# define do_pb_bin_op_pb_signal_pb_add_pb_immediate(dest, reg, imm) \
   do {                                                           \
-    iptr a = (iptr)regs[INSTR_dri_reg(instr)];                   \
-    iptr b = INSTR_dri_imm(instr);                               \
+    iptr a = (iptr)regs[reg];                                    \
+    iptr b = imm;                                                \
     iptr r;                                                      \
     flag = __builtin_add_overflow(a, b, &r);                     \
-    regs[INSTR_drr_dest(instr)] = (uptr)r;                       \
+    regs[dest] = (uptr)r;                                        \
   } while (0)
 #else
-# define do_pb_bin_op_pb_signal_pb_add_pb_immediate(instr)       \
-  do {                                                           \
-    uptr a = regs[INSTR_dri_reg(instr)];                         \
-    uptr b = (uptr)INSTR_dri_imm(instr);                         \
-    uptr r = a + b;                                              \
-    regs[INSTR_dri_dest(instr)] = r;                             \
-    flag = SIGN_FLIP(r, a, b);                                   \
+# define doi_pb_bin_op_pb_signal_pb_add_pb_immediate(instr) \
+   do_pb_bin_op_pb_signal_pb_add_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+# define do_pb_bin_op_pb_signal_pb_add_pb_immediate(dest, reg, imm) \
+  do {                                                              \
+    uptr a = regs[reg];                                             \
+    uptr b = (uptr)imm;                                             \
+    uptr r = a + b;                                                 \
+    regs[dest] = r;                                                 \
+    flag = SIGN_FLIP(r, a, b);                                      \
   } while (0)
 #endif
 
 #if USE_OVERFLOW_INTRINSICS
-#define do_pb_bin_op_pb_signal_pb_sub_pb_register(instr)        \
-  do {                                                          \
-    iptr a = (iptr)regs[INSTR_drr_reg1(instr)];                 \
-    iptr b = (iptr)regs[INSTR_drr_reg2(instr)];                 \
-    iptr r;                                                     \
-    flag = __builtin_sub_overflow(a, b, &r);                    \
-    regs[INSTR_drr_dest(instr)] = (uptr)r;                      \
+#define doi_pb_bin_op_pb_signal_pb_sub_pb_register(instr) \
+  do_pb_bin_op_pb_signal_pb_sub_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_signal_pb_sub_pb_register(dest, reg1, reg2) \
+  do {                                                              \
+    iptr a = (iptr)regs[reg1];                                      \
+    iptr b = (iptr)regs[reg2];                                      \
+    iptr r;                                                         \
+    flag = __builtin_sub_overflow(a, b, &r);                        \
+    regs[dest] = (uptr)r;                                           \
   } while (0)
 #else
-#define do_pb_bin_op_pb_signal_pb_sub_pb_register(instr)        \
-  do {                                                          \
-    uptr a = regs[INSTR_drr_reg1(instr)];                       \
-    uptr b = regs[INSTR_drr_reg2(instr)];                       \
-    uptr r = a - b;                                             \
-    regs[INSTR_drr_dest(instr)] = r;                            \
-    flag = SIGN_FLIP(r, a, ~b);                                 \
+#define doi_pb_bin_op_pb_signal_pb_sub_pb_register(instr) \
+  do_pb_bin_op_pb_signal_pb_sub_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_signal_pb_sub_pb_register(dest, reg1, reg2) \
+  do {                                                              \
+    uptr a = regs[reg1];                                            \
+    uptr b = regs[reg2];                                            \
+    uptr r = a - b;                                                 \
+    regs[dest] = r;                                                 \
+    flag = SIGN_FLIP(r, a, ~b);                                     \
   } while (0)
 #endif
 
 #if USE_OVERFLOW_INTRINSICS
-# define do_pb_bin_op_pb_signal_pb_sub_pb_immediate(instr) \
-  do {                                                     \
-    iptr a = (iptr)regs[INSTR_dri_reg(instr)];             \
-    iptr b = INSTR_dri_imm(instr);                         \
-    iptr r;                                                \
-    flag = __builtin_sub_overflow(a, b, &r);               \
-    regs[INSTR_drr_dest(instr)] = (uptr)r;                 \
+# define doi_pb_bin_op_pb_signal_pb_sub_pb_immediate(instr) \
+   do_pb_bin_op_pb_signal_pb_sub_pb_immediate(INSTR_drr_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+# define do_pb_bin_op_pb_signal_pb_sub_pb_immediate(dest, reg, imm) \
+  do {                                                              \
+    iptr a = (iptr)regs[reg];                                       \
+    iptr b = imm;                                                   \
+    iptr r;                                                         \
+    flag = __builtin_sub_overflow(a, b, &r);                        \
+    regs[dest] = (uptr)r;                                           \
   } while (0)
 #else
-# define do_pb_bin_op_pb_signal_pb_sub_pb_immediate(instr) \
-  do {                                                     \
-    uptr a = regs[INSTR_dri_reg(instr)];                   \
-    uptr b = (uptr)INSTR_dri_imm(instr);                   \
-    uptr r = a - b;                                        \
-    regs[INSTR_dri_dest(instr)] = r;                       \
-    flag = SIGN_FLIP(r, a, ~b);                            \
+# define doi_pb_bin_op_pb_signal_pb_sub_pb_immediate(instr) \
+   do_pb_bin_op_pb_signal_pb_sub_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+# define do_pb_bin_op_pb_signal_pb_sub_pb_immediate(dest, reg, imm) \
+  do {                                                              \
+    uptr a = regs[reg];                                             \
+    uptr b = (uptr)imm;                                             \
+    uptr r = a - b;                                                 \
+    regs[dest] = r;                                                 \
+    flag = SIGN_FLIP(r, a, ~b);                                     \
   } while (0)
 #endif
 
 #if USE_OVERFLOW_INTRINSICS
-#define do_pb_bin_op_pb_signal_pb_mul_pb_register(instr)        \
+#define doi_pb_bin_op_pb_signal_pb_mul_pb_register(instr) \
+  do_pb_bin_op_pb_signal_pb_mul_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_signal_pb_mul_pb_register(dest, reg1, reg2) \
   do {                                                          \
-    iptr a = (iptr)regs[INSTR_drr_reg1(instr)];                 \
-    iptr b = (iptr)regs[INSTR_drr_reg2(instr)];                 \
+    iptr a = (iptr)regs[reg1];                                  \
+    iptr b = (iptr)regs[reg2];                                  \
     iptr r;                                                     \
     flag = __builtin_mul_overflow(a, b, &r);                    \
-    regs[INSTR_drr_dest(instr)] = (uptr)r;                      \
+    regs[dest] = (uptr)r;                                       \
   } while (0)
 #else
-#define do_pb_bin_op_pb_signal_pb_mul_pb_register(instr)        \
-  do {                                                          \
-  uptr a = regs[INSTR_drr_reg1(instr)];                         \
-  uptr b = regs[INSTR_drr_reg2(instr)];                         \
-  uptr r = a * b;                                               \
-  regs[INSTR_drr_dest(instr)] = r;                              \
-  if (b != 0) {                                                 \
-    if (b == (uptr)-1)                                          \
-      flag = (a != r * (uptr)-1);                               \
-    else                                                        \
-      flag = ((iptr)a != (iptr)r / (iptr)b);                    \
-  } else                                                        \
-    flag = 0;                                                   \
+#define doi_pb_bin_op_pb_signal_pb_mul_pb_register(instr) \
+  do_pb_bin_op_pb_signal_pb_mul_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_signal_pb_mul_pb_register(dest, reg1, reg2) \
+  do {                                                              \
+    uptr a = regs[reg1];                                            \
+    uptr b = regs[reg2];                                            \
+    uptr r = a * b;                                                 \
+    regs[dest] = r;                                                 \
+    if (b != 0) {                                                   \
+      if (b == (uptr)-1)                                            \
+        flag = (a != r * (uptr)-1);                                 \
+      else                                                          \
+        flag = ((iptr)a != (iptr)r / (iptr)b);                      \
+    } else                                                          \
+      flag = 0;                                                     \
   } while (0)
 #endif
 
 #if USE_OVERFLOW_INTRINSICS
-# define do_pb_bin_op_pb_signal_pb_mul_pb_immediate(instr) \
-  do {                                                     \
-    iptr a = (iptr)regs[INSTR_dri_reg(instr)];             \
-    iptr b = INSTR_dri_imm(instr);                         \
-    iptr r;                                                \
-    flag = __builtin_mul_overflow(a, b, &r);               \
-    regs[INSTR_drr_dest(instr)] = (uptr)r;                 \
+# define doi_pb_bin_op_pb_signal_pb_mul_pb_immediate(instr) \
+   do_pb_bin_op_pb_signal_pb_mul_pb_immediate(INSTR_drr_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+# define do_pb_bin_op_pb_signal_pb_mul_pb_immediate(dest, reg, imm) \
+  do {                                                              \
+    iptr a = (iptr)regs[reg];                                       \
+    iptr b = imm;                                                   \
+    iptr r;                                                         \
+    flag = __builtin_mul_overflow(a, b, &r);                        \
+    regs[dest] = (uptr)r;                                           \
   } while (0)
 #else
-# define do_pb_bin_op_pb_signal_pb_mul_pb_immediate(instr) \
-  do {                                                     \
-    uptr a = regs[INSTR_dri_reg(instr)];                   \
-    uptr b = (uptr)INSTR_dri_imm(instr);                   \
-    uptr r = a * b;                                        \
-    regs[INSTR_dri_dest(instr)] = r;                       \
-    if (b != 0) {                                          \
-      if (b == (uptr)-1)                                   \
-        flag = (a != r * (uptr)-1);                        \
-      else                                                 \
-        flag = ((iptr)a != (iptr)r / (iptr)b);             \
-    } else                                                 \
-      flag = 0;                                            \
+# define doi_pb_bin_op_pb_signal_pb_mul_pb_immediate(instr) \
+   do_pb_bin_op_pb_signal_pb_mul_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+# define do_pb_bin_op_pb_signal_pb_mul_pb_immediate(dest, reg, imm) \
+  do {                                                              \
+    uptr a = regs[reg];                                             \
+    uptr b = (uptr)imm;                                             \
+    uptr r = a * b;                                                 \
+    regs[dest] = r;                                                 \
+    if (b != 0) {                                                   \
+      if (b == (uptr)-1)                                            \
+        flag = (a != r * (uptr)-1);                                 \
+      else                                                          \
+        flag = ((iptr)a != (iptr)r / (iptr)b);                      \
+    } else                                                          \
+      flag = 0;                                                     \
   } while (0)
 #endif
 
-#define do_pb_bin_op_pb_signal_pb_subz_pb_register(instr)               \
-  do {                                                                  \
-    iptr r = regs[INSTR_drr_reg1(instr)] - regs[INSTR_drr_reg2(instr)]; \
-    regs[INSTR_drr_dest(instr)] = r;                                    \
-    flag = (r == 0);                                                    \
+#define doi_pb_bin_op_pb_signal_pb_subz_pb_register(instr) \
+  do_pb_bin_op_pb_signal_pb_subz_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_signal_pb_subz_pb_register(dest, reg1, reg2) \
+  do {                                                               \
+    iptr r = regs[reg1] - regs[reg2];                                \
+    regs[dest] = r;                                                  \
+    flag = (r == 0);                                                 \
   } while (0)
 
-#define do_pb_bin_op_pb_signal_pb_subz_pb_immediate(instr)              \
-  do {                                                                  \
-    iptr r = regs[INSTR_dri_reg(instr)] - (uptr)INSTR_dri_imm(instr);   \
-    regs[INSTR_dri_dest(instr)] = r;                                    \
-    flag = (r == 0);                                                    \
+#define doi_pb_bin_op_pb_signal_pb_subz_pb_immediate(instr) \
+  do_pb_bin_op_pb_signal_pb_subz_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_signal_pb_subz_pb_immediate(dest, reg, imm) \
+  do {                                                              \
+    iptr r = regs[reg] - (uptr)imm;                                 \
+    regs[dest] = r;                                                 \
+    flag = (r == 0);                                                \
   } while (0)
 
-#define do_pb_bin_op_pb_signal_pb_subp_pb_register(instr)               \
-  do {                                                                  \
-    iptr r = regs[INSTR_drr_reg1(instr)] - regs[INSTR_drr_reg2(instr)]; \
-    regs[INSTR_drr_dest(instr)] = r;                                    \
-    flag = (r > 0);                                                     \
+#define doi_pb_bin_op_pb_signal_pb_subp_pb_register(instr) \
+  do_pb_bin_op_pb_signal_pb_subp_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_bin_op_pb_signal_pb_subp_pb_register(dest, reg1, reg2) \
+  do {                                                               \
+    iptr r = regs[reg1] - regs[reg2];                                \
+    regs[dest] = r;                                                  \
+    flag = (r > 0);                                                  \
   } while (0)
 
-#define do_pb_bin_op_pb_signal_pb_subp_pb_immediate(instr)              \
-  do {                                                                  \
-    iptr r = regs[INSTR_dri_reg(instr)] - (uptr)INSTR_dri_imm(instr);   \
-    regs[INSTR_dri_dest(instr)] = r;                                    \
-    flag = (r > 0);                                                     \
+#define doi_pb_bin_op_pb_signal_pb_subp_pb_immediate(instr) \
+  do_pb_bin_op_pb_signal_pb_subp_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_bin_op_pb_signal_pb_subp_pb_immediate(dest, reg, imm) \
+  do {                                                              \
+    iptr r = regs[reg] - (uptr)imm;                                 \
+    regs[dest] = r;                                                 \
+    flag = (r > 0);                                                 \
   } while (0)
 
-#define do_pb_cmp_op_pb_eq_pb_register(instr) \
-  flag = regs[INSTR_dr_dest(instr)] == regs[INSTR_dr_reg(instr)]
+#define doi_pb_cmp_op_pb_eq_pb_register(instr) \
+  do_pb_cmp_op_pb_eq_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_cmp_op_pb_eq_pb_register(dest, reg) \
+  flag = regs[dest] == regs[reg]
 
-#define do_pb_cmp_op_pb_eq_pb_immediate(instr) \
-  flag = regs[INSTR_di_dest(instr)] == (uptr)INSTR_di_imm(instr)
+#define doi_pb_cmp_op_pb_eq_pb_immediate(instr) \
+  do_pb_cmp_op_pb_eq_pb_immediate(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_cmp_op_pb_eq_pb_immediate(dest, imm) \
+  flag = regs[dest] == (uptr)imm
 
-#define do_pb_cmp_op_pb_lt_pb_register(instr) \
-  flag = (iptr)regs[INSTR_dr_dest(instr)] < (iptr)regs[INSTR_dr_reg(instr)]
+#define doi_pb_cmp_op_pb_lt_pb_register(instr) \
+  do_pb_cmp_op_pb_lt_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_cmp_op_pb_lt_pb_register(dest, reg) \
+  flag = (iptr)regs[dest] < (iptr)regs[reg]
 
-#define do_pb_cmp_op_pb_lt_pb_immediate(instr) \
-  flag = (iptr)regs[INSTR_di_dest(instr)] < (iptr)INSTR_di_imm(instr)
+#define doi_pb_cmp_op_pb_lt_pb_immediate(instr) \
+  do_pb_cmp_op_pb_lt_pb_immediate(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_cmp_op_pb_lt_pb_immediate(dest, imm) \
+  flag = (iptr)regs[dest] < (iptr)imm
 
-#define do_pb_cmp_op_pb_gt_pb_register(instr) \
-  flag = (iptr)regs[INSTR_dr_dest(instr)] > (iptr)regs[INSTR_dr_reg(instr)]
+#define doi_pb_cmp_op_pb_gt_pb_register(instr) \
+  do_pb_cmp_op_pb_gt_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_cmp_op_pb_gt_pb_register(dest, reg) \
+  flag = (iptr)regs[dest] > (iptr)regs[reg]
 
-#define do_pb_cmp_op_pb_gt_pb_immediate(instr) \
-  flag = (iptr)regs[INSTR_di_dest(instr)] > (iptr)INSTR_di_imm(instr)
+#define doi_pb_cmp_op_pb_gt_pb_immediate(instr) \
+  do_pb_cmp_op_pb_gt_pb_immediate(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_cmp_op_pb_gt_pb_immediate(dest, imm) \
+  flag = (iptr)regs[dest] > (iptr)imm
 
-#define do_pb_cmp_op_pb_le_pb_register(instr) \
-  flag = (iptr)regs[INSTR_dr_dest(instr)] <= (iptr)regs[INSTR_dr_reg(instr)]
+#define doi_pb_cmp_op_pb_le_pb_register(instr) \
+  do_pb_cmp_op_pb_le_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_cmp_op_pb_le_pb_register(dest, reg) \
+  flag = (iptr)regs[dest] <= (iptr)regs[reg]
 
-#define do_pb_cmp_op_pb_le_pb_immediate(instr) \
-  flag = (iptr)regs[INSTR_di_dest(instr)] <= (iptr)INSTR_di_imm(instr)
+#define doi_pb_cmp_op_pb_le_pb_immediate(instr) \
+  do_pb_cmp_op_pb_le_pb_immediate(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_cmp_op_pb_le_pb_immediate(dest, imm) \
+  flag = (iptr)regs[dest] <= (iptr)imm
 
-#define do_pb_cmp_op_pb_ge_pb_register(instr) \
-  flag = (iptr)regs[INSTR_dr_dest(instr)] >= (iptr)regs[INSTR_dr_reg(instr)]
+#define doi_pb_cmp_op_pb_ge_pb_register(instr) \
+  do_pb_cmp_op_pb_ge_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_cmp_op_pb_ge_pb_register(dest, reg) \
+  flag = (iptr)regs[dest] >= (iptr)regs[reg]
 
-#define do_pb_cmp_op_pb_ge_pb_immediate(instr) \
-  flag = (iptr)regs[INSTR_di_dest(instr)] >= (iptr)INSTR_di_imm(instr)
+#define doi_pb_cmp_op_pb_ge_pb_immediate(instr) \
+  do_pb_cmp_op_pb_ge_pb_immediate(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_cmp_op_pb_ge_pb_immediate(dest, imm) \
+  flag = (iptr)regs[dest] >= (iptr)imm
 
-#define do_pb_cmp_op_pb_ab_pb_register(instr) \
-  flag = regs[INSTR_dr_dest(instr)] > regs[INSTR_dr_reg(instr)]
+#define doi_pb_cmp_op_pb_ab_pb_register(instr) \
+  do_pb_cmp_op_pb_ab_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_cmp_op_pb_ab_pb_register(dest, reg) \
+  flag = regs[dest] > regs[reg]
 
-#define do_pb_cmp_op_pb_ab_pb_immediate(instr) \
-  flag = regs[INSTR_di_dest(instr)] > (uptr)INSTR_di_imm(instr)
+#define doi_pb_cmp_op_pb_ab_pb_immediate(instr) \
+  do_pb_cmp_op_pb_ab_pb_immediate(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_cmp_op_pb_ab_pb_immediate(dest, imm) \
+  flag = regs[dest] > (uptr)imm
 
-#define do_pb_cmp_op_pb_bl_pb_register(instr) \
-  flag = regs[INSTR_dr_dest(instr)] < regs[INSTR_dr_reg(instr)]
+#define doi_pb_cmp_op_pb_bl_pb_register(instr) \
+  do_pb_cmp_op_pb_bl_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_cmp_op_pb_bl_pb_register(dest, reg) \
+  flag = regs[dest] < regs[reg]
 
-#define do_pb_cmp_op_pb_bl_pb_immediate(instr) \
-  flag = regs[INSTR_di_dest(instr)] < (uptr)INSTR_di_imm(instr)
+#define doi_pb_cmp_op_pb_bl_pb_immediate(instr) \
+  do_pb_cmp_op_pb_bl_pb_immediate(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_cmp_op_pb_bl_pb_immediate(dest, imm) \
+  flag = regs[dest] < (uptr)imm
 
-#define do_pb_cmp_op_pb_cs_pb_register(instr) \
-  flag = ((regs[INSTR_dr_dest(instr)] & regs[INSTR_dr_reg(instr)]) != 0)
+#define doi_pb_cmp_op_pb_cs_pb_register(instr) \
+  do_pb_cmp_op_pb_cs_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_cmp_op_pb_cs_pb_register(dest, reg) \
+  flag = ((regs[dest] & regs[reg]) != 0)
 
-#define do_pb_cmp_op_pb_cs_pb_immediate(instr) \
-  flag = ((regs[INSTR_di_dest(instr)] & (uptr)INSTR_di_imm(instr)) != 0)
+#define doi_pb_cmp_op_pb_cs_pb_immediate(instr) \
+  do_pb_cmp_op_pb_cs_pb_immediate(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_cmp_op_pb_cs_pb_immediate(dest, imm) \
+  flag = ((regs[dest] & (uptr)imm) != 0)
 
-#define do_pb_cmp_op_pb_cc_pb_register(instr) \
-  flag = ((regs[INSTR_dr_dest(instr)] & regs[INSTR_dr_reg(instr)]) == 0)
+#define doi_pb_cmp_op_pb_cc_pb_register(instr) \
+  do_pb_cmp_op_pb_cc_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_cmp_op_pb_cc_pb_register(dest, reg) \
+  flag = ((regs[dest] & regs[reg]) == 0)
 
-#define do_pb_cmp_op_pb_cc_pb_immediate(instr) \
-  flag = ((regs[INSTR_di_dest(instr)] & (uptr)INSTR_di_imm(instr)) == 0)
+#define doi_pb_cmp_op_pb_cc_pb_immediate(instr) \
+  do_pb_cmp_op_pb_cc_pb_immediate(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_cmp_op_pb_cc_pb_immediate(dest, imm) \
+  flag = ((regs[dest] & (uptr)imm) == 0)
 
-#define do_pb_fp_bin_op_pb_add_pb_register(instr) \
-  fpregs[INSTR_drr_dest(instr)] = fpregs[INSTR_drr_reg1(instr)] + fpregs[INSTR_drr_reg2(instr)]
+#define doi_pb_fp_bin_op_pb_add_pb_register(instr) \
+  do_pb_fp_bin_op_pb_add_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_fp_bin_op_pb_add_pb_register(dest, reg1, reg2) \
+  fpregs[dest] = fpregs[reg1] + fpregs[reg2]
 
-#define do_pb_fp_bin_op_pb_sub_pb_register(instr) \
-  fpregs[INSTR_drr_dest(instr)] = fpregs[INSTR_drr_reg1(instr)] - fpregs[INSTR_drr_reg2(instr)]
+#define doi_pb_fp_bin_op_pb_sub_pb_register(instr) \
+  do_pb_fp_bin_op_pb_sub_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_fp_bin_op_pb_sub_pb_register(dest, reg1, reg2) \
+  fpregs[dest] = fpregs[reg1] - fpregs[reg2]
 
-#define do_pb_fp_bin_op_pb_mul_pb_register(instr) \
-  fpregs[INSTR_drr_dest(instr)] = fpregs[INSTR_drr_reg1(instr)] * fpregs[INSTR_drr_reg2(instr)]
+#define doi_pb_fp_bin_op_pb_mul_pb_register(instr) \
+  do_pb_fp_bin_op_pb_mul_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_fp_bin_op_pb_mul_pb_register(dest, reg1, reg2) \
+  fpregs[dest] = fpregs[reg1] * fpregs[reg2]
 
-#define do_pb_fp_bin_op_pb_div_pb_register(instr) \
-  fpregs[INSTR_drr_dest(instr)] = fpregs[INSTR_drr_reg1(instr)] / fpregs[INSTR_drr_reg2(instr)]
+#define doi_pb_fp_bin_op_pb_div_pb_register(instr) \
+  do_pb_fp_bin_op_pb_div_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_fp_bin_op_pb_div_pb_register(dest, reg1, reg2) \
+  fpregs[dest] = fpregs[reg1] / fpregs[reg2]
 
-#define do_pb_un_op_pb_not_pb_register(instr) \
-  regs[INSTR_dr_dest(instr)] = ~(regs[INSTR_dr_reg(instr)])
+#define doi_pb_un_op_pb_not_pb_register(instr) \
+  do_pb_un_op_pb_not_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_un_op_pb_not_pb_register(dest, reg) \
+  regs[dest] = ~(regs[reg])
 
-#define do_pb_un_op_pb_not_pb_immediate(instr) \
-  regs[INSTR_di_dest(instr)] = ~((uptr)(iptr)INSTR_di_imm(instr))
+#define doi_pb_un_op_pb_not_pb_immediate(instr) \
+  do_pb_un_op_pb_not_pb_immediate(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_un_op_pb_not_pb_immediate(dest, imm) \
+  regs[dest] = ~((uptr)(iptr)imm)
 
-#define do_pb_fp_un_op_pb_sqrt_pb_register(instr) \
-  fpregs[INSTR_dr_dest(instr)] = sqrt(fpregs[INSTR_dr_reg(instr)])
+#define doi_pb_fp_un_op_pb_sqrt_pb_register(instr) \
+  do_pb_fp_un_op_pb_sqrt_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_fp_un_op_pb_sqrt_pb_register(dest, reg) \
+  fpregs[dest] = sqrt(fpregs[reg])
 
-#define do_pb_fp_cmp_op_pb_eq_pb_register(instr) \
-  flag = fpregs[INSTR_dr_dest(instr)] == fpregs[INSTR_dr_reg(instr)]
+#define doi_pb_fp_cmp_op_pb_eq_pb_register(instr) \
+  do_pb_fp_cmp_op_pb_eq_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_fp_cmp_op_pb_eq_pb_register(dest, reg) \
+  flag = fpregs[dest] == fpregs[reg]
 
-#define do_pb_fp_cmp_op_pb_lt_pb_register(instr) \
-  flag = fpregs[INSTR_dr_dest(instr)] < fpregs[INSTR_dr_reg(instr)]
+#define doi_pb_fp_cmp_op_pb_lt_pb_register(instr) \
+  do_pb_fp_cmp_op_pb_lt_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_fp_cmp_op_pb_lt_pb_register(dest, reg) \
+  flag = fpregs[dest] < fpregs[reg]
 
-#define do_pb_fp_cmp_op_pb_le_pb_register(instr) \
-  flag = fpregs[INSTR_dr_dest(instr)] <= fpregs[INSTR_dr_reg(instr)]
+#define doi_pb_fp_cmp_op_pb_le_pb_register(instr) \
+  do_pb_fp_cmp_op_pb_le_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_fp_cmp_op_pb_le_pb_register(dest, reg) \
+  flag = fpregs[dest] <= fpregs[reg]
 
 #if ptr_bits == 64
-#define do_pb_rev_op_pb_int16_pb_register(instr)                        \
-  regs[INSTR_dr_dest(instr)] = ((uptr)((iptr)(regs[INSTR_dr_reg(instr)] << 56) >> 48) \
-                                | ((regs[INSTR_dr_reg(instr)] & 0xFF00) >> 8))
+#define doi_pb_rev_op_pb_int16_pb_register(instr) \
+  do_pb_rev_op_pb_int16_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_rev_op_pb_int16_pb_register(dest, reg) \
+  regs[dest] = ((uptr)((iptr)(regs[reg] << 56) >> 48) \
+                                | ((regs[reg] & 0xFF00) >> 8))
 #else
-#define do_pb_rev_op_pb_int16_pb_register(instr)                        \
-  regs[INSTR_dr_dest(instr)] = ((uptr)((iptr)(regs[INSTR_dr_reg(instr)] << 24) >> 16) \
-                                | ((regs[INSTR_dr_reg(instr)] & 0xFF00) >> 8))
+#define doi_pb_rev_op_pb_int16_pb_register(instr) \
+  do_pb_rev_op_pb_int16_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_rev_op_pb_int16_pb_register(dest, reg) \
+  regs[dest] = ((uptr)((iptr)(regs[reg] << 24) >> 16) \
+                                | ((regs[reg] & 0xFF00) >> 8))
 #endif
 
-#define do_pb_rev_op_pb_uint16_pb_register(instr) \
-  regs[INSTR_dr_dest(instr)] = (((regs[INSTR_dr_reg(instr)] & 0x00FF) << 8) \
-                                | ((regs[INSTR_dr_reg(instr)] & 0xFF00) >> 8))
+#define doi_pb_rev_op_pb_uint16_pb_register(instr) \
+  do_pb_rev_op_pb_uint16_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_rev_op_pb_uint16_pb_register(dest, reg) \
+  regs[dest] = (((regs[reg] & 0x00FF) << 8) \
+                                | ((regs[reg] & 0xFF00) >> 8))
 
 #if ptr_bits == 64
-# define do_pb_rev_op_pb_int32_pb_register(instr)                       \
-  regs[INSTR_dr_dest(instr)] = ((uptr)((iptr)(regs[INSTR_dr_reg(instr)] << 56) >> 32) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0xFF000000) >> 24) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00FF0000) >> 8) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000FF00) << 8))
+# define doi_pb_rev_op_pb_int32_pb_register(instr) \
+   do_pb_rev_op_pb_int32_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+# define do_pb_rev_op_pb_int32_pb_register(dest, reg) \
+  regs[dest] = ((uptr)((iptr)(regs[reg] << 56) >> 32) \
+                                | ((regs[reg] & (uptr)0xFF000000) >> 24) \
+                                | ((regs[reg] & (uptr)0x00FF0000) >> 8) \
+                                | ((regs[reg] & (uptr)0x0000FF00) << 8))
 #else
-# define do_pb_rev_op_pb_int32_pb_register(instr)                       \
-  regs[INSTR_dr_dest(instr)] = ((regs[INSTR_dr_reg(instr)] << 24)       \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0xFF000000) >> 24) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00FF0000) >> 8) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000FF00) << 8))
+# define doi_pb_rev_op_pb_int32_pb_register(instr) \
+   do_pb_rev_op_pb_int32_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+# define do_pb_rev_op_pb_int32_pb_register(dest, reg) \
+  regs[dest] = ((regs[reg] << 24)       \
+                                | ((regs[reg] & (uptr)0xFF000000) >> 24) \
+                                | ((regs[reg] & (uptr)0x00FF0000) >> 8) \
+                                | ((regs[reg] & (uptr)0x0000FF00) << 8))
 #endif
 
-#define do_pb_rev_op_pb_uint32_pb_register(instr)                       \
-  regs[INSTR_dr_dest(instr)] = (((regs[INSTR_dr_reg(instr)] & (uptr)0x000000FF) << 24) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0xFF000000) >> 24) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00FF0000) >> 8) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000FF00) << 8))
+#define doi_pb_rev_op_pb_uint32_pb_register(instr) \
+  do_pb_rev_op_pb_uint32_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_rev_op_pb_uint32_pb_register(dest, reg) \
+  regs[dest] = (((regs[reg] & (uptr)0x000000FF) << 24) \
+                                | ((regs[reg] & (uptr)0xFF000000) >> 24) \
+                                | ((regs[reg] & (uptr)0x00FF0000) >> 8) \
+                                | ((regs[reg] & (uptr)0x0000FF00) << 8))
 
 #if ptr_bits == 64
-# define do_pb_rev_op_pb_int64_pb_register(instr)                       \
-  regs[INSTR_dr_dest(instr)] = (((regs[INSTR_dr_reg(instr)] & (uptr)0x00000000000000FF) << 56) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x000000000000FF00) << 40) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000000000FF0000) << 24) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00000000FF000000) << 8) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x000000FF00000000) >> 8) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000FF0000000000) >> 24) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00FF000000000000) >> 40) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0xFF00000000000000) >> 56))
+# define doi_pb_rev_op_pb_int64_pb_register(instr) \
+   do_pb_rev_op_pb_int64_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+# define do_pb_rev_op_pb_int64_pb_register(dest, reg) \
+  regs[dest] = (((regs[reg] & (uptr)0x00000000000000FF) << 56) \
+                                | ((regs[reg] & (uptr)0x000000000000FF00) << 40) \
+                                | ((regs[reg] & (uptr)0x0000000000FF0000) << 24) \
+                                | ((regs[reg] & (uptr)0x00000000FF000000) << 8) \
+                                | ((regs[reg] & (uptr)0x000000FF00000000) >> 8) \
+                                | ((regs[reg] & (uptr)0x0000FF0000000000) >> 24) \
+                                | ((regs[reg] & (uptr)0x00FF000000000000) >> 40) \
+                                | ((regs[reg] & (uptr)0xFF00000000000000) >> 56))
 #else
-# define do_pb_rev_op_pb_int64_pb_register(instr)                        \
-  regs[INSTR_dr_dest(instr)] = (((regs[INSTR_dr_reg(instr)] & (uptr)0x000000FF) << 24) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0xFF000000) >> 24) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x00FF0000) >> 8) \
-                                | ((regs[INSTR_dr_reg(instr)] & (uptr)0x0000FF00) << 8))
+# define doi_pb_rev_op_pb_int64_pb_register(instr) \
+   do_pb_rev_op_pb_int64_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+# define do_pb_rev_op_pb_int64_pb_register(dest, reg) \
+  regs[dest] = (((regs[reg] & (uptr)0x000000FF) << 24) \
+                                | ((regs[reg] & (uptr)0xFF000000) >> 24) \
+                                | ((regs[reg] & (uptr)0x00FF0000) >> 8) \
+                                | ((regs[reg] & (uptr)0x0000FF00) << 8))
 #endif
 
-#define do_pb_ld_op_pb_int8_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = *(int8_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)])
+#define doi_pb_ld_op_pb_int8_pb_register(instr) \
+  do_pb_ld_op_pb_int8_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_ld_op_pb_int8_pb_register(dest, reg1, reg2) \
+  regs[dest] = *(int8_t *)TO_VOIDP(regs[reg1] + regs[reg2])
 
 #if defined(__arm__)
 /* Complicated load to avoid an internal compiler error from an old gcc on Raspbian: */
-# define do_pb_ld_op_pb_int8_pb_immediate(instr)                        \
+# define doi_pb_ld_op_pb_int8_pb_immediate(instr) \
+   do_pb_ld_op_pb_int8_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+# define do_pb_ld_op_pb_int8_pb_immediate(dest, reg, imm) \
   do {                                                                  \
     int8_t v;                                                           \
-    memcpy(&v, TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)), sizeof(int8_t)); \
-    regs[INSTR_dri_dest(instr)] = v;                                    \
+    memcpy(&v, TO_VOIDP(regs[reg] + imm), sizeof(int8_t)); \
+    regs[dest] = v;                                    \
   } while (0)
 #else
-# define do_pb_ld_op_pb_int8_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = *(int8_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr))
+# define doi_pb_ld_op_pb_int8_pb_immediate(instr) \
+   do_pb_ld_op_pb_int8_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+# define do_pb_ld_op_pb_int8_pb_immediate(dest, reg, imm) \
+  regs[dest] = *(int8_t *)TO_VOIDP(regs[reg] + imm)
 #endif
 
-#define do_pb_ld_op_pb_uint8_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = *(uint8_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)])
+#define doi_pb_ld_op_pb_uint8_pb_register(instr) \
+  do_pb_ld_op_pb_uint8_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_ld_op_pb_uint8_pb_register(dest, reg1, reg2) \
+  regs[dest] = *(uint8_t *)TO_VOIDP(regs[reg1] + regs[reg2])
 
-#define do_pb_ld_op_pb_uint8_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = *(uint8_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr))
+#define doi_pb_ld_op_pb_uint8_pb_immediate(instr) \
+  do_pb_ld_op_pb_uint8_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_ld_op_pb_uint8_pb_immediate(dest, reg, imm) \
+  regs[dest] = *(uint8_t *)TO_VOIDP(regs[reg] + imm)
 
-#define do_pb_ld_op_pb_int16_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = *(int16_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)])
+#define doi_pb_ld_op_pb_int16_pb_register(instr) \
+  do_pb_ld_op_pb_int16_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_ld_op_pb_int16_pb_register(dest, reg1, reg2) \
+  regs[dest] = *(int16_t *)TO_VOIDP(regs[reg1] + regs[reg2])
 
-#define do_pb_ld_op_pb_int16_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = *(int16_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr))
+#define doi_pb_ld_op_pb_int16_pb_immediate(instr) \
+  do_pb_ld_op_pb_int16_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_ld_op_pb_int16_pb_immediate(dest, reg, imm) \
+  regs[dest] = *(int16_t *)TO_VOIDP(regs[reg] + imm)
 
-#define do_pb_ld_op_pb_uint16_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = *(uint16_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)])
+#define doi_pb_ld_op_pb_uint16_pb_register(instr) \
+  do_pb_ld_op_pb_uint16_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_ld_op_pb_uint16_pb_register(dest, reg1, reg2) \
+  regs[dest] = *(uint16_t *)TO_VOIDP(regs[reg1] + regs[reg2])
 
-#define do_pb_ld_op_pb_uint16_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = *(uint16_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr))
+#define doi_pb_ld_op_pb_uint16_pb_immediate(instr) \
+  do_pb_ld_op_pb_uint16_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_ld_op_pb_uint16_pb_immediate(dest, reg, imm) \
+  regs[dest] = *(uint16_t *)TO_VOIDP(regs[reg] + imm)
 
-#define do_pb_ld_op_pb_int32_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = *(int32_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)])
+#define doi_pb_ld_op_pb_int32_pb_register(instr) \
+  do_pb_ld_op_pb_int32_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_ld_op_pb_int32_pb_register(dest, reg1, reg2) \
+  regs[dest] = *(int32_t *)TO_VOIDP(regs[reg1] + regs[reg2])
 
-#define do_pb_ld_op_pb_int32_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = *(int32_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr))
+#define doi_pb_ld_op_pb_int32_pb_immediate(instr) \
+  do_pb_ld_op_pb_int32_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_ld_op_pb_int32_pb_immediate(dest, reg, imm) \
+  regs[dest] = *(int32_t *)TO_VOIDP(regs[reg] + imm)
 
-#define do_pb_ld_op_pb_uint32_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = *(uint32_t *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)])
+#define doi_pb_ld_op_pb_uint32_pb_register(instr) \
+  do_pb_ld_op_pb_uint32_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_ld_op_pb_uint32_pb_register(dest, reg1, reg2) \
+  regs[dest] = *(uint32_t *)TO_VOIDP(regs[reg1] + regs[reg2])
 
-#define do_pb_ld_op_pb_uint32_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = *(uint32_t *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr))
+#define doi_pb_ld_op_pb_uint32_pb_immediate(instr) \
+  do_pb_ld_op_pb_uint32_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_ld_op_pb_uint32_pb_immediate(dest, reg, imm) \
+  regs[dest] = *(uint32_t *)TO_VOIDP(regs[reg] + imm)
 
-#define do_pb_ld_op_pb_int64_pb_register(instr) \
-  regs[INSTR_drr_dest(instr)] = *(uptr *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)])
+#define doi_pb_ld_op_pb_int64_pb_register(instr) \
+  do_pb_ld_op_pb_int64_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_ld_op_pb_int64_pb_register(dest, reg1, reg2) \
+  regs[dest] = *(uptr *)TO_VOIDP(regs[reg1] + regs[reg2])
 
-#define do_pb_ld_op_pb_int64_pb_immediate(instr) \
-  regs[INSTR_dri_dest(instr)] = *(uptr *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr))
+#define doi_pb_ld_op_pb_int64_pb_immediate(instr) \
+  do_pb_ld_op_pb_int64_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_ld_op_pb_int64_pb_immediate(dest, reg, imm) \
+  regs[dest] = *(uptr *)TO_VOIDP(regs[reg] + imm)
 
-#define do_pb_ld_op_pb_double_pb_register(instr) \
-  fpregs[INSTR_drr_dest(instr)] = *(double *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)])
+#define doi_pb_ld_op_pb_double_pb_register(instr) \
+  do_pb_ld_op_pb_double_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_ld_op_pb_double_pb_register(dest, reg1, reg2) \
+  fpregs[dest] = *(double *)TO_VOIDP(regs[reg1] + regs[reg2])
 
-#define do_pb_ld_op_pb_double_pb_immediate(instr) \
-  fpregs[INSTR_dri_dest(instr)] = *(double *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr))
+#define doi_pb_ld_op_pb_double_pb_immediate(instr) \
+  do_pb_ld_op_pb_double_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_ld_op_pb_double_pb_immediate(dest, reg, imm) \
+  fpregs[dest] = *(double *)TO_VOIDP(regs[reg] + imm)
 
-#define do_pb_ld_op_pb_single_pb_register(instr) \
-  fpregs[INSTR_drr_dest(instr)] =  *(float *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)])
+#define doi_pb_ld_op_pb_single_pb_register(instr) \
+  do_pb_ld_op_pb_single_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_ld_op_pb_single_pb_register(dest, reg1, reg2) \
+  fpregs[dest] =  *(float *)TO_VOIDP(regs[reg1] + regs[reg2])
 
-#define do_pb_ld_op_pb_single_pb_immediate(instr) \
-  fpregs[INSTR_dri_dest(instr)] = *(float *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr))
+#define doi_pb_ld_op_pb_single_pb_immediate(instr) \
+  do_pb_ld_op_pb_single_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_ld_op_pb_single_pb_immediate(dest, reg, imm) \
+  fpregs[dest] = *(float *)TO_VOIDP(regs[reg] + imm)
 
-#define do_pb_st_op_pb_int8_pb_register(instr) \
-  *(char *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = (char)regs[INSTR_drr_dest(instr)]
+#define doi_pb_st_op_pb_int8_pb_register(instr) \
+  do_pb_st_op_pb_int8_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_st_op_pb_int8_pb_register(dest, reg1, reg2) \
+  *(char *)TO_VOIDP(regs[reg1] + regs[reg2]) = (char)regs[dest]
 
-#define do_pb_st_op_pb_int8_pb_immediate(instr)                         \
-  *(char *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = (char)regs[INSTR_dri_dest(instr)]
+#define doi_pb_st_op_pb_int8_pb_immediate(instr) \
+  do_pb_st_op_pb_int8_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_st_op_pb_int8_pb_immediate(dest, reg, imm) \
+  *(char *)TO_VOIDP(regs[reg] + imm) = (char)regs[dest]
 
-#define do_pb_st_op_pb_int16_pb_register(instr) \
-  *(short *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = (short)regs[INSTR_drr_dest(instr)]
+#define doi_pb_st_op_pb_int16_pb_register(instr) \
+  do_pb_st_op_pb_int16_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_st_op_pb_int16_pb_register(dest, reg1, reg2) \
+  *(short *)TO_VOIDP(regs[reg1] + regs[reg2]) = (short)regs[dest]
 
-#define do_pb_st_op_pb_int16_pb_immediate(instr) \
-  *(short *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = (short)regs[INSTR_dri_dest(instr)]
+#define doi_pb_st_op_pb_int16_pb_immediate(instr) \
+  do_pb_st_op_pb_int16_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_st_op_pb_int16_pb_immediate(dest, reg, imm) \
+  *(short *)TO_VOIDP(regs[reg] + imm) = (short)regs[dest]
 
-#define do_pb_st_op_pb_int32_pb_register(instr) \
-  *(int *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = (int)regs[INSTR_drr_dest(instr)]
+#define doi_pb_st_op_pb_int32_pb_register(instr) \
+  do_pb_st_op_pb_int32_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_st_op_pb_int32_pb_register(dest, reg1, reg2) \
+  *(int *)TO_VOIDP(regs[reg1] + regs[reg2]) = (int)regs[dest]
 
-#define do_pb_st_op_pb_int32_pb_immediate(instr) \
-  *(int *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = (int)regs[INSTR_dri_dest(instr)]
+#define doi_pb_st_op_pb_int32_pb_immediate(instr) \
+  do_pb_st_op_pb_int32_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_st_op_pb_int32_pb_immediate(dest, reg, imm) \
+  *(int *)TO_VOIDP(regs[reg] + imm) = (int)regs[dest]
 
-#define do_pb_st_op_pb_int64_pb_register(instr) \
-  *(uptr *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = regs[INSTR_drr_dest(instr)]
+#define doi_pb_st_op_pb_int64_pb_register(instr) \
+  do_pb_st_op_pb_int64_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_st_op_pb_int64_pb_register(dest, reg1, reg2) \
+  *(uptr *)TO_VOIDP(regs[reg1] + regs[reg2]) = regs[dest]
 
-#define do_pb_st_op_pb_int64_pb_immediate(instr) \
-  *(uptr *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = regs[INSTR_dri_dest(instr)]
+#define doi_pb_st_op_pb_int64_pb_immediate(instr) \
+  do_pb_st_op_pb_int64_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_st_op_pb_int64_pb_immediate(dest, reg, imm) \
+  *(uptr *)TO_VOIDP(regs[reg] + imm) = regs[dest]
 
-#define do_pb_st_op_pb_double_pb_register(instr) \
-  *(double *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = fpregs[INSTR_drr_dest(instr)]
+#define doi_pb_st_op_pb_double_pb_register(instr) \
+  do_pb_st_op_pb_double_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_st_op_pb_double_pb_register(dest, reg1, reg2) \
+  *(double *)TO_VOIDP(regs[reg1] + regs[reg2]) = fpregs[dest]
 
-#define do_pb_st_op_pb_double_pb_immediate(instr) \
-  *(double *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = fpregs[INSTR_dri_dest(instr)]
+#define doi_pb_st_op_pb_double_pb_immediate(instr) \
+  do_pb_st_op_pb_double_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_st_op_pb_double_pb_immediate(dest, reg, imm) \
+  *(double *)TO_VOIDP(regs[reg] + imm) = fpregs[dest]
 
-#define do_pb_st_op_pb_single_pb_register(instr) \
-  *(float *)TO_VOIDP(regs[INSTR_drr_reg1(instr)] + regs[INSTR_drr_reg2(instr)]) = (float)fpregs[INSTR_drr_dest(instr)]
+#define doi_pb_st_op_pb_single_pb_register(instr) \
+  do_pb_st_op_pb_single_pb_register(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_st_op_pb_single_pb_register(dest, reg1, reg2) \
+  *(float *)TO_VOIDP(regs[reg1] + regs[reg2]) = (float)fpregs[dest]
 
-#define do_pb_st_op_pb_single_pb_immediate(instr) \
-  *(float *)TO_VOIDP(regs[INSTR_dri_reg(instr)] + INSTR_dri_imm(instr)) = (float)fpregs[INSTR_dri_dest(instr)]
+#define doi_pb_st_op_pb_single_pb_immediate(instr) \
+  do_pb_st_op_pb_single_pb_immediate(INSTR_dri_dest(instr), INSTR_dri_reg(instr), INSTR_dri_imm(instr))
+#define do_pb_st_op_pb_single_pb_immediate(dest, reg, imm) \
+  *(float *)TO_VOIDP(regs[reg] + imm) = (float)fpregs[dest]
 
 #if defined(PTHREADS)
 # define CAS_ANY_FENCE_SEQOK(addr, old_r, r) \
@@ -687,12 +949,14 @@ enum {
   (*(uptr *)TO_VOIDP(addr) = r, 1)
 #endif
 
-#define do_pb_inc_pb_register(instr)                                    \
+#define doi_pb_inc_pb_register(instr) \
+  do_pb_inc_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_inc_pb_register(dest, reg)                                \
   do {                                                                  \
-    uptr addr = regs[INSTR_dr_dest(instr)];                             \
+    uptr addr = regs[dest];                                             \
     while (1) {                                                         \
       uptr old_r = *(uptr *)TO_VOIDP(addr);                             \
-      uptr r = old_r + regs[INSTR_dr_reg(instr)];                       \
+      uptr r = old_r + regs[reg];                                       \
       if (CAS_ANY_FENCE_SEQOK(addr, old_r, r)) {                        \
         flag = (r == 0);                                                \
         break;                                                          \
@@ -700,12 +964,14 @@ enum {
     }                                                                   \
   } while (0)
 
-#define do_pb_inc_pb_immediate(instr)                                   \
+#define doi_pb_inc_pb_immediate(instr) \
+  do_pb_inc_pb_immediate(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_inc_pb_immediate(dest, imm) \
   do {                                                                  \
-    uptr addr = regs[INSTR_di_dest(instr)];                             \
+    uptr addr = regs[dest];                                             \
     while (1) {                                                         \
       uptr old_r = *(uptr *)TO_VOIDP(addr);                             \
-      uptr r = old_r + INSTR_di_imm(instr);                             \
+      uptr r = old_r + imm;                                             \
       if (CAS_ANY_FENCE_SEQOK(addr, old_r, r)) {                        \
         flag = (r == 0);                                                \
         break;                                                          \
@@ -714,15 +980,19 @@ enum {
   } while (0)
 
 #if defined(PTHREADS)
-# define do_pb_lock(instr)                                       \
+# define doi_pb_lock(instr) \
+   do_pb_lock(INSTR_d_dest(instr))
+# define do_pb_lock(dest)                                        \
   do {                                                           \
-    uptr *l = TO_VOIDP(regs[INSTR_d_dest(instr)]);               \
+    uptr *l = TO_VOIDP(regs[dest]);                              \
     flag = CAS_ANY_FENCE(l, TO_VOIDP(0), TO_VOIDP(1));           \
   } while (0)
 #else
-# define do_pb_lock(instr)                             \
+# define doi_pb_lock(instr) \
+   do_pb_lock(INSTR_d_dest(instr))
+# define do_pb_lock(dest) \
   do {                                                 \
-    uptr *l = TO_VOIDP(regs[INSTR_d_dest(instr)]);     \
+    uptr *l = TO_VOIDP(regs[dest]);                    \
     if (*l == 0) {                                     \
       *l = 1;                                          \
       flag = 1;                                        \
@@ -732,19 +1002,23 @@ enum {
 #endif
 
 #if defined(PTHREADS)
-# define do_pb_cas(instr)                                      \
-  do {                                                         \
-    uptr *l = TO_VOIDP(regs[INSTR_drr_dest(instr)]);           \
-    uptr old = regs[INSTR_drr_reg1(instr)];                    \
-    uptr new = regs[INSTR_drr_reg2(instr)];                    \
+# define doi_pb_cas(instr) \
+   do_pb_cas(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+# define do_pb_cas(dest, reg1, reg2)          \
+  do {                                        \
+    uptr *l = TO_VOIDP(regs[dest]);           \
+    uptr old = regs[reg1];                    \
+    uptr new = regs[reg2];                    \
     flag = CAS_ANY_FENCE(l, TO_VOIDP(old), TO_VOIDP(new));     \
   } while (0)
 #else
-#define do_pb_cas(instr)                                 \
+#define doi_pb_cas(instr) \
+  do_pb_cas(INSTR_drr_dest(instr), INSTR_drr_reg1(instr), INSTR_drr_reg2(instr))
+#define do_pb_cas(dest, reg1, reg2)                      \
   do {                                                   \
-    uptr *l = TO_VOIDP(regs[INSTR_drr_dest(instr)]);     \
-    uptr old = regs[INSTR_drr_reg1(instr)];              \
-    uptr new = regs[INSTR_drr_reg2(instr)];              \
+    uptr *l = TO_VOIDP(regs[dest]);                      \
+    uptr old = regs[reg1];                               \
+    uptr new = regs[reg2];                               \
     if (*l == old) {                                     \
       *l = new;                                          \
       flag = 1;                                          \
@@ -753,35 +1027,55 @@ enum {
   } while (0)
 #endif
 
-#define do_pb_fence_pb_fence_store_store(instr) \
+#define doi_pb_fence_pb_fence_store_store(instr) \
+  do_pb_fence_pb_fence_store_store()
+#define do_pb_fence_pb_fence_store_store() \
   STORE_FENCE()
 
-#define do_pb_fence_pb_fence_acquire(instr) \
+#define doi_pb_fence_pb_fence_acquire(instr) \
+  do_pb_fence_pb_fence_acquire()
+#define do_pb_fence_pb_fence_acquire() \
   ACQUIRE_FENCE()
 
-#define do_pb_fence_pb_fence_release(instr) \
+#define doi_pb_fence_pb_fence_release(instr) \
+  do_pb_fence_pb_fence_release()
+#define do_pb_fence_pb_fence_release() \
   RELEASE_FENCE()
 
-#define do_pb_call_arena_in(instr) \
-  *(ptr *)TO_VOIDP(((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr))) = regs[INSTR_di_dest(instr)]
+#define doi_pb_call_arena_in(instr) \
+  do_pb_call_arena_in(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_call_arena_in(dest, imm) \
+  *(ptr *)TO_VOIDP(((uptr)TO_PTR(call_arena) + imm)) = regs[dest]
 
-#define do_pb_fp_call_arena_in(instr) \
-  *(double *)TO_VOIDP(((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr))) = fpregs[INSTR_di_dest(instr)]
+#define doi_pb_fp_call_arena_in(instr) \
+  do_pb_fp_call_arena_in(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_fp_call_arena_in(dest, imm) \
+  *(double *)TO_VOIDP(((uptr)TO_PTR(call_arena) + imm)) = fpregs[dest]
 
-#define do_pb_call_arena_out(instr) \
-  regs[INSTR_di_dest(instr)] = *(ptr *)TO_VOIDP((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr))
+#define doi_pb_call_arena_out(instr) \
+  do_pb_call_arena_out(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_call_arena_out(dest, imm) \
+  regs[dest] = *(ptr *)TO_VOIDP((uptr)TO_PTR(call_arena) + imm)
 
-#define do_pb_fp_call_arena_out(instr)                                  \
-  fpregs[INSTR_di_dest(instr)] = *(double *)TO_VOIDP((uptr)TO_PTR(call_arena) + INSTR_di_imm(instr))
+#define doi_pb_fp_call_arena_out(instr) \
+  do_pb_fp_call_arena_out(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define do_pb_fp_call_arena_out(dest, imm) \
+  fpregs[dest] = *(double *)TO_VOIDP((uptr)TO_PTR(call_arena) + imm)
 
-#define do_pb_stack_call(instr) \
-  S_ffi_call(regs[INSTR_dr_reg(instr)], regs[INSTR_dr_dest(instr)], (ptr *)call_arena)
+#define doi_pb_stack_call(instr) \
+  do_pb_stack_call(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define do_pb_stack_call(dest, reg) \
+  S_ffi_call(regs[reg], regs[dest], (ptr *)call_arena)
 
-#define pb_bs_op_pb_register_addr(instr) \
-  (*(uptr *)TO_VOIDP(regs[INSTR_dr_dest(instr)] + regs[INSTR_dr_reg(instr)]))
+#define geti_pb_bs_op_pb_register_addr(instr) \
+  get_pb_bs_op_pb_register_addr(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+#define get_pb_bs_op_pb_register_addr(dest, reg) \
+  (*(uptr *)TO_VOIDP(regs[dest] + regs[reg]))
 
-#define pb_bs_op_pb_immediate_addr(instr) \
-  (*(uptr *)TO_VOIDP(regs[INSTR_di_dest(instr)] + INSTR_di_imm(instr)))
+#define geti_pb_bs_op_pb_immediate_addr(instr) \
+  get_pb_bs_op_pb_immediate_addr(INSTR_di_dest(instr), INSTR_di_imm(instr))
+#define get_pb_bs_op_pb_immediate_addr(dest, imm) \
+  (*(uptr *)TO_VOIDP(regs[dest] + imm))
 
 #if ptr_bits == 64      
 # define decode_relocation(instr, ip)                   \
