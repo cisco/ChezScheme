@@ -370,9 +370,7 @@ static void check_ap(tc) ptr tc; {
     }
 }
 
-//static int inv_count = 1;
 void S_generic_invoke(tc, code) ptr tc; ptr code; {\
-  //  printf("S_generic_invoke: %d\n", inv_count++);
 #if defined(PPCAIX)
     struct {caddr_t entry, toc, static_link;} hdr;
     hdr.entry = (caddr_t)&CODEIT(code,0);
