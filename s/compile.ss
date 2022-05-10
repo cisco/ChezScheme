@@ -296,6 +296,10 @@
                           (record-case x
                             [(ppc32-abs ppc32-call ppc32-jump) (n x) (build x)]
                             [else (void)])]
+                         [(riscv64)
+                          (record-case x
+                                       [(riscv64-abs riscv64-call riscv64-jump) (n x) (build x)]
+                                       [else (void)])]
                          [(la64)
                           (record-case x
                             [(la64-abs la64-call la64-jump) (n x) (build x)]
