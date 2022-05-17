@@ -1950,6 +1950,14 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{\scheme{char-} returns negative results (9.6.0)}
+
+The character difference oprator returned a large positive integer in
+situations where the first argument is represented by a lower number than the
+second argument.  For example: \scheme{(char- #\a #\b)} on 64-bit macOS returns
+\scheme{720575940379279351}.  The fix corrects this, so that it instead
+returns \scheme{-1}.
+
 \subsection{Certain mixed exact/inexact arithmetic comparisons (9.5.8)}
 
 The arithmetic comparison functions (\scheme{<}, \scheme{<=}, \scheme{=},
