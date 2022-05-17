@@ -628,6 +628,18 @@
       #t)
  )
 
+(mat char-
+  (error? (char-))
+  (error? (char- #\a #\b #\c))
+  (error? (char- #\a 4))
+  (eqv? (char- #\b #\a) 1)
+  (eqv? (char- #\a #\b) -1)
+  ;; lambda - eta
+  (eqv? (char- #\x03BB #\x03B7) 4)
+  ;; eta - lambda
+  (eqv? (char- #\x03B7 #\x03BB) -4)
+)
+
 (mat string-for-each
   (error? ; invalid number of arguments
     (string-for-each))

@@ -2304,3 +2304,11 @@
     csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
     wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
     wininstall/ta6nt.wxs wininstall/ti3nt.wxs
+- added install-docs target for make and corresponding configuration
+  options: --installdoc, --installcsug, and --installreleasenotes
+    configure makefiles/Makefile.in
+- fixed a bug in `char-` that led to returning a large positive integer
+  result when the second argument had a value greater than the first.
+  It now returns a negative number in this situation.
+    cpnanopass.ss
+    5_4.ms root-experr-* patch-*

@@ -2078,6 +2078,9 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_4.mo:Expected error in mat char->integer: "incorrect argument count in call (char->integer #\a #\b)".
 5_4.mo:Expected error in mat char->integer: "char->integer: a is not a character".
 5_4.mo:Expected error in mat char->integer: "char->integer: <int> is not a character".
+5_4.mo:Expected error in mat char-: "incorrect argument count in call (char-)".
+5_4.mo:Expected error in mat char-: "incorrect argument count in call (char- #\a #\b #\c)".
+5_4.mo:Expected error in mat char-: "char-: 4 is not a character".
 5_4.mo:Expected error in mat string-for-each: "incorrect argument count in call (string-for-each)".
 5_4.mo:Expected error in mat string-for-each: "incorrect argument count in call (string-for-each (quote #()))".
 5_4.mo:Expected error in mat string-for-each: "incorrect argument count in call (string-for-each +)".

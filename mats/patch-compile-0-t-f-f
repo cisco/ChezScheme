@@ -1727,7 +1727,7 @@
   5_4.mo:Expected error in mat integer->char: "integer->char: #f is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: #\a is not a valid unicode scalar value".
 ***************
-*** 2074,2086 ****
+*** 2074,2089 ****
   5_4.mo:Expected error in mat integer->char: "integer->char: 1114112 is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: 1179648 is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: <int> is not a valid unicode scalar value".
@@ -1735,13 +1735,16 @@
 ! 5_4.mo:Expected error in mat char->integer: "incorrect argument count in call (char->integer #\a #\b)".
   5_4.mo:Expected error in mat char->integer: "char->integer: a is not a character".
   5_4.mo:Expected error in mat char->integer: "char->integer: <int> is not a character".
+! 5_4.mo:Expected error in mat char-: "incorrect argument count in call (char-)".
+! 5_4.mo:Expected error in mat char-: "incorrect argument count in call (char- #\a #\b #\c)".
+  5_4.mo:Expected error in mat char-: "char-: 4 is not a character".
 ! 5_4.mo:Expected error in mat string-for-each: "incorrect argument count in call (string-for-each)".
 ! 5_4.mo:Expected error in mat string-for-each: "incorrect argument count in call (string-for-each (quote #()))".
 ! 5_4.mo:Expected error in mat string-for-each: "incorrect argument count in call (string-for-each +)".
   5_4.mo:Expected error in mat string-for-each: "string-for-each: "" is not a procedure".
   5_4.mo:Expected error in mat string-for-each: "string-for-each: "" is not a procedure".
   5_4.mo:Expected error in mat string-for-each: "string-for-each: "" is not a procedure".
---- 2074,2086 ----
+--- 2074,2089 ----
   5_4.mo:Expected error in mat integer->char: "integer->char: 1114112 is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: 1179648 is not a valid unicode scalar value".
   5_4.mo:Expected error in mat integer->char: "integer->char: <int> is not a valid unicode scalar value".
@@ -1749,6 +1752,9 @@
 ! 5_4.mo:Expected error in mat char->integer: "incorrect number of arguments 2 to #<procedure char->integer>".
   5_4.mo:Expected error in mat char->integer: "char->integer: a is not a character".
   5_4.mo:Expected error in mat char->integer: "char->integer: <int> is not a character".
+! 5_4.mo:Expected error in mat char-: "incorrect number of arguments 0 to #<procedure char->".
+! 5_4.mo:Expected error in mat char-: "incorrect number of arguments 3 to #<procedure char->".
+  5_4.mo:Expected error in mat char-: "char-: 4 is not a character".
 ! 5_4.mo:Expected error in mat string-for-each: "incorrect number of arguments 0 to #<procedure string-for-each>".
 ! 5_4.mo:Expected error in mat string-for-each: "incorrect number of arguments 1 to #<procedure string-for-each>".
 ! 5_4.mo:Expected error in mat string-for-each: "incorrect number of arguments 1 to #<procedure string-for-each>".

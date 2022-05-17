@@ -7673,7 +7673,7 @@
     (define-inline 3 char-
       ; assumes fixnum is zero
       [(e1 e2)
-       (%inline srl
+       (%inline sra
           ,(%inline - ,e1 ,e2)
           (immediate ,(fx- (constant char-data-offset) (constant fixnum-offset))))])
     (define-inline 3 integer->char
