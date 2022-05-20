@@ -1713,13 +1713,7 @@ static void sparc64_set_literal(address, item) void *address; uptr item; {
 }
 #endif /* SPARC64 */
 
-#ifdef RISCV64 //@ todo
-#define ADDI_OP 0b0010011
-#define AUIPC_OP 0b0010111
-#define LUI_OP 0b0110111
-#define nop 0b00000000000000000000000000010011
-#define jump 0b11011
-
+#ifdef RISCV64
 static uptr riscv64_get_abs(void* address)
 {
   return *((I64 *)((I32 *)address + 3));
@@ -1754,37 +1748,37 @@ static void riscv64_set_jump(void* address, uptr item, IBOOL callp)
 }
 #endif /* RISCV64 */
 
-#ifdef LA64 //@ todo
+#ifdef LA64
 static uptr la64_get_abs(void* address)
 {
-        return *((I64 *)((I32 *)address + 3));
+  return *((I64 *)((I32 *)address + 3));
 }
 
 static uptr la64_get_jump(void* address)
 {
-        return *((I64 *)((I32 *)address + 3));
+  return *((I64 *)((I32 *)address + 3));
 }
 
 static void la64_set_abs(void* address, uptr item)
 {
-        /*
-          [0]pcaddi
-          [1]ld.d
-          [2]b
-          [3]8-bytes of addr
-        */
-        (*((I64 *)((I32 *)address + 3))) = item;
+  /*
+    [0]pcaddi
+    [1]ld.d
+    [2]b
+    [3]8-bytes of addr
+  */
+  (*((I64 *)((I32 *)address + 3))) = item;
 }
 
 static void la64_set_jump(void* address, uptr item, IBOOL callp)
 {
-        /*
-          [0]pcaddi
-          [1]ld.d
-          [2]b
-          [3]8-bytes of addr
-          [5]jilr
-        */
-        (*((I64 *)((I32 *)address + 3))) = item;
+   /*
+     [0]pcaddi
+     [1]ld.d
+     [2]b
+     [3]8-bytes of addr
+     [5]jilr
+   */
+   (*((I64 *)((I32 *)address + 3))) = item;
 }
 #endif /* LA64 */
