@@ -53,8 +53,9 @@
    [%Cfparg6 %f15           #f  15]
    [%Cfparg7 %f16           #f  16]
    [%Cfparg8 %f17           #f  17]
-   [%flreg1  %f0            #f  0]
-   [%flreg2  %f1            #f  1]))
+   [%flreg1  %f1            #f  1]
+   [%flreg2  %f2            #f  2]
+   [%flreg3  %f3            #f  3]))
 
 ;;; SECTION 2: instructions
 (module (md-handle-jump)
@@ -333,16 +334,21 @@
 
   (define-instruction value (+/carry)
     [(op (z ur) (x ur) (y ur))
-     `(set! ,(make-live-info) ,z (asm ,info ,asm-add/carry ,x ,y))])
+     (let ([u1 (make-tmp 'u1+)])
+       (seq
+        `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,z (asm ,info ,asm-add/carry ,x ,y ,u1))))])
 
   (define-instruction value (+/ovfl)
     [(op (z ur) (x ur) (y ur))
-     (let ([u1 (make-tmp 'u1+)]
-           [u2 (make-tmp 'u2+)])
+     (let ([u1 (make-tmp 'u1+)] [u2 (make-tmp 'u2+)]
+           [u3 (make-tmp 'u3+)] [u4 (make-tmp 'u4+)])
        (seq
         `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
         `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-add/ovfl ,x ,y ,u1 ,u2))))])
+        `(set! ,(make-live-info) ,u3 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,u4 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-add/ovfl ,x ,y ,u1 ,u2 ,u3 ,u4))))])
 
   (define-instruction value (-)
     [(op (z ur) (x ur) (y ur))
@@ -350,14 +356,16 @@
 
   (define-instruction value (-/ovfl)
     [(op (z ur) (x ur) (y ur))
-     (let ([u1 (make-tmp 'u1-)]
-           [u2 (make-tmp 'u2-)]
-           [u3 (make-tmp 'u3-)])
+     (let ([u1 (make-tmp 'u1-)] [u2 (make-tmp 'u2-)]
+           [u3 (make-tmp 'u3-)] [u4 (make-tmp 'u4-)]
+           [u5 (make-tmp 'u5-)])
        (seq
         `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
         `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
         `(set! ,(make-live-info) ,u3 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-sub/ovfl ,x ,y ,u1 ,u2 ,u3))))])
+        `(set! ,(make-live-info) ,u4 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,u5 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-sub/ovfl ,x ,y ,u1 ,u2 ,u3 ,u4 ,u5))))])
 
   (define-instruction value (-/eq)
     [(op (z ur) (x ur) (y ur))
@@ -369,10 +377,12 @@
 
   (define-instruction value (*/ovfl)
     [(op (z ur) (x ur) (y ur))
-     (let ([u1 (make-tmp 'u1*)])
+     (let ([u1 (make-tmp 'u1*)] [u2 (make-tmp 'u2*)] [u3 (make-tmp 'u3*)])
        (seq
         `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-mul/ovfl ,x ,y ,u1))))])
+        `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,u3 (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-mul/ovfl ,x ,y ,u1 ,u2 ,u3))))])
 
   (define-instruction value (/)
     [(op (z ur) (x ur) (y ur))
@@ -513,16 +523,16 @@
            `(asm ,info ,(pick-asm-op op info) ,x ,z)
            (let ([u (make-tmp 'fl1)])
              (seq
-              `(set! ,(make-live-info) ,u (asm ,info ,asm-add ,x ,y))
+              `(set! ,(make-live-info) ,u (asm ,null-info ,asm-add ,x ,y))
               `(asm ,info ,(pick-asm-op op info) ,u ,z))))]
       [(op (x ur) (y ur) (z ur))
        (let ([u (make-tmp 'fl2)])
          (seq
-          `(set! ,(make-live-info) ,u (asm ,info ,asm-add ,x ,z))
+          `(set! ,(make-live-info) ,u (asm ,null-info ,asm-add ,x ,z))
           (if (eq? y %zero)
               `(asm ,info ,(pick-asm-op op info) ,u (immediate 0))
               (seq
-               `(set! ,(make-live-info) ,u (asm ,info ,asm-add ,u ,y))
+               `(set! ,(make-live-info) ,u (asm ,null-info ,asm-add ,u ,y))
                `(asm ,info ,(pick-asm-op op info) ,u (immediate 0))))))]))
 
   (define-instruction effect (flt)
@@ -613,7 +623,8 @@
      (let ([u (make-tmp 'asmlib!)])
        (seq
             `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
-            `(asm ,info ,(asm-library-call! (info-asmlib-libspec info) (info-asmlib-save-ra? info)) ,u ,(info-kill*-live*-live* info) ...)))])
+            `(asm ,info ,(asm-library-call! (info-asmlib-libspec info)
+                                            (info-asmlib-save-ra? info)) ,u ,(info-kill*-live*-live* info) ...)))])
 
   ;;@ todo assert needed?
   (safe-assert (reg-callee-save? %tc))  ; no need to save-restore
@@ -622,7 +633,8 @@
      (let ([u (make-tmp 'c-simple)])
        (seq
             `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
-            `(asm ,info ,(asm-c-simple-call (info-c-simple-call-entry info) (info-c-simple-call-save-ra? info)) ,u)))])
+            `(asm ,info ,(asm-c-simple-call (info-c-simple-call-entry info)
+                                            (info-c-simple-call-save-ra? info)) ,u)))])
 
   (define-instruction pred (eq? u< > < <= >= logtest log!test)
     [(op (x ur) (y ur))
@@ -877,7 +889,7 @@
     (lambda (op opcode dest imm20 code*)
       (safe-assert (signed20? (ax-imm-data imm20 op)))
       (emit-code (op dest imm20 code*)
-                 [12 (ax-imm-data imm20 op)] ;;@ todo check size
+                 [12 (ax-imm-data imm20 op)]
                  [7 (ax-ea-reg-code dest)]
                  [0 opcode])))
 
@@ -927,9 +939,11 @@
     (lambda (ea)
       (if (pair? ea)
           (record-case ea
-            [(reg) r (reg-mdinfo r)]
-            [else (sorry! who "ea=~s" ea)])
-          (reg-mdinfo ea))))
+                       [(reg) r (reg-mdinfo r)]
+                       [else (sorry! who "not a reg: ea=~s" ea)])
+          (if (reg? ea)
+              (reg-mdinfo ea)
+              (sorry! who "not a reg: ea=~s" ea)))))
 
   (define ax-imm-data
     (lambda (ea op)
@@ -1035,8 +1049,7 @@
         [(byte) 1]
         [(word) 2]
         [(long) 4]
-        [(quad code-top-link abs) 8] ;; aligned with compile.ss
-        [else ($oops 'assembler-internal "unknown size: ~a" (car x))])))
+        [else 8])))
 
   (define asm-add
     (lambda (code* dest src0 src1)
@@ -1047,10 +1060,11 @@
 
   ;; carry if dest < src0(or src1)
   (define asm-add/carry
-    (lambda (code* dest src0 src1)
-      (Trivit (dest src0 src1)
-              (emit add dest src0 src1
-                    (emit sltu `(reg . ,%cond) dest src0 code*)))))
+    (lambda (code* dest src0 src1 t0)
+      (Trivit (dest src0 src1 t0)
+              (emit addi t0 src0 0
+                    (emit add dest src0 src1
+                          (emit sltu %cond dest t0 code*))))))
 
   ;; ovfl detection logic borrowed from Racket's pb interpreter
   (define sign-flip
@@ -1066,10 +1080,12 @@
   ;; +    +    -
   ;; -    -    +
   (define asm-add/ovfl ;;@ todo imm? optimization?
-    (lambda (code* dest src0 src1 t0 t1)
-      (Trivit (dest src0 src1 t0 t1)
-              (emit add dest src0 src1
-                    (sign-flip dest src0 src1 t0 t1 code*)))))
+    (lambda (code* dest src0 src1 t0 t1 t2 t3)
+      (Trivit (dest src0 src1 t0 t1 t2 t3)
+              (emit addi t2 src0 0
+                    (emit addi t3 src1 0
+                          (emit add dest src0 src1
+                                (sign-flip dest t2 t3 t0 t1 code*)))))))
 
   (define asm-sub
     (lambda (code* dest src0 src1)
@@ -1080,17 +1096,19 @@
   ;; -    +    -
   ;; +    -    +
   (define asm-sub/ovfl
-    (lambda (code* dest src0 src1 t0 t1 t3)
-      (Trivit (dest src0 src1 t0 t1)
-              (emit sub dest src0 src1
-                    (emit xori t3 src1 -1
-                          (sign-flip dest src0 t3 t0 t1 code*))))))
+    (lambda (code* dest src0 src1 t0 t1 t2 t3 t4)
+      (Trivit (dest src0 src1 t0 t1 t2 t3 t4)
+              (emit addi t3 src0 0
+                    (emit addi t4 src1 0
+                          (emit sub dest src0 src1
+                                (emit xori t2 t4 -1
+                                      (sign-flip dest t3 t2 t0 t1 code*))))))))
 
   (define asm-sub/eq
     (lambda (code* dest src0 src1)
       (Trivit (dest src0 src1)
               (emit sub dest src0 src1
-                    (emit sltiu `(reg . ,%cond) dest 1 code*))))) ;; set if dest == 0
+                    (emit sltiu %cond dest 1 code*))))) ;; set if dest == 0
 
   (define asm-mul
     (lambda (code* dest src0 src1)
@@ -1100,32 +1118,25 @@
   ;; case1: pos*pos=neg
   ;; case2: neg*pos=pos or pos*neg=pos
   ;; case3: neg*neg=neg
-  ;;
-  ;; case1 and case3:
-  ;; src0 src1 dest
-  ;; t2   t3   t1
-  ;; +    +    -
-  ;; -    -    -
-  ;; case2:
-  ;; +    -    +
-  ;; -    +    -
   (define asm-mul/ovfl
-    (lambda (code* dest src0 src1 t0)
-      (Trivit (dest src0 src1 t0)
+    (lambda (code* dest src0 src1 t0 t1 t2)
+      (Trivit (dest src0 src1 t0 t1 t2)
               (let ([zero `(reg . ,%real-zero)]
                     [cond `(reg . ,%cond)])
-                (emit mul dest src0 src1
-                      ;; if src0 == 0 || src1 == 0, then no ovfl
-                      (emit sltiu t0 src0 1
-                            (emit sltiu cond src1 1
-                                  (emit or cond t0 cond
-                                        (emit bne cond zero 20
-                                              ;; if dest/src0 != src1, ovfl!
-                                              (emit div t0 dest src0
-                                                    (emit beq t0 src1 12
-                                                         (emit addi cond zero 1
-                                                               (emit jal zero 8
-                                                                     (emit addi cond zero 0 code*))))))))))))))
+                (emit addi t1 src0 0
+                      (emit addi t2 src1 0
+                            (emit mul dest src0 src1
+                                  ;; if src0 == 0 || src1 == 0, then no ovfl
+                                  (emit sltiu t0 t1 1
+                                        (emit sltiu cond t2 1
+                                              (emit or cond t0 cond
+                                                    (emit bne cond zero 20
+                                                          ;; if dest/src0 != src1, ovfl!
+                                                          (emit div t0 dest t1
+                                                                (emit beq t0 t2 12
+                                                                      (emit addi cond zero 1
+                                                                            (emit jal zero 8
+                                                                                  (emit addi cond zero 0 code*))))))))))))))))
 
   (define asm-div
     (lambda (code* dest src0 src1)
@@ -1159,26 +1170,24 @@
     (lambda (op flreg)
       (lambda (code* base offset)
         (Trivit (base offset)
-                (let ([flreg2 `(reg . ,%flreg2)])
-                  (case op
-                    [(load-single->double)
-                     (emit flw flreg2 base offset
-                           (emit fcvt.d.s flreg flreg2 '() code*))]
-                    [(load-double->single)
-                     (emit fld flreg2 base offset
-                           (emit fcvt.s.d flreg flreg2 '() code*))]
-                    [else (sorry! who "unrecognized op ~s" op)]))))))
+                (case op
+                  [(load-single->double)
+                   (emit flw %flreg2 base offset
+                         (emit fcvt.d.s flreg %flreg2 '() code*))]
+                  [(load-double->single)
+                   (emit fld %flreg2 base offset
+                         (emit fcvt.s.d flreg %flreg2 '() code*))]
+                  [else (sorry! who "unrecognized op ~s" op)])))))
 
   (define-who asm-fl-store/cvt
     (lambda (op flreg)
       (lambda (code* base offset)
         (Trivit (base offset)
-                (let ([flreg2 `(reg . ,%flreg2)])
-                  (case op
-                    [(store-single->double)
-                     (emit fcvt.d.s flreg2 flreg '()
-                           (emit fsd flreg2 base offset code*))]
-                    [else (sorry! who "unrecognized op ~s" op)]))))))
+                (case op
+                  [(store-single->double)
+                   (emit fcvt.d.s %flreg2 flreg '()
+                         (emit fsd %flreg2 base offset code*))]
+                  [else (sorry! who "unrecognized op ~s" op)])))))
 
   (define-who asm-fl-load/store
     (lambda (op flreg)
@@ -1260,47 +1269,47 @@
 
   (define-who asm-flop-2
     (lambda (op)
-      (lambda (code* src1 src2 dest) ;; args contain the base addr of fp numbers, thus need the fp disp
+      ;; args contain the base addr of fp numbers, thus need the fp disp
+      (lambda (code* src1 src2 dest)
         (Trivit (src1 src2 dest)
-                (let ([flreg1 `(reg . ,%flreg1)]
-                      [flreg2 `(reg . ,%flreg2)]
-                      [disp (constant flonum-data-disp)])
-                  (emit fld flreg1 src1 disp
-                        (emit fld flreg2 src2 disp
-                              (let ([code* (emit fsd flreg1 dest disp code*)]) ;;@ %flreg1 holds the result
+                (let ([disp (constant flonum-data-disp)])
+                  (emit fld %flreg1 src1 disp
+                        (emit fld %flreg2 src2 disp
+                              (let ([code* (emit fsd %flreg3 dest disp code*)])
                                 (case op
-                                  [(fl+) (emit fadd.d flreg1 flreg1 flreg2 code*)]
-                                  [(fl-) (emit fsub.d flreg1 flreg1 flreg2 code*)]
-                                  [(fl*) (emit fmul.d flreg1 flreg1 flreg2 code*)]
-                                  [(fl/) (emit fdiv.d flreg1 flreg1 flreg2 code*)]
+                                  [(fl+) (emit fadd.d %flreg3 %flreg1 %flreg2 code*)]
+                                  [(fl-) (emit fsub.d %flreg3 %flreg1 %flreg2 code*)]
+                                  [(fl*) (emit fmul.d %flreg3 %flreg1 %flreg2 code*)]
+                                  [(fl/) (emit fdiv.d %flreg3 %flreg1 %flreg2 code*)]
                                   [else (sorry! who "unrecognized op ~s" op)])))))))))
 
-  (define asm-flsqrt ;;@ load, calc, store
+  ;; load, calc, store
+  (define asm-flsqrt
     (lambda (code* src dest)
       (Trivit (src dest)
-              (let ([flreg1 `(reg . ,%flreg1)]
-                    [disp (constant flonum-data-disp)])
-                (emit fld flreg1 src disp
-                      (emit fsqrt.d flreg1 flreg1 '()
-                            (emit fsd flreg1 dest disp code*)))))))
+              (let ([disp (constant flonum-data-disp)])
+                (emit fld %flreg1 src disp
+                      (emit fsqrt.d %flreg1 %flreg1 '()
+                            (emit fsd %flreg1 dest disp code*)))))))
 
-  (define asm-trunc ;;@ flonum to fixnum
+  ;; flonum to fixnum
+  (define asm-trunc
     (lambda (code* dest src)
       (Trivit (dest src)
-              (let ([flreg1 `(reg . ,%flreg1)]
-                    [disp (constant flonum-data-disp)])
-                (emit fld flreg1 src disp
-                      (emit fcvt.l.d dest flreg1 '() code*))))))
+              (let ([disp (constant flonum-data-disp)])
+                (emit fld %flreg1 src disp
+                      (emit fcvt.l.d dest %flreg1 '() code*))))))
 
-  (define asm-flt ;;@ fixnum to flonum
+  ;; fixnum to flonum
+  (define asm-flt
     (lambda (code* src dest)
       (Trivit (src dest) ;;@ todo flonumreg holds addr?
-              (let ([flreg1 `(reg . ,%flreg1)]
-                    [disp (constant flonum-data-disp)])
-                (emit fcvt.d.l flreg1 src '() ;; '() placeholder
-                      (emit fsd flreg1 dest disp code*))))))
+              (let ([disp (constant flonum-data-disp)])
+                (emit fcvt.d.l %flreg1 src '() ;; '() placeholder
+                      (emit fsd %flreg1 dest disp code*))))))
 
-  (define-who asm-swap ;;@ big <-> little-endian
+  ;; big <-> little-endian
+  (define-who asm-swap
     (lambda (type)
       (rec asm-swap-internal
            (lambda (code* dest src t0)
@@ -1361,45 +1370,45 @@
     ;;    addi tmp, %real-zero, 1
     ;;    sc.d tmp, tmp, [src]
     ;;L:
-    (lambda (code* src tmp)
-      (Trivit (src tmp)
-              (emit lr.d tmp src '()
-                    (emit bne tmp `(reg . ,%real-zero) 12
-                          (emit addi tmp `(reg . ,%real-zero) 1
-                                (emit sc.d tmp tmp src code*)))))))
+    (lambda (code* src t0)
+      (Trivit (src t0)
+              (emit lr.d t0 src '()
+                    (emit bne t0 %real-zero 12
+                          (emit addi t0 %real-zero 1
+                                (emit sc.d t0 t0 src code*)))))))
 
   (define-who asm-lock+/-
     ;;S:
-    ;;    lr.d tmp1, [src]
-    ;;    addi tmp1, tmp1, +/-1
-    ;;    sc.d tmp2, tmp1, [src]
-    ;;    bne  tmp2, %real-zero, S[-12]
-    ;;    sltiu %cond tmp1 1 # set %cond if tmp1=0
+    ;;    lr.d t0, [src]
+    ;;    addi t0, t0, +/-1
+    ;;    sc.d t1, t0, [src]
+    ;;    bne  t1, %real-zero, S[-12]
+    ;;    sltiu %cond t0 1 # set %cond if t0=0
     (lambda (op)
-      (lambda (code* src tmp1 tmp2)
-        (Trivit (src tmp1 tmp2)
-                (emit lr.d tmp1 src '()
-                      (let ([code* (emit sc.d tmp2 tmp1 src
-                                         (emit bne tmp2 `(reg . ,%real-zero) -12
-                                               (emit sltiu `(reg . ,%cond) tmp1 1 code*)))])
+      (lambda (code* src t0 t1)
+        (Trivit (src t0 t1)
+                (emit lr.d t0 src '()
+                      (let ([code* (emit sc.d t1 t0 src
+                                         (emit bne t1 %real-zero -12
+                                               (emit sltiu %cond t0 1 code*)))])
                         (case op
-                          [(locked-incr!) (emit addi tmp1 tmp1 1 code*)]
-                          [(locked-decr!) (emit addi tmp1 tmp1 -1 code*)]
+                          [(locked-incr!) (emit addi t0 t0 1 code*)]
+                          [(locked-decr!) (emit addi t0 t0 -1 code*)]
                           [else (sorry! who "unexpected op ~s" op)])))))))
 
   (define asm-cas
     ;;cas:
-    ;;   lr.d tmp1, src
-    ;;   bne  tmp1, old, L[12]
-    ;;   sc.d tmp2, new, [src] # tmp2!=0 if store fails
-    ;;   sltiu %cond tmp2 1    # %cond=1 if tmp2=0(succeed)
+    ;;   lr.d t0, src
+    ;;   bne  t0, old, L[12]
+    ;;   sc.d t1, new, [src] # t1!=0 if store fails
+    ;;   sltiu %cond t1 1    # %cond=1 if t1=0(succeed)
     ;;L:
-    (lambda (code* src old new tmp1 tmp2)
-      (Trivit (src old new tmp1 tmp2)
-              (emit lr.d tmp1 src '()
-                    (emit bne tmp1 old 12
-                          (emit sc.d tmp2 new src
-                                (emit sltiu `(reg . ,%cond) tmp2 1 code*)))))))
+    (lambda (code* src old new t0 t1)
+      (Trivit (src old new t0 t1)
+              (emit lr.d t0 src '()
+                    (emit bne t0 old 12
+                          (emit sc.d t1 new src
+                                (emit sltiu %cond t1 1 code*)))))))
 
   (define-who asm-relop
     (lambda (info)
@@ -1407,21 +1416,19 @@
            (lambda (l1 l2 offset x y)
              (Trivit (x y)
                      (values
-                      (let ([type (info-condition-code-type info)]
-                            [cond `(reg . ,%cond)])
-                        (case type
-                          [(eq?) (emit xor cond x y
-                                       (emit sltiu cond cond 1 '()))]
-                          [(u<) (emit sltu cond x y '())]
-                          [(<) (emit slt cond x y '())]
-                          [(>) (emit slt cond y x '())]
-                          [(<=) (emit slt cond y x
-                                      (emit xori cond cond 1 '()))]
-                          [(>=) (emit slt cond x y
-                                      (emit xori cond cond 1 '()))]
-                          [(logtest) (emit and cond x y '())]
-                          [(log!test) (emit and cond x y
-                                            (emit sltiu cond cond 1 '()))]))
+                      (case (info-condition-code-type info)
+                        [(eq?) (emit xor %cond x y
+                                     (emit sltiu %cond %cond 1 '()))]
+                        [(u<) (emit sltu %cond x y '())]
+                        [(<) (emit slt %cond x y '())]
+                        [(>) (emit slt %cond y x '())]
+                        [(<=) (emit slt %cond y x
+                                    (emit xori %cond %cond 1 '()))]
+                        [(>=) (emit slt %cond x y
+                                    (emit xori %cond %cond 1 '()))]
+                        [(logtest) (emit and %cond x y '())]
+                        [(log!test) (emit and %cond x y
+                                          (emit sltiu %cond %cond 1 '()))])
                       (asm-conditional-jump info l1 l2 offset)))))))
 
   (define-who asm-fl-relop
@@ -1429,24 +1436,21 @@
       (lambda (l1 l2 offset x y)
         (Trivit (x y)
                 (values
-                 (let ([flreg1 `(reg . ,%flreg1)]
-                       [flreg2 `(reg . ,%flreg2)]
-                       [cond `(reg . ,%cond)]
-                       [disp (constant flonum-data-disp)])
-                   (emit fld flreg1 x disp
-                         (emit fld flreg2 y disp
+                 (let ([disp (constant flonum-data-disp)])
+                   (emit fld %flreg1 x disp
+                         (emit fld %flreg2 y disp
                                (let ([op (info-condition-code-type info)])
                                  (case op
-                                   [(fl=) (emit feq.d cond flreg1 flreg2 '())]
-                                   [(fl<) (emit flt.d cond flreg1 flreg2 '())]
-                                   [(fl<=) (emit fle.d cond flreg1 flreg2 '())]
+                                   [(fl=) (emit feq.d %cond %flreg1 %flreg2 '())]
+                                   [(fl<) (emit flt.d %cond %flreg1 %flreg2 '())]
+                                   [(fl<=) (emit fle.d %cond %flreg1 %flreg2 '())]
                                    [else (sorry! who "unrecognized op ~s" op)])))))
                  (asm-conditional-jump info l1 l2 offset))))))
 
   (define asm-read-performance-monitoring-counter
     (lambda (code* dest src)
       (Trivit (dest src)
-              (emit addi dest `(reg . ,%real-zero) 0 code*))))
+              (emit addi dest %real-zero 0 code*))))
 
   (define asm-read-time-stamp-counter
     (lambda (code* dest)
@@ -1456,11 +1460,9 @@
   (define asm-inc-cc-counter ;; load, add, store back
     (lambda (code* addr val tmp)
       (Trivit (addr val tmp)
-              (emit ld tmp `(reg . ,%real-zero) addr
+              (emit ld tmp %real-zero addr
                     (emit add tmp tmp val
-                          (emit sd tmp `(reg . ,%real-zero) addr code*))))))
-
-  (define asm-enter values)
+                          (emit sd tmp %real-zero addr code*))))))
 
   (define asm-fence
     (lambda (code*)
@@ -1472,14 +1474,16 @@
             [lower (lower12 n)])
         (safe-assert (signed20? upper))
         (emit lui dest upper
-              (emit addi dest dest lower code*)))))
+              (emit addi dest dest lower
+                    (aop-cons* `(asm "long:" ,n) code*))))))
 
   (define ax-mov64
     (lambda (dest n code*)
       (emit auipc dest 0
             (emit ld dest dest 12
                   (emit jal %real-zero 12
-                        `((quad . ,n) (unquote-splicing code*)))))))
+                        (cons* `(quad . ,n)
+                               (aop-cons* `(asm "quad:" ,n) code*)))))))
 
   (define-who asm-move
     (lambda (code* dest src)
@@ -1494,7 +1498,7 @@
                   [(reg) ignore (emit addi dest src 0 code*)]
                   [(imm) (n)
                    (if (signed12? n)
-                       (emit addi dest `(reg . ,%real-zero) n code*)
+                       (emit addi dest %real-zero n code*)
                        (if (signed32? n)
                            (ax-mov32 dest n code*)
                            (ax-mov64 dest n code*)))]
@@ -1575,6 +1579,7 @@
                         ;;@ (label-ref ...) is processed by (make-funcrel) in (Trivit-rand), that is, into a 'literal form
                         (asm-move '() dest (with-output-language (L16 Triv) `(label-ref ,l ,incr-offset)))))))
 
+  ;;@ todo use auipc + addi
   (define-who asm-jump
     (lambda (l next-addr)
       (make-gchunk l next-addr
@@ -1584,15 +1589,16 @@
                        (let ([disp (fx- next-addr offset)])
                          (cond
                           [(eqv? disp 0) '()]
+                          ;;@ todo add jal for 12-bit offset?
                           [(jump-disp? disp) (emit auipc %jump (upper20 (+ disp 8))
                                                    ;;@ todo disp is recomputed in munge? yes
                                                    ;; 8 is obtained from debugging
                                                    (emit jalr %real-zero %jump (lower12 (+ disp 8)) '()))]
                           [else (sorry! who "disp value not supported")])))]
                     [else
-                                        ; label must be somewhere above.  generate something so that a hard loop
-                                        ; doesn't get dropped.  this also has some chance of being the right size
-                                        ; for the final branch instruction.
+                     ;; label must be somewhere above.  generate something so that a hard loop
+                     ;; doesn't get dropped.  this also has some chance of being the right size
+                     ;; for the final branch instruction.
                      (emit auipc %jump 0
                            (emit jalr %real-zero %jump 0 '()))]))))
 
@@ -1604,19 +1610,19 @@
   ;; to be reversed.
   (define asm-conditional-jump
     (lambda (info l1 l2 next-addr)
-      ;;@ normally:
+      ;; normally:
       ;; [cond jump l1]
       ;; l2:           # disp2 = 0
       ;;     ...
       ;; l1:
       ;;     ...
-      ;;@ inverted:
+      ;; inverted:
       ;; [inverted cond jump l2]
       ;; l1:           # disp1 = 0
       ;;    ...
       ;; l2:
       ;;    ...
-      ;;@ no disp is 0:
+      ;; no disp is 0:
       ;;    [cond jump to 1f]
       ;;    [jmp l2]
       ;; 1: [jmp l1]
@@ -1636,36 +1642,35 @@
            [else 0])))
       (safe-assert (and (local-label? l1) (local-label? l2)))
       (make-cgchunk info l1 l2 next-addr
-                    (let ( #;[type (info-condition-code-type info)] ; of no use since %cond is set accordingly
-                          [disp1 (get-disp next-addr l1)]
+                    (let ([disp1 (get-disp next-addr l1)]
                           [disp2 (get-disp next-addr l2)])
                       (cond
                        ;; inverted
                        [(fx= disp1 0)
                         (safe-assert (signed32? disp2))
-                        (if (cond-jump-disp? (+ disp2 4))
-                            (emit beq `(reg . ,%cond) `(reg . ,%real-zero) (+ disp2 4) '())
-                            (emit beq `(reg . ,%cond) `(reg . ,%real-zero) 8
-                                  (emit jal `(reg . ,%real-zero) 12 ;; fall through
-                                        (emit auipc `(reg . ,%jump) (upper20 (+ disp2 8)) ;; 2 instr below
-                                              (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) (lower12 (+ disp2 8)) '())))))]
+                        ;;@ todo add 12-bit offset case
+                        ;; (emit beq %cond %real-zero (+ disp2 4) '())
+                        (emit beq %cond %real-zero 8
+                              (emit jal %real-zero 12 ;; fall through
+                                    (emit auipc %jump (upper20 (fx+ disp2 8)) ;; 2 instr below
+                                          (emit jalr %real-zero %jump (lower12 (fx+ disp2 8)) '()))))
+                        ]
                        ;; normal
                        [(fx= disp2 0)
                         (safe-assert (signed32? disp1))
-                        (if (cond-jump-disp? (+ disp1 4))
-                            (emit bne `(reg . ,%cond) `(reg . ,%real-zero) (+ disp1 4) '())
-                            (emit bne `(reg . ,%cond) `(reg . ,%real-zero) 8
-                                  (emit jal `(reg . ,%real-zero) 12 ;; fall through
-                                        (emit auipc `(reg . ,%jump) (upper20 (+ disp1 8)) ;; 2 instr below
-                                              (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) (lower12 (+ disp1 8)) '())))))]
+                        (emit bne %cond %real-zero 8
+                              (emit jal %real-zero 12 ;; fall through
+                                    (emit auipc %jump (upper20 (fx+ disp1 8)) ;; 2 instr below
+                                          (emit jalr %real-zero %jump (lower12 (fx+ disp1 8)) '()))))
+                        ]
                        ;; others
                        [else
-                        (safe-assert (signed32? (+ disp1 8)) (signed32? (+ disp2 16)))
-                        (emit bne `(reg . ,%cond) `(reg . ,%real-zero) 12
-                              (emit auipc `(reg . ,%jump) (upper20 (+ disp2 16)) ;; 4 instr below
-                                    (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) (lower12 (+ disp2 16))
-                                          (emit auipc `(reg . ,%jump) (upper20 (+ disp1 8)) ;; 2 instr below
-                                                (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) (lower12 (+ disp1 8)) '())))))])))))
+                        (safe-assert (signed32? (fx+ disp1 8)) (signed32? (fx+ disp2 16)))
+                        (emit bne %cond %real-zero 12
+                              (emit auipc %jump (upper20 (fx+ disp2 16)) ;; 4 instr below
+                                    (emit jalr %real-zero %jump (lower12 (fx+ disp2 16))
+                                          (emit auipc %jump (upper20 (fx+ disp1 8)) ;; 2 instr below
+                                                (emit jalr %real-zero %jump (lower12 (fx+ disp1 8)) '())))))])))))
 
   (define asm-direct-jump
     (lambda (l offset)
@@ -1686,14 +1691,14 @@
       (let ([target `(riscv64-call ,(constant code-data-disp) (library-code ,libspec))])
         (rec asm-asm-call-internal
              (lambda (code* dest tmp . ignore) ;; retval setup by intrinsics
-               (asm-helper-call code* target save-ra? tmp))))))
+               (asm-helper-call code* target #t tmp))))))
 
   (define asm-library-call!
     (lambda (libspec save-ra?)
       (let ([target `(riscv64-call ,(constant code-data-disp) (library-code ,libspec))])
         (rec asm-asm-call-internal
              (lambda (code* tmp . ignore)
-               (asm-helper-call code* target save-ra? tmp))))))
+               (asm-helper-call code* target #t tmp))))))
 
   ;; for things like split-and-resize, handle-apply-overflood, Sreturn, foreign-entry
   ;; where no retval is needed
@@ -1702,29 +1707,33 @@
       (let ([target `(riscv64-call 0 (entry ,entry))])
         (rec asm-c-simple-call-internal
              (lambda (code* tmp . ignore)
-               (asm-helper-call code* target save-ra? tmp))))))
+               (asm-helper-call code* target #t tmp))))))
 
   (define-who asm-indirect-call
     (lambda (code* dest . ignore)
       (Trivit (dest)
               (unless (ax-reg? dest) (sorry! who "unexpected dest ~s" dest))
-              (emit jalr %ra dest 0 code*))))
+              (emit addi %sp %sp -16
+                    (emit sd %ra %sp 0
+                          (emit jalr %ra dest 0
+                                (emit ld %ra %sp 0
+                                      (emit addi %sp %sp 16 code*))))))))
 
   (define-who asm-indirect-jump ;; no link
     (lambda (src)
       (Trivit (src)
               (record-case src
-                [(reg) ignore (emit jalr `(reg . ,%real-zero) `(reg . ,src) 0 '())]
+                [(reg) ignore (emit jalr %real-zero src 0 '())]
                 ;; the following two load EA from memory first
                 [(disp) (n breg)
                  (safe-assert (signed12? n))
-                 (emit ld `(reg . ,%jump) breg n
-                       (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) 0 '()))]
+                 (emit ld %jump breg n
+                       (emit jalr %real-zero %jump 0 '()))]
                 [(index) (n ireg breg)
                  (safe-assert (eqv? n 0))
                  (emit add %cond ireg breg
-                       (emit ld `(reg . ,%jump) %cond 0
-                             (emit jalr `(reg . ,%real-zero) `(reg . ,%jump) 0 '())))]
+                       (emit ld %jump %cond 0
+                             (emit jalr %real-zero %jump 0 '())))]
                 [else (sorry! who "unexpected src ~s" src)]))))
 
   (define asm-get-tc
@@ -1747,60 +1756,60 @@
       (lambda (code* tmp . ignore)
         (asm-helper-call code* target #f tmp))))
 
-  (define asm-push ;;@ todo alignment
+  (define asm-push
     (lambda (code* x)
       (Trivit (x)
-              (let ([sp `(reg . ,%sp)])
-                (emit addi sp sp -16
-                      (emit sd x sp 0 code*))))))
+              (emit addi %sp %sp -16
+                    (emit sd x %sp 0 code*)))))
 
   (define asm-pop
     (lambda (code* dest)
       (Trivit (dest)
-              (let ([sp `(reg . ,%sp)])
-                (emit ld dest sp 0
-                      (emit addi sp sp 16 code*))))))
+              (emit ld dest %sp 0
+                    (emit addi %sp %sp 16 code*)))))
+
+  (define asm-enter values)
 
   (define asm-return
     (lambda ()
-      (emit jalr `(reg . ,%real-zero) %ra 0 '())))
+      (emit jalr %real-zero %ra 0 '())))
 
   (define asm-c-return
     (lambda (info)
-      (emit jalr `(reg . ,%real-zero) %ra 0 '())))
+      (emit jalr %real-zero %ra 0 '())))
 
-  (define asm-helper-jump ;; no need to save ra
-    (lambda (code* reloc) ;;@ todo need saving %cond?
-      (let ([zero `(reg . ,%real-zero)]
-            [jump `(reg . ,%jump)])
-        (emit auipc jump 0
-              (emit ld jump jump 12
-                    (emit jal zero 12
-                          `((quad . 0)
-                            (unquote-splicing (emit jalr zero jump 0
-                                                    (asm-helper-relocation code* reloc))))))))))
+  ;; no need to save ra
+  ;; eed saving %cond? No need since it's always clobbered before use.
+  (define asm-helper-jump
+    (lambda (code* reloc)
+      (emit auipc %jump 0
+            (emit ld %jump %jump 12
+                  (emit jal %real-zero 12
+                        (cons* `(quad . 0)
+                               (aop-cons* `(asm "quad jump")
+                                          (emit jalr real-zero %jump 0
+                                                (asm-helper-relocation code* reloc)))))))))
 
-  (define asm-helper-call ;; need to save ra
+  ;; need to save ra
+  (define asm-helper-call
     (lambda (code* reloc save-ra? tmp)
       (define maybe-save-ra
         (lambda (code* p)
           (if save-ra?
-              (let ([sp `(reg . ,%sp)]
-                    [ra `(reg . ,%ra)])
-                (emit addi sp sp -16 ;; save %ra on the stack
-                      (emit sd ra sp 0
-                            (p (emit ld ra sp 0
-                                     (emit addi sp sp 16 code*))))))
+              (emit addi %sp %sp -16 ;; save %ra on the stack
+                    (emit sd %ra %sp 0
+                          (p (emit ld %ra %sp 0
+                                   (emit addi %sp %sp 16 code*)))))
               (p code*))))
-      (let ([zero `(reg . ,%real-zero)])
-        (maybe-save-ra code*
-                       (lambda (code*)
-                         (emit auipc tmp 0
-                               (emit ld tmp tmp 12
-                                     (emit jal zero 12
-                                           `((quad . 0)
-                                             (unquote-splicing (emit jalr %ra tmp 0
-                                                               (asm-helper-relocation code* reloc))))))))))))
+      (maybe-save-ra code*
+                     (lambda (code*)
+                       (emit auipc tmp 0
+                             (emit ld tmp tmp 12
+                                   (emit jal %real-zero 12
+                                         (cons* `(quad . 0)
+                                                (aop-cons* `(asm "quad call")
+                                                           (emit jalr %ra tmp 0
+                                                                 (asm-helper-relocation code* reloc)))))))))))
 
   (define asm-kill
     (lambda (code* dest)
