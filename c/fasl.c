@@ -259,13 +259,13 @@ static void sparc64_set_literal PROTO((void *address, uptr item));
 #ifdef RISCV64
 static void riscv64_set_abs PROTO((void *address, uptr item));
 static uptr riscv64_get_abs PROTO((void *address));
-static void riscv64_set_jump PROTO((void *address, uptr item, IBOOL callp));
+static void riscv64_set_jump PROTO((void *address, uptr item));
 static uptr riscv64_get_jump PROTO((void *address));
 #endif /* RISCV64 */
 #ifdef LA64
 static void la64_set_abs PROTO((void *address, uptr item));
 static uptr la64_get_abs PROTO((void *address));
-static void la64_set_jump PROTO((void *address, uptr item, IBOOL callp));
+static void la64_set_jump PROTO((void *address, uptr item));
 static uptr la64_get_jump PROTO((void *address));
 #endif /* LA64 */
 
@@ -1285,10 +1285,10 @@ void S_set_code_obj(who, typ, p, n, x, o) char *who; IFASLCODE typ; iptr n, o; p
       riscv64_set_abs(address, item);
       break;
     case reloc_riscv64_jump:
-      riscv64_set_jump(address, item, 0);
+      riscv64_set_jump(address, item);
       break;
     case reloc_riscv64_call:
-      riscv64_set_jump(address, item, 1);
+      riscv64_set_jump(address, item);
       break;
 #endif /* RISCV64 */
 #ifdef LA64
@@ -1375,7 +1375,7 @@ ptr S_get_code_obj(typ, p, n, o) IFASLCODE typ; iptr n, o; ptr p; {
       item = riscv64_get_jump(address);
       break;
 #endif /* RISCV64 */
-#ifdef LA64 //@ todo
+#ifdef LA64
     case reloc_la64_abs:
             item = la64_get_abs(address);
             break;
@@ -1735,7 +1735,7 @@ static void riscv64_set_abs(void* address, uptr item)
   (*((I64 *)((I32 *)address + 3))) = item;
 }
 
-static void riscv64_set_jump(void* address, uptr item, IBOOL callp)
+static void riscv64_set_jump(void* address, uptr item)
 {
   /*
     [0]auipc
@@ -1770,7 +1770,7 @@ static void la64_set_abs(void* address, uptr item)
   (*((I64 *)((I32 *)address + 3))) = item;
 }
 
-static void la64_set_jump(void* address, uptr item, IBOOL callp)
+static void la64_set_jump(void* address, uptr item)
 {
    /*
      [0]pcaddi
