@@ -412,9 +412,9 @@ typedef char *memcpy_t;
 typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
-#ifndef DISABLE_X11
-#define LIBX11 "libX11.so"
-#endif
+//#ifndef DISABLE_X11
+//#define LIBX11 "libX11.so"
+//#endif
 #define LSEEK lseek64
 #define OFF_T off64_t
 #define _LARGEFILE64_SOURCE
@@ -447,9 +447,9 @@ typedef char *memcpy_t;
 typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
-#ifndef DISABLE_X11
-#define LIBX11 "libX11.so"
-#endif
+//#ifndef DISABLE_X11
+//#define LIBX11 "libX11.so"
+//#endif
 #define LSEEK lseek64
 #define OFF_T off64_t
 #define _LARGEFILE64_SOURCE
