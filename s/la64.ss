@@ -45,8 +45,8 @@
    [%real-zero %r0 #f 0]
    [%ra %r1 #f 1]
    [%sp %r3 #t 3]
-   [%jump %scratch %r30 #t 30]
-   [%cond          %r31 #t 31]
+   [%jump %scratch0 %r30 #t 30]
+   [%cond %scratch1 %r31 #t 31]
    [%Cfparg1 %Cfpretval %f0 #f 0]
    [%Cfparg2 %f1           #f  1]
    [%Cfparg3 %f2           #f  2]
@@ -57,7 +57,7 @@
    [%Cfparg8 %f7           #f  7]
    [%flreg1  %f8           #f  8]
    [%flreg2  %f9           #f  9]
-   [%flreg3  %f10           #f  10]))
+   [%flreg3  %f10          #f  10]))
 
 (module (md-handle-jump)
   (import asm-module)
@@ -368,21 +368,11 @@
 
   (define-instruction value (+/carry)
     [(op (z ur) (x ur) (y ur))
-     (let ([u1 (make-tmp 'u1+)])
-       (seq
-        `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,z (asm ,info ,asm-add/carry ,x ,y ,u1))))])
+     `(set! ,(make-live-info) ,z (asm ,info ,asm-add/carry ,x ,y))])
 
   (define-instruction value (+/ovfl)
     [(op (z ur) (x ur) (y ur))
-     (let ([u1 (make-tmp 'u1+)] [u2 (make-tmp 'u2+)]
-           [u3 (make-tmp 'u3+)] [u4 (make-tmp 'u4+)])
-       (seq
-        `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,u3 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,u4 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-add/ovfl ,x ,y ,u1 ,u2 ,u3 ,u4))))])
+     `(set! ,(make-live-info) ,z (asm ,null-info ,asm-add/ovfl ,x ,y))])
 
   (define-instruction value (-)
     [(op (z ur) (x ur) (y ur))
@@ -390,16 +380,7 @@
 
   (define-instruction value (-/ovfl)
     [(op (z ur) (x ur) (y ur))
-     (let ([u1 (make-tmp 'u1-)] [u2 (make-tmp 'u2-)]
-           [u3 (make-tmp 'u3-)] [u4 (make-tmp 'u4-)]
-           [u5 (make-tmp 'u5-)])
-       (seq
-        `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,u3 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,u4 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,u5 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-sub/ovfl ,x ,y ,u1 ,u2 ,u3 ,u4 ,u5))))])
+     `(set! ,(make-live-info) ,z (asm ,null-info ,asm-sub/ovfl ,x ,y))])
 
   (define-instruction value (-/eq)
     [(op (z ur) (x ur) (y ur))
@@ -670,7 +651,7 @@
   (define-instruction pred (eq? u< > < <= >= logtest log!test)
     [(op (x ur) (y ur))
      (let ([info (if (eq? op 'eq?) info-cc-eq (make-info-condition-code op #f #t))])
-       (values '() `(asm ,info ,(asm-relop info) ,x ,y)))]) ;;@ todo asm-relop
+       (values '() `(asm ,info ,(asm-relop info) ,x ,y)))])
 
   (define-instruction pred (condition-code)
     [(op) (values '() `(asm ,info ,(asm-condition-code info)))])
@@ -1141,7 +1122,7 @@
     (syntax-rules ()
       [(byte-fields (n e) ...)
        (andmap fixnum? (datum (n ...)))
-       (+ (bitwise-arithmetic-shift-left e n) ...)]))
+       (fx+ (bitwise-arithmetic-shift-left e n) ...)]))
 
   (define upper20-32
     (lambda (x)
@@ -1176,28 +1157,28 @@
 
   ; carry if dest < src0(or src1)
   (define asm-add/carry
-    (lambda (code* dest src0 src1 t0)
-      (Trivit (dest src0 src1 t0)
-              (emit addi.d t0 src0 0
+    (lambda (code* dest src0 src1)
+      (Trivit (dest src0 src1)
+              (emit addi.d %scratch0 src0 0
                     (emit add.d dest src0 src1
-                          (emit sltu %cond dest t0 code*))))))
+                          (emit sltu %cond dest %scratch0 code*))))))
 
   (define sign-flip
-    (lambda (r a b t0 t1 code*)
-      (emit xor t0 a b
-            (emit xori t1 b -1
-                  (emit xor t1 t1 r
-                        (emit or t0 t0 t1
-                              (emit xori t0 t0 -1
-                                    (emit srli.d %cond t0 63 code*))))))))
+    (lambda (r a b code*)
+      (emit xor a a b
+            (emit xori b b -1
+                  (emit xor b b r
+                        (emit or a a b
+                              (emit xori a a -1
+                                    (emit srli.d %cond a 63 code*))))))))
 
   (define asm-add/ovfl
-    (lambda (code* dest src0 src1 t0 t1 t2 t3)
-      (Trivit (dest src0 src1 t0 t1 t2 t3)
-              (emit addi.d t2 src0 0
-                    (emit addi.d t3 src1 0
+    (lambda (code* dest src0 src1)
+      (Trivit (dest src0 src1)
+              (emit addi.d %scratch0 src0 0
+                    (emit addi.d %scratch1 src1 0
                           (emit add.d dest src0 src1
-                                (sign-flip dest t2 t3 t0 t1 code*)))))))
+                                (sign-flip dest %scratch0 %scratch1 code*)))))))
 
   (define asm-sub
     (lambda (code* dest src0 src1)
@@ -1205,13 +1186,13 @@
               (emit sub.d dest src0 src1 code*))))
 
   (define asm-sub/ovfl
-    (lambda (code* dest src0 src1 t0 t1 t2 t3 t4)
-      (Trivit (dest src0 src1 t0 t1 t2 t3 t4)
-              (emit addi.d t3 src0 0
-                    (emit addi.d t4 src1 0
+    (lambda (code* dest src0 src1)
+      (Trivit (dest src0 src1)
+              (emit addi.d %scratch0 src0 0
+                    (emit addi.d %scratch1 src1 0
                           (emit sub.d dest src0 src1
-                                (emit xori t2 t4 -1
-                                      (sign-flip dest t3 t2 t0 t1 code*))))))))
+                                (emit xori %scratch1 %scratch1 -1
+                                      (sign-flip dest %scratch0 %scratch1 code*))))))))
 
   (define asm-sub/eq
     (lambda (code* dest src0 src1)
@@ -1647,7 +1628,7 @@
                        (let ([disp (fx- next-addr offset)])
                          (cond
                           [(eqv? disp 0) '()]
-                          ;;@ todo use b for 28-bit offset
+                          ;;@ todo use `b` for 28-bit offset
                           [(signed38? disp) (emit pcaddu18i %jump (upper20-38 (fx+ disp 8))
                                                   (emit jirl %real-zero %jump (lower18-38 (fx+ disp 8)) '()))]
                           [else (sorry! who "disp value not supported")])))]
@@ -1675,11 +1656,11 @@
                       (cond
                        ;; inverted
                        [(fx= disp1 0)
-                        (safe-assert (signed23? disp2))
+                        (safe-assert (signed23? (fx+ disp2 4)))
                         (emit beqz %cond (fx+ disp2 4) '())]
                        ;; normal
                        [(fx= disp2 0)
-                        (safe-assert (signed23? disp1))
+                        (safe-assert (signed23? (fx+ disp1 4)))
                         (emit bnez %cond (fx+ disp1 4) '())]
                        ;; others
                        [else
@@ -1855,7 +1836,7 @@
           (define make-vfp (lambda () (vector %Cfparg1 %Cfparg2 %Cfparg3 %Cfparg4 %Cfparg5 %Cfparg6 %Cfparg7 %Cfparg8)))
           (define align
             (lambda (b x)
-              (let ([k (- b 1)])
+              (let ([k (fx- b 1)])
                 (fxlogand (fx+ x k) (fxlognot k)))))
 
           ;; Currently:

@@ -1,0 +1,32 @@
+m = la64le
+Cpu = LA64
+
+mdclib = -lm -ldl ${ncursesLib} -lrt -luuid
+C = ${CC} ${CPPFLAGS} -Wpointer-arith -Wall -Wextra -Werror -Wno-implicit-fallthrough -O2 -mabi=lp64d ${CFLAGS}
+o = o
+mdsrc = la64le.c
+mdobj = la64le.o
+
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+.c.o:
+	$C -c -D${Cpu} -I${Include} ${zlibInc} ${LZ4Inc} $*.c
+
+include Mf-base
+
+# -m: emulation, can be seen by -V
+${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
+	${LD} -melf64lloongarch_lp64 -r -X -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
+
+${KernelLib}: ${kernelobj}
+	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
+
+${Scheme}: ${Kernel} ${KernelLinkDeps} ${Main}
+	$C -rdynamic -o ${Scheme} ${Main} ${Kernel} ${mdclib} ${KernelLinkLibs} ${LDFLAGS}
+
+../zlib/configure.log:
+	(cd ../zlib; CFLAGS="${CFLAGS}" ./configure)
+
+../lz4/lib/liblz4.a: ${LZ4Sources}
+	(cd ../lz4/lib; CFLAGS="${CFLAGS}" ${MAKE} liblz4.a)
