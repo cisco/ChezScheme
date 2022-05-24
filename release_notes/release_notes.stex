@@ -1,9 +1,9 @@
 \documentclass{releasenotes}
 
-\thisversion{Version 9.5.7}
+\thisversion{Version 9.5.9}
 \thatversion{Version 8.4}
-\pubmonth{November}
-\pubyear{2021}
+\pubmonth{April}
+\pubyear{2022}
 
 \begin{document}
 
@@ -58,12 +58,12 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Basic ftypes can be referenced, even if shadowed by syntactic binding (9.5.7)}
+\subsection{Basic ftypes can be referenced, even if shadowed by syntactic binding (9.5.8)}
 
 Previously, it was possible to interfere with the definition of ftypes by
 creating a syntactic binding for one of the built-in types, such as
 \scheme{integer-32}, \scheme{float}, etc.
-As of 9.5.7, syntactic bindings that do not bind an ftype descriptor are no
+As of 9.5.8, syntactic bindings that do not bind an ftype descriptor are no
 longer considered when defining ftypes.
 
 This change also allows a base ftype to be bound using `define-ftype`, though

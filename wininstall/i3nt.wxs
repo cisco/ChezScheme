@@ -4,16 +4,16 @@
     <DirectoryRef Id="D_bin">
       <Directory Id="D_bin_i3nt" Name="i3nt">
         <Component Id="cmp3EAD5F342D86023E323C2F3E96A596B9" Guid="*">
-          <File Id="filF35C82CDA44DE51CEFA9FF8CA1B38AAA" KeyPath="yes" Source="..\i3nt\bin\i3nt\csv957.dll" />
+          <File Id="filF35C82CDA44DE51CEFA9FF8CA1B38AAA" KeyPath="yes" Source="..\i3nt\bin\i3nt\csv959.dll" />
         </Component>
         <Component Id="cmpF2410A7AF5FB7C10A33DA57476B0E56B" Guid="*">
-          <File Id="filFE4E60D4DD4AEF0DDA574E6EF117FEC0" KeyPath="yes" Source="..\i3nt\bin\i3nt\csv957.exp" />
+          <File Id="filFE4E60D4DD4AEF0DDA574E6EF117FEC0" KeyPath="yes" Source="..\i3nt\bin\i3nt\csv959.exp" />
         </Component>
         <Component Id="cmp905F254ECBC3BCB861BBBF60B0F34D73" Guid="*">
-          <File Id="fil811C8A53860477F59CD4D11BF7C36A5E" KeyPath="yes" Source="..\i3nt\bin\i3nt\csv957.lib" />
+          <File Id="fil811C8A53860477F59CD4D11BF7C36A5E" KeyPath="yes" Source="..\i3nt\bin\i3nt\csv959.lib" />
         </Component>
         <Component Id="cmp43EE1BA94E7D15B5F9721D32B41CDFF1" Guid="*">
-          <File Id="fil3475AECC40E6C77A1E5A74C81205D246" KeyPath="yes" Source="..\i3nt\bin\i3nt\csv957.pdb" />
+          <File Id="fil3475AECC40E6C77A1E5A74C81205D246" KeyPath="yes" Source="..\i3nt\bin\i3nt\csv959.pdb" />
         </Component>
         <Component Id="cmp2660425B08191D07FD2B8E4D12C25CAF" Guid="*">
           <File Id="fil6C14AF587FDAABD1440BADC640EEF64E" KeyPath="yes" Source="..\i3nt\bin\i3nt\petite.exe" />
@@ -40,10 +40,10 @@
     <DirectoryRef Id="D_boot">
       <Directory Id="D_boot_i3nt" Name="i3nt">
         <Component Id="cmp47E339F22F1D268C3D889C89DC04B1EC" Guid="*">
-          <File Id="filFAE795432021A108F72A5A1763549848" KeyPath="yes" Source="..\i3nt\boot\i3nt\csv957md.lib" />
+          <File Id="filFAE795432021A108F72A5A1763549848" KeyPath="yes" Source="..\i3nt\boot\i3nt\csv959md.lib" />
         </Component>
         <Component Id="cmp97E86E3E78EC5C1E35333413F9D239A9" Guid="*">
-          <File Id="filC2A38DD4D83F793279D6D10E8D553145" KeyPath="yes" Source="..\i3nt\boot\i3nt\csv957mt.lib" />
+          <File Id="filC2A38DD4D83F793279D6D10E8D553145" KeyPath="yes" Source="..\i3nt\boot\i3nt\csv959mt.lib" />
         </Component>
         <Component Id="cmp4EC08D9AF0D6DADE3077A7EB099476B4" Guid="*">
           <File Id="fil47E4EBA05B181E80FAF43A5B84DCC1D6" KeyPath="yes" Source="..\i3nt\boot\i3nt\mainmd.obj" />

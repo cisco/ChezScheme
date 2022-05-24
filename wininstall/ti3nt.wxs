@@ -4,16 +4,16 @@
     <DirectoryRef Id="D_bin">
       <Directory Id="D_bin_ti3nt" Name="ti3nt">
         <Component Id="cmp3E51840FF941B7410025EFB2215EAB58" Guid="*">
-          <File Id="fil6B96E8682034EC96C7842C5024FDF620" KeyPath="yes" Source="..\ti3nt\bin\ti3nt\csv957.dll" />
+          <File Id="fil6B96E8682034EC96C7842C5024FDF620" KeyPath="yes" Source="..\ti3nt\bin\ti3nt\csv959.dll" />
         </Component>
         <Component Id="cmp68BA21E76800BFFA057D33973E89D8F4" Guid="*">
-          <File Id="fil5F505E9200C84F7887C4D12FA9D9D794" KeyPath="yes" Source="..\ti3nt\bin\ti3nt\csv957.exp" />
+          <File Id="fil5F505E9200C84F7887C4D12FA9D9D794" KeyPath="yes" Source="..\ti3nt\bin\ti3nt\csv959.exp" />
         </Component>
         <Component Id="cmpCA1F1C55C49A3A332E60F8D0D78363C2" Guid="*">
-          <File Id="filB8607D2BF295249DD6F51070A687E14B" KeyPath="yes" Source="..\ti3nt\bin\ti3nt\csv957.lib" />
+          <File Id="filB8607D2BF295249DD6F51070A687E14B" KeyPath="yes" Source="..\ti3nt\bin\ti3nt\csv959.lib" />
         </Component>
         <Component Id="cmp01D266C0ECE540BE4BF6E6AE14AFFCBB" Guid="*">
-          <File Id="filE99735E84B4934FC41AAA6BBF547F1C5" KeyPath="yes" Source="..\ti3nt\bin\ti3nt\csv957.pdb" />
+          <File Id="filE99735E84B4934FC41AAA6BBF547F1C5" KeyPath="yes" Source="..\ti3nt\bin\ti3nt\csv959.pdb" />
         </Component>
         <Component Id="cmpC00FD9C7415A1D2D22EA38F5259CAAA4" Guid="*">
           <File Id="fil80D2F31CB0D3B8F98E3C8CCAF9DA6F29" KeyPath="yes" Source="..\ti3nt\bin\ti3nt\petite.exe" />
@@ -40,10 +40,10 @@
     <DirectoryRef Id="D_boot">
       <Directory Id="D_boot_ti3nt" Name="ti3nt">
         <Component Id="cmp7099C9EB3F487AAFE3A880CED21FA9C2" Guid="*">
-          <File Id="filD5DA8D84F54BC985AA246BBD3FB15239" KeyPath="yes" Source="..\ti3nt\boot\ti3nt\csv957md.lib" />
+          <File Id="filD5DA8D84F54BC985AA246BBD3FB15239" KeyPath="yes" Source="..\ti3nt\boot\ti3nt\csv959md.lib" />
         </Component>
         <Component Id="cmpF3038779EA05930E72A29C15DC2D64B2" Guid="*">
-          <File Id="filFB335FE01A6D5ED27AD2BC179DB8E265" KeyPath="yes" Source="..\ti3nt\boot\ti3nt\csv957mt.lib" />
+          <File Id="filFB335FE01A6D5ED27AD2BC179DB8E265" KeyPath="yes" Source="..\ti3nt\boot\ti3nt\csv959mt.lib" />
         </Component>
         <Component Id="cmp9DDE0523EFC5EEA983DE3CFA0F493908" Guid="*">
           <File Id="fil139F59D34D1A013CCB2AEC11507287AA" KeyPath="yes" Source="..\ti3nt\boot\ti3nt\mainmd.obj" />
