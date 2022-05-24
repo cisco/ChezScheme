@@ -1471,7 +1471,7 @@
   (merge [sig [(procedure list list) -> (list)]] [flags true])
   (merge! [sig [(procedure list list) -> (list)]] [flags true])
   (mkdir [sig [(pathname) (pathname sub-uint) -> (void)]] [flags])
-  (multibyte->string [feature windows] [sig [(sub-uint bytevector) -> (string)]] [flags true discard])
+  (multibyte->string [feature windows] [sig [(sub-ptr bytevector) -> (string)]] [flags true discard])
   (mutable-box? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (mutable-string? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (mutable-fxvector? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
@@ -1652,7 +1652,7 @@
   (standard-output-port [sig [() (sub-symbol) (sub-symbol maybe-transcoder) -> (output-port)]] [flags true])
   (standard-error-port [sig [() (sub-symbol) (sub-symbol maybe-transcoder) -> (output-port)]] [flags true])
   (statistics [sig [() -> (sstats)]] [flags unrestricted alloc])
-  (string->multibyte [feature windows] [sig [(sub-uint string) -> (bytevector)]] [flags true discard])
+  (string->multibyte [feature windows] [sig [(sub-ptr string) -> (bytevector)]] [flags true discard])
   (string->number [sig [(string) (string sub-ufixnum) -> (maybe-number)]] [flags discard]) ; radix not restricted to 2, 4, 8, 16
   (string<=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard])        ; not restricted to 2+ arguments
   (string<? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard])         ; not restricted to 2+ arguments

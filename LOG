@@ -2319,3 +2319,5 @@
     s/ppc32.ss
 - fix callable floating-point argument allocation on x86
     s/cpnanopass.ss
+- corrected signature of multibyte->string and string->multibyte
+    s/primdata.ss
