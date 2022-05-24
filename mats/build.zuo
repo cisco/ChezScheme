@@ -283,6 +283,8 @@
   (define covin-files (list (path->complete-path (at-dir "../boot" m "petite.covin"))
                             (path->complete-path (at-dir "../boot" m "scheme.covin"))))
 
+  (define version-target (input-data-target 'version (source-version)))
+
   (define (find-util name)
     (cond
       [(eq? 'windows (system-type))
@@ -635,7 +637,7 @@
 
        ;; for individual ".mo" written to an "out-" subdirectory (but is this used?):
        ,@(map (lambda (obj src name)
-                `[:target ,obj (,src ,mat.so ,options-t)
+                `[:target ,obj (,src ,mat.so ,options-t ,version-target)
                           ,(lambda (path token)
                              (run-mat name obj out-dir))
                           ;; keep output on failure:
@@ -662,7 +664,7 @@
                    (display-to-file s path :truncate))
                 :command]
 
-       [:target ,mat.so (,mat.ss)
+       [:target ,mat.so (,mat.ss ,version-target)
                 ,(lambda (path token)
                    (run-scheme "compile"
                                `((reset-handler abort)
@@ -713,7 +715,7 @@
                                 (config-include config
                                                 (at-dir (build-path "../boot" m))
                                                 (at-dir ".")))))]
-       [:target ,build-examples-stamp ()
+       [:target ,build-examples-stamp (,version-target)
                 ,(lambda (path token)
                    (mkdir-p (at-dir "../examples"))
                    (build (find-target "all" (examples-targets-at (make-at-dir (at-dir "../examples")) vars))

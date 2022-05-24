@@ -11,7 +11,8 @@
          make-lookup
          make-opt-lookup
          make-run-scheme
-         relevant-config)
+         relevant-config
+         source-version)
 
 (define-syntax (define-values stx)
   (unless (and (list? stx) (= 3 (length stx))) (bad-syntax stx))
@@ -167,3 +168,11 @@
                [else relevant-config])))
          (hash)
          (hash-keys default-options)))
+
+(define (source-version)
+  (define lines (string-split (file->string (at-source "../s/cmacros.ss")) "\n"))
+  (ormap (lambda (line)
+           (let ([s (string-split line "(define-constant scheme-version #x")])
+             (and (pair? (cdr s))
+                  (car (string-split (cadr s) ")")))))
+         lines))

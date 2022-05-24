@@ -27,7 +27,7 @@
    `([:target needed ,objs ,void]
      
      ,@(map (lambda (src obj)
-              `[:target ,obj (,src)
+              `[:target ,obj (,src ,(input-data-target 'version (source-version)))
                         ,(lambda (path token)
                            (run-scheme obj
                                        `((time (compile-file ,src ,obj)))
