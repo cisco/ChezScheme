@@ -115,14 +115,24 @@
   (define (call-with-scheme k)
     (define scheme.exe (or host-scheme
                            (build-path host-workarea "bin" host-m (.exe "scheme"))))
+    (define init-env (hash-ref (runtime-env) 'env))
+    (define lib-env (let ([lib-dirs (lookup 'CHEZSCHEMELIBDIRS)])
+                      (cond
+                        [(not lib-dirs) init-env]
+                        [else
+                         (define env (filter (lambda (p) (not (string=? (car p) "CHEZSCHEMELIBDIRS")))
+                                             init-env))
+                         (cond
+                           [(equal? lib-dirs "") env]
+                           [else (cons (cons "CHEZSCHEMELIBDIRS" lib-dirs) env)])])))
     (define env (if (or (lookup 'SCHEMEHEAPDIRS)
                         (not (equal? host-workarea "")))
                     (cons
                      (cons "SCHEMEHEAPDIRS" (path->complete-path
                                              (or (lookup 'SCHEMEHEAPDIRS)
                                                  (build-path host-workarea "boot" host-m))))
-                     (hash-ref (runtime-env) 'env))
-                    (hash-ref (runtime-env) 'env)))
+                     lib-env)
+                    lib-env))
     (k scheme.exe env))
 
   (define (run-scheme/status what script inputs [options (hash)])

@@ -339,7 +339,12 @@
     (list (at-dir ".")))
 
   (define-values (call-with-scheme run-scheme/status run-scheme)
-    (make-run-scheme at-source at-dir lookup
+    (make-run-scheme at-source at-dir
+                     ;; turn off `CHEZSCHEMELIBDIRS` environment variable:
+                     (lambda (key)
+                       (if (eq? key 'CHEZSCHEMELIBDIRS)
+                           ""
+                           (lookup key)))
                      #f (at-dir "..") m
                      (source-directories)
                      (library-directories)))
