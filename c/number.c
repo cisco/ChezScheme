@@ -1493,7 +1493,8 @@ ptr S_big_positive_bit_field(ptr x, ptr fxstart, ptr fxend) {
 }
 
 /* returns a lower bound on the number of trailing 0 bits in the
-   binary representation: */
+   binary representation; the result plus bigit_bits-1 is an
+   upper bound: */
 ptr S_big_trailing_zero_bits(ptr x) {
   bigit *xp = &BIGIT(x, 0);
   iptr xl = BIGLEN(x), i;

@@ -270,8 +270,12 @@
          (let* ([nz ($bignum-trailing-zero-bits n)]
                 [dz ($bignum-trailing-zero-bits d)]
                 [cz (fxmin nz dz)]
-                [n (abs (bitwise-arithmetic-shift-right n nz))]
-                [d (abs (bitwise-arithmetic-shift-right d dz))])
+                ;; The `$bignum-trailing-zero-bits` function is just counting trailing 0 bigits,
+                ;; so it returns an approximation to the number of trailing zero bits. We may need to
+                ;; keep one bigit of `n` or `d` to pair up with leftover trailing 0 bits in
+                ;; `d` or `n`.
+                [n (abs (bitwise-arithmetic-shift-right n (fxmax cz (fx- nz (constant bigit-bits)))))]
+                [d (abs (bitwise-arithmetic-shift-right d (fxmax cz (fx- dz (constant bigit-bits)))))])
            (define (gcd n d)
              (cond
                [(= n 0) d]
