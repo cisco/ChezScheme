@@ -181,7 +181,13 @@
                         (x v ...))
                       (+ v ...)))))))))
 
-(define foreign1.so (find-source "foreign1.so"))
+(define foreign1.so (let ([p (find-source "foreign1.so")])
+                      p
+                      (if (or (path-absolute? p)
+                              (not (equal? "" (path-parent p))))
+                          p
+                          ;; specify relative to current directory:
+                          (path-build "." p))))
 (printf "found ~s in ~s\n" foreign1.so (source-directories))
 
 (machine-case

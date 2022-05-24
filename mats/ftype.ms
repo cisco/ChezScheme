@@ -552,26 +552,15 @@
               [testfile.so (format "testfile-~a.~:[so~;dll~]" testfile
                              (windows?))])
           (with-output-to-file testfile.c thunk 'replace)
-          (unless (= (case (machine-type)
-                       [(i3osx ti3osx ppc32osx tppc32osx)
-                        (system (format "cc -m32 -dynamiclib -o ~a ~a" testfile.so testfile.c))]
-                       [(a6osx a6osx)
-                        (system (format "cc -m64 -dynamiclib -o ~a ~a" testfile.so testfile.c))]
-                       [(a6nt ta6nt)
-                        (system (format "set cl= && ~a\\..\\c\\vs.bat amd64 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a"
-                                  (patch-exec-path *mats-dir*) testfile.so testfile.c))]
-                       [(i3nt ti3nt)
-                        (system (format "set cl= && ~a\\..\\c\\vs.bat x86 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a"
-                                  (patch-exec-path *mats-dir*) testfile.so testfile.c))]
-                       [(arm64nt tarm64nt)
-                        (system (format "set cl= && ~a\\..\\c\\vs.bat x64_arm64 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a"
-                                  (patch-exec-path *mats-dir*) testfile.so testfile.c))]
-                       [(arm32le tarm32le arm64le tarm64le)
-                        (system (format "cc -fPIC -shared -o ~a ~a" testfile.so testfile.c))]
-                       [else ; this should work for most intel-based systems that use gcc...
-                        (if (> (fixnum-width) 32)
-                            (system (format "cc -m64 -fPIC -shared -o ~a ~a" testfile.so testfile.c))
-                            (system (format "cc -m32 -fPIC -shared -o ~a ~a" testfile.so testfile.c)))])
+          (unless (= (system (format "~a ~a  ~a ~a  ~a ~a"
+                                     (getenv "FTYPE_CC")
+                                     (or (getenv "FTYPE_CFLAGS") "")
+                                     (if (equal? (getenv "FTYPE_TOOLCHAIN") "windows")
+                                         "/Fe:"
+                                         "-o")
+                                     testfile.so
+                                     testfile.c
+                                     (or (getenv "FTYPE_LDFLAGS") "")))
                      0)
             (errorf 'ftype-test "C compilation failed"))
           (load-shared-object (format "./~a" testfile.so)))))

@@ -339,15 +339,39 @@
     (list (at-dir ".")))
 
   (define-values (call-with-scheme run-scheme/status run-scheme)
-    (make-run-scheme at-source at-dir
-                     ;; turn off `CHEZSCHEMELIBDIRS` environment variable:
-                     (lambda (key)
-                       (if (eq? key 'CHEZSCHEMELIBDIRS)
-                           ""
-                           (lookup key)))
+    (make-run-scheme at-source at-dir lookup
                      #f (at-dir "..") m
                      (source-directories)
-                     (library-directories)))
+                     (library-directories)
+                     (let ([init-env (hash-ref (runtime-env) 'env)])
+                       ;; turn off `CHEZSCHEMELIBDIRS` environment variable:
+                       (define lib-env
+                         (filter (lambda (p) (not (string=? (car p) "CHEZSCHEMELIBDIRS")))
+                                 init-env))
+                       ;; communicate C compiler configuration to "ftype.ms":
+                       (list*
+                        (cons "FTYPE_CC" (or (lookup 'CC)
+                                             (if (eq? 'windows (hash-ref (runtime-env) 'toolchain-type))
+                                                 "cl.exe"
+                                                 "cc")))
+                        (cons "FTYPE_CFLAGS"
+                              (build-shell (or (lookup 'CPPFLAGS) "")
+                                           (if (glob-match? "*nt" m)
+                                               "-DWIN32"
+                                               "")
+                                           (or (lookup 'mdinclude) "")
+                                           (or (lookup 'CFLAGS) "")
+                                           (or (lookup 'mdcflags) "")))
+                        (cons "FTYPE_LDFLAGS"
+                              (build-shell (or (lookup 'LDFLAGS) "")
+                                           (if (eq? 'windows (hash-ref (runtime-env) 'toolchain-type))
+                                               (build-shell "/LD" "/MD")
+                                               "")))
+                        (cons "FTYPE_TOOLCHAIN"
+                              (if (eq? 'windows (hash-ref (runtime-env) 'toolchain-type))
+                                  "windows"
+                                  "unix"))
+                        lib-env))))
 
   (define (make-config-script opt)
     `((optimize-level ,(opt 'o 'integer))
@@ -705,7 +729,7 @@
                    (c-compile foreign1.so foreign-srcs
                               (let* ([config (config-merge config 'CPPFLAGS (or (lookup 'mdinclude) ""))]
                                      [config (config-merge config 'CFLAGS (or (lookup 'mdcflags) ""))]
-                                     [config (if (glob-match? "*nt" m)
+                                     [config (if (eq? 'windows (hash-ref (runtime-env) 'toolchain-type))
                                                  (config-merge config 'LDFLAGS (build-shell "/LD" "/MD"))
                                                  config)]
                                      [config (if (glob-match? "*nt" m)
