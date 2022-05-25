@@ -36,16 +36,16 @@ Low-level Memory management strategy:
 #include "sort.h"
 #include <sys/types.h>
 
-static void out_of_memory PROTO((void));
-static void initialize_seginfo PROTO((seginfo *si, ISPC s, IGEN g));
-static seginfo *allocate_segments PROTO((uptr nreq));
-static void expand_segment_table PROTO((uptr base, uptr end, seginfo *si));
-static void contract_segment_table PROTO((uptr base, uptr end));
-static void add_to_chunk_list PROTO((chunkinfo *chunk, chunkinfo **pchunk_list));
-static seginfo *sort_seginfo PROTO((seginfo *si, uptr n));
-static seginfo *merge_seginfo PROTO((seginfo *si1, seginfo *si2));
+static void out_of_memory(void);
+static void initialize_seginfo(seginfo *si, ISPC s, IGEN g);
+static seginfo *allocate_segments(uptr nreq);
+static void expand_segment_table(uptr base, uptr end, seginfo *si);
+static void contract_segment_table(uptr base, uptr end);
+static void add_to_chunk_list(chunkinfo *chunk, chunkinfo **pchunk_list);
+static seginfo *sort_seginfo(seginfo *si, uptr n);
+static seginfo *merge_seginfo(seginfo *si1, seginfo *si2);
 
-void S_segment_init() {
+void S_segment_init(void) {
   IGEN g; ISPC s; int i;
 
   if (!S_boot_time) return;
@@ -231,7 +231,7 @@ static void initialize_seginfo(seginfo *si, ISPC s, IGEN g) {
   }
 }
 
-iptr S_find_segments(s, g, n) ISPC s; IGEN g; iptr n; {
+iptr S_find_segments(ISPC s, IGEN g, iptr n) {
   chunkinfo *chunk, *nextchunk;
   seginfo *si, *nextsi, **prevsi;
   iptr nunused_segs, j;

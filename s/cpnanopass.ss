@@ -8969,7 +8969,7 @@
         (define-inline 3 char-
           ; assumes fixnum is zero
           [(e1 e2)
-           (%inline srl
+           (%inline sra
               ,(%inline - ,e1 ,e2)
               (immediate ,(fx- (constant char-data-offset) (constant fixnum-offset))))])
         (define-inline 3 integer->char
@@ -10644,7 +10644,7 @@
                    (Scheme->C type toC t)])))
             (define C->Scheme
               ; ASSUMPTIONS: ac0, ac1, and xp are not C argument registers
-              (lambda (type fromC lvalue)
+              (lambda (type fromC lvalue for-return?)
                 (define integer->ptr
                  ; ac0 holds low 32-bits, ac1 holds high 32 bits, if needed
                   (lambda (width lvalue)
@@ -10755,12 +10755,12 @@
                       ,(unsigned->ptr bits lvalue))]
                   [(fp-double-float)
                    (%seq
-                     (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) #t))
+                     (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) for-return?))
                      ,(fromC %xp)
                      (set! ,lvalue ,%xp))]
                   [(fp-single-float)
                    (%seq
-                     (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) #t))
+                     (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) for-return?))
                      ,(fromC %xp)
                      (set! ,lvalue ,%xp))]
                   [(fp-ftd ,ftd)
@@ -10801,7 +10801,7 @@
                                          ;; was instead installed in the first argument.
                                          `(seq (set! ,maybe-lvalue ,(%constant svoid)) ,e)]
                                         [else
-                                         `(seq ,(C->Scheme result-type c-res maybe-lvalue) ,e)])
+                                         `(seq ,(C->Scheme result-type c-res maybe-lvalue #t) ,e)])
                                       e))))])
                     (if new-frame?
                         (sorry! who "can't handle nontail foreign calls")
@@ -10850,7 +10850,7 @@
                               [(real-register? '%cp) `(set! ,cp-save ,%cp)]
                               [else `(nop)])
                             ; convert arguments
-                            ,(fold-left (lambda (e x arg-type c-arg) `(seq ,(C->Scheme arg-type c-arg x) ,e))
+                            ,(fold-left (lambda (e x arg-type c-arg) `(seq ,(C->Scheme arg-type c-arg x #f) ,e))
                                (set-locs fv* frame-x*
                                  (set-locs (map (lambda (reg) (in-context Lvalue (%mref ,%tc ,(reg-tc-disp reg)))) reg*) reg-x*
                                    `(set! ,%ac0 (immediate ,(length arg-type*)))))

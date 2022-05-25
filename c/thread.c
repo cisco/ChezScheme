@@ -18,11 +18,11 @@
 
 /* locally defined functions */
 #ifdef PTHREADS
-static s_thread_rv_t start_thread PROTO((void *tc));
-static IBOOL destroy_thread PROTO((ptr tc));
+static s_thread_rv_t start_thread(void *tc);
+static IBOOL destroy_thread(ptr tc);
 #endif
 
-void S_thread_init() {
+void S_thread_init(void) {
   if (S_boot_time) {
     S_protect(&S_G.threadno);
     S_G.threadno = FIX(0);
@@ -47,7 +47,7 @@ void S_thread_init() {
    thread_find_room.  scheme.c does part of the initialization of the
    base thread (e.g., parameters, current input/output ports) in one
    or more places. */
-ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
+ptr S_create_thread_object(const char *who, ptr p_tc) {
   ptr thread, tc;
   INT i;
 
@@ -132,7 +132,7 @@ ptr S_create_thread_object(who, p_tc) const char *who; ptr p_tc; {
 }
 
 #ifdef PTHREADS
-IBOOL Sactivate_thread() { /* create or reactivate current thread */
+IBOOL Sactivate_thread(void) { /* create or reactivate current thread */
   ptr tc = get_thread_context();
 
   if (tc == (ptr)0) { /* thread created by someone else */
@@ -148,7 +148,7 @@ IBOOL Sactivate_thread() { /* create or reactivate current thread */
   }
 }
 
-int S_activate_thread() { /* Like Sactivate_thread(), but returns a mode to revert the effect */
+int S_activate_thread(void) { /* Like Sactivate_thread(), but returns a mode to revert the effect */
   ptr tc = get_thread_context();
 
   if (tc == (ptr)0) {
@@ -175,12 +175,12 @@ void S_unactivate_thread(int mode) { /* Reverts a previous S_activate_thread() e
   }
 }
 
-void Sdeactivate_thread() { /* deactivate current thread */
+void Sdeactivate_thread(void) { /* deactivate current thread */
   ptr tc = get_thread_context();
   if (tc != (ptr)0) deactivate_thread(tc)
 }
 
-int Sdestroy_thread() { /* destroy current thread */
+int Sdestroy_thread(void) { /* destroy current thread */
   ptr tc = get_thread_context();
   if (tc != (ptr)0 && destroy_thread(tc)) {
     s_thread_setspecific(S_tc_key, 0);
@@ -189,7 +189,7 @@ int Sdestroy_thread() { /* destroy current thread */
   return 0;
 }
 
-static IBOOL destroy_thread(tc) ptr tc; {
+static IBOOL destroy_thread(ptr tc) {
   ptr *ls; IBOOL status;
 
   status = 0;
@@ -243,7 +243,7 @@ static IBOOL destroy_thread(tc) ptr tc; {
   return status;
 }
 
-ptr S_fork_thread(thunk) ptr thunk; {
+ptr S_fork_thread(ptr thunk) {
   ptr thread;
   int status;
 
@@ -294,12 +294,12 @@ scheme_mutex_t *S_make_mutex() {
   return m;
 }
 
-void S_mutex_free(m) scheme_mutex_t *m; {
+void S_mutex_free(scheme_mutex_t *m) {
   s_thread_mutex_destroy(&m->pmutex);
   free(m);
 }
 
-void S_mutex_acquire(m) scheme_mutex_t *m; {
+void S_mutex_acquire(scheme_mutex_t *m) {
   s_thread_t self = s_thread_self();
   iptr count;
   INT status;
@@ -317,7 +317,7 @@ void S_mutex_acquire(m) scheme_mutex_t *m; {
   m->count = 1;
 }
 
-INT S_mutex_tryacquire(m) scheme_mutex_t *m; {
+INT S_mutex_tryacquire(scheme_mutex_t *m) {
   s_thread_t self = s_thread_self();
   iptr count;
   INT status;
@@ -339,7 +339,7 @@ INT S_mutex_tryacquire(m) scheme_mutex_t *m; {
   return status;
 }
 
-void S_mutex_release(m) scheme_mutex_t *m; {
+void S_mutex_release(scheme_mutex_t *m) {
   s_thread_t self = s_thread_self();
   iptr count;
   INT status;
@@ -362,7 +362,7 @@ s_thread_cond_t *S_make_condition() {
   return c;
 }
 
-void S_condition_free(c) s_thread_cond_t *c; {
+void S_condition_free(s_thread_cond_t *c) {
   s_thread_cond_destroy(c);
   free(c);
 }
@@ -417,7 +417,7 @@ static inline int s_thread_cond_timedwait(s_thread_cond_t *cond, s_thread_mutex_
 
 #define Srecord_ref(x,i) (((ptr *)((uptr)(x)+record_data_disp))[i])
 
-IBOOL S_condition_wait(c, m, t) s_thread_cond_t *c; scheme_mutex_t *m; ptr t; {
+IBOOL S_condition_wait(s_thread_cond_t *c, scheme_mutex_t *m, ptr t) {
   ptr tc = get_thread_context();
   s_thread_t self = s_thread_self();
   iptr count;

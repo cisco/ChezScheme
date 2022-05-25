@@ -53,7 +53,7 @@ void S_doflush(uptr start, uptr end) {
   __asm__ __volatile__ ("sync ; isync");
 }
 
-void S_machine_init() {
+void S_machine_init(void) {
   if ((l1_dcache_line_size = sysconf(_SC_LEVEL1_DCACHE_LINESIZE)) <= 0) {
     l1_dcache_line_size = DEFAULT_L1_MAX_CACHE_LINE_SIZE;
   }

@@ -60,6 +60,11 @@ docs: build
 	(cd csug && $(MAKE) m=$(m))
 	(cd release_notes && $(MAKE) m=$(m))
 
+.PHONY: install-docs
+install-docs: docs
+	(cd csug && $(MAKE) install m=$(m))
+	(cd release_notes && $(MAKE) install m=$(m))
+
 .PHONY: bintar
 bintar:
 	(cd $(workarea) && $(MAKE) bintar)

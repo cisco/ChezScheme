@@ -2259,3 +2259,65 @@
     BUILDING, c/vs.bat, wininstall/locate-vcredist.bat
 - make threaded foreign mats more robust
     mats/foreign.ms
+- fix rational-valued? for numbers with an exceptional real part
+    s/5_3.ss mats/5_1.ms
+- change behavior of mixed exact/inexact arithmetic comparisons in
+  the range where fixnums have greater precision than flonums.  This
+  makes <=, =, and >= transitive as required by R6RS.  (< and > were
+  already transitive, but the behavior is changed to match.)
+    s/5_3.ss mats/5_3.ms
+- consolidate the $thread-check code in misc.ms and thread.ms, keeping
+  the thread.ms version of the code since it is more recent
+    mats/misc.ms mats/thread-check.ss mats/thread.ms
+- Replace K&R style function declarations with ANSI style
+    c/alloc.c c/arm32le.c c/externs.h c/fasl.c c/flushcache.c c/foreign.c
+    c/gc.c c/gcwrapper.c c/i32le.c c/intern.c c/io.c c/itest.c c/new-io.c
+    c/number.c c/ppc32.c c/ppc32le.c c/prim.c c/prim5.c c/print.c c/scheme.c
+    c/schlib.c c/schsig.c c/segment.c c/statics.c c/stats.c c/symbol.c
+    c/thread.c c/windows.c mats/foreign1.c
+- Eliminate PROTO macro from scheme.h
+    boot/*/scheme.h c/Makefile.* c/alloc.c c/externs.h c/fasl.c c/flushcache.c
+    c/foreign.c c/gc.c c/gcwrapper.c c/intern.c c/io.c c/new-io.c c/number.c
+    c/prim.c c/prim5.c c/print.c c/scheme.c c/schlib.c c/schsig.c c/segment.c
+    c/thread.c mats/foreign3.c s/mkheader.ss
+- update lz4 to version 1.9.3
+    configure
+- update zlib to version 1.2.12 (which fixes CVE-2018-25032)
+    configure c/Mf-*le
+
+9.5.8 changes:
+- updated version to 9.5.8
+    BUILDING NOTICE makefiles/Mf-install.in scheme.1.in c/Makefile.a6nt
+    c/Makefile.i3nt c/Makefile.ta6nt c/Makefile.ti3nt mats/Mf-a6nt
+    mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt workarea c/scheme.rc s/7.ss
+    s/cmacros.ss release_notes/release_notes.stex csug/copyright.stex
+    csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
+    wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
+    wininstall/ta6nt.wxs wininstall/ti3nt.wxs newrelease
+
+9.5.9 changes:
+- updated version to 9.5.9
+    BUILDING NOTICE makefiles/Mf-install.in scheme.1.in c/Makefile.a6nt
+    c/Makefile.i3nt c/Makefile.ta6nt c/Makefile.ti3nt mats/Mf-a6nt
+    mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt workarea c/scheme.rc
+    s/cmacros.ss release_notes/release_notes.stex csug/copyright.stex
+    csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
+    wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
+    wininstall/ta6nt.wxs wininstall/ti3nt.wxs
+- fix arm32le compilation systems using musl libc
+    c/arm32le.c
+- added install-docs target for make and corresponding configuration
+  options: --installdoc, --installcsug, and --installreleasenotes
+    configure makefiles/Makefile.in
+- fixed a bug in `char-` that led to returning a large positive integer
+  result when the second argument had a value greater than the first.
+  It now returns a negative number in this situation.
+    cpnanopass.ss
+    5_4.ms root-experr-* patch-*
+- fix ppc32 conditional-branch code generation when displacement is
+  exactly 32764
+    s/ppc32.ss
+- fix callable floating-point argument allocation on x86
+    s/cpnanopass.ss
+- corrected signature of multibyte->string and string->multibyte
+    s/primdata.ss

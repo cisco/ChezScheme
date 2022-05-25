@@ -25,7 +25,7 @@ export MSYS_NO_PATHCONV=1
 export MSYS2_ARG_CONV_EXCL=*
 
 foreign1.so: $(fsrc)
-	cmd.exe /c "vs.bat amd64 && cl /DWIN32 /DX86_64 /Fe$@ /I${Include} /LD /MD /nologo ../bin/$m/csv957.lib $(fsrc)"
+	cmd.exe /c "vs.bat amd64 && cl /DWIN32 /DX86_64 /Fe$@ /I${Include} /LD /MD /nologo ../bin/$m/csv959.lib $(fsrc)"
 
 cat_flush.exe: cat_flush.c
 	cmd.exe /c "vs.bat amd64 && cl /DWIN32 /DX86_64 /MD /nologo $<"

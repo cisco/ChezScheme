@@ -40,7 +40,7 @@ The \scheme{(\var{test})} form of clause is not supported.
 The order chosen when profiling information is available is based
 on the relative numbers of times the RHS of each clause is executed,
 and \scheme{(\var{test})} has no RHS.
-\scheme{(\var{test} => values)} is equivalent, abeit less concise.
+\scheme{(\var{test} => values)} is equivalent, albeit less concise.
 
 %----------------------------------------------------------------------------
 \entryheader

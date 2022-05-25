@@ -726,6 +726,12 @@
     (not (rational-valued? +inf.0))
     (not (rational-valued? -inf.0))
     (not (rational-valued? +nan.0))
+    (not (rational-valued? +inf.0+0.0i))
+    (not (rational-valued? +inf.0-0.0i))
+    (not (rational-valued? -inf.0+0.0i))
+    (not (rational-valued? -inf.0-0.0i))
+    (not (rational-valued? +nan.0+0.0i))
+    (not (rational-valued? +nan.0-0.0i))
  )
 
 (mat integer?

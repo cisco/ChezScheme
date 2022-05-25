@@ -62,7 +62,7 @@ InstallLZ4Target=
 #                 no changes should be needed below this point                #
 ###############################################################################
 
-Version=csv9.5.7
+Version=csv9.5.9
 Include=boot/$m
 PetiteBoot=boot/$m/petite.boot
 SchemeBoot=boot/$m/scheme.boot

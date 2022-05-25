@@ -3,7 +3,7 @@
 .if t .ds c caf\o'\'e'
 .if n .ds c cafe
 .ds ]W 
-.TH SCHEME 1 "Chez Scheme Version 9.5.7 November 2021"
+.TH SCHEME 1 "Chez Scheme Version 9.5.9 April 2022"
 .SH NAME
 \fIChez Scheme\fP
 .br
@@ -794,6 +794,6 @@ Second Edition\fP,
 MIT press (1996).
 .in -5
 .SH AUTHOR
-Copyright 2021 Cisco Systems, Inc.
+Copyright 2022 Cisco Systems, Inc.
 Licensed under the Apache License, Version 2.0
 (http://www.apache.org/licenses/LICENSE-2.0)

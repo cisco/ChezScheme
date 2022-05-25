@@ -60,326 +60,326 @@ off64_t lseek64(int,off64_t,int);
 /* prototypes gen. by ProtoGen Version 0.31 (Haydn Huntley) 1/18/93 */
 
 /* alloc.c */
-extern void S_alloc_init PROTO((void));
-extern void S_protect PROTO((ptr *p));
-extern void S_reset_scheme_stack PROTO((ptr tc, iptr n));
-extern void S_reset_allocation_pointer PROTO((ptr tc));
-extern ptr S_compute_bytes_allocated PROTO((ptr xg, ptr xs));
-extern ptr S_find_more_room PROTO((ISPC s, IGEN g, iptr n, ptr old));
-extern void S_dirty_set PROTO((ptr *loc, ptr x));
-extern void S_mark_card_dirty PROTO((uptr card, IGEN to_g));
-extern void S_scan_dirty PROTO((ptr **p, ptr **endp));
-extern void S_scan_remembered_set PROTO((void));
-extern void S_get_more_room PROTO((void));
-extern ptr S_get_more_room_help PROTO((ptr tc, uptr ap, uptr type, uptr size));
-extern ptr S_cons_in PROTO((ISPC s, IGEN g, ptr car, ptr cdr));
-extern ptr S_symbol PROTO((ptr name));
-extern ptr S_rational PROTO((ptr n, ptr d));
-extern ptr S_tlc PROTO((ptr keyval, ptr tconc, ptr next));
-extern ptr S_vector_in PROTO((ISPC s, IGEN g, iptr n));
-extern ptr S_vector PROTO((iptr n));
-extern ptr S_fxvector PROTO((iptr n));
-extern ptr S_bytevector PROTO((iptr n));
-extern ptr S_null_immutable_vector PROTO((void));
-extern ptr S_null_immutable_fxvector PROTO((void));
-extern ptr S_null_immutable_bytevector PROTO((void));
-extern ptr S_null_immutable_string PROTO((void));
-extern ptr S_record PROTO((iptr n));
-extern ptr S_closure PROTO((ptr cod, iptr n));
-extern ptr S_mkcontinuation PROTO((ISPC s, IGEN g, ptr nuate, ptr stack,
-                iptr length, iptr clength, ptr link, ptr ret, ptr winders));
-extern ptr S_inexactnum PROTO((double rp, double ip));
-extern ptr S_exactnum PROTO((ptr a, ptr b));
-extern ptr S_thread PROTO((ptr tc));
-extern ptr S_string PROTO((const char *s, iptr n));
-extern ptr S_bignum PROTO((ptr tc, iptr n, IBOOL sign));
-extern ptr S_code PROTO((ptr tc, iptr type, iptr n));
-extern ptr S_relocation_table PROTO((iptr n));
-extern ptr S_weak_cons PROTO((ptr car, ptr cdr));
+extern void S_alloc_init(void);
+extern void S_protect(ptr *p);
+extern void S_reset_scheme_stack(ptr tc, iptr n);
+extern void S_reset_allocation_pointer(ptr tc);
+extern ptr S_compute_bytes_allocated(ptr xg, ptr xs);
+extern ptr S_find_more_room(ISPC s, IGEN g, iptr n, ptr old);
+extern void S_dirty_set(ptr *loc, ptr x);
+extern void S_mark_card_dirty(uptr card, IGEN to_g);
+extern void S_scan_dirty(ptr **p, ptr **endp);
+extern void S_scan_remembered_set(void);
+extern void S_get_more_room(void);
+extern ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size);
+extern ptr S_cons_in(ISPC s, IGEN g, ptr car, ptr cdr);
+extern ptr S_symbol(ptr name);
+extern ptr S_rational(ptr n, ptr d);
+extern ptr S_tlc(ptr keyval, ptr tconc, ptr next);
+extern ptr S_vector_in(ISPC s, IGEN g, iptr n);
+extern ptr S_vector(iptr n);
+extern ptr S_fxvector(iptr n);
+extern ptr S_bytevector(iptr n);
+extern ptr S_null_immutable_vector(void);
+extern ptr S_null_immutable_fxvector(void);
+extern ptr S_null_immutable_bytevector(void);
+extern ptr S_null_immutable_string(void);
+extern ptr S_record(iptr n);
+extern ptr S_closure(ptr cod, iptr n);
+extern ptr S_mkcontinuation(ISPC s, IGEN g, ptr nuate, ptr stack,
+                iptr length, iptr clength, ptr link, ptr ret, ptr winders);
+extern ptr S_inexactnum(double rp, double ip);
+extern ptr S_exactnum(ptr a, ptr b);
+extern ptr S_thread(ptr tc);
+extern ptr S_string(const char *s, iptr n);
+extern ptr S_bignum(ptr tc, iptr n, IBOOL sign);
+extern ptr S_code(ptr tc, iptr type, iptr n);
+extern ptr S_relocation_table(iptr n);
+extern ptr S_weak_cons(ptr car, ptr cdr);
 
 /* fasl.c */
-extern void S_fasl_init PROTO((void));
-ptr S_fasl_read PROTO((INT fd, IFASLCODE situation, ptr path));
-ptr S_bv_fasl_read PROTO((ptr bv, ptr path));
-ptr S_boot_read PROTO((INT fd, const char *path));
-char *S_format_scheme_version PROTO((uptr n));
-char *S_lookup_machine_type PROTO((uptr n));
-extern void S_set_code_obj PROTO((char *who, IFASLCODE typ, ptr p, iptr n,
-             ptr x, iptr o));
-extern ptr S_get_code_obj PROTO((IFASLCODE typ, ptr p, iptr n, iptr o));
+extern void S_fasl_init(void);
+ptr S_fasl_read(INT fd, IFASLCODE situation, ptr path);
+ptr S_bv_fasl_read(ptr bv, ptr path);
+ptr S_boot_read(INT fd, const char *path);
+char *S_format_scheme_version(uptr n);
+char *S_lookup_machine_type(uptr n);
+extern void S_set_code_obj(char *who, IFASLCODE typ, ptr p, iptr n,
+             ptr x, iptr o);
+extern ptr S_get_code_obj(IFASLCODE typ, ptr p, iptr n, iptr o);
 
 /* flushcache.c */
-extern void S_record_code_mod PROTO((ptr tc, uptr addr, uptr bytes));
-extern void S_flush_instruction_cache PROTO((ptr tc));
-extern void S_flushcache_init PROTO((void));
+extern void S_record_code_mod(ptr tc, uptr addr, uptr bytes);
+extern void S_flush_instruction_cache(ptr tc);
+extern void S_flushcache_init(void);
 
 /* foreign.c */
-extern void S_foreign_init PROTO((void));
-extern void S_foreign_entry PROTO((void));
+extern void S_foreign_init(void);
+extern void S_foreign_entry(void);
 
 /* gcwrapper.c */
-extern void S_ptr_tell PROTO((ptr p));
-extern void S_addr_tell PROTO((ptr p));
-extern void S_gc_init PROTO((void));
+extern void S_ptr_tell(ptr p);
+extern void S_addr_tell(ptr p);
+extern void S_gc_init(void);
 #ifndef WIN32
-extern void S_register_child_process PROTO((INT child));
+extern void S_register_child_process(INT child);
 #endif /* WIN32 */
-extern void S_fixup_counts PROTO((ptr counts));
-extern void S_do_gc PROTO((IGEN max_cg, IGEN min_tg, IGEN max_tg));
-extern void S_gc PROTO((ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg));
-extern void S_gc_init PROTO((void));
-extern void S_set_maxgen PROTO((IGEN g));
-extern IGEN S_maxgen PROTO((void));
-extern void S_set_minfreegen PROTO((IGEN g));
-extern IGEN S_minfreegen PROTO((void));
+extern void S_fixup_counts(ptr counts);
+extern void S_do_gc(IGEN max_cg, IGEN min_tg, IGEN max_tg);
+extern void S_gc(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg);
+extern void S_gc_init(void);
+extern void S_set_maxgen(IGEN g);
+extern IGEN S_maxgen(void);
+extern void S_set_minfreegen(IGEN g);
+extern IGEN S_minfreegen(void);
 #ifndef WIN32
-extern void S_register_child_process PROTO((INT child));
+extern void S_register_child_process(INT child);
 #endif /* WIN32 */
-extern IBOOL S_enable_object_counts PROTO((void));
-extern void S_set_enable_object_counts PROTO((IBOOL eoc));
-extern ptr S_object_counts PROTO((void));
-extern ptr S_locked_objects PROTO((void));
-extern ptr S_unregister_guardian PROTO((ptr tconc));
-extern void S_compact_heap PROTO((void));
-extern void S_check_heap PROTO((IBOOL aftergc));
+extern IBOOL S_enable_object_counts(void);
+extern void S_set_enable_object_counts(IBOOL eoc);
+extern ptr S_object_counts(void);
+extern ptr S_locked_objects(void);
+extern ptr S_unregister_guardian(ptr tconc);
+extern void S_compact_heap(void);
+extern void S_check_heap(IBOOL aftergc);
 
 /* gc-011.c */
-extern void S_gc_011 PROTO((ptr tc));
+extern void S_gc_011(ptr tc);
 
 /* gc-ocd.c */
-extern void S_gc_ocd PROTO((ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg));
+extern void S_gc_ocd(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg);
 
 /* gc-oce.c */
-extern void S_gc_oce PROTO((ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg));
+extern void S_gc_oce(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg);
 
 /* intern.c */
-extern void S_intern_init PROTO((void));
-extern void S_resize_oblist PROTO((void));
-extern ptr S_intern PROTO((const unsigned char *s));
-extern ptr S_intern_sc PROTO((const string_char *s, iptr n, ptr name_str));
-extern ptr S_intern3 PROTO((const string_char *pname, iptr plen, const string_char *uname, iptr ulen, ptr pname_str, ptr uame_str));
-extern void S_intern_gensym PROTO((ptr g));
-extern void S_retrofit_nonprocedure_code PROTO((void));
+extern void S_intern_init(void);
+extern void S_resize_oblist(void);
+extern ptr S_intern(const unsigned char *s);
+extern ptr S_intern_sc(const string_char *s, iptr n, ptr name_str);
+extern ptr S_intern3(const string_char *pname, iptr plen, const string_char *uname, iptr ulen, ptr pname_str, ptr uame_str);
+extern void S_intern_gensym(ptr g);
+extern void S_retrofit_nonprocedure_code(void);
 
 /* io.c */
-extern IBOOL S_file_existsp PROTO((const char *inpath, IBOOL followp));
-extern IBOOL S_file_regularp PROTO((const char *inpath, IBOOL followp));
-extern IBOOL S_file_directoryp PROTO((const char *inpath, IBOOL followp));
-extern IBOOL S_file_symbolic_linkp PROTO((const char *inpath));
+extern IBOOL S_file_existsp(const char *inpath, IBOOL followp);
+extern IBOOL S_file_regularp(const char *inpath, IBOOL followp);
+extern IBOOL S_file_directoryp(const char *inpath, IBOOL followp);
+extern IBOOL S_file_symbolic_linkp(const char *inpath);
 #ifdef WIN32
-extern ptr S_find_files PROTO((const char *wildpath));
+extern ptr S_find_files(const char *wildpath);
 #else
-extern ptr S_directory_list PROTO((const char *inpath));
+extern ptr S_directory_list(const char *inpath);
 #endif
-extern char *S_malloc_pathname PROTO((const char *inpath));
+extern char *S_malloc_pathname(const char *inpath);
 #ifdef WIN32
-extern wchar_t *S_malloc_wide_pathname PROTO((const char *inpath));
+extern wchar_t *S_malloc_wide_pathname(const char *inpath);
 #endif
-extern IBOOL S_fixedpathp PROTO((const char *inpath));
+extern IBOOL S_fixedpathp(const char *inpath);
 
 /* compress-io.c */
-extern INT S_zlib_compress_level PROTO((INT compress_level));
-extern INT S_lz4_compress_level PROTO((INT compress_level));
-extern glzFile S_glzdopen_output PROTO((INT fd, INT compress_format, INT compress_level));
-extern glzFile S_glzdopen_input PROTO((INT fd));
-extern glzFile S_glzopen_input PROTO((const char *path));
+extern INT S_zlib_compress_level(INT compress_level);
+extern INT S_lz4_compress_level(INT compress_level);
+extern glzFile S_glzdopen_output(INT fd, INT compress_format, INT compress_level);
+extern glzFile S_glzdopen_input(INT fd);
+extern glzFile S_glzopen_input(const char *path);
 #ifdef WIN32
-extern glzFile S_glzopen_input_w PROTO((const wchar_t *path));
+extern glzFile S_glzopen_input_w(const wchar_t *path);
 #endif
-extern IBOOL S_glzdirect PROTO((glzFile file));
-extern INT S_glzclose PROTO((glzFile file));
+extern IBOOL S_glzdirect(glzFile file);
+extern INT S_glzclose(glzFile file);
 
-extern INT S_glzread PROTO((glzFile file, void *buffer, UINT count));
-extern INT S_glzwrite PROTO((glzFile file, void *buffer, UINT count));
-extern long S_glzseek PROTO((glzFile file, long offset, INT whence));
-extern INT S_glzgetc PROTO((glzFile file));
-extern INT S_glzungetc PROTO((INT c, glzFile file));
-extern INT S_glzrewind PROTO((glzFile file));
+extern INT S_glzread(glzFile file, void *buffer, UINT count);
+extern INT S_glzwrite(glzFile file, void *buffer, UINT count);
+extern long S_glzseek(glzFile file, long offset, INT whence);
+extern INT S_glzgetc(glzFile file);
+extern INT S_glzungetc(INT c, glzFile file);
+extern INT S_glzrewind(glzFile file);
 
-extern void S_glzerror PROTO((glzFile file, INT *errnum));
-extern void S_glzclearerr PROTO((glzFile fdfile));
+extern void S_glzerror(glzFile file, INT *errnum);
+extern void S_glzclearerr(glzFile fdfile);
 
 
 /* new-io.c */
-extern INT S_gzxfile_fd PROTO((ptr x));
-extern glzFile S_gzxfile_gzfile PROTO((ptr x));
-extern ptr S_new_open_input_fd PROTO((const char *filename, IBOOL compressed));
-extern ptr S_new_open_output_fd PROTO((
+extern INT S_gzxfile_fd(ptr x);
+extern glzFile S_gzxfile_gzfile(ptr x);
+extern ptr S_new_open_input_fd(const char *filename, IBOOL compressed);
+extern ptr S_new_open_output_fd(
   const char *filename, INT mode,
   IBOOL no_create, IBOOL no_fail, IBOOL no_truncate,
-  IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed));
-extern ptr S_new_open_input_output_fd PROTO((
+  IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed);
+extern ptr S_new_open_input_output_fd(
   const char *filename, INT mode,
   IBOOL no_create, IBOOL no_fail, IBOOL no_truncate,
-  IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed));
-extern ptr S_close_fd PROTO((ptr file, IBOOL gzflag));
-extern ptr S_compress_input_fd PROTO((INT fd, I64 fp));
-extern ptr S_compress_output_fd PROTO((INT fd));
+  IBOOL append, IBOOL lock, IBOOL replace, IBOOL compressed);
+extern ptr S_close_fd(ptr file, IBOOL gzflag);
+extern ptr S_compress_input_fd(INT fd, I64 fp);
+extern ptr S_compress_output_fd(INT fd);
 
-extern ptr S_bytevector_read PROTO((ptr file, ptr buffer, iptr start, iptr count, IBOOL gzflag));
-extern ptr S_bytevector_read_nb PROTO((ptr file, ptr buffer, iptr start, iptr count, IBOOL gzflag));
-extern ptr S_bytevector_write PROTO((ptr file, ptr buffer, iptr start, iptr count, IBOOL gzflag));
-extern ptr S_put_byte PROTO((ptr file, INT byte, IBOOL gzflag));
+extern ptr S_bytevector_read(ptr file, ptr buffer, iptr start, iptr count, IBOOL gzflag);
+extern ptr S_bytevector_read_nb(ptr file, ptr buffer, iptr start, iptr count, IBOOL gzflag);
+extern ptr S_bytevector_write(ptr file, ptr buffer, iptr start, iptr count, IBOOL gzflag);
+extern ptr S_put_byte(ptr file, INT byte, IBOOL gzflag);
 
-extern ptr S_get_fd_pos PROTO((ptr file, IBOOL gzflag));
-extern ptr S_set_fd_pos PROTO((ptr file, ptr pos, IBOOL gzflag));
-extern ptr S_get_fd_non_blocking PROTO((ptr file, IBOOL gzflag));
-extern ptr S_set_fd_non_blocking PROTO((ptr file, IBOOL x, IBOOL gzflag));
-extern ptr S_get_fd_length PROTO((ptr file, IBOOL gzflag));
-extern ptr S_set_fd_length PROTO((ptr file, ptr length, IBOOL gzflag));
-extern void S_new_io_init PROTO((void));
+extern ptr S_get_fd_pos(ptr file, IBOOL gzflag);
+extern ptr S_set_fd_pos(ptr file, ptr pos, IBOOL gzflag);
+extern ptr S_get_fd_non_blocking(ptr file, IBOOL gzflag);
+extern ptr S_set_fd_non_blocking(ptr file, IBOOL x, IBOOL gzflag);
+extern ptr S_get_fd_length(ptr file, IBOOL gzflag);
+extern ptr S_set_fd_length(ptr file, ptr length, IBOOL gzflag);
+extern void S_new_io_init(void);
 
-extern uptr S_bytevector_compress_size PROTO((iptr s_count, INT compress_format));
-extern ptr S_bytevector_compress PROTO((ptr dest_bv, iptr d_start, iptr d_count,
+extern uptr S_bytevector_compress_size(iptr s_count, INT compress_format);
+extern ptr S_bytevector_compress(ptr dest_bv, iptr d_start, iptr d_count,
                                         ptr src_bv, iptr s_start, iptr s_count,
-                                        INT compress_format));
-extern ptr S_bytevector_uncompress PROTO((ptr dest_bv, iptr d_start, iptr d_count,
+                                        INT compress_format);
+extern ptr S_bytevector_uncompress(ptr dest_bv, iptr d_start, iptr d_count,
                                           ptr src_bv, iptr s_start, iptr s_count,
-                                          INT compress_format));
+                                          INT compress_format);
 
 /* thread.c */
-extern void S_thread_init PROTO((void));
-extern ptr S_create_thread_object PROTO((const char *who, ptr p_tc));
+extern void S_thread_init(void);
+extern ptr S_create_thread_object(const char *who, ptr p_tc);
 #ifdef PTHREADS
-extern ptr S_fork_thread PROTO((ptr thunk));
-extern scheme_mutex_t *S_make_mutex PROTO((void));
-extern void S_mutex_free PROTO((scheme_mutex_t *m));
-extern void S_mutex_acquire PROTO((scheme_mutex_t *m));
-extern INT S_mutex_tryacquire PROTO((scheme_mutex_t *m));
-extern void S_mutex_release PROTO((scheme_mutex_t *m));
-extern s_thread_cond_t *S_make_condition PROTO((void));
-extern void S_condition_free PROTO((s_thread_cond_t *c));
-extern IBOOL S_condition_wait PROTO((s_thread_cond_t *c, scheme_mutex_t *m, ptr t));
-extern INT S_activate_thread PROTO((void));
-extern void S_unactivate_thread PROTO((int mode));
+extern ptr S_fork_thread(ptr thunk);
+extern scheme_mutex_t *S_make_mutex(void);
+extern void S_mutex_free(scheme_mutex_t *m);
+extern void S_mutex_acquire(scheme_mutex_t *m);
+extern INT S_mutex_tryacquire(scheme_mutex_t *m);
+extern void S_mutex_release(scheme_mutex_t *m);
+extern s_thread_cond_t *S_make_condition(void);
+extern void S_condition_free(s_thread_cond_t *c);
+extern IBOOL S_condition_wait(s_thread_cond_t *c, scheme_mutex_t *m, ptr t);
+extern INT S_activate_thread(void);
+extern void S_unactivate_thread(int mode);
 #endif
 
 /* scheme.c */
-extern void S_generic_invoke PROTO((ptr tc, ptr code));
+extern void S_generic_invoke(ptr tc, ptr code);
 
 /* number.c */
-extern void S_number_init PROTO((void));
-extern ptr S_normalize_bignum PROTO((ptr x));
-extern IBOOL S_integer_valuep PROTO((ptr x));
-extern iptr S_integer_value PROTO((const char *who, ptr x));
-extern I64 S_int64_value PROTO((char *who, ptr x));
-extern IBOOL S_big_eq PROTO((ptr x, ptr y));
-extern IBOOL S_big_lt PROTO((ptr x, ptr y));
-extern ptr S_big_negate PROTO((ptr x));
-extern ptr S_add PROTO((ptr x, ptr y));
-extern ptr S_sub PROTO((ptr x, ptr y));
-extern ptr S_mul PROTO((ptr x, ptr y));
-extern ptr S_div PROTO((ptr x, ptr y));
-extern ptr S_rem PROTO((ptr x, ptr y));
-extern ptr S_trunc PROTO((ptr x, ptr y));
-extern void S_trunc_rem PROTO((ptr tc, ptr x, ptr y, ptr *q, ptr *r));
-extern ptr S_gcd PROTO((ptr x, ptr y));
-extern ptr S_ash PROTO((ptr x, ptr n));
-extern ptr S_big_positive_bit_field PROTO((ptr x, ptr fxstart, ptr fxend));
-extern ptr S_integer_length PROTO((ptr x));
-extern ptr S_big_first_bit_set PROTO((ptr x));
-extern double S_random_double PROTO((U32 m1, U32 m2,
-               U32 m3, U32 m4, double scale));
-extern double S_floatify PROTO((ptr x));
-extern ptr S_decode_float PROTO((double d));
-extern ptr S_logand PROTO((ptr x, ptr y));
-extern ptr S_logbitp PROTO((ptr k, ptr x));
-extern ptr S_logbit0 PROTO((ptr k, ptr x));
-extern ptr S_logbit1 PROTO((ptr k, ptr x));
-extern ptr S_logtest PROTO((ptr x, ptr y));
-extern ptr S_logor PROTO((ptr x, ptr y));
-extern ptr S_logxor PROTO((ptr x, ptr y));
-extern ptr S_lognot PROTO((ptr x));
+extern void S_number_init(void);
+extern ptr S_normalize_bignum(ptr x);
+extern IBOOL S_integer_valuep(ptr x);
+extern iptr S_integer_value(const char *who, ptr x);
+extern I64 S_int64_value(char *who, ptr x);
+extern IBOOL S_big_eq(ptr x, ptr y);
+extern IBOOL S_big_lt(ptr x, ptr y);
+extern ptr S_big_negate(ptr x);
+extern ptr S_add(ptr x, ptr y);
+extern ptr S_sub(ptr x, ptr y);
+extern ptr S_mul(ptr x, ptr y);
+extern ptr S_div(ptr x, ptr y);
+extern ptr S_rem(ptr x, ptr y);
+extern ptr S_trunc(ptr x, ptr y);
+extern void S_trunc_rem(ptr tc, ptr x, ptr y, ptr *q, ptr *r);
+extern ptr S_gcd(ptr x, ptr y);
+extern ptr S_ash(ptr x, ptr n);
+extern ptr S_big_positive_bit_field(ptr x, ptr fxstart, ptr fxend);
+extern ptr S_integer_length(ptr x);
+extern ptr S_big_first_bit_set(ptr x);
+extern double S_random_double(U32 m1, U32 m2,
+               U32 m3, U32 m4, double scale);
+extern double S_floatify(ptr x);
+extern ptr S_decode_float(double d);
+extern ptr S_logand(ptr x, ptr y);
+extern ptr S_logbitp(ptr k, ptr x);
+extern ptr S_logbit0(ptr k, ptr x);
+extern ptr S_logbit1(ptr k, ptr x);
+extern ptr S_logtest(ptr x, ptr y);
+extern ptr S_logor(ptr x, ptr y);
+extern ptr S_logxor(ptr x, ptr y);
+extern ptr S_lognot(ptr x);
 
 /* prim.c */
-extern ptr S_lookup_library_entry PROTO((iptr n, IBOOL errorp));
-extern ptr S_lookup_c_entry PROTO((iptr i));
-extern void S_prim_init PROTO((void));
+extern ptr S_lookup_library_entry(iptr n, IBOOL errorp);
+extern ptr S_lookup_c_entry(iptr i);
+extern void S_prim_init(void);
 
 /* prim5.c */
-extern ptr S_strerror PROTO((INT errnum));
-extern void S_prim5_init PROTO((void));
-extern void S_dump_tc PROTO((ptr tc));
+extern ptr S_strerror(INT errnum);
+extern void S_prim5_init(void);
+extern void S_dump_tc(ptr tc);
 
 /* print.c */
-extern void S_print_init PROTO((void));
-extern void S_prin1 PROTO((ptr x));
+extern void S_print_init(void);
+extern void S_prin1(ptr x);
 
 /* schsig.c */
-extern ptr S_get_scheme_arg PROTO((ptr tc, iptr n));
-extern void S_put_scheme_arg PROTO((ptr tc, iptr n, ptr x));
-extern iptr S_continuation_depth PROTO((ptr k));
-extern ptr S_single_continuation PROTO((ptr k, iptr n));
-extern void S_split_and_resize PROTO((void));
-extern void S_handle_overflow PROTO((void));
-extern void S_handle_overflood PROTO((void));
-extern void S_handle_apply_overflood PROTO((void));
-extern void S_overflow PROTO((ptr tc, iptr frame_request));
-extern NORETURN void S_error_reset PROTO((const char *s));
-extern NORETURN void S_error_abort PROTO((const char *s));
-extern NORETURN void S_abnormal_exit PROTO((void));
-extern NORETURN void S_error PROTO((const char *who, const char *s));
-extern NORETURN void S_error1 PROTO((const char *who, const char *s, ptr x));
-extern NORETURN void S_error2 PROTO((const char *who, const char *s, ptr x, ptr y));
-extern NORETURN void S_error3 PROTO((const char *who, const char *s, ptr x, ptr y, ptr z));
-extern NORETURN void S_boot_error PROTO((const ptr who, ptr s, ptr args));
-extern void S_handle_docall_error PROTO((void));
-extern void S_handle_arg_error PROTO((void));
-extern void S_handle_nonprocedure_symbol PROTO((void));
-extern void S_handle_values_error PROTO((void));
-extern void S_handle_mvlet_error PROTO((void));
-extern ptr S_allocate_scheme_signal_queue PROTO((void));
-extern ptr S_dequeue_scheme_signals PROTO((ptr tc));
-extern void S_register_scheme_signal PROTO((iptr sig));
-extern void S_fire_collector PROTO((void));
-extern NORETURN void S_noncontinuable_interrupt PROTO((void));
-extern void S_schsig_init PROTO((void));
+extern ptr S_get_scheme_arg(ptr tc, iptr n);
+extern void S_put_scheme_arg(ptr tc, iptr n, ptr x);
+extern iptr S_continuation_depth(ptr k);
+extern ptr S_single_continuation(ptr k, iptr n);
+extern void S_split_and_resize(void);
+extern void S_handle_overflow(void);
+extern void S_handle_overflood(void);
+extern void S_handle_apply_overflood(void);
+extern void S_overflow(ptr tc, iptr frame_request);
+extern NORETURN void S_error_reset(const char *s);
+extern NORETURN void S_error_abort(const char *s);
+extern NORETURN void S_abnormal_exit(void);
+extern NORETURN void S_error(const char *who, const char *s);
+extern NORETURN void S_error1(const char *who, const char *s, ptr x);
+extern NORETURN void S_error2(const char *who, const char *s, ptr x, ptr y);
+extern NORETURN void S_error3(const char *who, const char *s, ptr x, ptr y, ptr z);
+extern NORETURN void S_boot_error(const ptr who, ptr s, ptr args);
+extern void S_handle_docall_error(void);
+extern void S_handle_arg_error(void);
+extern void S_handle_nonprocedure_symbol(void);
+extern void S_handle_values_error(void);
+extern void S_handle_mvlet_error(void);
+extern ptr S_allocate_scheme_signal_queue(void);
+extern ptr S_dequeue_scheme_signals(ptr tc);
+extern void S_register_scheme_signal(iptr sig);
+extern void S_fire_collector(void);
+extern NORETURN void S_noncontinuable_interrupt(void);
+extern void S_schsig_init(void);
 #ifdef DEFINE_MATHERR
 #include <math.h>
-extern INT matherr PROTO((struct exception *x));
+extern INT matherr(struct exception *x);
 #endif /* DEFINE_MATHERR */
 
 /* segment.c */
-extern void S_segment_init PROTO((void));
-extern void *S_getmem PROTO((iptr bytes, IBOOL zerofill));
-extern void S_freemem PROTO((void *addr, iptr bytes));
-extern iptr S_find_segments PROTO((ISPC s, IGEN g, iptr n));
-extern void S_free_chunk PROTO((chunkinfo *chunk));
-extern void S_free_chunks PROTO((void));
-extern uptr S_curmembytes PROTO((void));
-extern uptr S_maxmembytes PROTO((void));
-extern void S_resetmaxmembytes PROTO((void));
-extern void S_move_to_chunk_list PROTO((chunkinfo *chunk, chunkinfo **pchunk_list));
+extern void S_segment_init(void);
+extern void *S_getmem(iptr bytes, IBOOL zerofill);
+extern void S_freemem(void *addr, iptr bytes);
+extern iptr S_find_segments(ISPC s, IGEN g, iptr n);
+extern void S_free_chunk(chunkinfo *chunk);
+extern void S_free_chunks(void);
+extern uptr S_curmembytes(void);
+extern uptr S_maxmembytes(void);
+extern void S_resetmaxmembytes(void);
+extern void S_move_to_chunk_list(chunkinfo *chunk, chunkinfo **pchunk_list);
 
 /* stats.c */
-extern void S_stats_init PROTO((void));
-extern ptr S_cputime PROTO((void));
-extern ptr S_realtime PROTO((void));
-extern ptr S_clock_gettime PROTO((I32 typeno));
-extern ptr S_gmtime PROTO((ptr tzoff, ptr tspair));
-extern ptr S_asctime PROTO((ptr dtvec));
-extern ptr S_mktime PROTO((ptr dtvec));
-extern ptr S_unique_id PROTO((void));
-extern void S_gettime PROTO((INT typeno, struct timespec *tp));
+extern void S_stats_init(void);
+extern ptr S_cputime(void);
+extern ptr S_realtime(void);
+extern ptr S_clock_gettime(I32 typeno);
+extern ptr S_gmtime(ptr tzoff, ptr tspair);
+extern ptr S_asctime(ptr dtvec);
+extern ptr S_mktime(ptr dtvec);
+extern ptr S_unique_id(void);
+extern void S_gettime(INT typeno, struct timespec *tp);
 
 /* symbol.c */
-extern ptr S_symbol_value PROTO((ptr sym));
-extern void S_set_symbol_value PROTO((ptr sym, ptr val));
+extern ptr S_symbol_value(ptr sym);
+extern void S_set_symbol_value(ptr sym, ptr val);
 
 /* machine-dependent .c files, e.g., x88k.c */
 #ifdef FLUSHCACHE
-extern INT S_flushcache_max_gap PROTO((void));
-extern void S_doflush PROTO((uptr start, uptr end));
+extern INT S_flushcache_max_gap(void);
+extern void S_doflush(uptr start, uptr end);
 #endif
-extern void S_machine_init PROTO((void));
+extern void S_machine_init(void);
 
 /* schlib.c */
-extern void S_initframe PROTO((ptr tc, iptr n));
-extern void S_put_arg PROTO((ptr tc, iptr i, ptr x));
-extern void S_return PROTO((void));
-extern void S_call_help PROTO((ptr tc, IBOOL singlep, IBOOL lock_ts));
-extern void S_call_one_result PROTO((void));
-extern void S_call_any_results PROTO((void));
+extern void S_initframe(ptr tc, iptr n);
+extern void S_put_arg(ptr tc, iptr i, ptr x);
+extern void S_return(void);
+extern void S_call_help(ptr tc, IBOOL singlep, IBOOL lock_ts);
+extern void S_call_one_result(void);
+extern void S_call_any_results(void);
 
 #ifdef WIN32
 /* windows.c */
@@ -408,8 +408,8 @@ extern void S_longjmp(void* jb, int value);
 
 #ifdef FEATURE_EXPEDITOR
 /* expeditor.c */
-extern void S_expeditor_init PROTO((void));
+extern void S_expeditor_init(void);
 #endif /* FEATURE_EXPEDITOR */
 
 /* statics.c */
-extern void scheme_statics();
+extern void scheme_statics(void);

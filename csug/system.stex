@@ -55,8 +55,7 @@ not \scheme{#f}, a \scheme{&message} condition whose message field is
 is \scheme{(\var{irritant} \dots)}.
 
 \var{who} must be a string, a symbol, or \scheme{#f} identifying the procedure
-or syntactic form reporting the warning upon whose behalf the warning is being
-reported.
+or syntactic form reporting the warning.
 It is usually best to identify a procedure the programmer has called rather
 than some other procedure the programmer may not be aware is involved in
 carrying out the operation.
@@ -824,7 +823,7 @@ procedures \index{\scheme{eval}}\scheme{eval}, \scheme{load}, and
 \index{\scheme{compile}}\scheme{compile}.
 (In {\PetiteChezScheme}, it is initially bound to the value of
 \index{\scheme{interpret}}\scheme{interpret}.)
-The evaluation procedureshould expect one or two arguments: an object
+The evaluation procedure should expect one or two arguments: an object
 to evaluate and an optional environment.
 The second argument might be an annotation
 (Section~\ref{SECTSYNTAXANNOTATIONS}).
@@ -1003,7 +1002,7 @@ A library search path must be a suitable argument for
 \index{\scheme{library-directories}}\scheme{library-directories}.
 
 \scheme{verify-loadability} verifies, without actually loading any
-code or definining any libraries, whether the object files named
+code or defining any libraries, whether the object files named
 by the specified pathnames and their library dependencies, direct
 or indirect, are present, readable, and mutually compatible.
 The type of dependencies for each named object file is determined
@@ -1017,7 +1016,7 @@ library search path during the recursive search for dependencies
 of the programs and libraries found in the object file named by the
 pathname.
 
-If \scheme{verify-loadabilty} finds a problem, such as a missing
+If \scheme{verify-loadability} finds a problem, such as a missing
 library dependency or compilation-instance mismatch, it raises an
 exception with an appropriate condition.
 Otherwise, it returns an unspecified value.
