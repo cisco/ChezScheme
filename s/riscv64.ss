@@ -737,7 +737,7 @@
            #'(define-syntax op
                (syntax-rules ()
                  [(_ mneu arg (... ...))
-                  (handler 'mneu e ... arg (... ...))])))]))) ;;@ e: opcodes
+                  (handler 'mneu e ... arg (... ...))])))])))
 
   (define-syntax emit
     (lambda (x)
@@ -989,7 +989,7 @@
 
   (define shamt?
     (lambda (imm)
-      (and (fixnum? imm) (fx<= imm (expt 2 6))))) ;; RV64I supports shift up to 2^6
+      (and (fixnum? imm) (fx<= 0 imm (expt 2 6))))) ;; RV64I supports shift up to 2^6
   (define signed12?
     (lambda (imm)
       (and (fixnum? imm) (fx<= (fx- (expt 2 11))
@@ -1413,29 +1413,29 @@
                                   [(reg) ignore
                                    (values
                                     (case op
-                                      [(eq?) (emit xor %cond x y
-                                                   (emit sltiu %cond %cond 1 '()))]
+                                      [(eq?) (emit xor %scratch0 x y
+                                                   (emit sltiu %cond %scratch0 1 '()))]
                                       [(u<) (emit sltu %cond x y '())]
                                       [(<) (emit slt %cond x y '())]
                                       [(>) (emit slt %cond y x '())]
-                                      [(<=) (emit slt %cond y x
-                                                  (emit xori %cond %cond 1 '()))]
-                                      [(>=) (emit slt %cond x y
-                                                  (emit xori %cond %cond 1 '()))]
+                                      [(<=) (emit slt %scratch0 y x
+                                                  (emit xori %cond %scratch0 1 '()))]
+                                      [(>=) (emit slt %scratch0 x y
+                                                  (emit xori %cond %scratch0 1 '()))]
                                       [(logtest) (emit and %cond x y '())]
-                                      [(log!test) (emit and %cond x y
-                                                        (emit sltiu %cond %cond 1 '()))])
+                                      [(log!test) (emit and %scratch0 x y
+                                                        (emit sltiu %cond %scratch0 1 '()))])
                                     (asm-conditional-jump info l1 l2 offset))]
                                   [(imm) (n)
                                    (values
                                     (case op
-                                      [(eq?) (emit xori %cond x n
-                                                   (emit sltiu %cond %cond 1 '()))]
+                                      [(eq?) (emit xori %scratch0 x n
+                                                   (emit sltiu %cond %scratch0 1 '()))]
                                       [(u<) (emit sltiu %cond x n '())]
                                       [(<) (emit slti %cond x n '())]
                                       [(logtest) (emit andi %cond x n '())]
-                                      [(log!test) (emit andi %cond x n
-                                                        (emit sltiu %cond %cond 1 '()))]
+                                      [(log!test) (emit andi %scratch0 x n
+                                                        (emit sltiu %cond %scratch0 1 '()))]
                                       [else (bad!)])
                                     (asm-conditional-jump info l1 l2 offset))])))))))
 
@@ -1699,14 +1699,14 @@
       (let ([target `(riscv64-call ,(constant code-data-disp) (library-code ,libspec))])
         (rec asm-asm-call-internal
              (lambda (code* dest tmp . ignore) ;; retval setup by intrinsics
-               (asm-helper-call code* target #t tmp))))))
+               (asm-helper-call code* target save-ra? tmp))))))
 
   (define asm-library-call!
     (lambda (libspec save-ra?)
       (let ([target `(riscv64-call ,(constant code-data-disp) (library-code ,libspec))])
         (rec asm-asm-call-internal
              (lambda (code* tmp . ignore)
-               (asm-helper-call code* target #t tmp))))))
+               (asm-helper-call code* target save-ra? tmp))))))
 
   ;; for things like split-and-resize, handle-apply-overflood, Sreturn, foreign-entry
   ;; where no retval is needed
@@ -1715,17 +1715,13 @@
       (let ([target `(riscv64-call 0 (entry ,entry))])
         (rec asm-c-simple-call-internal
              (lambda (code* tmp . ignore)
-               (asm-helper-call code* target #t tmp))))))
+               (asm-helper-call code* target save-ra? tmp))))))
 
   (define-who asm-indirect-call
     (lambda (code* dest . ignore)
       (Trivit (dest)
               (unless (ax-reg? dest) (sorry! who "unexpected dest ~s" dest))
-              (emit addi %sp %sp -16
-                    (emit sd %ra %sp 0
-                          (emit jalr %ra dest 0
-                                (emit ld %ra %sp 0
-                                      (emit addi %sp %sp 16 code*))))))))
+              (emit jalr %ra dest 0 code*))))
 
   (define-who asm-indirect-jump ;; no link
     (lambda (src)
@@ -1794,7 +1790,7 @@
             (emit ld %jump %jump 12
                   (emit jal %real-zero 12
                         (cons* `(quad . 0)
-                               (aop-cons* `(asm "quad jump")
+                               (aop-cons* `(asm "quad jump addr")
                                           (emit jalr %real-zero %jump 0
                                                 (asm-helper-relocation code* reloc)))))))))
 
@@ -1815,7 +1811,7 @@
                              (emit ld tmp tmp 12
                                    (emit jal %real-zero 12
                                          (cons* `(quad . 0)
-                                                (aop-cons* `(asm "quad call")
+                                                (aop-cons* `(asm "quad call addr")
                                                            (emit jalr %ra tmp 0
                                                                  (asm-helper-relocation code* reloc)))))))))))
 

@@ -17,12 +17,12 @@
    [%ac1 %r18 %deact #f 18]
    [%yp  %r19 #f 19]
    [%cp  %r20 #f 20]
-   [     %r4 %Carg1 %Cretval #f 4]
-   [     %r5 %Carg2 #f 5]
-   [     %r6 %Carg3 #f 6]
-   [     %r7 %Carg4 #f 7]
-   [     %r8 %Carg5 #f 8]
-   [     %r9 %Carg6 #f 9]
+   [     %r4  %Carg1 %Cretval #f 4]
+   [     %r5  %Carg2 #f 5]
+   [     %r6  %Carg3 #f 6]
+   [     %r7  %Carg4 #f 7]
+   [     %r8  %Carg5 #f 8]
+   [     %r9  %Carg6 #f 9]
    [     %r10 %Carg7 #f 10]
    [     %r11 %Carg8 #f 11]
 ;; [     %r2  #f 2] ; tp, unallocatable
@@ -375,6 +375,10 @@
      `(set! ,(make-live-info) ,z (asm ,null-info ,asm-add/ovfl ,x ,y))])
 
   (define-instruction value (-)
+    [(op (z ur) (x ur) (y imm12))
+     (let ([n (nanopass-case (L15d Triv) y [(immediate ,imm) imm])])
+       (with-output-language (L15d Effect)
+                             `(set! ,(make-live-info) ,z (asm ,info ,asm-add ,x (immediate ,(- n))))))]
     [(op (z ur) (x ur) (y ur))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-sub ,x ,y))])
 
@@ -648,8 +652,13 @@
             `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
             `(asm ,info ,(asm-c-simple-call (info-c-simple-call-entry info) (info-c-simple-call-save-ra? info)) ,u)))])
 
-  (define-instruction pred (eq? u< > < <= >= logtest log!test)
+  (define-instruction pred (> <= >=)
     [(op (x ur) (y ur))
+     (let ([info (if (eq? op 'eq?) info-cc-eq (make-info-condition-code op #f #t))])
+       (values '() `(asm ,info ,(asm-relop info) ,x ,y)))])
+
+  (define-instruction pred (eq? u< < logtest log!test)
+    [(op (x ur) (y imm12 ur))
      (let ([info (if (eq? op 'eq?) info-cc-eq (make-info-condition-code op #f #t))])
        (values '() `(asm ,info ,(asm-relop info) ,x ,y)))])
 
@@ -657,7 +666,7 @@
     [(op) (values '() `(asm ,info ,(asm-condition-code info)))])
 
   (define-instruction pred (type-check?)
-    [(op (x ur) (mask ur) (type ur)) ;;@ todo smarter
+    [(op (x ur) (mask imm12 ur) (type imm12 ur))
      (let ([u (make-tmp 'u)])
        (values
         (with-output-language (L15d Effect)
@@ -747,24 +756,24 @@
                     asm-load asm-store asm-fence asm-swap asm-lock asm-lock+/- asm-move asm-move/extend
                     asm-return-address asm-indirect-call asm-library-call asm-library-call! asm-c-simple-call
                     asm-foreign-call asm-foreign-callable
-                    asm-size signed12? unsigned12? signed14? signed16? signed20? signed26? shamt? )
+                    asm-size signed12? unsigned12? signed14? signed16? signed20? signed26? shamt?)
 
-    (define-syntax define-op
+  (define-syntax define-op
     (lambda (x)
       (syntax-case x ()
         [(k op handler e ...)
          (with-syntax ([op (construct-name #'k "asmop-" #'op)])
-           #'(define-syntax op
-               (syntax-rules ()
-                 [(_ mneu arg (... ...))
-                  (handler 'mneu e ... arg (... ...))])))]))) ;;@ e: opcodes
+                      #'(define-syntax op
+                          (syntax-rules ()
+                            [(_ mneu arg (... ...))
+                             (handler 'mneu e ... arg (... ...))])))])))
 
   (define-syntax emit
     (lambda (x)
       (syntax-case x ()
         [(k op x ...)
          (with-syntax ([emit-op (construct-name #'k "asmop-" #'op)])
-           #'(emit-op op x ...))])))
+                      #'(emit-op op x ...))])))
 
   (define-op revb.2h two-R-op #b1101)
   (define-op revb.2w two-R-op #b1110)
@@ -846,18 +855,17 @@
   (define-op pcaddu12i  one-R-imm20-op #b1110)
   (define-op pcaddu18i  one-R-imm20-op #b1111)
 
-  ;; TODO test the lowest 2 bits are zero
-  (define-op beqz  one-R-imm21-op #b10000)
-  (define-op bnez  one-R-imm21-op #b10001)
-  (define-op bceqz one-R-imm21-op #b10010)
-  (define-op bcnez one-R-imm21-op #b10010)
+  (define-op beqz  one-R-imm23-op #b10000)
+  (define-op bnez  one-R-imm23-op #b10001)
+  (define-op bceqz one-R-imm23-op #b10010)
+  (define-op bcnez one-R-imm23-op #b10010)
 
-  (define-op jirl two-R-imm16-op #b10011)
-  (define-op bne  two-R-imm16-op #b10111)
-  (define-op beq  two-R-imm16-op #b10110)
+  (define-op jirl two-R-imm18-op #b10011)
+  (define-op bne  two-R-imm18-op #b10111)
+  (define-op beq  two-R-imm18-op #b10110)
 
-  (define-op b  imm26-op #b10100)
-  (define-op bl imm26-op #b10101)
+  (define-op b  imm28-op #b10100)
+  (define-op bl imm28-op #b10101)
 
   (define-op ibar sync-op #b111000011100101)
 
@@ -913,16 +921,6 @@
                  [5 (ax-ea-reg-code src0)]
                  [0 (ax-ea-reg-code dest)])))
 
-  (define two-R-imm16-op
-    (lambda (op opcode link src imm16 code*)
-      ;; offset in multiples of 4
-      (safe-assert (signed18? (ax-imm-data imm16 op)))
-      (emit-code (op link src imm16 code*)
-                 [26 opcode]
-                 [10 (ax-imm-data imm16 op)]
-                 [5 (ax-ea-reg-code src)]
-                 [0 (ax-ea-reg-code link)])))
-
   (define one-R-imm20-op
     (lambda (op opcode dest imm20 code*)
       (safe-assert (signed20? (ax-imm-data imm20 op)))
@@ -931,27 +929,39 @@
                  [5 (ax-imm-data imm20 op)]
                  [0 (ax-ea-reg-code dest)])))
 
-  (define one-R-imm21-op
-    (lambda (op opcode src imm21 code*)
-      (safe-assert (signed23? (ax-imm-data imm21 op)))
-      (let ([offs0  (logand (ax-imm-data imm21 op) #xffff)] ; offs[15:0]
-            [offs16 (logand (ash (ax-imm-data imm21 op) -16) #b11111)] ; offs[20:16]
+  (define two-R-imm18-op
+    (lambda (op opcode link src imm18 code*)
+      (safe-assert (signed18? (ax-imm-data imm18 op))
+                   (code-disp? (ax-imm-data imm18 op))) ; offset in multiples of 4
+      (emit-code (op link src imm18 code*)
+                 [26 opcode]
+                 [10 (ax-imm-data imm18 op)]
+                 [5 (ax-ea-reg-code src)]
+                 [0 (ax-ea-reg-code link)])))
+
+  (define one-R-imm23-op
+    (lambda (op opcode src imm23 code*)
+      (safe-assert (signed23? (ax-imm-data imm23 op))
+                   (code-disp? (ax-imm-data imm23 op))) ; offset in multiples of 4
+      (let ([offs0  (fxlogand (ax-imm-data imm23 op) #xffff)] ; offs[15:0]
+            [offs16 (fxlogand (ash (ax-imm-data imm23 op) -16) #b11111)] ; offs[20:16]
             [s (case op
                  [(bceqz) #b0000]
                  [(bcnez) #b0100]
                  [else (ax-ea-reg-code src)])])
-        (emit-code (op src imm21 code*)
+        (emit-code (op src imm23 code*)
                    [26 opcode]
                    [10 offs0]
                    [5 s]
                    [0 offs16]))))
 
-  (define imm26-op
-    (lambda (op opcode imm26 code*)
-      (safe-assert (signed26? (ax-imm-data imm26 op)))
-      (let ([offs0  (logand (ax-imm-data imm26 op) #xffff)] ; offs[15:0]
-            [offs16 (logand (ash (ax-imm-data imm26 op) -16) #b1111111111)]) ; offs[25:16] 10 bits
-        (emit-code (op imm26 code*)
+  (define imm28-op
+    (lambda (op opcode imm28 code*)
+      (safe-assert (signed28? (ax-imm-data imm28 op))
+                   (code-disp? (ax-imm-data imm28 op))) ; offset in multiples of 4
+      (let ([offs0  (fxlogand (ax-imm-data imm28 op) #xffff)] ; offs[15:0]
+            [offs16 (fxlogand (ash (ax-imm-data imm28 op) -16) #b1111111111)]) ; offs[25:16] 10 bits
+        (emit-code (op imm28 code*)
                    [26 opcode]
                    [10 offs0]
                    [0  offs16]))))
@@ -977,7 +987,7 @@
 
   (define shamt?
     (lambda (imm)
-      (and (fixnum? imm) (fx>= imm 0) (fx<= imm (expt 2 6)))))
+      (and (fixnum? imm) (fx<= 0 imm (expt 2 6)))))
   (define signed12?
     (lambda (imm)
       (and (fixnum? imm) (fx<= (fx- (expt 2 11))
@@ -985,8 +995,7 @@
                                (fx- (expt 2 11) 1)))))
   (define unsigned12?
     (lambda (imm)
-      (and (fixnum? imm)
-           ($fxu< imm (expt 2 12)))))
+      (and (fixnum? imm) (fx<= 0 imm (expt 2 12)))))
   (define signed14?
     (lambda (imm)
       (and (fixnum? imm) (fx<= (fx- (expt 2 13))
@@ -1036,7 +1045,7 @@
   (define jump-disp?
     (lambda (imm)
       (and (fixnum? imm)
-           (= (mod imm 4) 0)
+           (code-disp? imm)
            (fx<= (fx- (expt 2 17))
                  imm
                  (fx- (expt 2 17) 1)))))
@@ -1044,7 +1053,7 @@
   (define branch-disp?
     (lambda (imm)
       (and (fixnum? imm)
-           (= (mod imm 4) 0)
+           (code-disp? imm)
            (fx<= (fx- (expt 2 27))
                  imm
                  (fx- (expt 2 27) 1)))))
@@ -1052,10 +1061,16 @@
   (define cond-branch-disp?
     (lambda (imm)
       (and (fixnum? imm)
-           (= (mod imm 4) 0)
+           (code-disp? imm)
            (fx<= (fx- (expt 2 22))
                  imm
                  (fx- (expt 2 22) 1)))))
+  (define code-disp?
+    (lambda (imm)
+      (and (fixnum? imm)
+           ;; lower two bits are zero
+           (= 0 (mod imm 4))
+           )))
 
   (define-who ax-ea-reg-code
     (lambda (ea)
@@ -1351,7 +1366,7 @@
                 (let ([disp (constant flonum-data-disp)])
                   (emit fld.d %flreg1 src1 disp
                         (emit fld.d %flreg2 src2 disp
-                              (let ([code* (emit fst.d %flreg1 dest disp code*)]) ;;@ %flreg1 holds the result
+                              (let ([code* (emit fst.d %flreg1 dest disp code*)])
                                 (case op
                                   [(fl+) (emit fadd.d %flreg1 %flreg1 %flreg2 code*)]
                                   [(fl-) (emit fsub.d %flreg1 %flreg1 %flreg2 code*)]
@@ -1364,8 +1379,8 @@
       (Trivit (src dest)
               (let ([disp (constant flonum-data-disp)])
                 (emit fld.d %flreg1 src disp
-                      (emit fsqrt.d %flreg1 %flreg1
-                            (emit fst.d %flreg1 dest disp code*)))))))
+                      (emit fsqrt.d %flreg2 %flreg1
+                            (emit fst.d %flreg2 dest disp code*)))))))
 
   (define asm-trunc ;;@ flonum to fixnum
     (lambda (code* dest src)
@@ -1407,7 +1422,7 @@
                          [(integer-64 unsigned-64) (emit revb.d dest src code*)]
                          [else (sorry! who "unexpected asm-swap type argument ~s" type)])))))))
 
-  (define asm-lock ;;@ check operands of sc.d, see if can be used in both places
+  (define asm-lock
     ;;    ll.d t0, [src]
     ;;    bnez  t0,  L
     ;;    addi.d t0, %real-zero, 1
@@ -1459,22 +1474,38 @@
     (lambda (info)
       (rec asm-relop-internal
            (lambda (l1 l2 offset x y)
-             (Trivit (x y)
-                     (values
-                      (case (info-condition-code-type info)
-                        [(eq?) (emit xor %cond x y
-                                     (emit sltui %cond %cond 1 '()))]
-                        [(u<) (emit sltu %cond x y '())]
-                        [(<) (emit slt %cond x y '())]
-                        [(>) (emit slt %cond y x '())]
-                        [(<=) (emit slt %cond y x
-                                    (emit xori %cond %cond 1 '()))]
-                        [(>=) (emit slt %cond x y
-                                    (emit xori %cond %cond 1 '()))]
-                        [(logtest) (emit and %cond x y '())]
-                        [(log!test) (emit and %cond x y
-                                          (emit sltui %cond %cond 1 '()))])
-                      (asm-conditional-jump info l1 l2 offset)))))))
+             (let ([op (info-condition-code-type info)])
+               (Trivit (x y)
+                       (define (bad!) (sorry! who "second operand cannot be imm: op ~s ~s" op x y))
+                       (record-case y
+                                    [(reg) ignore
+                                     (values
+                                      (case op
+                                        [(eq?) (emit xor %scratch0 x y
+                                                     (emit sltui %cond %scratch0 1 '()))]
+                                        [(u<) (emit sltu %cond x y '())]
+                                        [(<) (emit slt %cond x y '())]
+                                        [(>) (emit slt %cond y x '())]
+                                        [(<=) (emit slt %scratch0 y x
+                                                    (emit xori %cond %scratch0 1 '()))]
+                                        [(>=) (emit slt %scratch0 x y
+                                                    (emit xori %cond %scratch0 1 '()))]
+                                        [(logtest) (emit and %cond x y '())]
+                                        [(log!test) (emit and %scratch0 x y
+                                                          (emit sltui %cond %scratch0 1 '()))])
+                                      (asm-conditional-jump info l1 l2 offset))]
+                                    [(imm) (n)
+                                     (values
+                                      (case op
+                                        [(eq?) (emit xori %scratch0 x n
+                                                     (emit sltui %cond %scratch0 1 '()))]
+                                        [(u<) (emit sltui %cond x n '())]
+                                        [(<) (emit slti %cond x n '())]
+                                        [(logtest) (emit andi %cond x n '())]
+                                        [(log!test) (emit andi %scratch0 x n
+                                                          (emit sltui %cond %scratch0 1 '()))]
+                                        [else (bad!)])
+                                      (asm-conditional-jump info l1 l2 offset))])))))))
 
   (define-who asm-fl-relop
     (lambda (info)
@@ -1486,7 +1517,7 @@
                    (emit fld.d %flreg1 x disp
                          (emit fld.d %flreg2 y disp
                                (emit fcmp.d op %flreg1 %flreg2 ; internally use the first flag reg
-                                     (emit bceqz '() 3 ; ditto '(): placeholder
+                                     (emit bceqz '() 12 ; ditto '(): placeholder
                                            (emit addi.d %cond %real-zero 1
                                                  (emit b 8
                                                        (emit addi.d %cond %real-zero 0 '()))))))))
@@ -1543,7 +1574,7 @@
                   [(reg) ignore (emit addi.d dest src 0 code*)]
                   [(imm) (n)
                    (if (signed12? n)
-                       (emit addi.d dest %real-zero  n code*)
+                       (emit addi.d dest %real-zero n code*)
                        (if (signed32? n)
                            (ax-mov32 dest n code*)
                            (ax-mov64 dest n code*)))]
@@ -1553,7 +1584,7 @@
                   [(disp) (n breg)
                    (safe-assert (signed12? n))
                    (emit ld.d dest breg n code*)]
-                  [(index) (n ireg breg) ;;@ todo check this; result usually won't exceed 2^31
+                  [(index) (n ireg breg)
                    (safe-assert (eqv? n 0))
                    (emit ldx.d dest breg ireg code*)]
                   [else (bad!)])]
@@ -1774,7 +1805,7 @@
             (emit ld.d %jump %jump 12
                   (emit b 12
                         (cons* `(quad . 0)
-                               (aop-cons* `(asm "quad jump")
+                               (aop-cons* `(asm "quad jump addr")
                                           (emit jirl %real-zero %jump 0
                                                 (asm-helper-relocation code* reloc)))))))))
 
@@ -1794,7 +1825,7 @@
                              (emit ld.d tmp tmp 12
                                    (emit b 12
                                          (cons* `(quad . 0)
-                                                (aop-cons* `(asm "quad call")
+                                                (aop-cons* `(asm "quad call addr")
                                                            (emit jirl %ra tmp 0
                                                                  (asm-helper-relocation code* reloc)))))))))))
 
