@@ -47,6 +47,7 @@
                         [(#\*) (cons #\s rest)]
                         [(#\=) (cons* #\e #\q #\l rest)]
                         [(#\?) (cons #\p rest)]
+                        [(#\$) (cons* #\s #\y #\s #\_ rest)]
                         [else (cons x rest)]))
           '()
           (string->list (symbol->string x))))))
@@ -279,6 +280,8 @@
         (deftotypep "Sbytevectorp" ($ mask-bytevector) ($ type-bytevector))
         (deftotypep "Sstringp" ($ mask-string) ($ type-string))
         (deftotypep "Sstencil_vectorp" ($ mask-stencil-vector) ($ type-stencil-vector))
+        (deftotypep "Ssystem_stencil_vectorp" ($ mask-sys-stencil-vector) ($ type-sys-stencil-vector))
+        (deftotypep "Sany_stencil_vectorp" ($ mask-any-stencil-vector) ($ type-any-stencil-vector))
         (deftotypep "Sbignump" ($ mask-bignum) ($ type-bignum))
         (deftotypep "Sboxp" ($ mask-box) ($ type-box))
         (deftotypep "Sinexactnump" ($ mask-inexactnum) ($ type-inexactnum))

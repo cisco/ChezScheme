@@ -4370,27 +4370,47 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector: mask 3 does not match given number of items 1".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector: invalid mask 288230376151711744".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-length: 3 is not a stencil vector".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-mask: 3 is not a vector".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-mask: 3 is not a stencil vector".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 3 is not a stencil vector".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: invalid index 0".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: invalid index 2".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: invalid index -1".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: invalid index 1267650600228229401496703205376".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: invalid index 1.0".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: invalid index 0".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: invalid index 2".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: invalid index -1".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: invalid index 1267650600228229401496703205376".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: invalid index 1.0".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 0 is not a valid index for #stencil[0]()".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 2 is not a valid index for #stencil[3](apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: -1 is not a valid index for #stencil[3](apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 1267650600228229401496703205376 is not a valid index for #stencil[3](apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 1.0 is not a valid index for #stencil[3](apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 0 is not a valid index for #stencil[0]()".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 2 is not a valid index for #stencil[3](apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: -1 is not a valid index for #stencil[3](apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 1267650600228229401496703205376 is not a valid index for #stencil[3](apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 1.0 is not a valid index for #stencil[3](apple banana)".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: 1 is not a stencil vector".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: stencil already has bits in 2".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: stencil does not have all bits in 1".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: mask of stencil vector #stencil[AAAAA](a b c d e f ...) already has bits in 2".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: mask of stencil vector #stencil[AAAAA](a b c d e f ...) does not have all bits in 1".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: addition mask 1 does not match given number of items 0".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: addition mask 1 does not match given number of items 2".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-truncate!: 1 is not a stencil vector".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-truncate!: new mask 1 is larger than old mask 0".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-truncate!: new mask 1 for #stencil[0]() is larger than old mask".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector: mask 7 does not match given number of items 0".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector: mask 6 does not match given number of items 0".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector: invalid mask x".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector: invalid mask -1".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector: mask 0 does not match given number of items 1".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector: mask 3 does not match given number of items 1".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector: mask 3 does not match given number of items 1".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector: invalid mask 288230376151711744".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-length: 3 is not a stencil vector".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-mask: 3 is not a stencil vector".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 3 is not a stencil vector".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 0 is not a valid index for #stencil[0]()".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 0 is not a valid index for #stencil[0]()".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 2 is not a valid index for #stencil[3](apple banana)".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 2 is not a valid index for #stencil[3](apple banana)".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-set!: 0 is not a valid index for #stencil[0]()".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-set!: 0 is not a valid index for #stencil[0]()".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector-update: 1 is not a stencil vector".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector-truncate!: 1 is not a stencil vector".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector-truncate!: new mask 1 for #stencil[0]() is larger than old mask".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector: mask 7 does not match given number of items 0".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector: mask 6 does not match given number of items 0".
 5_7.mo:Expected error in mat string->symbol: "string->symbol: 3 is not a string".
 5_7.mo:Expected error in mat string->symbol: "string->symbol: a is not a string".
 5_7.mo:Expected error in mat gensym: "gensym: #(a b c) is not a string".

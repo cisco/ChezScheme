@@ -182,7 +182,7 @@
        [(fasl-type-vector fasl-type-immutable-vector)
         (chunk-vector! vec ci)]
        [else (void)])]
-    [(stencil-vector mask vec)
+    [(stencil-vector mask vec sys?)
      (chunk-vector! vec ci)]
     [(record maybe-uid size nflds rtd pad-ty* fld*)
      (for-each (lambda (fld)

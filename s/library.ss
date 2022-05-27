@@ -306,7 +306,7 @@
 
   (define stencil-vector-oops
     (lambda (who x)
-      ($oops who "~s is not a vector" x)))
+      ($oops who "~s is not a stencil vector" x)))
 
   (define-library-entry (char->integer x) (char-oops 'char->integer x))
 
@@ -412,6 +412,9 @@
 
   (define-library-entry (bytevector-length v)
     (bytevector-oops 'bytevector-length v))
+
+  (define-library-entry ($stencil-vector-mask v)
+    (stencil-vector-oops '$stencil-vector-mask v))
 
   (define-library-entry (stencil-vector-mask v)
     (stencil-vector-oops 'stencil-vector-mask v))

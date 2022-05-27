@@ -405,7 +405,7 @@
              (set! (vector-data _copy_ len) (FIX 0))))
       (count countof-vector)]
 
-     [stencil-vector
+     [any-stencil-vector ; stencil-vector or $stencil-vector
       ;; Assumes stencil-vector tags look like immediates or fixnums;
       ;; if not, stencil vectors will need their own space
       (space

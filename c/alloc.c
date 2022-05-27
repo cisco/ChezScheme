@@ -798,7 +798,7 @@ ptr S_null_immutable_string(void) {
   return v;
 }
 
-ptr S_stencil_vector(mask) uptr mask; {
+static ptr stencil_vector(uptr type, uptr mask) {
     ptr tc;
     ptr p; iptr d;
     iptr n = Spopcount(mask);
@@ -807,8 +807,16 @@ ptr S_stencil_vector(mask) uptr mask; {
 
     d = size_stencil_vector(n);
     newspace_find_room(tc, type_typed_object, d, p);
-    VECTTYPE(p) = (mask << stencil_vector_mask_offset) | type_stencil_vector;
+    VECTTYPE(p) = (mask << stencil_vector_mask_offset) | type;
     return p;
+}
+
+ptr S_stencil_vector(uptr mask) {
+  return stencil_vector(type_stencil_vector, mask);
+}
+
+ptr S_system_stencil_vector(mask) uptr mask; {
+  return stencil_vector(type_sys_stencil_vector, mask);
 }
 
 ptr S_record(n) iptr n; {

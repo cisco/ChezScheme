@@ -1427,7 +1427,7 @@ brackets, and followed by a parenthesized sequence of elements.
 \endentryheader
 
 \noindent
-The result is always less than \scheme{(fixnum-width)]}.
+The result is always less than \scheme{(fixnum-width)}.
 
 %----------------------------------------------------------------------------
 \entryheader

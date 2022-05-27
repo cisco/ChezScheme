@@ -709,14 +709,16 @@
                      bytevector-type-disp
                      set-u8!
                      bytevector-u8-ref)])]
-    [(stencil-vector mask vec)
+    [(stencil-vector mask vec sys?)
      (vector-copy v vec vfi
                   vector-length
                   vspace-impure
                   header-size-stencil-vector stencil-vector-data-disp
                   ptr-bytes
                   (bitwise-ior (bitwise-arithmetic-shift-left mask (constant stencil-vector-mask-offset))
-                               (constant type-stencil-vector))
+                               (if sys?
+                                   (constant type-sys-stencil-vector)
+                                   (constant type-stencil-vector)))
                   stencil-vector-type-disp
                   set-ptr!
                   (lambda (v i) (copy (vector-ref v i) vfi)))]

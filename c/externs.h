@@ -95,6 +95,7 @@ extern ptr S_null_immutable_fxvector(void);
 extern ptr S_null_immutable_bytevector(void);
 extern ptr S_null_immutable_string(void);
 extern ptr S_stencil_vector(uptr mask);
+extern ptr S_system_stencil_vector(uptr mask);
 extern ptr S_record(iptr n);
 extern ptr S_closure(ptr cod, iptr n);
 extern ptr S_mkcontinuation(ISPC s, IGEN g, ptr nuate, ptr stack,

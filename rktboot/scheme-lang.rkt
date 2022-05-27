@@ -93,6 +93,8 @@
          record-type-uid
          $object-ref
          stencil-vector?
+         $system-stencil-vector?
+         $stencil-vector?
          (rename-out [s:vector-sort vector-sort]
                      [s:vector-sort! vector-sort!])
          vector-for-each
@@ -797,6 +799,8 @@
      (list->vector (apply map proc (map vector->list vecs)))]))
 
 (define (stencil-vector? v) #f)
+(define ($stencil-vector? v) #f)
+(define ($system-stencil-vector? v) #f)
 
 (define (fxpopcount32 x)
   (let* ([x (- x (bitwise-and (arithmetic-shift x -1) #x55555555))]

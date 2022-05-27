@@ -1440,12 +1440,20 @@
    (lambda (v)
       (#2%stencil-vector-mask v)))
 
+(define $stencil-vector-mask
+   (lambda (v)
+      (#2%$stencil-vector-mask v)))
+
 (define-who $make-stencil-vector
   (lambda (len mask)
     ($oops who "should only be used as inlined with GC disabled")))
 
+(define-who $make-system-stencil-vector
+  (lambda (len mask)
+    ($oops who "should only be used as inlined with GC disabled")))
+
 ; not safe; assumes `val` is older than `v`
-(define $stencil-vector-set!
+(define $stencil-vector-fill-set!
   (lambda (v i val)
     ($stencil-vector-set! v i val)))
 
@@ -1539,6 +1547,10 @@
 (define flvector? (lambda (x) (flvector? x)))
 
 (define stencil-vector? (lambda (x) (stencil-vector? x)))
+
+(define $stencil-vector? (lambda (x) ($stencil-vector? x)))
+
+(define $system-stencil-vector? (lambda (x) ($system-stencil-vector? x)))
 
 (define procedure? (lambda (x) (procedure? x)))
 

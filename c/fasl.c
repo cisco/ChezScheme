@@ -830,10 +830,14 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             }
             return;
         }
-        case fasl_type_stencil_vector: {
+        case fasl_type_stencil_vector:
+        case fasl_type_system_stencil_vector: {
             uptr mask; iptr n; ptr *p;
             mask = uptrin(f);
-            *x = S_stencil_vector(mask);
+            if (ty == fasl_type_stencil_vector)
+              *x = S_stencil_vector(mask);
+            else
+              *x = S_system_stencil_vector(mask);
             p = &INITSTENVECTIT(*x, 0);
             n = Spopcount(mask);
             while (n--) faslin(tc, p++, t, pstrbuf, f);

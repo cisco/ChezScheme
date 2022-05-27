@@ -3191,6 +3191,7 @@
                                                    (abort 'oops)
                                                    (#3%$app/no-return f))])))
    (or (not (enable-cp0))
+       (#%$suppress-primitive-inlining)
        (eq? (current-eval) interpret)
        (let ([mk (make-wrapper-procedure
                   (lambda (x)

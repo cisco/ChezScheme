@@ -8,7 +8,7 @@
   (#{vector striprur0zx3-6} ty vfasl)
   (#{fxvector striprur0zx3-7} viptr)
   (#{bytevector striprur0zx3-9} ty bv)
-  (#{stencil-vector striprur0zx3-sv} mask vfasl)
+  (#{stencil-vector striprur0zx0-sv} mask vfasl sys?)
   (#{record  striprur0zx3-10} maybe-uid size nflds rtd pad-ty* fld*) ; maybe-uid => rtd
   (#{rtd-ref striprur0zx3-11} uid) ; field info not recorded
   (#{closure striprur0zx3-12} offset c)
