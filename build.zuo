@@ -414,7 +414,7 @@
                 ,(lambda (path token)
                    ;; clear out links from old build system that break the new build
                    (clean-links (at-dir))
-                   (display-to-file "done" path))]
+                   (display-to-file "done" path :truncate))]
 
        ;; Needed to keep the initial-boot-file info here instead of in "boot"
        [:db-dir ,(at-dir ".")]
