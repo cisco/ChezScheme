@@ -195,7 +195,7 @@
    (begin (current-input-port (console-input-port)) #t)
 
    ; the following tests open-input-string, open-output-string, read-char,
-   ; eof-object?, unread-char, write-char, and get-ouptut-string
+   ; eof-object?, unread-char, write-char, and get-output-string
    (let ([s "hi there, mom!"])
       (let ([ip (open-input-string s)] [op (open-output-string)])
          (do ([c (read-char ip) (read-char ip)])

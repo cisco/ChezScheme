@@ -934,7 +934,7 @@
 
 (define-constant fixnum-offset (- (constant ptr-bits) (constant fixnum-bits)))
 
-; string length field (high bits) + immutabilty is stored with type
+; string length field (high bits) + immutability is stored with type
 (define-constant string-length-offset      4)
 (define-constant string-immutable-flag
   (expt 2 (- (constant string-length-offset) 1)))
@@ -950,7 +950,7 @@
 (define-constant bigit-bits                32)
 (define-constant bigit-bytes               (/ (constant bigit-bits) 8))
 
-; vector length field (high bits) + immutabilty is stored with type
+; vector length field (high bits) + immutability is stored with type
 (define-constant vector-length-offset (fx+ 1 (constant fixnum-offset)))
 (define-constant vector-immutable-flag
   (expt 2 (- (constant vector-length-offset) 1)))
@@ -972,7 +972,7 @@
 
 (define-constant never-immutable-flag 0)
 
-; bytevector length field (high bits) + immutabilty is stored with type
+; bytevector length field (high bits) + immutability is stored with type
 (define-constant bytevector-length-offset 3)
 (define-constant bytevector-immutable-flag
   (expt 2 (- (constant bytevector-length-offset) 1)))
@@ -1223,7 +1223,7 @@
 (eval-when (compile load eval)
 (define-syntax filter-foreign-type
  ; for $object-ref, foreign-ref, etc.
- ; foreign-procedure and foriegn-callable have their own
+ ; foreign-procedure and foreign-callable have their own
  ; filter-type in syntax.ss
   (with-syntax ([alist (datum->syntax #'*
                          `((ptr . scheme-object)
@@ -2087,7 +2087,7 @@
     ((_ x) (let ((t x)) (and (pair? t) (symbol? (car t)))))))
 
 ;; ---------------------------------------------------------------------
-;; Heap/stack mangement constants:
+;; Heap/stack management constants:
 
 (define-constant collect-interrupt-index 1)
 (define-constant timer-interrupt-index 2)

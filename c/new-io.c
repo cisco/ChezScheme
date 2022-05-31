@@ -942,6 +942,6 @@ ptr S_bytevector_uncompress(ptr dest_bv, iptr d_start, iptr d_count,
           return Sstring("internal error uncompressing ~s");
       }
     default:
-      return Sstring("unepxected compress format ~s");
+      return Sstring("unexpected compress format ~s");
   }
 }

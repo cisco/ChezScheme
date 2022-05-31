@@ -76,7 +76,7 @@ static void split(ptr k, ptr *s) {
     *s = TO_PTR(DOUNDERFLOW);
 }
 
-/* We may come in to S_split_and_resize with a multi-shot contination whose
+/* We may come in to S_split_and_resize with a multi-shot continuation whose
  * stack segment exceeds the copy bound or is too large to fit along
  * with the return values in the current stack.  We may also come in to
  * S_split_and_resize with a one-shot continuation for which all of the

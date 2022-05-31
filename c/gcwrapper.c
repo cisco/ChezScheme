@@ -995,7 +995,7 @@ void S_check_heap(IBOOL aftergc, IGEN mcg) {
                 if (checkheap_noisy && si->dirty_bytes[d] < dirty) {
                   /* sweep_dirty won't sweep, and update dirty byte, for
                      cards with dirty pointers to segments older than the
-                     maximum copyied generation, so we can get legitimate
+                     maximum copied generation, so we can get legitimate
                      conservative dirty bytes even after gc */
                   printf("... Conservative dirty byte %x (%x) %sfor segment "PHtx" card %d ",
                          si->dirty_bytes[d], dirty,

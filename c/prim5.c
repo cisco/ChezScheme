@@ -1522,7 +1522,7 @@ static s_thread_rv_t s_backdoor_thread_start(void *p) {
   (void) Sdeactivate_thread();
   display("thread deactivated\n")
   (void) Sactivate_thread();
-  display("thread reeactivated\n")
+  display("thread reactivated\n")
   Scall0((ptr)Sunbox(TO_PTR(p)));
   Sdestroy_thread();
   display("thread destroyed\n")

@@ -36,7 +36,7 @@
 ;;;                         | <keyword> <template-id>
 ;;; <additional-pattern>   -> <initial-pattern>
 ;;;                         | (<keyword> (<syntax-pattern>*) <template-id>) ...
-;;;                         | (<keyword> <tempalte-id>) ...
+;;;                         | (<keyword> <template-id>) ...
 ;;;                         | (optional <keyword> (<syntax-pattern>*)
 ;;;                             <template-id>)
 ;;;                         | (optional <keyword> <template-id>)
@@ -196,7 +196,7 @@
         (define (p) (flush-output-port op) (extract-string-and-reset! tb))
         (values op p line column))))
   
-  ;; scan foward for blanks, and if it leads you to a new-line, strip
+  ;; scan forward for blanks, and if it leads you to a new-line, strip
   ;; the previous blanks back to the new line.
   (define (finish-strip ip stack bfp start-bfp)
     (let ([node-to-strip (car stack)])
@@ -687,7 +687,7 @@ cat >> /tmp/rockets <<END
 @if((= y 0))
 Again!
 @elif((= y 1))
-Rockets are awseome!
+Rockets are awesome!
 @elif((= y 2))
 Explosions!
 @else
@@ -703,7 +703,7 @@ END
 scheme -q << END
 (import (template))
 (unless (equal? (let ([xs '(3 2 1)] [y 1]) (include-template "/tmp/rockets"))
-          "Test\n3 ...\n2 ...\n1 ...\nBlast off!\nRockets are awseome!\n")
+          "Test\n3 ...\n2 ...\n1 ...\nBlast off!\nRockets are awesome!\n")
   (error #f "test 10 failed"))
 END
 scheme -q << END

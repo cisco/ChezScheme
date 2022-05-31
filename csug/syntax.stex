@@ -1858,7 +1858,7 @@ should not be greater than \var{efp}.
 \scheme{current-make-source-object} is used by the reader to construct
 a source object for an annotation. \scheme{current-make-source-object}
 is initially bound to \scheme{make-source-object}, and the reader always
-calls the function bound to the paramater with three arguments.
+calls the function bound to the parameter with three arguments.
 
 Adjust this parameter to, for example, eagerly convert a position integer
 to a file-position object, instead of delaying the conversion to

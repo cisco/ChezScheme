@@ -10435,7 +10435,7 @@
                                #x01 #x00 #x00 #x65
                                #x00 #x00 #x00 #x65)
                         'big
-                        ; rkd: added endianness-manditory? flag
+                        ; rkd: added endianness-mandatory? flag
                         #t))
                 => #t)
 
@@ -10481,7 +10481,7 @@
                                #x65 #x00 #x00 #x01
                                #x65 #x00 #x00 #x00)
                         'little
-                        ; rkd: added endianness-manditory? flag
+                        ; rkd: added endianness-mandatory? flag
                         #t))
                 => #t)
 
@@ -10947,7 +10947,7 @@
 
     #t)
 
- ; Currently the reference implementation is the only implemenation,
+ ; Currently the reference implementation is the only implementation,
  ; so go ahead and use it for the tests and the random tests below.
   (define bytevector-and $bytevector-and)
   (define bytevector-ior $bytevector-ior)

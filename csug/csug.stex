@@ -42,7 +42,7 @@
 (printf "\\def\\CSVersion{~a}" (scheme-version))
 \endgenerated
 
-% Just don't care amout small overflows, most of the time:
+% Just don't care about small overflows, most of the time:
 \iflatex
 \hfuzz=16.0pt
 \fi

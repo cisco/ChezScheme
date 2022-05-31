@@ -2033,7 +2033,7 @@ static iptr sweep_generation_pass(thread_gc *tgc) {
     send_and_receive_remote_sweeps(tgc);
 
     /* Waiting until sweeping doesn't trigger a change reduces the
-       chance that an ephemeron must be reigistered as a
+       chance that an ephemeron must be registered as a
        segment-specific trigger or gets triggered for recheck, but
        it doesn't change the worst-case complexity. */
     if (tgc->sweep_change == SWEEP_NO_CHANGE)

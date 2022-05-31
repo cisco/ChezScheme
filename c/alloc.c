@@ -105,7 +105,7 @@ void S_protect(ptr *p) {
 void S_reset_scheme_stack(ptr tc, iptr n) {
     ptr *x; iptr m;
 
-  /* we allow less than one_shot_headroom here for no truly justifyable
+  /* we allow less than one_shot_headroom here for no truly justifiable
      reason */
     n = ptr_align(n + (one_shot_headroom >> 1));
 
@@ -429,7 +429,7 @@ void S_mark_card_dirty(uptr card, IGEN to_g) {
   }
 }
 
-/* scan remembered set from P to ENDP, transfering to dirty vector;
+/* scan remembered set from P to ENDP, transferring to dirty vector;
    allocation mutex must be held */
 void S_scan_dirty(ptr *p, ptr *endp) {
   uptr this, last;
@@ -491,7 +491,7 @@ void S_scan_remembered_set(void) {
   S_maybe_fire_collector(THREAD_GC(tc));
 }
 
-/* S_get_more_room is called from genereated machine code when there is
+/* S_get_more_room is called from generated machine code when there is
  * insufficient room for an allocation.  ap has already been incremented
  * by the size of the object and xp is a (typed) pointer to the value of
  * ap before the allocation attempt.  xp must be set to a new object of

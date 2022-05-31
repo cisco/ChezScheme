@@ -1204,7 +1204,7 @@
                       (waiter))]
                    [(and (integer? x) (nonnegative? x))
                     (fprintf (console-output-port)
-                       "No saved error continution for thread ~s.~%"
+                       "No saved error continuation for thread ~s.~%"
                        x)
                     (flush-output-port (console-output-port))
                     (waiter)]

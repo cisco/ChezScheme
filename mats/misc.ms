@@ -2483,7 +2483,7 @@
       (cost-center-allocation-count cc)))
 
   (let ([x (fx+ 3 (random 10))])
-    ((lambda (count) ; range for padding on 32-bit and to accomadate 64-bit words
+    ((lambda (count) ; range for padding on 32-bit and to accommodate 64-bit words
        (<= (fxsll (fx+ x 1) 2) count (fxsll (fx+ x 2) 3)))
      (let ([cc (make-cost-center)])
        (with-cost-center cc

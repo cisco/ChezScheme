@@ -2302,7 +2302,7 @@
               [(>) (i? (r? bge ble) (r? blt bgt))]
               [(>=) (i? (r? bgt blt) (r? ble bge))]
               [(overflow) (i? bvc bvs)]
-              [(multiply-overflow) (i? beq bne)] ; result of comparing sign bit of low word with all bits in high word: eq if no overflow, ne if oveflow
+              [(multiply-overflow) (i? beq bne)] ; result of comparing sign bit of low word with all bits in high word: eq if no overflow, ne if overflow
               [(positive) (i? ble bgt)]
               [(carry) (i? bcc bcs)]
               [(fp<) (i? (r? ble bcs) (r? bgt bcc))]
@@ -3301,7 +3301,7 @@
                             ,(let ([len (+ post-pad-bytes return-bytes)])
                                (if (fx= len 0) `(nop) `(set! ,%sp ,(%inline - ,%sp (immediate ,len)))))
                             ,(if (fx= idbl 0) `(nop) `(inline ,(make-info-vpush %Cfparg1 idbl) ,%vpush-multiple))
-                            ; pad if necessary to force 8-byte boundardy after saving callee-save-regs+lr
+                            ; pad if necessary to force 8-byte boundary after saving callee-save-regs+lr
                             ,(if (fx= pre-pad-bytes 0) `(nop) `(set! ,%sp ,(%inline - ,%sp (immediate ,pre-pad-bytes))))
                             ; save the callee save registers & return address
                             (inline ,(make-info-kill*-live* '() callee-save-regs+lr) ,%push-multiple)
