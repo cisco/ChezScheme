@@ -50,7 +50,7 @@
 ;;;  we insist on real argument for ~f, ~e, and ~g; common lisp is
 ;;;    lax and sends off anything else to ~D.
 
-;;; other notees
+;;; other notes
 ;;;  we always assume that format starts at the beginning of a line
 ;;;    in support of ~&, ~t, and ~<...>
 

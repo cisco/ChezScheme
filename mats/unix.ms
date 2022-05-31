@@ -363,7 +363,7 @@
       (eq? (sleep (make-time 'time-duration 0 2)) (void))
       (symbol? (with-input-from-file "testfile.ss" read))
       ; following should be time<?, but access times are not updated on some
-      ; file systems, particulary nfs file systems.  but we wouldn't expect
+      ; file systems, particularly nfs file systems.  but we wouldn't expect
       ; time to run backwards (except for one hour for DST)
       (time<=? $taccess (file-access-time "testfile.ss"))
       (begin

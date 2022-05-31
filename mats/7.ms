@@ -4961,7 +4961,7 @@ evaluating module init
   (error?
     (verify-loadability 'load "testfile-clI1.so"))
 
-  ; make sure compile-whole-program perserves the information verify-loadability needs
+  ; make sure compile-whole-program preserves the information verify-loadability needs
   (begin
     (mkfile "testfile-clJ0.ss"
       '(library (testfile-clJ0) (export x0) (import (chezscheme)) (define x0 'eat) (printf "invoking J0\n")))

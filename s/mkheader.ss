@@ -574,7 +574,7 @@
             (pr "                        \"lwz %%r0, 0(%0)\\n\\t\"\\~%")       ;  try a non-reserved load to see if we are likely to succeed
             (pr "                        \"cmpwi %%r0, 0\\n\\t\"\\~%")         ;  if it is = 0, try to acquire at start
             (pr "                        \"beq 0b\\n\\t\"\\~%")                ;
-            (pr "                        \"b 1b\\n\\t\"\\~%")                  ;  othwerise loop through the try again
+            (pr "                        \"b 1b\\n\\t\"\\~%")                  ;  otherwise loop through the try again
             (pr "                        \"2:\\n\\t\"\\~%")                    ; done:
             (pr "                        :                \\~%")
             (pr "                        : \"b\" (addr)\\~%")

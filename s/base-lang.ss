@@ -114,7 +114,7 @@
 
   (define rcd?
     (lambda (x)
-      (or (record-constructor-descriptor? x) #t))) ; rcd should be retricted to rcd or ctrcd
+      (or (record-constructor-descriptor? x) #t))) ; rcd should be restricted to rcd or ctrcd
 
   (define exact-integer?
     (lambda (x)

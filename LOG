@@ -2321,3 +2321,12 @@
     s/cpnanopass.ss
 - corrected signature of multibyte->string and string->multibyte
     s/primdata.ss
+- fix typos found by Eric Lindblad
+    c/alloc.c c/compress-io.c c/gc.c c/gcwrapper.c c/new-io.c c/prim5.c
+    c/schsig.c csug/csug.stex csug/syntax.stex examples/template.ss
+    mats/4.ms mats/6.ms mats/7.ms mats/8.ms mats/bytevector.ms mats/foreign.ms
+    mats/io.ms mats/mat.ss mats/misc.ms mats/oop.ms mats/oop.ss mats/profile.ms
+    mats/record.ms mats/unix.ms s/5_3.ss s/7.ss s/arm32.ss s/base-lang.ss
+    s/cmacros.ss s/cp0.ss s/cpnanopass.ss s/date.ss s/format.ss s/io.ss
+    s/mkheader.ss s/np-languages.ss s/pdhtml.ss s/ppc32.ss s/print.ss
+    s/syntax.ss s/x86.ss s/x86_64.ss

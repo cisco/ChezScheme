@@ -787,7 +787,7 @@
 
  ; calling conventions are imposed; clauses no longer have formals (they are
  ; now locals set by arguments from argument registers and frame); calls no
- ; longer have arguments; case-lambda is resposible for dispatching to correct
+ ; longer have arguments; case-lambda is responsible for dispatching to correct
  ; clause, even when the game is being played
   (define-language L13
     (terminals
