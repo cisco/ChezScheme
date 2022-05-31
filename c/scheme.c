@@ -151,7 +151,7 @@ static void idiot_checks(void) {
   IBOOL oops = 0;
 
 #ifndef PORTABLE_BYTECODE
-  if (bytes_per_segment < S_pagesize) {
+  if (minimum_segment_request * bytes_per_segment < S_pagesize) {
     fprintf(stderr, "bytes_per_segment (%x) < S_pagesize (%lx)\n",
               bytes_per_segment, (long)S_pagesize);
     oops = 1;
