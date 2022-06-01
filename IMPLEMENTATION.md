@@ -44,7 +44,7 @@ related to the fasl format that is exposed by `fasl-write` and
 `fasl-read`, but you can't compile Scheme code to some value that is
 written with `fasl-write`. Instead, `compile-file` and related
 functions directly generate compiled code in a fasled form that
-includes needed linking information.
+includes needed linking information (described more below in "Linking").
 
 A boot file, usually with the suffix ".boot", has the same format as a
 compiled file, but with an extra header that identifies it as a boot
@@ -573,6 +573,44 @@ definition in "prims.ss".
 
 If you're looking for math primitives, see "mathprims.ss" instead of
 "prims.ss".
+
+# Linking
+
+Before generated code can be run, it must be linked with primitives,
+library entries, and C entries as they exist in memory within the
+current OS procss. Even when code is compiled and then run in the same
+OS process, linking is a separate, post-install step (by `c-mkcode` in
+"compile.ss"). More typically, compiled code is written to a ".so" or
+".boot" fasl file and loaded later. The fasl format is mostly a
+generic serialization and deserialization format for Scheme objects,
+but writing (via `c-build-fasl` in "compile.ss" plus "fasl.ss") and
+fasl reading (via "fasl.c") are assymetric for code: fasl writing
+works only on unlinked code objects, while reading a fasl file produces
+linked code objects by linking as it loads. (Utilities in "strip.ss"
+can read and re-write file content without linking. Those tools are
+use a completely separate reader and writer ythan "fasl.ss" and
+"fasl.c".) There's currently no support for writing linked code, as
+represented by a procedure value, to a fasl stream.
+
+Chez Scheme has its own custom linker and does not use the OS linker.
+To support linking, each code object is paired with a relocation
+table. Each table entry specifies an offset in the code object, the
+value that should be linkaed at that offset, and the encoding that is
+used at the offset. The value to link can be a Scheme object, such as
+a bignum, symbol, or list, or an index of a library entry or C entry.
+The encoding is machine-specific, and might indicate a literal word in
+the code that is loaded by PC-relative addresing or a sequence of
+instructions that load a value through moves and shifts. Except for
+code that is moved to the "static" GC generation, the relocation table
+is preserved with a code object in memory, because it is needed by the
+garbage collector to relink when code and linked values are moved in
+memory.
+
+When a function directly calls another function compiled at the same
+time, the a reference from one function is often directly to the code
+object of another function. Predefined functions are typically
+referenced by linking to a symbol, and generated code accesses the
+function by looking at the function or value slot of the symbol.
 
 # Compilation Pipeline
 
@@ -1110,7 +1148,7 @@ human-readable addition.
 All of that could be done with just plain functions, but the macros
 help with boilerplate and arrange some helpful compile-time checking.
 
-# Linking
+# Directives for Linking
 
 Besides actual machine code in the output of the assembly step,
 machine-specific linking dierctives can appear. In the case of
@@ -1119,7 +1157,8 @@ address), `arm32-call` (call an asolute address while setting the link
 register), and a`arm32-jump` (jump to an asolute address). These are
 turned into relocation entries associated with compiled code by steps
 in "compile.ss". Relocation entries are used when loading and GCing
-with update routines implemented in "fasl.c".
+with update routines implemented in "fasl.c" as desctibed above in
+"Linking".
 
 Typically, a linking directive is written just after some code that is
 generated as installing a dummy value, and then the update routine in
