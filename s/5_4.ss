@@ -423,6 +423,7 @@
                         (if (fx= i n)
                             (handle-special dst ac)
                             (s0 i ac)))])))
+          (define (extend-format-zwj? c) (or ($wb-extend? c) ($wb-format? c) ($wb-zwj? c)))
           (define (sAletter i seen-cased? ac)
             (let ([c (string-ref str i)])
               (cond
@@ -431,7 +432,7 @@
                 [(or ($wb-midletter? c) ($wb-midnumlet? c) ($wb-single-quote? c)) (trans sWB6/WB7/WB7a i c seen-cased? ac)] ; WB6/WB7
                 [($wb-numeric? c) (trans sNumeric i c seen-cased? ac)] ; WB9
                 [($wb-extendnumlet? c) (trans sExtendnumlet i c seen-cased? ac)] ; WB13a
-                [(or ($wb-extend? c) ($wb-format? c)) (trans sAletter i c seen-cased? ac)] ; WB4
+                [(extend-format-zwj? c) (trans sAletter i c seen-cased? ac)] ; WB4
                 [else (s0 i ac)]))) ; WB14
           (define (sHebrewletter i seen-cased? ac)
             (let ([c (string-ref str i)])
@@ -442,14 +443,14 @@
                 [($wb-double-quote? c) (trans sWB7b/WB7c i c seen-cased? ac)] ; WB7b, WB7c
                 [($wb-numeric? c) (trans sNumeric i c seen-cased? ac)] ; WB9
                 [($wb-extendnumlet? c) (trans sExtendnumlet i c seen-cased? ac)] ; WB13a
-                [(or ($wb-extend? c) ($wb-format? c)) (trans sHebrewletter i c seen-cased? ac)] ; WB4
+                [(extend-format-zwj? c) (trans sHebrewletter i c seen-cased? ac)] ; WB4
                 [else (s0 i ac)]))) ; WB14
           (define (sWB6/WB7/WB7a i seen-cased? ac)
             (let ([c (string-ref str i)])
               (cond
                 [($wb-aletter? c) (trans sAletter i c seen-cased? ac)] ; WB6, WB7
                 [($wb-hebrew-letter? c) (trans sHebrewletter i c seen-cased? ac)] ; WB6, WB7
-                [(or ($wb-extend? c) ($wb-format? c)) (trans sWB6/WB7/WB7a i c seen-cased? ac)] ; WB4
+                [(extend-format-zwj? c) (trans sWB6/WB7/WB7a i c seen-cased? ac)] ; WB4
                 ; word break actually should/could have occurred one character earlier if we got here
                 ; from sAletter rather than sHebrewletter but that was before a midlet, midnumlet, or single
                 ; quote which has no titlecase
@@ -458,7 +459,7 @@
             (let ([c (string-ref str i)])
               (cond
                 [($wb-hebrew-letter? c) (trans sHebrewletter i c seen-cased? ac)] ; WB7b, WB7c
-                [(or ($wb-extend? c) ($wb-format? c)) (trans sWB7b/WB7c i c seen-cased? ac)] ; WB4
+                [(extend-format-zwj? c) (trans sWB7b/WB7c i c seen-cased? ac)] ; WB4
                 ; word break actually should/could have occurred one character earlier
                 ; but that was before a double quote which has no titlecase
                 [else (s0 i ac)]))) ; WB14
@@ -467,7 +468,7 @@
               (cond
                 [($wb-aletter? c) (trans sAletter i c seen-cased? ac)] ; finishing WB6, WB7
                 [($wb-hebrew-letter? c) (trans sHebrewletter i c seen-cased? ac)] ; finishing WB6, WB7
-                [(or ($wb-extend? c) ($wb-format? c)) (trans sSingleQuote i c seen-cased? ac)] ; WB4
+                [(extend-format-zwj? c) (trans sSingleQuote i c seen-cased? ac)] ; WB4
                 [else (s0 i ac)]))) ; WB14
           (define (sNumeric i seen-cased? ac)
             (let ([c (string-ref str i)])
@@ -477,13 +478,13 @@
                 [($wb-hebrew-letter? c) (trans sHebrewletter i c seen-cased? ac)] ; WB10
                 [(or ($wb-midnum? c) ($wb-midnumlet? c) ($wb-single-quote? c)) (trans sWB11/WB12 i c seen-cased? ac)] ; WB11, WB12
                 [($wb-extendnumlet? c) (trans sExtendnumlet i c seen-cased? ac)]
-                [(or ($wb-extend? c) ($wb-format? c)) (trans sNumeric i c seen-cased? ac)] ; WB4
+                [(extend-format-zwj? c) (trans sNumeric i c seen-cased? ac)] ; WB4
                 [else (s0 i ac)]))) ; WB14
           (define (sWB11/WB12 i seen-cased? ac)
             (let ([c (string-ref str i)])
               (cond
                 [($wb-numeric? c) (trans sNumeric i c seen-cased? ac)]
-                [(or ($wb-extend? c) ($wb-format? c)) (trans sWB11/WB12 i c seen-cased? ac)] ; WB4
+                [(extend-format-zwj? c) (trans sWB11/WB12 i c seen-cased? ac)] ; WB4
                 ; word break actually should/could have occurred one character earlier
                 ; but that was before a midnum, midnumlet, or single quote which has no titltecase
                 [else (s0 i ac)]))) ; WB14
@@ -492,7 +493,7 @@
               (cond
                 [($wb-katakana? c) (trans sKatakana i c seen-cased? ac)] ; WB13
                 [($wb-extendnumlet? c) (trans sExtendnumlet i c seen-cased? ac)] ; WB13a
-                [(or ($wb-extend? c) ($wb-format? c)) (trans sKatakana i c seen-cased? ac)] ; WB4
+                [(extend-format-zwj? c) (trans sKatakana i c seen-cased? ac)] ; WB4
                 [else (s0 i ac)]))) ; WB14
           (define (sExtendnumlet i seen-cased? ac)
             (let ([c (string-ref str i)])
@@ -502,13 +503,13 @@
                 [($wb-hebrew-letter? c) (trans sHebrewletter i c seen-cased? ac)] ; WB13b
                 [($wb-numeric? c) (trans sNumeric i c seen-cased? ac)] ; WB13b
                 [($wb-katakana? c) (trans sKatakana i c seen-cased? ac)] ; WB13b
-                [(or ($wb-extend? c) ($wb-format? c)) (trans sExtendnumlet i c seen-cased? ac)] ; WB4
+                [(extend-format-zwj? c) (trans sExtendnumlet i c seen-cased? ac)] ; WB4
                 [else (s0 i ac)]))) ; WB14
           (define (sRegionalIndicator i seen-cased? ac)
             (let ([c (string-ref str i)])
               (cond
                 [($wb-regional-indicator? c) (trans sRegionalIndicator i c seen-cased? ac)] ; WB13c
-                [(or ($wb-extend? c) ($wb-format? c)) (trans sExtendnumlet i c seen-cased? ac)] ; WB4
+                [(extend-format-zwj? c) (trans sExtendnumlet i c seen-cased? ac)] ; WB4
                 [else (s0 i ac)]))) ; WB14
           (if (fx= n 0) dst (s0 0 '())))))
   )
