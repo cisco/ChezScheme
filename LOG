@@ -2334,3 +2334,5 @@
     unicode/* s/5_4.ss mats/5_4.ms mats/6.ms
 - don't rely on signed integer overflow (UB) in symhash implementation
     c/foreign.c
+- Propagate immutable versions of "", #(), #vu8() and #vfx() in cp0.
+    s/cp0.ss s/cpnanopass.ss
