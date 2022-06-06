@@ -240,7 +240,8 @@
                                 (string->shell (~a "-outputresource:" path ";1")))]
                    [else
                     (define post (lookup 'exePostStep))
-                    (when post
+                    (when (and post
+                               (not (equal? "" post)))
                       (shell/wait post (string->shell exe)))]))]
 
      ;; for Windows linking variants:
