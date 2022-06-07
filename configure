@@ -330,8 +330,8 @@ while [ $# != 0 ] ; do
       CFLAGS=`echo $1 | sed -e 's/^CFLAGS=//'`
       cflagsset=yes
       ;;
-    HOSTCC=*)
-      HOSTCC=`echo $1 | sed -e 's/^HOSTCC=//'`
+    CC_FOR_BUILD=*)
+      CC_FOR_BUILD=`echo $1 | sed -e 's/^CC_FOR_BUILD=//'`
       ;;
     LD=*)
       LD=`echo $1 | sed -e 's/^LD=//'`
@@ -542,7 +542,7 @@ if [ "$help" = "yes" ]; then
   echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   C preprocessor flags"
   echo "  CFLAGS=<C compiler flags>         C compiler flags"
-  echo "  HOSTCC=<C compiler>               C compiler and flags for host"
+  echo "  CC_FOR_BUILD=<C compiler>         C compiler and flags for build machine"
   echo "  LD=<linker>                       linker"
   echo "  LDFLAGS=<linker flags>            additional linker flags"
   echo "  LIBS=<libraries>                  additional libraries"
@@ -661,8 +661,8 @@ if [ "$cflagsset" = "no" ] ; then
   esac
 fi
 
-if [ "$HOSTCC" = "" ] ; then
-    HOSTCC="${CC} ${CFLAGS}"
+if [ "$CC_FOR_BUILD" = "" ] ; then
+    CC_FOR_BUILD="${CC} ${CFLAGS}"
 fi
 
 # Add automatic thread compilation flags, unless suppressed by --disable-auto-flags
@@ -960,7 +960,7 @@ exePostStep=$exePostStep
 exeSuffix=$exeSuffix
 zlibConfigureEnv=$zlibConfigureEnv
 zlibConfigureFlags=
-HOSTCC=$HOSTCC
+CC_FOR_BUILD=$CC_FOR_BUILD
 CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS
