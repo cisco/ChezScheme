@@ -1748,7 +1748,7 @@
   (let ([bv1 (string->utf8 "hello")] [bv2 (make-bytevector 5)])
     ($fp-bvcopy bv2 bv1 5)
     (and (bytevector=? bv1 bv2) (bytevector=? bv1 (string->utf8 "hello"))))
-  ;; No longer an error since make-ftype-pointer also serves to make foriegn-pointers
+  ;; No longer an error since make-ftype-pointer also serves to make foreign-pointers
   #;(error? ; "memcpy" is not a procedure
       (make-ftype-pointer memcpy_t "memcpy"))
   (error? ; unrecognized ftype
@@ -2422,7 +2422,7 @@
         (+ $stack-depth $base-value)))
   (or (= (optimize-level) 3)
       ; similarly, but with a ptr return value so the values error is signaled
-      ; by S_call_help wrather than the foreign-procedure wrapper
+      ; by S_call_help rather than the foreign-procedure wrapper
       (eqv?
         ($with-exit-proc
           (lambda (ignore)

@@ -350,7 +350,7 @@
       (syntax-case x (definitions)
         [(k context (sym ...) (definitions defn ...) [(op (a aty ...) ...) ?rhs0 ?rhs1 ...] ...)
          ; potentially unnecessary level of checking, but the big thing is to make sure
-         ; the number of operands expected is the same on every clause of define-intruction
+         ; the number of operands expected is the same on every clause of define-instruction
          (and (not (null? #'(op ...)))
               (andmap identifier? #'(sym ...))
               (andmap identifier? #'(op ...))
@@ -1393,9 +1393,10 @@
 
   (define conditional-branch-disp?
     (lambda (x)
-      (and (fixnum? x) 
-           (fx<= (- (expt 2 15)) x (- (expt 2 15) 1))
-           (not (fxlogtest x #b11)))))
+      (let ([x (+ x 4)])
+        (and (fixnum? x)
+             (fx<= (- (expt 2 15)) x (- (expt 2 15) 1))
+             (not (fxlogtest x #b11))))))
 
   (define asm-size
     (lambda (x)

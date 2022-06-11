@@ -583,7 +583,7 @@
         (syntax-case x (reserved allocable machine-dependent)
           [(k (reserved [rreg rreg-alias ... rreg-callee-save? rreg-mdinfo] ...)
               (allocable [areg areg-alias ... areg-callee-save? areg-mdinfo] ...)
-              (machine-depdendent [mdreg mdreg-alias ... mdreg-callee-save? mdreg-mdinfo] ...))
+              (machine-dependent [mdreg mdreg-alias ... mdreg-callee-save? mdreg-mdinfo] ...))
            (with-implicit (k regvec arg-registers extra-registers real-register? with-initialized-registers)
              #`(begin
                  (define-reserved-registers [rreg rreg-alias ... rreg-callee-save? rreg-mdinfo] ...)
@@ -8969,7 +8969,7 @@
         (define-inline 3 char-
           ; assumes fixnum is zero
           [(e1 e2)
-           (%inline srl
+           (%inline sra
               ,(%inline - ,e1 ,e2)
               (immediate ,(fx- (constant char-data-offset) (constant fixnum-offset))))])
         (define-inline 3 integer->char
@@ -9407,7 +9407,7 @@
                  ; misbehaved gotos, i.e., paths ending in a goto that don't do an overflow
                  ; or trap check where the target label expects it to have been done.  if we
                  ; ever violate this assumption on a regular basis, might want to revisit and
-                 ; do somthing better.
+                 ; do something better.
                  ; ... test punt case by commenting out above for all but library.ss
                  `(overflow-check (trap-check #f ,(insert-loop-traps body)))))])
       (CaseLambdaExpr : CaseLambdaExpr (ir) -> CaseLambdaExpr ()
@@ -10641,7 +10641,7 @@
                    (Scheme->C type toC t)])))
             (define C->Scheme
               ; ASSUMPTIONS: ac0, ac1, and xp are not C argument registers
-              (lambda (type fromC lvalue)
+              (lambda (type fromC lvalue for-return?)
                 (define integer->ptr
                  ; ac0 holds low 32-bits, ac1 holds high 32 bits, if needed
                   (lambda (width lvalue)
@@ -10752,12 +10752,12 @@
                       ,(unsigned->ptr bits lvalue))]
                   [(fp-double-float)
                    (%seq
-                     (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) #t))
+                     (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) for-return?))
                      ,(fromC %xp)
                      (set! ,lvalue ,%xp))]
                   [(fp-single-float)
                    (%seq
-                     (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) #t))
+                     (set! ,%xp ,(%constant-alloc type-flonum (constant size-flonum) for-return?))
                      ,(fromC %xp)
                      (set! ,lvalue ,%xp))]
                   [(fp-ftd ,ftd)
@@ -10798,7 +10798,7 @@
                                          ;; was instead installed in the first argument.
                                          `(seq (set! ,maybe-lvalue ,(%constant svoid)) ,e)]
                                         [else
-                                         `(seq ,(C->Scheme result-type c-res maybe-lvalue) ,e)])
+                                         `(seq ,(C->Scheme result-type c-res maybe-lvalue #t) ,e)])
                                       e))))])
                     (if new-frame?
                         (sorry! who "can't handle nontail foreign calls")
@@ -10847,7 +10847,7 @@
                               [(real-register? '%cp) `(set! ,cp-save ,%cp)]
                               [else `(nop)])
                             ; convert arguments
-                            ,(fold-left (lambda (e x arg-type c-arg) `(seq ,(C->Scheme arg-type c-arg x) ,e))
+                            ,(fold-left (lambda (e x arg-type c-arg) `(seq ,(C->Scheme arg-type c-arg x #f) ,e))
                                (set-locs fv* frame-x*
                                  (set-locs (map (lambda (reg) (in-context Lvalue (%mref ,%tc ,(reg-tc-disp reg)))) reg*) reg-x*
                                    `(set! ,%ac0 (immediate ,(length arg-type*)))))
@@ -13823,7 +13823,7 @@
           ; munge gets the code in forward order, but really wants to process it
           ; backwards to find the label offsets.  Maybe the size would be better
           ; tracked by doing it more like cp2 does right now and then patching in
-          ; the foward jumps and tightening up the code.
+          ; the forward jumps and tightening up the code.
           (define-who munge
             (lambda (c* size)
               (define (munge-pass c* iteration)
@@ -14465,7 +14465,7 @@
         ; as ordinary lambda expressions, there shouldn't be anything but ac0, cp, and argument
         ; registers, which we weed out here.  for library routines, there are often additional
         ; registers, sometimes for good reason and sometimes because we are lazy and didn't give
-        ; outselves a mechanism to prune out unneeded saves and restores.  for foreign-callable
+        ; ourselves a mechanism to prune out unneeded saves and restores.  for foreign-callable
         ; procedures, C argument registers and callee-save registers might show up live.
         ; we could enable a variant of this always that just checks normal procedures.  also,
         ; it might be nice to make it a bit more efficient, though it probably doesn't matter.

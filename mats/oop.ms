@@ -704,7 +704,7 @@
     ;; "method-3" and "method-4" because they're used by
     ;; <test-2>. Chez OOP produces a "generic function"
     ;; for each method, and it looks like those functions
-    ;; all have to belong to one line of the class inheritence
+    ;; all have to belong to one line of the class inheritance
     ;; tree.
   
     ;; sub-class w/ overload
@@ -1103,7 +1103,7 @@
   ; compiler will catch.  A few might not fail given the proper compiler
   ; extension (i.e. do classes and variables share the same namespace...)
 
-  (error? ; duplicate definition repeat, repeat?, and make-repeate
+  (error? ; duplicate definition repeat, repeat?, and make-repeat
     (letrec-classes ([Repeat () (<root>) ()]
                      [Repeat () (<root>) ()])
       0))
@@ -1244,7 +1244,7 @@
   0)
 
   (eq?
-  ;; naive inheritence example
+  ;; naive inheritance example
   (letrec-classes ([One () (<root>) ()])
     (letrec-classes ([Two  () (One) ()])
     0))

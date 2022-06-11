@@ -462,7 +462,7 @@
       (let* ([stdout-stuff (slurp from-stdout)]
              [stderr-stuff (slurp from-stderr)])
         (when (string=? stderr-stuff "")
-          (printf "$separate-eval command succeeeded with\nSTDERR:\n~a\nSTDOUT:\n~a\nEND\n" stderr-stuff stdout-stuff))
+          (printf "$separate-eval command succeeded with\nSTDERR:\n~a\nSTDOUT:\n~a\nEND\n" stderr-stuff stdout-stuff))
         (unless (string=? stderr-stuff "")
           (printf "$separate-eval command failed with\nSTDERR:\n~a\nSTDOUT:\n~a\nEND\n" stderr-stuff stdout-stuff)
           (errorf who "~a" stderr-stuff))

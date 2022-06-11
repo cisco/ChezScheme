@@ -628,6 +628,18 @@
       #t)
  )
 
+(mat char-
+  (error? (char-))
+  (error? (char- #\a #\b #\c))
+  (error? (char- #\a 4))
+  (eqv? (char- #\b #\a) 1)
+  (eqv? (char- #\a #\b) -1)
+  ;; lambda - eta
+  (eqv? (char- #\x03BB #\x03B7) 4)
+  ;; eta - lambda
+  (eqv? (char- #\x03B7 #\x03BB) -4)
+)
+
 (mat string-for-each
   (error? ; invalid number of arguments
     (string-for-each))
@@ -1286,7 +1298,7 @@
       (if (not (= n (length chars)))
           (begin (display " but expected ")
                  (write n)
-                 (display " in Unicode 5.0.0")))
+                 (display " in Unicode 14.0")))
       (newline)
       0)
     (define-syntax test
@@ -1310,6 +1322,10 @@
    ; #x230A #x230B #x2E42 #x110BD #x1BCA0 #x1BCA1 #x1BCA2 #x1BCA3
    ; rkd: Unicode 7.0 removes:
    ; #x17B4 #x17B5
+   ; Unicode 14.0 adds:
+   ; #x890 #x891 #x8E2 #x2E55 #x2E56 #x2E57 #x2E58 #x2E59 #x2E5A
+   ; #x2E5B #x2E5C #x110CD #x13430 #x13431 #x13432 #x13433 #x13434
+   ; #x13435 #x13436 #x13437 #x13438
     (define excluded-code-points-above-127
       '(
     
@@ -1318,8 +1334,9 @@
      #x94 #x95 #x96 #x97 #x98 #x99 #x9A #x9B #x9C #x9D
      #x9E #x9F #xA0 #xAB #xAD #xBB #x600 #x601 #x602 #x603
      #x604 #x605 #x61C                                       ; Unicode 7.0
-     #x6DD #x70F #xF3A #xF3B #xF3C #xF3D #x1680 #x169B
-     #x169C
+     #x6DD #x70F
+     #x890 #x891 #x8E2                                       ; Unicode 14.0
+     #xF3A #xF3B #xF3C #xF3D #x1680 #x169B #x169C
      #;#x17B4 #;#x17B5                                       ; Unicode 7.0
      #x180E #x2000 #x2001 #x2002 #x2003
      #x2004 #x2005 #x2006 #x2007 #x2008 #x2009 #x200A #x200B
@@ -1347,6 +1364,7 @@
      #x2E20 #x2E21 #x2E22 #x2E23 #x2E24 #x2E25 #x2E26 #x2E27 ; Unicode 5.1
      #x2E28 #x2E29                                           ; Unicode 5.1
      #x2E42                                                  ; Unicode 7.0
+     #x2E55 #x2E56 #x2E57 #x2E58 #x2E59 #x2E5A #x2E5B #x2E5C ; Unicode 14.0
      #x3000
      #x3008 #x3009 #x300A #x300B #x300C #x300D #x300E #x300F
      #x3010 #x3011 #x3014 #x3015 #x3016 #x3017 #x3018 #x3019
@@ -1356,7 +1374,10 @@
      #xFE44 #xFE47 #xFE48 #xFE59 #xFE5A #xFE5B #xFE5C #xFE5D
      #xFE5E #xFEFF #xFF08 #xFF09 #xFF3B #xFF3D #xFF5B #xFF5D
      #xFF5F #xFF60 #xFF62 #xFF63 #xFFF9 #xFFFA #xFFFB
-     #x110BD #x1BCA0 #x1BCA1 #x1BCA2 #x1BCA3                 ; Unicode 7.0
+     #x110BD                                                 ; Unicode 7.0
+     #x110CD #x13430 #x13431 #x13432 #x13433 #x13434 #x13435 ; Unicode 14.0
+     #x13436 #x13437 #x13438                                 ; Unicode 14.0
+     #x1BCA0 #x1BCA1 #x1BCA2 #x1BCA3                         ; Unicode 7.0
      #x1D173
      #x1D174 #x1D175 #x1D176 #x1D177 #x1D178 #x1D179 #x1D17A
      #xE0001 #xE0020 #xE0021 #xE0022 #xE0023 #xE0024 #xE0025
@@ -1463,23 +1484,23 @@
         => 0)
 
   (test alphabetic?
-        (report (filter-all-chars char-alphabetic?) 93217)
+        (report (filter-all-chars char-alphabetic?) 133396)
         => 0)
 
   (test numeric?
-        (report (filter-all-chars char-numeric?) 282)
+        (report (filter-all-chars char-numeric?) 1799)
         => 0)
 
   (test whitespace?
-        (report (filter-all-chars char-whitespace?) 26)
+        (report (filter-all-chars char-whitespace?) 25)
         => 0)
 
   (test upper-case?
-        (report (filter-all-chars char-upper-case?) 1362)
+        (report (filter-all-chars char-upper-case?) 1951)
         => 0)
 
   (test lower-case?
-        (report (filter-all-chars char-lower-case?) 1791)
+        (report (filter-all-chars char-lower-case?) 2471)
         => 0)
 
   (test title-case?

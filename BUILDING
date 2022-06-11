@@ -222,6 +222,11 @@ The make file supports several targets:
   installation.  If your system has a vim installation, then it might
   contain an rgb.txt in $VIMRUNTIME.
 
+'sudo make install-docs'
+  builds the documentation as with 'make docs' and installs it. If the installcsug and
+  installreleasenotes directories used with './configure' are writable by the current
+  user, then 'sudo' is not necessary.
+
 'make clean'
   removes binaries from the workarea.
 

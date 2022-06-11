@@ -24,8 +24,6 @@
 ; dropping support for s16 inner vectors for now
 (include "extract-common.ss")
 
-(define ptr-bytes 4)
-
 (define code-point-limit #x110000) ; as of Unicode 5.1
 #;(define table-limit #x30000)
 (define table-limit code-point-limit)

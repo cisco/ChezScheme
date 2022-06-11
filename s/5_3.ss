@@ -198,7 +198,7 @@
 (define flatanh
    (or (op-if-entry? cflop1 "(cs)atanh")
        ; |x| <= 1
-       ; principle expression:
+       ; principal expression:
        ; (log(1+x)-log(1-x))/2
        ; should use "log1p" but it doesn't exist on the 88k
        (let ([f (lambda (x)
@@ -219,7 +219,7 @@
 (define flasinh
    ; scheme-coded version needs "log2"
    (or (op-if-entry? cflop1 "(cs)asinh")
-       ; prinicple expression:
+       ; principal expression:
        ; log(x + sqrt(xx + 1))
        ; avoids spurious overflows
        ; avoids underflow problems from negative x by using identity
@@ -236,7 +236,7 @@
    ; scheme-coded version needs "log2"
    (or (op-if-entry? cflop1 "(cs)acosh")
        ; x >= 1
-       ; prinicple expression:
+       ; principal expression:
        ; log(x + sqrt(xx - 1))
        ; avoids spurious overflows
        (lambda (x)

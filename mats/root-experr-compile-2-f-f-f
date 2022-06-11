@@ -1980,6 +1980,9 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_4.mo:Expected error in mat char->integer: "incorrect argument count in call (char->integer #\a #\b)".
 5_4.mo:Expected error in mat char->integer: "char->integer: a is not a character".
 5_4.mo:Expected error in mat char->integer: "char->integer: <int> is not a character".
+5_4.mo:Expected error in mat char-: "incorrect argument count in call (char-)".
+5_4.mo:Expected error in mat char-: "incorrect argument count in call (char- #\a #\b #\c)".
+5_4.mo:Expected error in mat char-: "char-: 4 is not a character".
 5_4.mo:Expected error in mat string-for-each: "incorrect argument count in call (string-for-each)".
 5_4.mo:Expected error in mat string-for-each: "incorrect argument count in call (string-for-each (quote #()))".
 5_4.mo:Expected error in mat string-for-each: "incorrect argument count in call (string-for-each +)".
@@ -4886,25 +4889,6 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: U+194D symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: U+194E symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: U+194F symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19B0 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19B1 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19B2 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19B3 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19B4 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19B5 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19B6 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19B7 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19B8 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19B9 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19BA symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19BB symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19BC symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19BD symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19BE symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19BF symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19C0 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19C8 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: U+19C9 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: U+19D0 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: U+19D1 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: U+19D2 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
@@ -5711,25 +5695,6 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: U+194D symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: U+194E symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: U+194F symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19B0 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19B1 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19B2 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19B3 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19B4 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19B5 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19B6 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19B7 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19B8 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19B9 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19BA symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19BB symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19BC symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19BD symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19BE symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19BF symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19C0 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19C8 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: U+19C9 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: U+19D0 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: U+19D1 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: U+19D2 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
@@ -6536,25 +6501,6 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: U+194D symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: U+194E symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: U+194F symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19B0 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19B1 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19B2 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19B3 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19B4 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19B5 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19B6 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19B7 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19B8 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19B9 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19BA symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19BB symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19BC symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19BD symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19BE symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19BF symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19C0 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19C8 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: U+19C9 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: U+19D0 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: U+19D1 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: U+19D2 symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".

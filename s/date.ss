@@ -16,7 +16,7 @@
 ;;; disagreements with SRFI 19:
 ;;;  - nanoseconds are limited to 999,999,999 (SRFI 19: 9,999,999)
 ;;;  - seconds are limited to 61 (SRFI 19: 60)
-;;;  - days range from 1 to 31, includsive (SRFI 19: 0 to 31, inclusive)
+;;;  - days range from 1 to 31, inclusive (SRFI 19: 0 to 31, inclusive)
 ;;;  - years range from 1901 to about 2038, inclusive (SRFI 19: not clear)
 ;;;    - years start at 1970 under Windows
 ;;;  - current-date tz-offset defaults to local offset (SRFI 19: not specified)

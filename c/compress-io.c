@@ -40,7 +40,7 @@
    don't increase the output-port in-buffer size unless you're sure
    it reduces object-file size or reduces compression time
    significantly.  don't decrease it unless you're sure it doesn't
-   increase object-file size significnatly.  one buffer of size
+   increase object-file size significantly.  one buffer of size
    LZ4_OUTPUT_PORT_IN_BUFFER_SIZE is allocated per lz4-compressed
    output port.  another buffer of a closely related size is allocated
    per thread. */

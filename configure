@@ -34,6 +34,9 @@ installgroup=""
 installbin=""
 installlib=""
 installman=""
+installdoc=""
+installcsug=""
+installreleasenotes=""
 installschemename="scheme"
 installpetitename="petite"
 installscriptname="scheme-script"
@@ -189,6 +192,15 @@ while [ $# != 0 ] ; do
     --installman=*)
       installman=`echo $1 | sed -e 's/^--installman=//'`
       ;;
+    --installdoc=*)
+      installdoc=`echo $1 | sed -e 's/^--installdoc=//'`
+      ;;
+    --installcsug=*)
+      installcsug=`echo $1 | sed -e 's/^--installcsug=//'`
+      ;;
+    --installreleasenotes=*)
+      installreleasenotes=`echo $1 | sed -e 's/^--installreleasenotes=//'`
+      ;;
     --installowner=*)
       installowner=`echo $1 | sed -e 's/^--installowner=//'`
       ;;
@@ -334,6 +346,18 @@ if [ "$installman" = "" ] ; then
   installman=$installprefix/$installmansuffix
 fi
 
+if [ "$installdoc" = "" ] ; then
+  installdoc=$installprefix/share/doc
+fi
+
+if [ "$installcsug" = "" ] ; then
+  installcsug=$installdoc/csug9.5
+fi
+
+if [ "$installreleasenotes" = "" ] ; then
+  installreleasenotes=$installdoc/csv9
+fi
+
 if [ "$disablex11" = "no" ] ; then
   if [ $m = a6osx ] || [ $m = ta6osx ] ; then
     if [ ! -d /opt/X11/include/ ] ; then
@@ -360,6 +384,10 @@ if [ "$help" = "yes" ]; then
   echo "  --installbin=<pathname>           bin directory ($installbin)"
   echo "  --installlib=<pathname>           lib directory ($installlib)"
   echo "  --installman=<pathname>           manpage directory ($installman)"
+  echo "  --installdoc=<pathname>           documentation root ($installdoc)"
+  echo "  --installcsug=<pathname>          guide directory ($installcsug)"
+  # abbreviate "release notes" to fit default help in 80 cols:
+  echo "  --installreleasenotes=<pathname>  notes directory ($installreleasenotes)"
   echo "  --temproot=<pathname>             staging root ($temproot)"
   echo "  --installowner=<ownername>        install with owner ($installowner)"
   echo "  --installgroup=<groupname>        install with group ($installgroup)"
@@ -444,9 +472,11 @@ sed -e 's/$(m)/'$m'/g'\
   makefiles/Makefile.in > Makefile
 
 sed -e 's/$(m)/'$m'/g'\
+    -e "s;^installdir=.*\$;installdir=$installcsug;"\
     makefiles//Makefile-csug.in > csug/Makefile
 
 sed -e 's/$(m)/'$m'/g'\
+    -e "s;^installdir=.*\$;installdir=$installreleasenotes;"\
     makefiles//Makefile-release_notes.in > release_notes/Makefile
 
 cat makefiles/Makefile-workarea.in > $w/Makefile

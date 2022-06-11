@@ -107,9 +107,9 @@ products:
   - consider exposing query-interface somehow
     - (interface I x) => version of x to which I's methods are applicable
     - (interface->instance (interface I x)) => x
-  - interfaces and inheritence
+  - interfaces and inheritance
     - either require parent for define-interface or hide <root-interface>
-    - consider allowing multiple inheritence (including zero parents) for interfaces
+    - consider allowing multiple inheritance (including zero parents) for interfaces
 |#
 
 #|

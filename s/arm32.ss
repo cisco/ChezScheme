@@ -390,7 +390,7 @@
       (syntax-case x (definitions)
         [(k context (sym ...) (definitions defn ...) [(op (a aty ...) ...) ?rhs0 ?rhs1 ...] ...)
          ; potentially unnecessary level of checking, but the big thing is to make sure
-         ; the number of operands expected is the same on every clause of define-intruction
+         ; the number of operands expected is the same on every clause of define-instruction
          (and (not (null? #'(op ...)))
               (andmap identifier? #'(sym ...))
               (andmap identifier? #'(op ...))
@@ -2252,7 +2252,7 @@
               [(>) (i? (r? bge ble) (r? blt bgt))]
               [(>=) (i? (r? bgt blt) (r? ble bge))]
               [(overflow) (i? bvc bvs)]
-              [(multiply-overflow) (i? beq bne)] ; result of comparing sign bit of low word with all bits in high word: eq if no overflow, ne if oveflow
+              [(multiply-overflow) (i? beq bne)] ; result of comparing sign bit of low word with all bits in high word: eq if no overflow, ne if overflow
               [(carry) (i? bcc bcs)]
               [(fl<) (i? (r? ble bcs) (r? bgt bcc))]
               [(fl<=) (i? (r? blt bhi) (r? bge bls))]
@@ -3068,7 +3068,7 @@
                             ,(let ([len (+ post-pad-bytes return-bytes)])
                                (if (fx= len 0) `(nop) `(set! ,%sp ,(%inline - ,%sp (immediate ,len)))))
                             ,(if (fx= idbl 0) `(nop) `(inline ,(make-info-vpush %Cfparg1 idbl) ,%vpush-multiple))
-                            ; pad if necessary to force 8-byte boundardy after saving callee-save-regs+lr
+                            ; pad if necessary to force 8-byte boundary after saving callee-save-regs+lr
                             ,(if (fx= pre-pad-bytes 0) `(nop) `(set! ,%sp ,(%inline - ,%sp (immediate 4))))
                             ; save the callee save registers & return address
                             (inline ,(make-info-kill*-live* '() callee-save-regs+lr) ,%push-multiple)

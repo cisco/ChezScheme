@@ -4297,11 +4297,11 @@ implementation notes:
     ;; if info-index == index, there was set-pos after last put/put-some
     ;;   and info-length is true length
 
-    ;; Invarient: info-index <= index
-    ;; Invarient: size = (max length index)
-    ;; Invarient: if no put/put-some after last set-pos/set-length,
+    ;; Invariant: info-index <= index
+    ;; Invariant: size = (max length index)
+    ;; Invariant: if no put/put-some after last set-pos/set-length,
     ;;       then info-index = index and true length = info-length
-    ;; Invarient: if put/put-some after last set-pos/set-length,
+    ;; Invariant: if put/put-some after last set-pos/set-length,
     ;;       then info-index < index and true length = max info-length index
 
     ;; It is always safe to increment index when count != 0

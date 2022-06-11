@@ -1047,7 +1047,7 @@
           (newline op)
           (close-port op)))
       ; NB: keep this last among the iconv-codec mats
-      ; close any files left open by failing iconv tests.  this is particulary
+      ; close any files left open by failing iconv tests.  this is particularly
       ; important on windows when the iconv dll isn't available and where keeping
       ; file open can prevent it from being reopened.
       (begin (collect (collect-maximum-generation)) #t)
