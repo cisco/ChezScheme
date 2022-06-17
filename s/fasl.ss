@@ -356,7 +356,7 @@
       (put-uptr p n)
       (let wrf-flvector-loop ([i 0])
         (unless (fx= i n)
-          (wrf-flonum (flvector-ref x i) p)
+          (wrf-flonum (flvector-ref x i) p t a?)
           (wrf-flvector-loop (fx+ i 1)))))))
 
 (define wrf-bytevector
@@ -619,7 +619,7 @@
       (put-uptr p x)))
 
 (define wrf-flonum
-   (lambda (x p)
+   (lambda (x p t a?)
      (put-u8 p (constant fasl-type-flonum))
      (let ([n ($object-ref 'unsigned-64 x (constant flonum-data-disp))])
        (put-uptr p (ash n -32))
@@ -681,7 +681,7 @@
          [(box? x) (wrf-graph x p t a? wrf-box)]
          [(large-integer? x) (wrf-graph (if (bignum? x) (intern-bignum x t) x) p t a? wrf-large-integer)]
          [(ratnum? x) (wrf-graph x p t a? wrf-ratnum)]
-         [(flonum? x) (wrf-flonum x p)]
+         [(flonum? x) (wrf-graph x p t a? wrf-flonum)]
          [($inexactnum? x) (wrf-graph x p t a? wrf-inexactnum)]
          [($exactnum? x) (wrf-graph x p t a? wrf-exactnum)]
          [(eof-object? x) (wrf-immediate (constant seof) p)]
