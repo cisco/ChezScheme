@@ -65,7 +65,7 @@ static void oblist_insert(ptr sym, iptr idx, IGEN g) {
 
 void S_resize_oblist(void) {
   bucket **new_oblist, *b, *oldb, **pb, *bnext;
-  iptr new_oblist_length, i, idx, inc = 0, dinc = 0;
+  iptr new_oblist_length, i, idx;
   ptr sym;
   IGEN g;
 
@@ -80,18 +80,14 @@ void S_resize_oblist(void) {
 
   for (i = 0; i < S_G.oblist_length; i += 1) {
     for (b = S_G.oblist[i]; b != NULL; b = bnext) {
-      int done = 0;
       bnext = b->next;
       sym = b->sym;
       idx = OBINDEX(UNFIX(SYMHASH(sym)), new_oblist_length);
       g = GENERATION(sym);
 
-      for (pb = &new_oblist[idx]; (oldb = *pb) != NULL && SegmentGeneration(addr_get_segment(TO_PTR(oldb))) < g; pb = &oldb->next) {
-        inc++;
-        if (done)
-          dinc++;
-        done = 1;
-      }
+      for (pb = &new_oblist[idx];
+           (oldb = *pb) != NULL && SegmentGeneration(addr_get_segment(TO_PTR(oldb))) < g;
+           pb = &oldb->next);
       b->next = oldb;
       *pb = b;
     }
@@ -304,7 +300,7 @@ void S_intern_gensym(ptr sym) {
 }
 
 /* must hold mutex */
-ptr S_intern4(sym) ptr sym; {
+ptr S_intern4(ptr sym) {
   ptr name = SYMNAME(sym);
   ptr uname_str = (Sstringp(name) ? name : Scar(name));
   const string_char *uname = &STRIT(uname_str, 0);

@@ -271,7 +271,7 @@ void S_foreign_entry(void) {
     AC0(tc) = x;
 }
 
-static ptr lookup_foreign_entry(s) const char *s; {
+static ptr lookup_foreign_entry(const char *s) {
   return lookup(s);
 }
 

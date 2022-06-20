@@ -1600,10 +1600,8 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
 
   /* rebuild rtds_with_counts lists, dropping otherwise inaccessible rtds */
     { IGEN g, newg; ptr ls, p; seginfo *si;
-      int count = 0;
       for (g = MAX_CG; g >= 0; g -= 1) {
         for (ls = S_G.rtds_with_counts[g], S_G.rtds_with_counts[g] = Snil; ls != Snil; ls = Scdr(ls)) {
-          count++;
           p = Scar(ls);
           si = SegInfo(ptr_get_segment(p));
           if (!si->old_space || new_marked(si, p)) {

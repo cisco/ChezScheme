@@ -298,7 +298,7 @@
         [pb-mov-pb-d->s->d dr]
         [pb-mov-pb-i-bits->d-bits dr]
         [pb-mov-pb-d-bits->i-bits dr]
-        [pb-mov-pb-i-i-bits->d-bits dr]
+        [pb-mov-pb-i-i-bits->d-bits drr]
         [pb-mov-pb-d-lo-bits->i-bits dr]
         [pb-mov-pb-d-hi-bits->i-bits dr]
         [pb-bin-op-pb-no-signal-pb-add-pb-register drr]

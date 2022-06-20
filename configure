@@ -653,9 +653,6 @@ if [ "$cflagsset" = "no" ] ; then
         CFLAGS="-m32 ${optFlags}"
         ;;
     em)
-        if [ "$zlibLib" = "" ]; then
-          zlibLib="-s USE_ZLIB=1"
-        fi
         CFLAGS="${optFlags}"
         ;;
   esac
@@ -860,6 +857,7 @@ case "${flagsmuni}" in
     em)
         if  [ "$zlibLib" = "" ]; then
             zlibLib="-s USE_ZLIB=1"
+            CFLAGS="${CFLAGS} -s USE_ZLIB=1"
             # not used, but this is how we might build our own zlib:
             zlibConfigureEnv="CROSS_PREFIX=em uname=wasm-em"
         fi

@@ -667,7 +667,7 @@ static void s_ee_set_color(int color_id, IBOOL background) {
 #include <sys/ioctl.h>
 #include <wchar.h>
 #include <locale.h>
-#if !defined(__GLIBC__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__linux__) && !defined(NO_USELOCALE)
+#if !defined(__GLIBC__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__linux__) && !defined(__EMSCRIPTEN__) && !defined(NO_USELOCALE)
 # include <xlocale.h>
 #endif
 

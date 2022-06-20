@@ -781,8 +781,7 @@ static void big_short_trunc(ptr tc, ptr x, bigit s, iptr xl, IBOOL qs, IBOOL rs,
   if (r != (ptr *)NULL) *r = copy_normalize(tc, &k,1,rs);
 }
 
-static void big_trunc(tc, x, y, xl, yl, qs, rs, q, r)
-              ptr tc, x, y; iptr xl, yl; IBOOL qs, rs; ptr *q, *r; {
+static void big_trunc(ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL qs, IBOOL rs, ptr *q, ptr *r) {
   iptr i;
   bigit *p, *xp, *yp;
   iptr m = xl-yl+1;

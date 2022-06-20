@@ -114,8 +114,8 @@ enum {
   regs[dest] = (uptr)imm_unsigned << 32
 #else
 # define doi_pb_mov16_pb_zero_bits_pb_shift2(instr) \
-   do_pb_mov16_pb_zero_bits_pb_shift2(INSTR_di_dest(instr))
-# define do_pb_mov16_pb_zero_bits_pb_shift2(dest) \
+  do_pb_mov16_pb_zero_bits_pb_shift2(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+# define do_pb_mov16_pb_zero_bits_pb_shift2(dest, imm_unsigned)      \
   regs[dest] = 0
 #endif
 
@@ -126,8 +126,8 @@ enum {
   regs[dest] = (uptr)imm_unsigned << 48
 #else
 # define doi_pb_mov16_pb_zero_bits_pb_shift3(instr) \
-   do_pb_mov16_pb_zero_bits_pb_shift3(INSTR_di_dest(instr))
-# define do_pb_mov16_pb_zero_bits_pb_shift3(dest) \
+  do_pb_mov16_pb_zero_bits_pb_shift3(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+# define do_pb_mov16_pb_zero_bits_pb_shift3(dest, imm_unsigned)      \
   regs[dest] = 0
 #endif
 
@@ -148,8 +148,8 @@ enum {
   regs[dest] |= (uptr)imm_unsigned << 32
 #else
 # define doi_pb_mov16_pb_keep_bits_pb_shift2(instr) \
-   do_pb_mov16_pb_keep_bits_pb_shift2()
-# define do_pb_mov16_pb_keep_bits_pb_shift2() \
+  do_pb_mov16_pb_keep_bits_pb_shift2(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+# define do_pb_mov16_pb_keep_bits_pb_shift2(dest, imm_unsigned) \
   do { } while (0)
 #endif
 
@@ -160,8 +160,8 @@ enum {
   regs[dest] |= (uptr)imm_unsigned << 48
 #else
 # define doi_pb_mov16_pb_keep_bits_pb_shift3(instr) \
-   do_pb_mov16_pb_keep_bits_pb_shift3()
-# define do_pb_mov16_pb_keep_bits_pb_shift3() \
+   do_pb_mov16_pb_keep_bits_pb_shift3(INSTR_di_dest(instr), INSTR_di_imm_unsigned(instr))
+# define do_pb_mov16_pb_keep_bits_pb_shift3(dest, imm_unsigned) \
   do { } while (0)
 #endif
 

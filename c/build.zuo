@@ -517,7 +517,9 @@
 (define (get-preload-files config at-dir mboot)
   (define preload-files
     (map (lambda (path)
-           (at-dir "../.." path))
+           (if (relative-path? path)
+               (at-dir "../.." path)
+               path))
          (shell->strings (hash-ref config 'preloadBootFiles ""))))
   (cond
     [(null? preload-files) '()]

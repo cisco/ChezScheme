@@ -558,7 +558,7 @@ ptr S_get_more_room_help(ptr tc, uptr ap, uptr type, uptr size) {
   return x;
 }
 
-ptr S_list_bits_ref(p) ptr p; {
+ptr S_list_bits_ref(ptr p) {
   seginfo *si = SegInfo(ptr_get_segment(p));
 
   if (si->list_bits) {
@@ -568,7 +568,7 @@ ptr S_list_bits_ref(p) ptr p; {
     return FIX(0);
 }
 
-void S_list_bits_set(p, bits) ptr p; iptr bits; {
+void S_list_bits_set(ptr p, iptr bits) {
   seginfo *si = SegInfo(ptr_get_segment(p));
 
   /* This function includes potential races when writing list bits.
@@ -598,7 +598,7 @@ void S_list_bits_set(p, bits) ptr p; iptr bits; {
   si->list_bits[segment_bitmap_byte(p)] |= segment_bitmap_bits(p, bits);
 }
 
-ptr S_cons_in(tc, s, g, car, cdr) ptr tc; ISPC s; IGEN g; ptr car, cdr; {
+ptr S_cons_in(ptr tc, ISPC s, IGEN g, ptr car, ptr cdr) {
     ptr p;
 
     find_room(tc, s, g, type_pair, size_pair, p);
@@ -617,7 +617,7 @@ ptr Scons(ptr car, ptr cdr) {
     return p;
 }
 
-ptr S_ephemeron_cons_in(gen, car, cdr) IGEN gen; ptr car, cdr; {
+ptr S_ephemeron_cons_in(IGEN gen, ptr car, ptr cdr) {
   ptr p;
   ptr tc = get_thread_context();
 
@@ -630,7 +630,7 @@ ptr S_ephemeron_cons_in(gen, car, cdr) IGEN gen; ptr car, cdr; {
   return p;
 }
 
-ptr S_box2(ref, immobile) ptr ref; IBOOL immobile; {
+ptr S_box2(ptr ref, IBOOL immobile) {
     ptr tc = get_thread_context();
     ptr p;
 
@@ -736,7 +736,7 @@ ptr S_fxvector(iptr n) {
     return p;
 }
 
-ptr S_flvector(n) iptr n; {
+ptr S_flvector(iptr n) {
     ptr tc;
     ptr p; iptr d;
 
@@ -815,11 +815,11 @@ ptr S_stencil_vector(uptr mask) {
   return stencil_vector(type_stencil_vector, mask);
 }
 
-ptr S_system_stencil_vector(mask) uptr mask; {
+ptr S_system_stencil_vector(uptr mask) {
   return stencil_vector(type_sys_stencil_vector, mask);
 }
 
-ptr S_record(n) iptr n; {
+ptr S_record(iptr n) {
     ptr tc = get_thread_context();
     ptr p;
 
@@ -1114,7 +1114,7 @@ ptr S_weak_cons(ptr car, ptr cdr) {
   return S_cons_in(tc, space_weakpair, 0, car, cdr);
 }
 
-ptr S_phantom_bytevector(sz) uptr sz; {
+ptr S_phantom_bytevector(uptr sz) {
     ptr tc = get_thread_context();
     ptr p;
 
@@ -1128,7 +1128,7 @@ ptr S_phantom_bytevector(sz) uptr sz; {
     return p;
 }
 
-void S_phantom_bytevector_adjust(ph, new_sz) ptr ph; uptr new_sz; {
+void S_phantom_bytevector_adjust(ptr ph, uptr new_sz) {
   ptr tc = get_thread_context();
   uptr old_sz = PHANTOMLEN(ph);
   seginfo *si;
