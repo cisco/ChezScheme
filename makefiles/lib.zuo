@@ -187,7 +187,7 @@
      (or (ormap (lambda (line)
                   (let ([s (string-split line "#define scheme_version 0x")])
                     (and (pair? (cdr s))
-                         (let ([v (cadr s)])
+                         (let ([v (car (string-split (cadr s) "\r"))])
                            (if (= (string-length v) 8)
                                v
                                (~a "0" v))))))
