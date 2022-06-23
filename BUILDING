@@ -68,10 +68,15 @@ have a Chez Scheme build on one machine, you can use use
 
 to more quickly create boot files for any <machine type>.
 
+Boot and header files are specific to a Chez Scheme version, so to
+rebuild after pulling commits in a Git checkout of Chez Scheme, you
+may need to perform this step again to create new boot and header
+files.
+
 
 CONFIGURING AND BUILDING
 
-After you have boot files for the current platform, builing an
+After you have boot files for the current platform, building and
 installing is the usual sequence:
 
   ./configure

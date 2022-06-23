@@ -12,7 +12,8 @@
          make-opt-lookup
          make-run-scheme
          relevant-config
-         source-version)
+         source-version
+         boot-files-version)
 
 (define-syntax (define-values stx)
   (unless (and (list? stx) (= 3 (length stx))) (bad-syntax stx))
@@ -177,3 +178,19 @@
              (and (pair? (cdr s))
                   (car (string-split (cadr s) ")")))))
          lines))
+
+(define (boot-files-version boot-dir)
+  (define equates (build-path boot-dir "equates.h"))
+  (cond
+    [(file-exists? equates)
+     (define lines (string-split (file->string equates) "\n"))
+     (or (ormap (lambda (line)
+                  (let ([s (string-split line "#define scheme_version 0x")])
+                    (and (pair? (cdr s))
+                         (let ([v (cadr s)])
+                           (if (= (string-length v) 8)
+                               v
+                               (~a "0" v))))))
+                lines)
+         "[unknown]")]
+    [else "[missing]"]))
