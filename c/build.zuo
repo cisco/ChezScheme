@@ -209,6 +209,12 @@
            env
            (shell->strings vars)))
 
+  (define (lookup-make)
+    (let ([make (or (lookup 'MAKE) "")])
+      (if (equal? make "")
+          "make"
+          make)))
+
   (make-targets
    `([:target build (,exe revision)
               ,void]
@@ -306,8 +312,7 @@
                                               (hash-ref config 'zlibConfigureEnv "")
                                               (config-to-env))
                                         'desc "libz configure"))])
-                   (shell/wait (hash-ref config 'MAKE "make")
-                               "static"
+                   (shell/wait (lookup-make) "static"
                                (hash 'dir zlib-dir
                                      'desc "zlib make"))]))]
 
@@ -319,7 +324,7 @@
 		  [msvc?
 		   ((dynamic-require (at-source "winlib.zuo") 'build-lz4) lz4-lib-dir config)]
 		  [else
-                   (shell/wait (hash-ref config 'MAKE "make") "liblz4.a"
+                   (shell/wait (lookup-make) "liblz4.a"
                                (hash 'dir lz4-lib-dir
                                      'env (config-to-env)
                                      'desc "lz4 make"))]))]
