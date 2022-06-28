@@ -2312,3 +2312,10 @@
   It now returns a negative number in this situation.
     cpnanopass.ss
     5_4.ms root-experr-* patch-*
+- fix ppc32 conditional-branch code generation when displacement is
+  exactly 32764
+    s/ppc32.ss
+- fix callable floating-point argument allocation on x86
+    s/cpnanopass.ss
+- corrected signature of multibyte->string and string->multibyte
+    s/primdata.ss

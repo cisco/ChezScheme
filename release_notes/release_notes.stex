@@ -1950,9 +1950,23 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Foreign-callable floating-point argument allocation for x86 (9.6.0)}
+
+When a foreign callable receives a \scheme{double} or \scheme{float} argument, the
+allocation of space to box the number would try to save the
+floating-point return register in the (rare) case that allocation
+requires a new page of memory. Saving the return register is harmless on
+most platforms, but on x86, a save and restore involves popping then
+pushing the x87 register stack, which is invalid if nothing was there
+at the start.
+
+\subsection{Code generation for a specific branch displacement on ppc32 (9.6.0)}
+
+Branch generation would go wrong if the displacement was exactly 32,764 bytes.
+
 \subsection{\scheme{char-} returns negative results (9.6.0)}
 
-The character difference oprator returned a large positive integer in
+The character difference operator returned a large positive integer in
 situations where the first argument is represented by a lower number than the
 second argument.  For example: \scheme{(char- #\a #\b)} on 64-bit macOS returns
 \scheme{720575940379279351}.  The fix corrects this, so that it instead
