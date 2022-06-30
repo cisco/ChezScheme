@@ -323,6 +323,7 @@
                      [peek-byte lookahead-u8]
                      [s:write write])
          console-output-port
+         $char-grapheme-other-state
          path-root
          path-last
          $make-read
@@ -1256,6 +1257,10 @@
       (write v o)))
 
 (define (console-output-port) (current-output-port))
+
+(define ($char-grapheme-other-state)
+  ;; Probably correct:
+  1)
 
 (define (path-root p)
   (path->string (path-replace-suffix p #"")))

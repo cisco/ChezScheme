@@ -8,5 +8,7 @@ http://www.unicode.org/Public/UCD/latest/ucd/SpecialCasing.txt
 http://www.unicode.org/Public/UCD/latest/ucd/auxiliary/WordBreakProperty.txt
 http://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
 http://www.unicode.org/Public/UCD/latest/ucd/NormalizationTest.txt
+http://www.unicode.org/Public/UCD/latest/ucd/auxiliary/GraphemeBreakProperty.txt
+http://www.unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt
 
 Then run 'make'.

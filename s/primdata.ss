@@ -1227,6 +1227,9 @@
   (char-ci=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard cp03 safeongoodargs])   ; not restricted to 2+ arguments
   (char-ci>=? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])  ; not restricted to 2+ arguments
   (char-ci>? [sig [(char char ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])   ; not restricted to 2+ arguments
+  (char-extended-pictographic? [sig [(char) -> (boolean)]] [flags pure mifoldable discard])
+  (char-grapheme-break-property [sig [(char) -> (symbol)]] [flags pure mifoldable discard])
+  (char-grapheme-step [sig [(char fixnum) -> (boolean fixnum)]] [flags])
   (char-name [sig [(sub-ptr) (sub-symbol maybe-char) -> (ptr)]] [flags cptypes2])
   (char-ready? [sig [() (textual-input-port) -> (boolean)]] [flags ieee r5rs])
   (chmod [sig [(pathname sub-ufixnum) -> (void)]] [flags])
@@ -1761,6 +1764,8 @@
   (string-copy! [sig [(string sub-length string sub-length sub-length) -> (void)]] [flags true])
   (string->immutable-string [sig [(string) -> (string)]] [flags alloc safeongoodargs])
   (string->uninterned-symbol [sig [(string) -> (uninterned-symbol)]] [flags true discard safeongoodargs])
+  (string-grapheme-count [sig [(string) -> (uptr)] [(string sub-index) -> (uptr)] [(string sub-index sub-index) -> (uptr)]] [flags true])
+  (string-grapheme-span [sig [(string sub-index) -> (uptr)] [(string sub-index sub-index) -> (uptr)]] [flags true])
   (string-truncate! [sig [(string length) -> (string)]] [flags true])
   (strip-fasl-file [sig [(pathname pathname fasl-strip-options) -> (void)]] [flags true])
   (sub1 [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs])
@@ -1877,6 +1882,8 @@
   ($bytevector-uncompress [flags])
   ($capture-fasl-target [flags single-valued])
   ($c-error [flags])
+  ($char-grapheme-step [sig [(char fixnum) -> (boolean fixnum)]] [flags])
+  ($char-grapheme-other-state [flags true])
   ($check-heap-errors [flags single-valued])
   ($clear-dynamic-closure-counts [flags single-valued])  ; added for closure instrumentation
   ($clear-pass-stats [flags single-valued])

@@ -246,7 +246,7 @@
              (if (char? c) 
                  (unsafe-op c)
                  ($oops who "~s is not a character" c))))]))
-    
+
     (define-char-op char-upcase $char-upcase)
     (define-char-op char-downcase $char-downcase)
     (define-char-op char-titlecase $char-titlecase)
@@ -260,6 +260,8 @@
     (define-char-op char-general-category $char-category)
     (define-char-op $constituent? $char-constituent?)
     (define-char-op $subsequent? $char-subsequent?)
+    (define-char-op char-extended-pictographic? $char-extended-pictographic?)
+    (define-char-op char-grapheme-break-property $char-grapheme-break-property)
   )
 
   (let ()
@@ -856,5 +858,192 @@
         (unless (string? s) (string-error who s))
         ($compose ($decompose s #f))))
   )
+
+  (let ()
+    (define Extended_Pictographic (fx+ grapheme-cluster-break-property-count 1))
+    (define grapheme-cluster-break-bits (integer-length (fx+ grapheme-cluster-break-property-count 1)))
+
+    ;; We encode the state of finding cluster boundaries as a fixnum,
+    ;; where the low bits are the previous character's grapheme-break
+    ;; property plus one, and the high bits are the state for
+    ;; Extended_Pictographic matching. A 0 state is treated as a
+    ;; previous property that doesn't match anything (and that's why
+    ;; we add one to the previous character's property otherwise).
+    ;; Use 0 for the state for the start of a sequence.
+    ;;
+    ;; The result of taking a step is two values:
+    ;;   * a boolean indicating whether an cluster end was found
+    ;;   * a new state
+    ;; The result state is 0 only if the character sent in is consumed
+    ;; as part of a cluster (in which case the first result will be #t).
+    ;; Otherwise, a true first result indicates that a boundary was
+    ;; found just before the provided character (and the provided character's
+    ;; grapheme end is still pending).
+    ;;
+    ;; So, if you get to the end of a string with a non-0 state, then
+    ;; "flush" the state by consuming that last grapheme cluster.
+    (define grapheme-step
+      (lambda (ch state)
+        (let ([prev (fx- (fxand state (fx- (fxsll 1 grapheme-cluster-break-bits) 1)) 1)]
+              [ext-pict (fxsrl state grapheme-cluster-break-bits)]
+              [prop ($char-grapheme-cluster-break ch)])
+          (define (init-state) 0)
+          (define (prop-state)
+            ;; when we know that `($char-extended-pictographic? ch)` is false
+            (safe-assert (not ($char-extended-pictographic? ch)))
+            (fx+ prop 1))
+          (define (next-state)
+            (fxior (fx+ prop 1)
+                   (if ($char-extended-pictographic? ch)
+                       (fxsll Extended_Pictographic grapheme-cluster-break-bits)
+                       0)))
+          ;; These are the rules from UAX 29.
+          ;; GB1 and GB2 are implicit and external to this stepping function.
+          (cond
+            ;; some of GB999 as common case;
+            ;; a variant of this is inlined in unsafe mode
+            [(and (fx= prev Other)
+                  (fx= prop Other)
+                  (not ($char-extended-pictographic? ch)))
+             (values #t (fx+ Other 1))]
+            ;; some of GB3 and some of GB4
+            [(fx= prev CR) 
+             (if (fx= prop LF)
+                 (values #t (init-state))
+                 (values #t (prop-state)))]
+            ;; some of GB3 and some of GB5
+            [(fx= prop CR)
+             (values (fx> state 0) (prop-state))]
+            ;; rest of GB4 
+            [(or (fx= prev Control)
+                 (fx= prev LF))
+             (values #t (prop-state))]
+            ;; rest of GB5
+            [(or (fx= prop Control)
+                 (fx= prop LF))
+             (values #t (if (fx= state 0)
+                            (init-state)
+                            (prop-state)))]
+            ;; GB6
+            [(and (fx= prev L)
+                  (or (fx= prop L)
+                      (fx= prop V)
+                      (fx= prop LV)
+                      (fx= prop LVT)))
+             (values #f (prop-state))]
+            ;; GB7
+            [(and (or (fx= prev LV)
+                      (fx= prev V))
+                  (or (fx= prop V)
+                      (fx= prop T)))
+             (values #f (prop-state))]
+            ;; GB8
+            [(and (or (fx= prev LVT)
+                      (fx= prev T))
+                  (fx= prop T))
+             (values #f (prop-state))]
+            ;; GB9
+            [(or (fx= prop Extend)
+                 (fx= prop ZWJ))
+             (values #f
+                     (cond
+                       [(or (fx= ext-pict Extended_Pictographic)
+                            (fx= ext-pict Extend))
+                        (fxior (fx+ prop 1)
+                               (fxsll prop grapheme-cluster-break-bits))]
+                       [else (fx+ prop 1)]))]
+            ;; GB9a
+            [(fx= prop SpacingMark)
+             (values #f (prop-state))]
+            ;; GB9b
+            [(fx= prev Prepend)
+             (values #f (next-state))]
+            ;; GB11
+            [(and (fx= ext-pict ZWJ)
+                  ($char-extended-pictographic? ch))
+             (values #f (fxior (fx+ prop 1)
+                               (fxsll Extended_Pictographic
+                                      grapheme-cluster-break-bits)))]
+            ;; GB12 and GB13
+            [(fx= prev Regional_Indicator)
+             (if (fx= prop Regional_Indicator)
+                 (values #f (fx+ Other 1))
+                 (values #t (next-state)))]
+            ;; GB999
+            [else
+             (values (fx> state 0) (next-state))]))))
+
+    (define grapheme-span
+      (lambda (s start end)
+        (cond
+          [(fx= start end) 0]
+          [else
+           (let-values ([(consumed? state) (char-grapheme-step (string-ref s start) 0)])
+             (cond
+               [consumed? 1]
+               [else
+                (let loop ([i (fx+ start 1)] [state state])
+                  (cond
+                    [(fx= i end) (fx- i start)]
+                    [else
+                     (let-values ([(consumed? state) (char-grapheme-step (string-ref s i) state)])
+                       (if consumed?
+                           (if (fx= state 0)
+                               (fx- (fx+ i 1) start) ; CRLF, consumed both
+                               (fx- i start))
+                           (loop (fx+ i 1) state)))]))]))])))
+
+    (define grapheme-count
+      (lambda (s start end count)
+        (cond
+          [(fx= start end) count]
+          [else
+           (let ([len (grapheme-span s start end)])
+             (grapheme-count s (fx+ start len) end (fx+ count 1)))])))
+
+    (set! $char-grapheme-step grapheme-step)
+
+    (set! $char-grapheme-other-state
+          (lambda () (fx+ Other 1)))
+
+    (set-who! char-grapheme-step
+      (lambda (ch state)
+        (unless (char? ch) (char-error who ch))
+        (unless (fixnum? state)
+          ($oops who "~s is not a grapheme cluster state" state))
+        (grapheme-step ch state)))
+
+    (set-who! string-grapheme-span
+      (case-lambda
+       [(s start)
+        (unless (string? s) (string-error who s))
+        (unless (and (fixnum? start) (fx<= 0 start (string-length s)))
+          ($oops who "~s is not a valid start index for ~s" start s))
+        (grapheme-span s start (string-length s))]
+       [(s start end)
+        (unless (string? s) (string-error who s))
+        (let ([k (string-length s)])
+          (unless (and (fixnum? start) (fixnum? end) (fx<= 0 start end k))
+            ($oops who "~s and ~s are not valid start/end indices for ~s" start end s)))
+        (grapheme-span s start end)]))
+
+    (set-who! string-grapheme-count
+      (case-lambda
+       [(s)
+        (unless (string? s) (string-error who s))
+        (grapheme-count s 0 (string-length s) 0)]
+       [(s start)
+        (unless (string? s) (string-error who s))
+        (unless (and (fixnum? start) (fx<= 0 start (string-length s)))
+          ($oops who "~s is not a valid start index for ~s" start s))
+        (grapheme-count s start (string-length s) 0)]
+       [(s start end)
+        (unless (string? s) (string-error who s))
+        (let ([k (string-length s)])
+          (unless (and (fixnum? start) (fixnum? end) (fx<= 0 start end k))
+            ($oops who "~s and ~s are not valid start/end indices for ~s" start end s)))
+        (grapheme-count s start end 0)]))
+    )
+  )
 )
-)
+

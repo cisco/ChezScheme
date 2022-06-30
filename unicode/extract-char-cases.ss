@@ -41,12 +41,13 @@
           (mutable tcstr)
           (mutable fcstr)
           (immutable decomp-canon)
-          (immutable decomp-compat))
+          (immutable decomp-compat)
+          (mutable grapheme-cluster-break))
   (protocol
     (lambda (new)
       (lambda (ucchar lcchar tcchar decomp-canon decomp-compat)
         (new ucchar lcchar tcchar 0 ucchar lcchar tcchar 0
-             decomp-canon decomp-compat)))))
+             decomp-canon decomp-compat 0)))))
 
 (define (find-cdrec idx ls)
   (cond
@@ -128,6 +129,42 @@
       (lambda (fields) (= 0 (string-length (list-ref fields 4))))
       data)))
 
+(define grapheme-cluster-break-props '(Other
+                                       CR
+                                       LF
+                                       Control
+                                       Extend
+                                       ZWJ
+                                       Regional_Indicator
+                                       Prepend
+                                       SpacingMark
+                                       L
+                                       V
+                                       T
+                                       LV
+                                       LVT))
+
+(define (insert-graphemebreak-data! ls data)
+  (for-each
+    (lambda (fields)
+      (let-values ([(lo hi) (hex-range->nums (car fields))])
+        (let loop ([n lo])
+          (unless (> n hi)
+            (unless (assq n ls)
+              (let ([cdrec (make-chardata 0 0 0 0 0)])
+                (set! ls (cons (cons n cdrec) ls))))
+            (let ([cdrec (find-cdrec n ls)])
+              (chardata-grapheme-cluster-break-set!
+               cdrec
+               (let ([s (string->symbol (list-ref fields 1))])
+                 (let loop ([i 0] [props grapheme-cluster-break-props])
+                   (if (eq? s (car props))
+                       i
+                       (loop (add1 i) (cdr props)))))))
+            (loop (add1 n))))))
+    data)
+  ls)
+
 (define verify-identity!
   (lambda (n cdrec)
     (define (zeros? . args) (andmap (lambda (x) (eqv? x 0)) args))
@@ -194,16 +231,19 @@
 (let ([ls (map data-case (get-unicode-data "UNIDATA/UnicodeData.txt"))])
   (insert-foldcase-data! ls (get-unicode-data "UNIDATA/CaseFolding.txt"))
   (insert-specialcase-data! ls (get-unicode-data "UNIDATA/SpecialCasing.txt"))
- ; insert final sigma flag for char-downcase conversion
-  (chardata-lcstr-set! (find-cdrec #x3a3 ls) 'sigma)
-  (with-output-to-file* "unicode-char-cases.ss"
-    (lambda ()
+  (let* ([ls (insert-graphemebreak-data! ls (get-unicode-data "UNIDATA/GraphemeBreakProperty.txt"))])
+   ; insert final sigma flag for char-downcase conversion
+    (chardata-lcstr-set! (find-cdrec #x3a3 ls) 'sigma)
+    (with-output-to-file* "unicode-char-cases.ss"
+     (lambda ()
       (parameterize ([print-graph #t] [print-vector-length #f] [print-unicode #f])
         (pretty-print
           `(module ($char-upcase $char-downcase $char-titlecase $char-foldcase
                     $str-upcase $str-downcase $str-titlecase $str-foldcase
                     $str-decomp-canon $str-decomp-compat
-                    $composition-pairs)
+                    $char-grapheme-cluster-break $char-grapheme-break-property
+                    $composition-pairs
+                    ,@grapheme-cluster-break-props grapheme-cluster-break-property-count)
              (define char-upcase-table ',(build-table chardata-ucchar ls))
              (define char-downcase-table ',(build-table chardata-lcchar ls))
              (define char-titlecase-table ',(build-table chardata-tcchar ls))
@@ -214,6 +254,14 @@
              (define string-foldcase-table ',(build-table chardata-fcstr ls))
              (define decomp-canon-table ',(build-table chardata-decomp-canon ls))
              (define decomp-compat-table ',(build-table chardata-decomp-compat ls))
+             (define grapheme-cluster-break-table ',(build-table chardata-grapheme-cluster-break ls))
+             ,@(let loop ([i 0] [props grapheme-cluster-break-props])
+                 (if (null? props)
+                     '()
+                     (cons `(define ,(car props) ,i)
+                           (loop (add1 i) (cdr props)))))
+             (define grapheme-cluster-break-property-count ,(length grapheme-cluster-break-props))
+
              (define table-limit ,table-limit)
              (define code-point-limit ,code-point-limit)
              (define table-ref ,table-ref-code)
@@ -232,6 +280,12 @@
                        (if (fixnum? x)
                            (integer->char (fx+ x n))
                            x)))))
+             (define (intop tbl c)
+               (let ([n (char->integer c)])
+                 (if (and (fx< table-limit code-point-limit)
+                          (fx>= n table-limit))
+                     0
+                     (table-ref tbl n))))
              (define ($char-upcase c) (charop char-upcase-table c))
              (define ($char-downcase c) (charop char-downcase-table c))
              (define ($char-titlecase c) (charop char-titlecase-table c))
@@ -242,8 +296,11 @@
              (define ($str-foldcase c) (strop string-foldcase-table c))
              (define ($str-decomp-canon c) (strop decomp-canon-table c))
              (define ($str-decomp-compat c) (strop decomp-compat-table c))
+             (define ($char-grapheme-cluster-break c) (intop grapheme-cluster-break-table c))
+             (define ($char-grapheme-break-property c) (vector-ref ',(list->vector grapheme-cluster-break-props)
+                                                                   (intop grapheme-cluster-break-table c)))
              (define ($composition-pairs)
                ',(get-composition-pairs
-                   (build-uncommonized-table chardata-decomp-canon ls)))))))))
+                   (build-uncommonized-table chardata-decomp-canon ls))))))))))
 
 (printf "Happy Happy Joy Joy ~a\n" (sizeof cache))

@@ -3641,6 +3641,23 @@
       (char-pred char=? r6rs:char=? eq?)
       (char-pred char>=? r6rs:char>=? >=)
       (char-pred char>? r6rs:char>? >))
+    (define-inline 3 char-grapheme-step
+      [(e-ch e-state)
+       (bind #t (e-ch e-state)
+         ;; Handle ASCII non-control charaters inline when the state is simple enough:
+         `(if ,(build-and
+                (%inline > ,e-ch (immediate ,(+ (constant type-char)
+                                                ;; last low-ASCII control character:
+                                                (fxsll #x1f (constant char-data-offset)))))
+                (%inline < ,e-ch (immediate ,(+ (constant type-char)
+                                                ;; first high-ASCII control character:
+                                                (fxsll #x7f (constant char-data-offset))))))
+              (if ,(%inline eq? ,e-state (immediate ,(fix ($char-grapheme-other-state))))
+                  ,(%primcall src sexpr values ,(%constant strue) (immediate ,(fix ($char-grapheme-other-state))))
+                  (if ,(%inline eq? ,e-state (immediate ,(fix 0)))
+                      ,(%primcall src sexpr values ,(%constant sfalse) (immediate ,(fix ($char-grapheme-other-state))))
+                      ,(%primcall src sexpr $char-grapheme-step ,e-ch ,e-state)))
+              ,(%primcall src sexpr $char-grapheme-step ,e-ch ,e-state)))])
     (define-inline 3 map
       [(e-proc e-ls)
        (or (nanopass-case (L7 Expr) e-proc

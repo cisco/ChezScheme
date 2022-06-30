@@ -434,6 +434,76 @@ ASCII code for the character.
     (- (char->integer c1) (char->integer c2))))
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{char-grapheme-step}{\categoryprocedure}{(char-grapheme-step \var{char} \var{state})}
+\returns two values: a boolean indicating whether a cluster terminated and a new state
+\listlibraries
+\endentryheader
+
+\noindent
+\var{char} must be a character, and \var{state} must be a fixnum.
+
+\scheme{char-grapheme-step} encodes a state machine for
+Unicode's grapheme specification on a sequence of code points.
+It accepts a character for the next code point in a sequence, and it
+returns two values: whether a (single) grapheme cluster has terminated
+since the most recently reported termination (or the start of the
+stream), and a new state to be used with
+\scheme{char-grapheme-step} and the next character.
+
+A \var{state} is represented by a fixnum. A value of \scheme{0} for
+\var{state} represents the initial state or a state where no
+characters are pending toward a new boundary. Thus, if a sequence of
+characters is exhausted and \var{state} is not \scheme{0}, then the
+end of the stream creates one last grapheme boundary.
+
+\scheme{char-grapheme-step} will produce a result for any
+fixnum \var{state}, but the meaning of a non-\scheme{0} \var{state} is
+specified only in that providing such a state produced by
+\scheme{char-grapheme-step} in another call to
+\scheme{char-grapheme-step} continues detecting
+grapheme boundaries in the sequence.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{char-grapheme-break-property}{\categoryprocedure}{(char-grapheme-break-property \var{char})}
+\returns a symbol
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{char-grapheme-break-property} reports the grapheme-break
+property of \var{char}, one of \scheme{Other}, \scheme{CR},
+\scheme{LF}, \scheme{Control}, \scheme{Extend}, \scheme{ZWJ},
+\scheme{Regional_Indicator}, \scheme{Prepend}, \scheme{SpacingMark},
+\scheme{L}, \scheme{V}, \scheme{T}, \scheme{LV}, or \scheme{LVT}.
+This function is used in the implementation of
+\scheme{char-grapheme-step}.
+
+\schemedisplay
+(char-grapheme-break-property #\a)    ;=> Other
+(char-grapheme-break-property #\x300) ;=> Extend
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{char-extended-pictographic?}{\categoryprocedure}{(char-extended-pictographic? \var{char})}
+\returns a boolean
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{char-extended-pictographic?} reports whether \var{char} has
+the Unicode Extended\_Pictographic property. This function is used in
+the implementation of \scheme{char-grapheme-step}.
+
+\schemedisplay
+(char-extended-pictographic? #\a)   ;=> #f
+(char-extended-pictographic? #\xA9) ;=> #t
+\endschemedisplay
+
+
 \section{Strings}
 
 {\ChezScheme} extends the standard string syntax with two character
@@ -611,6 +681,59 @@ is immutable; otherwise, the result is an immutable string with the same content
 
 \noindent
 Like \scheme{string-append}, but produces an immutable string.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{string-grapheme-span}{\categoryprocedure}{(string-grapheme-span \var{string} \var{start})}
+\formdef{string-grapheme-span}{\categoryprocedure}{(string-grapheme-span \var{string} \var{start} \var{end})}
+\returns the number of characters in a grapheme cluster at the given \var{start}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{start} and \var{end} must indicate a valid range in the string as
+for \scheme{substring}, where the length of the string is used if
+\var{end} is not supplied.
+
+The result is the number of characters (i.e., code points) in the
+string that form a Unicode grapheme cluster starting at \var{start},
+assuming that \var{start} is the start of a grapheme cluster and
+extending no further than the character before \var{end}. The result
+is \scheme{0} if \var{start} equals \var{end}.
+
+\schemedisplay
+(string-grapheme-span (string #\a) 0)              ;=> 1
+(string-grapheme-span (string #\a #\x300) 0)       ;=> 2
+(string-grapheme-span (string #\a #\x300 #\a) 0)   ;=> 2
+(string-grapheme-span (string #\a #\x300 #\a) 0 1) ;=> 1
+\endschemedisplay
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{string-grapheme-count}{\categoryprocedure}{(string-grapheme-count \var{string})}
+\formdef{string-grapheme-count}{\categoryprocedure}{(string-grapheme-count \var{string} \var{start})}
+\formdef{string-grapheme-count}{\categoryprocedure}{(string-grapheme-count \var{string} \var{start} \var{end})}
+\returns a boolean indincating whether the character has a property
+\listlibraries
+\endentryheader
+
+\noindent
+\var{start} and \var{end} must indicate a valid range in the string as
+for \scheme{substring}, where \scheme{0} is used if \var{start} is not
+provided, and the length of the string is used if \var{end} is not
+supplied.
+
+The result is the number of Unicode grapheme clusters in the substring
+of \var{string} selected by \var{start} and \var{end}.
+
+\schemedisplay
+(string-grapheme-count (string #\a) 0)              ;=> 1
+(string-grapheme-count (string #\a #\x300) 0)       ;=> 1
+(string-grapheme-count (string #\a #\x300 #\a) 0)   ;=> 2
+(string-grapheme-count (string #\a #\x300 #\a) 0 1) ;=> 1
+\endschemedisplay
+
 
 \section{Vectors}
 

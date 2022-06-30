@@ -106,6 +106,7 @@
   (flag alphabetic-property)
   (flag numeric-property)
   (flag whitespace-property)
+  (flag extended-pictographic-property)
   (enumeration category Lu-cat Ll-cat Lt-cat Lm-cat Lo-cat
     Mn-cat Mc-cat Me-cat Nd-cat Nl-cat No-cat Pc-cat Pd-cat
     Ps-cat Pe-cat Pi-cat Pf-cat Po-cat Sm-cat Sc-cat Sk-cat
@@ -283,6 +284,17 @@
                    (setprop i (fxlogor (getprop i) n))
                    (f (+ i 1) j)))))])))
     (get-unicode-data "UNIDATA/PropList.txt"))
+  (for-each
+    (lambda (x)
+      (let ([range (extract-range (list-ref x 0))]
+            [name (list-ref x 1)])
+        (cond
+          [(equal? name "Extended_Pictographic")
+           (let f ([i (car range)] [j (cdr range)])
+             (unless (> i j) 
+               (setprop i (fxlogor (getprop i) extended-pictographic-property))
+               (f (+ i 1) j)))])))
+    (get-unicode-data "UNIDATA/emoji-data.txt"))
   ;;; clear constituent property for first 128 characters
   (do ([i 0 (fx+ i 1)])
       ((fx= i 128))
@@ -294,6 +306,7 @@
         (pretty-print
           `(module ($char-constituent? $char-subsequent? $char-upper-case? $char-lower-case? $char-title-case? $char-alphabetic?
                     $char-numeric? $char-whitespace? $char-cased? $char-case-ignorable? $char-category
+                    $char-extended-pictographic?
                     $wb-aletter? $wb-numeric? $wb-katakana? $wb-extend? $wb-format? $wb-midnum? $wb-midletter?
                     $wb-midnumlet? $wb-extendnumlet? $char-combining-class $char-dump
                     ; UNICODE 7.0.0
@@ -330,6 +343,9 @@
              (define $char-whitespace?
                (lambda (c)
                  (fxlogtest (getprop (char->integer c)) ,whitespace-property)))
+             (define $char-extended-pictographic?
+               (lambda (c)
+                 (fxlogtest (getprop (char->integer c)) ,extended-pictographic-property)))
              (define $char-cased?
                (lambda (c)
                  (fxlogtest (getprop (char->integer c)) ,cased-property)))

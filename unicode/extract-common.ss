@@ -134,3 +134,14 @@
 (define (sizeof ls) (compute-size ls))
 
 (define (hex->num x) (string->number x 16))
+
+(define (hex-range->nums x)
+  (let loop ([i 0])
+    (cond
+      [(= i (string-length x))
+       (let ([n (string->number x 16)])
+         (values n n))]
+      [(char=? #\. (string-ref x i))
+       (values (string->number (substring x 0 i) 16)
+               (string->number (substring x (+ i 2) (string-length x)) 16))]
+      [else (loop (add1 i))])))

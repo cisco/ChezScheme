@@ -65,7 +65,8 @@
       (let loop ([dir dir] [accum '()])
         (foldl (lambda (e-name accum)
                  (define e (build-path dir e-name))
-                 (define type (hash-ref (stat e) 'type))
+                 (define st (stat e))
+                 (define type (and st (hash-ref st 'type)))
                  (cond
                    [(eq? type 'file) (cons (input-file-target e) accum)]
                    [(eq? type 'dir) (loop e accum)]
