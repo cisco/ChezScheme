@@ -390,6 +390,10 @@
                                   "#define DISABLE_X11"))
                        (line (and (equal? (hash-ref config 'enablelibffi #f) "yes")
                                   "#define ENABLE_LIBFFI"))
+                       (line (and (not (for-windows? config))
+                                  (let ([s (hash-ref config 'InstallLib #f)])
+                                    (and s
+                                         (~a "#define DEFAULT_HEAP_PATH \"" s "/csv%v/%m\"")))))
                        (line (let ([alwaysUseBootFile
                                     (or (and (not (equal? (hash-ref config 'alwaysUseBootFile "") "")))
                                         (infer-always-use-boot-file preload-files))])
