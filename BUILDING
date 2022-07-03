@@ -40,38 +40,57 @@ In you're on Windows, see the WINDOWS VIA COMMAND PROMPT section later
 in this file. Otherwise, to get further instructions, try running
 
   ./configure
-  make
 
-The output will either suggest using using the pb boot files with
+The output will suggest one of the ways listed below to get boot
+files, and then try again with `./configure`.
 
-  ./configure --pb
-  make <machine type>.bootquick
+ Note: Boot and header files are specific to a Chez Scheme version, so
+ to rebuild after pulling commits in a Git checkout of Chez Scheme,
+ you may need to perform this step again to create new boot and header
+ files.
 
-or Racket as
 
-  racket rktboot/main.rkt --machine <machine type>
+WAYS TO GET BOOT FILES
 
-and then trying again with `./configure`. In the former case, you can
-use "auto.bootquick" instead of "<machine type>.bootquick".
+1. If "boot/pb" is present, use
 
-If you plan to build on multiple different machines and you don't have
-pb boot files, then it may be a good idea to generate pb boot files
-via Racket:
+     ./configure --pb
+     make <machine type>.bootquick
 
-  racket rktboot/main.rkt --machine pb
+   to create boot files for <machine type>. You can use "auto"
+   in place of <machine type> to build for an inferred machine
+   type.
 
-Then, you can use the pb boot files on different machines instead of
-having to install Racket on each machine. Alternatively, after you
-have a Chez Scheme build on one machine, you can use use
+2. If you have Racket installed as `racket`, then
 
-  make <machine type>.boot
+     racket rktboot/main.rkt --machine <machine type>
 
-to more quickly create boot files for any <machine type>.
+   creates boot files for <machine type>.
 
-Boot and header files are specific to a Chez Scheme version, so to
-rebuild after pulling commits in a Git checkout of Chez Scheme, you
-may need to perform this step again to create new boot and header
-files.
+3. A combination of the previous two ways: If you plan to build on
+   many different machines and you don't have pb boot files, then it
+   may be a good idea to generate pb boot files once via Racket and
+   then use them on different machines:
+
+     racket rktboot/main.rkt --machine pb
+
+4. Along similar lines as the previous way, building for multiple
+   specific <machine type>s: After you have a Chez Scheme build on one
+   machine, you can use use
+
+     make <machine type>.boot
+
+   in that build to quickly create boot files for any <machine type>.
+
+5. Along similar lines, again: If you have Chez Scheme installed, but
+   no longer have that installation's build directory, you can still
+   build for any <machine type> using `zuo` directly to launch the
+   build:
+
+     zuo makefiles/boot.zuo <scheme> <machine type>
+
+   The <scheme> executable must be the same version as the sources
+   here.
 
 
 CONFIGURING AND BUILDING

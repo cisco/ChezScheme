@@ -309,7 +309,7 @@
              (compile-file , src , dest))]
           [(eq? mode 'patch)
            `(,@(cp0+gc-control)
-             (time (compile-file ,src ,dest ',(string->symbol host-m)))
+             (time (compile-file ,src ,dest)) ; compiling for for host-m
              (printf "    ~a bytes peak memory use~n" (maximum-memory-bytes)))]
           [(eq? mode 'library)
            `((compile-library ,src ,dest))])))

@@ -1,5 +1,8 @@
 #lang zuo
-(require (only-in "s/build.zuo"
+(require (rename-in "makefiles/boot.zuo"
+                    [boot-file-names boot:boot-file-names]
+                    [cross-build-boot boot:cross-build-boot])
+         (only-in "s/build.zuo"
                   [targets-at s-targets-at]
                   base-src-names
                   macro-src-names
@@ -50,12 +53,7 @@
 
   (define boot-file-names
     (append
-     '(;; the boot files proper
-       "petite.boot" "scheme.boot"
-       ;; machine-specific header files:
-       "scheme.h" "equates.h"
-       ;; GC traversal functions
-       "gc-ocd.inc" "gc-oce.inc" "gc-par.inc" "heapcheck.inc")
+     boot:boot-file-names
      ;; extra boot files from source
      (let ([config-file (build-path boot-src-dir "Mf-config")])
        (if (file-exists? config-file)
@@ -102,34 +100,9 @@
     (parse-boot-args
      args
      (lambda (xm host-scheme host-workarea)
-       (define dir (at-dir ".." (~a "xc-" xm)))
-       (define s-dir (build-path dir "s"))
-       (mkdir-p s-dir)
-       (clean-links s-dir) ; in case leftover from old build system
-       (display-to-file (~a "m=" xm "\n"
-                            "hostm=" m "\n"
-                            (if host-scheme
-                                (~a "hostscheme=" host-scheme "\n")
-                                "")
-                            "hostworkarea=" (if host-scheme
-                                                ""
-                                                (find-relative-path dir (or host-workarea
-                                                                            (at-dir .))))
-                            "\n")
-                        (build-path dir "Mf-config")
-                        :truncate)
-       (let ([targets (s-targets-at (make-at-dir s-dir)
-                                    (hash-remove vars 'm)
-                                    ccopts)])
-         (build (find-target "clean" targets) token)
-         (build (map (lambda (t) (find-target t targets)) make-targets)
-                token))
-       (define boot-xm-dir (at-dir "../boot" xm))
-       (mkdir-p boot-xm-dir)
-       (for-each (lambda (file)
-                   (cp (build-path dir "boot" xm file)
-                       (build-path boot-xm-dir file)))
-                 boot-file-names))))
+       (boot:cross-build-boot token ccopts make-targets
+                              xm host-scheme host-workarea
+                              at-dir config vars m))))
 
   (define (cross-build-boot/safe+examples token args)
     (cross-build-boot token args (hash 'o "2" 'd "3" 'i "t") '("all" "examples")))
@@ -185,15 +158,6 @@
       [:target ,(string->symbol (~a "install-" name)) (,name-sym)
                ,(lambda (token . args)
                   (run-make "install"))]))
-
-  (define (clean-links dir)
-    (for-each (lambda (p)
-                (cond
-                  [(link-exists? p) (rm p)]
-                  [(directory-exists? p)
-                   (unless (equal? "boot" (file-name-from-path p))
-                     (clean-links p))]))
-              (ls* dir)))
 
   (define (check-boot-file-version)
     (define src-ver (source-version))
