@@ -647,11 +647,17 @@
             (guard (eq? (primref-name pr) '$fixmediate))
             (build-assign base index offset e)]
            [else
-            (if (nanopass-case (L7 Expr) e
-                  [(quote ,d) (ptr->imm d)]
-                  [(call ,info ,mdcl ,pr ,e* ...)
-                   (eq? 'fixnum ($sgetprop (primref-name pr) '*result-type* #f))]
-                  [else #f])
+            (if (let loop ([e e] [fuel 5])
+                  (nanopass-case (L7 Expr) e
+                    [(quote ,d) (ptr->imm d)]
+                    [(call ,info ,mdcl ,pr ,e* ...)
+                     (memq ($sgetprop (primref-name pr) '*result-type* #f)
+                           '(fixnum boolean))]
+                    [(if ,e1 ,e2 ,e3)
+                     (and (fx> fuel 0) (loop e2 (fx- fuel 1)) (loop e3 (fx- fuel 1)))]
+                    [(seq ,e1 ,e2)
+                     (and (fx> fuel 0) (loop e2 (fx- fuel 1)))]
+                    [else #f]))
                 (build-assign base index offset e)
                 (let ([a (if (eq? index %zero)
                              (%lea ,base offset)
