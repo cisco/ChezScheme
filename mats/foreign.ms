@@ -186,7 +186,7 @@
       (error? (load-shared-object 3))
     )
    ]
-  [(i3le ti3le a6le ta6le arm32le tarm32le ppc32le tppc32le)
+  [(i3le ti3le a6le ta6le arm32le tarm32le ppc32le tppc32le rv64le trv64le la64le tla64le)
    (mat load-shared-object
       (file-exists? foreign1.so)
       (begin (load-shared-object foreign1.so) #t)
