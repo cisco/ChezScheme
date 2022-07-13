@@ -135,40 +135,10 @@
                       [(immediate ,imm) (signed12? imm)]
                       [else #f])))
 
-   (define imm-unsigned12?
-     (lambda (x)
-       (nanopass-case (L15c Triv) x
-                      [(immediate ,imm) (unsigned12? imm)]
-                      [else #f])))
-
    (define imm-shamt?
      (lambda (x)
        (nanopass-case (L15c Triv) x
                       [(immediate ,imm) (shamt? imm)]
-                      [else #f])))
-
-   (define imm-signed14?
-     (lambda (x)
-       (nanopass-case (L15c Triv) x
-                      [(immediate ,imm) (signed14?)]
-                      [else #f])))
-
-   (define imm-signed16?
-     (lambda (x)
-       (nanopass-case (L15c Triv) x
-                      [(immediate ,imm) (signed16? imm)]
-                      [else #f])))
-
-   (define imm-signed20?
-     (lambda (x)
-       (nanopass-case (L15c Triv) x
-                      [(immediate ,imm) (signed20? imm)]
-                      [else #f])))
-
-   (define imm-signed26?
-     (lambda (x)
-       (nanopass-case (L15c Triv) x
-                      [(immediate ,imm) (signed26? imm)]
                       [else #f])))
 
    (define md-handle-jump
@@ -199,10 +169,6 @@
        (let ([a ?a] [aty* ?aty*])
          (or (memq 'ur aty*)
              (and (memq 'imm12 aty*) (imm-signed12? a))
-             (and (memq 'imm16 aty*) (imm-signed14? a))
-             (and (memq 'imm16 aty*) (imm-signed16? a))
-             (and (memq 'imm20 aty*) (imm-signed20? a))
-             (and (memq 'imm26 aty*) (imm-signed26? a))
              (and (memq 'shamt aty*) (imm-shamt? a))
              (and (memq 'mem aty*) (mem? a))))]))
 
@@ -213,10 +179,6 @@
          (cond
           [(and (memq 'mem aty*) (mem? a)) (mem->mem a k)]
           [(and (memq 'imm12 aty*) (imm-signed12? a)) (k (imm->imm a))]
-          [(and (memq 'imm14 aty*) (imm-signed14? a)) (k (imm->imm a))]
-          [(and (memq 'imm16 aty*) (imm-signed16? a)) (k (imm->imm a))]
-          [(and (memq 'imm20 aty*) (imm-signed20? a)) (k (imm->imm a))]
-          [(and (memq 'imm26 aty*) (imm-signed26? a)) (k (imm->imm a))]
           [(and (memq 'shamt aty*) (imm-shamt? a)) (k (imm->imm a))]
           [(memq 'ur aty*)
            (cond
@@ -396,12 +358,11 @@
 
   (define-instruction value (*/ovfl)
     [(op (z ur) (x ur) (y ur))
-     (let ([u1 (make-tmp 'u1*)] [u2 (make-tmp 'u2*)] [u3 (make-tmp 'u3*)])
+     (let ([u1 (make-tmp 'u1*)] [u2 (make-tmp 'u2*)])
        (seq
         `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
         `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,u3 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-mul/ovfl ,x ,y ,u1 ,u2 ,u3))))])
+        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-mul/ovfl ,x ,y ,u1 ,u2))))])
 
   (define-instruction value (/)
     [(op (z ur) (x ur) (y ur))
@@ -574,12 +535,11 @@
     [(op (x ur) (y ur)) `(asm ,info ,asm-flsqrt ,x ,y)])
 
   (define-instruction effect inc-cc-counter
-    [(op (x ur) (w imm12 ur) (z imm12 ur)) ;;@ base offset val
-     (let ([u1 (make-tmp 'inc1)] [u2 (make-tmp 'inc2)])
+    [(op (x ur) (w imm12 ur) (z imm12 ur))
+     (let ([u1 (make-tmp 'inc1)])
        (seq
-        `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-add ,x ,w))
-        `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
-        `(asm ,null-info ,asm-inc-cc-counter ,u1 ,z ,u2)))])
+        `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
+        `(asm ,null-info ,asm-inc-cc-counter ,x ,w ,z ,u1)))])
 
   (define-instruction effect inc-profile-counter
     [(op (x mem) (y imm12 ur))
@@ -935,7 +895,7 @@
                    (code-disp? (ax-imm-data imm18 op))) ; offset in multiples of 4
       (emit-code (op link src imm18 code*)
                  [26 opcode]
-                 [10 (ax-imm-data imm18 op)]
+                 [10 (fxsra (ax-imm-data imm18 op) 2)]
                  [5 (ax-ea-reg-code src)]
                  [0 (ax-ea-reg-code link)])))
 
@@ -943,12 +903,13 @@
     (lambda (op opcode src imm23 code*)
       (safe-assert (signed23? (ax-imm-data imm23 op))
                    (code-disp? (ax-imm-data imm23 op))) ; offset in multiples of 4
-      (let ([offs0  (fxlogand (ax-imm-data imm23 op) #xffff)] ; offs[15:0]
-            [offs16 (fxlogand (ash (ax-imm-data imm23 op) -16) #b11111)] ; offs[20:16]
-            [s (case op
-                 [(bceqz) #b0000]
-                 [(bcnez) #b0100]
-                 [else (ax-ea-reg-code src)])])
+      (let* ([imm (fxsra (ax-imm-data imm23 op) 2)]
+             [offs0  (fxlogand imm #xffff)] ; offs[15:0]
+             [offs16 (fxlogand (ash imm -16) #b11111)] ; offs[20:16]
+             [s (case op
+                  [(bceqz) #b0000]
+                  [(bcnez) #b0100]
+                  [else (ax-ea-reg-code src)])])
         (emit-code (op src imm23 code*)
                    [26 opcode]
                    [10 offs0]
@@ -959,8 +920,9 @@
     (lambda (op opcode imm28 code*)
       (safe-assert (signed28? (ax-imm-data imm28 op))
                    (code-disp? (ax-imm-data imm28 op))) ; offset in multiples of 4
-      (let ([offs0  (fxlogand (ax-imm-data imm28 op) #xffff)] ; offs[15:0]
-            [offs16 (fxlogand (ash (ax-imm-data imm28 op) -16) #b1111111111)]) ; offs[25:16] 10 bits
+      (let* ([imm (fxsra (ax-imm-data imm28 op) 2)]
+             [offs0  (fxlogand imm #xffff)] ; offs[15:0]
+             [offs16 (fxlogand (ash imm -16) #b1111111111)]) ; offs[25:16] 10 bits
         (emit-code (op imm28 code*)
                    [26 opcode]
                    [10 offs0]
@@ -1069,8 +1031,7 @@
     (lambda (imm)
       (and (fixnum? imm)
            ;; lower two bits are zero
-           (= 0 (mod imm 4))
-           )))
+           (not (fxlogtest imm #b11)))))
 
   (define-who ax-ea-reg-code
     (lambda (ea)
@@ -1221,10 +1182,11 @@
               (emit mul.d dest src0 src1 code*))))
 
   (define asm-mul/ovfl
-    (lambda (code* dest src0 src1 t0 t1 t2)
-      (Trivit (dest src0 src1 t0 t1 t2)
+    (lambda (code* dest src0 src1 t1 t2)
+      (Trivit (dest src0 src1 t1 t2)
               (let ([zero `(reg . ,%real-zero)]
-                    [cond `(reg . ,%cond)])
+                    [cond `(reg . ,%cond)]
+                    [t0 %scratch0])
                 (emit addi.d t1 src0 0
                       (emit addi.d t2 src1 0
                             (emit mul.d dest src0 src1
@@ -1423,52 +1385,55 @@
                          [else (sorry! who "unexpected asm-swap type argument ~s" type)])))))))
 
   (define asm-lock
-    ;;    ll.d t0, [src]
+    ;;    ll.d t0, [addr]
     ;;    bnez  t0,  L
     ;;    addi.d t0, %real-zero, 1
-    ;;    sc.d t0, t0, [src]
+    ;;    sc.d t0, t0, [addr]
     ;;L:
-    (lambda (code* src t0)
-      (Trivit (src t0)
-              (emit ll.d t0 src 0
+    (lambda (code* addr t0)
+      (Trivit (addr t0)
+              (emit ll.d t0 addr 0
                     (emit bnez t0 12
                           (emit addi.d t0 %real-zero 1
-                                (emit sc.d t0 src 0 code*))))))) ;;@todo sc.d semantics
+                                (emit sc.d t0 addr 0 code*))))))) ;;@todo sc.d semantics
 
   (define-who asm-lock+/-
     ;;S:
-    ;;    ll.d t0, [src]
+    ;;    ll.d t0, [addr]
     ;;    addi.d t0, t0, +/-1
-    ;;    sc.d t1, t0, [src]
+    ;;    sc.d t1, t0, [addr]
     ;;    bnez  t1, S[-12]
     ;;    sltui %cond t0 1 # set %cond if t0=0
     (lambda (op)
-      (lambda (code* src t0 t1)
-        (Trivit (src t0 t1)
-                (emit ll.d t0 src 0
-                      (let ([code* (emit sc.d t0 src 0
-                                         (emit bnez t1 -12
-                                               (emit sltui `(reg . ,%cond) t0 1 code*)))])
+      (lambda (code* addr t0 t1)
+        (Trivit (addr t0 t1)
+                (emit ll.d t0 addr 0
+                      (let ([code* (emit sc.d t0 addr 0 ;;@todo check this
+                                         (emit bnez t0 -12
+                                               (emit sltui %cond t1 1 code*)))])
                         (case op
-                          [(locked-incr!) (emit addi.d t0 t0 1 code*)]
-                          [(locked-decr!) (emit addi.d t0 t0 -1 code*)]
+                          [(locked-incr!) (emit addi.d t0 t0 1
+                                                (emit addi.d t1 t0 0 code*))] ; backup
+                          [(locked-decr!) (emit addi.d t0 t0 -1
+                                                (emit addi.d t1 t0 0 code*))]
                           [else (sorry! who "unexpected op ~s" op)])))))))
 
   (define asm-cas
     ;;cas:
-    ;;   ll.d t0, src
+    ;;   ll.d t0, addr
     ;;   bne  t0, old, L[12]
-    ;;   sc.d t1, new, [src] # t1!=0 if store fails
+    ;;   sc.d t1, new, [addr] # t1!=0 if store fails
     ;;   sltui %cond t1 1    # %cond=1 if t1=0(succeed)
     ;;L:
-    (lambda (code* src old new t0 t1)
-      (Trivit (src old new t0 t1)
-              (emit ll.d t0 src 0
+    (lambda (code* addr old new t0 t1)
+      (Trivit (addr old new t0 t1)
+              (emit ll.d t0 addr 0
                     (emit addi.d t1 new 0 ; backup
                           (emit bne t0 old 16
-                                (emit sc.d new src 0
+                                (emit sc.d new addr 0
                                       (emit sltui %cond new 1
-                                            (emit add.d new t1 %real-zero code*)))))))))
+                                            (emit b 8
+                                                  (emit xor %cond %cond %cond code*))))))))))
 
   (define-who asm-relop
     (lambda (info)
@@ -1533,12 +1498,26 @@
       (Trivit (dest)
               (emit rdtime.d dest %real-zero code*))))
 
-  (define asm-inc-cc-counter ;; load, add, store back
-    (lambda (code* addr val tmp)
-      (Trivit (addr val tmp)
-              (emit ld.d tmp %real-zero addr
-                    (emit add.d tmp tmp val
-                          (emit st.d tmp %real-zero addr code*))))))
+  (define-who inc-cc-helper
+    (lambda (val t code*)
+      (nanopass-case (L16 Triv) val
+                     [(immediate ,imm) (emit addi.d t t imm code*)]
+                     [,x (emit add.d t t x code*)]
+                     [else (sorry! who "unexpected val format ~s" val)])))
+
+  (define-who asm-inc-cc-counter ;; load, add, store back
+    (lambda (code* base offset val t)
+      (Trivit (base t)
+              (nanopass-case (L16 Triv) offset
+                             [(immediate ,imm)
+                              (emit ld.d t base imm
+                                    (inc-cc-helper val t
+                                                   (emit st.d t base imm code*)))]
+                             [,x
+                              (emit ldx.d t base x
+                                    (inc-cc-helper val t
+                                                   (emit stx.d t base x code*)))]
+                             [else (sorry! who "unexpected offset format ~s" offset)]))))
 
   (define asm-enter values)
 

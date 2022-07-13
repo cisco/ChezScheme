@@ -140,12 +140,6 @@
                       [(immediate ,imm) (shamt? imm)]
                       [else #f])))
 
-   (define imm-constant? ;;@ todo not used?
-     (lambda (x)
-       (nanopass-case (L15c Triv) x
-                      [(immediate ,imm) #t]
-                      [else #f])))
-
    (define md-handle-jump
      (lambda (t)
        (with-output-language (L15d Tail)
@@ -362,12 +356,14 @@
 
   (define-instruction value (*/ovfl)
     [(op (z ur) (x ur) (y ur))
-     (let ([u1 (make-tmp 'u1*)] [u2 (make-tmp 'u2*)] [u3 (make-tmp 'u3*)])
+     ;; sth wrong with the reg allocator: z will be the same
+     ;; as u1 if u1 if created using make-tmp
+     (let ([u1 (make-precolored-unspillable 'u1 %x12) #;(make-tmp 'u1)]
+           [u2 (make-precolored-unspillable 'u2 %x17) #;(make-tmp 'u2)])
        (seq
         `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
         `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,u3 (asm ,null-info ,asm-kill))
-        `(set! ,(make-live-info) ,z (asm ,null-info ,asm-mul/ovfl ,x ,y ,u1 ,u2 ,u3))))])
+        `(set! ,(make-live-info) ,z (asm ,info ,asm-mul/ovfl ,x ,y ,u1 ,u2))))])
 
   (define-instruction value (/)
     [(op (z ur) (x ur) (y ur))
@@ -467,11 +463,9 @@
                      (lambda (x y w)
                        (let ([instr `(set! ,(make-live-info) ,z (asm ,null-info ,(asm-load type) ,x ,y ,w))])
                          (if (info-load-swapped? info) ;; change endianness
-                             (let ([t1 (make-tmp 'ld1)])
-                               (seq
-                                instr
-                                `(set! ,(make-live-info) ,t1 (asm ,null-info ,asm-kill))
-                                `(set! ,(make-live-info) ,z (asm ,null-info ,(asm-swap type) ,z ,t1))))
+                             (seq
+                              instr
+                              `(set! ,(make-live-info) ,z (asm ,null-info ,(asm-swap type) ,z)))
                              instr)))))])
 
     (define-instruction effect (store)
@@ -480,10 +474,9 @@
          (load/store x y w
                      (lambda (x y w)
                        (if (info-load-swapped? info) ;; change endianness
-                           (let ([u (make-tmp 'unique-bob)] [t1 (make-tmp 'st1)])
+                           (let ([u (make-tmp 'unique-bob)])
                              (seq
-                              `(set! ,(make-live-info) ,t1 (asm ,null-info ,asm-kill))
-                              `(set! ,(make-live-info) ,u (asm ,null-info ,(asm-swap type) ,z ,t1))
+                              `(set! ,(make-live-info) ,u (asm ,null-info ,(asm-swap type) ,z))
                               `(asm ,null-info ,(asm-store type) ,x ,y ,w ,u)))
                            `(asm ,null-info ,(asm-store type) ,x ,y ,w ,z)))))]))
 
@@ -543,7 +536,13 @@
        (values '() `(asm ,info ,(asm-fl-relop info) ,x ,y)))])
 
   (define-instruction effect inc-cc-counter
-    [(op (x ur) (w imm12 ur) (z imm12 ur)) ;;@ base offset val
+    ;; base offset val
+    [(op (x ur) (w imm12) (z imm12 ur))
+     (let ([u1 (make-tmp 'inc1)])
+       (seq
+        `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
+        `(asm ,null-info ,asm-inc-cc-counter ,x ,w ,z ,u1)))]
+    [(op (x ur) (w ur) (z imm12 ur))
      (let ([u1 (make-tmp 'inc1)] [u2 (make-tmp 'inc2)])
        (seq
         `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-add ,x ,w))
@@ -755,9 +754,9 @@
   (define-op xor bin-op #b0110011 #b100 #b0000000)
   (define-op slt bin-op #b0110011 #b010 #b0000000)
   (define-op sltu bin-op #b0110011 #b011 #b0000000)
-  (define-op sll bin-op #b0110011 #b001 #b0000000)
-  (define-op srl bin-op #b0110011 #b101 #b0000000)
-  (define-op sra bin-op #b0110011 #b101 #b0100000)
+  (define-op sll  bin-op #b0110011 #b001 #b0000000)
+  (define-op srl  bin-op #b0110011 #b101 #b0000000)
+  (define-op sra  bin-op #b0110011 #b101 #b0100000)
   (define-op fadd.d bin-op #b1010011 #b111 #b0000001) ; #b111: dynamic rounding mode
   (define-op fsub.d bin-op #b1010011 #b111 #b0000101) ; #b111: dynamic rounding mode
   (define-op fmul.d bin-op #b1010011 #b111 #b0001001) ; #b111: dynamic rounding mode
@@ -1111,10 +1110,11 @@
   ;; case2: neg*pos=pos or pos*neg=pos
   ;; case3: neg*neg=neg
   (define asm-mul/ovfl
-    (lambda (code* dest src0 src1 t0 t1 t2)
-      (Trivit (dest src0 src1 t0 t1 t2)
+    (lambda (code* dest src0 src1 t1 t2)
+      (Trivit (dest src0 src1 t1 t2)
               (let ([zero `(reg . ,%real-zero)]
-                    [cond `(reg . ,%cond)])
+                    [cond `(reg . ,%cond)]
+                    [t0 %scratch0])
                 (emit addi t1 src0 0
                       (emit addi t2 src1 0
                             (emit mul dest src0 src1
@@ -1304,83 +1304,84 @@
   (define-who asm-swap
     (lambda (type)
       (rec asm-swap-internal
-           (lambda (code* dest src t0)
-             (Trivit (dest src)
-                     ;; Hopefully every RISC-V CPU will implement the B extension.
-                     (define dance
-                       (lambda (right left code*)
-                         (emit srli t0 src right
-                               (emit andi t0 t0 #xff
-                                     (if (= left 0)
-                                         (emit or dest dest t0 code*)
-                                         (emit slli t0 t0 left
-                                               (emit or dest dest t0 code*)))))))
-                     (case type
-                       [(integer-16)
-                        ;; 1st byte
-                        (emit andi t0 src #xff
-                              (emit slli t0 t0 56
-                                    (emit srai dest t0 48
-                                          ;; 2nd byte
-                                          (dance 8 0 code*))))]
-                       [(unsigned-16)
-                        (emit andi t0 src #xff
-                              (emit slli dest t0 8
-                                    (dance 8 0 code*)))]
-                       [(integer-32)
-                        ;; 1st byte
-                        (emit andi t0 src #xff
-                              (emit slli t0 t0 56
-                                    (emit srai dest t0 32
-                                          ;; 2nd and so on
-                                          (dance 8 16
-                                                 (dance 16 8
-                                                        (dance 24 0 code*))))))]
-                       [(unsigned-32)
-                        ;; 1st byte
-                        (emit andi t0 src #xff
-                              (emit slli dest t0 24
-                                    ;; 2nd and so on
-                                    (dance 8 16
-                                           (dance 16 8
-                                                  (dance 24 0 code*)))))]
-                       [(integer-64 unsigned-64)
-                        (emit andi t0 src #xff
-                              (emit slli dest t0 56
-                                    (dance 8 48
-                                           (dance 16 40
-                                                  (dance 24 32
-                                                         (dance 32 24
-                                                                (dance 40 16
-                                                                       (dance 48 8
-                                                                              (dance 56 0 code*)))))))))]
-                       [else (sorry! who "unexpected asm-swap type argument ~s" type)]))))))
+           (lambda (code* dest src)
+             (let ([t0 %scratch0])
+               (Trivit (dest src)
+                       ;; Hopefully every RISC-V CPU will implement the B extension.
+                       (define dance
+                         (lambda (right left code*)
+                           (emit srli t0 src right
+                                 (emit andi t0 t0 #xff
+                                       (if (= left 0)
+                                           (emit or dest dest t0 code*)
+                                           (emit slli t0 t0 left
+                                                 (emit or dest dest t0 code*)))))))
+                       (case type
+                         [(integer-16)
+                          ;; 1st byte
+                          (emit andi t0 src #xff
+                                (emit slli t0 t0 56
+                                      (emit srai dest t0 48
+                                            ;; 2nd byte
+                                            (dance 8 0 code*))))]
+                         [(unsigned-16)
+                          (emit andi t0 src #xff
+                                (emit slli dest t0 8
+                                      (dance 8 0 code*)))]
+                         [(integer-32)
+                          ;; 1st byte
+                          (emit andi t0 src #xff
+                                (emit slli t0 t0 56
+                                      (emit srai dest t0 32
+                                            ;; 2nd and so on
+                                            (dance 8 16
+                                                   (dance 16 8
+                                                          (dance 24 0 code*))))))]
+                         [(unsigned-32)
+                          ;; 1st byte
+                          (emit andi t0 src #xff
+                                (emit slli dest t0 24
+                                      ;; 2nd and so on
+                                      (dance 8 16
+                                             (dance 16 8
+                                                    (dance 24 0 code*)))))]
+                         [(integer-64 unsigned-64)
+                          (emit andi t0 src #xff
+                                (emit slli dest t0 56
+                                      (dance 8 48
+                                             (dance 16 40
+                                                    (dance 24 32
+                                                           (dance 32 24
+                                                                  (dance 40 16
+                                                                         (dance 48 8
+                                                                                (dance 56 0 code*)))))))))]
+                         [else (sorry! who "unexpected asm-swap type argument ~s" type)])))))))
 
   (define asm-lock ;;@ check operands of sc.d, see if can be used in both places
-    ;;    lr.d tmp, [src]
+    ;;    lr.d tmp, [addr]
     ;;    bne  tmp, %real-zero, L
     ;;    addi tmp, %real-zero, 1
-    ;;    sc.d tmp, tmp, [src]
+    ;;    sc.d tmp, tmp, [addr]
     ;;L:
-    (lambda (code* src t0)
-      (Trivit (src t0)
-              (emit lr.d t0 src '()
+    (lambda (code* addr t0)
+      (Trivit (addr t0)
+              (emit lr.d t0 addr '()
                     (emit bne t0 %real-zero 12
                           (emit addi t0 %real-zero 1
-                                (emit sc.d t0 t0 src code*)))))))
+                                (emit sc.d t0 addr t0 code*)))))))
 
   (define-who asm-lock+/-
     ;;S:
-    ;;    lr.d t0, [src]
+    ;;    lr.d t0, [addr]
     ;;    addi t0, t0, +/-1
-    ;;    sc.d t1, t0, [src]
+    ;;    sc.d t1, t0, [addr]
     ;;    bne  t1, %real-zero, S[-12]
     ;;    sltiu %cond t0 1 # set %cond if t0=0
     (lambda (op)
-      (lambda (code* src t0 t1)
-        (Trivit (src t0 t1)
-                (emit lr.d t0 src '()
-                      (let ([code* (emit sc.d t1 t0 src
+      (lambda (code* addr t0 t1)
+        (Trivit (addr t0 t1)
+                (emit lr.d t0 addr '()
+                      (let ([code* (emit sc.d t1 addr t0
                                          (emit bne t1 %real-zero -12
                                                (emit sltiu %cond t0 1 code*)))])
                         (case op
@@ -1390,17 +1391,19 @@
 
   (define asm-cas
     ;;cas:
-    ;;   lr.d t0, src
+    ;;   lr.d t0, addr
     ;;   bne  t0, old, L[12]
-    ;;   sc.d t1, new, [src] # t1!=0 if store fails
+    ;;   sc.d t1, new, [addr] # t1!=0 if store fails
     ;;   sltiu %cond t1 1    # %cond=1 if t1=0(succeed)
     ;;L:
-    (lambda (code* src old new t0 t1)
-      (Trivit (src old new t0 t1)
-              (emit lr.d t0 src '()
-                    (emit bne t0 old 12
-                          (emit sc.d t1 new src
-                                (emit sltiu %cond t1 1 code*)))))))
+    (lambda (code* addr old new t0 t1)
+      (Trivit (addr old new t0 t1)
+              (emit lr.d t0 addr '()
+                    (emit bne t0 old 16
+                          (emit sc.d t1 addr new
+                                (emit sltiu %cond t1 1
+                                      (emit jal %real-zero 8
+                                            (emit xor %cond %cond %cond code*)))))))))
 
   (define-who asm-relop
     (lambda (info)
@@ -1465,12 +1468,25 @@
       (Trivit (dest)
               (emit rdtime dest code*))))
 
+  (define-who inc-cc-helper
+    (lambda (val t code*)
+      (nanopass-case (L16 Triv) val
+                     [(immediate ,imm) (emit addi t t imm code*)]
+                     [,x (emit add t t x code*)]
+                     [else (sorry! who "unexpected val format ~s" val)])))
+
   (define asm-inc-cc-counter ;; load, add, store back
-    (lambda (code* addr val t)
-      (Trivit (addr val t)
-              (emit ld t %real-zero addr
-                    (emit add t t val
-                          (emit sd t %real-zero addr code*))))))
+    (case-lambda
+     [(code* base offset val t)
+      (Trivit (base offset t)
+              (emit ld t base offset
+                    (inc-cc-helper val t
+                                   (emit sd t base offset code*))))]
+     [(code* addr val t)
+      (Trivit (addr t)
+              (emit ld t addr 0
+                    (inc-cc-helper val t
+                                   (emit sd t addr 0 code*))))]))
 
   (define asm-fence
     (lambda (code*)
@@ -1656,21 +1672,23 @@
                        ;; inverted
                        [(fx= disp1 0)
                         (safe-assert (signed32? disp2))
-                        ;;@ todo add 12-bit offset case
-                        ;; (emit beq %cond %real-zero (fx+ disp2 4) '())
-                        (emit beq %cond %real-zero 8
-                              (emit jal %real-zero 12 ;; fall through
-                                    (emit auipc %jump (upper20 (fx+ disp2 8)) ;; 2 instr below
-                                          (emit jalr %real-zero %jump (lower12 (fx+ disp2 8)) '()))))
-                        ]
+                        (if (or (and (fx<= 0 (fx+ disp2 4) (fx- (expt 2 11) 1)))
+                                (and (fx<= (fx- (expt 2 12)) (fx+ disp2 4) 0)))
+                            (emit beq %cond %real-zero (fx+ disp2 4) '())
+                            (emit beq %cond %real-zero 8
+                                  (emit jal %real-zero 12 ;; fall through
+                                        (emit auipc %jump (upper20 (fx+ disp2 8)) ;; 2 instr below
+                                              (emit jalr %real-zero %jump (lower12 (fx+ disp2 8)) '())))))]
                        ;; normal
                        [(fx= disp2 0)
                         (safe-assert (signed32? disp1))
-                        (emit bne %cond %real-zero 8
-                              (emit jal %real-zero 12 ;; fall through
-                                    (emit auipc %jump (upper20 (fx+ disp1 8)) ;; 2 instr below
-                                          (emit jalr %real-zero %jump (lower12 (fx+ disp1 8)) '()))))
-                        ]
+                        (if (or (and (fx<= 0 (fx+ disp1 4) (fx- (expt 2 11) 1)))
+                                (and (fx<= (fx- (expt 2 12)) (fx+ disp1 4) 0)))
+                            (emit bne %cond %real-zero (fx+ disp1 4) '())
+                            (emit bne %cond %real-zero 8
+                                  (emit jal %real-zero 12 ;; fall through
+                                        (emit auipc %jump (upper20 (fx+ disp1 8)) ;; 2 instr below
+                                              (emit jalr %real-zero %jump (lower12 (fx+ disp1 8)) '())))))]
                        ;; others
                        [else
                         (safe-assert (signed32? (fx+ disp1 8)) (signed32? (fx+ disp2 16)))
