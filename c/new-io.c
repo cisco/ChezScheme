@@ -457,7 +457,7 @@ ptr S_bytevector_read(ptr file, ptr bv, iptr start, iptr count, IBOOL gzflag) {
   /* If we are running on Apple Silicon under Rosetta 2 translation, work around
      a bug (present in 11.2.3 at least) in its handling of memory page protection
      bits.  One of the tasks that Rosetta handles is to appropriately twiddle the
-     execute and write bits based on what's happinging to the memory in order to
+     execute and write bits based on what's happening to the memory in order to
      preserve the illusion that the pages have RWX permissions, whereas Apple
      Silicon enforces a W^X (write XOR execute) model.  For some reason, this
      bit-twiddling sometimes fails when the bytevector passed to `read` extends
@@ -965,6 +965,6 @@ ptr S_bytevector_uncompress(ptr dest_bv, iptr d_start, iptr d_count,
           return Sstring("internal error uncompressing ~s");
       }
     default:
-      return Sstring("unepxected compress format ~s");
+      return Sstring("unexpected compress format ~s");
   }
 }

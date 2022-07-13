@@ -377,7 +377,7 @@
       (syntax-case x (definitions)
         [(k context (sym ...) (definitions defn ...) [(op (a aty ...) ...) ?rhs0 ?rhs1 ...] ...)
          ; potentially unnecessary level of checking, but the big thing is to make sure
-         ; the number of operands expected is the same on every clause of define-intruction
+         ; the number of operands expected is the same on every clause of define-instruction
          (and (not (null? #'(op ...)))
               (andmap identifier? #'(sym ...))
               (andmap identifier? #'(op ...))
@@ -554,7 +554,7 @@
          `(set! ,(make-live-info) ,t (asm ,info ,asm-add ,t ,y))
          `(set! ,(make-live-info) ,z ,t)))])
 
-  (define-instruction value (* */ovfl) ; */ovfl must set mulitply-overflow flag on overflow
+  (define-instruction value (* */ovfl) ; */ovfl must set multiply-overflow flag on overflow
     [(op (z ur) (x z) (y ur mem))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-mul ,z ,y))]
     [(op (z ur) (x ur mem) (y z))
@@ -820,7 +820,7 @@
     ; CMP r/m, r
     ; CMP r, r/m
     ; the last format we may want to drop, since it uses a different
-    ; format from the one above it, but is interchangable with it,
+    ; format from the one above it, but is interchangeable with it,
     ; if we reverse the operands.
     [(op (x mem) (y ur imm32))
      (let ([info (make-info-condition-code op #f #t)])

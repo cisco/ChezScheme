@@ -9099,7 +9099,7 @@
   (and (member o l) #t))
  
 (mat cp0-kar-kons-optimizations
-  ; for now, it's necesary to run cp0 three times to complete the reduction
+  ; for now, it's necessary to run cp0 three times to complete the reduction
   (equal?
     (with-output-to-string
       (lambda ()

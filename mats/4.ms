@@ -3907,7 +3907,7 @@
    ;; ----------------------------------------
    ;; Check interaction of mutation and generations
    
-   ;; This check disables interrups so that a garbage collection
+   ;; This check disables interrupts so that a garbage collection
    ;; happens only for the explicit `collect` request.
    (with-interrupts-disabled
      (let ([e (ephemeron-cons (gensym) 'ok)])

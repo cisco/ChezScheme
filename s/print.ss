@@ -332,7 +332,7 @@
     digits to be in
 <mode> is one of:
     'normal:  this is used for "free format" printing.  In normal
-        mode, the digits produced are the minumum number needed
+        mode, the digits produced are the minimum number needed
         to reproduce the internal representation.  In this case,
         <position> is ignored (pass in zero).
 
@@ -355,8 +355,8 @@ In any of the modes, you receive an infinite list consisting of
     * the sign represented by 1 for + and -1 for -
     * the exponent
     * the significant digits w/o trailing zeros
-    * a (posibly empty) sequence of -1's, and
-    * a (posibly empty) sequence of -2's.
+    * a (possibly empty) sequence of -1's, and
+    * a (possibly empty) sequence of -2's.
 
 The -1's should be printed as zeros if you need them; a -1 digit is
 equivalent to zero except that it is not necessary to print it to

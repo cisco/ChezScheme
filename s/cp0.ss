@@ -456,7 +456,7 @@
                ; unsound to split apart two things that can observe a side effect or two
                ; allocation operations that can be separated by a continuation grab.
                [(if (ivory? body) (andmap simple/profile? e*) (andmap ivory? e*))
-                ; assocate each lhs with cooked operand for corresponding rhs.  make-record-constructor-descriptor,
+                ; associate each lhs with cooked operand for corresponding rhs.  make-record-constructor-descriptor,
                 ; at least, counts on this to allow protocols to be inlined.
                 (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e)) (operand-name-set! opnd (prelex-name x))) x* e*)
                 (values (make-lifted #f x* e*) body)]
@@ -485,7 +485,7 @@
                       (let ([x (car x*)] [e (car e*)])
                         (if (and (not (prelex-assigned x)) (ivory? e))
                             (begin
-                              ; assocate each lhs with cooked operand for corresponding rhs.  see note above.
+                              ; associate each lhs with cooked operand for corresponding rhs.  see note above.
                               (prelex-operand-set! x (build-cooked-opnd e))
                               (operand-name-set! opnd (prelex-name x))
                               (loop (cdr x*) (cdr e*) rx* re* (cons x rlx*) (cons e rle*)))
@@ -496,7 +496,7 @@
             ; RHS and body expressions
             [(letrec ([,x* ,e*] ...) ,body)
              (guard (or (ivory? body) (andmap ivory? e*)))
-             ; assocate each lhs with cooked operand for corresponding rhs.  see note above.
+             ; associate each lhs with cooked operand for corresponding rhs.  see note above.
              (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e)) (operand-name-set! opnd (prelex-name x))) x* e*)
              (values (make-lifted #f x* e*) body)]
             ; force the issue by creating an extra tmp for body
@@ -510,7 +510,7 @@
                  (values (make-lifted #t x* e*) (build-ref x))))]
             [(letrec* ([,x* ,e*] ...) ,body)
              (guard (or (ivory? body) (andmap ivory? e*)))
-             ; assocate each lhs with cooked operand for corresponding rhs.  see note above.
+             ; associate each lhs with cooked operand for corresponding rhs.  see note above.
              (for-each (lambda (x e) (prelex-operand-set! x (build-cooked-opnd e)) (operand-name-set! opnd (prelex-name x))) x* e*)
              (values (make-lifted #t x* e*) body)]
             ; force the issue by creating an extra tmp for body.
@@ -524,7 +524,7 @@
                  (values (make-lifted #t x* e*) (build-ref x))))]
             ; we can lift arbitrary subforms of record forms if we also lift
             ; a binding for the record form itself.  there's no worry about
-            ; continuation captures: if rtd-expr or e* capture a contination,
+            ; continuation captures: if rtd-expr or e* capture a continuation,
             ; invoking the continuation to return from a rhs is no worse than
             ; invoking the continuation to build the record and then return
             ; from a rhs.
@@ -799,9 +799,13 @@
             (boolean? obj)
             (null? obj)
             (eqv? obj "")
+            (eqv? obj ($tc-field 'null-immutable-string ($tc)))
             (eqv? obj '#())
+            (eqv? obj ($tc-field 'null-immutable-vector ($tc)))
             (eqv? obj '#vu8())
+            (eqv? obj ($tc-field 'null-immutable-bytevector ($tc)))
             (eqv? obj '#vfx())
+            (eqv? obj ($tc-field 'null-immutable-fxvector ($tc)))
             (eq? obj (void))
             (eof-object? obj)
             (bwp-object? obj)
@@ -1890,7 +1894,7 @@
                     xval]
                    [else #f])))))
 
-      ; could handle inequalies as well (returning #f), but that seems less likely to crop up
+      ; could handle inequalities as well (returning #f), but that seems less likely to crop up
       (define handle-equality
         (lambda (ctxt arg arg*)
           (and

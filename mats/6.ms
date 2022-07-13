@@ -194,7 +194,7 @@
    (begin (current-input-port (console-input-port)) #t)
 
    ; the following tests open-input-string, open-output-string, read-char,
-   ; eof-object?, unread-char, write-char, and get-ouptut-string
+   ; eof-object?, unread-char, write-char, and get-output-string
    (let ([s "hi there, mom!"])
       (let ([ip (open-input-string s)] [op (open-output-string)])
          (do ([c (read-char ip) (read-char ip)])
@@ -1961,7 +1961,6 @@
   "; Test error \"\x667; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x667;\n"
   "; Test error \"\x668; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x668;\n"
   "; Test error \"\x669; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x669;\n"
-  #;"; Test error \"\x6DE; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x6DE;\n"  ; switched from Me to So in Unicode 7.0
   "; Test error \"\x6F0; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x6F0;\n"
   "; Test error \"\x6F1; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x6F1;\n"
   "; Test error \"\x6F2; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x6F2;\n"
@@ -2305,25 +2304,6 @@
   "; Test error \"\x194D; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x194D;\n"
   "; Test error \"\x194E; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x194E;\n"
   "; Test error \"\x194F; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x194F;\n"
-  "; Test error \"\x19B0; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19B0;\n"
-  "; Test error \"\x19B1; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19B1;\n"
-  "; Test error \"\x19B2; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19B2;\n"
-  "; Test error \"\x19B3; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19B3;\n"
-  "; Test error \"\x19B4; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19B4;\n"
-  "; Test error \"\x19B5; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19B5;\n"
-  "; Test error \"\x19B6; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19B6;\n"
-  "; Test error \"\x19B7; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19B7;\n"
-  "; Test error \"\x19B8; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19B8;\n"
-  "; Test error \"\x19B9; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19B9;\n"
-  "; Test error \"\x19BA; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19BA;\n"
-  "; Test error \"\x19BB; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19BB;\n"
-  "; Test error \"\x19BC; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19BC;\n"
-  "; Test error \"\x19BD; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19BD;\n"
-  "; Test error \"\x19BE; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19BE;\n"
-  "; Test error \"\x19BF; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19BF;\n"
-  "; Test error \"\x19C0; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19C0;\n"
-  "; Test error \"\x19C8; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19C8;\n"
-  "; Test error \"\x19C9; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19C9;\n"
   "; Test error \"\x19D0; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19D0;\n"
   "; Test error \"\x19D1; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19D1;\n"
   "; Test error \"\x19D2; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19D2;\n"
@@ -2336,7 +2316,6 @@
   "; Test error \"\x19D9; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x19D9;\n"
   "; Test error \"\x1A19; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x1A19;\n"
   "; Test error \"\x1A1A; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x1A1A;\n"
-  #;"; Test error \"\x1A1B; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x1A1B;\n"  ; switched from Mc to Mn in Unicode 7.0
   "; Test error \"\x1B04; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x1B04;\n"
   "; Test error \"\x1B35; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x1B35;\n"
   "; Test error \"\x1B3B; symbol syntax not allowed in #!r6rs mode\"\n\n#!r6rs \x1B3B;\n"

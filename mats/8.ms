@@ -4241,7 +4241,7 @@
       (define x 77))
     #t)
  ; this works because the indirect export of x for b
- ; counts as an indrect export of x for a.  perhaps it
+ ; counts as an indirect export of x for a.  perhaps it
  ; shouldn't work.
   (eqv?
     (let () (import $ie-E) a)
@@ -5901,7 +5901,7 @@
   (equal?
     (qs-foo 3 2 1)
     '(a 1 2 3))
- ; tests adpated from Andre van Tonder posts to srfi 93 discussion
+ ; tests adapted from Andre van Tonder posts to srfi 93 discussion
   (equal?
     (let ()
       (define-syntax swap!
@@ -8441,7 +8441,7 @@
       (import (a3-6 foo))
       (cons x a))
     '("hello" . "boo"))
- ; import a library in subset-mode system, then outsied of subset-mode system
+ ; import a library in subset-mode system, then outside of subset-mode system
   (begin
     (with-output-to-file "testfile-a3-7.ss"
       (lambda ()
@@ -11369,7 +11369,7 @@
     (make-source-file-descriptor "foo" 17))
   (error? ; #<input port stdin> is not a binary-input port
     (make-source-file-descriptor "foo" (open-string-input-port "oops")))
-  (error? ; #<binary input port> does not supoprt port-position and set-port-position!
+  (error? ; #<binary input port> does not support port-position and set-port-position!
     (make-source-file-descriptor "foo"
       (make-custom-binary-input-port "foo" (lambda (bv s c) 0) #f #f #f)
       #t))
@@ -11814,7 +11814,7 @@
   (begin
     (collect (collect-maximum-generation))
     ;; After collecting the maximum generation, the
-    ;; cached information shoould definitely be gone:
+    ;; cached information should definitely be gone:
     (equal? (call-with-values
              (lambda () (locate-source sfd-to-cache 8 #t))
              (lambda () 'gone))

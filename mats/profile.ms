@@ -962,7 +962,7 @@
          (file-found? "testfile-coverage1b.ss")
          (file-found? "testfile-coverage1c.ss")
          (not (file-found? "testfile-coverage1d.ss"))))
-  ; the coverage table retreived should include counts for both sets of load-program calls
+  ; the coverage table retrieved should include counts for both sets of load-program calls
   (and
     (andmap
       (lambda (dumpit)

@@ -107,7 +107,7 @@
     (case-lambda
       [() (profile-counts (get-counter-list))]
       [(counter*)
-       ; disabiling interrupts so we don't sum part of the counters for a block before
+       ; disabling interrupts so we don't sum part of the counters for a block before
        ; an interrupt and the remaining counters after the interrupt, which can lead
        ; to inaccurate (and possibly negative) counts.  we could disable interrupts just
        ; around the body of rblock-count to shorten the windows during which interrupts

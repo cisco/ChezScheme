@@ -58,6 +58,11 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Unicode 14.0 Support (9.6.0)}
+
+The character sets, character classes, and word-breaking algorithms for character, string,
+and Unicode-related bytevector operations have now been updated to Unicode 14.0.
+
 \subsection{Basic ftypes can be referenced, even if shadowed by syntactic binding (9.5.8)}
 
 Previously, it was possible to interfere with the definition of ftypes by

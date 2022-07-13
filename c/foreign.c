@@ -51,7 +51,7 @@
 #endif /* LOAD_SHARED_OBJECT */
 
 /* locally defined functions */
-static iptr symhash(const char *s);
+static uptr symhash(const char *s);
 static ptr lookup_static(const char *s);
 static ptr lookup_dynamic(const char *s, ptr tbl);
 static ptr lookup(const char *s);
@@ -85,16 +85,16 @@ static ptr bvstring(const char *s) {
 }
 
 /* multiplier weights each character, h = n factors in the length */
-static iptr symhash(const char *s) {
-  iptr n, h;
+static uptr symhash(const char *s) {
+  uptr n, h;
 
   h = n = strlen(s);
-  while (n--) h = h * multiplier + *s++;
-  return (h & 0x7fffffff) % buckets;
+  while (n--) h = h * multiplier + (unsigned char)*s++;
+  return h % buckets;
 }
 
 static ptr lookup_static(const char *s) {
-  iptr b; ptr p;
+  uptr b; ptr p;
 
   b = symhash(s);
   for (p = Svector_ref(S_G.foreign_static, b); p != Snil; p = Scdr(p))
@@ -180,7 +180,7 @@ void Sforeign_symbol(const char *s, void *v) {
 /* like Sforeign_symbol except it silently redefines the symbol
    if it's already in S_G.foreign_static */
 void Sregister_symbol(const char *s, void *v) {
-  iptr b; ptr p;
+  uptr b; ptr p;
 
   tc_mutex_acquire()
 
@@ -198,7 +198,7 @@ void Sregister_symbol(const char *s, void *v) {
 }
 
 static ptr remove_foreign_entry(const char *s) {
-    iptr b;
+    uptr b;
     ptr tbl, p1, p2;
 
     tc_mutex_acquire()
