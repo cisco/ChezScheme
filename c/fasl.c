@@ -257,16 +257,16 @@ static INT sparc64_set_lit_only(void *address, uptr item, I32 destreg);
 static void sparc64_set_literal(void *address, uptr item);
 #endif /* SPARC64 */
 #ifdef RISCV64
-static void riscv64_set_abs PROTO((void *address, uptr item));
-static uptr riscv64_get_abs PROTO((void *address));
-static void riscv64_set_jump PROTO((void *address, uptr item));
-static uptr riscv64_get_jump PROTO((void *address));
+static void riscv64_set_abs(void *address, uptr item);
+static uptr riscv64_get_abs(void *address);
+static void riscv64_set_jump(void *address, uptr item);
+static uptr riscv64_get_jump(void *address);
 #endif /* RISCV64 */
 #ifdef LA64
-static void la64_set_abs PROTO((void *address, uptr item));
-static uptr la64_get_abs PROTO((void *address));
-static void la64_set_jump PROTO((void *address, uptr item));
-static uptr la64_get_jump PROTO((void *address));
+static void la64_set_abs(void *address, uptr item);
+static uptr la64_get_abs(void *address);
+static void la64_set_jump(void *address, uptr item);
+static uptr la64_get_jump(void *address);
 #endif /* LA64 */
 
 static double s_nan;
@@ -1296,10 +1296,10 @@ void S_set_code_obj(char *who, IFASLCODE typ, ptr p, iptr n, ptr x, iptr o) {
             la64_set_abs(address, item);
             break;
     case reloc_la64_jump:
-            la64_set_jump(address, item, 0);
+            la64_set_jump(address, item);
             break;
     case reloc_la64_call:
-            la64_set_jump(address, item, 1);
+            la64_set_jump(address, item);
             break;
 #endif /* LA64 */
     default:
