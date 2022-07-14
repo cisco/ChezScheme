@@ -1,1 +1,0 @@
-.././csug/../s/primdata.ss
