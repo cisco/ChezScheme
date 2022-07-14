@@ -8,3 +8,5 @@
 (define pkg-desc "Creates Chez Scheme boot files from source")
 
 (define pkg-authors '(mflatt))
+
+(define license '(Apache-2.0 OR MIT))
