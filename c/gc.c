@@ -3450,7 +3450,7 @@ ptr S_count_size_increments(ptr ls, IGEN generation) {
   ptr tc = get_thread_context();
   thread_gc *tgc = THREAD_GC(tc);
 
-  tc_mutex_acquire();
+  /* caller acquires mutex and ensures that this is the only thread */
 
   init_measure(tgc, 0, generation);
 
@@ -3497,8 +3497,6 @@ ptr S_count_size_increments(ptr ls, IGEN generation) {
   }
 
   finish_measure();
-
-  tc_mutex_release();
 
   return totals;
 }

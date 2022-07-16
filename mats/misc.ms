@@ -1135,14 +1135,13 @@
             (mutex-acquire m)
             (set-box! ready 'finish)
             ;; Wait for thread to become inactive again
+            (pause-until (lambda () (eq? 'done (unbox ready))))
             (pause-until (lambda () (= 1 (#%$top-level-value '$active-threads))))
             ;; Get thread's size, which shouldn't include bstr
             (let ([post-sizes (compute-size-increments (list th))])
               (mutex-release m)
               ;; Wait for thread to exit
-              (let ()
-                (define $threads (foreign-procedure "(cs)threads" () scheme-object))
-                (pause-until (lambda () (= 1 (length ($threads))))))
+              (thread-join th)
               ;; Make sure `compute-size-increments` doesn't crash on a
               ;; terminated thread:
               (compute-size-increments (list th))

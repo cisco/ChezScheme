@@ -1601,6 +1601,8 @@ The following examples are valid for machines with 32-bit pointers.
 \scheme{static}.
 If \var{generation} is not supplied, it defaults to the value of
 \scheme{collect-maximum-generation}.
+In the threaded versions of {\ChezScheme}, the thread that invokes
+\scheme{compute-size-increments} must be the only active thread.
 
 \scheme{compute-size-increments} is like mapping \scheme{compute-size}
 over \var{list}, except that any object reachable from an earlier
