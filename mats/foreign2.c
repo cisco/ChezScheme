@@ -557,7 +557,6 @@ typedef struct {
 } three_floats;
 
 EXPORT double many_doubles_and_three_floats_and_float(double a, double b, double c, double d, double e, double f, double g, double h, three_floats i, float j) {
-  printf("%f %f %f %f %f\n", h, i.a, i.b, i.c, j);
   return a + b + c + d + e + f + g + h + i.a + i.b + i.c + j;
 }
 
