@@ -2991,7 +2991,7 @@ Scheme counterparts.
 \begin{flushleft}
 \cmacro{ptr}{Scar}{ptr \var{pair}}
 \cmacro{ptr}{Scdr}{ptr \var{pair}}
-\cmacro{ptr}{Ssymbol_to_string}{ptr \var{sym}}
+\cfunction{ptr}{Ssymbol_to_string}{ptr \var{sym}}
 \cmacro{ptr}{Sunbox}{ptr \var{box}}
 \end{flushleft}
 
