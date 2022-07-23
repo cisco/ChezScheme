@@ -3365,7 +3365,7 @@ operation as its Scheme counterpart, i.e., the Scheme procedure
 \scheme{foreign-callable-entry-point}.
 
 \begin{flushleft}
-\cfunction{(void (*) (void))}{Sforeign_callable_entry_point}{ptr \var{code}}
+\cmacro{(void (*) (void))}{Sforeign_callable_entry_point}{ptr \var{code}}
 \end{flushleft}
 
 \noindent
@@ -3377,7 +3377,7 @@ is not saved across any calls back into Scheme.
 The inverse translation can be made via \scheme{Sforeign_callable_code_object}.
 
 \begin{flushleft}
-\cfunction{ptr}{Sforeign_callable_code_object}{(void (*addr)(void))}
+\cmacro{ptr}{Sforeign_callable_code_object}{(void (*addr)(void))}
 \end{flushleft}
 
 \parheader{Low-level support for calls into Scheme}
