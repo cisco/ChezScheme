@@ -2461,7 +2461,7 @@
               indirect-bytes)) ; #f or extra bytes on stack for indirect
 
     (define alignment-via-lookahead
-      (lambda (size types stack-align varargs-after k)
+      (lambda (size types int* fp* fp-in-int? stack-align varargs-after k)
         (constant-case machine-type-name
           [(arm64osx tarm64osx)
            (cond
@@ -2471,24 +2471,67 @@
               ;; multiple of 8, but we need to work out any padding that
               ;; is needed to get alignment right for the next argument
               ;; (and to end on 8-byte alignment). Currently, we're
-              ;; assuming max aignment of 8.
-              (let ([end-this-align (fxand #x7 (fx+ stack-align size))]
-                    [next-align (cond
-                                  [(null? types) 8]
-                                  [else (nanopass-case (Ltype Type) (car types)
-                                          [(fp-double-float) 8]
-                                          [(fp-single-float) 4]
-                                          [(fp-ftd& ,ftd) (if (> ($ftd-size ftd) 16)
-                                                              8
-                                                              ($ftd-alignment ftd))]
-                                          [(fp-integer ,bits) (fxquotient bits 8)]
-                                          [(fp-unsigned ,bits) (fxquotient bits 8)]
-                                          [else 8])])])
-                (cond
-                  [(fx= 0 (fxand end-this-align (fx- next-align 1)))
-                   (k size 0 end-this-align)]
-                  [else
-                   (k size (- next-align end-this-align) next-align)]))])]
+              ;; assuming max alignment of 8.
+              (let ()
+                (define (next-is-stack types)
+                  (let ([end-this-align (fxand #x7 (fx+ stack-align size))]
+                        [next-align (cond
+                                      [(null? types) 8]
+                                      [else (nanopass-case (Ltype Type) (car types)
+                                              [(fp-double-float) 8]
+                                              [(fp-single-float) 4 #;(if (and (eq? kind 'float)
+                                               (= stack-align (align 8 stack-align)))
+                                               4
+                                               8)]
+                                              [(fp-ftd& ,ftd) (cond
+                                                                [(> ($ftd-size ftd) 16) 8]
+                                                                [else ($ftd-alignment ftd)])]
+                                              [(fp-integer ,bits) (fxquotient bits 8)]
+                                              [(fp-unsigned ,bits) (fxquotient bits 8)]
+                                              [else 8])])])
+                    (cond
+                      [(fx= 0 (fxand end-this-align (fx- next-align 1)))
+                       (k size 0 end-this-align)]
+                      [else
+                       (k size (- next-align end-this-align) next-align)])))
+                ;; Look past arguments that fit in registers
+                (let loop ([types types] [int* int*] [fp* fp*])
+                  (cond
+                    [(null? types) (next-is-stack types)]
+                    [else
+                     (let ()
+                       (define (use-int-regs n)
+                         (let use ([n n] [int* int*])
+                           (cond
+                             [(null? int*) (next-is-stack types)]
+                             [(fx> n 1) (use (fx- n 1) (cdr int*))]
+                             [else (loop (cdr types) (cdr int*) fp*)])))
+                       (define (use-fp-regs n)
+                         (cond
+                           [fp-in-int? (use-int-regs n)]
+                           [else
+                            (let use ([n n] [fp* fp*])
+                              (cond
+                                [(null? fp*) (next-is-stack types)]
+                                [(fx> n 1) (use (fx- n 1) (cdr fp*))]
+                                [else (loop (cdr types) int* (cdr fp*))]))]))
+                       (nanopass-case (Ltype Type) (car types)
+                         [(fp-double-float) (use-fp-regs 1)]
+                         [(fp-single-float) (use-fp-regs 1)]
+                         [(fp-ftd& ,ftd) (cond
+                                           [(> ($ftd-size ftd) 16) (next-is-stack types)]
+                                           [else
+                                            (let ([members ($ftd->members ftd)])
+                                              (cond
+                                                [(and (fx= 8 ($ftd-alignment ftd))
+                                                      (andmap double-member? members))
+                                                 (use-fp-regs (length members))]
+                                                [(and (fx= 4 ($ftd-alignment ftd))
+                                                      (andmap float-member? members))
+                                                 (use-fp-regs (length members))]
+                                                [else
+                                                 (use-int-regs (fxquotient (align ($ftd-size ftd) 8) 8))]))])]
+                         [else (use-int-regs 1)]))])))])]
           [else
            (k (align 8 size) 0 0)])))
 
@@ -2537,7 +2580,7 @@
                    (cond
                      [(if fp-in-int? (null? int*) (null? fp*))
                       (alignment-via-lookahead
-                       4 (cdr types) stack-align varargs-after
+                       4 (cdr types) int* fp* fp-in-int? stack-align varargs-after
                        (lambda (bytes pad stack-align)
                          (cons (make-cat 'stack '() bytes pad #f) (loop (cdr types) int* '() next-varargs-after stack-align))))]
                      [fp-in-int?
@@ -2586,7 +2629,7 @@
                           [else
                            ;; Stop using fp registers, put on stack
                            (alignment-via-lookahead
-                            size (cdr types) stack-align varargs-after
+                            size (cdr types) int* fp* fp-in-int? stack-align varargs-after
                             (lambda (size pad stack-align)
                               (cons (make-cat 'stack '() size pad #f)
                                     (loop (cdr types) int* '() next-varargs-after stack-align))))])]
@@ -2616,20 +2659,20 @@
                             [else
                              ;; Stop using int registers, put on stack
                              (alignment-via-lookahead
-                              size (cdr types) stack-align varargs-after
+                              size (cdr types) int* fp* fp-in-int? stack-align varargs-after
                               (lambda (size pad stack-align)
                                 (cons (make-cat 'stack '() size pad #f)
                                       (loop (cdr types) '() fp* next-varargs-after stack-align))))]))]))]
                   [else
                    ;; integers, scheme-object, etc.
                    (cond
-                     [(null? int*) 
+                     [(null? int*)
                       (let ([size (nanopass-case (Ltype Type) (car types)
                                     [(fp-integer ,bits) (fxquotient bits 8)]
                                     [(fp-unsigned ,bits) (fxquotient bits 8)]
                                     [else 8])])
                         (alignment-via-lookahead
-                         size (cdr types) stack-align varargs-after
+                         size (cdr types) int* fp* fp-in-int? stack-align varargs-after
                          (lambda (size pad stack-align)
                            (cons (make-cat 'stack '() size pad #f) (loop (cdr types) '() fp* next-varargs-after stack-align)))))]
                      [else
@@ -2729,15 +2772,18 @@
                            (%seq
                             ,(loop 4 offset from-offset)
                             ,(loop (fx- size 4) (fx+ offset 4) (fx+ from-offset 4)))]
+                          [(1 2 4)
+                           (let ([info (case size
+                                         [(1) (make-info-load 'integer-8 #f)]
+                                         [(2) (make-info-load 'integer-16 #f)]
+                                         [(4) (make-info-load 'integer-32 #f)])])
+                             `(seq
+                               (set! ,%argtmp (inline ,info ,%load ,x ,%zero (immediate ,from-offset)))
+                               (inline ,info ,%store ,%sp ,%zero (immediate ,offset) ,%argtmp)))]
                           [(3)
                            (%seq
-                            (set! ,(%mref ,%sp ,offset) (inline ,(make-info-load 'integer-16 #f) ,%load ,x ,%zero (immediate ,from-offset)))
-                            (set! ,(%mref ,%sp ,(fx+ offset 2)) (inline ,(make-info-load 'integer-8 #f) ,%load ,x ,%zero (immediate ,(fx+ from-offset 2)))))]
-                          [(1 2 4)
-                           `(set! ,(%mref ,%sp ,offset) ,(case size
-                                                           [(1) `(inline ,(make-info-load 'integer-8 #f) ,%load ,x ,%zero (immediate ,from-offset))]
-                                                           [(2) `(inline ,(make-info-load 'integer-16 #f) ,%load ,x ,%zero (immediate ,from-offset))]
-                                                           [(4) `(inline ,(make-info-load 'integer-32 #f) ,%load ,x ,%zero (immediate ,from-offset))]))]
+                            ,(loop 2 offset from-offset)
+                            ,(loop 1 (fx+ offset 2) (fx+ from-offset 2)))]
                           [else
                            (%seq
                             ,(loop 8 offset from-offset)

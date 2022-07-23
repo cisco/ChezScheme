@@ -2066,6 +2066,52 @@
             single-float single-float single-float single-float)
            single-float)
          args)))
+
+  (let ([many_ints_and_floats
+         (foreign-procedure "many_ints_and_floats" (int int int int int int float (* float)  int (* float) int float (* float) int)
+                            iptr)])
+    (= (many_ints_and_floats -1 -2 -3 1 2 3 4.0 (make-ftype-pointer float 5) 6 (make-ftype-pointer float 7) 8 9.0 (make-ftype-pointer float 4) 11)
+       (+ -1 -2 -3 1 2 3 4 5 6 7 8 9 4 11)))
+
+  (begin
+    (define-ftype three_floats
+      (struct (a float) (b float) (c float)))
+    (define three-floats
+      (let ([p (make-ftype-pointer three_floats (foreign-alloc (ftype-sizeof three_floats)))])
+        (ftype-set! three_floats (a) p 10.0)
+        (ftype-set! three_floats (b) p 11.0)
+        (ftype-set! three_floats (c) p 12.0)
+        p))
+    #t)
+
+  (let ([proc
+         (foreign-procedure "many_doubles_and_three_floats_and_float" (double double double double double double double double (& three_floats) float)
+                            double)])
+    (= (proc 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 three-floats 9.0)
+       (+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 10.0 11.0 12.0 9.0)))
+
+  (let ([proc
+         (foreign-procedure "many_doubles_and_float_and_three_floats" (double double double double double double double double float (& three_floats))
+                            double)])
+    (= (proc 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 three-floats)
+       (+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0)))
+
+  (let ([proc
+         (foreign-procedure "many_doubles_and_float_and_three_floats" (double double double double double double double double float (& three_floats))
+                            double)])
+    (= (proc 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 91.0 three-floats)
+       (+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 91.0 10.0 11.0 12.0)))
+
+  (let ([proc
+         (foreign-procedure "many_doubles_and_three_floats_and_three_floats" (double double double double double double double double (& three_floats) (& three_floats))
+                            double)])
+    (= (proc 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 three-floats (let ([p (make-ftype-pointer three_floats (foreign-alloc (ftype-sizeof three_floats)))])
+                                                            (ftype-set! three_floats (a) p 34.0)
+                                                            (ftype-set! three_floats (b) p 35.0)
+                                                            (ftype-set! three_floats (c) p 36.0)
+                                                            p))
+       (+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 10.0 11.0 12.0 34.0 35.0 36.0)))
+
  )
 
 (mat auto-mat-icks

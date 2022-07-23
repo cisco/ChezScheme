@@ -547,3 +547,24 @@ EXPORT void call_with_many_args(many_arg_callback_t callback)
 {
     callback(0, "this", "is", "working", "just", 1, "fine", "or does it?", 2);
 }
+
+EXPORT iptr many_ints_and_floats(int o, int p, int q, int a, int b, int c, float d, float *e, int f, float *g, int h, float i, float *j, int k) {
+  return (iptr)o + (iptr)p + (iptr)q + (iptr)a + (iptr)b + (iptr)c + (iptr)d + (iptr)e + (iptr)f + (iptr)g + (iptr)h + (iptr)i + (iptr)j + (iptr)k;
+}
+
+typedef struct {
+  float a, b, c;
+} three_floats;
+
+EXPORT double many_doubles_and_three_floats_and_float(double a, double b, double c, double d, double e, double f, double g, double h, three_floats i, float j) {
+  printf("%f %f %f %f %f\n", h, i.a, i.b, i.c, j);
+  return a + b + c + d + e + f + g + h + i.a + i.b + i.c + j;
+}
+
+EXPORT double many_doubles_and_float_and_three_floats(double a, double b, double c, double d, double e, double f, double g, double h, float i, three_floats j) {
+  return a + b + c + d + e + f + g + h + i + j.a + j.b + j.c;
+}
+
+EXPORT double many_doubles_and_three_floats_and_three_floats(double a, double b, double c, double d, double e, double f, double g, double h, three_floats i, three_floats j) {
+  return a + b + c + d + e + f + g + h + i.a + i.b + i.c + j.a + j.b + j.c;
+}
