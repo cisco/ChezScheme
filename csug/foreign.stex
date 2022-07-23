@@ -3312,11 +3312,11 @@ be unlocked by an equal number of calls to
 \scheme{Sunlock_object} or \scheme{unlock-object} before it is
 truly unlocked.
 
-The function \scheme{Sunlocked_objectp} can be used to determine
+The function \scheme{Slocked_objectp} can be used to determine
 if an object is locked.
 
 \begin{flushleft}
-\cfunction{int}{Sunlocked_objectp}{ptr \var{obj}}
+\cfunction{int}{Slocked_objectp}{ptr \var{obj}}
 \end{flushleft}
 
 When a foreign procedure call is made into Scheme, a return address
