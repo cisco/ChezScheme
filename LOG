@@ -2336,3 +2336,5 @@
     c/foreign.c
 - Propagate immutable versions of "", #(), #vu8() and #vfx() in cp0.
     s/cp0.ss s/cpnanopass.ss
+- Fix several issues in foreign docs (section 4.8)
+    csug/foreign.stex
