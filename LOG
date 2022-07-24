@@ -2330,3 +2330,6 @@
     s/syntax.ss s/x86.ss s/x86_64.ss
 - Unicode 14.0 support
     unicode/* s/5_4.ss mats/5_4.ms mats/6.ms
+- correct mislabeling of some functions as macros and vice versa in
+  docs + correct name of Slocked_objectp from Sunlocked_objectp
+    csug/foreign.stex

@@ -3250,7 +3250,7 @@ Scheme counterparts.
 \begin{flushleft}
 \cmacro{ptr}{Scar}{ptr \var{pair}}
 \cmacro{ptr}{Scdr}{ptr \var{pair}}
-\cmacro{ptr}{Ssymbol_to_string}{ptr \var{sym}}
+\cfunction{ptr}{Ssymbol_to_string}{ptr \var{sym}}
 \cmacro{ptr}{Sunbox}{ptr \var{box}}
 \end{flushleft}
 
@@ -3585,11 +3585,11 @@ be unlocked by an equal number of calls to
 \scheme{Sunlock_object} or \scheme{unlock-object} before it is
 truly unlocked.
 
-The function \scheme{Sunlocked_objectp} can be used to determine
+The function \scheme{Slocked_objectp} can be used to determine
 if an object is locked.
 
 \begin{flushleft}
-\cfunction{int}{Sunlocked_objectp}{ptr \var{obj}}
+\cfunction{int}{Slocked_objectp}{ptr \var{obj}}
 \end{flushleft}
 
 When a foreign procedure call is made into Scheme, a return address
@@ -3638,7 +3638,7 @@ operation as its Scheme counterpart, i.e., the Scheme procedure
 \scheme{foreign-callable-entry-point}.
 
 \begin{flushleft}
-\cfunction{(void (*) (void))}{Sforeign_callable_entry_point}{ptr \var{code}}
+\cmacro{(void (*) (void))}{Sforeign_callable_entry_point}{ptr \var{code}}
 \end{flushleft}
 
 \noindent
@@ -3650,7 +3650,7 @@ is not saved across any calls back into Scheme.
 The inverse translation can be made via \scheme{Sforeign_callable_code_object}.
 
 \begin{flushleft}
-\cfunction{ptr}{Sforeign_callable_code_object}{(void (*addr)(void))}
+\cmacro{ptr}{Sforeign_callable_code_object}{(void (*addr)(void))}
 \end{flushleft}
 
 \parheader{Low-level support for calls into Scheme}
