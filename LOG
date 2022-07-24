@@ -2336,5 +2336,6 @@
     c/foreign.c
 - Propagate immutable versions of "", #(), #vu8() and #vfx() in cp0.
     s/cp0.ss s/cpnanopass.ss
-- Fix several issues in foreign docs (section 4.8)
+- correct mislabeling of some functions as macros and vice versa in
+  docs + correct name of Slocked_objectp from Sunlocked_objectp
     csug/foreign.stex
