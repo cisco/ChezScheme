@@ -458,6 +458,12 @@ static IBOOL next_path(char *path, const char *name, const char *ext, const char
 static const char *path_last(const char *path);
 static char *get_defaultheapdirs(void);
 
+#ifdef PATH_MAX
+# define BOOT_PATH_MAX PATH_MAX
+#else /* hack for Hurd: better to remove the restriction */
+# define BOOT_PATH_MAX 4096
+#endif
+
 static const char *path_last(const char *p) {
   const char *s;
 #ifdef WIN32
@@ -483,7 +489,7 @@ static const char *path_last(const char *p) {
 
 static char *get_defaultheapdirs() {
   char *result;
-  wchar_t buf[PATH_MAX];
+  wchar_t buf[BOOT_PATH_MAX];
   DWORD len = sizeof(buf);
   if (ERROR_SUCCESS != RegGetValueW(HKEY_LOCAL_MACHINE, L"Software\\Chez Scheme\\csv" VERSION, L"HeapSearchPath", RRF_RT_REG_SZ, NULL, buf, &len))
     return DEFAULT_HEAP_PATH;
@@ -512,14 +518,14 @@ static char *get_defaultheapdirs() {
  * leaving the full path with name affixed in path and *sp / *dsp pointing
  * past the current entry.  it returns 1 on success and 0 if at the end of
  * the search path.  path should be a pointer to an unoccupied buffer
- * PATH_MAX characters long.  either or both of sp/dsp may be empty,
+ * BOOT_PATH_MAX characters long.  either or both of sp/dsp may be empty,
  * but neither may be null, i.e., (char *)0. */
 static IBOOL next_path(char *path, const char *name, const char *ext,
                        const char **sp, const char **dsp) {
   char *p;
   const char *s, *t;
 
-#define setp(c) if (p >= path + PATH_MAX) { fprintf(stderr, "search path entry too long\n"); S_abnormal_exit(); } else *p++ = (c)
+#define setp(c) if (p >= path + BOOT_PATH_MAX) { fprintf(stderr, "search path entry too long\n"); S_abnormal_exit(); } else *p++ = (c)
   for (;;) {
     s = *sp;
     p = path;
@@ -532,10 +538,10 @@ static IBOOL next_path(char *path, const char *name, const char *ext,
           switch (*s) {
 #ifdef WIN32
             case 'x': {
-              wchar_t exepath[PATH_MAX]; DWORD n;
+              wchar_t exepath[BOOT_PATH_MAX]; DWORD n;
               s += 1;
-              n = GetModuleFileNameW(NULL, exepath, PATH_MAX);
-              if (n == 0 || (n == PATH_MAX && GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+              n = GetModuleFileNameW(NULL, exepath, BOOT_PATH_MAX);
+              if (n == 0 || (n == BOOT_PATH_MAX && GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
                 fprintf(stderr, "warning: executable path is too long; ignoring %%x\n");
               } else {
                 char *tstart;
@@ -608,7 +614,7 @@ typedef struct {
   iptr len; /* 0 => unknown */
   iptr offset;
   IBOOL need_check, close_after;
-  char path[PATH_MAX];
+  char path[BOOT_PATH_MAX];
 } boot_desc;
 
 #define MAX_BOOT_FILES 10
@@ -695,14 +701,14 @@ static void finish_dependencies_header(int fd, const char *path, int c) {
 static IBOOL find_boot(const char *name, const char *ext, IBOOL direct_pathp,
                        int fd,
                        IBOOL errorp) {
-  char pathbuf[PATH_MAX], buf[PATH_MAX];
+  char pathbuf[BOOT_PATH_MAX], buf[BOOT_PATH_MAX];
   uptr n = 0;
   INT c;
   const char *path;
   char *expandedpath;
 
   if ((fd != -1) || direct_pathp || S_fixedpathp(name)) {
-    if (strlen(name) >= PATH_MAX) {
+    if (strlen(name) >= BOOT_PATH_MAX) {
       fprintf(stderr, "boot-file path is too long %s\n", name);
       S_abnormal_exit();
     }
@@ -776,7 +782,7 @@ static IBOOL find_boot(const char *name, const char *ext, IBOOL direct_pathp,
     if (boot_count == 0) {
       for (;;) {
        /* try to load heap or boot file this boot file requires */
-        if (get_string(fd, buf, PATH_MAX, &c) != 0) {
+        if (get_string(fd, buf, BOOT_PATH_MAX, &c) != 0) {
           fprintf(stderr, "unexpected end of file on %s\n", path);
           CLOSE(fd);
           S_abnormal_exit();
@@ -796,7 +802,7 @@ static IBOOL find_boot(const char *name, const char *ext, IBOOL direct_pathp,
           c = get_u8(fd);
           for (sep = " "; ; sep = "or ") {
             if (c == ')') break;
-            (void) get_string(fd, buf, PATH_MAX, &c);
+            (void) get_string(fd, buf, BOOT_PATH_MAX, &c);
             fprintf(stderr, "%s%s.boot ", sep, buf);
           }
           fprintf(stderr, "required by %s\n", path);
@@ -1090,7 +1096,7 @@ extern void Sregister_boot_file_fd_region(const char *name,
                                           int close_after) {
   check_boot_file_state("Sregister_boot_file_fd");
 
-  if (strlen(name) >= PATH_MAX) {
+  if (strlen(name) >= BOOT_PATH_MAX) {
     fprintf(stderr, "boot-file path is too long %s\n", name);
     S_abnormal_exit();
   }
@@ -1141,14 +1147,14 @@ extern void Sbuild_heap(const char *kernel, void (*custom_init)(void)) {
     }
 
     name = path_last(kernel);
-    if (strlen(name) >= PATH_MAX) {
+    if (strlen(name) >= BOOT_PATH_MAX) {
       fprintf(stderr, "executable name too long: %s\n", name);
       S_abnormal_exit();
     }
 
 #ifdef WIN32
     { /* strip off trailing .exe, if any */
-      static char buf[PATH_MAX];
+      static char buf[BOOT_PATH_MAX];
       iptr n;
 
       n = strlen(name) - 4;

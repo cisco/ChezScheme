@@ -13,6 +13,7 @@ Supported platforms (bytecode interpreter may work for others):
  * OpenBSD: x86, x86_64, ARMv6, AArch64, PowerPC32
  * NetBSD: x86, x86_64, ARMv6, AArch64, PowerPC32
  * Solaris: x86, x86_64
+ * GNU/Hurd: x86
  * Android: ARMv7, AArch64
  * iOS: AArch64
  * WebAssembly via Emscripten (bytecode interpreter only)

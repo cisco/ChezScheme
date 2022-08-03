@@ -102,6 +102,11 @@ case "${CONFIG_UNAME}" in
     installprefix=/usr
     installmansuffix=share/man
     ;;
+  GNU)
+    unixsuffix=gnu # the Hurd
+    installprefix=/usr
+    installmansuffix=share/man
+    ;;
   QNX)
     if uname -a | egrep 'x86' > /dev/null 2>&1 ; then
       m32=i3qnx
@@ -591,7 +596,7 @@ fi
 
 # Infer flags needed for threads:
 case "${flagsm}" in
-  *le|*fb|*ob|*nb)
+  *le|*gnu|*fb|*ob|*nb)
       threadFlags="-D_REENTRANT -pthread"
       threadLibs="-lpthread"
       ;;
@@ -627,7 +632,7 @@ if [ "$cflagsset" = "no" ] ; then
     a6*)
         CFLAGS="-m64 ${optFlags}"
         ;;
-    i3le)
+    i3le) # intentionally not including i3gnu, which may not support sse2
         CFLAGS="-m32 -msse2 -mfpmath=sse ${optFlags}"
         ;;
     i3nt)
@@ -688,7 +693,7 @@ fi
 # Add automatic linking flags, unless suppressed by --disable-auto-flags
 if [ "$addflags" = "yes" ] ; then
   case "${flagsm}" in
-    *le)
+    *le|*gnu)
         LDFLAGS="${LDFLAGS} -rdynamic"
         ;;
     *fb|*nb)
@@ -702,7 +707,7 @@ if [ "$addflags" = "yes" ] ; then
   esac
 
   case "${flagsm}" in
-    *le)
+    *le|*gnu)
         LIBS="${LIBS} -lm -ldl ${ncursesLib} -lrt"
         ;;
     *fb|*ob)
@@ -780,7 +785,7 @@ exeSuffix=
 
 # compile flags for c/Mf-unix and mats/Mf-unix
 case "${flagsmuni}" in
-    *le)
+    *le|*gnu)
         mdcflags="-fPIC -shared"
         ;;
     *fb|*ob)
@@ -812,7 +817,7 @@ case "${flagsmuni}" in
     i3le)
         mdldflags="-melf_i386"
         ;;
-    *le)
+    *le|*gnu)
         ;;
     i3nb)
         mdldflags="-m elf_i386"

@@ -385,6 +385,7 @@
   i3fb      ti3fb
   i3ob      ti3ob
   i3osx     ti3osx
+  i3gnu     ti3gnu
   a6le      ta6le
   a6osx     ta6osx
   a6ob      ta6ob

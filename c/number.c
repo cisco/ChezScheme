@@ -1041,15 +1041,15 @@ floating-point operations
 
 #ifdef IEEE_DOUBLE
 /* exponent stored + 1024, hidden bit to left of decimal point */
-#define bias 1023
-#define bitstoright 52
-#define m1mask 0xf
-#ifdef WIN32
-#define hidden_bit 0x10000000000000
-#else
-#define hidden_bit 0x10000000000000ULL
-#endif
-#ifdef LITTLE_ENDIAN_IEEE_DOUBLE
+# define bias 1023
+# define bitstoright 52
+# define m1mask 0xf
+# ifdef WIN32
+#  define hidden_bit 0x10000000000000
+# else
+#  define hidden_bit 0x10000000000000ULL
+# endif
+# ifdef LITTLE_ENDIAN_IEEE_DOUBLE
 struct dblflt {
     UINT m4: 16;
     UINT m3: 16;
@@ -1058,7 +1058,7 @@ struct dblflt {
     UINT e: 11;
     UINT sign: 1;
 };
-#else
+# else
 struct dblflt {
     UINT sign: 1;
     UINT e: 11;
@@ -1067,7 +1067,7 @@ struct dblflt {
     UINT m3: 16;
     UINT m4: 16;
 };
-#endif
+# endif
 #endif
 
 double S_random_double(U32 m1, U32 m2, U32 m3, U32 m4, double scale) {
