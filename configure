@@ -77,6 +77,7 @@ default_warning_flags="-Wpointer-arith -Wall -Wextra -Wno-implicit-fallthrough"
 : ${ARFLAGS:="rc"}
 : ${RANLIB:="ranlib"}
 : ${WINDRES:="windres"}
+: ${STRIP:="strip"}
 zlibLib=
 LZ4Lib=
 Kernel=KernelLib
@@ -275,6 +276,7 @@ while [ $# != 0 ] ; do
       AR="${toolprefix}${AR}"
       RANLIB="${toolprefix}${RANLIB}"
       WINDRES="${toolprefix}${WINDRES}"
+      STRIP="${toolprefix}${STRIP}"
       ;;
     --gzip-man-pages)
       gzipmanpages=yes
@@ -358,6 +360,9 @@ while [ $# != 0 ] ; do
       ;;
     WINDRES=*)
       WINDRES=`echo $1 | sed -e 's/^WINDRES=//'`
+      ;;
+    STRIP=*)
+      STRIP=`echo $1 | sed -e 's/^STRIP=//'`
       ;;
     ZLIB=*)
       zlibLib=`echo $1 | sed -e 's/^ZLIB=//'`
@@ -555,6 +560,7 @@ if [ "$help" = "yes" ]; then
   echo "  ARFLAGS=<archiver flgs>           archiver flags"
   echo "  RANLIB=<archive indexer>          archive indexer"
   echo "  WINDRES=<resource compiler>       resource compiler"
+  echo "  STRIP=<strip>                     executable stripper"
   echo "  ZLIB=<lib>                        link to <lib> instead of own zlib"
   echo "  LZ4=<lib>                         link to <lib> instead of own LZ4"
   echo ""
@@ -974,6 +980,7 @@ AR=$AR
 ARFLAGS=$ARFLAGS
 RANLIB=$RANLIB
 WINDRES=$WINDRES
+STRIP=$STRIP
 cursesLib=$cursesLib
 ncursesLib=$ncursesLib
 zlibLib=$zlibLib

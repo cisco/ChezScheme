@@ -200,7 +200,7 @@
                               env)
                      env)))
              (hash-ref (runtime-env) 'env)
-             '(CC CFLAGS AR ARFLAGS RANLIB LDFLAGS))))
+             '(CC CFLAGS AR ARFLAGS RANLIB STRIP LDFLAGS))))
 
   (define (add-to-env vars env)
     (foldl (lambda (var=val env)
@@ -301,7 +301,8 @@
                                         (string->shell (~a "CFLAGS=" (hash-ref config 'CFLAGS)))
                                         (string->shell (~a "AR=" (hash-ref config 'AR)))
                                         (string->shell (~a "RANLIB=" (hash-ref config 'RANLIB)))
-                                        (string->shell (~a "RC=" (hash-ref config 'WINDRES))))
+                                        (string->shell (~a "RC=" (hash-ref config 'WINDRES)))
+                                        (string->shell (~a "STRIP=" (hash-ref config 'STRIP))))
                            "\n")
                        (build-path zlib-dir "Makefile")
                        :truncate)]
