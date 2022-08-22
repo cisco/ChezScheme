@@ -2722,6 +2722,39 @@
     '(666 66.6 -1 .25))
   (#%$address-in-heap? (#%$object-address cons 0))
   (not (#%$address-in-heap? 0))
+  (or (not #%$compiler-is-loaded?)
+      (#%$suppress-primitive-inlining)
+      (< (optimize-level) 3)
+      ;; check for live-pointer mask issue
+      (let ()
+        (define bait (list -1 -1))
+        (define addr (#%$object-address bait 0))
+        (define typemod #x8) ;; TODO is there a clean way to get this?
+        (define type-mask (- typemod 1))
+        (define wrong-tag-bits (logand type-mask (#%$object-address values 0)))
+        (define A)
+        (define B)
+        ;; prevent cp0 from simplifying the primitive call operands
+        (set! A (lambda () (collect 0) A))
+        (set! B
+          (lambda ()
+            ;; We return a fixnum here, but object-address shifts it right and
+            ;; stores the resulting raw value on the stack where it is live
+            ;; across the call to A. If expand-primitives marks it as raw then
+            ;; we omit it from the live-pointer mask and the collector will
+            ;; leave it alone. If not, we've arranged for the raw value to look
+            ;; like a closure though it actually points to a list.
+            ;;
+            ;; This catches the issue on a6le since the object address is a
+            ;; fixnum and we can construct a value that passes the in-heap
+            ;; check. It does not catch the issue on i3le since the object
+            ;; address is not a fixnum and the result we construct here does not
+            ;; fool the in-heap check.
+            (logand (most-positive-fixnum)
+              (bitwise-copy-bit-field addr 0 (integer-length type-mask) wrong-tag-bits))))
+        ;; crashes if raw value from B is marked as a live pointer
+        (#3%$object-address (A) (B))
+        #t))
 )
 
 (mat record-inheritance
