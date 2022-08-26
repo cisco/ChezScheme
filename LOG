@@ -2339,3 +2339,6 @@
 - correct mislabeling of some functions as macros and vice versa in
   docs + correct name of Slocked_objectp from Sunlocked_objectp
     csug/foreign.stex
+- fix some missing quotes around shell variable expansion; add a helpful
+  message telling how to build under Rosetta2 when running on an arm64 OSX
+    configure
