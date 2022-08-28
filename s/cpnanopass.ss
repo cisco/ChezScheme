@@ -6573,7 +6573,7 @@
                               ,(%mref ,e ,disp-low))))])
                     ,t)))))
 
-          ;; TODO: Rather then reducing here, (which will allocate a new flonum for each interim result)
+          ;; TODO: Rather than reducing here, (which will allocate a new flonum for each interim result)
           ;; we could allocate a single flonum and reuse it until the final result is calculated.
           ;; Better yet, we could do this across nested fl operations, so that only one flonum is
           ;; allocated across nested fl+, fl*, fl-, fl/ etc. operation
