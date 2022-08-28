@@ -1602,6 +1602,10 @@ static void s_mutex_release(ptr m) {
   S_mutex_release(TO_VOIDP(m));
 }
 
+static IBOOL s_mutex_is_owner(ptr m) {
+  return S_mutex_is_owner(TO_VOIDP(m));
+}
+
 static void s_condition_broadcast(ptr c_p) {
   s_thread_cond_t *c = TO_VOIDP(c_p);
   s_thread_cond_broadcast(c);
@@ -1703,6 +1707,7 @@ void S_prim5_init(void) {
     Sforeign_symbol("(cs)mutex_acquire", (void *)s_mutex_acquire);
     Sforeign_symbol("(cs)mutex_release", (void *)s_mutex_release);
     Sforeign_symbol("(cs)mutex_acquire_noblock", (void *)s_mutex_acquire_noblock);
+    Sforeign_symbol("(cs)mutex_is_owner", (void *)s_mutex_is_owner);
     Sforeign_symbol("(cs)make_condition", (void *)S_make_condition);
     Sforeign_symbol("(cs)condition_free", (void *)s_condition_free);
     Sforeign_symbol("(cs)condition_broadcast", (void *)s_condition_broadcast);
