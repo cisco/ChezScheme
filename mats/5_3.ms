@@ -2307,7 +2307,8 @@
  )
 
 (mat max
-    (error? (max))
+    (eqv? (max) -inf.0)
+    (eqv? (max -inf.0 1) 1)
     (error? (max 'a))
     (error? (max 1 'a))
     (error? (max 1 'a 2))
@@ -2324,7 +2325,8 @@
  )
 
 (mat min
-    (error? (min))
+    (eqv? (min) +inf.0)
+    (eqv? (min +inf.0 1) 1)
     (error? (min 'a))
     (error? (min 1 'a))
     (error? (min 1 'a 2))

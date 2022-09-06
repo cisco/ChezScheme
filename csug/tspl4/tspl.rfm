@@ -172,8 +172,8 @@
 "ceiling" \sfentry{\scheme{(ceiling~\var{real})}}{\categoryprocedure}{\pageref{./objects:s103}}
 "round" \sfentry{\scheme{(round~\var{real})}}{\categoryprocedure}{\pageref{./objects:s104}}
 "abs" \sfentry{\scheme{(abs~\var{real})}}{\categoryprocedure}{\pageref{./objects:s105}}
-"max" \sfentry{\scheme{(max~\var{real$_1$}~\var{real$_2$}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s107}}
-"min" \sfentry{\scheme{(min~\var{real$_1$}~\var{real$_2$}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s108}}
+"max" \sfentry{\scheme{(max~\var{real}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s107}}
+"min" \sfentry{\scheme{(min~\var{real}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s108}}
 "gcd" \sfentry{\scheme{(gcd~\var{int}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s109}}
 "lcm" \sfentry{\scheme{(lcm~\var{int}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s110}}
 "expt" \sfentry{\scheme{(expt~\var{num$_1$}~\var{num$_2$})}}{\categoryprocedure}{\pageref{./objects:s111}}
@@ -285,8 +285,8 @@
 "flnan?" \sfentry{\scheme{(flnan?~\var{fl})}}{\categoryprocedure}{\pageref{./objects:s181}}
 "fleven?" \sfentry{\scheme{(fleven?~\var{fl-int})}}{\categoryprocedure}{\pageref{./objects:s182}}
 "flodd?" \sfentry{\scheme{(flodd?~\var{fl-int})}}{\categoryprocedure}{\pageref{./objects:s182}}
-"flmin" \sfentry{\scheme{(flmin~\var{fl$_1$}~\var{fl$_2$}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s183}}
-"flmax" \sfentry{\scheme{(flmax~\var{fl$_1$}~\var{fl$_2$}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s183}}
+"flmin" \sfentry{\scheme{(flmin~\var{fl}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s183}}
+"flmax" \sfentry{\scheme{(flmax~\var{fl}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s183}}
 "fl+" \sfentry{\scheme{(fl+~\var{fl}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s184}}
 "fl-" \sfentry{\scheme{(fl-~\var{fl})}}{\categoryprocedure}{\pageref{./objects:s185}}
 "fl-" \sfentry{\scheme{(fl-~\var{fl$_1$}~\var{fl$_2$}~\var{fl$_3$}~{\dots})}}{\categoryprocedure}{\pageref{./objects:s185}}

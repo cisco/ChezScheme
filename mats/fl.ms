@@ -834,7 +834,7 @@
  )
 
 (mat flmin
-    (error? (flmin))
+    (eqv? (flmin) +inf.0)
     (error? (flmin 'a))
     (error? (flmin 1.0 'a))
     (error? (flmin 1.0 'a 2.0))
@@ -861,7 +861,7 @@
  )
 
 (mat flmax
-    (error? (flmax))
+    (eqv? (flmax) -inf.0)
     (error? (flmax 'a))
     (error? (flmax 1.0 'a))
     (error? (flmax 1.0 3))

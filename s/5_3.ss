@@ -1107,25 +1107,30 @@
   (rec min
     (case-lambda
       [(x y)
-       (type-case x
-          [(flonum?)
-           (type-case y
-              [(flonum?) (if (or (fl< x y) ($nan? x)) x y)]
-              [(fixnum? bignum? ratnum?) (min x (inexact y))]
-              [else (nonreal-error who y)])]
-          [(fixnum?)
-           (type-case y
-              [(fixnum?) (if (fx< x y) x y)]
-              [(bignum? ratnum?) (if (< x y) x y)]
-              [(flonum?) (min (inexact x) y)]
-              [else (nonreal-error who y)])]
-          [(bignum? ratnum?)
-           (type-case y
-              [(fixnum? bignum? ratnum?) (if (< x y) x y)]
-              [(flonum?) (min (inexact x) y)]
-              [else (nonreal-error who y)])]
-          [else (nonreal-error who x)])]
+       (cond
+        [(eqv? +inf.0 x) (min y)]
+        [(eqv? +inf.0 y) (min x)]
+        [else
+         (type-case x
+            [(flonum?)
+             (type-case y
+                [(flonum?) (if (or (fl< x y) ($nan? x)) x y)]
+                [(fixnum? bignum? ratnum?) (min x (inexact y))]
+                [else (nonreal-error who y)])]
+            [(fixnum?)
+             (type-case y
+                [(fixnum?) (if (fx< x y) x y)]
+                [(bignum? ratnum?) (if (< x y) x y)]
+                [(flonum?) (min (inexact x) y)]
+                [else (nonreal-error who y)])]
+            [(bignum? ratnum?)
+             (type-case y
+                [(fixnum? bignum? ratnum?) (if (< x y) x y)]
+                [(flonum?) (min (inexact x) y)]
+                [else (nonreal-error who y)])]
+            [else (nonreal-error who x)])])]
       [(x) (if (real? x) x (nonreal-error who x))]
+      [() +inf.0]
       [(x y . z)
        (let loop ([x (min x y)] [z z])
           (if (null? z)
@@ -1136,25 +1141,30 @@
   (rec max
     (case-lambda
       [(x y)
-       (type-case x
-          [(flonum?)
-           (type-case y
-              [(flonum?) (if (or (fl> x y) ($nan? x)) x y)]
-              [(fixnum? bignum? ratnum?) (max x (inexact y))]
-              [else (nonreal-error who y)])]
-          [(fixnum?)
-           (type-case y
-              [(fixnum?) (if (fx> x y) x y)]
-              [(bignum? ratnum?) (if (> x y) x y)]
-              [(flonum?) (max (inexact x) y)]
-              [else (nonreal-error who y)])]
-          [(bignum? ratnum?)
-           (type-case y
-              [(fixnum? bignum? ratnum?) (if (> x y) x y)]
-              [(flonum?) (max (inexact x) y)]
-              [else (nonreal-error who y)])]
-          [else (nonreal-error who x)])]
+       (cond
+        [(eqv? -inf.0 x) (max y)]
+        [(eqv? -inf.0 y) (max x)]
+        [else
+         (type-case x
+            [(flonum?)
+             (type-case y
+                [(flonum?) (if (or (fl> x y) ($nan? x)) x y)]
+                [(fixnum? bignum? ratnum?) (max x (inexact y))]
+                [else (nonreal-error who y)])]
+            [(fixnum?)
+             (type-case y
+                [(fixnum?) (if (fx> x y) x y)]
+                [(bignum? ratnum?) (if (> x y) x y)]
+                [(flonum?) (max (inexact x) y)]
+                [else (nonreal-error who y)])]
+            [(bignum? ratnum?)
+             (type-case y
+                [(fixnum? bignum? ratnum?) (if (> x y) x y)]
+                [(flonum?) (max (inexact x) y)]
+                [else (nonreal-error who y)])]
+            [else (nonreal-error who x)])])]
       [(x) (if (real? x) x (nonreal-error who x))]
+      [() -inf.0]
       [(x y . z)
        (let loop ([x (max x y)] [z z])
           (if (null? z)
@@ -2796,6 +2806,7 @@
        [(x)
         (unless (flonum? x) ($oops who "~s is not a flonum" x))
         x]
+       [() +inf.0]
        [(x y . r)
         (unless (flonum? x) ($oops who "~s is not a flonum" x))
         (unless (flonum? y) ($oops who "~s is not a flonum" y))
@@ -2816,6 +2827,7 @@
        [(x)
         (unless (flonum? x) ($oops who "~s is not a flonum" x))
         x]
+       [() -inf.0]
        [(x y . r)
         (unless (flonum? x) ($oops who "~s is not a flonum" x))
         (unless (flonum? y) ($oops who "~s is not a flonum" y))
