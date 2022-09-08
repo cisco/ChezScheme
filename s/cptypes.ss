@@ -1285,14 +1285,14 @@ Notes:
                              ret2)
                          types2 t-types2 f-types2))])))
 
-        (define-specialize/unrestricted 2 call-setting-continuation-attachment
+        (define-specialize/unrestricted 2 $call-setting-continuation-attachment
           ;; body is in 'value context, because called with a mark
           [(e1 e2) (handle-call-attachment preinfo pr e1 e2 ctxt oldtypes plxc 'value)])
 
-        (define-specialize/unrestricted 2 call-getting-continuation-attachment
+        (define-specialize/unrestricted 2 $call-getting-continuation-attachment
           [(e1 e2) (handle-call-attachment preinfo pr e1 e2 ctxt oldtypes plxc ctxt)])
 
-        (define-specialize/unrestricted 2 call-consuming-continuation-attachment
+        (define-specialize/unrestricted 2 $call-consuming-continuation-attachment
           [(e1 e2) (handle-call-attachment preinfo pr e1 e2 ctxt oldtypes plxc ctxt)]))
         
       (let ()

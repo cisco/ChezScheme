@@ -396,6 +396,7 @@
               [(compile-time-value) (make-compile-time-value 17) #f]
               [(condition) (make-who-condition 'me) 'the-who #f]
               [(continuation-condition) (call/cc make-continuation-condition) (make-who-condition 'who) #f]
+              [(continuation-mark-set) (current-continuation-marks) 8 #f]
               [(cost-center) *cost-center '(a) #f]
               [(source-table) (make-source-table) *time #f]
               [(date) *date *time #f]

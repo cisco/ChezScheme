@@ -1,7 +1,7 @@
-*** output-compile-0-f-t-f-experr/errors-compile-0-f-t-f	2022-03-17 11:38:23.000000000 -0600
---- output-compile-0-f-t-t-experr/errors-compile-0-f-t-t	2022-03-17 11:38:06.000000000 -0600
+*** output-compile-0-f-t-f-experr/errors-compile-0-f-t-f	2022-09-08 16:12:23.000000000 +0800
+--- output-compile-0-f-t-t-experr/errors-compile-0-f-t-t	2022-09-08 16:12:15.000000000 +0800
 ***************
-*** 9308,9320 ****
+*** 9331,9343 ****
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -15,7 +15,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
---- 9308,9320 ----
+--- 9331,9343 ----
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".

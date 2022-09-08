@@ -3394,3 +3394,27 @@
   (eq? (void) (parameter-porentially-inlined 'other))
   (eq? 'other (parameter-porentially-inlined))
   )
+
+(cp0-mat cp0-continuation-marks
+    (equivalent-expansion?
+     (expand/optimize '(with-continuation-mark 'x 'y 10))
+     '10)
+    (equivalent-expansion?
+     (expand/optimize '(with-continuation-mark (go-get-x) 'y 10))
+     (if (eqv? (optimize-level) 3)
+         '(begin (go-get-x) 10)
+         '(begin (#3%$value (go-get-x)) 10)))
+    (equivalent-expansion?
+     (expand/optimize '(with-continuation-mark 'x (go-get-y) 10))
+     (if (eqv? (optimize-level) 3)
+         '(begin (go-get-y) 10)
+         '(begin (#3%$value (go-get-y)) 10)))
+    (equivalent-expansion?
+     (expand/optimize '(lambda (z) (with-continuation-mark 'x 'y z)))
+     '(lambda (z) z))
+    (equivalent-expansion?
+     (expand/optimize '(lambda (z) (with-continuation-mark 'x 'y (values z z z))))
+     (if (eqv? (optimize-level) 3)
+         '(lambda (z) (#3%values z z z))
+         '(lambda (z) (#2%values z z z))))
+  )

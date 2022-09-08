@@ -1366,9 +1366,9 @@
 
       (define (extract-called-procedure/inspect-ok pr e*)
         (case (primref-name pr)
-          [(call-setting-continuation-attachment
-            call-getting-continuation-attachment
-            call-consuming-continuation-attachment)
+          [($call-setting-continuation-attachment
+            $call-getting-continuation-attachment
+            $call-consuming-continuation-attachment)
            (and (fx= (length e*) 2)
                 (cadr e*))]
           [else #f]))
@@ -2544,6 +2544,45 @@
                                        (residualize-seq (cons p-opnd used) unused ctxt)
                                        e]))
                                  c-val)))))])))))])
+
+      (define-inline 2 $call-setting-continuation-attachment
+        [(val body)
+         (nanopass-case (Lsrc Expr) (value-visit-operand! body)
+           [(case-lambda ,preinfo (clause () ,interface ,e))
+            (guard (simple? e))
+            (residualize-seq (list val) '() ctxt)
+            (make-1seq (app-ctxt ctxt) (value-visit-operand! val) e)]
+           [else #f])])
+
+      (define-inline 2 $call-getting-continuation-attachment
+        [(def-val body)
+         (nanopass-case (Lsrc Expr) (value-visit-operand! body)
+           [(case-lambda ,preinfo (clause (,x) ,interface ,e))
+            (guard (not (prelex-was-referenced x)))
+            (residualize-seq (list def-val) '() ctxt)
+            (make-1seq (app-ctxt ctxt) (value-visit-operand! def-val) e)]
+           [else #f])])
+
+      (define-inline 2 $call-consuming-continuation-attachment
+        [(def-val body)
+         (nanopass-case (Lsrc Expr) (value-visit-operand! body)
+           [(case-lambda ,preinfo (clause (,x) ,interface ,e))
+            (guard (not (prelex-was-referenced x)))
+            (residualize-seq (list def-val) '() ctxt)
+            (make-1seq (app-ctxt ctxt) (value-visit-operand! def-val) e)]
+           [else #f])])
+
+      (define-inline 2 continuation-mark-set-first
+        [(set . more)
+         (and
+          (<= 1 (length more) 2)
+          (nanopass-case (Lsrc Expr) (value-visit-operand! set)
+            [(call ,preinfo ,pr)
+             (guard (eq? (primref-name pr) 'current-continuation-marks))
+             (let ([vals (map value-visit-operand! more)])
+               (residualize-seq more '() ctxt)
+               (build-primcall preinfo level '$continuation-mark-set-first vals))]
+            [else #f]))])
 
       (define-inline 2 list
         [() (begin

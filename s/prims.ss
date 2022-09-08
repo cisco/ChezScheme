@@ -562,16 +562,16 @@
 ;; attachments or the given attachments `as` that must be either
 ;; the same as the attachments saved by `c` or one immediate
 ;; attachment extending those attachments
-(define-who call-in-continuation
+(define-who $call-in-continuation
   (case-lambda
    [(c p)
     (unless (procedure? p)
       ($oops who "~s is not a procedure" p))
-    (#2%call-in-continuation c (lambda () (p)))]
+    (#2%$call-in-continuation c (lambda () (p)))]
    [(c as p)
     (unless (procedure? p)
       ($oops who "~s is not a procedure" p))
-    (#2%call-in-continuation c as (lambda () (p)))]))
+    (#2%$call-in-continuation c as (lambda () (p)))]))
 
 ;; checks `c` and consistency of `as` with `c`, and also runs any needed winders
 (define $assert-continuation
@@ -579,23 +579,23 @@
    [(c) (#2%$assert-continuation c)]
    [(c as) (#2%$assert-continuation c as)]))
 
-(define-who call-setting-continuation-attachment
+(define-who $call-setting-continuation-attachment
   (lambda (v p)
     (unless (procedure? p)
       ($oops who "~s is not a procedure" p))
-    (#3%call-setting-continuation-attachment v (lambda () (p)))))
+    (#3%$call-setting-continuation-attachment v (lambda () (p)))))
 
-(define-who call-getting-continuation-attachment
+(define-who $call-getting-continuation-attachment
   (lambda (default-val p)
     (unless (procedure? p)
       ($oops who "~s is not a procedure" p))
-    (#3%call-getting-continuation-attachment default-val (lambda (x) (p x)))))
+    (#3%$call-getting-continuation-attachment default-val (lambda (x) (p x)))))
 
-(define-who call-consuming-continuation-attachment
+(define-who $call-consuming-continuation-attachment
   (lambda (default-val p)
     (unless (procedure? p)
       ($oops who "~s is not a procedure" p))
-    (#3%call-consuming-continuation-attachment default-val (lambda (x) (p x)))))
+    (#3%$call-consuming-continuation-attachment default-val (lambda (x) (p x)))))
 
 (define $code? (lambda (x) ($code? x)))
 

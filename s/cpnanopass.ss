@@ -1200,7 +1200,7 @@
          `(letrec ([,x* ,le*] ...) ,body)]
         [(call ,info ,mdcl ,pr ,[e1 'non/none -> e1]
                (case-lambda ,info2 (clause () ,interface ,[body (->in-set mode) -> body])))
-         (guard (and (eq? (primref-name pr) 'call-setting-continuation-attachment)
+         (guard (and (eq? (primref-name pr) '$call-setting-continuation-attachment)
                      (= interface 0)))
          (case mode
            [(non/some tail/some)
@@ -1220,11 +1220,11 @@
             `(seq (attachment-set push ,e1) ,body)])]
         [(call ,info ,mdcl ,pr ,[e1 'non/none -> e1]
                (case-lambda ,info2 (clause (,x) ,interface ,[body])))
-         (guard (and (eq? (primref-name pr) 'call-getting-continuation-attachment)
+         (guard (and (eq? (primref-name pr) '$call-getting-continuation-attachment)
                      (= interface 1)))
          (case mode
            [(non/none tail/none)
-            ;; No surrounding `call-setting-continuation-attachment`
+            ;; No surrounding `$call-setting-continuation-attachment`
             `(let ([,x ,e1]) ,body)]
            [(non/some tail/some)
             ;; Definitely an attachment in place
@@ -1234,15 +1234,15 @@
             `(let ([,x (attachment-get ,(eq? mode 'tail/reified) ,e1)]) ,body)])]
         [(call ,info ,mdcl ,pr ,[e1 'non/none -> e1]
                (case-lambda ,info2 (clause (,x) ,interface ,[body (->in-consume mode) -> body])))
-         (guard (and (eq? (primref-name pr) 'call-consuming-continuation-attachment)
+         (guard (and (eq? (primref-name pr) '$call-consuming-continuation-attachment)
                      (= interface 1)))
-         ;; Currently, `call-consuming-continuation-attachment` in tail position
+         ;; Currently, `$call-consuming-continuation-attachment` in tail position
          ;; reifies the continuation, because we expect it to be combined with
-         ;; `call-setting-continuation-attachment` in `body`. Since the continuation
-         ;; is reified here, `call-setting-continuation-attachment` can simply push.
+         ;; `$call-setting-continuation-attachment` in `body`. Since the continuation
+         ;; is reified here, `$call-setting-continuation-attachment` can simply push.
          (case mode
            [(non/none tail/none)
-            ;; No surrounding `call-setting-continuation-attachment`, but reified if tail
+            ;; No surrounding `$call-setting-continuation-attachment`, but reified if tail
             `(let ([,x ,e1]) ,body)]
            [(non/some tail/some)
             ;; Definitely an attachment in place
@@ -1263,7 +1263,7 @@
                ,[e1 'non/none -> e1]
                (case-lambda ,info2 (clause () ,interface ,[body (->in-set-cont mode #f) -> body])))
          (guard (and (memq mode '(tail tail/none tail/some tail/reified))
-                     (eq? (primref-name pr) 'call-in-continuation)
+                     (memq (primref-name pr) '($call-in-continuation call-in-continuation))
                      (= interface 0)))
          (let ([tmp (make-tmp 'c)])
            `(let ([,tmp ,e1])
@@ -1273,7 +1273,7 @@
                ,[e2 'non/none -> e2] ; new attachments, which must extend continuation's
                (case-lambda ,info2 (clause () ,interface ,[body (->in-set-cont mode #t) -> body])))
          (guard (and (memq mode '(tail tail/none tail/some tail/reified))
-                     (eq? (primref-name pr) 'call-in-continuation)
+                     (eq? (primref-name pr) '$call-in-continuation)
                      (= interface 0)))
          (let ([tmp (make-tmp 'c)]
                [tmp2 (make-tmp 'as)])

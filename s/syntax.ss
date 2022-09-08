@@ -8333,6 +8333,19 @@
                              (set! y t) ...))])
                (dynamic-wind #t swap (lambda () e1 e2 ...) swap))))])))
 
+
+(define-syntax with-continuation-mark
+  (lambda (x)
+    (syntax-case x ()
+      [(_ key val body)
+       #'($call-consuming-continuation-attachment
+          '()
+          (lambda (marks)
+            ($call-setting-continuation-attachment
+             ($update-mark marks key val)
+             (lambda ()
+               body))))])))
+
 (define-syntax rec
   (lambda (x)
     (syntax-case x ()

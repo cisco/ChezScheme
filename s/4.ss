@@ -389,15 +389,181 @@
                     ($current-winders new)))))))))
   )
 
-(define current-continuation-attachments
-  (lambda ()
-    ($current-attachments)))
+(set! continuation-mark-set?
+      (let* ([mark-cache-key '#{cache-key mpsiogk70mywwtrxxqyso7lht-0}]
+             [mark-not-found-key mark-cache-key])
+        (define-record-type continuation-mark-set
+          (fields (immutable markss))
+          (nongenerative #{continuation-mark-set c32ju6acq6xzgmortvhjrnb9b-1})
+          (opaque #t)
+          (sealed #t))
 
-(define-who continuation-next-attachments
-  (lambda (c)
-    (unless ($continuation? c)
-      ($oops who "~s is not a continuation" c))
-    ($continuation-attachments c)))
+        ;; a mark table as an attachment is an association list from keys to
+        ;; values; the first thing in the list may be a cache, which should
+        ;; be discarded if the mark table is updated
+
+        (define (do-continuation-mark-set-first markss key none-v)
+          (let loop ([markss markss] [slow-markss markss] [i 0])
+            (define (result found)
+              ;; cache at half the depth we had to look:
+              (when (> i 10)
+                (let* ([marks (car slow-markss)]
+                       [has-cache? (and (pair? marks)
+                                        (eq? mark-cache-key (caar marks)))]
+                       [cache (if has-cache?
+                                  (cdar marks)
+                                  '())]
+                       [new-cache (update-cache cache key found)])
+                  ;; there's a small chance that multiple threads will try to update
+                  ;; `slow-markss` at the same time, in which case one update can get
+                  ;; lost, but it's ok to lose a cache update
+                  (set-car! slow-markss (cons (cons mark-cache-key new-cache)
+                                              (if has-cache? (cdr marks) marks)))))
+              (if (eq? found mark-not-found-key)
+                  none-v
+                  found))
+            (cond
+              [(null? markss) (result mark-not-found-key)]
+              [else
+               (let ([a (let ([marks (car markss)])
+                          (or (assq key marks)
+                              (and (pair? marks)
+                                   (eq? mark-cache-key (caar marks))
+                                   (assq key (cdar marks)))))])
+                 (if a
+                     (result (cdr a))
+                     (loop (cdr markss)
+                           (if (fxodd? i)
+                               (cdr slow-markss)
+                               slow-markss)
+                           (fx+ i 1))))])))
+
+        (define update-cache 
+          (lambda (cache key val)
+            (cond
+              [(null? cache) (list (ephemeron-cons key val))]
+              [else
+               (let ([k (caar cache)])
+                 (cond
+                   [(eq? k key) (cons (ephemeron-cons key val) (cdr cache))]
+                   [(eq? k #!bwp) (update-cache (cdr cache) key val)]
+                   [else (cons (car cache) (update-cache (cdr cache) key val))]))])))
+
+        (set-who! $update-mark
+          (lambda (marks key val)
+            (cond
+              [(null? marks) (list (cons key val))]
+              [else
+               (let loop ([marks (if (eq? (caar marks) mark-cache-key)
+                                     (cdr marks)
+                                     marks)])
+                 (cond
+                   [(null? marks) (list (cons key val))]
+                   [(eq? (caar marks) key) (cons (cons key val) (cdr marks))]
+                   [else (cons (car marks) (loop (cdr marks)))]))])))
+
+        (set-who! current-continuation-marks
+          (lambda ()
+            (make-continuation-mark-set ($current-attachments))))
+
+        (set-who! continuation-next-marks
+          (lambda (c)
+            (unless ($continuation? c)
+              ($oops who "~s is not a continuation" c))
+            (make-continuation-mark-set ($continuation-attachments c))))
+
+        (set-who! continuation-mark-set->iterator
+          (rec continuation-mark-set->iterator
+               (case-lambda
+                [(set keys) (continuation-mark-set->iterator set keys #f)]
+                [(set keys none-val)
+                 (unless (continuation-mark-set? set)
+                   ($oops who "~s is not a continuation mark set" set))
+                 (unless (vector? keys)
+                   ($oops who "~s is not a vector" keys))
+                 (let gen ([markss (continuation-mark-set-markss set)])
+                   (lambda ()
+                     (let loop ([markss markss])
+                       (cond
+                         [(null? markss) (values #f (gen '()))]
+                         [else
+                          (let* ([marks (car markss)]
+                                 [hit? #f]
+                                 [vec (vector-map (lambda (key)
+                                                    (let ([a (assq key marks)])
+                                                      (if a
+                                                          (begin
+                                                            (set! hit? #t)
+                                                            (cdr a))
+                                                          none-val)))
+                                                  keys)])
+                            (if hit?
+                                (values vec
+                                        (gen (cdr markss)))
+                                (loop (cdr markss))))]))))])))
+
+        (set-who! continuation-mark-set->list
+          (lambda (set key)
+            (unless (continuation-mark-set? set)
+              ($oops who "~s is not a continuation mark set" set))
+            (let loop ([markss (continuation-mark-set-markss set)])
+              (cond
+                [(null? markss) '()]
+                [else
+                 (let ([marks (car markss)])
+                   (let ([a (assq key marks)])
+                     (if a
+                         (cons (cdr a) (loop (cdr markss)))
+                         (loop (cdr markss)))))]))))
+
+        (set-who! continuation-mark-set-first
+          (rec continuation-mark-set-first
+               (case-lambda
+                [(set key) (continuation-mark-set-first set key #f)]
+                [(set key none-v)
+                 (unless (continuation-mark-set? set)
+                   ($oops who "~s is not a continuation mark set" set))
+                 (do-continuation-mark-set-first (continuation-mark-set-markss set) key none-v)])))
+
+        ;; co0 shortcuts an immediate `(current-continuation-marks)`:
+        (set-who! $continuation-mark-set-first
+          (case-lambda
+           [(key) (do-continuation-mark-set-first ($current-attachments) key #f)]
+           [(key none-v) (do-continuation-mark-set-first ($current-attachments) key none-v)]))
+
+        (set-who! call-with-immediate-continuation-mark
+          (rec call-with-immediate-continuation-mark
+               (case-lambda
+                [(key proc) (call-with-immediate-continuation-mark key #f proc)]
+                [(key none-v proc)
+                 (unless (procedure? proc)
+                   ($oops who "~s is not a procedure" proc))
+                 ($call-getting-continuation-attachment
+                  '()
+                  (lambda (marks)
+                    (proc (let ([a (assq key marks)])
+                            (if a
+                                (cdr a)
+                                none-v)))))])))
+
+        (set-who! call-in-continuation
+          (case-lambda
+           [(c proc)
+            (unless ($continuation? c) ($oops who "~s is not a continuation" c))
+            (unless (procedure? proc) ($oops who "~s is not a procedure" proc))
+            ($call-in-continuation c proc)]
+           [(c set proc)
+            (unless ($continuation? c) ($oops who "~s is not a continuation" c))
+            (unless (continuation-mark-set? set) ($oops who "~s is not a continuation mark set" set))
+            (unless (procedure? proc) ($oops who "~s is not a procedure" proc))
+            (let ([markss (continuation-mark-set-markss set)]
+                  [c-markss ($continuation-attachments c)])
+              (unless (or (eq? markss c-markss)
+                          (and (pair? markss) (eq? (cdr markss) c-markss)))
+                ($oops who "~s is not an extension of the mark set of ~s" set c))
+              ($call-in-continuation c markss proc))]))
+
+        continuation-mark-set?))
 
 ;;; make-promise and force
 
