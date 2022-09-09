@@ -50,7 +50,7 @@
 ;; below don't matter, since they're fixed up for the target plaform.
 (define base-rtd-fields
   (map vector-copy
-       '(#(fld ancestors #f scheme-object 9)
+       '(#(fld ancestry #f scheme-object 9)
          #(fld size #f scheme-object 17)
          #(fld pm #f scheme-object 25)
          #(fld mpm #f scheme-object 33)
@@ -344,7 +344,7 @@
             (if (base-rtd? rtd)
                 null
                 (hash-ref rtd-fields rtd)))))]
-       [(ancestors)
+       [(ancestry)
         (assert-accessor)
         (lambda (rtd)
           (cond

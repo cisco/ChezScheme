@@ -361,14 +361,14 @@
                            (compile-one .c .o))])
             main-srcs main-objs)
 
-     [:depend ,(.c->.o "scheme.c") (,(at-source "itest.c"))]
-     [:depend ,(.c->.o "gc-011.c") (,@gc-wrap ,(at-mach "gc-ocd.inc"))]
-     [:depend ,(.c->.o "gc-ocd.c") (,@gc-wrap ,(at-mach "gc-ocd.inc"))]
-     [:depend ,(.c->.o "gc-oce.c") (,@gc-wrap ,(at-mach "gc-oce.inc"))]
-     [:depend ,(.c->.o "gc-par.c") (,@gc-wrap ,(at-mach "gc-par.inc"))]
-     [:depend ,(.c->.o "gcwrapper.c") (,(at-mach "heapcheck.inc"))]
+     [:depend ,(at-dir (.c->.o "scheme.c")) (,(at-source "itest.c"))]
+     [:depend ,(at-dir (.c->.o "gc-011.c")) (,@gc-wrap ,(at-mach "gc-ocd.inc"))]
+     [:depend ,(at-dir (.c->.o "gc-ocd.c")) (,@gc-wrap ,(at-mach "gc-ocd.inc"))]
+     [:depend ,(at-dir (.c->.o "gc-oce.c")) (,@gc-wrap ,(at-mach "gc-oce.inc"))]
+     [:depend ,(at-dir (.c->.o "gc-par.c")) (,@gc-wrap ,(at-mach "gc-par.inc"))]
+     [:depend ,(at-dir (.c->.o "gcwrapper.c")) (,(at-mach "heapcheck.inc"))]
 
-     [:depend ,(.c->.o "pb.c") (,(at-source "pb.h"))]
+     [:depend ,(at-dir (.c->.o "pb.c")) (,(at-source "pb.h"))]
 
      [:target ,res-file (,(at-source "scheme.rc"))
               ,(lambda (path token)

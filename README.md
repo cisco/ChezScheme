@@ -86,7 +86,7 @@ Main additions to Chez Scheme in the Racket variant:
 
  * Type reconstruction during optimization (especially for safe code)
 
- * Continuation attachments
+ * Continuation marks
 
  * Parallel garbage collection, in-place garbage collection for
    old-generation objects (instead of always copying), and
@@ -100,3 +100,5 @@ Main additions to Chez Scheme in the Racket variant:
    platforms without native-code generation; can be compiled via
    Emscripten, linked with libffi, and/or used with bytecode partially
    compiled to C
+
+ * Easier bootstrapping via old versions of Chez Scheme

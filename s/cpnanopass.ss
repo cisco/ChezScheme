@@ -206,7 +206,7 @@
           (annotation-expression x)
           x)))
 
-  (define rtd-ancestors (csv7:record-field-accessor #!base-rtd 'ancestors))
+  (define rtd-ancestry (csv7:record-field-accessor #!base-rtd 'ancestry))
 
   (let ()
     (import (nanopass) np-languages)
@@ -2834,13 +2834,15 @@
         [(call ,info ,mdcl ,pr ,e1 ,[e2 #f -> * fp?2] ,[e3 #f -> * fp?3] ,e4)
          (guard (and (eq? '$object-set! (primref-name pr))
                      (nanopass-case (L7 Expr) e1
-                       [(quote ,d) (eq? d 'double)])))
+                       [(quote ,d) (eq? d 'double)]
+                       [else #f])))
          (Expr e4 #t)
          #f]
         [(call ,info ,mdcl ,pr ,e1 ,[e2 #f -> * fp?2] ,[e3 #f -> * fp?3])
          (guard (and (eq? '$object-ref (primref-name pr))
                      (nanopass-case (L7 Expr) e1
-                       [(quote ,d) (eq? d 'double)])))
+                       [(quote ,d) (eq? d 'double)]
+                       [else #f])))
          #t]
         [(call ,info ,mdcl ,pr ,[e1 #f -> * fp?1] ,[e2 #f -> * fp?2] ,e3)
          (guard (eq? 'bytevector-ieee-double-native-set! (primref-name pr)))

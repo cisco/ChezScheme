@@ -61,36 +61,40 @@ WAYS TO GET BOOT FILES
    in place of <machine type> to build for an inferred machine
    type.
 
-2. If you have Racket installed as `racket`, then
+2. If you have an older version of Chez Scheme installed as `scheme`,
+   then
+
+     ./configure --force <machine type>
+     make re.boot
+
+   creates boot files for <machine type>. You can supply
+   `SCHEME=<scheme>` to run <scheme> instead of `scheme`.
+
+   If your existing Chez Scheme installation is only slightly old, you
+   may be able to create boot files more quickly using `cross.boot`
+   instead of `re.boot`.
+
+3. A combination of the previous two ways: If you plan to build on
+   many different machines and you don't have pb boot files, then it
+   may be a good idea to generate pb boot files once and then use them
+   on different machines:
+
+     ./configure --force --pb
+     make re.boot
+
+4. Along similar lines as the previous way, building for multiple
+   specific <machine type>s: After you have a new Chez Scheme build
+   for some machine, within that build you can use use
+
+     make <machine type>.boot
+
+   to quickly create boot files for any <machine type>.
+
+5. If you have Racket installed as `racket`, then
 
      racket rktboot/main.rkt --machine <machine type>
 
    creates boot files for <machine type>.
-
-3. A combination of the previous two ways: If you plan to build on
-   many different machines and you don't have pb boot files, then it
-   may be a good idea to generate pb boot files once via Racket and
-   then use them on different machines:
-
-     racket rktboot/main.rkt --machine pb
-
-4. Along similar lines as the previous way, building for multiple
-   specific <machine type>s: After you have a Chez Scheme build on one
-   machine, you can use use
-
-     make <machine type>.boot
-
-   in that build to quickly create boot files for any <machine type>.
-
-5. Along similar lines, again: If you have Chez Scheme installed, but
-   no longer have that installation's build directory, you can still
-   build for any <machine type> using `zuo` directly to launch the
-   build:
-
-     zuo makefiles/boot.zuo <scheme> <machine type>
-
-   The <scheme> executable must be the same version as the sources
-   here.
 
 
 CONFIGURING AND BUILDING
@@ -190,7 +194,7 @@ The makefile supports several targets:
  * `make kernel`
 
    Compiles just the C sources to produce the executable so that
-   running can use existing bootfiles.
+   running can use existing boot files.
 
  * `make run`
 
@@ -275,20 +279,32 @@ The makefile supports several targets:
    So, the corresponding commands as `zuo . boot <machine-type>` and
    `zuo . bootquick <machine-type>`.
 
- * `make cross.boot SCHEME=<scheme>`
+ * `make cross.boot`
 
    Creates boot files for the configured machine type using an
-   existing <scheme>, which must be sufficiently compatible version of
-   Chez Scheme. (It doesn't need to be the same version, but it needs
-   to have some compatible internal structure.) To use this target for
-   a machine type whose bootfiles are not present (which would be
-   typical for this target), run "configure" with the `--force` flag.
+   existing `scheme` executable, which must be sufficiently compatible
+   version of Chez Scheme. (It doesn't need to be the same version,
+   but it needs to have some compatible internal structure.) Supply
+   `SCHEME=<scheme>` to select the Scheme implementaion.
+
+   To use this target for a machine type whose boot files are not
+   present (which would be typical for this target), run "configure"
+   with the `--force` flag.
 
    When using `zuo`, use the `boot` target, but also supply
    `SCHEME=<scheme>` or `--host-scheme <scheme>`, or supply
    `--host-workarea <dir>` to use a Scheme built in existing workarea.
    In that last case, add `hostm=<machine type>` if the workarea's
    machine type does not match the machine type configured here.
+
+ * `make re.boot`
+
+   Like `make cross.boot`, but requires less compatibility from the
+   existing Chez Scheme implementation, so it works with much older
+   versions of Chez Scheme.
+
+   When using `zuo`, use the `reboot` target with the same options as
+   the `boot` target.
 
  * `make bootfiles`
 

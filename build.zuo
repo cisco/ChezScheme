@@ -2,6 +2,8 @@
 (require (rename-in "makefiles/boot.zuo"
                     [boot-file-names boot:boot-file-names]
                     [cross-build-boot boot:cross-build-boot])
+         (only-in "s/reboot.zuo"
+                  reboot)
          (only-in "s/build.zuo"
                   [targets-at s-targets-at]
                   base-src-names
@@ -89,9 +91,8 @@
     (define host-scheme (or host-scheme-via-flag
                             (and (not host-workarea)
                                  (let ([s (hash-ref config 'SCHEME #f)])
-                                   (when (equal? s "")
-                                     (error "expected non-empty SCHEME=..."))
-                                   s))))
+                                   (and (not (equal? s ""))
+                                        s)))))
     (define rest-args (if (or host-workarea
                               host-scheme-via-flag)
                           (cddr args)
@@ -119,6 +120,19 @@
   (define (cross-build-boot/safe+examples token args)
     (cross-build-boot token args (hash 'o "2" 'd "3" 'i "t") '("all" "examples")))
 
+  (define (cross-reboot token args)
+    (parse-boot-args
+     args
+     (lambda (xm m host-scheme host-workarea)
+       (define scheme (or host-scheme
+                          (build-path host-workarea m "bin" m (.exe "scheme"))))
+       (define options (if host-workarea
+                           (hash 'env
+                                 (cons "SCHEMEHEAPDIRS"
+                                       (path->complete-path (build-path host-workarea "boot" m))))
+                           (hash)))
+       (reboot m xm scheme (hash 'shell-options options 'out-dir (at-dir ".."))))))
+  
   (define (run-tests token name [vars vars])
     (check-not-kernel-only)
     (build (find-target name
@@ -271,6 +285,11 @@
                                (cross-build-boot/safe+examples token (list mach)))
                              (unique (append (ls (at-source "boot"))
                                              (ls (at-dir "../boot"))))))]
+
+       [:target reboot ()
+                ,(lambda (token . args)
+                   (cross-reboot token args))
+                :command]
 
        [:target bootpbchunk ()
                 ,(lambda (token . args)

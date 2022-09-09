@@ -122,8 +122,8 @@
   ; don't use rtd-* as defined in record.ss in case we're building a patch
   ; file for cross compilation, because the offsets may be incorrect
   (define rtd-flds (csv7:record-field-accessor #!base-rtd 'flds))
-  (define rtd-ancestors (csv7:record-field-accessor #!base-rtd 'ancestors))
-  (define rtd-parent (lambda (x) (let ([a (rtd-ancestors x)])
+  (define rtd-ancestry (csv7:record-field-accessor #!base-rtd 'ancestry))
+  (define rtd-parent (lambda (x) (let ([a (rtd-ancestry x)])
                                    (vector-ref a (fx- (vector-length a) (constant ancestry-parent-offset))))))
   (define rtd-size (csv7:record-field-accessor #!base-rtd 'size))
   (define rtd-pm (csv7:record-field-accessor #!base-rtd 'pm))

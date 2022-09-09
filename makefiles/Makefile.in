@@ -56,8 +56,13 @@ reset: $(ZUO)
 auto.boot: $(ZUO)
 	$(ZUO) $(workarea) boot MAKE="$(MAKE)"
 
+SCHEME=scheme
+
 cross.boot: $(ZUO)
 	$(ZUO) $(workarea) boot SCHEME="$(SCHEME)" MAKE="$(MAKE)"
+
+re.boot: $(ZUO)
+	$(ZUO) $(workarea) reboot SCHEME="$(SCHEME)"
 
 # <machine>.bootquick to build boot files for <machine>
 # with o=3 d=0 for the cross compiler, and only after

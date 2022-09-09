@@ -1,0 +1,65 @@
+#lang zuo
+(require "../makefiles/lib.zuo"
+         "machine.zuo")
+
+(provide reboot)
+
+(module+ main
+  (command-line
+   :once-each
+   [flags ("--scheme") command "Run Scheme as <command>"
+          (hash-set flags 'command command)]
+   [flags ("--target") machine "Create bootfiles for <target>"
+          (hash-set flags 'target machine)]
+   [flags ("--dest") dest "Write boot files to <dest>/boot/<target>"
+          (hash-set flags 'dest dest)]
+   :args
+   ()
+   (lambda (flags)
+     (define command (hash-ref flags 'command "scheme"))
+     (define host (get-host-from-scheme command))
+     (define target (hash-ref flags 'target host))
+     (define dest (hash-ref flags 'dest "."))
+
+     (reboot 'infer target command (hash 'out-dir dest)))))
+
+(define (reboot given-host target command [options (hash)])
+  (define host (if (eq? given-host 'infer)
+                   (get-host-from-scheme command)
+                   given-host))
+  (alert (~a "Host: " host))
+  (alert (~a "Target: " target))
+
+  (define work-dir (hash-ref options 'work-dir "."))
+  (define xc (build-path work-dir (~a "xc-" target)))
+  (alert (~a "Working in: " xc))
+
+  (define s-dir (build-path xc "s"))
+  (define host-dir (build-path xc "host"))
+  
+  (mkdir-p s-dir)
+  (mkdir-p host-dir)
+  
+  (define host-config (get-machine-files host (m->arch host)))
+  (define target-config (get-machine-files target (m->arch target)))
+  
+  ((cdar host-config) (build-path host-dir "machine.def") #f)
+  ((cdar target-config) (build-path s-dir "machine.def") #f)
+
+  (define (dir-arg dir)
+    (string->shell (find-relative-path (at-source "..") dir)))
+  
+  (shell/wait command "--script" "s/reboot.ss"
+              (dir-arg s-dir) (dir-arg host-dir) (dir-arg (hash-ref options 'out-dir work-dir))
+              (hash-set* (hash-ref options 'shell-options (hash))
+                         'no-thread? #t
+                         'dir (at-source "..")))
+
+  (void))
+
+(define (get-host-from-scheme command)
+  (let ([r (shell command "-q" (hash 'stdin 'pipe 'stdout 'pipe))])
+    (fd-write (hash-ref r 'stdin) "(machine-type)\n")
+    (fd-close (hash-ref r 'stdin))
+    (define line (fd-read (hash-ref r 'stdout) eof))
+    (car (string-split line "\n"))))

@@ -4620,11 +4620,11 @@
     (module (make-root insert-path delete-path search-path list-paths)
       (define-record-type dir
         (fields (immutable name) (immutable dir*) (immutable file*))
-        (nongenerative)
+        (nongenerative #{dir htcavk0jv3uhhtakfluarlapg-0})
         (sealed #t))
       (define-record-type file
         (fields (immutable name) (immutable lib))
-        (nongenerative)
+        (nongenerative #{file htcavk0jv3uhhtakfluarlapg-1})
         (sealed #t))
       (define make-root (lambda () (make-dir "root" '() '())))
       (define insert-path
@@ -4710,7 +4710,12 @@
         [() (list-paths root)]
         [(root) (list-paths root)]))
     (define loaded-libraries-root
-      (lambda () root)))
+      (lambda () root))
+    ;; for bootstrapping via "reboot.ss":
+    (set! $loaded-libraries
+      (case-lambda
+        [() root]
+        [(r) (set! root r)])))
 
   (define install-library/ct-desc
     (lambda (path version uid outfn importer visible? ctdesc)
@@ -7258,6 +7263,13 @@
   (set-who! datum->syntax-object
     (lambda (id datum)
       (d->s id datum who))))
+
+;; for bootstrapping via "reboot.ss":
+(set! $datum->environment-syntax
+  (lambda (sym env)
+    (make-syntax-object sym (make-wrap (wrap-marks top-wrap)
+                                       (cons (env-top-ribcage env)
+                                             (wrap-subst top-wrap))))))
 
 (set! syntax->list
   (lambda (orig-ls)

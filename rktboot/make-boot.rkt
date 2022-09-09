@@ -373,7 +373,7 @@
   (status "Load most front.ss declarations")
   (call-with-expressions
    (build-path scheme-dir "s/front.ss")
-   (lambda (e)<
+   (lambda (e)
      ;; Skip `package-stubs`, which would undo "syntax.ss" definitions
      (let loop ([e e])
        (match e

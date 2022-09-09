@@ -36,7 +36,7 @@
                               (flonum-result? e3 (fxsrl fuel 1)))]
        [else #f]))))
 
-(define rtd-ancestors (csv7:record-field-accessor #!base-rtd 'ancestors))
+(define rtd-ancestry (csv7:record-field-accessor #!base-rtd 'ancestry))
 
 ;; After the `np-expand-primitives` pass, some expression produce
 ;; double (i.e., floating-point) values instead of pointer values.
@@ -7774,7 +7774,7 @@
         (lambda (e e-rtd assume-record?)
           (let ([known-depth (nanopass-case (L7 Expr) e-rtd
                                [(quote ,d) (and (record-type-descriptor? d)
-                                                (vector-length (rtd-ancestors d)))]
+                                                (vector-length (rtd-ancestry d)))]
                                [else #f])])
             ;; `t` is rtd of `e`, and it's used once
             (define (compare-at-depth t known-depth)

@@ -313,7 +313,7 @@
 
   ; don't use rtd-* as defined in record.ss in case we're building a patch
   ; file for cross compilation, because the offsets may be incorrect
-  (define rtd-ancestors (csv7:record-field-accessor #!base-rtd 'ancestors))
+  (define rtd-ancestry (csv7:record-field-accessor #!base-rtd 'ancestry))
   (define rtd-flds (csv7:record-field-accessor #!base-rtd 'flds))
 
   ;could be a ctrtd
@@ -334,9 +334,9 @@
   (define (rtd-ancestor*? x y)
     (or (eq? x y)
         (let ()
-          (define ax (rtd-ancestors x))
+          (define ax (rtd-ancestry x))
           (define lx (vector-length ax))
-          (define ay (rtd-ancestors y))
+          (define ay (rtd-ancestry y))
           (define ly (vector-length ay))
           (and (fx<= lx ly)
                (eq? x (vector-ref ay (fx- lx 1)))))))
@@ -348,9 +348,9 @@
       [(eq? x y) x]
       [else
        (let ()
-         (define ax (rtd-ancestors x))
+         (define ax (rtd-ancestry x))
          (define lx (vector-length ax))
-         (define ay (rtd-ancestors y))
+         (define ay (rtd-ancestry y))
          (define ly (vector-length ay))
          (cond
            [(and (fx<= lx ly)
