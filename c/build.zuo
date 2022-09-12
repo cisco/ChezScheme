@@ -410,9 +410,10 @@
                    (make-run-scheme at-source at-dir lookup
                                     #f (at-dir "..") m))
                  (call-with-scheme
-                  (lambda (scheme.exe env)
-                    (process scheme.exe args (hash 'env env
-                                                   'exec? (eq? 'unix (system-type)))))))
+                  (lambda (scheme.exe scheme-args env)
+                    (process scheme.exe scheme-args args
+                             (hash 'env env
+                                   'exec? (eq? 'unix (system-type)))))))
               :command]
 
      [:target revision ()

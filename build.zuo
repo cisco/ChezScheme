@@ -71,27 +71,39 @@
     (when (build-kernel-only?)
       (error "target does not apply to a kernel-only configuration")))
 
+  ;; besides `<machine>` argument, accepts `--host-scheme <command>`
+  ;; or `--host-workarea <dir>", and recognizes `SCHEME=...` if neither
+  ;; flag is provided
   (define (parse-boot-args args k)
-    (define host-scheme
+    (define host-scheme-via-flag
       (and (pair? args)
            (equal? (car args) "--host-scheme")
            (pair? (cdr args))
            (cadr args)))
     (define host-workarea
-      (and (not host-scheme)
+      (and (not host-scheme-via-flag)
            (pair? args)
            (equal? (car args) "--host-workarea")
            (pair? (cdr args))
            (cadr args)))
+    (define host-scheme (or host-scheme-via-flag
+                            (and (not host-workarea)
+                                 (let ([s (hash-ref config 'SCHEME #f)])
+                                   (when (equal? s "")
+                                     (error "expected non-empty SCHEME=..."))
+                                   s))))
     (define rest-args (if (or host-workarea
-                              host-scheme)
+                              host-scheme-via-flag)
                           (cddr args)
                           args))
     (unless (<= (length rest-args) 1) (error "expected optional <machine>" args))
     (define xm (if (null? rest-args)
                    (hash-ref config 'defaultm m)
                    (car rest-args)))
-    (k xm host-scheme host-workarea))
+    (define host-m (if host-scheme
+                       (ask-scheme-machine host-scheme)
+                       m))
+    (k xm host-m host-scheme host-workarea))
 
   ;; Cross-builds for a machine type that is specified as an argument;
   ;; the machine type defaults to the `defaultm` configuration entry, and
@@ -99,7 +111,7 @@
   (define (cross-build-boot token args ccopts make-targets)
     (parse-boot-args
      args
-     (lambda (xm host-scheme host-workarea)
+     (lambda (xm m host-scheme host-workarea)
        (boot:cross-build-boot token ccopts make-targets
                               xm host-scheme host-workarea
                               at-dir config vars m))))
@@ -222,7 +234,7 @@
                    (check-not-kernel-only)
                    (parse-boot-args
                     args
-                    (lambda (xm host-scheme host-workarea)
+                    (lambda (xm m host-scheme host-workarea)
                       (unless (or host-scheme host-workarea)
                         (build/dep (find-target "kernel" the-targets) token))
                       (define (at-boot name) (at-dir "../boot" xm name))

@@ -424,7 +424,8 @@
     (list scheme.h equates.h gc-ocd.inc gc-oce.inc gc-par.inc heapcheck.inc))
 
   (define (add-patchfile l)
-    (if (string=? m host-m)
+    (if (and (string=? m host-m)
+             (not (equal? (lookup 'cross) "t")))
         l
         (append l (list (at-dir "xpatch")))))
 
@@ -507,9 +508,9 @@
        [:target run ()
                 ,(lambda (token . args)
                    (call-with-scheme
-                    (lambda (scheme.exe env)
-                      (process scheme.exe args (hash 'env env
-                                                     'exec? (eq? 'unix (system-type)))))))
+                    (lambda (scheme.exe scheme-args env)
+                      (process scheme.exe scheme-args args (hash 'env env
+                                                                 'exec? (eq? 'unix (system-type)))))))
                 :command]
 
        [:target examples ()

@@ -56,6 +56,9 @@ reset: $(ZUO)
 auto.boot: $(ZUO)
 	$(ZUO) $(workarea) boot MAKE="$(MAKE)"
 
+cross.boot: $(ZUO)
+	$(ZUO) $(workarea) boot SCHEME="$(SCHEME)" MAKE="$(MAKE)"
+
 # <machine>.bootquick to build boot files for <machine>
 # with o=3 d=0 for the cross compiler, and only after
 # building the kernel for the configured machine

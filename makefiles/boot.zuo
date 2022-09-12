@@ -45,7 +45,10 @@
                        "hostworkarea=" (if host-scheme
                                            ""
                                            (find-relative-path dir (or host-workarea
-                                                                       (at-dir .))))
+                                                                       (at-dir .)))) "\n"
+                       (if (or host-scheme host-workarea)
+                           "cross=t\n"
+                           "")
                        "\n")
                    (build-path dir "Mf-config")
                    :truncate)
@@ -53,8 +56,9 @@
                                (hash-remove vars 'm)
                                ccopts)])
     (build (find-target "clean" targets) token)
-    (build (map (lambda (t) (find-target t targets)) make-targets)
-           token))
+    (map (lambda (t)
+           (build (find-target t targets) token))
+         make-targets))
   (define boot-xm-dir (at-dir "../boot" xm))
   (mkdir-p boot-xm-dir)
   (for-each (lambda (file)

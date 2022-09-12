@@ -258,7 +258,7 @@ The makefile supports several targets:
  * `make <machine type>.boot` or `make <machine type>.bootquick`
 
    Creates boot files for a supported machine type, which is not
-   necessarily the current machine type. The boot files aer written to
+   necessarily the current machine type. The boot files are written to
    a subdirectory in "boot".
 
    The difference between `boot` and `bootquick` is that the latter
@@ -267,10 +267,28 @@ The makefile supports several targets:
    `bootquick` is faster, but `boot` is more helpful during
    development.
 
-   When using `zuo`, instead of encodig <machine type> in the target
+   Use "auto" for <machine type> as a shorthand for an inferred
+   machine type after configuring with `--pb`.
+
+   When using `zuo`, instead of encoding <machine type> in the target
    name, there are `boot` and bootquick` targets that take arguments.
    So, the corresponding commands as `zuo . boot <machine-type>` and
    `zuo . bootquick <machine-type>`.
+
+ * `make cross.boot SCHEME=<scheme>`
+
+   Creates boot files for the configured machine type using an
+   existing <scheme>, which must be sufficiently compatible version of
+   Chez Scheme. (It doesn't need to be the same version, but it needs
+   to have some compatible internal structure.) To use this target for
+   a machine type whose bootfiles are not present (which would be
+   typical for this target), run "configure" with the `--force` flag.
+
+   When using `zuo`, use the `boot` target, but also supply
+   `SCHEME=<scheme>` or `--host-scheme <scheme>`, or supply
+   `--host-workarea <dir>` to use a Scheme built in existing workarea.
+   In that last case, add `hostm=<machine type>` if the workarea's
+   machine type does not match the machine type configured here.
 
  * `make bootfiles`
 

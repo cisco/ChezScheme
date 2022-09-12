@@ -13,7 +13,8 @@
          make-run-scheme
          relevant-config
          source-version
-         boot-files-version)
+         boot-files-version
+         ask-scheme-machine)
 
 (define-syntax (define-values stx)
   (unless (and (list? stx) (= 3 (length stx))) (bad-syntax stx))
@@ -116,8 +117,12 @@
                          [extra-library-dirs '()]
                          [init-env (hash-ref (runtime-env) 'env)])
   (define (call-with-scheme k)
-    (define scheme.exe (or host-scheme
-                           (build-path host-workarea "bin" host-m (.exe "scheme"))))
+    (define-values (scheme.exe scheme-args)
+      (if host-scheme
+          ;; `host-scheme` is a command, not just an executable
+          (let ([l (shell->strings host-scheme #t)])
+            (list (find-executable-path (car l)) (cdr l)))
+          (list (build-path host-workarea "bin" host-m (.exe "scheme")) '())))
     (define env (if (or (lookup 'SCHEMEHEAPDIRS)
                         (not (equal? host-workarea "")))
                     (cons
@@ -126,13 +131,13 @@
                                                  (build-path host-workarea "boot" host-m))))
                      init-env)
                     init-env))
-    (k scheme.exe env))
+    (k scheme.exe scheme-args env))
 
   (define (run-scheme/status what script inputs [options (hash)])
     (call-with-scheme
-     (lambda (scheme.exe env)
+     (lambda (scheme.exe scheme-args env)
        (displayln (~a "running " scheme.exe " to build " what))
-       (define p (process scheme.exe "-q" inputs
+       (define p (process scheme.exe scheme-args "-q" inputs
                           (hash 'stdin 'pipe
                                 'stdout (or (hash-ref options 'stdout #f)
                                             (fd-open-output 'stdout))
@@ -195,3 +200,14 @@
                 lines)
          "[unknown]")]
     [else "[missing]"]))
+
+(define (ask-scheme-machine scheme-command)
+  (define p (shell scheme-command "-q"
+                   (hash 'stdin 'pipe
+                         'stdout 'pipe)))
+  (fd-write (hash-ref p 'stdin) "(machine-type)\n")
+  (fd-close (hash-ref p 'stdin))
+  (thread-process-wait (hash-ref p 'process))
+  (define m (car (string-split (fd-read (hash-ref p 'stdout) eof) "\n")))
+  (fd-close (hash-ref p 'stdout))
+  m)
