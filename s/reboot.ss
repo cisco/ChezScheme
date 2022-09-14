@@ -421,6 +421,7 @@
 (define-primitive compile-procedure-realm (make-parameter #f))
 (define-primitive compile-omit-concatenate-support (make-parameter #f))
 (define-primitive enable-arithmetic-left-associative (make-parameter #f))
+(define-primitive self-evaluating-vectors (make-parameter #f))
 
 (define-syntax $lambda/lift-barrier
   (syntax-rules ()
