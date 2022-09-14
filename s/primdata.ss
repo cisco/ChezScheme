@@ -1046,7 +1046,6 @@
 )
 
 (define-symbol-flags* ([libraries] [flags keyword])
-  ($lambda/lift-barrier [flags])
   ($system [flags library-uid])
   (add-prefix [flags])
   (alias [flags])
@@ -2549,6 +2548,7 @@
   ($foreign-callable [flags])
   ($foreign-procedure [flags])
   ($import [flags])
+  ($lambda/lift-barrier [flags])
   ($library [flags])
   ($module [flags])
   ($moi [flags])
