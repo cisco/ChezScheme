@@ -110,12 +110,6 @@ WAYS TO GET BOOT FILES
 
    to quickly create boot files for any <machine type>.
 
-5. If you have Racket installed as `racket`, then
-
-     racket rktboot/main.rkt --machine <machine type>
-
-   creates boot files for <machine type>.
-
 
 DETAILS
 
@@ -132,10 +126,10 @@ The sources for Chez Scheme come in two parts:
    header files produced by compiling the Scheme sources.
 
 The Scheme sources can be compiled only by a working version of Chez
-Scheme or via Racket; it's not possible to build Chez Scheme from
-source using only standard Unix tools, such as a C compiler, unless
-the "pb" boot files are packaged with the source (which is a way of
-including a working version of Chez Scheme).
+Scheme; it's not possible to build Chez Scheme from source using only
+standard Unix tools, such as a C compiler, unless the "pb" boot files
+are packaged with the source (which is a way of including a working
+version of Chez Scheme).
 
 The "configure" script attempts to determine what type of machine it's
 on and looks for boot files for the machine in a "boot" subdirectory
