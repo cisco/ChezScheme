@@ -82,6 +82,7 @@ zlibLib=
 LZ4Lib=
 Kernel=KernelLib
 buildKernelOnly=no
+enablepb=yes
 pbendian=l
 emscripten=no
 empetite=no
@@ -225,6 +226,7 @@ while [ $# != 0 ] ; do
       ;;
     --emscripten)
       emscripten=yes
+      CC_FOR_BUILD="${CC}"
       CC="emcc"
       LD="emld"
       AR="emar"
@@ -232,6 +234,10 @@ while [ $# != 0 ] ; do
       ;;
     --force)
       forceworkarea=yes
+      enablepb=no
+      ;;
+    --disable-pb)
+      enablepb=no
       ;;
     --installprefix=*)
       installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
@@ -389,7 +395,8 @@ if [ $emscripten = yes ] ; then
         echo "Don't combine --emscripten with -m or --machine"
         exit 1
     fi
-    m32=em
+    m32=pb32l
+    tm32=tpb32l
 fi
 
 case "$m" in
@@ -453,6 +460,7 @@ elif [ $pb = yes ] ; then
   m=pb
 else
   flagsm=$m
+  defaultm=$m
 fi
 
 if [ $pbarch = yes ] ; then
@@ -519,6 +527,7 @@ if [ "$help" = "yes" ]; then
   echo "  --pb                              specify pb (portable bytecode) version"
   echo "  --pbarch                          specify pb with inferred word and endianness"
   echo "  --emscripten                      build via emscripten (\"em\" tool prefix)"
+  echo "  --disable-pb                      disable use of pb to (re)build boot files"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
   echo "  --disable-iconv                   disable iconv support"
@@ -548,7 +557,7 @@ if [ "$help" = "yes" ]; then
   echo "  --start=<name>                    load <boot>.boot instead of <exe>.boot"
   echo "  --[no]gzip-man-pages              compress manual pages ($gzipmanpages)"
   echo "  --workarea=<pathname>             build directory ($w)"
-  echo "  --force                           configure even without boot files"
+  echo "  --force                           even without boot files, and disable pb"
   echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   C preprocessor flags"
   echo "  CFLAGS=<C compiler flags>         C compiler flags"
@@ -671,6 +680,8 @@ fi
 
 if [ "$CC_FOR_BUILD" = "" ] ; then
     CC_FOR_BUILD="${CC} ${CFLAGS}"
+else
+    enablepb=no
 fi
 
 # Add automatic thread compilation flags, unless suppressed by --disable-auto-flags
@@ -883,6 +894,8 @@ fi
 
 if [ -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
     echo "Configuring for $m$configuringin"
+elif [ -f "$srcdir"/boot/pb/scheme.boot -a "$enablepb" = "yes" ] ; then
+    echo "Configuring for $m$configuringin, and will create boot files via pb"
 elif [ "$forceworkarea" = yes ] ; then
     echo "Configuring for $m$configuringin despite missing boot files"
 else
@@ -907,16 +920,8 @@ else
       echo "  $0 -m=<machine type>"
       echo "to specify one of the available machine types."
   fi
-  if [ -f "${srcdir}"/boot/pb/scheme.boot ] ; then
-      echo ""
-      echo "Otherwise, the pb machine type is available, so try"
-      echo "  $0 --pb"
-      echo "  make $maybem.bootquick"
-      echo "to create the boot files using a portable-bytecode build,"
-      echo "and then try $0 again."
-  fi
   echo ""
-  echo "See \"${srcdir}/BUILDING\" for more ways of getting boot files."
+  echo "See \"${srcdir}/BUILDING\" for ways of getting boot files."
   exit 1
 fi
 
@@ -951,6 +956,7 @@ m=$m
 defaultm=$defaultm
 mboot=$mboot
 buildKernelOnly=$buildKernelOnly
+enablepb=$enablepb
 mdinclude=$mdinclude
 mdcppflags=$mdcppflags
 mdcflags=$mdcflags

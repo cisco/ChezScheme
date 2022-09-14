@@ -14,7 +14,8 @@
          relevant-config
          source-version
          boot-files-version
-         ask-scheme-machine)
+         ask-scheme-machine
+         check-machine-type)
 
 (define-syntax (define-values stx)
   (unless (and (list? stx) (= 3 (length stx))) (bad-syntax stx))
@@ -211,3 +212,24 @@
   (define m (car (string-split (fd-read (hash-ref p 'stdout) eof) "\n")))
   (fd-close (hash-ref p 'stdout))
   m)
+
+(define (check-machine-type m)
+  (define lines (map (lambda (s) (string-trim (string-trim s "\r")))
+                     (string-split (file->string (at-source "../s/cmacros.ss")) "\n")))
+  (let loop ([lines lines])
+    (cond
+      [(null? lines) (error "cound not find machine types in \"cmacros.ss\"")]
+      [(equal? (car lines) "(define-machine-types")
+       (define machine-lines
+         (let loop ([lines (cdr lines)])
+           (when (null? lines)
+             (error "did not detect end of machine types in \"cmacros.ss\""))
+           (define l (string-split (car lines) ")"))
+           (if (pair? (cdr l))
+               (list (car l))
+               (cons (car lines) (loop (cdr lines))))))
+       (define machs (string-read (string-join machine-lines)))
+       (unless (or (member (string->symbol m) machs)
+                   (equal? m "any"))
+         (error "not a recognized machine name" m))]
+      [else (loop (cdr lines))])))

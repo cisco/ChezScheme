@@ -43,6 +43,7 @@ echo srcdir=%SRCDIR% > %WORKAREA%\Mf-config
 echo m=%M% >> %WORKAREA%\Mf-config
 echo linkAs=%LINKAS% >> %WORKAREA%\Mf-config
 echo runtimeAs=%RUNTIMEAS% >> %WORKAREA%\Mf-config
+echo enablepb=yes >> %WORKAREA%\Mf-config
 
 echo workarea=%WORKAREA% > Makefile
 echo !include %WORKAREA%\Mf-config >> Makefile

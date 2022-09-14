@@ -47,11 +47,20 @@
                                          at-source))))
          bounce-dirs))
 
-  (define boot-src-dir
+  (define use-pb?
+    (and (equal? (hash-ref config 'enablepb #f) "yes")
+         (not (equal? m "pb"))
+         (directory-exists? (at-source "boot" "pb"))))
+
+  (define (find-boot-src-dir mboot always-use-here?)
     (let ([here-dir (at-dir ".." "boot" mboot)])
-      (if (directory-exists? here-dir)
+      (if (or always-use-here?
+              (directory-exists? here-dir))
           here-dir
           (at-source "boot" mboot))))
+
+  (define boot-src-dir
+    (find-boot-src-dir mboot use-pb?))
 
   (define boot-file-names
     (append
@@ -64,6 +73,16 @@
 
   (define boot-files
     (map (lambda (file) (at-dir "boot" m file)) boot-file-names))
+
+  (define boot-src-files
+    (and use-pb?
+         (map (lambda (file) (build-path boot-src-dir file))
+              boot:boot-file-names)))
+  (define pb-files
+    (and use-pb?
+         (let ([pb-dir (find-boot-src-dir "pb" #f)])
+           (map (lambda (file) (build-path pb-dir file))
+                boot:boot-file-names))))
 
   (define clean-links-stamp (at-dir ".no-links"))
 
@@ -113,6 +132,8 @@
     (parse-boot-args
      args
      (lambda (xm m host-scheme host-workarea)
+       (unless (or host-scheme host-workarea)
+         (check-not-kernel-only))
        (boot:cross-build-boot token ccopts make-targets
                               xm host-scheme host-workarea
                               at-dir config vars m))))
@@ -274,7 +295,6 @@
        ;; See `cross-build-boot`: builds cross-compiler in safe mode, includes examples
        [:target boot ()
                 ,(lambda (token . args)
-                   (check-not-kernel-only)
                    (cross-build-boot/safe+examples token args))
                 :command]
 
@@ -413,6 +433,29 @@
                                (cp/ln src dest)))])
               boot-file-names
               boot-files)
+
+       ,@(if use-pb?
+             `([:target (,@boot-src-files) (,@pb-files)
+                        ,(lambda (first-path token)
+                           (check-machine-type m)
+                           (alert (~a "building boot files for " m " via pb"))
+                           (define pb-dir (at-dir ".." "pb"))
+                           (mkdir-p pb-dir)
+                           (define config (map (lambda (s) (string-trim (string-trim s "\r")))
+                                               (string-split (file->string (at-dir "Mf-config")) "\n")))
+                           (define m-line (~a "m=" m))
+                           (define mboot-line (~a "mboot=" mboot))
+                           (define new-config (cons "m=pb"
+                                                    (filter (lambda (s) (not (or (string=? s m-line)
+                                                                                 (string=? s mboot-line))))
+                                                            config)))
+                           (display-to-file (string-join new-config "\n") (build-path pb-dir "Mf-config")
+                                            :truncate)
+                           (build (command-target->target (find-target "bootquick"
+                                                                       (targets-at (make-at-dir pb-dir) vars))
+                                                          (list m))
+                                  token))])
+             '())
 
        [:target ,clean-links-stamp ()
                 ,(lambda (path token)

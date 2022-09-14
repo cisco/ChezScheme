@@ -34,25 +34,38 @@ This directory contains the sources for Chez Scheme. It may also
 contain boot and header files in "boot/pb" for the "portable bytecode"
 Chez Scheme machine type, which can be used to build for native
 machine types, or you may have to create initial boot files using
-Racket.
+an exsisting Chez Scheme build.
 
 In you're on Windows, see the WINDOWS VIA COMMAND PROMPT section later
-in this file. Otherwise, to get further instructions, try running
+in this file. Otherwise, carry on to CONFIGURING AND BUILDING.
+
+
+CONFIGURING AND BUILDING
+
+Assuming you have boot files, building and installing is the usual
+sequence:
 
   ./configure
+  make
+  sudo make install
 
-The output will suggest one of the ways listed below to get boot
-files, and then try again with `./configure`.
+This should not take more than a few minutes, after which the
+commands `scheme` and `petite` can be used to run Chez Scheme and
+Petite Chez Scheme, while `man scheme` and `man petite` can be used to
+view the manual pages. Chez Scheme and Petite Chez Scheme are
+terminal-based programs, not GUIs. They both incorporate sophisticated
+command-line editing reminiscent of tcsh but with support for
+expressions that span multiple lines.
 
- Note: Boot and header files are specific to a Chez Scheme version, so
- to rebuild after pulling commits in a Git checkout of Chez Scheme,
- you may need to perform this step again to create new boot and header
- files.
+Uninstalling on Unix-like systems is as simple as running:
+
+  sudo make uninstall
 
 
 WAYS TO GET BOOT FILES
 
-1. If "boot/pb" is present, use
+1. If "boot/pb" is present, then it will normally be used
+   automatically. You can perform the same step manually with
 
      ./configure --pb
      make <machine type>.bootquick
@@ -64,11 +77,18 @@ WAYS TO GET BOOT FILES
 2. If you have an older version of Chez Scheme installed as `scheme`,
    then
 
+     ./configure --force
+     make re.boot
+
+   creates boot files for an inferred <machine type>, or
+
      ./configure --force <machine type>
      make re.boot
 
-   creates boot files for <machine type>. You can supply
-   `SCHEME=<scheme>` to run <scheme> instead of `scheme`.
+   creates boot files for <machine type>. A `make` afterward builds
+   for <machine type>. The `--force` flag disables the use of `pb`
+   boot files, if present. You can supply `SCHEME=<scheme>` to run
+   <scheme> instead of `scheme`.
 
    If your existing Chez Scheme installation is only slightly old, you
    may be able to create boot files more quickly using `cross.boot`
@@ -97,28 +117,6 @@ WAYS TO GET BOOT FILES
    creates boot files for <machine type>.
 
 
-CONFIGURING AND BUILDING
-
-After you have boot files for the current platform, building and
-installing is the usual sequence:
-
-  ./configure
-  make
-  sudo make install
-
-This should not take more than a minute or so, after which the
-commands `scheme` and `petite` can be used to run Chez Scheme and
-Petite Chez Scheme, while `man scheme` and `man petite` can be used to
-view the manual pages. Chez Scheme and Petite Chez Scheme are
-terminal-based programs, not GUIs. They both incorporate sophisticated
-command-line editing reminiscent of tcsh but with support for
-expressions that span multiple lines.
-
-Uninstalling on Unix-like systems is as simple as running:
-
-  sudo make uninstall
-
-
 DETAILS
 
 The sources for Chez Scheme come in two parts:
@@ -136,7 +134,8 @@ The sources for Chez Scheme come in two parts:
 The Scheme sources can be compiled only by a working version of Chez
 Scheme or via Racket; it's not possible to build Chez Scheme from
 source using only standard Unix tools, such as a C compiler, unless
-the "pb" boot files are packaged with the source.
+the "pb" boot files are packaged with the source (which is a way of
+including a working version of Chez Scheme).
 
 The "configure" script attempts to determine what type of machine it's
 on and looks for boot files for the machine in a "boot" subdirectory
@@ -189,7 +188,7 @@ The makefile supports several targets:
 
    When you make a modification to the system that causes the C side
    to get out of sync with the Scheme side so that the build fails,
-   the simplest approach is to re-bootstrap via Racket.
+   the simplest approach is to re-bootstrap via `make re.boot`.
 
  * `make kernel`
 
@@ -384,27 +383,12 @@ run-time library vcruntime140.dll. If you distribute the executables
 to a different system, be sure to include the redistributable run-time
 library.
 
-You'll need boot files already for the Chez Scheme target to build.
-One reason to build pb, for example, is that a distribution may
-include pb boot files, and then a pb build can be used to create other
-boot files. Another approach to getting boot files is to install
-Racket and run (where you may have to supply the full path to your
-Racket installation):
-
-  racket rktboot/main.rkt --machine <machine type>
-
 The `build.bat` script creates and uses an `nmake`-compatible makefile
 to build `zuo.exe` as its first step. You can use `zuo` to drive
 targets described in DETAILS above, but you must explicitly set up
 Microsoft Visual Studio command-line tools (perhaps using `c/vs.bat`).
-For example, to get from pb boot files to a ta6nt build:
 
- c\vs.bat x64
- build.bat pb /kernel
- zuo . bootquick ta6nt
- build.bat ta6nt
-
-But default `build.bat` not only builds the "scheme.exe" executable,
+By default, `build.bat` not only builds the "scheme.exe" executable,
 it also builds DLLs and libraries to support four linking
 combinations: Scheme as a DLL versus a static library, and using the C
 runtime system as a DLL versus a statically linked C runtime library.
@@ -490,7 +474,7 @@ To cross-compile the main Chez Scheme executable for Windows using
 MinGW, specify suitable build tools to configure, perhaps using
 --toolprefix= like this:
 
- ./configure -m=ta6nt --toolprefix=x86_64-w64-mingw32-
+ ./configure -m=ta6nt --toolprefix=x86_64-w64-mingw32- CC_FOR_BUILD=cc
  make kernel
 
 

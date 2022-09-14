@@ -77,6 +77,7 @@ default_warning_flags="-Wpointer-arith -Wall -Wextra -Wno-implicit-fallthrough"
 : ${ARFLAGS:="rc"}
 : ${RANLIB:="ranlib"}
 : ${WINDRES:="windres"}
+: ${STRIP:="strip"}
 zlibLib=
 LZ4Lib=
 Kernel=KernelLib
@@ -99,6 +100,11 @@ fi
 case "${CONFIG_UNAME}" in
   Linux)
     unixsuffix=le
+    installprefix=/usr
+    installmansuffix=share/man
+    ;;
+  GNU)
+    unixsuffix=gnu # the Hurd
     installprefix=/usr
     installmansuffix=share/man
     ;;
@@ -270,6 +276,7 @@ while [ $# != 0 ] ; do
       AR="${toolprefix}${AR}"
       RANLIB="${toolprefix}${RANLIB}"
       WINDRES="${toolprefix}${WINDRES}"
+      STRIP="${toolprefix}${STRIP}"
       ;;
     --gzip-man-pages)
       gzipmanpages=yes
@@ -330,8 +337,8 @@ while [ $# != 0 ] ; do
       CFLAGS=`echo $1 | sed -e 's/^CFLAGS=//'`
       cflagsset=yes
       ;;
-    HOSTCC=*)
-      HOSTCC=`echo $1 | sed -e 's/^HOSTCC=//'`
+    CC_FOR_BUILD=*)
+      CC_FOR_BUILD=`echo $1 | sed -e 's/^CC_FOR_BUILD=//'`
       ;;
     LD=*)
       LD=`echo $1 | sed -e 's/^LD=//'`
@@ -353,6 +360,9 @@ while [ $# != 0 ] ; do
       ;;
     WINDRES=*)
       WINDRES=`echo $1 | sed -e 's/^WINDRES=//'`
+      ;;
+    STRIP=*)
+      STRIP=`echo $1 | sed -e 's/^STRIP=//'`
       ;;
     ZLIB=*)
       zlibLib=`echo $1 | sed -e 's/^ZLIB=//'`
@@ -383,8 +393,8 @@ if [ $emscripten = yes ] ; then
 fi
 
 case "$m" in
-    *pb*)
-        echo "Don't select pb using -m or --machine, because pb needs the"
+    pb)
+        echo "Don't select pb using -m or --machine, because pb prefers to use the"
         echo " machine as the kernel host machine. Instead, use --pb or --pbarch"
         echo " to select a pb (portable bytecode) build."
         exit 1
@@ -431,14 +441,7 @@ if [ "$m" = "" ] ; then
      if [ $bits = 64 ] ; then mpbhost=$m64 ; else mpbhost=$m32 ; fi
      flagsm=$mpbhost
      if [ "$mpbhost" = "" ] ; then
-         echo "Could not infer current machine type."
-         echo ""
-         echo "Even for a pb build, a machine type is needed to select C compiler"
-         echo "and linker flags. You can use"
-         echo "  $0 --pb -m=<machine type>"
-         echo "to specify the available machine type, but since it wasn't inferred,"
-         echo "probably your OS and architecture combination is not supported."
-         exit 1
+         flagsm=unknown
      fi
   else
     m=$defaultm
@@ -509,12 +512,12 @@ if [ "$help" = "yes" ]; then
   echo ""
   echo "Options (defaults shown in parens):"
   echo "  --machine=<machine type>          explicitly specify machine type ($m)"
-  echo "  -m=<machine type>                 same as --machine <machine type> ($m)"
+  echo "  -m=<machine type>                 same as --machine=<machine type> ($m)"
   echo "  --threads                         specify threaded version ($threads)"
   echo "  --nothreads                       specify non-threaded version ($nothreads)"
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
   echo "  --pb                              specify pb (portable bytecode) version"
-  echo "  --pbarch                          specify pb with host word and endianness"
+  echo "  --pbarch                          specify pb with inferred word and endianness"
   echo "  --emscripten                      build via emscripten (\"em\" tool prefix)"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
@@ -549,7 +552,7 @@ if [ "$help" = "yes" ]; then
   echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   C preprocessor flags"
   echo "  CFLAGS=<C compiler flags>         C compiler flags"
-  echo "  HOSTCC=<C compiler>               C compiler and flags for host"
+  echo "  CC_FOR_BUILD=<C compiler>         C compiler and flags for build machine"
   echo "  LD=<linker>                       linker"
   echo "  LDFLAGS=<linker flags>            additional linker flags"
   echo "  LIBS=<libraries>                  additional libraries"
@@ -557,6 +560,7 @@ if [ "$help" = "yes" ]; then
   echo "  ARFLAGS=<archiver flgs>           archiver flags"
   echo "  RANLIB=<archive indexer>          archive indexer"
   echo "  WINDRES=<resource compiler>       resource compiler"
+  echo "  STRIP=<strip>                     executable stripper"
   echo "  ZLIB=<lib>                        link to <lib> instead of own zlib"
   echo "  LZ4=<lib>                         link to <lib> instead of own LZ4"
   echo ""
@@ -598,7 +602,7 @@ fi
 
 # Infer flags needed for threads:
 case "${flagsm}" in
-  *le|*fb|*ob|*nb)
+  *le|*gnu|*fb|*ob|*nb)
       threadFlags="-D_REENTRANT -pthread"
       threadLibs="-lpthread"
       ;;
@@ -634,7 +638,7 @@ if [ "$cflagsset" = "no" ] ; then
     a6*)
         CFLAGS="-m64 ${optFlags}"
         ;;
-    i3le)
+    i3le) # intentionally not including i3gnu, which may not support sse2
         CFLAGS="-m32 -msse2 -mfpmath=sse ${optFlags}"
         ;;
     i3nt)
@@ -660,16 +664,13 @@ if [ "$cflagsset" = "no" ] ; then
         CFLAGS="-m32 ${optFlags}"
         ;;
     em)
-        if [ "$zlibLib" = "" ]; then
-          zlibLib="-s USE_ZLIB=1"
-        fi
         CFLAGS="${optFlags}"
         ;;
   esac
 fi
 
-if [ "$HOSTCC" = "" ] ; then
-    HOSTCC="${CC} ${CFLAGS}"
+if [ "$CC_FOR_BUILD" = "" ] ; then
+    CC_FOR_BUILD="${CC} ${CFLAGS}"
 fi
 
 # Add automatic thread compilation flags, unless suppressed by --disable-auto-flags
@@ -698,7 +699,7 @@ fi
 # Add automatic linking flags, unless suppressed by --disable-auto-flags
 if [ "$addflags" = "yes" ] ; then
   case "${flagsm}" in
-    *le)
+    *le|*gnu)
         LDFLAGS="${LDFLAGS} -rdynamic"
         ;;
     *fb|*nb)
@@ -712,7 +713,7 @@ if [ "$addflags" = "yes" ] ; then
   esac
 
   case "${flagsm}" in
-    *le)
+    *le|*gnu)
         LIBS="${LIBS} -lm -ldl ${ncursesLib} -lrt"
         ;;
     *fb|*ob)
@@ -790,7 +791,7 @@ exeSuffix=
 
 # compile flags for c/Mf-unix and mats/Mf-unix
 case "${flagsmuni}" in
-    *le)
+    *le|*gnu)
         mdcflags="-fPIC -shared"
         ;;
     *fb|*ob)
@@ -822,7 +823,7 @@ case "${flagsmuni}" in
     i3le)
         mdldflags="-melf_i386"
         ;;
-    *le)
+    *le|*gnu)
         ;;
     i3nb)
         mdldflags="-m elf_i386"
@@ -867,6 +868,7 @@ case "${flagsmuni}" in
     em)
         if  [ "$zlibLib" = "" ]; then
             zlibLib="-s USE_ZLIB=1"
+            CFLAGS="${CFLAGS} -s USE_ZLIB=1"
             # not used, but this is how we might build our own zlib:
             zlibConfigureEnv="CROSS_PREFIX=em uname=wasm-em"
         fi
@@ -889,7 +891,7 @@ else
   else
       maybem=$m
   fi
-  echo 'No suitable machine type found in "boot".'
+  echo "No suitable machine type found in \"${srcdir}/boot\"."
   echo ""
   echo "Available machine types:"
   echo "  $machs"
@@ -914,15 +916,7 @@ else
       echo "and then try $0 again."
   fi
   echo ""
-  if [ "$m" = "" ] ; then
-      echo 'Alternatively, If no directory in "boot" exists for the correct'
-      echo "machine type, then you can use Racket v7.1 or later with"
-  else
-      echo "Alternatively, since no directory in "'"boot"'" exists for $m,"
-      echo "you can try using Racket v7.1 or later with"
-  fi
-  echo "  racket rktboot/main.rkt --machine $maybem"
-  echo "to create the boot files, and then try $0 again."
+  echo "See \"${srcdir}/BUILDING\" for more ways of getting boot files."
   exit 1
 fi
 
@@ -967,7 +961,7 @@ exePostStep=$exePostStep
 exeSuffix=$exeSuffix
 zlibConfigureEnv=$zlibConfigureEnv
 zlibConfigureFlags=
-HOSTCC=$HOSTCC
+CC_FOR_BUILD=$CC_FOR_BUILD
 CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS
@@ -978,6 +972,7 @@ AR=$AR
 ARFLAGS=$ARFLAGS
 RANLIB=$RANLIB
 WINDRES=$WINDRES
+STRIP=$STRIP
 cursesLib=$cursesLib
 ncursesLib=$ncursesLib
 zlibLib=$zlibLib
