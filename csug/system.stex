@@ -5605,7 +5605,7 @@ for {\PetiteChezScheme}.
 
 Each of the three return values is a nonnegative fixnum.
 
-In {\ChezScheme} Version 9.5.7.x:
+In {\ChezScheme} Version 9.5.7 or 9.5.7.x:
 
 \schemedisplay
 (scheme-version-number) ;=> 9
@@ -5616,20 +5616,17 @@ In {\ChezScheme} Version 9.5.7.x:
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{scheme-fork-version-number}{\categoryprocedure}{(scheme-fork-version-number)}
-\returns four values: the major, minor, sub-minor, and development version numbers
+\formdef{scheme-build-number}{\categoryprocedure}{(scheme-build-number)}
+\returns a development-build number
 \listlibraries
 \endentryheader
 
-Each of the three return values is a nonnegative fixnum.
+The return value is a nonnegative fixnum for a development build number.
 
-In {\ChezScheme} Version 9.5.7.1:
+In {\ChezScheme} Version 9.5.9.7:
 
 \schemedisplay
-(scheme-fork-version-number) ;=> 9
-                             ;== 5
-                             ;== 7
-                             ;== 1
+(scheme-build-number) ;=> 7
 \endschemedisplay
 
 

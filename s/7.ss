@@ -727,14 +727,10 @@
         (logand (ash n -16) 255)
         (logand (ash n -8) 255)))))
 
-(define scheme-fork-version-number
+(define scheme-build-number
   (lambda ()
     (let ([n (constant scheme-version)])
-      (values
-        (ash n -24)
-        (logand (ash n -16) 255)
-        (logand (ash n -8) 255)
-        (logand n 255)))))
+      (logand n 255))))
 
 (define scheme-version
   (let ([s #f])
