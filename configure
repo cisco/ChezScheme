@@ -143,6 +143,8 @@ case "${CONFIG_UNAME}" in
       m64=a6osx
       tm32=ti3osx
       tm64=ta6osx
+    elif uname -a |egrep 'arm64' > /dev/null 2>&1 ; then
+        is_arm64osx=1
     fi
     installprefix=/usr/local
     installmansuffix=share/man
@@ -369,7 +371,7 @@ if [ "$installreleasenotes" = "" ] ; then
 fi
 
 if [ "$disablex11" = "no" ] ; then
-  if [ $m = a6osx ] || [ $m = ta6osx ] ; then
+  if [ "$m" = "a6osx" ] || [ "$m" = "ta6osx" ] ; then
     if [ ! -d /opt/X11/include/ ] ; then
       disablex11=yes
     fi
@@ -438,6 +440,14 @@ if [ "$help" = "yes" ]; then
   echo "  pages in the staging area."
   echo ""
   exit 0
+fi
+
+if [ "$m" = "" -a "$is_arm64osx" != "" ] ; then
+    echo "Compiling for Apple Silicon is not yet supported."
+    echo "You can build under Rosetta2 by running configure and make inside an"
+    echo "x86 shell, started via the following command:"
+    echo "    /usr/bin/arch -x86_64 /bin/bash -l"
+    echo
 fi
 
 if [ "$m" = "" -o ! -f boot/$m/scheme.boot ] ; then
