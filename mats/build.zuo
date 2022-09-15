@@ -477,7 +477,13 @@
                              (~a name ".mo:" line))
                            report-lines))
                     mat-names))))
-    (display-to-file (string-join (append report-lines '("")) (newline-string experr-file))
+    (display-to-file (string-join (append report-lines
+                                          (let ([finished? (glob->matcher "Finished loading mat*")])
+                                            (if (ormap finished? lines)
+                                                '()
+                                                '("mat did not finish")))
+                                          '(""))
+                                  (newline-string experr-file))
                      (build-path report-dir (~a "errors-" conf))
                      :truncate)
     (define diff-out (build-path report-dir (~a "report-" conf)))
@@ -585,7 +591,10 @@
                          saw-err?))
                    #f
                    lines)
-        (error "failed"))))
+        (error "failed")))
+    (let ([finished? (glob->matcher "Finished loading mat*")])
+      (unless (ormap finished? lines)
+        (error "mat did not finish"))))
 
   (define (mo-depend .mos deps)
     `[:depend ,(apply append

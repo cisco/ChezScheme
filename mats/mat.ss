@@ -75,7 +75,8 @@
                     (fprintf (mat-output) "Error reading mat input: ")
                     (display-condition c (mat-output))
                     (reset))))
-            (lambda () (load in))))))))
+            (lambda () (load in))))
+        (fprintf (mat-output) "Finished loading mat\n")))))
 
 (define mat-one-exp
   (lambda (expect th sanitize-all?)
