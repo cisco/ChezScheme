@@ -187,6 +187,9 @@
 ;; This is an expensive test, since we perform half of a vfasl
 ;; encoding to look for `$install-library-entry`. */
 (define (fasl-can-combine? v)
+  (constant-case native-endianness
+    [(unknown) ($oops 'vfasl "cannot vfasl with unknown endianness")]
+    [else (void)])
   (let ([vfi (new-vfasl-info)])
     ;; Run a "first pass"
     (copy v vfi)

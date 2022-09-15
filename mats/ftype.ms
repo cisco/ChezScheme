@@ -5604,8 +5604,8 @@
 
   (equal?
     (ftype-pointer-ftype (make-ftype-pointer A 0))
-    (cond
-      [(pb?) '(endian little double)]
+    (case (machine-type)
+      [(pb tpb) '(endian little double)]
       [else
        (case (native-endianness)
          [(big) '(endian swapped double)]
@@ -5614,8 +5614,8 @@
 
   (equal?
     (ftype-pointer-ftype (make-ftype-pointer B 0))
-    (cond
-      [(pb?) '(endian big double)]
+    (case (machine-type)
+      [(pb tpb) '(endian big double)]
       [else
        (case (native-endianness)
          [(big) 'double]

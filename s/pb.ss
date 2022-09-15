@@ -1890,6 +1890,9 @@
             (let* ([arg-type* (info-foreign-arg-type* info)]
                    [result-type (info-foreign-result-type info)])
               (let ([prototype (and (not (adjust-active? info))
+                                    (not (ormap (lambda (conv)
+                                                  (and (pair? conv) (eq? (car conv) 'varargs) (cdr conv)))
+                                                (info-foreign-conv* info)))
                                     (get-prototype (cons result-type arg-type*)))])
                 (cond
                   [prototype

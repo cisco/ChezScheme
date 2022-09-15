@@ -2038,8 +2038,13 @@
                            `(define (get-vfasled) vfasled)
                            `(define (call-vfasled) (vfasled)))
                      "testfile-fasl.so")
-    (vfasl-convert-file "testfile-fasl.so" "testfile-vfasl.so" #f)
-    (load "testfile-vfasl.so")
+    (case (machine-type)
+      [(pb tpb)
+       ;; vfasl not supported with endianness not statically known
+       (load "testfile-fasl.so")]
+      [else
+       (vfasl-convert-file "testfile-fasl.so" "testfile-vfasl.so" #f)
+       (load "testfile-vfasl.so")])
     #t)
   
   (same-vfasl-content? (vfasled))
@@ -4636,7 +4641,7 @@
 
 (unless (memq (machine-type) '(arm32le tarm32le arm64le tarm64le arm64osx tarm64osx ; timestamp counter tends to be priviledged on Arm
 				       arm64nt tarm64nt
-                                       pb)) ; doesn't increment for pb
+                                       pb pb32l pb32b pb64l pb64b tpb tpb32l tpb32b tpb64l tpb64b)) ; doesn't increment for pb
   (mat $read-time-stamp-counter
 
     (let ([t (#%$read-time-stamp-counter)])

@@ -185,7 +185,13 @@ if [ "$unixsuffix" != "" ] ; then
     elif uname -a | egrep 'power|ppc' > /dev/null 2>&1 ; then
         m32=ppc32${unixsuffix}
         tm32=tppc32${unixsuffix}
-        pbendian=b
+        m64=ppc64${unixsuffix}
+        tm64=tppc64${unixsuffix}
+        if uname -a | egrep 'ppc64le' > /dev/null 2>&1 ; then
+            pbendian=l
+        else
+            pbendian=b
+        fi
     elif uname -a | egrep 'armv|aarch64' > /dev/null 2>&1 ; then
         m32=arm32${unixsuffix}
         m64=arm64${unixsuffix}
@@ -774,7 +780,7 @@ fi
 submod_instructions () {
     echo $1"; trying Git submodules checkout"
     git submodule init
-    git submodule update --depth 1
+    git submodule update
 }
 
 if [ ! -f "$srcdir"/zuo/configure ] ; then

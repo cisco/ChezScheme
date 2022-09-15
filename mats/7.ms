@@ -1152,7 +1152,7 @@
   ; which scheme-start is set, which was failing because its relocation information was discarded
   ; by the static-generation collection.
   (or
-   (case (machine-type) [(pb tpb pb32 tpb32) #t] [else #f]) ; callables not always in pb
+   (pb?) ; callables not always in pb, and boot files may not work with pbchunk
    (equal?
     (let ([would-be-scheme (find-source (format "..~abin~a~a~ascheme~a" 
                                                 (directory-separator)

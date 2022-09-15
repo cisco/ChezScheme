@@ -406,11 +406,11 @@
         [pb-b*-op-pb-immediate di/b]
         [pb-return n/x]
         [pb-adr adr]
-        [pb-interp r/x]
+        [pb-interp d/x]
         [pb-call dri/c]
         [pb-inc-pb-register dr/f]
         [pb-inc-pb-immediate di/f]
-        [pb-lock r/f]
+        [pb-lock d/f]
         [pb-cas drr/f]
         [pb-fence-pb-fence-store-store n]
         [pb-fence-pb-fence-acquire n]
@@ -764,16 +764,17 @@
              (loop next-i (cdr relocs) headers labels (or start-i i) #f uses-flag?)))
 
          (define-syntax (dispatch stx)
-           (syntax-case stx (dri/x r/x n/x r/b i/b r/f dr/b di/b
+           (syntax-case stx (dri/x dr/x d/x n/x r/b i/b d/f dr/b di/b
                                    dr/f di/f drr/f dri/f literal nop)
              [(_ op dri/x) #'(stop-before)]
-             [(_ op r/x) #'(stop-before)]
+             [(_ op dr/x) #'(stop-before)]
+             [(_ op d/x) #'(stop-before)]
              [(_ op n/x) #'(stop-before)]
              [(_ op r/b "") #'(stop-after)]
              [(_ op i/b "") #'(keep #f)]
              [(_ op r/b . _) #'(keep #t)]
              [(_ op i/b . _) #'(keep #t)]
-             [(_ op r/f) #'(keep-signalling)]
+             [(_ op d/f) #'(keep-signalling)]
              [(_ op dr/b) #'(stop-after)]
              [(_ op di/b) #'(stop-after)]
              [(_ op dr/f) #'(keep-signalling)]
@@ -854,6 +855,11 @@
            (fprintf o "\n")
            (next))
          
+         (define (d-form _op)
+           (emit-do _op (instr-dr-dest instr))
+           (fprintf o "\n")
+           (next))
+
          (define (dr-form _op)
            (emit-do _op (instr-dr-dest instr) (instr-dr-reg instr))
            (fprintf o " /* r~a <- r~a */\n"
@@ -910,15 +916,23 @@
                                                              '()
                                                              (string->list (symbol->string (syntax->datum #'op))))))])])
              (syntax-case stx (di/u
-                               di di/f dr dr/f
+                               di di/f dr dr/f dr/x
                                drr dri drr/f dri/f dri/c
-                               dri/x r r/f r/x i r/b i/b dr/b di/b n n/x
+                               dri/x r d/f d/x i r/b i/b dr/b di/b n n/x
                                adr literal nop)
                [(_ op di/u) #'(di-form '_op (instr-di-imm uinstr))]
                [(_ op di) #'(di-form '_op (instr-di-imm instr))]
                [(_ op di/f) #'(di-form '_op (instr-di-imm instr))]
                [(_ op dr) #'(dr-form '_op)]
                [(_ op dr/f) #'(dr-form '_op)]
+               [(_ op dr/x)
+                #'(begin
+                    (emit-return)
+                    (fprintf o "/* ~a: r~a <- r~a */\n"
+                             '_op
+                             (instr-dr-dest instr)
+                             (instr-dr-reg instr))
+                    (done))]
                [(_ op drr) #'(drr-form '_op)]
                [(_ op drr/f) #'(drr-form '_op)]
                [(_ op dri) #'(dri-form '_op)]
@@ -934,13 +948,13 @@
                              (instr-dri-imm instr))
                     (done))]
                [(_ op r) #'(r-form '_op)]
-               [(_ op r/f) #'(r-form '_op)]
-               [(_ op r/x)
+               [(_ op d/f) #'(d-form '_op)]
+               [(_ op d/x)
                 #'(begin
                     (emit-return)
                     (fprintf o "/* ~a: ~a */\n"
                              '_op
-                             (instr-dr-reg instr))
+                             (instr-dr-dest instr))
                     (done))]
                [(_ op i)
                 #'(begin

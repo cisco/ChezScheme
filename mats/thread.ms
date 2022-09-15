@@ -1346,6 +1346,8 @@
       (define ls '())
       (ftype-set! A (x) a 3.4)
       (ftype-set! A (y) a 1)
+      (ff-locked-incr! (ftype-&ref A (y) a)) ; try once in main thread, in case this errors
+      (ff-locked-decr! (ftype-&ref A (y) a))
       (with-mutex m
         (do ([n n (fx- n 1)])
           ((fx= n 0))

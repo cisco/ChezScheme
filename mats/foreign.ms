@@ -241,7 +241,7 @@
       (error? (load-shared-object 3))
     )
    ]
-  [(pb tpb pb32 tpb32)
+  [(pb pb32l pb32b pb64l pb64b tpb tpb32l tpb32b tpb64l tpb64b)
    (mat load-shared-object
      (file-exists? foreign1.so)
      (begin (load-shared-object foreign1.so) #t)
@@ -2460,7 +2460,9 @@
         (list (locked-object? cb) ans)))
     '(#f 13))
   (begin
-    (define $stack-depth 8000)
+    (define $stack-depth (cond
+                           [(pb?) 1000] ; interpreter frames are big
+                           [else 8000]))
     (define $base-value 37)
     #t)
   (eqv? ; make sure foreign-callable does it's overflow checks
@@ -2842,7 +2844,7 @@
          '(load-shared-object "msvcrt.dll")]
         [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx)
          '(load-shared-object "libc.dylib")]
-        [(pb tpb pb32 tpb32)
+        [(pb pb32l pb32b pb64l pb64b tpb tpb32l tpb32b tpb64l tpb64b)
          '(let ([try-load (lambda (path)
                             (guard (x [#t #f])
                                    (load-shared-object path)
@@ -3129,16 +3131,10 @@
           (check-3 long t int 7 (+ 70 x) 700)
           (check-3 i64 t int 9 (+ 90 x) 900)
           (check-3 i8 t int 10 (+ 100 x) 1000))]))
-    (machine-case
-     [(pb tpb pb32 tpb32)
-      ;; libffi doesn't write precisely
-      (define malloc_at_boundary (foreign-procedure "malloc" (int) uptr))
-      (define free_at_boundary (foreign-procedure "free" (uptr) void))]
-     [else
-      (define malloc_at_boundary (foreign-procedure "malloc_at_boundary"
-                                                    (int) uptr))
-      (define free_at_boundary (foreign-procedure "free_at_boundary"
-                                                  (uptr) void))])
+    (define malloc_at_boundary (foreign-procedure "malloc_at_boundary"
+                                                  (int) uptr))
+    (define free_at_boundary (foreign-procedure "free_at_boundary"
+                                                (uptr) void))
     #t)
   (check i8 -11)
   (check u8 129)

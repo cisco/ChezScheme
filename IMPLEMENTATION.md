@@ -1407,7 +1407,7 @@ in "boot/tpb64l-demo".
 To build with the assembled pbchunk configuration, use
 
 ```bash
-./configure --boot=<machine-type>-<tag> -m=<machine-type>
+./configure --boot=<machine-type>-<tag> --pbarch
 ```
 
 which configures a build using prepared "boot/*machine-type*-*tag*"

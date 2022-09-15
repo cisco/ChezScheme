@@ -269,6 +269,28 @@ ffi_type *decode_type(alloc_state *alloc, ptr type, ffi_abi abi, IBOOL *all_floa
   }
 }
 
+/* detect when an indirect integer size is smaller than the word size */
+static unsigned int integer_ptr_size(ptr type) {
+  if (Sboxp(type)) {
+    type = Sunbox(type);
+    if (Sfixnump(type)) {
+      switch(UNFIX(type)) {
+      case ffi_typerep_uint8:
+      case ffi_typerep_sint8:
+        return 1;
+      case ffi_typerep_uint16:
+      case ffi_typerep_sint16:
+        return 2;
+      case ffi_typerep_uint32:
+      case ffi_typerep_sint32:
+        return 4;
+        break;
+      }
+    }
+  }
+  return sizeof(uptr);
+}
+
 static void *alloc_for_ffi(alloc_state *alloc, iptr sz) {
   void *result;
 
@@ -356,12 +378,24 @@ void S_ffi_call(ptr types, ptr proc, ptr *arena) {
   iptr len = Svector_length(types), i;
   iptr n_args = len - ARG_TYPE_START_INDEX;
   void *rvalue, **args = TO_VOIDP((uptr)TO_PTR(arena) + ((n_args+1) * 8));
+  uptr widened;
+  void *actual_rvalue;
+
+  if (sizeof(uptr) != sizeof(ffi_arg))
+    S_error("foreign-call", "libffi argument promotion doesn't match ours");
 
   if (Svector_ref(types, RET_IS_ARG_INDEX) != Sfalse) {
-    rvalue = TO_VOIDP(*arena);
+    actual_rvalue = TO_VOIDP(*arena);
+    if (integer_ptr_size(Svector_ref(types, RET_TYPE_INDEX)) < sizeof(uptr)) {
+      /* libffi promotes the destination type to word size */
+      rvalue = &widened;
+    } else
+      rvalue = actual_rvalue;
     arena++;
-  } else
-    rvalue = arena;
+  } else {
+    actual_rvalue = arena;
+    rvalue = actual_rvalue;
+  }
 
   for (i = 0; i < n_args; i++) {
     ptr type = Svector_ref(types, i + ARG_TYPE_START_INDEX);
@@ -428,49 +462,48 @@ void S_ffi_call(ptr types, ptr proc, ptr *arena) {
   }
 
 #ifdef PTHREADS
-  if (Svector_ref(types, ADJ_ACTIVE_INDEX) != Sfalse)
+  if (Svector_ref(types, ADJ_ACTIVE_INDEX) != Sfalse) {
+    Slock_object(types);
     Sdeactivate_thread();
+  }
 #endif
 
   ffi_call(cif, TO_VOIDP(proc), rvalue, args);
 
 #ifdef PTHREADS
-  if (Svector_ref(types, ADJ_ACTIVE_INDEX) != Sfalse)
+  if (Svector_ref(types, ADJ_ACTIVE_INDEX) != Sfalse) {
     (void)S_activate_thread();
+    Sunlock_object(types);
+  }
 #endif
 
   /* fix up result for certain types: */
   {
     ptr ret_type = Svector_ref(types, RET_TYPE_INDEX);
     if (Sfixnump(ret_type)) {
-      /* adjust arguments that are not ptr-sized or not encoded as doubles/iptrs */
+      /* adjust arguments that are not encoded as iptrs or doubles,
+         and also handle smaller-than-word results promoted by libffi;
+         libffi appears to promote the size but not the sign on some
+         platforms */
       switch(UNFIX(ret_type)) {
-#   ifdef PORTABLE_BYTECODE_BIGENDIAN
-      case ffi_typerep_uint8:
       case ffi_typerep_sint8:
-        {
-          U8 s;
-          memcpy(&s, arena_start, sizeof(U8));
-          *arena_start = (ptr)s;
-        }
+        *(iptr *)arena_start = (I8)*(iptr *)arena_start;
+        break;
+      case ffi_typerep_uint8:
+        *(uptr *)arena_start = (U8)*(uptr *)arena_start;
+        break;
+      case ffi_typerep_sint16:
+        *(iptr *)arena_start = (I16)*(iptr *)arena_start;
         break;
       case ffi_typerep_uint16:
-      case ffi_typerep_sint16:
-        {
-          U16 s;
-          memcpy(&s, arena_start, sizeof(U16));
-          *arena_start = (ptr)s;
-        }
+        *(uptr *)arena_start = (U16)*(uptr *)arena_start;
+        break;
+      case ffi_typerep_sint32:
+        *(iptr *)arena_start = (I32)*(iptr *)arena_start;
         break;
       case ffi_typerep_uint32:
-      case ffi_typerep_sint32:
-        {
-          U32 s;
-          memcpy(&s, arena_start, sizeof(U32));
-          *arena_start = (ptr)s;
-        }
+        *(uptr *)arena_start = (U32)*(uptr *)arena_start;
         break;
-#   endif
       case ffi_typerep_uint64:
       case ffi_typerep_sint64:
         if (sizeof(I64) > sizeof(ptr)) {
@@ -492,6 +525,28 @@ void S_ffi_call(ptr types, ptr proc, ptr *arena) {
           memcpy(arena_start, &d, sizeof(double));
         }
         break;
+      }
+    } else if (Sboxp(ret_type) && (actual_rvalue != rvalue)) {
+      /* handle smaller-than-word results promoted by libffi */
+      ptr in_type = Sunbox(ret_type);
+      if (Sfixnump(in_type)) {
+        switch(UNFIX(in_type)) {
+        case ffi_typerep_uint8:
+        case ffi_typerep_sint8:
+          if (actual_rvalue != rvalue)
+            *(U8 *)actual_rvalue = widened;
+          break;
+        case ffi_typerep_uint16:
+        case ffi_typerep_sint16:
+          if (actual_rvalue != rvalue)
+            *(U16 *)actual_rvalue = widened;
+          break;
+        case ffi_typerep_uint32:
+        case ffi_typerep_sint32:
+          if (actual_rvalue != rvalue)
+            *(U32 *)actual_rvalue = widened;
+          break;
+        }
       }
     }
   }
@@ -517,10 +572,12 @@ ptr S_ffi_closure(ptr types, ptr proc) {
   
   ffi_prep_closure_loc(closure, cif, closure_callback, TO_VOIDP(vec), code);
 
+  tc_mutex_acquire();
   S_G.foreign_callables = Scons(S_weak_cons(vec, Scons(TO_PTR(closure),
                                                        TO_PTR(code))),
                                 S_G.foreign_callables);
   check_prune_callables();
+  tc_mutex_release();
   
   return vec;
 }
@@ -544,7 +601,7 @@ static void closure_callback(UNUSED ffi_cif *cif, void *ret, void **args, void *
     ret_is_arg = 1;
   } else
     ret_is_arg = 0;
- 
+
   /* Move args in `args` to "arena" space */
   for (i = 0; i < n_args; i++) {
     type = Svector_ref(types, i + ARG_TYPE_START_INDEX);
@@ -628,25 +685,9 @@ static void closure_callback(UNUSED ffi_cif *cif, void *ret, void **args, void *
     type = Svector_ref(types, RET_TYPE_INDEX);
 
     if (Sfixnump(type)) {
+      /* we don't need to handle promotion of int sizes,
+         because pb already does that */
       switch(UNFIX(type)) {
-      case ffi_typerep_uint8:
-        *(U8 *)ret = *arena_start;
-        break;
-      case ffi_typerep_sint8:
-        *(I8 *)ret = *arena_start;
-        break;
-      case ffi_typerep_uint16:
-        *(U16 *)ret = *arena_start;
-        break;
-      case ffi_typerep_sint16:
-        *(I16 *)ret = *arena_start;
-        break;
-      case ffi_typerep_uint32:
-        *(U32 *)ret = *arena_start;
-        break;
-      case ffi_typerep_sint32:
-        *(I32 *)ret = *arena_start;
-        break;
       case ffi_typerep_uint64:
       case ffi_typerep_sint64:
         if (sizeof(U64) > sizeof(ptr)) {
@@ -658,7 +699,7 @@ static void closure_callback(UNUSED ffi_cif *cif, void *ret, void **args, void *
           ((U32 *)ret)[0] = arena_start[1];
 #        endif
         } else {
-          *(U64 *)ret = *arena_start;
+          *(ptr *)ret = *arena_start;
         }
         break;
       case ffi_typerep_float:
@@ -674,22 +715,85 @@ static void closure_callback(UNUSED ffi_cif *cif, void *ret, void **args, void *
     } else {
       *(ptr *)ret = *arena_start;
     }
+  } else {
+#   ifdef PORTABLE_BYTECODE_BIGENDIAN
+    type = Svector_ref(types, RET_TYPE_INDEX);
+    if (Sboxp(type)) {
+      /* match promotion as expected by libffi */
+      ptr in_type = Sunbox(type);
+      if (Sfixnump(in_type)) {
+        switch(UNFIX(in_type)) {
+        case ffi_typerep_sint8:
+          {
+            I8 v;
+            memcpy(&v, ret, sizeof(I8));
+            *(iptr *)ret = v;
+          }
+          break;
+        case ffi_typerep_uint8:
+          {
+            U8 v;
+            memcpy(&v, ret, sizeof(U8));
+            *(uptr *)ret = v;
+          }
+          break;
+        case ffi_typerep_sint16:
+          {
+            I16 v;
+            memcpy(&v, ret, sizeof(I16));
+            *(iptr *)ret = v;
+          }
+          break;
+        case ffi_typerep_uint16:
+          {
+            U16 v;
+            memcpy(&v, ret, sizeof(U16));
+            *(uptr *)ret = v;
+          }
+          break;
+        case ffi_typerep_sint32:
+          {
+            I32 v;
+            memcpy(&v, ret, sizeof(I32));
+            *(iptr *)ret = v;
+          }
+          break;
+        case ffi_typerep_uint32:
+          {
+            U32 v;
+            memcpy(&v, ret, sizeof(U32));
+            *(uptr *)ret = v;
+          }
+          break;
+        }
+      }
+    }
+#endif
   }
 }
 
 ptr Sforeign_callable_code_object(void *addr) {
-  ptr p = S_G.foreign_callables;
+  ptr p, result = Sfalse;
+
+  tc_mutex_acquire();
+
+  p = S_G.foreign_callables;
 
   while (p != Snil) {
     ptr a = Scar(p);
-    if (Scdr(Scdr(a)) == TO_PTR(addr))
-      return Scar(a);
+    if (Scdr(Scdr(a)) == TO_PTR(addr)) {
+      result = Scar(a);
+      break;
+    }
     p = Scdr(p);
   }
 
-  return Sfalse;
+  tc_mutex_release();
+
+  return result;
 }
 
+/* called with tc mutex */
 void check_prune_callables() {
   /* after every doubling of the callables list, check whether
      we need to prune after weak references are gone */
