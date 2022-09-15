@@ -65,10 +65,10 @@ Uninstalling on Unix-like systems is as simple as running:
 WAYS TO GET BOOT FILES
 
 1. If "boot/pb" is present, then it will normally be used
-   automatically. You can perform the same step manually with
+   automatically. Build and run pb manually with
 
      ./configure --pb
-     make <machine type>.bootquick
+     make bootquick XM=<machine type>
 
    to create boot files for <machine type>. You can use "auto"
    in place of <machine type> to build for an inferred machine
@@ -106,7 +106,7 @@ WAYS TO GET BOOT FILES
    specific <machine type>s: After you have a new Chez Scheme build
    for some machine, within that build you can use use
 
-     make <machine type>.boot
+     make boot XM=<machine type>
 
    to quickly create boot files for any <machine type>.
 
@@ -252,7 +252,7 @@ The makefile supports several targets:
    To run test sets in parallel, use `zuo` instead of `make`, and
    supply the `-j` flag between `.` and `test`.
 
- * `make <machine type>.boot` or `make <machine type>.bootquick`
+ * `make boot XM=<machine type>` or `make bootquick XM=<machine type>`
 
    Creates boot files for a supported machine type, which is not
    necessarily the current machine type. The boot files are written to
@@ -267,10 +267,9 @@ The makefile supports several targets:
    Use "auto" for <machine type> as a shorthand for an inferred
    machine type after configuring with `--pb`.
 
-   When using `zuo`, instead of encoding <machine type> in the target
-   name, there are `boot` and bootquick` targets that take arguments.
-   So, the corresponding commands as `zuo . boot <machine-type>` and
-   `zuo . bootquick <machine-type>`.
+   When using `zuo`, the `boot` and bootquick` targets take arguments
+   instead of using variables. So, the corresponding commands are
+   `zuo . boot <machine-type>` and `zuo . bootquick <machine-type>`.
 
  * `make cross.boot`
 
@@ -306,7 +305,7 @@ The makefile supports several targets:
    type for which a subdirectory exists in the top-level "boot"
    directory. To include a supported machine type that isn't already
    represented in "boot", simply add the appropriate subdirectory as
-   empty or use `make <machine type>.boot` first.
+   empty or use `make boot XM=<machine type>` first.
 
  * `make docs`
 
@@ -526,7 +525,7 @@ CROSS-COMPILING SCHEME PROGRAMS
 
 Using
 
-  make <machine type>.bootquick
+  make bootquick XM=<machine type>
 
 or
 

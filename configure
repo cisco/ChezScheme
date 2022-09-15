@@ -174,6 +174,8 @@ case "${CONFIG_UNAME}" in
     ;;
 esac
 
+unknownm=no
+
 if [ "$unixsuffix" != "" ] ; then
     if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
         m32=i3${unixsuffix}
@@ -189,6 +191,13 @@ if [ "$unixsuffix" != "" ] ; then
         m64=arm64${unixsuffix}
         tm32=tarm32${unixsuffix}
         tm64=tarm64${unixsuffix}
+    else
+        # using "unknown" helps at least select OS-based flags
+        m32=unknown32${unixsuffix}
+        m64=unknown64${unixsuffix}
+        tm32=tunknown32${unixsuffix}
+        tm64=tunknown64${unixsuffix}
+        unknownm=yes
     fi
 fi
 
@@ -451,8 +460,10 @@ if [ "$m" = "" ] ; then
          flagsm=unknown
      fi
   else
-    m=$defaultm
-    flagsm=$m
+    if [ "$unknownm" != "yes" ] ; then
+        m=$defaultm
+    fi
+    flagsm=$defaultm
   fi
 elif [ $pb = yes ] ; then
   mpbhost=$m
@@ -516,7 +527,7 @@ fi
 if [ "$help" = "yes" ]; then
   echo "Purpose:"
   echo "  $0 determines the machine type and constructs a custom Makefile"
-  echo "  and Mf-install, taking into account the options below."
+  echo "  taking into account the options below."
   echo ""
   echo "Options (defaults shown in parens):"
   echo "  --machine=<machine type>          explicitly specify machine type ($m)"
@@ -675,6 +686,9 @@ if [ "$cflagsset" = "no" ] ; then
     em)
         CFLAGS="${optFlags}"
         ;;
+    *)
+        CFLAGS="${optFlags}"
+        ;;
   esac
 fi
 
@@ -758,10 +772,9 @@ if [ "$addflags" = "yes" ] ; then
 fi
 
 submod_instructions () {
-    echo $1"; check out Git submodules using"
-    echo "   git submodule init"
-    echo "   git submodule update --depth 1"
-    exit 1
+    echo $1"; trying Git submodules checkout"
+    git submodule init
+    git submodule update --depth 1
 }
 
 if [ ! -f "$srcdir"/zuo/configure ] ; then
@@ -890,6 +903,11 @@ if [ "$w" = "$m" ] ; then
     configuringin=""
 else
     configuringin=" in $w"
+fi
+
+if [ "$m" = "" ] ; then
+    enablepb=no
+    forceworkarea=no
 fi
 
 if [ -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then

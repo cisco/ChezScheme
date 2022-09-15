@@ -49,40 +49,53 @@ bootfiles: $(ZUO)
 reset: $(ZUO)
 	$(ZUO) $(workarea) reset MAKE="$(MAKE)"
 
-# <machine>.boot to build boot files for <machine>
+# Supply XM=<machine> to build boot files for <machine>
+.PHONY: boot
+boot:
+	$(ZUO) $(workarea) boot "$(XM)" MAKE="$(MAKE)"
+
+# `<machine>.boot` as alias for `boot XM=<machine>`
 %.boot: $(ZUO)
 	$(ZUO) $(workarea) boot $* MAKE="$(MAKE)"
 
+.PHONY: auto.boot
 auto.boot: $(ZUO)
 	$(ZUO) $(workarea) boot MAKE="$(MAKE)"
 
 SCHEME=scheme
 
+.PHONY: cross.boot
 cross.boot: $(ZUO)
 	$(ZUO) $(workarea) boot SCHEME="$(SCHEME)" MAKE="$(MAKE)"
 
+.PHONY: re.boot
 re.boot: $(ZUO)
 	$(ZUO) $(workarea) reboot SCHEME="$(SCHEME)"
 
-# <machine>.bootquick to build boot files for <machine>
+# Supply XM=<machine> to build boot files for <machine>
 # with o=3 d=0 for the cross compiler, and only after
 # building the kernel for the configured machine
+.PHONY: bootquick
+bootquick:
+	$(ZUO) $(workarea) bootquick "$(XM)" MAKE="$(MAKE)"
+
+# `<machine>.bootquick` as alias for `boot XM=<machine>`
 %.bootquick: $(ZUO)
 	$(ZUO) $(workarea) bootquick $* MAKE="$(MAKE)"
 
 auto.bootquick: $(ZUO)
 	$(ZUO) $(workarea) bootquick MAKE="$(MAKE)"
 
-# <machine>-<tag>.boot to repackage boot files for
+# Supply XM=<machine>-<tag>.bootpbchunk to repackage boot files for
 # <machine> with pbchunk sources, including additional
 # boot files
+.PHONY: bootpbchunk
+bootpbchunk:
+	$(ZUO) $(workarea) bootpbchunk "$(XM)" $(ARGS) MAKE="$(MAKE)"
+
+# `<machine>.bootpbchunk` as alias for `pbchunk XM=<machine>`
 %.bootpbchunk: $(ZUO)
 	$(ZUO) $(workarea) bootpbchunk $* $(ARGS) MAKE="$(MAKE)"
-
-# Supply ORIG=<dir> to build using existing at <dir>
-.PHONY: from-orig
-from-orig: $(ZUO)
-	$(ZUO) $(workarea) from-orig $(ORIG) MAKE="$(MAKE)"
 
 .PHONY: docs
 docs: build $(ZUO)
