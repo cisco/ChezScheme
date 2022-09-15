@@ -910,6 +910,10 @@ if [ "$m" = "" ] ; then
     forceworkarea=no
 fi
 
+if [ "$buildKernelOnly" = yes ] ; then
+    enablepb=no
+fi
+
 if [ -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
     echo "Configuring for $m$configuringin"
 elif [ -f "$srcdir"/boot/pb/scheme.boot -a "$enablepb" = "yes" ] ; then
