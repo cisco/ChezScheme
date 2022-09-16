@@ -288,7 +288,11 @@
                                                                   other-src-names)))
                                              (lambda ()
                                                (cross-build-boot token args (hash) '("all")))))
-                                     (hash 'co-outputs (map at-boot (cdr boot-file-names))))
+                                     (hash 'co-outputs (map at-boot (cdr boot-file-names))
+                                           'precious? #t
+                                           'db-dir (let ([dir (at-dir "to-cross")])
+                                                     (mkdir-p dir)
+                                                     dir)))
                              token))))
                 :command]
 
@@ -454,7 +458,8 @@
                            (build (command-target->target (find-target "bootquick"
                                                                        (targets-at (make-at-dir pb-dir) vars))
                                                           (list m))
-                                  token))])
+                                  token))
+                        :precious])
              '())
 
        [:target ,clean-links-stamp ()
