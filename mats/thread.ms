@@ -1332,7 +1332,13 @@
     '(3.4 -4))
   ($thread-check)
   (begin
-    (load-shared-object (find-source "foreign1.so"))
+    (load-shared-object (let ([p (find-source "foreign1.so")])
+                          p
+                          (if (or (path-absolute? p)
+                                  (not (equal? "" (path-parent p))))
+                              p
+                              ;; specify relative to current directory:
+                              (path-build "." p))))
     #t)
   (equal?
     (let ()
