@@ -52,3 +52,4 @@
 /release_notes/*.log
 /release_notes/release_notes.pdf
 /rktboot/compiled/
+/expr.md

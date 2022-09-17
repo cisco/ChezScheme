@@ -316,7 +316,7 @@
                             [else (void)])]
                          [(riscv64)
                           (record-case x
-                            [(riscv64-abs riscv64-call riscv64-jump) (n x) (build x)]
+                            [(riscv64-abs riscv64-call riscv64-jump) (n x) (build x d)]
                            [else (void)])]
                          [(pb)
                           (record-case x

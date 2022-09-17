@@ -1052,7 +1052,12 @@ ftype operators:
           (ftd-array? x))))
   (set! $ftd-union?
     (lambda (x)
-      (ftd-union? x)))
+      (or (ftd-union? x)
+          (and (ftd-struct? x)
+               (ormap (lambda (f) ($ftd-union? (caddr f)))
+                      (ftd-struct-field* x)))
+          (and (ftd-array? x)
+               ($ftd-union? (ftd-array-ftd x))))))
   (set! $ftd-unsigned?
     (lambda (x)
       (and (ftd-base? x)
@@ -1063,42 +1068,43 @@ ftype operators:
     (lambda (x)
       ;; Currently used for x86_64 and arm32 ABI: Returns a list of
       ;;  (list 'integer/'float size offset)
-      (let loop ([x x] [offset 0] [accum '()])
-        (cond
-         [(ftd-base? x)
-          (cons (list (case (ftd-base-type x)
-                        [(double double-float float single-float)
-                         'float]
-                        [else 'integer])
-                      (ftd-size x)
-                      offset)
-                accum)]
-         [(ftd-struct? x)
-          (let struct-loop ([field* (ftd-struct-field* x)] [accum accum])
-            (cond
-             [(null? field*) accum]
-             [else (let* ([fld (car field*)]
-                          [sub-ftd (caddr fld)]
-                          [sub-offset (cadr fld)])
-                     (struct-loop (cdr field*)
-                                  (loop sub-ftd (+ offset sub-offset) accum)))]))]
-         [(ftd-union? x)
-          (let union-loop ([field* (ftd-union-field* x)] [accum accum])
-            (cond
-             [(null? field*) accum]
-             [else (let* ([fld (car field*)]
-                          [sub-ftd (cdr fld)])
-                     (union-loop (cdr field*)
-                                 (loop sub-ftd offset accum)))]))]
-         [(ftd-array? x)
-          (let ([elem-ftd (ftd-array-ftd x)])
-            (let array-loop ([len (ftd-array-length x)] [offset offset] [accum accum])
+      (reverse
+       (let loop ([x x] [offset 0] [accum '()])
+         (cond
+           [(ftd-base? x)
+            (cons (list (case (ftd-base-type x)
+                          [(double double-float float single-float)
+                           'float]
+                          [else 'integer])
+                        (ftd-size x)
+                        offset)
+                  accum)]
+           [(ftd-struct? x)
+            (let struct-loop ([field* (ftd-struct-field* x)] [accum accum])
               (cond
-               [(fx= len 0) accum]
-               [else (array-loop (fx- len 1)
-                                 (+ offset (ftd-size elem-ftd))
-                                 (loop elem-ftd offset accum))])))]
-         [else (cons (list 'integer (ftd-size x) offset) accum)]))))
+                [(null? field*) accum]
+                [else (let* ([fld (car field*)]
+                             [sub-ftd (caddr fld)]
+                             [sub-offset (cadr fld)])
+                        (struct-loop (cdr field*)
+                                     (loop sub-ftd (+ offset sub-offset) accum)))]))]
+           [(ftd-union? x)
+            (let union-loop ([field* (ftd-union-field* x)] [accum accum])
+              (cond
+                [(null? field*) accum]
+                [else (let* ([fld (car field*)]
+                             [sub-ftd (cdr fld)])
+                        (union-loop (cdr field*)
+                                    (loop sub-ftd offset accum)))]))]
+           [(ftd-array? x)
+            (let ([elem-ftd (ftd-array-ftd x)])
+              (let array-loop ([len (ftd-array-length x)] [offset offset] [accum accum])
+                (cond
+                  [(fx= len 0) accum]
+                  [else (array-loop (fx- len 1)
+                                    (+ offset (ftd-size elem-ftd))
+                                    (loop elem-ftd offset accum))])))]
+           [else (cons (list 'integer (ftd-size x) offset) accum)])))))
   (set! $ftd-atomic-category
     (lambda (x)
       ;; Currently used for PowerPC32 ABI

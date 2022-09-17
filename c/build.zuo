@@ -53,6 +53,9 @@
       [(string=? arch "ppc32")
        (cons "PPC32"
              "ppc32.c")]
+      [(string=? arch "rv64")
+       (cons "RISCV64"
+             "clearcache.c")]
       [(glob-match? "pb*" "pb")
        (cons "PORTABLE_BYTECODE"
              "pb.c")]
@@ -266,6 +269,7 @@
                                (config-merge config 'LDFLAGS
                                              "/LD"))]
                    [else
+                    (rm* path) ; in case an object needs to be removed
                     (c-ar path
                           kernel-objs
                           config)]))]
@@ -478,7 +482,7 @@
        [(string=? arch "a6")
         (config-merge config 'LDFLAGS
                       "/link /STACK:0x1000000")]
-       [(string=? arch "arm64")
+       [(string=? arch "i3")
         (config-merge config 'LDFLAGS
                       "/link /STACK:0x800000")]
        [else config])]

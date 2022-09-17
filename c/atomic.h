@@ -26,6 +26,10 @@
 # define STORE_FENCE() __asm__ __volatile__ ("sync" : : : "memory")
 # define ACQUIRE_FENCE() STORE_FENCE()
 # define RELEASE_FENCE() STORE_FENCE()
+#elif defined(__riscv)
+# define STORE_FENCE() __asm__ __volatile__ ("fence w,rw" : : : "memory")
+# define ACQUIRE_FENCE() __asm__ __volatile__ ("fence r,rw" : : : "memory")
+# define RELEASE_FENCE() __asm__ __volatile__ ("fence rw,r" : : : "memory")
 #else
 # define STORE_FENCE() do { } while (0)
 #endif
@@ -141,6 +145,8 @@ FORCEINLINE int S_cas_any_fence(volatile void *addr, void *old_val, void *new_va
   return ret;
 }
 # define CAS_ANY_FENCE(a, old, new) S_cas_any_fence(a, old, new)
+#elif defined(__riscv)
+# error expected a compiler with a CS intrinsic for RISC-V
 #else
 # define CAS_ANY_FENCE(a, old, new) ((*(ptr *)(a) == TO_PTR(old)) ? (*(ptr *)(a) = TO_PTR(new), 1) : 0)
 #endif

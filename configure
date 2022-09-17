@@ -694,6 +694,9 @@ if [ "$cflagsset" = "no" ] ; then
     ppc32*)
         CFLAGS="-m32 ${optFlags}"
         ;;
+    rv64*)
+        CFLAGS="-mabi=lp64d ${optFlags}"
+        ;;
     em)
         CFLAGS="${optFlags}"
         ;;

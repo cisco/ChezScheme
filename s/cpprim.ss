@@ -625,7 +625,7 @@
     (define need-store-fence?
       (if-feature pthreads
 	(constant-case architecture
-          [(arm32 arm64 pb) #t]
+          [(arm32 arm64 riscv64 pb) #t]
           [else #f])
         #f))
     (define add-store-fence
@@ -3156,13 +3156,13 @@
     (define-inline 2 memory-order-acquire
       [() (if-feature pthreads
             (constant-case architecture
-	          [(arm32 arm64 pb) (%seq ,(%inline acquire-fence) (quote ,(void)))]
+	          [(arm32 arm64 riscv64 pb) (%seq ,(%inline acquire-fence) (quote ,(void)))]
               [else `(quote ,(void))])
             `(quote ,(void)))])
     (define-inline 2 memory-order-release
       [() (if-feature pthreads
             (constant-case architecture
-	          [(arm32 arm64 pb) (%seq ,(%inline release-fence) (quote ,(void)))]
+	          [(arm32 arm64 riscv64 pb) (%seq ,(%inline release-fence) (quote ,(void)))]
               [else `(quote ,(void))])
             `(quote ,(void)))])
     (let ()
@@ -5083,7 +5083,7 @@
          (build-checked-fp-op e
            (lambda (e)
              (constant-case architecture
-               [(x86 x86_64 arm32 arm64 pb) (build-fp-op-1 %fpsqrt e)]
+               [(x86 x86_64 arm32 arm64 riscv64 pb) (build-fp-op-1 %fpsqrt e)]
                [(ppc32) (build-fl-call (lookup-c-entry flsqrt) e)]))
            (lambda (e)
              (build-libcall #t src sexpr flsqrt e)))])

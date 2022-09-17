@@ -35,8 +35,6 @@ primvars.mo:Expected error testing (expand 1.0+2.0i (quote #f) 1.0+2.0i 1.0+2.0i
 primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b))) 1.0+2.0i 1.0+2.0i "a"): Exception in sc-expand: ((a . b)) is not an environment
 primvars.mo:Expected error testing (expand 1.0+2.0i (quote #f) 1.0+2.0i 1.0+2.0i "a"): Exception in sc-expand: #f is not an environment
 primvars.mo:Expected error testing (expand 1.0+2.0i *env 1.0+2.0i 1.0+2.0i (quote a)): Exception in sc-expand: a is not a string or #f
-primvars.mo:Expected error testing (fxpopcount (quote #!eof)): Exception in fxpopcount32: #!eof is not a non-negative fixnum
-primvars.mo:Expected error testing (fxpopcount (quote #f)): Exception in fxpopcount32: #f is not a non-negative fixnum
 primvars.mo:Expected error testing (hashtable-cells (quote ((a . b)))): Exception in hashtable-size: ((a . b)) is not a hashtable
 primvars.mo:Expected error testing (hashtable-cells (quote #f)): Exception in hashtable-size: #f is not a hashtable
 primvars.mo:Expected error testing (load-compiled-from-port 1.0+2.0i (quote "a")): Exception in load-compiled-from-port: 1.0+2.0i is not a binary input port
@@ -1920,10 +1918,10 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat special-cases: "+: bogus is not a number".
 5_3.mo:Expected error in mat special-cases: "-: bogus is not a number".
 5_3.mo:Expected error in mat special-cases: "-: bogus is not a number".
-5_3.mo:Expected error in mat popcount: "fxpopcount32: #f is not a non-negative fixnum".
-5_3.mo:Expected error in mat popcount: "fxpopcount32: 1.0 is not a non-negative fixnum".
-5_3.mo:Expected error in mat popcount: "fxpopcount32: 1267650600228229401496703205376 is not a non-negative fixnum".
-5_3.mo:Expected error in mat popcount: "fxpopcount32: -1 is not a non-negative fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount: #f is not a non-negative fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount: 1.0 is not a non-negative fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount: 1267650600228229401496703205376 is not a non-negative fixnum".
+5_3.mo:Expected error in mat popcount: "fxpopcount: -1 is not a non-negative fixnum".
 5_3.mo:Expected error in mat popcount: "fxpopcount32: #f is not a 32-bit fixnum".
 5_3.mo:Expected error in mat popcount: "fxpopcount32: 1.0 is not a 32-bit fixnum".
 5_3.mo:Expected error in mat popcount: "fxpopcount32: 1267650600228229401496703205376 is not a 32-bit fixnum".

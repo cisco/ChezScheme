@@ -5,9 +5,7 @@
                   [targets-at examples-targets-at]))
 
 (provide-targets targets-at)
-(provide base-src-names
-         macro-src-names
-         other-src-names)
+(provide all-src-names)
 
 (define default-options
   (hash
@@ -120,6 +118,26 @@
 (define compiler-names
   (list "cpnanopass.ss" "cpprim.ss" "compile.ss" "cback.ss"))
 
+(define type-src-names
+  ;; files that are `include`d by other files:
+  (list "base-lang.ss" "expand-lang.ss" "primref.ss" "types.ss" "io-types.ss"
+        "fasl-helpers.ss" "hashtable-types.ss" "strip-types.ss"))
+
+(define cpnanopass-src-names
+  ;; files that are `include`d by "cpnanopass.ss" and "cpprim.ss"
+  (list "x86.ss" "x86_64.ss" "arm32.ss" "arm64.ss" "ppc32.ss" "riscv64.ss" "pb.ss"
+        "np-languages.ss" "fxmap.ss" "cptypes-lattice.ss"
+        "np-register.ss" "np-info.ss" "np-help.ss"
+        "ffi-help.ss"))
+
+;; used externally as dependencies
+(define all-src-names
+  (append base-src-names
+          macro-src-names
+          other-src-names
+          type-src-names
+          cpnanopass-src-names))
+
 ;; The `compiler-compiler-options` argument overrides certain `var` and config-file
 ;; options for building preamble files, which is useful for compiling a cross-compiler
 ;; in safe mode (but having the final cross-built compiler built in unsafe mode)
@@ -144,7 +162,6 @@
                               ((make-at-dir (at-dir "..")) (or host-workarea ".")))))
   (define host-scheme (lookup 'hostscheme))
   (define arch (m->arch m))
-  (define arch.ss (~a (arch->backend arch) ".ss"))
 
   (define mach-src+dep+more-srcs (get-machine-files m arch))
   (define machine-def-inputs (map at-source (cons (caar mach-src+dep+more-srcs)
@@ -175,19 +192,11 @@
     (map (lambda (s) (at-dir (path-replace-extension s (~a "." m))))
          compiler-names))
 
-  (define type-src-files
-    ;; files that are `include`d by other files:
-    (list "base-lang.ss" "expand-lang.ss" "primref.ss" "types.ss" "io-types.ss"
-          "fasl-helpers.ss" "hashtable-types.ss" "strip-types.ss"))
   (define type-srcs
-    (map at-source type-src-files))
+    (map at-source type-src-names))
 
-  (define cpnanopass-src-files
-    ;; files that are `include`d by "cpnanopass.ss" and "cpprim.ss"
-    (list arch.ss "np-languages.ss" "fxmap.ss" "cptypes-lattice.ss"
-          "np-register.ss" "np-info.ss" "np-help.ss"))
   (define cpnanopass-srcs
-    (map at-source cpnanopass-src-files))
+    (map at-source cpnanopass-src-names))
 
   (define unicode-src-names
     '("../unicode/unicode-char-cases.ss"
@@ -582,8 +591,8 @@
        ,(include-dep "strip" (list "strip-types.ss"))
        ,(include-dep "vfasl" (list "strip-types.ss"))
        ,(include-dep "pbchunk" (list "strip-types.ss"))
-       ,(include-dep "cpnanopass" cpnanopass-src-files)
-       ,(include-dep "cpprim" cpnanopass-src-files)
+       ,(include-dep "cpnanopass" cpnanopass-src-names)
+       ,(include-dep "cpprim" cpnanopass-src-names)
 
        [:target ,petite.boot ,(add-patchfile base-objs)
                 ,(lambda (petite.boot token)
