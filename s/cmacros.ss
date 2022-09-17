@@ -411,6 +411,7 @@
   ppc32nb   tppc32nb
   arm64nb   tarm64nb
   arm64nt   tarm64nt
+  rv64le    trv64le
 )
 
 (include "machine.def")
@@ -592,6 +593,7 @@
   (arm32 reloc-arm32-abs reloc-arm32-call reloc-arm32-jump)
   (arm64 reloc-arm64-abs reloc-arm64-call reloc-arm64-jump)
   (ppc32 reloc-ppc32-abs reloc-ppc32-call reloc-ppc32-jump)
+  (riscv64 reloc-riscv64-abs reloc-riscv64-call reloc-riscv64-jump)
   (pb reloc-pb-abs reloc-pb-proc))
 
 (constant-case ptr-bits

@@ -44,7 +44,7 @@
 # define FLUSHCACHE
 #endif
 
-#if (defined(__arm__) || defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64))
+#if defined(__arm__) || defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64) || defined(__riscv)
 # define FLUSHCACHE
 #endif
 

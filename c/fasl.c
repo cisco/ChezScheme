@@ -276,6 +276,12 @@ static U32 adjust_delay_inst(U32 delay_inst, U32 *old_call_addr, U32 *new_call_a
 static INT sparc64_set_lit_only(void *address, uptr item, I32 destreg);
 static void sparc64_set_literal(void *address, uptr item);
 #endif /* SPARC64 */
+#ifdef RISCV64
+static void riscv64_set_abs(void *address, uptr item);
+static uptr riscv64_get_abs(void *address);
+static void riscv64_set_jump(void *address, uptr item);
+static uptr riscv64_get_jump(void *address);
+#endif /* RISCV64 */
 #ifdef PORTABLE_BYTECODE_SWAPENDIAN
 static void swap_code_endian(octet *code, uptr len);
 #endif
@@ -1470,6 +1476,17 @@ void S_set_code_obj(char *who, IFASLCODE typ, ptr p, iptr n, ptr x, iptr o) {
             *(U32 *)address = *(U32 *)address & ~0x3fffffff | item >> 2 & 0x3fffffff;
             break;
 #endif /* SPARC */
+#ifdef RISCV64
+        case reloc_riscv64_abs:
+          riscv64_set_abs(address, item);
+          break;
+        case reloc_riscv64_jump:
+          riscv64_set_jump(address, item);
+          break;
+        case reloc_riscv64_call:
+          riscv64_set_jump(address, item);
+          break;
+#endif /* RISCV64 */
         default:
             S_error1(who, "invalid relocation type ~s", FIX(typ));
     }
@@ -1550,6 +1567,15 @@ ptr S_get_code_obj(IFASLCODE typ, ptr p, iptr n, iptr o) {
             item += (uptr)address;
             break;
 #endif /* SPARC */
+#ifdef RISCV64 //@ todo
+        case reloc_riscv64_abs:
+          item = riscv64_get_abs(address);
+          break;
+        case reloc_riscv64_jump:
+        case reloc_riscv64_call:
+          item = riscv64_get_jump(address);
+          break;
+#endif /* RISCV64 */
         default:
             S_error1("", "invalid relocation type ~s", FIX(typ));
             return (ptr)0 /* not reached */;
@@ -1960,6 +1986,41 @@ static void sparc64_set_literal(void* address, uptr item) {
   sparc64_set_lit_only(address, item, destreg);
 }
 #endif /* SPARC64 */
+
+#ifdef RISCV64
+static uptr riscv64_get_abs(void* address)
+{
+  return *((I64 *)((I32 *)address + 3));
+}
+
+static uptr riscv64_get_jump(void* address)
+{
+  return *((I64 *)((I32 *)address + 3));
+}
+
+static void riscv64_set_abs(void* address, uptr item)
+{
+  /*
+    [0]auipc
+    [1]ld
+    [2]jal
+    [3]8-bytes of addr
+   */
+  (*((I64 *)((I32 *)address + 3))) = item;
+}
+
+static void riscv64_set_jump(void* address, uptr item)
+{
+  /*
+    [0]auipc
+    [1]ld
+    [2]jal
+    [3]8-bytes of addr
+    [5]jalr
+  */
+  (*((I64 *)((I32 *)address + 3))) = item;
+}
+#endif /* RISCV64 */
 
 #ifdef PORTABLE_BYTECODE_SWAPENDIAN
 typedef struct {

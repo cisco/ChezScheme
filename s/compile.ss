@@ -216,6 +216,24 @@
                                 (let ([r ($reloc (constant reloc-x86_64-popcount) n (fx- a1 ra))])
                                   (mkc0 (cdr c*) a (cons r r*) a1 x*)))]
                              [else (c-assembler-output-error c)])]
+                          [(riscv64)
+                           (record-case c
+                             [(riscv64-abs) (n x)
+                              (let ([a1 (fx- a 20)])
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-riscv64-abs) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [(riscv64-jump) (n x)
+                              (let ([a1 (fx- a 24)])
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-riscv64-jump) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [(riscv64-call) (n x)
+                              (let ([a1 (fx- a 24)])
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-riscv64-call) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [else (c-assembler-output-error c)])]
                           [(pb)
                            (record-case c
                              [(pb-abs) (n x)
@@ -296,6 +314,10 @@
                           (record-case x
                             [(ppc32-abs ppc32-call ppc32-jump) (n x) (build x d)]
                             [else (void)])]
+                         [(riscv64)
+                          (record-case x
+                            [(riscv64-abs riscv64-call riscv64-jump) (n x) (build x)]
+                           [else (void)])]
                          [(pb)
                           (record-case x
                             [(pb-abs pb-proc) (n x) (build x d)]
@@ -463,6 +485,21 @@
                             [(x86_64-popcount) (n x)
                              (let ([a1 (fx- a 12)]) ; like a call, for worst case
                                (let ([r ($reloc (constant reloc-x86_64-popcount) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [else (c-assembler-output-error c)])]
+                         [(riscv64)
+                          (record-case c
+                            [(riscv64-abs) (n x)
+                             (let ([a1 (fx- a 20)])
+                               (let ([r ($reloc (constant reloc-riscv64-abs) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [(riscv64-jump) (n x)
+                             (let ([a1 (fx- a 24)])
+                               (let ([r ($reloc (constant reloc-riscv64-jump) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [(riscv64-call) (n x)
+                             (let ([a1 (fx- a 24)])
+                               (let ([r ($reloc (constant reloc-riscv64-call) n (fx- a1 ra))])
                                  (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
                             [else (c-assembler-output-error c)])]
                          [(pb)

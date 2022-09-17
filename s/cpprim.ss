@@ -4736,7 +4736,7 @@
       (define-inline 3 flsqrt
         [(e)
          (constant-case architecture
-           [(x86 x86_64 arm32 arm64 pb) (build-fp-op-1 %fpsqrt e)]
+           [(x86 x86_64 arm32 arm64 riscv64 pb) (build-fp-op-1 %fpsqrt e)]
            [(ppc32) (build-fl-call (lookup-c-entry flsqrt) e)])])
 
       (define-inline 3 flsingle
@@ -8030,7 +8030,7 @@
                (%inline logor ,(%inline sll ,%rdx (immediate 32)) ,%rax)
                64))]
          [(arm32 pb) (unsigned->ptr (%inline read-time-stamp-counter) 32)]
-         [(arm64) (unsigned->ptr (%inline read-time-stamp-counter) 64)]
+         [(arm64 riscv64) (unsigned->ptr (%inline read-time-stamp-counter) 64)]
          [(ppc32)
           (let ([t-hi (make-tmp 't-hi)])
             `(let ([,t-hi (inline ,(make-info-kill* (reg-list %real-zero))
@@ -8051,7 +8051,7 @@
                (%inline logor ,(%inline sll ,%rdx (immediate 32)) ,%rax)
                64))]
          [(arm32 ppc32 pb) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 32)]
-         [(arm64) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 64)])])
+         [(arm64 riscv64) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 64)])])
 
     (define-inline 3 assert-unreachable
       [() (%constant svoid)])
