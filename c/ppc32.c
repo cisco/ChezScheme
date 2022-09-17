@@ -1,4 +1,4 @@
-/* ppc32le.c
+/* ppc32.c
  * Copyright 1984-2017 Cisco Systems, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
-#include <unistd.h>
 
 /* NB: when sysconf isn't helpful, hardcoding data max cache line size from PowerMac G4.
  * NB: this may cause illegal instruction error on machines with smaller cache line sizes. Also, it

@@ -46,10 +46,10 @@
              (or-windows "i3le.c"))]
       [(string=? arch "arm32")
        (cons "ARMV6"
-             "arm32le.c")]
+             "clearcache.c")]
       [(string=? arch "arm64")
        (cons "AARCH64"
-             (or-windows "arm32le.c"))]
+             (or-windows "clearcache.c"))]
       [(string=? arch "ppc32")
        (cons "PPC32"
              "ppc32.c")]
