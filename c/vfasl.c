@@ -504,7 +504,7 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
     a = 0;
     n = 0;
     while (n < m) {
-      uptr entry, item_off, code_off; ptr obj;
+      uptr entry, item_off, code_off; ptr obj; I32 saved_off;
 
         entry = RELOCIT(t, n); n += 1;
         if (RELOC_EXTENDED_FORMAT(entry)) {
@@ -517,7 +517,8 @@ static void relink_code(ptr co, ptr sym_base, ptr *vspaces, uptr *vspace_offsets
         a += code_off;
 
         /* offset is stored in place of constant-loading code: */
-        memcpy(&obj, TO_VOIDP((ptr)((uptr)co + a)), sizeof(ptr));
+        memcpy(&saved_off, TO_VOIDP((ptr)((uptr)co + a)), sizeof(I32));
+        obj = (ptr)(iptr)saved_off;
 
         if (FIXMEDIATE(obj)) {
           if (Sfixnump(obj)) {

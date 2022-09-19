@@ -374,6 +374,15 @@
       (set-double! bv offset dbl))]))
 
 ;; Overloaded in the same way as `set-uptr!`
+(define set-int32!
+  (case-lambda
+   [(bv i uptr)
+    (bytevector-s32-set! bv i uptr (constant native-endianness))]
+   [(p delta uptr vfi)
+    (let-values ([(bv offset) (vptr->bytevector+offset p delta vfi)])
+      (set-int32! bv offset uptr))]))
+
+;; Overloaded in the same way as `set-uptr!`
 (define set-char!
   (case-lambda
    [(bv i char)
@@ -1078,7 +1087,7 @@
              ;; overwrites constant-loading instructions in the code, so the
              ;; linking protocol needs to be able to deal with that, possibly using
              ;; later instructions to infer the right repair:
-             (set-iptr! code-p a new-elem vfi)
+             (set-int32! code-p a new-elem vfi)
              (loop n a (fx+ i 1)))]
           [else ($oops 'vfasl "expected a relocation")])))
     new-p))

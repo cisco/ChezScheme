@@ -1640,7 +1640,7 @@ static uptr arm32_get_jump(void *address) {
 #define SHIFT48_OPCODE 0x00600000
 
 static void arm64_set_abs(void *address, uptr item) {
-  /* First word can have an arbitrary value due to vfasl offset
+  /* First instruction can have an arbitrary value due to vfasl offset
      storage, so get the target register from the end: */
   int dest_reg = ((U32 *)address)[3] & DEST_REG_MASK;
   
