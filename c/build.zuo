@@ -235,6 +235,15 @@
                          (let* ([config (config-merge (add-preloads config preload-files)
                                                       'LDFLAGS
                                                       (or (lookup 'mdlinkflags) ""))]
+				[config (if (and (for-windows? config)
+						 (not (is-msvc? config)))
+					    (config-merge config
+							  'LDFLAGS
+							  ;; for tests, at least:
+							  (~a "-Wl,--out-implib="
+							      (string->shell
+							       (at-dir "../boot" m "schemeexe.lib"))))
+					    config)]
                                 [config (if zlib-system-lib
                                             (config-merge config 'LIBS zlib-system-lib)
                                             config)]
@@ -474,17 +483,23 @@
 
 (define (exe-config arch config)
   (cond
-    [(is-msvc? config)
+    [(for-windows? config)
      (cond
        [(string=? arch "arm64")
         (config-merge config 'LDFLAGS
-                      "/link /STACK:0x1000000")]
+                      (if (is-msvc? config)
+                          "/link /STACK:0x1000000"
+                          "-Wl,--stack,16777216"))]
        [(string=? arch "a6")
         (config-merge config 'LDFLAGS
-                      "/link /STACK:0x1000000")]
+                      (if (is-msvc? config)
+                          "/link /STACK:0x1000000"
+                          "-Wl,--stack,16777216"))]
        [(string=? arch "i3")
         (config-merge config 'LDFLAGS
-                      "/link /STACK:0x800000")]
+                      (if (is-msvc? config)
+                          "/link /STACK:0x800000"
+                          "-Wl,--stack,8388608"))]
        [else config])]
     [else config]))
 

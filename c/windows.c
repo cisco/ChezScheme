@@ -412,7 +412,20 @@ int S_windows_rmdir(const char *pathname) {
 
 int S_windows_stat64(const char *pathname, struct STATBUF *buffer) {
   wchar_t wpathname[PATH_MAX];
-  if (MultiByteToWideChar(CP_UTF8,0,pathname,-1,wpathname,PATH_MAX) == 0)
+  int len = MultiByteToWideChar(CP_UTF8,0,pathname,-1,wpathname,PATH_MAX);
+
+# ifdef __MINGW32__
+  /* MinGW _wstat64 does not want path separators at the end, except for 
+     a drive: */
+  while ((len > 2)
+	 && ((wpathname[len-2] == '/')
+	     || (wpathname[len-2] == '\\'))
+	 && (wpathname[len-3] != ':')) {
+    wpathname[(--len)-1] = 0;
+  }
+# endif
+
+  if (len == 0)
     return _stat64(pathname, buffer);
   else
     return _wstat64(wpathname, buffer);

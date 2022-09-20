@@ -1457,11 +1457,26 @@ static double s_pow(double x, double y) { return powl(x, y); }
 static double s_pow(double x, double y) { return pow(x, y); }
 #endif /* i3fb/ti3fb */
 
+#ifdef __MINGW32__
+/* cos() and sin() do not handle large values nicely,
+   so use fmod() to get reasonably close */
+# define INTO_SINCOS_RANGE(x) (((x > 1e9) || (x < -1e9)) \
+			       ? fmod(x, 2*atan2(0.0, -1.0)) \
+			       : x)
+/* asinh() and atanh() sometimes get zero sign wrong */
+# define CHECK_ASINTAN_ZERO(x, e) ((x == 0.0) \
+                                   ? (signbit(x) ? -0.0 : 0.0)  \
+                                   : e)
+#else
+# define INTO_SINCOS_RANGE(x) x
+# define CHECK_ASINTAN_ZERO(x, e) e
+#endif
+
 static double s_sqrt(double x) { return sqrt(x); }
 
-static double s_sin(double x) { return sin(x); }
+static double s_sin(double x) { return sin(INTO_SINCOS_RANGE(x)); }
 
-static double s_cos(double x) { return cos(x); }
+static double s_cos(double x) { return cos(INTO_SINCOS_RANGE(x)); }
 
 static double s_tan(double x) { return tan(x); }
 
@@ -1490,11 +1505,11 @@ static double s_trunc(double x) { return trunc(x); }
 static double s_hypot(double x, double y) { return HYPOT(x, y); }
 
 #ifdef ARCHYPERBOLIC
-static double s_asinh(double x) { return asinh(x); }
+static double s_asinh(double x) { return CHECK_ASINTAN_ZERO(x, asinh(x)); }
 
 static double s_acosh(double x) { return acosh(x); }
 
-static double s_atanh(double x) { return atanh(x); }
+static double s_atanh(double x) { return CHECK_ASINTAN_ZERO(x, atanh(x)); }
 #endif /* ARCHHYPERBOLIC */
 
 #ifdef LOG1P

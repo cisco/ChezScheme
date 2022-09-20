@@ -53,8 +53,9 @@ EXPORT double float_id(double x) {
 
 #ifdef _WIN32
 #include <stdlib.h>
+#include <string.h>
 
-EXPORT int windows_strcpy(char *dst, char *src) {
+EXPORT char *windows_strcpy(char *dst, char *src) {
   return strcpy(dst, src);
 }
 

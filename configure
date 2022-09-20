@@ -840,6 +840,9 @@ case "${flagsmuni}" in
         mdcflags="-fPIC -shared"
         mdinclude="-I/usr/X11R7/include -I/usr/pkg/include -I/usr/pkg/include/ncurses -I/usr/X11R6/include"
         ;;
+    *nt)
+        mdcflags="-shared"
+	;;
     *osx)
         mdcflags="-dynamiclib -undefined dynamic_lookup"
         ;;

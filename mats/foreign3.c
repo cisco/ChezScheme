@@ -23,6 +23,7 @@
 
 #ifdef _WIN32
 #  define SCHEME_IMPORT
+#  include <windows.h>
 #  include "scheme.h"
 #  undef EXPORT
 #  define EXPORT extern __declspec (dllexport)

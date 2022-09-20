@@ -22,6 +22,7 @@
 #  include <Windows.h>
 #  define SCHEME_IMPORT
 #  include "scheme.h"
+#  include <process.h>
 # else
 #  include <pthread.h>
 #  include "scheme.h"
@@ -123,7 +124,7 @@ void *in_thread(void *_proc_and_arg)
 
 #if defined(_WIN32)
 # define os_thread_t unsigned
-# define os_thread_create(addr, proc, arg) (((*(addr)) = _beginthread(proc, 0, arg)) == -1)
+# define os_thread_create(addr, proc, arg) (((*(addr)) = _beginthread((void(*)(void*))proc, 0, arg)) == -1)
 # define os_thread_join(t) WaitForSingleObject((HANDLE)(intptr_t)(t), INFINITE)
 #else
 # define os_thread_t pthread_t

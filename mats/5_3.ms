@@ -2652,7 +2652,11 @@
     (cfl~= -0.0+0.0i (expt -0.1 1000000000000001/3)) ; inexact approx of second arg is non-integer
     (eqv? +inf.0+inf.0i (expt -0.1 -1000000000000001/3)) ; inexact approx of second arg is non-integer
     (cfl~= -0.0+0.0i (expt -0.1 100000000000000000001/3)) ;  inexact approx of second arg is integer
-    (eqv? -inf.0-inf.0i (expt -0.1 -100000000000000000001/3)) ; inexact approx of second arg is integer
+    (let ([v (expt -0.1 -100000000000000000001/3)]) ; inexact approx of second arg is integer
+      ;; expect -inf.0-inf.0i, but the calculation involves
+      ;; sin and cos of large numbes, which isn't so well defined
+      (and (eqv? +inf.0 (abs (real-part v)))
+	   (eqv? +inf.0 (abs (imag-part v)))))
    ; test cp0 handling of expt
     (begin
       (define $probably-should-not-use

@@ -741,15 +741,20 @@
                                      [config (if (eq? 'windows (hash-ref (runtime-env) 'toolchain-type))
                                                  (config-merge config 'LDFLAGS (build-shell "/LD" "/MD"))
                                                  config)]
-                                     [config (if (glob-match? "*nt" m)
-                                                 (config-merge config 'LIBS
-                                                               (string->shell (at-dir "../bin" m
-                                                                                      (~a "csv" (get-dll-version)
-                                                                                          (if (equal? (lookup 'runtimeAs) "dll")
-                                                                                              "md"
-                                                                                              "mt")
-                                                                                          ".lib"))))
-                                                 config)])
+                                     [config 
+				      (cond
+				       [(eq? 'windows (hash-ref (runtime-env) 'toolchain-type))
+                                        (config-merge config 'LIBS
+                                                      (string->shell (at-dir "../bin" m
+                                                                             (~a "csv" (get-dll-version)
+                                                                                 (if (equal? (lookup 'runtimeAs) "dll")
+                                                                                     "md"
+                                                                                     "mt")
+                                                                                 ".lib"))))]
+				       [(glob-match? "*nt" m)
+					(config-merge config 'LDFLAGS
+						      (string->shell (at-dir "../boot" m "schemeexe.lib")))]
+				       [else config])])
                                 (config-include config
                                                 (at-dir (build-path "../boot" m))
                                                 (at-dir ".")))))]
