@@ -31,7 +31,7 @@ typedef unsigned long long uint64_t;
 
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define EXPORT extern __declspec (dllexport)
 #else
 #define EXPORT extern

@@ -363,9 +363,6 @@
                                                  "cc")))
                         (cons "FTYPE_CFLAGS"
                               (build-shell (or (lookup 'CPPFLAGS) "")
-                                           (if (eq? 'windows (system-type))
-                                               "-DWIN32"
-                                               "")
                                            (or (lookup 'mdinclude) "")
                                            (or (lookup 'CFLAGS) "")
                                            (or (lookup 'mdcflags) "")))
