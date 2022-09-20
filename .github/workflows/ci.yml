@@ -1,12 +1,16 @@
 ---
-name: test
+name: CI
 on: [push, pull_request]
 jobs:
-  test:
+  ci:
     strategy:
       fail-fast: false
       matrix:
         config:
+          - machine: tpb
+            os: ubuntu-20.04
+            configure: --pb --threads --enable-libffi
+            test: test-some-fast
           - machine: a6osx
             os: macos-11
           - machine: ta6osx
@@ -20,24 +24,26 @@ jobs:
           - machine: ta6le
             os: ubuntu-20.04
           - machine: i3nt
-            os: windows-2019
-          - machine: i3nt
             os: windows-2022
-          - machine: ti3nt
-            os: windows-2019
+            toolchain: vs
           - machine: ti3nt
             os: windows-2022
-          - machine: a6nt
-            os: windows-2019
+            toolchain: vs
           - machine: a6nt
             os: windows-2022
-          - machine: ta6nt
-            os: windows-2019
+            toolchain: vs
           - machine: ta6nt
             os: windows-2022
+            toolchain: vs
+          - machine: ta6nt
+            os: windows-2022
+            toolchain: gcc
     runs-on: ${{ matrix.config.os }}
     env:
       TARGET_MACHINE: ${{ matrix.config.machine }}
+      TOOLCHAIN: ${{ matrix.config.toolchain }}
+      CONFIGURE_ARGS: ${{ matrix.config.configure }}
+      TEST_TARGET: ${{ matrix.config.test }}
     defaults:
       run:
         shell: bash
@@ -48,16 +54,18 @@ jobs:
         run: git config --global core.autocrlf false
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
       - name: Setup 32-bit Linux
         if: ${{ endsWith(matrix.config.machine, 'i3le') }}
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install gcc-multilib lib32ncurses5-dev uuid-dev:i386
+          sudo apt-get install gcc-multilib lib32ncurses5-dev
       - name: Build Chez Scheme
         run: .github/workflows/build.sh
       - name: Run tests
-        timeout-minutes: 30
+        timeout-minutes: 45
         run: .github/workflows/test.sh
       - name: Archive workspace
         if: always()
@@ -71,4 +79,4 @@ jobs:
       - name: Check test results
         run: |
           cat $TARGET_MACHINE/mats/summary
-          diff -q .github/workflows/summary $TARGET_MACHINE/mats/summary
+          diff -q .github/workflows/summary${{ matrix.config.test }} $TARGET_MACHINE/mats/summary

@@ -1,0 +1,4 @@
+-------- o=0 eoc=f simple --------
+-------- o=3 eoc=f simple --------
+-------- o=3 cp0=t cp0 --------
+-------- o=3 cp0=t eval=interpret rmg=2 rmg2 --------

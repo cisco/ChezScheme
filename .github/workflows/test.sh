@@ -1,7 +1,10 @@
 #!/bin/bash
-if test -n "$PARALLEL_MATS" ; then
-    njobs="$PARALLEL_MATS"
-else
-    njobs="$(getconf _NPROCESSORS_ONLN)"
+export ZUO_JOBS="$(getconf _NPROCESSORS_ONLN)"
+if test "$TEST_TARGET" = ""; then
+    TEST_TARGET=test-some
 fi
-make -C "$TARGET_MACHINE"/mats -j "$njobs" partialx
+if test "$TOOLCHAIN" = vs ; then
+    cmd.exe /c "build.bat $TARGET_MACHINE /$TEST_TARGET"
+else
+    make $TEST_TARGET
+fi
