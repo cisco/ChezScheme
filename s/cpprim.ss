@@ -6865,6 +6865,7 @@
                     (and (or (constant unaligned-integers)
                              (and #,(p2? (fx+ (datum mask) 1)) (bv-offset-okay? e-offset mask)))
                          (constant? (lambda (x) (memq x '(big little))) e-eness)
+                         (not (eq? (constant native-endianness) 'unknown))
                          (let-values ([(e-index imm-offset) (bv-index-offset e-offset)])
                            (build-object-ref (not (eq? (constant-value e-eness) (constant native-endianness)))
                              'type e-bv e-index imm-offset)))])])))
