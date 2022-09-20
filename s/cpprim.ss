@@ -3579,8 +3579,11 @@
       [else
        (define-inline 2 native-endianness
          [() `(quote ,(constant native-endianness))])])
-    (define-inline 2 directory-separator
-      [() `(quote ,(if-feature windows #\\ #\/))])
+    (constant-case architecture
+      [(pb) (void)]
+      [else
+       (define-inline 2 directory-separator
+         [() `(quote ,(if-feature windows #\\ #\/))])])
     (let () ; level 2 char=?, r6rs:char=?, etc.
       (define-syntax char-pred
         (syntax-rules ()
@@ -7943,13 +7946,16 @@
                   ,t)))])
     (define-inline 3 $get-timer
       [() (build-fix (ref-reg %trap))])
-    (define-inline 3 directory-separator?
-      [(e) (if-feature windows
-             (bind #t (e)
-               (build-simple-or
-                 (%inline eq? ,e (immediate ,(ptr->imm #\/)))
-                 (%inline eq? ,e (immediate ,(ptr->imm #\\)))))
-             (%inline eq? ,e (immediate ,(ptr->imm #\/))))])
+    (constant-case architecture
+      [(pb) (void)]
+      [else
+       (define-inline 3 directory-separator?
+         [(e) (if-feature windows
+                (bind #t (e)
+                  (build-simple-or
+                   (%inline eq? ,e (immediate ,(ptr->imm #\/)))
+                   (%inline eq? ,e (immediate ,(ptr->imm #\\)))))
+                (%inline eq? ,e (immediate ,(ptr->imm #\/))))])])
     (let ()
       (define add-cdrs
         (lambda (n e)

@@ -2348,10 +2348,14 @@
                           `(quote ,k)))])]))
         (constant-case native-endianness
           [(unknown)
-           (define-inline 2 (native-endianness))]
+           (define-inline 2 native-endianness)]
           [else
            (define-inline-constant-parameter (native-endianness) (constant native-endianness))])
-        (define-inline-constant-parameter (directory-separator) (if-feature windows #\\ #\/))
+        (constant-case architecture
+          [(pb)
+           (define-inline 2 directory-separator)]
+          [else
+           (define-inline-constant-parameter (directory-separator) (if-feature windows #\\ #\/))])
         (define-inline-constant-parameter (threaded?) (if-feature pthreads #t #f))
         (define-inline-constant-parameter (most-negative-fixnum least-fixnum) (constant most-negative-fixnum))
         (define-inline-constant-parameter (most-positive-fixnum greatest-fixnum) (constant most-positive-fixnum))
@@ -2359,10 +2363,14 @@
         (define-inline-constant-parameter (virtual-register-count) (constant virtual-register-count))
         (define-inline-constant-parameter (stencil-vector-mask-width) (constant stencil-vector-mask-bits)))
 
-      (define-inline 2 directory-separator?
-        [(c) (visit-and-maybe-extract* char? ([dc c])
-               (residualize-seq '() (list c) ctxt)
-               `(quote ,(and (memv dc (if-feature windows '(#\\ #\/) '(#\/))) #t)))])
+      (constant-case architecture
+        [(pb)
+         (define-inline 2 directory-separator?)]
+        [else
+         (define-inline 2 directory-separator?
+           [(c) (visit-and-maybe-extract* char? ([dc c])
+                  (residualize-seq '() (list c) ctxt)
+                  `(quote ,(and (memv dc (if-feature windows '(#\\ #\/) '(#\/))) #t)))])])
 
       (define-inline 2 (foreign-sizeof foreign-alignof)
         [(x) (and (okay-to-handle?)
