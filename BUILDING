@@ -65,7 +65,7 @@ Uninstalling on Unix-like systems is as simple as running:
 WAYS TO GET BOOT FILES
 
 1. If "boot/pb" is present, then it will normally be used
-   automatically. Build and run pb manually with
+   automatically. You can use pb to build boot files manually with
 
      ./configure --pb
      make bootquick XM=<machine type>
@@ -85,14 +85,19 @@ WAYS TO GET BOOT FILES
      ./configure --force <machine type>
      make re.boot
 
-   creates boot files for <machine type>. A `make` afterward builds
-   for <machine type>. The `--force` flag disables the use of `pb`
-   boot files, if present. You can supply `SCHEME=<scheme>` to run
-   <scheme> instead of `scheme`.
+   creates boot files for <machine type>. You can supply
+   `SCHEME=<scheme>` to run <scheme> instead of `scheme`. A `make`
+   afterward builds for <machine type>.
 
    If your existing Chez Scheme installation is only slightly old, you
    may be able to create boot files more quickly using `cross.boot`
    instead of `re.boot`.
+
+   The `--force` flag disables the requirement to have either existing
+   boot files for the target machine or pb boot files for creating
+   them. If you have pb boot files, you can omit `--force`; the build
+   system will record the assumption that the created boot files are
+   newer, so pb should not be used to rebuild them.
 
 3. A combination of the previous two ways: If you plan to build on
    many different machines and you don't have pb boot files, then it

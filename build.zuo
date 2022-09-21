@@ -45,10 +45,13 @@
                                          at-source))))
          bounce-dirs))
 
-  (define use-pb?
-    (and (equal? (hash-ref config 'enablepb #f) "yes")
+  (define record-from-pb?
+    (directory-exists? (at-source "boot" "pb")))
+
+  (define boot-from-pb?
+    (and (equal? (hash-ref config 'enableFrompb #f) "yes")
          (not (equal? m "pb"))
-         (directory-exists? (at-source "boot" "pb"))))
+         record-from-pb?))
 
   (define (find-boot-src-dir mboot always-use-here?)
     (let ([here-dir (at-dir ".." "boot" mboot)])
@@ -58,7 +61,7 @@
           (at-source "boot" mboot))))
 
   (define boot-src-dir
-    (find-boot-src-dir mboot use-pb?))
+    (find-boot-src-dir mboot boot-from-pb?))
 
   (define boot-file-names
     (append
@@ -73,14 +76,22 @@
     (map (lambda (file) (at-dir "boot" m file)) boot-file-names))
 
   (define boot-src-files
-    (and use-pb?
+    (and boot-from-pb?
          (map (lambda (file) (build-path boot-src-dir file))
               boot:boot-file-names)))
   (define pb-files
-    (and use-pb?
+    (and record-from-pb?
          (let ([pb-dir (find-boot-src-dir "pb" #f)])
            (map (lambda (file) (build-path pb-dir file))
                 boot:boot-file-names))))
+
+  (define all-src-files
+    (map (lambda (n) (at-source "s" n))
+         all-src-names))
+
+  (define via-pb-files
+    (and record-from-pb?
+         (append pb-files all-src-files)))
 
   (define clean-links-stamp (at-dir ".no-links"))
 
@@ -126,18 +137,22 @@
   ;; Cross-builds for a machine type that is specified as an argument;
   ;; the machine type defaults to the `defaultm` configuration entry, and
   ;; that default is normally useful if the current machine type is "pb"
-  (define (cross-build-boot token args ccopts make-targets)
+  (define (cross-build-boot token args ccopts make-targets record-dep?)
     (parse-boot-args
      args
      (lambda (xm m host-scheme host-workarea)
        (unless (or host-scheme host-workarea)
          (check-not-kernel-only))
+       (alert (~a "building boot files for " xm " using " m))
        (boot:cross-build-boot token ccopts make-targets
                               xm host-scheme host-workarea
-                              at-dir config vars m))))
+                              at-dir config vars m)
+       ;; record success so boot files will not be rebuilt from pb
+       (when (and record-from-pb? record-dep?)
+         (build-boot-target token xm m host-scheme host-workarea void)))))
 
   (define (cross-build-boot/safe+examples token args)
-    (cross-build-boot token args (hash 'o "2" 'd "3" 'i "t") '("all" "examples")))
+    (cross-build-boot token args (hash 'o "2" 'd "3" 'i "t") '("all" "examples") #t))
 
   (define (cross-reboot token args)
     (parse-boot-args
@@ -151,6 +166,36 @@
                                        (path->complete-path (build-path host-workarea "boot" m))))
                            (hash)))
        (reboot m xm scheme (hash 'shell-options options 'out-dir (at-dir ".."))))))
+
+  ;; used to create a target for "quickboot", or just record dependency for other modes
+  ;; of building boot files
+  (define (build-boot-target token xm m host-scheme host-workarea thunk)
+    (define (at-boot name) (at-dir "../boot" xm name))
+    (define (host-boot-files)
+      (cond
+        [host-workarea
+         (map (lambda (file) (build-path host-workarea "boot" m file)) boot-file-names)]
+        [host-scheme '()]
+        [else boot-files]))
+    (build (target (at-boot (car boot-file-names))
+                   (lambda (path token)
+                     (rule (if record-from-pb?
+                               ;; declare dependency on pb instead of host,
+                               ;; so we don't rebuild via pb:
+                               via-pb-files
+                               ;; otherwise, bootquick again if host changes:
+                               (append (host-boot-files)
+                                       all-src-files))
+                           thunk))
+                   (hash 'co-outputs (map at-boot (cdr boot-file-names))
+                         'precious? #t
+                         'db-dir (if record-from-pb?
+                                     ;; record dependency with pb
+                                     (let ([dir (at-dir "../pb")])
+                                       (mkdir-p dir)
+                                       dir)
+                                     (at-dir "."))))
+           token))
   
   (define (run-tests token name [vars vars])
     (check-not-kernel-only)
@@ -261,7 +306,7 @@
                 :command]
 
        ;; See `cross-build-boot`: builds cross-compiler in unsafe mode, skips examples,
-       ;; only rebuilds is needed
+       ;; only rebuilds if needed
        [:target bootquick ()
                 ,(lambda (token . args)
                    (check-not-kernel-only)
@@ -270,26 +315,10 @@
                     (lambda (xm m host-scheme host-workarea)
                       (unless (or host-scheme host-workarea)
                         (build/dep (find-target "kernel" the-targets) token))
-                      (define (at-boot name) (at-dir "../boot" xm name))
-                      (define host-boot-files
-                        (cond
-                          [host-workarea
-                           (map (lambda (file) (build-path host-workarea "boot" m file)) boot-file-names)]
-                          [host-scheme '()]
-                          [else boot-files]))
-                      (build (target (at-boot (car boot-file-names))
-                                     (lambda (path token)
-                                       (rule (append host-boot-files
-                                                     (map (lambda (n) (at-source "s" n))
-                                                          all-src-names))
-                                             (lambda ()
-                                               (cross-build-boot token args (hash) '("all")))))
-                                     (hash 'co-outputs (map at-boot (cdr boot-file-names))
-                                           'precious? #t
-                                           'db-dir (let ([dir (at-dir "to-cross")])
-                                                     (mkdir-p dir)
-                                                     dir)))
-                             token))))
+                      (build-boot-target
+                       token xm m host-scheme host-workarea
+                       (lambda ()
+                         (cross-build-boot token args (hash) '("all") #f))))))
                 :command]
 
        ;; See `cross-build-boot`: builds cross-compiler in safe mode, includes examples
@@ -436,11 +465,11 @@
               boot-file-names
               boot-files)
 
-       ,@(if use-pb?
-             `([:target (,@boot-src-files) (,@pb-files)
+       ,@(if boot-from-pb?
+             `([:target (,@boot-src-files) (,@via-pb-files)
                         ,(lambda (first-path token)
                            (check-machine-type m)
-                           (alert (~a "building boot files for " m " via pb"))
+                           (alert (~a "checking boot files for " m " against pb"))
                            (define pb-dir (at-dir ".." "pb"))
                            (mkdir-p pb-dir)
                            (define config (map (lambda (s) (string-trim (string-trim s "\r")))

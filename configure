@@ -82,7 +82,7 @@ zlibLib=
 LZ4Lib=
 Kernel=KernelLib
 buildKernelOnly=no
-enablepb=yes
+enableFrompb=yes
 pbendian=l
 emscripten=no
 empetite=no
@@ -254,10 +254,7 @@ while [ $# != 0 ] ; do
       ;;
     --force)
       forceworkarea=yes
-      enablepb=no
-      ;;
-    --disable-pb)
-      enablepb=no
+      enableFrompb=no
       ;;
     --installprefix=*)
       installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
@@ -549,7 +546,6 @@ if [ "$help" = "yes" ]; then
   echo "  --pb                              specify pb (portable bytecode) version"
   echo "  --pbarch                          specify pb with inferred word and endianness"
   echo "  --emscripten                      build via emscripten (\"em\" tool prefix)"
-  echo "  --disable-pb                      disable use of pb to (re)build boot files"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
   echo "  --disable-iconv                   disable iconv support"
@@ -579,7 +575,7 @@ if [ "$help" = "yes" ]; then
   echo "  --start=<name>                    load <boot>.boot instead of <exe>.boot"
   echo "  --[no]gzip-man-pages              compress manual pages ($gzipmanpages)"
   echo "  --workarea=<pathname>             build directory ($w)"
-  echo "  --force                           even without boot files, and disable pb"
+  echo "  --force                           disable use of pb to (re)build boot files"
   echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   C preprocessor flags"
   echo "  CFLAGS=<C compiler flags>         C compiler flags"
@@ -709,7 +705,7 @@ fi
 if [ "$CC_FOR_BUILD" = "" ] ; then
     CC_FOR_BUILD="${CC} ${CFLAGS}"
 else
-    enablepb=no
+    enableFrompb=no
 fi
 
 # Add automatic thread compilation flags, unless suppressed by --disable-auto-flags
@@ -930,17 +926,17 @@ else
 fi
 
 if [ "$m" = "" ] ; then
-    enablepb=no
+    enableFrompb=no
     forceworkarea=no
 fi
 
 if [ "$buildKernelOnly" = yes ] ; then
-    enablepb=no
+    enableFrompb=no
 fi
 
 if [ -f boot/$m/scheme.boot -o -f "$srcdir"/boot/$m/scheme.boot ] ; then
     echo "Configuring for $m$configuringin"
-elif [ -f "$srcdir"/boot/pb/scheme.boot -a "$enablepb" = "yes" ] ; then
+elif [ -f "$srcdir"/boot/pb/scheme.boot -a "$enableFrompb" = "yes" ] ; then
     echo "Configuring for $m$configuringin, and will create boot files via pb"
 elif [ "$forceworkarea" = yes ] ; then
     echo "Configuring for $m$configuringin despite missing boot files"
@@ -1002,7 +998,7 @@ m=$m
 defaultm=$defaultm
 mboot=$mboot
 buildKernelOnly=$buildKernelOnly
-enablepb=$enablepb
+enableFrompb=$enableFrompb
 mdinclude=$mdinclude
 mdcppflags=$mdcppflags
 mdcflags=$mdcflags
