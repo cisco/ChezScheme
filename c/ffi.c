@@ -586,14 +586,25 @@ static void closure_callback(UNUSED ffi_cif *cif, void *ret, void **args, void *
   ptr caller_saved[4]; /* first four registers are preserved */
   ptr vec = (ptr)user_data;
   ptr types = Svector_ref(vec, 1), type;
-  ptr tc = get_thread_context();
-  ptr *arena_start = S_get_call_arena(tc), *arena = arena_start;
+  ptr tc;
+  ptr *arena_start, *arena;
   iptr len = Svector_length(types), i;
   iptr n_args = len - ARG_TYPE_START_INDEX;
   IBOOL ret_is_arg;
 #ifdef PTHREADS
   int active_state;
 #endif
+
+#ifdef PTHREADS
+  if (Svector_ref(types, ADJ_ACTIVE_INDEX) != Sfalse)
+    active_state = S_activate_thread();
+  else
+    active_state = 0;
+#endif
+
+  tc = get_thread_context();
+  arena_start = S_get_call_arena(tc);
+  arena = arena_start;
 
   if (Svector_ref(types, RET_IS_ARG_INDEX) != Sfalse) {
     *arena = TO_PTR(ret);
@@ -662,23 +673,11 @@ static void closure_callback(UNUSED ffi_cif *cif, void *ret, void **args, void *
     arena++;
   }
 
-#ifdef PTHREADS
-  if (Svector_ref(types, ADJ_ACTIVE_INDEX) != Sfalse)
-    active_state = S_activate_thread();
-  else
-    active_state = 0;
-#endif
-
   memcpy(caller_saved, &PBREGS(tc, 0), sizeof(caller_saved));
 
   S_generic_invoke(tc, Svector_ref(vec, 0));
 
   memcpy(&PBREGS(tc, 0), caller_saved, sizeof(caller_saved));
-
-#ifdef PTHREADS
-  if (Svector_ref(types, ADJ_ACTIVE_INDEX) != Sfalse)
-    S_unactivate_thread(active_state);
-#endif
 
   if (!ret_is_arg) {
     /* move result to "arena" */
@@ -770,6 +769,11 @@ static void closure_callback(UNUSED ffi_cif *cif, void *ret, void **args, void *
     }
 #endif
   }
+
+#ifdef PTHREADS
+  if (Svector_ref(types, ADJ_ACTIVE_INDEX) != Sfalse)
+    S_unactivate_thread(active_state);
+#endif
 }
 
 ptr Sforeign_callable_code_object(void *addr) {
