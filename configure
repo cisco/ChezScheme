@@ -721,6 +721,13 @@ if [ "$addflags" = "yes" ] ; then
     fi
 fi
 
+# Add libffi library, unless suppressed by --disable-auto-flags
+if [ "$addflags" = "yes" ] ; then
+    if [ "$libffi" = "yes" ] ; then
+        LIBS="${LIBS} -lffi"
+    fi
+fi
+
 cursesLib=-lcurses
 ncursesLib=-lncurses
 
