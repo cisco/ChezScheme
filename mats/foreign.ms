@@ -251,7 +251,8 @@
                               #t))])
        (or (try-load "libc.so.7")
            (try-load "libc.so.6")
-           (try-load "libc.dylib"))))]
+           (try-load "libc.dylib")))
+     (error? (load-shared-object 3)))]
   [else
    (mat foreign-procedure
       (error? (foreign-procedure "foo" () scheme-object))

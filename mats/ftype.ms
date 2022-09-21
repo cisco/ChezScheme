@@ -1481,6 +1481,7 @@
     (define $not-much-alloc?
       (lambda (require-cp0? p)
         (or (eq? (current-eval) interpret)
+            (pb?)
             (#%$suppress-primitive-inlining)
             (eq? (compile-profile) 'source)
             (not (= (optimize-level) 3))

@@ -112,7 +112,9 @@
       (+ (* (time-second t) 1000)
          (round (/ (time-nanosecond t) 1000000)))))
   (define runs 10)
-  (define iterations 1000)
+  (define iterations (cond
+                       [(pb?) 100]
+                       [else 1000]))
   (define-syntax run
     (syntax-rules ()
       [(_ ?set ?ref ?make-ht)

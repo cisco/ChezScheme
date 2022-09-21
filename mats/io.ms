@@ -535,7 +535,7 @@
  )
 
 (if (case (machine-type)
-     [(pb) #t]
+     [(pb tpb) #t]
      [else (embedded?)])
     (mat iconv-codec
       (error? (errorf 'iconv-codec "-73 is not a string"))
