@@ -702,7 +702,7 @@
 (define $format-scheme-version
   (lambda (n)
     (if (= (logand n 255) 0)
-        (if (= (logand n 255) 0)
+        (if (= (logand (ash n -8) 255) 0)
             (format "~d.~d"
               (ash n -24)
               (logand (ash n -16) 255))
