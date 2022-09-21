@@ -714,9 +714,15 @@ enum {
 #if ptr_bits == 64
 #define doi_pb_rev_op_pb_int16_pb_register(instr) \
   do_pb_rev_op_pb_int16_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
+# if USE_OVERFLOW_INTRINSICS
+/* See note below on unsigned swap. */
+#  define do_pb_rev_op_pb_int16_pb_register(dest, reg) \
+  regs[dest] = ((uptr)(((iptr)((uptr)__builtin_bswap16(regs[reg]) << 48)) >> 48))
+# else
 #define do_pb_rev_op_pb_int16_pb_register(dest, reg) \
   regs[dest] = ((uptr)((iptr)(regs[reg] << 56) >> 48) \
                                 | ((regs[reg] & 0xFF00) >> 8))
+# endif
 #else
 #define doi_pb_rev_op_pb_int16_pb_register(instr) \
   do_pb_rev_op_pb_int16_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
@@ -734,11 +740,19 @@ enum {
 #if ptr_bits == 64
 # define doi_pb_rev_op_pb_int32_pb_register(instr) \
    do_pb_rev_op_pb_int32_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
-# define do_pb_rev_op_pb_int32_pb_register(dest, reg) \
+# if USE_OVERFLOW_INTRINSICS
+/* x86_64 GCC before 12.2 incorrectly compiles the code below to an unsigned swap.
+   Defeat that by using the unsigned-swap intrinsic (which is good, anyway), then
+   shift up and back. */
+#  define do_pb_rev_op_pb_int32_pb_register(dest, reg) \
+  regs[dest] = ((uptr)(((iptr)((uptr)__builtin_bswap32(regs[reg]) << 32)) >> 32))
+# else
+#  define do_pb_rev_op_pb_int32_pb_register(dest, reg) \
   regs[dest] = ((uptr)((iptr)(regs[reg] << 56) >> 32) \
                                 | ((regs[reg] & (uptr)0xFF000000) >> 24) \
                                 | ((regs[reg] & (uptr)0x00FF0000) >> 8) \
                                 | ((regs[reg] & (uptr)0x0000FF00) << 8))
+# endif
 #else
 # define doi_pb_rev_op_pb_int32_pb_register(instr) \
    do_pb_rev_op_pb_int32_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))

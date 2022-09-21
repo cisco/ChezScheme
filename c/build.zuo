@@ -56,7 +56,7 @@
       [(string=? arch "rv64")
        (cons "RISCV64"
              "clearcache.c")]
-      [(glob-match? "pb*" "pb")
+      [(glob-match? "pb*" arch)
        (cons "PORTABLE_BYTECODE"
              "pb.c")]
       [else (error "unrecognized arch")]))
