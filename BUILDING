@@ -252,6 +252,11 @@ The makefile supports several targets:
    To run test sets in parallel, use `zuo` instead of `make`, and
    supply the `-j` flag between `.` and `test`.
 
+   There are also `test-one` (a representative test), `test-some` (a
+   handful of representative tests), `test-some-fast` (omits
+   interpreter tests from `test-some`), and `test-more` (additional
+   configurations) targets.
+
  * `make boot XM=<machine type>` or `make bootquick XM=<machine type>`
 
    Creates boot files for a supported machine type, which is not

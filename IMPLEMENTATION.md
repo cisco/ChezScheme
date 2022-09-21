@@ -258,23 +258,27 @@ see the next section on running more tests.
 
 ### Running Tests for All Configurations
 
-The "mats/main.zuo" script has four sets of configurations available
-for convenient testing:
+The "mats/main.zuo" script has several sets of configurations
+available for convenient testing, in order of increasing length:
+
+ * `zuo . test-one`
+
+ * `zuo . test-some-fast`
 
  * `zuo . test-some`
- 
+
  * `zuo . test`
- 
+
  * `zuo . test-more`
 
  * `zuo . test-experr`
 
 As its name suggests, the `test` group is a good default set of
-configrations. The `test-some` target is mostly a subset of `test`.
-The `test-more` target includes combinations with slowet and more
-agressive checking. The `test-experr` set includes one configuration
-for every combination of options that might have different expected
-errors.
+configrations. The `test-some` target is mostly a subset of `test`,
+and `test-some-fast` further omits interpreter mode. The `test-more`
+target includes combinations with slower and more agressive checking.
+The `test-experr` set includes one configuration for every combination
+of options that might have different expected errors.
 
 To run *N* configurations in parallel, supply `-j` *N* to `zuo`, as in
 `zuo . -j 6 test`, or set the `ZUO_JOBS` environment variable. You can

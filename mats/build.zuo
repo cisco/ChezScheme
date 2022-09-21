@@ -139,12 +139,18 @@
 (define one-test-option
   (hash 'o "3" 'eoc "f" 'name "simple"))
 
-(define some-test-options
+(define some-fast-test-options
+  ;; no interpreter tests
   (list
    (hash 'o "0" 'eoc "f" 'name "simple")
-   (hash 'o "3" 'eoc "f" 'name "simple")
-   (hash 'o "3" 'cp0 "t" 'name "cp0")
-   (hash 'o "3" 'eval "interpret" 'cp0 "t" 'rmg "2" 'name "rmg2")))
+   one-test-option
+   (hash 'o "3" 'cp0 "t" 'name "cp0")))
+
+(define some-test-options
+  (append
+   some-fast-test-options
+   (list
+    (hash 'o "3" 'eval "interpret" 'cp0 "t" 'rmg "2" 'name "rmg2"))))
 
 (define test-options
   (list
@@ -627,6 +633,10 @@
        [:target test-one (,(options-name one-test-option))
                 ,(lambda (target)
                    (summarize-results (list one-test-option)))
+                :quiet]
+       [:target test-some-fast ,(map options-name some-fast-test-options)
+                ,(lambda (target)
+                   (summarize-results some-fast-test-options))
                 :quiet]
        [:target test-some ,(map options-name some-test-options)
                 ,(lambda (target)

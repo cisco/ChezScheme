@@ -21,6 +21,11 @@ if defined ARG (
   if "%ARG%"=="/only" set MAKETARGET=build && goto argloop
   if "%ARG%"=="/kernel" set MAKETARGET=kernel && goto argloop
   if "%ARG%"=="/none" set MAKETARGET=none && goto argloop
+  if "%ARG%"=="/test-one" set MAKETARGET=test-one && goto argloop
+  if "%ARG%"=="/test-some-fast" set MAKETARGET=test-some-fast && goto argloop
+  if "%ARG%"=="/test-some" set MAKETARGET=test-some && goto argloop
+  if "%ARG%"=="/test" set MAKETARGET=test && goto argloop
+  if "%ARG%"=="/test-more" set MAKETARGET=test-more && goto argloop
   echo Unrecognized argument %ARG%
   exit /B 1
 )
