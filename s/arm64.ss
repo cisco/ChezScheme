@@ -2543,6 +2543,17 @@
           [else
            (list-tail regs n)])))
 
+    ;; remove members of an `&`-wrapped ftd that have the
+    ;; same the same type and offset, since the AArch64 ABI
+    ;; is in terns of individually accessible elements
+    (define filter-union
+      (lambda (members)
+        (let loop ([members members])
+          (cond
+            [(null? members) '()]
+            [(member (car members) (cdr members)) (loop (cdr members))]
+            [else (cons (car members) (loop (cdr members)))]))))
+
     (define categorize-arguments
       (lambda (types varargs-after)
         (let loop ([types types] [int* int-argument-regs] [fp* fp-argument-regs]
@@ -2590,7 +2601,7 @@
                                   stack-align))])]
                   [(fp-ftd& ,ftd)
                    (let* ([size ($ftd-size ftd)]
-                          [members ($ftd->members ftd)]
+                          [members (filter-union ($ftd->members ftd))]
                           [num-members (length members)]
                           [doubles? (and (fx= 8 ($ftd-alignment ftd))
                                          (fx<= num-members 4)

@@ -3188,6 +3188,24 @@
   (check-union [x float 58.0] [y int 0])
   (check-union [x double 68.0] [y int 0])
 
+  (let ()
+    (define-ftype T (struct
+                        [ds (union [d1 double]
+                                   [d2 double])]
+                        [d3 double]))
+    (define s (apply string-append
+                     "_union"
+                     (let loop ([l '(t0 ti ...)])
+                       (cond
+                         [(null? l) '()]
+                         [else (cons (format "_~a" (car l))
+                                     (loop (cdr l)))]))))
+    (check*t T
+             "_struct_uniondoubledouble_double"
+             [99.0 -12.5]
+             [(lambda (a) (ftype-ref T (ds d1) a)) (lambda (a) (ftype-ref T (d3) a))]
+             [(lambda (a) (ftype-set! T (ds d1) a 99.0)) (lambda (a) (ftype-set! T (d3) a -12.5))]))
+
   ;; Check that `__collect_safe` saves argument and result floating-point registers
   ;; while activating and deactivating a thread
   (let ()

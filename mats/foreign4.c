@@ -396,3 +396,13 @@ GEN_U2(int, int, 48)
 GEN_U2(i64, int, 43)
 GEN_U2(float, int, 58.0)
 GEN_U2(double, int, 68.0)
+
+typedef struct struct_uniondoubledouble_double {
+  union { double d1; double d2; } ds;
+  double d3;
+} struct_uniondoubledouble_double;
+static double _f4_sum_struct_uniondoubledouble_double (struct_uniondoubledouble_double v) {
+  return v.ds.d1 + v.d3;
+}
+static struct_uniondoubledouble_double init_struct_uniondoubledouble_double = { { 99.0 }, -12.5};
+GEN(struct_uniondoubledouble_double, init_struct_uniondoubledouble_double, _f4_sum_struct_uniondoubledouble_double)
