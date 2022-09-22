@@ -484,7 +484,7 @@
                                       ""
                                       " /DSCHEME_STATIC")
                                   " /Ox /W3 /DWIN32 /D_CRT_SECURE_NO_WARNINGS"
-                                  " /Zi /Fd" (string->shell (at-dir "scheme.pdb"))
+                                  " /Zi /FS /Fd" (string->shell (at-dir "scheme.pdb"))
                                   (if (glob-match? "pb*" (hash-ref config 'm))
                                       " /DFEATURE_WINDOWS"
                                       "")))]
