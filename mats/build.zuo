@@ -757,9 +757,6 @@
                                         (config-merge config 'LIBS
                                                       (string->shell (at-dir "../bin" m
                                                                              (~a "csv" (get-dll-version)
-                                                                                 (if (equal? (lookup 'runtimeAs) "dll")
-                                                                                     "md"
-                                                                                     "mt")
                                                                                  ".lib"))))]
 				       [(glob-match? "*nt" m)
 					(config-merge config 'LDFLAGS
