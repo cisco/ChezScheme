@@ -373,10 +373,11 @@ where <machine type> is one of the following:
 If you're using Visual Studio 2022 or 2019, install "Desktop
 development with C++" on the "Workloads" tabs and the "C++ 20[xx]
 Redistributable MSMs" on the "Individual components" tab under the
-"Compilers, build tools, and runtimes" section. If you have not yet
-set up Microsoft Visual Studio command-line tools, `build.bat` will
-run `c/vs.bat` to try to find and set up command-line tools
-automatically for <machine type>.
+"Compilers, build tools, and runtimes" section. The `build.bat` script
+will use `c\vs.bat` to find and set up Microsoft Visual Studio
+command-line tools automatically for <machine type>; supply `/keepvs`
+if you have set up command-line tools already so that `c\vs.bat`
+should be skipped.
 
 The generated executables "scheme.exe" and "petite.exe" are in
 "<machine type>\bin\<machine type>", and each relies on generated boot
@@ -387,9 +388,10 @@ to a different system, be sure to include the redistributable run-time
 library.
 
 The `build.bat` script creates and uses an `nmake`-compatible makefile
-to build `zuo.exe` as its first step. You can use `zuo` to drive
-targets described in DETAILS above, but you must explicitly set up
-Microsoft Visual Studio command-line tools (perhaps using `c/vs.bat`).
+to build `zuo.exe` as its first step and as its only step is `/config`
+is supplied. You can use `zuo` to drive targets described in DETAILS
+above, but you must Microsoft Visual Studio command-line tools set up
+already (perhaps using `c/vs.bat`).
 
 By default, `build.bat` not only builds the "scheme.exe" executable,
 it also builds DLLs and libraries to support four linking
@@ -399,7 +401,7 @@ runtime system as a DLL versus a statically linked C runtime library.
 The `build.bat` script accepts some options that can be specified
 after <machine type>:
 
- * `/none`
+ * `/config` or `/none`
 
    Configures for a machine type, including creating the
    `nmake`-compable "Makefile", but does not build.
@@ -414,13 +416,13 @@ after <machine type>:
    Builds just the "scheme.exe" executable and boot files, instead of
    also building DLLs and library variants.
 
- * '/dll'
+ * `/dll`
 
    Specifies that "scheme.exe" should use the Scheme kernel compiled
    as a DLL "csv<vers>.dll", which normally should be included in the
    same directory as "scheme.exe". This is the default.
 
- * '/exe'
+ * `/exe`
 
    Specifies that "scheme.exe" should statically link the Scheme
    kernel, instead of relying on a separate "csv<vers>.dll".
@@ -435,8 +437,21 @@ after <machine type>:
    Specifies that "scheme.exe" (and its DLL, if any) should statically
    link to the multi-threaded C runtime.
 
-To create an installer you will need to use WSL or MSYS2 after
-building with `build.bat`:
+ * `/keepvs`
+
+   Specifies that command-lnie tools like "cl.exe" are available and
+   configured already, so `c\vs.bat` should not be run.
+
+ * `/test`
+   `/test-one`
+   `/test-some-fast`
+   `/test-some`
+   `/test-more`
+
+   Runs tests (default set and other sets) assuming that "scheme.exe"
+   is already built.
+
+To create an installer you will need to use WSL or MSYS2:
 
   cd wininstall
   make workareas
@@ -467,8 +482,6 @@ should be affected.
 Unset the `TZ` environment variable before running the tests, because
 the Cygwin values are incompatible with the Microsoft C Runtime
 Library.
-
-Use `zuo . test` described above to run the tests.
 
 
 WINDOWS VIA CROSS-COMPILER
