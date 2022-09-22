@@ -1958,7 +1958,7 @@ x                         ;=> #{g2 bcsfg5eq4e9b3h9o-c}
 
 Gensyms subsume the notion of \index{uninterned symbols}\emph{uninterned
 symbols} supported by earlier versions of {\ChezScheme}.
-Similarly, the predicate
+For most purposes, the predicate
 \index{uninterned-symbol?}\scheme{uninterned-symbol?} has been replaced
 by \scheme{gensym?}.
 
@@ -2054,22 +2054,6 @@ same new uninterned symbol in the fasl reader's result for the stream.
 (symbol? (string->uninterned-symbol "z")) ;=> #t
 (gensym? (string->uninterned-symbol "z")) ;=> #f
 \endschemedisplay
-
-%----------------------------------------------------------------------------
-\entryheader
-\formdef{uninterned-symbol?}{\categoryprocedure}{(uninterned-symbol? \var{obj})}
-\returns \scheme{#t} if \var{obj} is an uninterned symbol, \scheme{#f} otherwise
-\listlibraries
-\endentryheader
-
-\noskip\schemedisplay
-(uninterned-symbol? (string->symbol "z")) ;=> #f
-(uninterned-symbol? (gensym "z")) ;=> #f
-(uninterned-symbol? (string->uninterned-symbol "z")) ;=> #t
-\endschemedisplay
-
-
-
 
 %----------------------------------------------------------------------------
 \entryheader

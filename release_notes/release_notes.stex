@@ -23,26 +23,43 @@ procedure) is given in parentheses.
 \begin{itemize}
 \item Linux x86, nonthreaded (i3le) and threaded (ti3le)
 \item Linux x86\_64, nonthreaded (a6le) and threaded (ta6le)
-\item MacOS X x86, nonthreaded (i3osx) and threaded (ti3osx)
-\item MacOS X x86\_64, nonthreaded (a6osx) and threaded (ta6osx)
-\item Linux ARMv6 (32-bit), nonthreaded (arm32le)
+\item Linux AArch64 including Android, nonthreaded (arm64le) and threaded (tarm64le)
+\item Linux ARMv6 (32-bit) including Android, nonthreaded (arm32le) and threaded (tarm32le)
+\item Linux RV64G (64-bit RISC-V), nonthreaded (rv64le) and threaded (trv64le)
 \item Linux PowerPC (32-bit), nonthreaded (ppc32le) and threaded (tppc32le)
+\item Mac OS x86, nonthreaded (i3osx) and threaded (ti3osx)
+\item Mac OS x86\_64, nonthreaded (a6osx) and threaded (ta6osx)
+\item Mac OS AArch64 and iOS, nonthreaded (arm64osx) and threaded (tarm64osx)
+\item Mac OS PowerPC (32-bit) (ppc2osx) and threaded (tppc32osx)
 \item Windows x86, nonthreaded (i3nt) and threaded (ti3nt)
-\item Windows x86\_64, nonthreaded (a6nt) and threaded (ta6nt) [experimental]
-%\item OpenBSD x86, nonthreaded (i3ob) and threaded (ti3ob)
-%\item OpenBSD x86\_64, nonthreaded (a6ob) and threaded (ta6ob)
-%\item FreeBSD x86, nonthreaded (i3fb) and threaded (ti3fb)
-%\item FreeBSD x86\_64, nonthreaded (a6fb) and threaded (ta6fb)
-%\item NetBSD x86, nonthreaded (i3nb) and threaded (ti3nb)
-%\item NetBSD x86\_64, nonthreaded (a6nb) and threaded (ta6nb)
-%\item OpenSolaris x86, nonthreaded (i3s2) and threaded (ti3s2)
-%\item OpenSolaris x86\_64, nonthreaded (a6s2) and threaded (ta6s2)
+\item Windows x86\_64, nonthreaded (a6nt) and threaded (ta6nt)
+\item Windows AArch64, nonthreaded (arm64nt) and threaded (tarm64nt)
+\item OpenBSD x86, nonthreaded (i3ob) and threaded (ti3ob)
+\item OpenBSD x86\_64, nonthreaded (a6ob) and threaded (ta6ob)
+\item OpenBSD AArch64, nonthreaded (arm64ob) and threaded (tarm64ob)
+\item OpenBSD ARMv6 (32-bit), nonthreaded (arm32ob) and threaded (tarm32ob)
+\item OpenBSD PowerPC (32-bit), nonthreaded (ppc32ob) and threaded (tppc32ob)
+\item FreeBSD x86, nonthreaded (i3fb) and threaded (ti3fb)
+\item FreeBSD x86\_64, nonthreaded (a6fb) and threaded (ta6fb)
+\item FreeBSD AArch64, nonthreaded (arm64fb) and threaded (tarm64fb)
+\item FreeBSD ARMv6 (32-bit), nonthreaded (arm32fb) and threaded (tarm32fb)
+\item FreeBSD PowerPC (32-bit), nonthreaded (ppc32fb) and threaded (tppc32fb)
+\item NetBSD x86, nonthreaded (i3nb) and threaded (ti3nb)
+\item NetBSD x86\_64, nonthreaded (a6nb) and threaded (ta6nb)
+\item NetBSD AArch64, nonthreaded (arm64nb) and threaded (tarm64nb)
+\item NetBSD ARMv6 (32-bit), nonthreaded (arm32nb) and threaded (tarm32nb)
+\item NetBSD PowerPC (32-bit), nonthreaded (ppc32nb) and threaded (tppc32nb)
+\item GNU Hurd x86, nonthreaded (i3gnu) and threaded (ti3gnu)
+\item OpenSolaris x86, nonthreaded (i3s2) and threaded (ti3s2)
+\item OpenSolaris x86\_64, nonthreaded (a6s2) and threaded (ta6s2)
+\item Other platforms via bytecode interpretation (pb, tpb, pb32l, tpb32l, pb32b, tpb32b, pb64l, tpb64l, pb64b, tpb64b)
 \end{itemize}
 
 This document contains three sections describing significant
-(1) \href[static]{section:functionality}{functionality changes},
-(2) \href[static]{section:bugfixes}{bugs fixed}, and
-(3) \href[static]{section:performance}{performance enhancements}.
+(1) \href[static]{section:racket}{changes specific to the Racket variant},
+(2) \href[static]{section:functionality}{functionality changes},
+(3) \href[static]{section:bugfixes}{bugs fixed}, and
+(4) \href[static]{section:performance}{performance enhancements}.
 A version number listed in parentheses in the header for a change
 indicates the first minor release or internal prerelease to support
 the change.
@@ -54,6 +71,600 @@ and extensive documentation is available in
 and the \CSUG{9}.
 Online versions of both books can be found at
 \hyperlink{http://www.scheme.com/}{http://www.scheme.com}.
+
+%-----------------------------------------------------------------------------
+\section{Racket Changes}\label{section:racket}
+
+In addition to changes listed in the remaining sections, the Racket
+version of Chez Scheme adds further functionality changes and
+performance improvements.
+
+
+\subsection{Supported Platforms and Portable Bytecode}
+
+AArch64 (64-bit Arm) and RV64G (64-bit RISC-V) architectures are
+supported. Threads are supported on architectures with weak memory
+models while preserving the safety guarantee described in the
+documentation for variables and primitive datatypes.
+
+The pb (``portable bytecode'') machine type corresponds to a virtual
+machine that the Chez Scheme kernel can interpret on practically any
+desktop platform. This machine type is used to enable bootstrapping on
+all native-code platforms using a single set of boot files. The pb
+machine type is also used to support platforms for which Chez Scheme
+does not have a supported native-code generator. For the latter use,
+the pb32l, pb32b, pb64l, and pb64b machine types specialize the
+interpreter to a word size and endianness, which improves performance.
+For example, pb32l is a suitable machine type for compiling to
+WebAssembly via Emscripten. Each pb variant has a corresponding
+threaded variant: tpb, tpb32l, tpb32b, tpb64l, and tpb64b.
+
+The \scheme{pbchunk-convert-file} procedure can convert sequences of
+static pb bytecode into C code. The generated C code can be compiled
+and linked with the Chez Scheme kernel to reduce the overhead of
+bytecode interpretation. In particular, since Chez Scheme is mostly
+written in Chez Scheme, a pbchunk conversion of its boot files
+improves performance of primitives and compilation.
+
+
+\subsection{Threaded Default and Build System Changes}
+
+Running \scheme{configure} assumes a threaded target machine type,
+unless \scheme{--nothreads} or a non-threaded machine type is
+specified.
+
+The build system mostly uses Zuo instead of Make, but the
+\scheme{configure} script continues to generate wrapper makefiles, so
+that there's no difference for most users who build from source and do
+not modify Chez Scheme. The build process on Windows has changed so
+that Unix-style tools are not required, but using Unix-style tools to
+compile with MinGW is supported.
+
+The Chez Scheme sources no longer include boot files for multiple
+platforms. Instead, a single set of pb boot files is normally used to
+build on any platform. This change makes an initial build of Chez
+Scheme slower, but it makes the build process consistent across all
+supported platforms and enables a much smaller source size.
+Alternatively, Chez Scheme can be bootstrapped from an older version
+of Chez Scheme (9.5.4 or later) using the \scheme{re.boot} makefile
+target.
+
+The new \scheme{scheme-build-number} function complements
+\scheme{scheme-version-number}, adding an extra level of versioning
+during development. The \scheme{scheme-build-number} procedure always
+returns zero for a released version of Chez Scheme.
+
+
+\subsection{Compiler Improvements}\label{sec:unbox-floats}
+
+The compiler generates code that locally unboxes floating-point
+operations, so that compositions of floating-point operations can be
+much faster.
+
+The compiler infers information about the type of value produced
+by an expression, and it uses that information to eliminate run-time
+checks or conditionals. For example, within
+\scheme{(if (flonum? x) \var{E1} \var{E2})},
+assuming that the variable \scheme{x} is never
+mutated, then it holds a flonum value within \var{E2}, so
+arithmetic can be specialized to flonum operations. Type inference
+increases compile time for the expectation of reducing run-time checks,
+and its effectiveness depends on the program and whether it is
+compiled in safe mode; inference can be disabled by setting
+\scheme{enable-type-recovery} to \scheme{#f}.
+
+The compiler can infer more than previously about procedures that
+always return a value or that never return (because they raise a
+noncontinuable exception). The compiler will no longer move an
+expression from a non-tail position to a tail position if that
+movement could be detected with continuation marks (see
+Section~\ref{sec:cont-marks}), and it will not change a program in a
+way that discards an error due to returning multiple values to a
+single-value context. The \scheme{assert-unreachable} procedure always
+reports an error in safe mode, but it in unsafe mode, it must never be
+called; the claim that some code is unreachable propagates backward to
+remove other code that must also be unreachable, and even drop
+conditionals that must always go the other way to avoid unreachable
+code. A macro expansion might use \scheme{assert-unreachable} to
+indicate that unsafe mode can assume that a check succeeded and
+eliminate the check, for example.
+
+The compiler consistently ``lifts'' procedures: When a procedure has
+only known call sites, refers to only immutable variables bound
+outside the procedure, and has only call site within the scope of
+those variables, then variables used by the procedure are converted to
+arguments, and call sites are converted to supply the variables as
+arguments. As a result, nested procedure definitions can be used more
+freely without a potential cost from closure allocation. There are
+programs where forming a closure would be faster, but consistent
+lifting is almost always faster in practice.
+
+Cross-library inlining can apply to a procedure that is exported
+from a library (explicitly or implicitly) and whose body refers to
+another procedure or other variable that is also exported (explicitly
+or implicitly).
+
+The compiler reduces code size by using a more compact representation
+for most call-return sites and by using a more compact dispatch to
+interrupt checking in most cases.
+
+The internal representation of record types has changed to that a
+record-type predicate is a constant-time operation, instead of
+proportional to the subtype depth.
+
+
+\subsection{Garbage-Collector Improvements}
+
+Garbage collection takes advantage of machine parallelism. Parallel
+collection is automatically enabled when a program has multiple Scheme
+threads active at the point that a garbage collection starts, but
+parallel collection can benefit from a hint about which threads are
+most relevant as allocators (see Section~\ref{sec:threads}).
+
+The garbage collector uses a hybrid mark--copy algorithm, which
+can improve performance for large objects and long-lived objects
+compared to a pure copying collector. The
+\scheme{in-place-minimum-generation} parameter tunes the hybrid by
+selecting the youngest generation at which marking is used.
+
+See also Sections~\ref{sec:gc-reflect} and \ref{sec:ffi-storage} for
+related new functionality.
+
+
+\subsection{Continuation Marks}\label{sec:cont-marks}
+
+\emph{Continuation marks} add key--value information to continuations.
+The \scheme{with-continuation-mark} form associates a key--value pair
+to the current continuation, replacing any same-keyed mark already
+associated to the immediate continuation, and adding to marks
+associated with continuations that the current continuation extends.
+Inspect marks with these functions:
+
+\schemedisplay
+current-continuation-marks
+continuation-next-marks
+continuation-mark-set-first
+continuation-mark-set->list
+continuation-mark-set->iterator
+call-with-immediate-continuation-mark
+continuation-mark-set?
+\endschemedisplay
+
+The \scheme{call-in-continuation} function can invoke a continuation
+similar to calling a procedure as a function, but instead of a value
+to deliver to the continuation, it takes a procedure of no arguments
+to call within the continuation.
+
+
+\subsection{Fixnums}
+
+New operations support common bit-related operations on fixnums:
+
+\schemedisplay
+fx+/wraparound
+fx-/wraparound
+fx*/wraparound
+fxsll/wraparound
+fxpopcount
+fxpopcount32
+fxpopcount16
+\endschemedisplay
+
+Immutable fixnum vectors are no longer supported, so the following
+functions are removed:
+
+\schemedisplay
+fxvector->immutable-fxvector    ; removed
+mutable-fxvector?               ; removed
+immutable-fxvector?             ; removed
+\endschemedisplay
+
+\subsection{Flonums}
+
+The \scheme{eq?} operator works on flonums in the sense that two
+flonums values that are \scheme{eq?} at some point (such as creation
+time) will continue to be \scheme{eq?} in the future.
+
+Mutable flonum vectors cooperate with local unboxing (see
+Section~\ref{sec:unbox-floats}) and are supported through the
+following functions:
+
+\schemedisplay
+flvector?
+make-flvector
+flvector-length
+flvector-ref
+flvector-set!
+flvector-fill!
+flvector->list
+list->flvector
+flvector-copy
+\endschemedisplay
+
+The \scheme{flsingle} operation drops precision from a flonum so that
+the result is representable as a single-precision (32-bit) flonum.
+Wrapping each operation of flonum arithmetic with \scheme{flsingle}
+produces the same result as single-precision arithmetic, and local
+unboxing plus type inference makes the combination reasonably
+efficient.
+
+
+\subsection{Bignums}
+
+Multiplication of very large numbers uses Karatsuba, Toom-3, or
+Toom-4, while division (including GCD) uses Burnikel-Ziegler. These
+changes make arithmetic and number-to-string conversions faster for
+large values, and they avoid unbounded delays between interrupt
+polling.
+
+
+\subsection{Characters, Strings, and Unicode}
+
+New functions support decoding grapheme clusters within strings or
+character streams and expose the underlying new character classifiers:
+
+\schemedisplay
+string-grapheme-span
+string-grapheme-count
+char-grapheme-step
+char-grapheme-break-property
+char-extended-pictographic?
+\endschemedisplay
+
+The \scheme{string-append-immutable} function enables the creation of
+an immutable string as the result of appending strings without
+creating an intermediate mutable string.
+
+The \scheme{path-build} procedure combines two path strings to form a
+path, adding a directory separator between them if necessary.
+
+
+\subsection{Hash Tables}
+
+The \scheme{make-weak-hashtable} and \scheme{make-ephemeron-hashtable}
+functions support weak and ephemeron hash tables with arbitrary
+equality and hashing functions.
+
+New operations on hashtable cells resemble procedures like
+\scheme{hashtable-keys} or \scheme{hashtable-ref}:
+
+\schemedisplay
+hashtable-cells
+hashtable-ref-cell
+eq-hashtable-ref-cell
+symbol-hashtable-ref-cell
+\endschemedisplay
+
+The \scheme{eq-hashtable-try-atomic-cell} procedure supports lock-free
+use of an \scheme{eq?}-based hash table, but with constraints on
+concurrent operations and resizing. Clean-up resizing can be performed
+within a collect-request handler, since only on thread can run at that
+time.
+
+
+\subsection{Stencil Vectors}
+
+Stencil vectors provide support in the compiler and runtime for
+implementing data structures such as persistent maps:
+
+\schemedisplay
+stencil-vector
+stencil-vector?
+stencil-vector-mask
+stencil-vector-length
+stencil-vector-ref
+stencil-vector-set!
+stencil-vector-update
+stencil-vector-truncate!
+stencil-vector-mask-width
+\endschemedisplay
+
+
+\subsection{Uninterned Symbols}
+
+While gensyms support most symbol-generation needs, uninterned symbols
+are useful for purposes where properties must not prevent a symbol
+from being reclaimed by the storage manager:
+
+\schemedisplay
+string->uninterned-symbol
+uninterned-symbol?
+\endschemedisplay
+
+
+\subsection{Records}
+
+Records can have anonymous fields, which can save memory in the
+representation when many record types need to be created (as opposed
+to many record instances of a few types), each with many fields. For a
+given record type and its ancestors, either all fields are named or
+all fields are anonymous.
+
+\schemedisplay
+make-record-type-descriptor*
+record-type-named-fields?
+record-type-field-indices
+\endschemedisplay
+
+The new \scheme{record-instance?} predicate is a specialization of
+\scheme{record?}, where the first argument is required to be a record.
+An unsafe \scheme{record-instance?} test can be faster than an unsafe
+\scheme{record?} test.
+
+
+\subsection{Lists}
+
+In a context where pairs are not mutated, the new
+\scheme{list-assuming-immutable?} predicate is useful as a variant of
+the \scheme{list?} predicate. The new predicate implements an
+efficient, amortized constant-time decision on whether a value
+represents a list, but its behavior is unspecified if the
+\scheme{cdr} or any pair relevant to the result is mutated.
+
+
+\subsection{Random Number Generation}
+
+A new random-number API implements the MRG32K3A algorithm:
+
+\schemedisplay
+make-pseudo-random-generator
+pseudo-random-generator?
+pseudo-random-generator-next!
+pseudo-random-generator-seed!
+pseudo-random-generator->vector
+vector->pseudo-random-generator
+\endschemedisplay
+
+
+\subsection{Wrapper Procedures}
+
+A \emph{wrapper procedure} provides an inexpensive way to an adjust a
+procedure's name, constrain its arity, or associate extra data to the
+procedure. A wrapper procedure is implemented as closure with an
+optimized jump to the wrapped procedure after arity checking,
+propagating the original arguments faster than \scheme{apply}.
+
+\schemedisplay
+make-wrapper-procedure
+make-arity-wrapper-procedure
+wrapper-procedure?
+wrapper-procedure-procedure
+wrapper-procedure-data
+set-wrapper-procedure-data!
+set-wrapper-procedure!
+\endschemedisplay
+
+
+\subsection{Threads}\label{sec:threads}
+
+The new \scheme{thread-join} operator can be used to wait for a thread
+to terminate. Waiting for termination in this sense can be useful to
+ensure that a single thread is running and calling \scheme{collect} is
+legal, for example.
+
+The new \scheme{get-initial-thread} procedure returns a descriptor for
+the initial thread (like a descriptor produced by \scheme{fork-thread}
+for a subsequently created thread).
+
+The new \scheme{thread-preserve-ownership!} procedure provides a hint
+to the storage manager that parallel garbage collection is likely to
+benefit by keeping track of which objects were allocated by a given
+thread.
+
+Useful on architectures with a weak consistency model,
+\scheme{memory-order-acquire} and \scheme{memory-order-release}
+implement fencing operators suitable for abstractions that acquire
+(load-load and load-store fence) or release (store-store and
+store-load fence) shared resources.
+
+
+\subsection{Garbage Collection Introspection}\label{sec:gc-reflect}
+
+Similar to \scheme{enable-object-counts}, the
+\scheme{enable-object-backreferences} parameter enables recording of
+information about reachability. After a collection with backreferences
+enabled, \scheme{object-backreferences} reports an association for
+each objects to the a referencing object---one that caused the storage
+manager to consider the former object reachable.
+
+A new \scheme{bytes-finalized} procedure reports the number of bytes
+that have been finalized via guardians, which is useful for deciding
+when to perform an extra major collection as a follow-up to an
+old-generation garbage collection.
+
+A \emph{phantom bytevector} is a small object that stands for a large
+externally allocated object, especially one that can be finalized.
+Registering external allocations with the storage manager helps it
+trigger collection requests at times that take into account the rate
+and scale of external allocation.
+
+\schemedisplay
+make-phantom-bytevector
+phantom-bytevector?
+phantom-bytevector-length
+set-phantom-bytevector-length!
+\endschemedisplay
+
+The new \scheme{compute-size-increments} procedure is similar to
+\scheme{compute-size}. Instead of a single object, it takes a list of
+objects, and it reports a list of sizes where any memory use
+attributed to objects earlier in the list is not counted for objects
+later in the list, while objects later the list are not considered
+reachable by objects earlier in the list. For example, given a list of
+threads, \scheme{compute-size-increments} effectively treats each
+thread as an accounting domain, where memory is charged to an earlier
+threads rather than a later thread when objects are reachable from
+both. Since this computation involves the same sort of traversal as a
+garbage collection, the \scheme{collect} function takes a list as
+an optional last argument to fuse a garbage collection with size
+accounting.
+
+
+\subsection{Storage Management and Foreign Interfaces}\label{sec:ffi-storage}
+
+The \scheme{make-guardian} function accepts an option to create an
+\emph{ordered guardian}. An ordered guardian treats each of its
+objects as accessible in the case that object is reachable from a
+guardian-registered object, whether or not the latter object is
+considered accessible. Ordered finalization is error-prone and cannot
+handle reference cycles, but it can be necessary to implement certain
+storage-management interfaces and abstractions.
+
+\emph{Immobile objects} are ones that the storage manager will not
+relocated as a long as it is referenced, in the same way that locked
+objects are never relocated. Unlike a locked object, an immobile
+object can be reclaimed by the storage manager.
+
+\schemedisplay
+box-immobile
+make-immobile-vector
+make-immobile-bytevector
+\endschemedisplay
+
+For foreign interfaces that involve arrays of references to allocated
+objects, the storage manager supports \emph{reference
+bytevectors}. A reference bytevector is a bytevector, but each
+word-aligned group of bytes is treated as a potential reference to an
+object managed by the collector; only a word whose value corresponds a
+region of managed memory is treated as an object reference, and it can
+be updated by the garbage collector if the referenced object is
+relocated. Using the reference-bytevector interface requires care, but
+it can greatly simplify certain foreign-library interactions. An
+object reference in a bytevector takes the form of a \emph{reference
+address} for a Scheme object, which matches the address of the first
+byte within a bytevector (including a reference bytevector).
+
+\schemedisplay
+make-reference-bytevector
+make-immobile-reference-bytevector
+reference-bytevector?
+bytevector-reference-set!
+bytevector-reference-ref
+bytevector-reference*-ref
+object->reference-address
+reference-address->object
+reference*-address->object
+\endschemedisplay
+
+The \scheme{keep-live} procedure accepts any value and returns
+\scheme{(void)}, but the argument to \scheme{keep-live} is defined to
+be reachable until the call to \scheme{keep-live} returns.
+
+
+\subsection{Foreign Interface}
+
+Some ABIs treat functions with varargs (i.e., specified with
+\scheme{...} in the C prototype) differently than functions without
+varargs, and some ABIs treat specific arguments differently depending
+on whether the argument is a vararg (i.e., before the \scheme{...} or
+not). A procedure type described with \scheme{foreign-procedure} or a
+\scheme{function} type can include a \scheme{__varargs} or
+\scheme{(__varargs_after \var{n})} convention to indicate which
+arguments of a function are varargs.
+
+The new \scheme{foreign-alignof} procedure reflects alignment
+information for a primitive type.
+
+To better support the pb machine type, where endianness is not known
+statically, endianness in a foreign type can not be \scheme{native} or
+\scheme{swapped} in addition to \scheme{big} or \scheme{little}.
+
+Chez Scheme's kernel also expose record-type and field access to
+C, mainly useful for for records that contain only pointer-sized
+values:
+
+\schemedisplay
+Srecord_type
+Srecord_type_parent
+Srecord_type_size
+Srecord_type_uniformp
+Srecord_uniform_ref
+\endschemedisplay
+
+The kernel also provides a new function
+\scheme{Sregister_boot_file_fd_segment} for loading a boot file from a
+file descriptor and offset. This form of boot-file registration is
+useful for loading boot files that are embedded with an executable
+segment.
+
+\subsection{Fasl and Vfasl}
+
+Reading fasl data has been made safe no matter how deeply nested the
+structure of the data.
+
+For reading and writing fasl data, the \scheme{fasl-write} procedure
+accepts a predicate to detect ``external'' values for which only a
+placeholder is saved, and \scheme{fasl-real} accepts a table of
+external values to substitute for placeholders. These ``external''
+values can then have their own serialization and deserialization. The
+\scheme{fasl-write} function also accepts an option to save a record
+type as only its unique ID, which can save space and time in contexts
+where the relevant record types will always be available already (and
+where savings are worth skipping a consistency check). The
+\scheme{compile-to-port} procedure accepts new arguments like
+\scheme{fasl-write}.
+
+A fasl stream can be converted a \emph{vfasl} (very fasl) format,
+which is close in structure to an image of data in memory. Using vfasl
+for boot files to load directly into a static generation can make
+startup much faster; otherwise, the time--space tradeoff rarely pays
+off. Convert from fasl to vfasl using \scheme{vfasl-convert-file}.
+
+\subsection{Compiler Options}
+
+Two new parameters skip safety checks in specific situations:
+\scheme{enable-unsafe-application} assumes that the target of a
+procedure application is a procedure, and
+\scheme{enable-unsafe-variable-reference} assumes that a variable has
+a value when it is referenced. These checks would be skipped at
+\scheme{optimize-level} 3, but the parameters cause them to be skipped
+independent of the value of \scheme{optimize-level}.
+
+The \scheme{begin-unsafe} syntactic form is the same as
+\scheme{begin}, but expands and compiles its body as if
+\scheme{optimize-level} is set to 3. The \scheme{begin-unsafe} form is
+useful in the expansion of a macro that otherwise ensures the safety
+of an expression.
+
+A true value for the \scheme{enable-arithmetic-left-associative}
+parameter ensures that arithmetic operations are performed as
+left-associative, which amounts to a constraint on optimizations.
+
+A new set of parameters control the way that libraries are compiled
+and invoked so that consistency checks, invocations checks, and
+recompilations can be skipped (to save time and space) in a context
+that ensures that they are unnecessary:
+
+\schemedisplay
+library-timestamp-mode
+expand-omit-library-invocations
+compile-omit-concatenate-support
+\endschemedisplay
+
+Along those lines, the \scheme{current-generate-id} parameter provides
+control over names that are generated during macro expansion. While
+the default parameter uses \scheme{gensym}, name generation can
+potentially be made deterministic, which in turn may reduce the need
+to recompile clients.
+
+The new \scheme{procedure-known-single-valued?} predicate is always
+allowed to return \scheme{#f}, but it may return \scheme{#t} for a
+procedure that the compiler was able to prove always returns a single
+value. This information may, in turn, be useful for run-time
+specialization in a library.
+
+Procedure objects recognize the \scheme{realm} inspector message
+alongside \scheme{name}. The result for \scheme{realm} is normally
+\scheme{#f}, but if \scheme{compile-procedure-realm} is set to a
+symbol when the procedure is compiled, then the procedure answers
+\scheme{realm} with that symbol. The intent of a realm is that it
+describes where a procedure name came from, so the name can be
+converted as appropriate for a run-time context that uses different
+naming conventions.
+
+The \scheme{enable-error-source-expression} parameter determines
+whether error messages that become embedded in code can refer to the
+original source file's path.
 
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
