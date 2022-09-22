@@ -6,7 +6,7 @@
 (provide-targets targets-at)
 
 (define (targets-at at-dir [vars (hash)])
-  (define config (win-config (config-file->hash (at-dir "../Mf-config") vars)))
+  (define config (win-config (config-file->hash (at-dir "../Mf-config") vars) at-dir))
   (define lookup (make-lookup config))
 
   (define m (hash-ref config 'm))
@@ -32,7 +32,10 @@
     (if msvc? 
         (build-path ".." (if (as-scheme-dll? config) "bin" "boot") m 
                     (~a (or (lookup 'kernelLibName)
-                            (~a "csv" (get-dll-version) (if (as-runtime-dll? config) "md" "mt")))
+                            (~a "csv" (get-dll-version)
+                                (if (as-just-dll? config)
+                                    (if (as-runtime-dll? config) "md" "mt")
+                                    "")))
                         ".lib"))
         lib))
 
@@ -134,9 +137,12 @@
 
   (define gc-wrap (list (at-source "gc.c")))
 
-  (define exe (at-dir (build-path "../bin" m (if (for-windows? config)
-                                                 "scheme.exe"
-                                                 (config-.exe config "scheme")))))
+  (define (exe-path name)
+    (at-dir (build-path "../bin" m (if (for-windows? config)
+                                       (~a name ".exe")
+                                       (config-.exe config name)))))
+  (define exe (exe-path "scheme"))
+  (define petite-exe (exe-path "petite"))
   (define kernel-lib (at-dir (or-windows-lib (build-path "../boot" m (.a "kernel")))))
   (define kernel.o (at-dir (build-path "../boot" m "kernel.o")))
   (define kernel-dep (if (equal? (lookup 'Kernel) "KernelO")
@@ -219,7 +225,7 @@
           make)))
 
   (make-targets
-   `([:target build (,exe revision)
+   `([:target build (,exe ,petite-exe revision)
               ,void]
 
      [:target ,exe (,kernel-dep ,@main-objs ,@res-deps ,@preload-files)
@@ -261,6 +267,14 @@
                     (when (and post
                                (not (equal? "" post)))
                       (shell/wait post (string->shell exe)))]))]
+
+     [:target ,petite-exe (,exe)
+              ,(lambda (path token)
+                 (rm* path)
+                 (cp/ln exe path)
+                 (when msvc?
+                   (cp/ln (path-replace-extension exe ".pdb")
+                          (path-replace-extension path ".pdb"))))]
 
      ;; for Windows linking variants:
      [:target lib (,kernel-dep ,@main-objs)
@@ -458,7 +472,7 @@
 (define (is-msvc? config)
   (eq? 'windows (hash-ref (runtime-env) 'toolchain-type)))
 
-(define (win-config config)
+(define (win-config config at-dir)
   (cond
     [(is-msvc? config)
      (let* ([config (hash-set config 'CFLAGS
@@ -470,6 +484,7 @@
                                       ""
                                       " /DSCHEME_STATIC")
                                   " /Ox /W3 /DWIN32 /D_CRT_SECURE_NO_WARNINGS"
+                                  " /Zi /Fd" (string->shell (at-dir "scheme.pdb"))
                                   (if (glob-match? "pb*" (hash-ref config 'm))
                                       " /DFEATURE_WINDOWS"
                                       "")))]
@@ -512,6 +527,10 @@
 (define (as-scheme-dll? config)
   (not (equal? (hash-ref config 'linkAs #f)
                "exe")))
+
+(define (as-just-dll? config)
+  (equal? (hash-ref config 'productAs #f)
+          "dll"))
 
 (define (for-windows? config)
   (or (is-msvc? config)

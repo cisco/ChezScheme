@@ -407,17 +407,21 @@
                               (for-each*
                                '("dll" "exe")
                                (lambda (linkAs)
-                                 (unless (and (equal? runtimeAs (hash-ref config 'runtimeAs #f))
-                                              (equal? linkAs (hash-ref config 'linkAs #f)))
-                                   (fd-write (fd-open-output 'stdout)
-                                             (~a "Also buidling variant " runtimeAs " " linkAs "...\n"))
-                                   (define var-dir (at-dir (~a "c-" runtimeAs "-" linkAs)))
-                                   (mkdir-p var-dir)
-                                   (build (find-target "lib" (c-targets-at (make-at-dir var-dir)
-                                                                           (hash-set* vars
-                                                                                      'runtimeAs runtimeAs
-                                                                                      'linkAs linkAs)))
-                                          token)))))))])
+                                 (fd-write (fd-open-output 'stdout)
+                                           (~a "Also buidling variant " runtimeAs " " linkAs "...\n"))
+                                 (define var-dir (if (and (equal? runtimeAs (hash-ref config 'runtimeAs #f))
+                                                          (equal? linkAs (hash-ref config 'linkAs #f)))
+                                                     ;; same configuration as executable, but maybe
+                                                     ;; produces a differently named DLL due to 'productAs:
+                                                     (at-dir "c")
+                                                     (at-dir (~a "c-" runtimeAs "-" linkAs))))
+                                 (mkdir-p var-dir)
+                                 (build (find-target "lib" (c-targets-at (make-at-dir var-dir)
+                                                                         (hash-set* vars
+                                                                                    'runtimeAs runtimeAs
+                                                                                    'linkAs linkAs
+                                                                                    'productAs "dll")))
+                                        token))))))])
              '())
 
        [:target clean ()
