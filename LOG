@@ -2333,3 +2333,4 @@
 - correct mislabeling of some functions as macros and vice versa in
   docs + correct name of Slocked_objectp from Sunlocked_objectp
     csug/foreign.stex
+- removed comments related to a completed TODO item from s/syntax.ss

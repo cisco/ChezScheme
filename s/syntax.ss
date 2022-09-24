@@ -39,26 +39,6 @@
 ; TODO:
 ; * fix to provide source information:
 ;   Error: missing definition for export(s) (y).
-; * work on marked identifiers:
-;   This works:
-;       > (define-syntax a
-;           (syntax-rules ()
-;             ((_ x c) (begin (define y c) (define x (lambda () y))))))
-;       > (a one 1)
-;       > (a two 2)
-;       > (one)
-;       1
-;       > (two)
-;       2
-;   But this does not:
-;       > (define-syntax a
-;         (syntax-rules ()
-;           ((_ x c) (begin (define x (lambda () y)) (define y c)))))
-;       > (a one 1)
-;       > (one)
-;       Error: variable y is not bound.
-;   The problem is that we are not establishing the substitution from
-;   y to its generated name until after we've expanded (lambda () y).
 ; * give ourselves better syntax-error formatting tools
 ; * unload module before loading it in sc-put-cte
 ; * consider allowing exports to be defined externally
@@ -167,12 +147,6 @@
 ;;; (x) => 17
 ;;; (x) => 34
 ;;; secret => Error: variable secret is not bound
-;;;
-;;; The definition above would fail if the definition for secret
-;;; were placed after the definition for var, since the expander would
-;;; encounter the references to secret before the definition that
-;;; establishes the compile-time map from the identifier secret to
-;;; the generated identifier.
 
 ;;; Identifiers and syntax objects are implemented as vectors for
 ;;; portability.  As a result, it is possible to "forge" syntax
