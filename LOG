@@ -2343,3 +2343,4 @@
   message telling how to build under Rosetta2 when running on an arm64 OSX
     configure
 - removed comments related to a completed TODO item from s/syntax.ss
+- updated a paragraph about import and compilation in csug/use.stex

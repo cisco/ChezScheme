@@ -848,13 +848,21 @@ list while compiling or loading the library.
 This allows a library to include files stored in or relative to its
 own directory.
 
-When \scheme{import} compiles a library as described above, it does not
-also load the compiled library, because this would cause portions of
-library to be reevaluated.
-Because of this, run-time expressions in the file outside of a
-\scheme{library} form will not be evaluated.
-If such expressions are present and should be evaluated, the library
+When \scheme{import} compiles a file containing a library as described
+above, it does not also load the compiled file, because this would cause
+portions of the file to be reevaluated.
+Because of this, run-time expressions in the file outside of the
+imported \scheme{library} form will not be evaluated.
+If such expressions are present and should be evaluated, the file
 should be compiled ahead of time or loaded explicitly.
+In the case of ahead-of-time compilation, a separate {\ChezScheme}
+instance should be used to compile the file.
+Otherwise the same reevlaution problem exists and {\ChezScheme} again won't
+evaluate expressions outside of the imported \scheme{library} form.
+Also, when a library is imported from a compiled file, expressions outside
+of the \scheme{library} form are not evaluated at the time of import, but
+at the time of library instantiation, which is the first moment any object
+from the library is used (in other words, instantiation is lazy).
 
 \index{\scheme{compile-library}}%
 \index{\scheme{compile-imported-libraries}}%
