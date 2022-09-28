@@ -1095,7 +1095,7 @@
           (let ([max-fx-shift (- (constant fixnum-bits) 1)])
             (if (fx> n max-fx-shift)
                 (integer-ash x n)
-                (let ([m (#3%fxsll x n)])
+                (let ([m (fxsll/wraparound x n)])
                   (if (fx= (fxsra m n) x)
                       m
                       (integer-ash x n)))))]
@@ -2438,7 +2438,7 @@
   (let ([$bignum-trailing-zero-bits (foreign-procedure "(cs)s_big_trailing_zero_bits" (ptr) ptr)])
    (lambda (who x y)
     (cond
-      [(and (fixnum? y) ($fxu< (#3%fx+ y 1) 3))
+      [(and (fixnum? y) ($fxu< (fx+/wraparound y 1) 3))
        (cond
          [(fx= y 0) (unless (number? x) (nonnumber-error who x)) 0]
          [(fx= y 1) (unless (number? x) (nonnumber-error who x)) x]
@@ -2918,7 +2918,7 @@
                       (fxsra x (fx- n)))
                   (if (fx> n max-fx-shift)
                       (integer-ash x n)
-                      (let ([m (#3%fxsll x n)])
+                      (let ([m (fxsll/wraparound x n)])
                         (if (fx= (fxsra m n) x)
                             m
                             (integer-ash x n))))))]
