@@ -347,7 +347,8 @@
           [else #f])))
     (define binder
       (lambda (multiple-ref? type e)
-        (if (no-need-to-bind? multiple-ref? e)
+        (if (and (not (eq? multiple-ref? 'always))
+                 (no-need-to-bind? multiple-ref? e))
             (values e values)
             (let ([t (make-tmp 't type)])
               (values t (lift-fp-unboxed
@@ -4713,7 +4714,17 @@
                             (make-info-foreign '(atomic) (map (lambda (e) `(fp-double-float)) e*) `(fp-double-float) #t))
                          (literal ,(make-info-literal #f 'entry entry 0))
                          ,e* ...)))
-      
+      (define build-flminmax
+        (lambda (min?)
+          (lambda (e1 e2)
+            (bind 'always fp (e1 e2)
+                  `(if (inline ,(make-info-unboxed-args '(#t #t)) ,%fp< ,e1 ,e2)
+                       (unboxed-fp ,(if min? e1 e2))
+                       (if (inline ,(make-info-unboxed-args '(#t #t)) ,%fp<= ,e2 ,e1)
+                           (unboxed-fp ,(if min? e2 e1))
+                           ;; one of them must be +nan.0, so ensure +nan.0 result
+                           (unboxed-fp (inline ,(make-info-unboxed-args '(#t #t)) ,%fp+ ,e1 ,e2))))))))
+
       (define-inline 3 fl+
         [() `(quote 0.0)]
         [(e) (ensure-single-valued e)]
@@ -4735,6 +4746,16 @@
         [(e) (build-fp-op-2 %fp/ `(quote 1.0) e)]
         [(e1 e2) (build-fp-op-2 %fp/ e1 e2)]
         [(e1 . e*) (reduce-fp src sexpr 3 'fl/ e1 e*)])
+
+      (define-inline 3 flmin
+        [(e) (ensure-single-valued e)]
+        [(e1 e2) ((build-flminmax #t) e1 e2)]
+        [(e1 . e*) (reduce-fp src sexpr 3 'flmin e1 e*)])
+
+      (define-inline 3 flmax
+        [(e) (ensure-single-valued e)]
+        [(e1 e2) ((build-flminmax #f) e1 e2)]
+        [(e1 . e*) (reduce-fp src sexpr 3 'flmax e1 e*)])
 
       (define-inline 3 flsqrt
         [(e)
@@ -5075,6 +5096,24 @@
                      (lambda (e1 e2)
                        (build-libcall #t src sexpr fl/ e1 e2)))]
           [(e1 . e*) (reduce-fp src sexpr 2 'fl/ e1 e*)])
+
+        (define-inline 2 flmin
+          [(e) (build-checked-fp-op e
+                 (lambda (e)
+                   (build-libcall #t src sexpr flmin e `(quote 0.0))))]
+          [(e1 e2) (build-checked-fp-op e1 e2 (build-flminmax #t)
+                     (lambda (e1 e2)
+                       (build-libcall #t src sexpr flmin e1 e2)))]
+          [(e1 . e*) (reduce-fp src sexpr 2 'flmin e1 e*)])
+
+        (define-inline 2 flmax
+          [(e) (build-checked-fp-op e
+                 (lambda (e)
+                   (build-libcall #t src sexpr flmax e `(quote 0.0))))]
+          [(e1 e2) (build-checked-fp-op e1 e2 (build-flminmax #f)
+                     (lambda (e1 e2)
+                       (build-libcall #t src sexpr flmax e1 e2)))]
+          [(e1 . e*) (reduce-fp src sexpr 2 'flmax e1 e*)])
 
       (define-inline 2 flabs
         [(e) (build-checked-fp-op e build-flabs

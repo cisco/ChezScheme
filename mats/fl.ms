@@ -1108,6 +1108,11 @@
   (check-loop-allocation (lambda (v) (flabs (fl+ v v))))
   (check-loop-allocation (lambda (v) (fl- (fl+ v v))))
 
+  (check-loop-allocation (lambda (v) (flmin v 2.0)))
+  (check-loop-allocation (lambda (v) (flmin v v v)))
+  (check-loop-allocation (lambda (v) (flmax v 2.0)))
+  (check-loop-allocation (lambda (v) (flmax v v v v)))
+
   (check-loop-allocation (lambda (v) (flround v)))
   (check-loop-allocation (lambda (v) (fltruncate v)))
   (check-loop-allocation (lambda (v) (flfloor v)))

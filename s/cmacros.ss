@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09050907)
+(define-constant scheme-version #x09050908)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -376,42 +376,45 @@
 (define-machine-types
   any
   pb        tpb
-  pb64l     tpb64l
-  pb64b     tpb64b
   pb32l     tpb32l
   pb32b     tpb32b
-  i3le      ti3le
+  pb64l     tpb64l
+  pb64b     tpb64b
   i3nt      ti3nt
+  i3osx     ti3osx
+  i3le      ti3le
   i3fb      ti3fb
   i3ob      ti3ob
-  i3osx     ti3osx
-  i3gnu     ti3gnu
-  a6le      ta6le
-  a6osx     ta6osx
-  a6ob      ta6ob
-  a6s2      ta6s2
-  i3s2      ti3s2
-  a6fb      ta6fb
   i3nb      ti3nb
-  a6nb      ta6nb
-  a6nt      ta6nt
+  i3s2      ti3s2
   i3qnx     ti3qnx
-  arm32le   tarm32le
-  ppc32le   tppc32le
-  arm64le   tarm64le
-  arm64osx  tarm64osx
+  i3gnu     ti3gnu
+  a6nt      ta6nt
+  a6osx     ta6osx
+  a6le      ta6le
+  a6fb      ta6fb
+  a6ob      ta6ob
+  a6nb      ta6nb
+  a6s2      ta6s2
   ppc32osx  tppc32osx
-  arm32fb   tarm32fb
+  ppc32le   tppc32le
   ppc32fb   tppc32fb
-  arm64fb   tarm64fb
-  arm32ob   tarm32ob
   ppc32ob   tppc32ob
-  arm64ob   tarm64ob
-  arm32nb   tarm32nb
   ppc32nb   tppc32nb
-  arm64nb   tarm64nb
+  arm32le   tarm32le
+  arm32fb   tarm32fb
+  arm32ob   tarm32ob
+  arm32nb   tarm32nb
   arm64nt   tarm64nt
+  arm64osx  tarm64osx
+  arm64le   tarm64le
+  arm64fb   tarm64fb
+  arm64ob   tarm64ob
+  arm64nb   tarm64nb
   rv64le    trv64le
+  rv64fb    trv64fb
+  rv64ob    trv64ob
+  rv64nb    trv64nb
 )
 
 (include "machine.def")
@@ -2812,6 +2815,8 @@
      (fl> #f 2 #t #t)
      (fl<= #f 2 #t #t)
      (fl>= #f 2 #t #t)
+     (flmin #f 2 #t #t)
+     (flmax #f 2 #t #t)
      (callcc #f 1 #f #f)
      (display-string #f 2 #f #t)
      (cfl* #f 2 #f #t)
