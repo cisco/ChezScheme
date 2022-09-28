@@ -247,7 +247,7 @@ static void sort_chunk_unused_segments(chunkinfo *chunk) {
 }
 
 static INT find_index(iptr n) {
-  INT index = (INT)((n >> 2) + 1);
+  UINT index = (UINT)(((uptr)n >> 2) + 1);
 
   return (index < PARTIAL_CHUNK_POOLS-1) ? index : PARTIAL_CHUNK_POOLS-1;
 }
