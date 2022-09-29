@@ -2450,7 +2450,7 @@
              [(fixnum?) (integer* x y)]
             [(bignum?) (if (fixnum? x)
                            (cond
-                            [($fxu< (#3%fx+ x 1) 3)
+                            [($fxu< (fx+/wraparound x 1) 3)
                              (cond
                               [(fx= x 0) (unless (number? y) (nonnumber-error who y)) 0]
                               [(fx= x 1) (unless (number? y) (nonnumber-error who y)) y]
