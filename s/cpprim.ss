@@ -5387,7 +5387,7 @@
                (eq? (primref-name pr) '$fptr-fptr-ref)
                (all-set? (prim-mask unsafe) (primref-flags pr)))
              (let-values ([(e-index imm-offset) (offset-expr->index+offset e2)])
-               (bind #f (e-index e3)
+               (bind #f (e-index e3) ;; evaluate e3 for effect
                  `(inline ,(make-info-load ptr-type #f) ,%load
                     ,($extract-fptr-address e1)
                     ,e-index (immediate ,imm-offset))))]
@@ -5396,7 +5396,8 @@
              (guard
                (eq? (primref-name pr) '$fptr-&ref)
                (all-set? (prim-mask unsafe) (primref-flags pr)))
-             (build-fx+raw e2 ($extract-fptr-address e1))]
+             (bind #f (e3) ;; evaluate e3 for effect
+               (build-fx+raw e2 ($extract-fptr-address e1)))]
             ; skip allocation and dereference of ftype-pointer for $make-fptr
             [(call ,info ,mdcl ,pr ,e1 ,e2) ; e1, e2 = ftd, (ptr) addr
              (guard
