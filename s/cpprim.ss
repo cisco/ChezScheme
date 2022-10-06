@@ -250,6 +250,7 @@
        (let-values ([(body unboxed-fp?) (Expr body can-unbox-fp?)])
          (uvar-location-set! x #f)
          (values `(loop ,x (,x* ...) ,body) unboxed-fp?))]
+      [(raw ,e) (values `(raw ,(Expr1 e)) #f)]
       [(attachment-set ,aop ,e) (values `(attachment-set ,aop ,(and e (Expr1 e))) #f)]
       [(attachment-get ,reified ,e) (values `(attachment-get ,reified ,(and e (Expr1 e))) #f)]
       [(attachment-consume ,reified ,e) (values `(attachment-consume ,reified ,(and e (Expr1 e))) #f)]
@@ -350,10 +351,14 @@
         (if (and (not (eq? multiple-ref? 'always))
                  (no-need-to-bind? multiple-ref? e))
             (values e values)
-            (let ([t (make-tmp 't type)])
-              (values t (lift-fp-unboxed
-                         (lambda (body)
-                           `(let ([,t ,e]) ,body))))))))
+            (let-values ([(type e)
+                          (nanopass-case (L7 Expr) e
+                            [(raw ,e) (values 'uptr e)]
+                            [else (values type e)])])
+              (let ([t (make-tmp 't type)])
+                (values t (lift-fp-unboxed
+                           (lambda (body)
+                             `(let ([,t ,e]) ,body)))))))))
     (define list-binder
       (lambda (multiple-ref? type e*)
         (if (null? e*)
@@ -505,7 +510,7 @@
        (lambda (e)
          (nanopass-case (L7 Expr) e
            [(quote ,d) (guard (target-fixnum? d)) `(immediate ,d)]
-           [else (%inline sra ,e ,(%constant fixnum-offset))])))
+           [else `(raw ,(%inline sra ,e ,(%constant fixnum-offset)))])))
     (define build-not
       (lambda (e)
         `(if ,e ,(%constant sfalse) ,(%constant strue))))
@@ -919,19 +924,20 @@
       (lambda (value width)
         (if (fx> (constant fixnum-bits) width)
             (build-unfix value)
-            `(seq
-               (set! ,%ac0 ,value)
-               (if ,(%type-check mask-fixnum type-fixnum ,%ac0)
-                   ,(build-unfix %ac0)
-                   (seq
-                     (set! ,%ac0
-                       (inline
-                         ,(cond
-                            [(fx<= width 32) (intrinsic-info-asmlib dofargint32 #f)]
-                            [(fx<= width 64) (intrinsic-info-asmlib dofargint64 #f)]
-                            [else ($oops who "can't handle width ~s" width)])
-                         ,%asmlibcall))
-                     ,%ac0))))))
+            `(raw
+               (seq
+                 (set! ,%ac0 ,value)
+                 (if ,(%type-check mask-fixnum type-fixnum ,%ac0)
+                     ,(build-unfix %ac0)
+                     (seq
+                       (set! ,%ac0
+                         (inline
+                           ,(cond
+                              [(fx<= width 32) (intrinsic-info-asmlib dofargint32 #f)]
+                              [(fx<= width 64) (intrinsic-info-asmlib dofargint64 #f)]
+                              [else ($oops who "can't handle width ~s" width)])
+                           ,%asmlibcall))
+                       ,%ac0)))))))
     (define ptr-type (constant-case ptr-bits
                        [(32) 'unsigned-32]
                        [(64) 'unsigned-64]
@@ -1211,7 +1217,7 @@
                        ;; slight abuse to call this "unboxed", but `store-double->single`
                        ;; wants an FP-flavored address
                        ,(%mref ,base ,index ,offset fp)
-                       ,(%mref ,value ,%zero ,(constant flonum-data-disp) fp)))]
+                       (raw ,(%mref ,value ,%zero ,(constant flonum-data-disp) fp))))]
            ; 40-bit+ only on 64-bit machines
            [(integer-8 integer-16 integer-24 integer-32 integer-40 integer-48 integer-56 integer-64
              unsigned-8 unsigned-16 unsigned-24 unsigned-32 unsigned-40 unsigned-48 unsigned-56 unsigned-64)
@@ -1231,7 +1237,7 @@
            [(double-float)
             `(inline ,(make-info-load 'unsigned-64 #t) ,%store
                ,base ,index (immediate ,offset)
-               ,(%mref ,value ,(constant flonum-data-disp)))]
+               (raw ,(%mref ,value ,(constant flonum-data-disp))))]
            ; 40-bit+ only on 64-bit machines
            [(integer-8 integer-16 integer-24 integer-32 integer-40 integer-48 integer-56 integer-64
              unsigned-8 unsigned-16 unsigned-24 unsigned-32 unsigned-40 unsigned-48 unsigned-56 unsigned-64)
@@ -1323,7 +1329,10 @@
               e
               (if (fx< delta 0)
                   (%inline sll ,e (immediate ,(fx- delta)))
-                  (%inline srl ,e (immediate ,delta)))))))
+                  (let ([shift-e (%inline srl ,e (immediate ,delta))])
+                    (if (fx= target-shift (constant fixnum-offset))
+                        shift-e
+                        `(raw ,shift-e))))))))
     (define extract-length
       (lambda (t/l length-offset)
         (%inline logand
@@ -1492,7 +1501,7 @@
     (define make-ftype-pointer-equal?
       (lambda (e1 e2)
         (bind #f (e1 e2)
-          (%inline eq?
+          (%inline eq? ;; raw operands safe given bind
             ,(%mref ,e1 ,(constant record-data-disp))
             ,(%mref ,e2 ,(constant record-data-disp))))))
     (define make-ftype-pointer-null?
@@ -4662,16 +4671,18 @@
        (bind #t (e1 e2)
          `(if ,(build-fl= e1 e1) ; check e1 not +nan.0
               ,(constant-case ptr-bits
-                [(32) (build-and
-                        (%inline eq?
-                         ,(%mref ,e1 ,(constant flonum-data-disp))
-                         ,(%mref ,e2 ,(constant flonum-data-disp)))
-                        (%inline eq?
-                          ,(%mref ,e1 ,(fx+ (constant flonum-data-disp) 4))
-                          ,(%mref ,e2 ,(fx+ (constant flonum-data-disp) 4))))]
+                [(32)
+                 (bind #t (e1 e2) ;; could omit raw due to bind, but that would look amiss beside 64-bit case
+                   (build-and
+                          (%inline eq?
+                           (raw ,(%mref ,e1 ,(constant flonum-data-disp)))
+                           (raw ,(%mref ,e2 ,(constant flonum-data-disp))))
+                          (%inline eq?
+                            (raw ,(%mref ,e1 ,(fx+ (constant flonum-data-disp) 4)))
+                            (raw ,(%mref ,e2 ,(fx+ (constant flonum-data-disp) 4))))))]
                 [(64) (%inline eq?
-                        ,(%mref ,e1 ,(constant flonum-data-disp))
-                        ,(%mref ,e2 ,(constant flonum-data-disp)))]
+                        (raw ,(%mref ,e1 ,(constant flonum-data-disp)))
+                        (raw ,(%mref ,e2 ,(constant flonum-data-disp))))]
                 [else ($oops 'compiler-internal
                              "$fleqv doesn't handle ptr-bits = ~s"
                              (constant ptr-bits))])
@@ -5365,8 +5376,8 @@
       (define build-fx+raw
         (lambda (fx-arg raw-arg)
           (if (constant? (lambda (x) (eqv? x 0)) fx-arg)
-              raw-arg
-              (%inline + ,raw-arg ,(build-unfix fx-arg)))))
+              raw-arg ;; already marked raw
+              `(raw ,(%inline + ,raw-arg ,(build-unfix fx-arg))))))
       (define $extract-fptr-address
         (lambda (e-fptr)
           (define suppress-unsafe-cast
@@ -5409,13 +5420,13 @@
                   (eq? (primref-name pr) 'ftype-pointer-address)
                   (all-set? (prim-mask unsafe) (primref-flags pr)))
                 (bind #f (e1)
-                  (%mref ,e3 ,(constant record-data-disp)))]
+                  `(raw ,(%mref ,e3 ,(constant record-data-disp))))]
                [else
                 (bind #f (e1)
                   (ptr->integer e2 (constant ptr-bits)))])]
             [else
-             `(inline ,(make-info-load ptr-type #f) ,%load ,(suppress-unsafe-cast e-fptr) ,%zero
-                ,(%constant record-data-disp))])))
+             `(raw (inline ,(make-info-load ptr-type #f) ,%load ,(suppress-unsafe-cast e-fptr) ,%zero
+                     ,(%constant record-data-disp)))])))
       (let ()
         (define-inline 3 $fptr-offset-addr
           [(e-fptr e-offset)

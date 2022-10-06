@@ -552,7 +552,7 @@
 
  ; move labels to top level and expands closures forms to more primitive operations
   (define-language L7 (extends L6)
-    (nongenerative-id #{L7 jczowy6yjfz400ntojb6av7y0-7})
+    (nongenerative-id #{L7 cdzl2w7vcr40l9ebd38t92bxg-7})
     (terminals
       (- (uvar (x))
          (fixnum (interface)))
@@ -582,6 +582,12 @@
          ; moved up one language to support closure instrumentation
          (inline info prim e* ...)                     => (inline info prim e* ...)
          (call info mdcl (maybe e0) e1 ...)            => (call mdcl e0 e1 ...)
+         ; use (raw e) to mark a raw non-immediate rvalue in expand-inline
+         ; (np-expand-primitives) so that we use a uptr temporary in bind or
+         ; when flattening the code in np-remove-complex-opera*; raw is optional
+         ; where we already bind or assign to a uptr temporary or where we
+         ; ensure the value is not live across a call
+         (raw e)
          (set! lvalue e)
          ; these two forms are added here so expand-inline handlers can expand into them
          (values info e* ...)
@@ -784,7 +790,7 @@
  ; '(), (eof-object), ($unbound-object), #!bwp, characters, and fixnums as
  ; scheme-object ptrs and inlines primitive calls
   (define-language L9 (extends L7)
-    (nongenerative-id #{L9 jczowy6yjfz400ntojb6av7y0-9})
+    (nongenerative-id #{L9 cdzl2w7vcr40l9ebd38t92bxg-9})
     (entry Program)
     (terminals
       (- (datum (d))
@@ -799,7 +805,7 @@
 
  ; determine where we should be placing interrupt and overflow
   (define-language L9.5 (extends L9)
-    (nongenerative-id #{L9.5 jczowy6yjfz400ntojb6av7y0-9.5})
+    (nongenerative-id #{L9.5 cdzl2w7vcr40l9ebd38t92bxg-9.5})
     (entry Program)
     (terminals
       (+ (boolean (ioc))))
@@ -809,7 +815,7 @@
 
  ; remove the loop form
   (define-language L9.75 (extends L9.5)
-    (nongenerative-id #{L9.75 jczowy6yjfz400ntojb6av7y0-9.75})
+    (nongenerative-id #{L9.75 cdzl2w7vcr40l9ebd38t92bxg-9.75})
     (entry Program)
     (Expr (e body)
       (- (loop x (x* ...) body))))
@@ -821,7 +827,7 @@
  ; Rhs expressions can appear on the right-hand-side of a set! or anywhere arbitrary
  ; Exprs can appear.  Exprs appear in the body of a case-lambda clause.
   (define-language L10 (extends L9.75)
-    (nongenerative-id #{L10 jczowy6yjfz400ntojb6av7y0-10})
+    (nongenerative-id #{L10 cdzl2w7vcr40l9ebd38t92bxg-10})
     (terminals
       (+ (uvar (local))))
     (entry Program)
@@ -858,6 +864,7 @@
          (let ([x e] ...) body)
          (set! lvalue e)
          (mvcall info e1 e2)
+         (raw e)
          (foreign-call info e e* ...)
          (attachment-get reified (maybe e))
          (attachment-consume reified (maybe e))

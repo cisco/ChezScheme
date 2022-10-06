@@ -2623,6 +2623,20 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Invalid live-pointer mask for some inline primitive calls (9.6.0)}
+
+Fixed a crash at optimize-level 2 and higher caused by the compiler generating
+an invalid live-pointer mask when inline-expanding certain primitive calls that
+store raw data on the stack and whose operands contain calls.
+
+\subsection{Optimization bug in \protect\scheme{remove},
+  \protect\scheme{member} and \protect\scheme{assoc} (9.6.0)}
+
+When \scheme{remove}, \scheme{member} or \scheme{assoc} were used in
+\scheme{optimize-level} 3 in a position where the result was discarded,
+a bug in the source code optimizer could drop the call even though the first
+argument may be a record with a custom equality predicate that has side effects.
+
 \subsection{Foreign-callable floating-point argument allocation for x86 (9.6.0)}
 
 When a foreign callable receives a \scheme{double} or \scheme{float} argument, the
