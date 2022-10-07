@@ -2707,7 +2707,7 @@ This parameter can take on one of the four values 0, 1, 2, and 3.
 It is used to tell the compiler how important the preservation of
 debugging information is, with 0 being least important and 3 being
 most important.
-The default v<alue is 1.
+The default value is 1.
 As of Version~9.0, it is used solely to determine whether an
 error-causing call encountered in nontail position is treated as
 if it were in tail position (thus causing the caller's frame not
