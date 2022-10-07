@@ -1559,19 +1559,20 @@ static void s_putenv(char *name, char *value) {
 
 #ifdef PTHREADS
 /* backdoor thread is for testing thread creation by Sactivate_thread */
-#define display(s) { const char *S = (s); if (WRITE(1, S, (unsigned int)strlen(S))) {} }
-static s_thread_rv_t s_backdoor_thread_start(void *p) {
-  display("backdoor thread started\n")
+#define display(s) do { const char *S = (s); if (WRITE(1, S, (unsigned int)strlen(S))) {} } while(0)
+static s_thread_rv_t s_backdoor_thread_start(void *p_in) {
+  ptr p = TO_PTR(p_in);
+  display("backdoor thread started\n");
   (void) Sactivate_thread();
-  display("thread activated\n")
-  Scall0((ptr)Sunbox(TO_PTR(p)));
+  display("thread activated\n");
+  Scall0(Sboxp(p) ? Sunbox(p) : p);
   (void) Sdeactivate_thread();
-  display("thread deactivated\n")
+  display("thread deactivated\n");
   (void) Sactivate_thread();
-  display("thread reactivated\n")
-  Scall0((ptr)Sunbox(TO_PTR(p)));
+  display("thread reactivated\n");
+  Scall0(Sboxp(p) ? Sunbox(p) : p);
   Sdestroy_thread();
-  display("thread destroyed\n")
+  display("thread destroyed\n");
   s_thread_return;
 }
 
