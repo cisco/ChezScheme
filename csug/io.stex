@@ -3317,10 +3317,83 @@ When \scheme{print-precision} is set to \scheme{#f} (the default),
 \scheme{write}, \scheme{put-datum}, \scheme{pretty-print}, and the
 \scheme{format} ``\scheme{~s}'' directive do not include the
 vertical-bar ``mantissa-width'' syntax after each floating-point
-number.
+number---except for subnormal floating-point numbers, in which case precision printing
+is controlled by \scheme{print-subnormal-precision}.
 When set to a nonnegative exact integer, the mantissa width is
 included, as per the precision argument to
 \scheme{number->string}.
+
+\schemedisplay
+(format "~s" 1e-100) ;=> "1e-100"
+(parameterize ([print-precision 32])
+  (format "~s" 1e-100)) ; => "1e-100|53"
+(format "~s" 1e-310) ;=> "1e-310|45"
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-subnormal-precision}{\categorythreadparameter}{print-subnormal-precision}
+\listlibraries
+\endentryheader
+
+\noindent
+When \scheme{print-subnormal-precision} is set to a true value (the default)
+and \scheme{print-precision} is set to \scheme{#f} (the default),
+\scheme{write}, \scheme{put-datum}, \scheme{pretty-print}, and the
+\scheme{format} ``\scheme{~s}'' directive include the
+vertical-bar ``mantissa-width'' syntax after each floating-point
+number whose value is subnormal (roughly 4.94e-324 to 2.225e-308).
+When \scheme{print-subnormal-precision} and \scheme{print-precision} are
+both set to \scheme{#f}, precision is not printed for a subnormal value.
+
+\schemedisplay
+(format "~s" 1e-310) ;=> "1e-310|45"
+(parameterize ([print-subnormal-precision #f])
+  (format "~s" 1e-310)) ; => "1e-310"
+(parameterize ([print-precision 32]
+               [print-subnormal-precision #f])
+  (format "~s" 1e-310)) ; => "1e-310|45"
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-positive-exponent-sign}{\categorythreadparameter}{print-positive-exponent-sign}
+\listlibraries
+\endentryheader
+
+\noindent
+When \scheme{print-positive-exponent-sign} is set to a true value, then
+when a flonum is printed in exponential form and the exponent is positive,
+a plus sign is written before the exponent. When
+\scheme{print-positive-exponent-sign} is set \scheme{#f} (the
+default), no a plus sign is written before a positive exponent.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{print-select-flonum-exponential-format}{\categorythreadparameter}{print-select-flonum-exponential-format}
+\listlibraries
+\endentryheader
+
+\noindent
+The value of \scheme{print-select-flonum-exponential-format} must be a
+procedure that is called with three arguments: a radix as an integer
+between 2 and 36 (inclusive), an exponent as an integer, and
+the number of non-zero significant digits in the flonum's printed form
+using the matissa (where the first digit is before the ``decimal'' point).
+If the procedure returns a true value, a number is printed in expotential
+form, otherwise it is printed in nonexponential form.
+
+\schemedisplay
+(format "~s ~s" 1e2 1e8) ;=> "100.0 100000000.0"
+(parameterize ([print-select-flonum-exponential-format
+                (lambda (radix exponent digits)
+                  (> exponent 3))])
+  (format "~s ~s" 1e2 1e8)) ;=> "100.0 1e8"
+(parameterize ([print-select-flonum-exponential-format
+                (lambda (radix exponent digits)
+                  (< digits 3))])
+  (format "~s ~s ~s" 1e2 1.5e8 3.14159e-8)) ;=> "1e2 1.5e8 0.0000000314159"
+\endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader

@@ -259,6 +259,7 @@ mutable-fxvector?               ; removed
 immutable-fxvector?             ; removed
 \endschemedisplay
 
+
 \subsection{Flonums}
 
 The \scheme{eq?} operator works on flonums in the sense that two
@@ -287,6 +288,14 @@ Wrapping each operation of flonum arithmetic with \scheme{flsingle}
 produces the same result as single-precision arithmetic, and local
 unboxing plus type inference makes the combination reasonably
 efficient.
+
+Flonum printing can be controlled by new parameters:
+
+\schemedisplay
+print-submornal-precision
+print-positive-exponent-sign
+print-select-flonum-exponential-format
+\endschemedisplay
 
 
 \subsection{Bignums}

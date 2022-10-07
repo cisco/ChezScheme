@@ -395,7 +395,7 @@ digits.  For denormalized floats, -2 digits may appear much sooner
 (perhaps even starting with the second digit).
 
 Positive floating point zero returns with (1 0 -1 ...).  Negative
-floating point returns with (1 0 -1 ...).
+floating point returns with (-1 0 -1 ...).
 |#
 
 (define $flonum->digits)
@@ -1067,7 +1067,8 @@ floating point returns with (1 0 -1 ...).
                         (write-char (flonum-digit->char u) p)
                         (loop (cdr s))))))
             (write-char #\e p)
-            (when (fxpositive? e) (write-char #\+ p))
+            (when (and (fxpositive? e) (print-positive-exponent-sign))
+              (write-char #\+ p))
             (wrfixnum e r #t p)))
 
       (define display-precision
@@ -1090,26 +1091,19 @@ floating point returns with (1 0 -1 ...).
                    (if (fx< s 0)
                        (write-char #\- p)
                        (when force-sign (write-char #\+ p)))
-                   (if (or (fx> r 10) (cond
-                                        [(fx< e -4) #f]
-                                        [(fx< e 14) #t]
-                                        [else
-                                         (let ([digits (let loop ([ls ls] [digits 0])
-                                                         (if (fx< (car ls) 0)
-                                                             digits
-                                                             (loop (cdr ls) (fx+ digits 1))))])
-                                           (fx< (fx- e digits) 3))]))
-                       (free-format e ls p)
-                       (free-format-exponential e ls r p))))
+                   (if ((print-select-flonum-exponential-format) r e (let loop ([ls ls] [digits 0])
+                                                                       (if (fx< (car ls) 0)
+                                                                           digits
+                                                                           (loop (cdr ls) (fx+ digits 1)))))
+                       (free-format-exponential e ls r p)
+                       (free-format e ls p))))
               (cond
                 [(print-precision) =>
                  (lambda (m)
                    (if (and (fixnum? m) (fx< m 53))
                        (display-precision (fxmax m (integer-length (vector-ref dx 0))) p)
                        (display-precision m p)))]
-                [else
-                 (void)
-                 #;
+                [(print-subnormal-precision)
                  (let ([m (integer-length (vector-ref dx 0))])
                    (when (fx< 0 m 53) (display-precision m p)))]))))))
 
@@ -1415,4 +1409,24 @@ floating point returns with (1 0 -1 ...).
       (unless (or (not x) (and (fixnum? x) (fx> x 0)) (and (bignum? x) ($bigpositive? x)))
         ($oops 'print-precision "~s is not a positive exact integer or #f" x))
       x)))
+
+(define print-subnormal-precision
+  ($make-thread-parameter
+    #t
+    (lambda (x) (and x #t))))
+
+(define print-positive-exponent-sign
+  ($make-thread-parameter
+    #f
+    (lambda (x) (and x #t))))
+
+(define-who print-select-flonum-exponential-format
+  ($make-thread-parameter
+   (lambda (r e n-digits)
+     (not (or (fx> r 10) (fx< -4 e 10))))
+   (lambda (x)
+     (unless (procedure? x)
+       ($oops who "~s is not a procedure" x))
+     x)))
+
 )
