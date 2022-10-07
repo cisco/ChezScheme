@@ -297,6 +297,11 @@ print-positive-exponent-sign
 print-select-flonum-exponential-format
 \endschemedisplay
 
+The \scheme{fl=}, \scheme{fl<}, , \scheme{fl>}, \scheme{fl<=}, and
+\scheme{fl>=} no longer produce \scheme{#f} for a single argument
+that's \scheme{+nan.0}, which makes them consistent with \scheme{=},
+\scheme{<}, \scheme{>}, \scheme{<=}, and \scheme{>=}.
+
 
 \subsection{Bignums}
 
@@ -305,6 +310,31 @@ Toom-4, while division (including GCD) uses Burnikel-Ziegler. These
 changes make arithmetic and number-to-string conversions faster for
 large values, and they avoid unbounded delays between interrupt
 polling.
+
+
+\subsection{Exact Zeros, Transcendentals, and Exponentials}
+
+Division of an inexact number by an exact \scheme{0} now raises
+exception instead of producing \scheme{+inf.0} or \scheme{-inf.0}.
+This makes division more consistent with with the existing behavior of
+multiplication, where multiplication of an inexact number by an exact
+\scheme{0} produces an exact \scheme{0}. Along these lines, inexact
+\scheme{1/0e10} or \scheme{#i1/0} are no longer valid number forms,
+while \scheme{1/0#} and \scheme{#i1/0#} are allowed on the grounds
+that the zero is explicitly inexact.
+
+Small changes to transcendental functions help improve consistency for
+derived compositions. The \scheme{expt} function with two
+\scheme{+inf.0} or \scheme{-inf.0} arguments now produces
+\scheme{+nan.0+nan.0i} instead of a complex number with infinite
+components. The \scheme{sqrt} and \scheme{log} functions changes to
+that \scheme{(sqrt -0.0)} and \scheme{(log -0.0)} produce real
+numbers, instead of complex numbers, on the grounds that
+\scheme{(negative? -0.0)} produces \scheme{#f}.
+
+The \scheme{expt} function recognizes an exact \scheme{1/2} as its
+second argument, and in that case it behaves like \scheme{sqrt}, which
+may produce an exact result.
 
 
 \subsection{Characters, Strings, and Unicode}
@@ -350,6 +380,12 @@ concurrent operations and resizing. Clean-up resizing can be performed
 within a collect-request handler, since only on thread can run at that
 time.
 
+A weak or ephemeron \scheme{eqv?} hash table now retains non-fixnum
+numbers only weakly, instead of strongly. This change is related to
+changes to \scheme{eq?} for flonum values and the availablity of weak
+and ephemeron hash tables with arbitrary equality and hashing
+functions.
+
 
 \subsection{Stencil Vectors}
 
@@ -369,7 +405,7 @@ stencil-vector-mask-width
 \endschemedisplay
 
 
-\subsection{Uninterned Symbols}
+\subsection{Symbols}
 
 While gensyms support most symbol-generation needs, uninterned symbols
 are useful for purposes where properties must not prevent a symbol
@@ -379,6 +415,8 @@ from being reclaimed by the storage manager:
 string->uninterned-symbol
 uninterned-symbol?
 \endschemedisplay
+
+The string returned by \scheme{symbol->string} is always immutable.
 
 
 \subsection{Records}
@@ -559,6 +597,12 @@ The \scheme{keep-live} procedure accepts any value and returns
 \scheme{(void)}, but the argument to \scheme{keep-live} is defined to
 be reachable until the call to \scheme{keep-live} returns.
 
+The maximum non-static generation for collection has been reduced from
+254 to 6. This change is related to parallel garbage collection and
+internal changes that make allocation thread-local, which in turn
+makes the size of a thread's representation proportional to the
+maximum number of generations.
+
 
 \subsection{Foreign Interface}
 
@@ -596,6 +640,7 @@ file descriptor and offset. This form of boot-file registration is
 useful for loading boot files that are embedded with an executable
 segment.
 
+
 \subsection{Fasl and Vfasl}
 
 Reading fasl data has been made safe no matter how deeply nested the
@@ -618,6 +663,7 @@ which is close in structure to an image of data in memory. Using vfasl
 for boot files to load directly into a static generation can make
 startup much faster; otherwise, the time--space tradeoff rarely pays
 off. Convert from fasl to vfasl using \scheme{vfasl-convert-file}.
+
 
 \subsection{Compiler Options}
 
