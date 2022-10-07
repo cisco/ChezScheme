@@ -2343,3 +2343,5 @@
   message telling how to build under Rosetta2 when running on an arm64 OSX
     configure
 - removed comments related to a completed TODO item from s/syntax.ss
+- Unicode 15.0 support
+    unicode/* mats/5_4.ms
