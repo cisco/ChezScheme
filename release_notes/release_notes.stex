@@ -318,10 +318,7 @@ Division of an inexact number by an exact \scheme{0} now raises
 exception instead of producing \scheme{+inf.0} or \scheme{-inf.0}.
 This makes division more consistent with with the existing behavior of
 multiplication, where multiplication of an inexact number by an exact
-\scheme{0} produces an exact \scheme{0}. Along these lines, inexact
-\scheme{1/0e10} or \scheme{#i1/0} are no longer valid number forms,
-while \scheme{1/0#} and \scheme{#i1/0#} are allowed on the grounds
-that the zero is explicitly inexact.
+\scheme{0} produces an exact \scheme{0}.
 
 Small changes to transcendental functions help improve consistency for
 derived compositions. The \scheme{expt} function with two

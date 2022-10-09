@@ -218,7 +218,7 @@ an exception.
         [(ieee) 1023]))
     (define min-float-exponent
       (float-type-case
-        [(ieee) -1023]))
+       [(ieee) -1023]))
     (cond
       [(eq? wi 'norep) 'norep]
       [(eq? wi 'inf) (if i? (s +inf.0) 'norep)]
@@ -399,7 +399,7 @@ an exception.
   (finish-number ms ex x1 (mkrat (eq? ex 'i) (eq? d-ex 'i) s 'norep 'norep m (make-part #f plus n)))
   [(digit r) (rat1 r ex d-ex ms s m (+ (* n r) d))]
   [#\# (let ([!r6rs #t]) (rathash r ex ms s m (* n r)))]
-  [(#\e #\s #\f #\d #\l) (let ([!r6rs #t]) (exp0 r ex ms s (mkrat #f #f plus 'norep 'norep m (make-part #f plus n))))]
+  [(#\e #\s #\f #\d #\l) (let ([!r6rs #t]) (exp0 r ex ms s (mkrat #f #f plus 'nan 'inf m (make-part #f plus n))))]
   [else (complex0 r ex ms (mkrat #f (eq? d-ex 'i) s 'norep 'norep m (make-part #f plus n)))])
 
 (mknum-state rathash (r ex ms s m n)    ; saw # after denominator
