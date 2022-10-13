@@ -897,7 +897,7 @@ case "${flagsmuni}" in
         exePostStep='paxctl +m'
         ;;
     em)
-        if [ "$empetite" == yes ]; then
+        if [ "$empetite" = yes ]; then
             preloadBootFiles="$w/boot/$m/petite.boot"
         else
             preloadBootFiles="$w/boot/$m/petite.boot $w/boot/$m/scheme.boot"
