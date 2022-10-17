@@ -3,7 +3,7 @@ installdir=oops-missing-installdir
 m=oops-missing-m
 STEXLIB=oops-missing-stexlib
 # Zuo overrides the above variables when running `make`
-Scheme=../bin/$m/scheme -b ../boot/$m/petite.boot -b ../boot/$m/scheme.boot
+Scheme=../$m/bin/$m/scheme -b ../$m/boot/$m/petite.boot -b ../$m/boot/$m/scheme.boot
 INSTALL=$(srcdir)/../makefiles/installsh
 
 # define default document pathname here

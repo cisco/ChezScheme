@@ -19,7 +19,8 @@
 /xc-*/
 /em-*/
 *.*run
-/csug/math/csug/
+/csug/math/
+/csug/gifs/
 /csug/Makefile
 /csug/*.aux
 /csug/*.html
@@ -41,7 +42,9 @@
 /csug/libslisted*
 /csug/libsrecorded*
 /csug/*.log
-/release_notes/math/release_notes/
+/csug/primdata.ss
+/release_notes/math/
+/release_notes/gifs/
 /release_notes/Makefile
 /release_notes/*.tex
 /release_notes/*.aux

@@ -221,13 +221,14 @@
     ;; in parallel to doc-project-names
     '(InstallCSUG InstallReleaseNotes))
   (define (targets-for-doc name install-dir-key)
+    (define doc-dir (at-dir ".." name)) ;; ".." goes out of the workarea
     (define mf-in (at-source "makefiles" (~a "Makefile-" name ".in")))
-    (define mf-out (at-dir name "Makefile"))
+    (define mf-out (build-path doc-dir "Makefile"))
     (define name-sym (string->symbol name))
     (define (run-make target)
       (check-not-kernel-only)
       (define (->rel-shell pth)
-        (string->shell (find-relative-path (at-dir name) pth)))
+        (string->shell (find-relative-path doc-dir pth)))
       (shell/wait "make"
                   (~a "m=" m)
                   (~a "srcdir=" (->rel-shell (at-source name)))
@@ -235,10 +236,10 @@
                       (->rel-shell (hash-ref config install-dir-key)))
                   (~a "STEXLIB=" (->rel-shell stexlib))
                   target
-                  (hash 'dir (at-dir name))))
+                  (hash 'dir doc-dir)))
     `([:target ,mf-out (,mf-in)
                ,(lambda (path token)
-                  (mkdir-p (at-dir name))
+                  (mkdir-p doc-dir)
                   (cp mf-in mf-out))]
       [:target ,name-sym (,mf-out
                           ,@(source-tree (at-source name))
