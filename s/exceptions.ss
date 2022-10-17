@@ -67,7 +67,11 @@ TODO:
               [(syntax-violation? c)
                (let ([form (syntax-violation-form c)]
                      [subform (syntax-violation-subform c)])
-                 (parameterize ([print-level 3] [print-length 6])
+                 (define (form-gensym-mode)
+                   (cond
+                     [(eq? (subset-mode) 'system) #f] ; so bootfile fixpoint is reached in safe mode
+                     [else (print-gensym)]))
+                 (parameterize ([print-level 3] [print-length 6] [print-gensym (form-gensym-mode)])
                    (if subform
                        (fprintf op "~a~s in ~s" prefix (syntax->datum subform) (syntax->datum form))
                        (fprintf op "~a~s" prefix (syntax->datum form))))

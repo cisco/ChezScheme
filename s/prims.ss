@@ -1772,6 +1772,8 @@
     (case-lambda
       [() ($current-winders)]
       [(w)
+       ;; this check could be helpful, but it's not constant-time:
+       #;
        (unless (and (list? w) (andmap winder? w))
          ($oops who "malformed winders ~s" w))
        ($current-winders w)])))
@@ -1780,6 +1782,8 @@
   (case-lambda
     [() ($current-attachments)]
     [(w)
+     ;; this check could be helpful, but it's not constant-time:
+     #;
      (unless (list? w)
        ($oops '$current-attachments "malformed attachments ~s" w))
      ($current-attachments w)]))
