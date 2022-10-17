@@ -193,6 +193,8 @@
           [(fasl-type-gensym)
            (let* ([pname (read-string p)] [uname (read-string p)])
              (fasl-gensym pname uname))]
+          [(fasl-type-uninterned-symbol)
+           (fasl-string ty (read-string p))]
           [(fasl-type-ratnum fasl-type-exactnum fasl-type-inexactnum
                              fasl-type-weak-pair fasl-type-ephemeron)
            (let ([first (read-fasl p g)])

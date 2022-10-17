@@ -285,6 +285,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
 
       while (sym < end_syms) {
         ptr isym;
+        IBOOL uninterned;
 
         /* Make sure we don't try to claim a symbol that crosses
            a segment boundary */
@@ -299,23 +300,27 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
           }
         }
 
+        uninterned = (SYMPVAL(sym) == Sfalse);
+
         INITSYMVAL(sym) = sunbound;
-        INITSYMCODE(sym,S_G.nonprocedure_code);
+        INITSYMCODE(sym, S_G.nonprocedure_code);
 
 #if 0
         S_prin1(sym); printf("\n");
 #endif
 
-        isym = S_intern4(sym);
-        if (isym != sym) {
-          /* The symbol was already interned, so point to the existing one */
-          INITSYMVAL(sym) = isym;
-          if (S_vfasl_boot_mode > 0) {
-            IGEN gen = SegInfo(ptr_get_segment(isym))->generation;
-            if (gen < static_generation) {
-              printf("WARNING: vfasl symbol already interned, but at generation %d: %p ", gen, TO_VOIDP(isym));
-              S_prin1(isym);
-              printf("\n");
+        if (!uninterned) {
+          isym = S_intern4(sym);
+          if (isym != sym) {
+            /* The symbol was already interned, so point to the existing one */
+            INITSYMVAL(sym) = isym;
+            if (S_vfasl_boot_mode > 0) {
+              IGEN gen = SegInfo(ptr_get_segment(isym))->generation;
+              if (gen < static_generation) {
+                printf("WARNING: vfasl symbol already interned, but at generation %d: %p ", gen, TO_VOIDP(isym));
+                S_prin1(isym);
+                printf("\n");
+              }
             }
           }
         }

@@ -2005,7 +2005,7 @@
       (fields x y)
       (nongenerative #{vfasl-demo pfwhk286n2j894o33awcq9er4-0}))
     (define vfasl-content (list 1 1/2 3.0 4+5i 6.0+7.0i
-                                "apple" 'banana
+                                "apple" 'banana (string->uninterned-symbol "coconut")
                                 (make-vfasl-demo 10 "11")
                                 (vector 1 'two "three")
                                 (stencil-vector 30 'one 2.0 0+3i "four")
@@ -2016,6 +2016,9 @@
     (define (same-vfasl-content? v)
       (andmap (lambda (a b)
                 (or (eqv? a b)
+                    (and (uninterned-symbol? a)
+                         (uninterned-symbol? b)
+                         (equal? (symbol->string a) (symbol->string b)))
                     (and (or (and (string? a)
                                   (positive? (string-length a)))
                              (and (vector? a)

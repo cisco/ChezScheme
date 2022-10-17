@@ -625,6 +625,13 @@
         (symbol-copy v
                      (string-copy string vfi)
                      (string->symbol string)
+                     string
+                     vfi)]
+       [(fasl-type-uninterned-symbol)
+        (symbol-copy v
+                     (pair-copy (string-copy string vfi) (constant sfalse) vfi)
+                     #f
+                     string
                      vfi)]
        [else
         (let ([immutable? (eqv? ty (constant fasl-type-immutable-string))])
@@ -648,7 +655,7 @@
                           set-char!
                           string-ref)]))])]
     [(gensym pname uname)
-     (symbol-copy v (pair-copy (string-copy uname vfi) (string-copy pname vfi) vfi) (gensym pname uname) vfi)]
+     (symbol-copy v (pair-copy (string-copy uname vfi) (string-copy pname vfi) vfi) (gensym pname uname) uname vfi)]
     [(vector ty vec)
      (cond
        [(fx= 0 (vector-length vec))
@@ -880,9 +887,9 @@
                                    [hc (or (fasl-case* (car p)
                                              [(string ty string)
                                               (and (eqv? ty (constant fasl-type-symbol))
-                                                   (target-symbol-hash (string->symbol string)))]
+                                                   (target-symbol-hash string))]
                                              [(gensym pname uname)
-                                              (target-symbol-hash (gensym pname uname))]
+                                              (target-symbol-hash uname)]
                                              [else #f])
                                            ($oops 'vfasl "symbol table key not a symbol ~s" (car p)))]
                                    [i (fxand hc (fx- veclen 1))])
@@ -926,13 +933,14 @@
              (loop (fx+ i 1))))
          new-p)]))
 
-(define (symbol-copy v name sym vfi)
+(define (symbol-copy v name sym hash-name vfi)
   (let ([v2 (eq-hashtable-ref (vfasl-info-symbols vfi) sym v)])
     (cond
       [(not (eq? v v2))
        (copy v2 vfi)]
       [else
-       (eq-hashtable-set! (vfasl-info-symbols vfi) sym v)
+       (when sym
+         (eq-hashtable-set! (vfasl-info-symbols vfi) sym v))
        (let ([new-p (find-room 'symbol vfi
                                (constant vspace-symbol)
                                (constant size-symbol)
@@ -942,21 +950,22 @@
                     ;; use value slot to store symbol index
                     (fix (symbol-vptr->index new-p vfi))
                     vfi)
-         (set-uptr! new-p (constant symbol-pvalue-disp) (constant snil) vfi)
+         (set-uptr! new-p (constant symbol-pvalue-disp)
+                    ;; use pvalue slot to record interned or not
+                    (if sym (constant strue) (constant sfalse))
+                    vfi)
          (set-uptr! new-p (constant symbol-plist-disp) (constant snil) vfi)
          (set-ptr! new-p (constant symbol-name-disp) name vfi)
          (set-uptr! new-p (constant symbol-splist-disp) (constant snil) vfi)
-         (set-iptr! new-p (constant symbol-hash-disp) (fix (target-symbol-hash sym)) vfi)
+         (set-iptr! new-p (constant symbol-hash-disp) (fix (target-symbol-hash hash-name)) vfi)
          new-p)])))
 
 (define target-symbol-hash
   (let ([symbol-hashX (constant-case ptr-bits
                         [(32) (foreign-procedure "(cs)symbol_hash32" (ptr) integer-32)]
                         [(64) (foreign-procedure "(cs)symbol_hash64" (ptr) integer-64)])])
-    (lambda (s)
-      (bitwise-and (symbol-hashX (if (gensym? s)
-                                     (gensym->unique-string s)
-                                     (symbol->string s)))
+    (lambda (name)
+      (bitwise-and (symbol-hashX (if (pair? name) (car name) name))
                    (constant most-positive-fixnum)))))
 
 (define (string-copy name vfi)
