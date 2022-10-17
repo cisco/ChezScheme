@@ -2345,3 +2345,4 @@
 - removed comments related to a completed TODO item from s/syntax.ss
 - Unicode 15.0 support
     unicode/* mats/5_4.ms
+- update zlib to version 1.2.13
