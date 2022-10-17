@@ -2308,3 +2308,14 @@
     #t)
 )
 
+(mat string->symbol
+  (immutable-string? (symbol->string (string->symbol "example")))
+  (let* ([str (string-copy "example")]
+         [sym (string->symbol str)])
+    (string-set! str 0 #\E)
+    (and (equal? str "Example")
+         (equal? (symbol->string sym) "example")))
+  (immutable-string? (symbol->string (string->symbol "")))
+  ;; make sure `string->symbol` didn't make the mutable empty string immutable:
+  (not (immutable-string? (string)))
+)

@@ -136,11 +136,15 @@ I64 S_symbol_hash64(ptr str) {
 }
 
 static ptr mkstring(const string_char *s, iptr n) {
-  iptr i;
-  ptr str = S_string(NULL, n);
-  for (i = 0; i != n; i += 1) STRIT(str, i) = s[i];
-  STRTYPE(str) |= string_immutable_flag;
-  return str;
+  if (n == 0) {
+    return S_G.null_immutable_string;
+  } else {
+    iptr i;
+    ptr str = S_string(NULL, n);
+    for (i = 0; i != n; i += 1) STRIT(str, i) = s[i];
+    STRTYPE(str) |= string_immutable_flag;
+    return str;
+  }
 }
 
 ptr S_mkstring(const string_char *s, iptr n) {
