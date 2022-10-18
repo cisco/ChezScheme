@@ -362,11 +362,7 @@
     (define scb (build-path (path-only scheme.boot) "scb"))
     (let loop ([i 0])
       (cond
-        [(= i n) (error (~a "failed to arrive at a fixpoint"
-                            (let ([o (opt 'o 'integer)])
-                              (if (equal? o 3)
-                                  o
-                                  (~a " (not unexpected with o=" o ")")))))]
+        [(= i n) (error "failed to arrive at a fixpoint")]
         [(and (file-exists? petite.boot)
               (file-exists? scheme.boot))
          (mv petite.boot sbb)
