@@ -544,7 +544,7 @@ typedef struct thread_gc {
 #define DOUNDERFLOW\
  &CODEIT(CLOSCODE(S_lookup_library_entry(library_dounderflow, 1)),size_rp_header)
 
-#define HEAP_VERSION_LENGTH 16
+#define HEAP_VERSION_LENGTH 24
 #define HEAP_MACHID_LENGTH 16
 #define HEAP_STAMP_LENGTH 16
 

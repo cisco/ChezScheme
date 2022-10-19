@@ -436,7 +436,7 @@ char *S_format_scheme_version(uptr n) {
       len = snprintf(buf, 20, "%d.%d.%d", (int) n >> 24, (int) (n >> 16) & 0xff, 
                      (int) (n >> 8) & 0xff);
   } else
-    len = snprintf(buf, 20, "%d.%d.%d.%d", (int) n >> 24, (int) (n >> 16) & 0xff, 
+    len = snprintf(buf, 20, "%d.%d.%d-pre-release.%d", (int) n >> 24, (int) (n >> 16) & 0xff,
                    (int) (n >> 8) & 0xff, (int) n & 0xff);
   return len > 0 ? buf : "unknown";
 }

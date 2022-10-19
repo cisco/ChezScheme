@@ -71,7 +71,14 @@
   ;; Everything after here is derived from the configuration
 
   (define Version (let ([l (get-version)])
-                    (~a "csv" (list-ref l 0) "." (list-ref l 1) "." (list-ref l 2) "." (list-ref l 3))))
+                    (~a "csv" (list-ref l 0) "." (list-ref l 1)
+                        (if (and (= (list-ref l 2) 0)
+                                 (= (list-ref l 3) 0))
+                            ""
+                            (~a "." (list-ref l 2)
+                                (if (= (list-ref l 3) 0)
+                                    ""
+                                    (~a "-pre-release." (list-ref l 3))))))))
 
   (define (build-path* . elems)
     (if script-to

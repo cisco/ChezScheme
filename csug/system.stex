@@ -5578,11 +5578,13 @@ threaded versions of the system).
 %----------------------------------------------------------------------------
 \noskipentryheader
 \formdef{scheme-version}{\categoryprocedure}{(scheme-version)}
+\formdef{scheme-version}{\categoryprocedure}{(scheme-version \var{show-pre-release?})}
 \returns a version string
 \listlibraries
 \endentryheader
 
-The version string is in the form
+When \var{show-pre-release?} is \scheme{#f} or not provided, the
+version string is in the form
 
 \schemedisplay
 "Chez Scheme Version \var{version}"
@@ -5596,16 +5598,21 @@ for {\ChezScheme}, and
 
 for {\PetiteChezScheme}.
 
+When \var{show-pre-release?} is \scheme{#t}, the result is different
+only for a pre-release version where \scheme{scheme-pre-release}
+produces a number. In that case, \scheme{"-alpha.\var{pre}"} is
+appended to the end of the string.
+
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{scheme-version-number}{\categoryprocedure}{(scheme-version-number)}
-\returns three values: the major, minor, and sub-minor version numbers
+\returns three values: the major, minor, and patch version numbers
 \listlibraries
 \endentryheader
 
 Each of the three return values is a nonnegative fixnum.
 
-In {\ChezScheme} Version 9.5.7 or 9.5.7.x:
+In {\ChezScheme} Version 9.5.7 or 9.5.7-alpha.3:
 
 \schemedisplay
 (scheme-version-number) ;=> 9
@@ -5616,17 +5623,27 @@ In {\ChezScheme} Version 9.5.7 or 9.5.7.x:
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{scheme-build-number}{\categoryprocedure}{(scheme-build-number)}
-\returns a development-build number
+\formdef{scheme-pre-release}{\categoryprocedure}{(scheme-pre-release)}
+\returns a pre-release number or \scheme{#f}
 \listlibraries
 \endentryheader
 
-The return value is a nonnegative fixnum for a development build number.
+The return value is a positve fixnum for a pre-release version, or it
+is \scheme{#f} for a release version (which is \emph{after} any
+version that has a pre-release number and the same major, minor, and
+patch number).
 
-In {\ChezScheme} Version 9.5.9.7:
+In {\ChezScheme} Version 9.5.7:
 
 \schemedisplay
-(scheme-build-number) ;=> 7
+(scheme-pre-release) ;=> #f
+\endschemedisplay
+
+
+In {\ChezScheme} Version 9.5.7-alpha.3:
+
+\schemedisplay
+(scheme-pre-release) ;=> 3
 \endschemedisplay
 
 

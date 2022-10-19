@@ -701,20 +701,14 @@
 
 (define $format-scheme-version
   (lambda (n)
-    (if (= (logand n 255) 0)
-        (if (= (logand (ash n -8) 255) 0)
-            (format "~d.~d"
-              (ash n -24)
-              (logand (ash n -16) 255))
-            (format "~d.~d.~d"
-              (ash n -24)
-              (logand (ash n -16) 255)
-              (logand (ash n -8) 255)))
-        (format "~d.~d.~d.~d"
+    (if (= (logand (ash n -8) 255) 0)
+        (format "~d.~d"
+          (ash n -24)
+          (logand (ash n -16) 255))
+        (format "~d.~d.~d"
           (ash n -24)
           (logand (ash n -16) 255)
-          (logand (ash n -8) 255)
-          (logand n 255)))))
+          (logand (ash n -8) 255)))))
 
 ; set in back.ss
 (define $scheme-version)
@@ -727,20 +721,36 @@
         (logand (ash n -16) 255)
         (logand (ash n -8) 255)))))
 
-(define scheme-build-number
+(define scheme-pre-release
   (lambda ()
-    (let ([n (constant scheme-version)])
-      (logand n 255))))
+    (let ([n (logand (constant scheme-version) 255)])
+      (and (fx> n 0)
+           n))))
 
 (define scheme-version
-  (let ([s #f])
-    (lambda ()
-      (unless s
-        (set! s
-          (format "~:[Petite ~;~]Chez Scheme Version ~a"
-            $compiler-is-loaded?
-            $scheme-version)))
-      s)))
+  (let ([s #f]
+        [s+pre #f])
+    (rec scheme-version
+      (case-lambda
+       [() (scheme-version #f)]
+       [(show-pre-release?)
+        (or (if show-pre-release? s+pre s)
+            (let* ([pre-n (scheme-pre-release)]
+                   [str (format "~:[Petite ~;~]Chez Scheme Version ~a~a"
+                                $compiler-is-loaded?
+                                $scheme-version
+                                (if show-pre-release?
+                                    (if pre-n (format "-pre-release.~a" pre-n) "")
+                                    ""))])
+              (cond
+                [(not pre-n)
+                 (set! s str)
+                 (set! s+pre str)]
+                [show-pre-release?
+                 (set! s+pre str)]
+                [else
+                 (set! s str)])
+              str))]))))
 
 (define petite?
   (lambda ()
@@ -768,7 +778,7 @@
 (define $scheme-greeting
   (lambda ()
     (format "~a\nCopyright 1984-2022 Cisco Systems, Inc.\n"
-      (scheme-version))))
+      (scheme-version #t))))
 
 (define $session-key #f)
 (define $scheme-init)

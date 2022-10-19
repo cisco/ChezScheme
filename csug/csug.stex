@@ -23,23 +23,32 @@
 \endschemeinit
 
 \generated
-(let ([d (current-date)])
-  (printf "\\def\\revisiondate{~a ~d}"
-    (case (date-month d)
-      [(1) "January"]
-      [(2) "February"]
-      [(3) "March"]
-      [(4) "April"]
-      [(5) "May"]
-      [(6) "June"]
-      [(7) "July"]
-      [(8) "August"]
-      [(9) "September"]
-      [(10) "October"]
-      [(11) "November"]
-      [(12) "December"])
-    (date-year d)))
-(printf "\\def\\CSVersion{~a}" (scheme-version))
+;; We assume here that the verison used to build the documentation
+;; is the same as the documented version. If it's a release version,
+;; then the date is fixed to the release date. Otherwise, use
+;; the date when the document is built.
+(define latest-release-date "April 2022")
+(printf "\\def\\CSVersion{~a}\n" (scheme-version #t))
+(cond
+  [(not (scheme-pre-release))
+   (printf "\\def\\revisiondate{~a}\n" latest-release-date)]
+  [else
+   (let ([d (current-date)])
+     (printf "\\def\\revisiondate{~a ~d}\n"
+             (case (date-month d)
+               [(1) "January"]
+               [(2) "February"]
+               [(3) "March"]
+               [(4) "April"]
+               [(5) "May"]
+               [(6) "June"]
+               [(7) "July"]
+               [(8) "August"]
+               [(9) "September"]
+               [(10) "October"]
+               [(11) "November"]
+               [(12) "December"])
+             (date-year d)))])
 \endgenerated
 
 % Just don't care about small overflows, most of the time:
@@ -65,7 +74,6 @@
 \makeindex
 \fi
 
-% also fix Revised date and version in copyright.stex
 \ifhtml
 \def\copyrightnotice{\raw{<hr class=copyright align=left>
 <p>
@@ -73,7 +81,7 @@
 Copyright &copy; 2022 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised} \revisiondate\raw{ for Chez Scheme Version 9.5.9<br>
+Revised} \revisiondate\raw{ for }\CSVersion\raw{<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 }}

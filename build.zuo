@@ -253,7 +253,7 @@
   (define (check-boot-file-version)
     (define src-ver (source-version))
     (define boot-ver (boot-files-version (at-dir "boot" m)))
-    (unless (equal? src-ver boot-ver)
+    (unless (string-ci=? src-ver boot-ver)
       (error (~a "version " boot-ver " in boot and header files for "
                  m
                  " do not match source version " src-ver "; rebuild boot files"))))

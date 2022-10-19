@@ -900,9 +900,9 @@
   (most-negative-fixnum [sig [() -> (fixnum)]] [flags pure unrestricted true cp02])
   (most-positive-fixnum [sig [() -> (ufixnum)]] [flags pure unrestricted true cp02])
   (petite? [sig [() -> (boolean)]] [flags pure unrestricted])
-  (scheme-version [sig [() -> (string)]] [flags pure unrestricted true])
+  (scheme-version [sig [() -> (string)] [(ptr) -> (string)]] [flags pure unrestricted true])
   (scheme-version-number [sig [() -> (uint uint uint)]] [flags discard unrestricted])
-  (scheme-build-number [sig [() -> (uint)]] [flags discard unrestricted])
+  (scheme-pre-release [sig [() -> (ptr)]] [flags discard unrestricted])
   (threaded? [sig [() -> (boolean)]] [flags pure unrestricted cp02])
 )
 

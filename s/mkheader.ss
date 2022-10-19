@@ -168,7 +168,7 @@
                 (ash n -24)
                 (logand (ash n -16) 255)
                 (logand (ash n -8) 255)))
-          (format "~d.~d.~d.~d"
+          (format "~d.~d.~d-pre-release.~d"
             (ash n -24)
             (logand (ash n -16) 255)
             (logand (ash n -8) 255)

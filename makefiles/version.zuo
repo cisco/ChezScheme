@@ -16,8 +16,8 @@
                                (+ i (string-length def))
                                (+ i (string-length def) 8))])
            (define (hex-digit-val c) (cond
-                                       [(>= c (char "a")) (+ (- c (char "a") 10))]
-                                       [(>= c (char "A")) (+ (- c (char "A") 10))]
+                                       [(>= c (char "a")) (+ (- c (char "a")) 10)]
+                                       [(>= c (char "A")) (+ (- c (char "A")) 10)]
                                        [else (- c (char "0"))]))
            (define (hex-val i) (+ (* 16 (hex-digit-val (string-ref hex i)))
                                   (hex-digit-val (string-ref hex (+ i 1)))))
@@ -27,5 +27,3 @@
 (define (get-dll-version)
   (let ([l (get-version)])
     (~a (list-ref l 0) (list-ref l 1) (list-ref l 2))))
-
-

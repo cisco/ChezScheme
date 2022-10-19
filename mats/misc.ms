@@ -35,6 +35,22 @@
              (with-syntax ((m (- nv 1)))
                (syntax (biglambda m (g . vars) (+ g e))))))))))
 
+(mat version
+  (string? (scheme-version))
+  (string? (scheme-version #f))
+  (string? (scheme-version #t))
+  (equal? (scheme-version) (scheme-version #f))
+  (= 3 (length (call-with-values scheme-version-number list)))
+  (let* ([alpha-s (format "-pre-release.~s" (scheme-pre-release))]
+         [ends? (lambda (s)
+                  (let ([len (string-length s)])
+                    (and (> len (string-length alpha-s))
+                         (equal? alpha-s (substring s (- len (string-length alpha-s)) len)))))])
+    (and (if (scheme-pre-release)
+             (ends? (scheme-version #t))
+             (not (ends? (scheme-version #t))))
+         (not (ends? (scheme-version))))))
+
 (mat cycle
   (let ((x '#1=(a b . #1#)))
     (eqv? x x))
