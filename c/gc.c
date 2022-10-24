@@ -1137,27 +1137,31 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
          } else {
            seginfo *si = SegInfo(ptr_get_segment(p));
 
-           si->counting_mask[segment_bitmap_byte(p)] -= segment_bitmap_bit(p);
+           if (si->counting_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p)) {
+             si->counting_mask[segment_bitmap_byte(p)] -= segment_bitmap_bit(p);
 
-           if (!si->old_space || FORWARDEDP(p, si) || marked(si, p)
-               || !count_roots[i].weak) {
-             /* reached or older; sweep transitively */
+             if (!si->old_space || FORWARDEDP(p, si) || marked(si, p)
+                 || !count_roots[i].weak) {
+               /* reached or older; sweep transitively */
 #ifdef ENABLE_PARALLEL
-             if (si->creator->tc == 0) si->creator = tgc;
+               if (si->creator->tc == 0) si->creator = tgc;
 #endif
-             {
-               BLOCK_SET_THREAD(si->creator);
-               relocate_pure_now(&p);
-               push_sweep(p);
+               {
+                 BLOCK_SET_THREAD(si->creator);
+                 relocate_pure_now(&p);
+                 push_sweep(p);
+               }
+               ADD_BACKREFERENCE(p, si->generation);
+
+               parallel_sweep_generation(tgc);
+
+               /* now count this object's size, if we have deferred it before */
+               si = SegInfo(ptr_get_segment(p));
+               if ((si->space == space_count_pure) || (si->space == space_count_impure))
+                 count_root_bytes -= size_object(p);
              }
-             ADD_BACKREFERENCE(p, si->generation);
-
-             parallel_sweep_generation(tgc);
-
-             /* now count this object's size, if we have deferred it before */
-             si = SegInfo(ptr_get_segment(p));
-             if ((si->space == space_count_pure) || (si->space == space_count_impure))
-               count_root_bytes -= size_object(p);
+           } else {
+             /* must have been already counted by being earlier in the list */
            }
          }
 
@@ -3290,10 +3294,12 @@ static void init_measure_mask(thread_gc *tgc, seginfo *si) {
   (!si->measured_mask \
    || !(si->measured_mask[segment_bitmap_byte(p)] & segment_bitmap_bit(p)))
 
+#define measure_mask_is_set(mm, si, p) \
+  (mm[segment_bitmap_byte(p)] & segment_bitmap_bit(p))
 #define measure_mask_set(mm, si, p) \
-  mm[segment_bitmap_byte(p)] |= segment_bitmap_bit(p)
+  do { mm[segment_bitmap_byte(p)] |= segment_bitmap_bit(p); } while (0)
 #define measure_mask_unset(mm, si, p) \
-  mm[segment_bitmap_byte(p)] -= segment_bitmap_bit(p)
+  do { mm[segment_bitmap_byte(p)] -= segment_bitmap_bit(p); } while (0)
 
 static void push_measure(thread_gc *tgc, ptr p)
 {
@@ -3476,8 +3482,10 @@ ptr S_count_size_increments(ptr ls, IGEN generation) {
 
     if (!FIXMEDIATE(p)) {
       seginfo *si = SegInfo(ptr_get_segment(p));
-      measure_mask_unset(si->counting_mask, si, p);
-      gc_measure_one(tgc, p);
+      if (measure_mask_is_set(si->counting_mask, si, p)) {
+        measure_mask_unset(si->counting_mask, si, p);
+        gc_measure_one(tgc, p);
+      }
     }
 
     p = Scons(FIX(measure_total), Snil);

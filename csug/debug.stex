@@ -1634,7 +1634,8 @@ The following examples are valid for machines with 32-bit pointers.
                            (list p p))) ;=> (8 0)
 (compute-size-increments (let ([p (cons 0 0)])
                            (list (cons 1 p) (cons 1 p)))) ;=> (16 8)
+(compute-size-increments (list (ephemeron-cons 0 0))) ;=> (16)
 (compute-size-increments (let* ([p (cons 0 0)]
                                 [e (ephemeron-cons p (cons 0 0))])
-                           (list e p))) ;=> (8 16)
+                           (list e p))) ;=> (16 16)
 \endschemedisplay
