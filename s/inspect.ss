@@ -2087,9 +2087,7 @@
     (define make-record-object
       (lambda (x)
         (let* ((rtd ($record-type-descriptor x))
-               (fields (if (record-type-named-fields? rtd)
-                           (csv7:record-type-field-names rtd)
-                           ($record-type-field-indices rtd))))
+               (fields (csv7:record-type-field-names rtd)))
           (define check-field
             (lambda (f)
               (unless (or (and (symbol? f) (memq f fields))

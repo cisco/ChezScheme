@@ -39,7 +39,7 @@
                      (#%$top-level-bound? x))
                    '(record-constructor-descriptor?
                      r6rs:record-constructor
-                     record-type-field-indices
+                     r6rs:make-record-type-descriptor
                      csv7:record-field-accessor
                      csv7:record-field-mutator
                      csv7:record-field-mutable?
@@ -78,6 +78,7 @@
            record-type-opaque?
            record-type-parent
            make-record-type-descriptor
+           r6rs:make-record-type-descriptor
            record-type-descriptor?
 
            make-record-constructor-descriptor
@@ -98,7 +99,6 @@
            $record-type-descriptor
            $make-record-type
            $make-record-type-descriptor
-           $make-record-type-descriptor*
            $make-record-constructor-descriptor
            make-record-type
            $remake-rtd
@@ -108,9 +108,7 @@
            csv7:record-field-mutator
            csv7:record-field-mutable?
            csv7:record-field-accessible?
-           record-type-field-indices
            csv7:record-type-field-names
-           $record-type-field-indices
            csv7:record-type-field-decls
            record-writer
            $object-ref)

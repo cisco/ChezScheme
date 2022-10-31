@@ -755,7 +755,7 @@
 )
 
 (define-symbol-flags* ([libraries (rnrs) (rnrs records procedural)] [flags primitive proc])
-  (make-record-type-descriptor [sig [(symbol maybe-rtd maybe-symbol ptr ptr vector) -> (rtd)]] [flags pure alloc cp02])
+  ((r6rs: make-record-type-descriptor) [sig [(symbol maybe-rtd maybe-symbol ptr ptr vector) -> (rtd)]] [flags pure alloc cp02])
   (record-type-descriptor? [sig [(ptr) -> (boolean)]] [pred rtd] [flags pure unrestricted mifoldable discard cp02])
   (make-record-constructor-descriptor [sig [(rtd maybe-sub-rcd maybe-procedure) -> (rcd)]] [flags pure true cp02])
   ((r6rs: record-constructor) [sig [(rcd) -> (procedure)]] [flags cp02]) ; user-supplied protocol can do anything
@@ -1522,7 +1522,7 @@
   (make-phantom-bytevector [sig [(uptr) -> (phantom-bytevector)]] [flags true])
   (make-pseudo-random-generator [sig [() -> (pseudo-random-generator)]] [flags true])
   (make-record-type [sig [(sub-ptr sub-list) (maybe-rtd sub-ptr sub-list) -> (rtd)]] [flags pure alloc cp02])
-  (make-record-type-descriptor* [sig [(symbol maybe-rtd maybe-symbol ptr ptr ufixnum exact-integer) -> (rtd)]] [flags pure alloc cp02])
+  (make-record-type-descriptor [sig [(symbol maybe-rtd maybe-symbol ptr ptr ptr) -> (rtd)]] [flags pure alloc cp02]) ; allows pair for anonymous fields
   (make-reference-bytevector [sig [(length) -> (bytevector)]] [flags alloc])
   (make-immobile-reference-bytevector [sig [(length) -> (bytevector)]] [flags alloc])
   (make-source-condition [sig [(ptr) -> (condition)]] [flags pure unrestricted mifoldable discard])
@@ -1645,8 +1645,7 @@
   (record-reader [sig [(sub-ptr) -> (ptr)] [(sub-ptr sub-ptr) -> (void)]] [flags])
   (record-type-equal-procedure [sig [(rtd) -> (maybe-procedure)] [(rtd maybe-procedure) -> (void)]] [flags])
   (record-type-hash-procedure [sig [(rtd) -> (maybe-procedure)] [(rtd maybe-procedure) -> (void)]] [flags])
-  (record-type-field-indices [sig [(rtd) -> (vector)]] [flags])
-  (record-type-named-fields? [sig [(rtd) -> (boolean)]] [flags])
+  (record-type-has-named-fields? [sig [(rtd) -> (boolean)]] [flags])
   (record-writer [sig [(rtd) -> (maybe-procedure)] [(rtd maybe-procedure) -> (void)]] [flags])
   (reference-address->object [sig [(sub-uint) -> (ptr)]] [flags])
   (reference*-address->object [sig [(sub-uint) -> (ptr)]] [flags])
@@ -2283,7 +2282,6 @@
   ($make-recompile-condition [flags single-valued])
   ($make-record-constructor-descriptor [flags single-valued pure true cp02])
   ($make-record-type-descriptor [flags single-valued pure alloc cp02])
-  ($make-record-type-descriptor* [flags single-valued pure alloc cp02])
   ($make-record-type [sig [(rtd maybe-rtd sub-ptr sub-list ptr ptr ptr ...) -> (rtd)]] [flags pure alloc cp02])
   ($make-relocation-table! [flags single-valued])
   ($make-rnrs-libraries [flags single-valued])
@@ -2365,7 +2363,6 @@
   ($record-type-descriptor [flags single-valued pure mifoldable discard true])
   ($record-type-field-offsets [flags single-valued pure mifoldable discard true])
   ($record-type-field-count [sig [(ptr) -> (fixnum)]] [flags single-valued pure mifoldable discard true])
-  ($record-type-field-indices [sig [(rtd) -> (list)]] [flags pure mifoldable discard true])
   ($reloc [flags single-valued])
   ($remake-rtd [flags single-valued])
   ($report-string [flags single-valued])

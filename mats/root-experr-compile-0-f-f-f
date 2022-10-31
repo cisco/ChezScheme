@@ -42,9 +42,6 @@ primvars.mo:Expected error testing (load-compiled-from-port 1.0+2.0i (quote #f))
 primvars.mo:Expected error testing (make-input-port (quote 0) "a"): Exception in make-input-port: fixnum handler no longer supported; use open-fd-input-port
 primvars.mo:Expected error testing (make-input/output-port (quote 0) "a" "a"): Exception in make-input/output-port: fixnum handler no longer supported; use open-fd-input-port
 primvars.mo:Expected error testing (make-output-port (quote 0) "a"): Exception in make-output-port: fixnum handler no longer supported; use open-fd-input-port
-primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i 0 (quote 2.0)): Exception in make-record-type-descriptor*: invalid mutability mask 2.0 for field count 0
-primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i 0 (quote 1/2)): Exception in make-record-type-descriptor*: invalid mutability mask 1/2 for field count 0
-primvars.mo:Expected error testing (make-record-type-descriptor* (quote a) *rtd (quote a) 1.0+2.0i 1.0+2.0i 0 (quote #f)): Exception in make-record-type-descriptor*: invalid mutability mask #f for field count 0
 primvars.mo:Expected error testing (make-sstats (quote "no-time") *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: cpu value "no-time" is not a time record
 primvars.mo:Expected error testing (make-sstats (quote #f) *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: cpu value #f is not a time record
 primvars.mo:Expected error testing (make-sstats *time (quote "no-time") (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (- (most-negative-fixnum) 1)): Exception in make-sstats: real value "no-time" is not a time record
@@ -8120,6 +8117,8 @@ record.mo:Expected error in mat record-type-mismatch: "make-record-type: incompa
 record.mo:Expected error in mat record-type-mismatch: "define-record-type: incompatible record type flotsam - different mutability".
 record.mo:Expected error in mat record-type-mismatch: "define-record-type: incompatible record type flotsam - different flags".
 record.mo:Expected error in mat record-type-mismatch: "define-record-type: incompatible record type flotsam - different flags".
+record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot make anonymous-field record type bar from named-field parent record type #<record type foo>".
+record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot make named-field record type bar from anonymous-field parent record type #<record type foo>".
 record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> specified for base record type #<record type foo2>".
 record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol (ugly . ducking)".
 record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
@@ -8147,6 +8146,7 @@ record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arg
 record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 2 to #<procedure accessor>".
 record.mo:Expected error in mat r6rs-records-syntactic: "record-mutator: field 0 of #<record type point> is immutable".
 record.mo:Expected error in mat r6rs-records-syntactic: "record-mutator: field 1 of #<record type point> is immutable".
+record.mo:Expected error in mat r6rs-records-syntactic: "r6rs:make-record-type-descriptor: invalid field vector (1 . 1)".
 record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
 record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 0 to #<procedure constructor>".
 record.mo:Expected error in mat r6rs-records-syntactic: "incorrect number of arguments 1 to #<procedure constructor>".

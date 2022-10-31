@@ -4455,17 +4455,6 @@ The field names are symbols.
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{record-type-field-indices}{\categoryprocedure}{(record-type-field-indices \var{rtd})}
-\returns a list of field indicies of the type represented by \var{rtd}
-\listlibraries
-\endentryheader
-
-\noindent
-\var{rtd} must be a record-type descriptor.
-The field indices are fixnums.
-
-%----------------------------------------------------------------------------
-\entryheader
 \formdef{record-type-field-decls}{\categoryprocedure}{(record-type-field-decls \var{rtd})}
 \returns a list of field declarations of the type represented by \var{rtd}
 \listlibraries
@@ -4562,29 +4551,33 @@ rtd ;=> #<record type frob>
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{make-record-type-descriptor*}{\categoryprocedure}{(make-record-type-descriptor* \var{name} \var{parent} \var{uid} \var{s?} \var{o?} \var{flds} \var{muts})}
+\formdef{make-record-type-descriptor}{\categoryprocedure}{(make-record-type-descriptor \var{name} \var{parent} \var{uid} \var{s?} \var{o?} \var{fields})}
 \returns a record-type descriptor for a new record type
 \listlibraries
 \endentryheader
 
 \noindent
-This variant of \scheme{make-record-type-descriptor} accepts a field
-count and mutability mask in place of a vector of field descriptions,
-which results in a record type with anonymous fields. The \var{flds}
-argument must be a non-negative fixnum for the field count, and it is
-added to any fields present in \var{parent} to determine the record
-type's total number of fields. The \var{muts} argument must be
-an exact non-negative integer that is treated as a bit array; a
-\scheme{1} bit indicates the the corresponding field among
-\var{flds} is mutable.
+Like the Revised$^6$ Report version of this procedure, but \var{fields}
+is also allowed to be a pair of non-negative integers, in which case the
+new record type has anonymous fields. The \scheme{car} of \var{fields}
+is a field count, and it is added to any fields present in
+\var{parent} to determine the record type's total number of fields.
+The \scheme{cdr} of \var{fields} must be an exact non-negative integer
+that is treated as a bit array; a \scheme{1} bit indicates the the
+corresponding field among new fields is mutable. The total number of
+fields in a record type must be a fixnum.
 
 If \var{parent} is a record type descriptor, it must also have
 anonymous fields. The resulting anonynmous-field record type can only
 be the parent of a record type with anonymous fields.
 
+When a function like \scheme{record-type-field-names} is applied to an
+anonymous-field record type, the field names are all reported as
+\scheme{field}.
+
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{record-type-named-fields?}{\categoryprocedure}{(record-type-named-fields? \var{rtd})}
+\formdef{record-type-has-named-fields?}{\categoryprocedure}{(record-type-has-named-fields? \var{rtd})}
 \returns a boolean indicating whether \var{rts} has named fields
 \listlibraries
 \endentryheader

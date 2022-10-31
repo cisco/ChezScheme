@@ -800,10 +800,10 @@
     (cptypes-equivalent-expansion?
      `(let ()
         (define-record I (a))
-        (define A (make-record-type-descriptor* 'a #f #f #f #f 1 0))
+        (define A (make-record-type-descriptor 'a #f #f #f #f '(1 . 0)))
         (lambda (x) (and ((record-predicate A) x) (I? x))))
      `(begin
-        (make-record-type-descriptor* 'a #f #f #f #f 1 0)
+        (make-record-type-descriptor 'a #f #f #f #f '(1 . 0))
         (lambda (x) #f))))
 )
 

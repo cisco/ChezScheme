@@ -4752,7 +4752,7 @@
     (define should-be-named-i (letrec ([f (let ([i (lambda (x) x)]) i)]) f))
     (define should-be-named-j (let ([f (letrec ([j (lambda (x) x)]) j)]) f))
     (define (result-should-be-named-mk-CP)
-      (let ([struct:CP (make-record-type-descriptor* 'CP #f #f #f #f 1 1)])
+      (let ([struct:CP (make-record-type-descriptor 'CP #f #f #f #f '(1 . 1))])
         (let ([mk-CP (record-constructor (make-record-constructor-descriptor
                                           struct:CP #f #f))])
           mk-CP)))

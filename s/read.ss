@@ -1143,7 +1143,7 @@
              (rd-fix-graph (vector-ref x m) rd-set-vector-tail! x m))))]
       [($record? x)
        (let ((d ($record-type-descriptor x)))
-         (do ([fields ($record-type-field-indices d) (cdr fields)]
+         (do ([fields (csv7:record-type-field-names d) (cdr fields)]
               [i 0 (+ i 1)])
              ((null? fields))
            (when (csv7:record-field-accessible? d i)
@@ -1167,7 +1167,7 @@
           (let* ((dr (car wl))
                  (rtd (delayed-record-rtd dr))
                  (vals (delayed-record-vals dr))
-                 (fields ($record-type-field-indices rtd)))
+                 (fields (csv7:record-type-field-names rtd)))
             (if (andmap
                   (lambda (f v)
                     (or (not (delayed-record? v))

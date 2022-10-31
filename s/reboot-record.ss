@@ -299,8 +299,8 @@
 (define-primitive (make-record-type-descriptor name parent uid sealed? opaque? fields)
   ($make-record-type-descriptor #!base-rtd name parent uid sealed? opaque? fields))
 
-(define-primitive ($make-record-type-descriptor* . args)
-  (error '$make-record-type-descriptor* "not yet ready"))
+(define-primitive (r6rs:make-record-type-descriptor name parent uid sealed? opaque? fields)
+  ($make-record-type-descriptor #!base-rtd name parent uid sealed? opaque? fields))
 
 (define-primitive record-type-descriptor?
   (lambda (v)
@@ -449,9 +449,6 @@
 (define-primitive (record-type-field-names rtd)
   (list->vector (map field-name (re:rtd-fields (subst-base-rtd rtd)))))
 
-(define-primitive (record-type-field-indices rtd)
-  (list->vector (iota (- (re:rtd-count rtd) (parent-rtd-count (re:rtd-parent (subst-base-rtd rtd)))))))
-
 (define-primitive (csv7:record-type-field-names rtd)
   (let loop ([rtd rtd] [accum '()])
     (let ([accum (append (map field-name (re:rtd-fields (subst-base-rtd rtd)))
@@ -460,9 +457,6 @@
       (if (not p)
           accum
           (loop p accum)))))
-
-(define-primitive ($record-type-field-indices rtd)
-  (iota (re:rtd-count rtd)))
 
 (define-primitive (csv7:record-type-field-decls rtd)
   (let loop ([rtd rtd] [accum '()])

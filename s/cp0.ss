@@ -3252,13 +3252,6 @@
           (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?fields))
             [(quote ,d) (k d)]
             [else #f]))
-        (define (get-mutability-mask ?mutability-mask k)
-          (cond
-           [(not ?mutability-mask) (k #f)]
-           [else
-            (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?mutability-mask))
-              [(quote ,d) (k d)]
-              [else #f])]))
         (define (get-sealed x)
           (nanopass-case (Lsrc Expr) (if x (result-exp (value-visit-operand! x)) false-rec)
             [(quote ,d) (values (if d #t #f) ctrtd-sealed-known)]
@@ -3322,7 +3315,7 @@
              (mrt ?parent ?name ?fields ?sealed ?opaque ctxt level $make-record-type '$make-record-type
                (list* ?base-id ?parent ?name ?fields ?sealed ?opaque ?extras))]))
         (let ()
-          (define (mrtd ?parent ?uid ?fields ?mutability-mask ?sealed ?opaque ctxt level prim primname opnd*)
+          (define (mrtd ?parent ?uid ?fields ?sealed ?opaque ctxt level prim primname opnd*)
             (or (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?uid))
                   [(quote ,d)
                    (and d
@@ -3338,49 +3331,38 @@
                   (lambda (prtd)
                     (get-fields ?fields
                       (lambda (fields)
-                        (get-mutability-mask ?mutability-mask
-                          (lambda (mutability-mask)
-                            (let-values ([(sealed? sealed-flag) (get-sealed ?sealed)]
-                                         [(opaque? opaque-flag) (get-opaque ?opaque prtd)])
-                              (cond
-                                [(guard (c [#t #f])
-                                   (if ?mutability-mask
-                                       ($make-record-type-descriptor* base-ctrtd 'tmp prtd #f
-                                         sealed? opaque? fields mutability-mask 'cp0 (fxlogor sealed-flag opaque-flag))
-                                       ($make-record-type-descriptor base-ctrtd 'tmp prtd #f
-                                         sealed? opaque? fields 'cp0 (fxlogor sealed-flag opaque-flag)))) =>
-                                 (lambda (rtd)
-                                   (residualize-seq opnd* '() ctxt)
-                                   `(record-type ,rtd
-                                      ; can't use level 3 unconditionally because we're missing checks for
-                                      ; ?base-rtd, ?name, ?uid, ?who, and ?extras
-                                      ,(build-primcall (app-preinfo ctxt) level primname
-                                         (value-visit-operands! opnd*))))]
-                                [else #f]))))))))))
+                        (let-values ([(sealed? sealed-flag) (get-sealed ?sealed)]
+                                     [(opaque? opaque-flag) (get-opaque ?opaque prtd)])
+                          (cond
+                            [(guard (c [#t #f])
+                               ($make-record-type-descriptor base-ctrtd 'tmp prtd #f
+                                  sealed? opaque? fields 'cp0 (fxlogor sealed-flag opaque-flag))) =>
+                             (lambda (rtd)
+                               (residualize-seq opnd* '() ctxt)
+                               `(record-type ,rtd
+                                   ; can't use level 3 unconditionally because we're missing checks for
+                                   ; ?base-rtd, ?name, ?uid, ?who, and ?extras
+                                   ,(build-primcall (app-preinfo ctxt) level primname
+                                      (value-visit-operands! opnd*))))]
+                            [else #f]))))))))
 
           (define-inline 2 make-record-type-descriptor
             [(?name ?parent ?uid ?sealed ?opaque ?fields)
-             (mrtd ?parent ?uid ?fields #f ?sealed ?opaque ctxt level
+             (mrtd ?parent ?uid ?fields ?sealed ?opaque ctxt level
                make-record-type-descriptor 'make-record-type-descriptor
                (list ?name ?parent ?uid ?sealed ?opaque ?fields))])
 
-          (define-inline 2 make-record-type-descriptor*
-            [(?name ?parent ?uid ?sealed ?opaque ?fields ?mutability-mask)
-             (mrtd ?parent ?uid ?fields ?mutability-mask ?sealed ?opaque ctxt level
-               make-record-type-descriptor* 'make-record-type-descriptor*
-               (list ?name ?parent ?uid ?sealed ?opaque ?fields ?mutability-mask))])
+          (define-inline 2 r6rs:make-record-type-descriptor
+            [(?name ?parent ?uid ?sealed ?opaque ?fields)
+             (mrtd ?parent ?uid ?fields ?sealed ?opaque ctxt level
+               r6rs:make-record-type-descriptor 'r6rs:make-record-type-descriptor
+               (list ?name ?parent ?uid ?sealed ?opaque ?fields))])
 
           (define-inline 2 $make-record-type-descriptor
             [(?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?who . ?extras)
-             (mrtd ?parent ?uid ?fields #f ?sealed ?opaque ctxt level
+             (mrtd ?parent ?uid ?fields ?sealed ?opaque ctxt level
                $make-record-type-descriptor '$make-record-type-descriptor
-               (list* ?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?who ?extras))])
-
-          (define-inline 2 $make-record-type-descriptor*
-            [(?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?mutability-mask ?who . ?extras)
-             (mrtd ?parent ?uid ?fields ?mutability-mask ?sealed ?opaque ctxt level
-               $make-record-type-descriptor* '$make-record-type-descriptor*
-               (list* ?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?mutability-mask ?who ?extras))])))
+               (list* ?base-rtd ?name ?parent ?uid ?sealed ?opaque ?fields ?who ?extras))])))
       (let ()
         ; if you update this, also update duplicate in record.ss
         (define-record-type rcd
@@ -3655,7 +3637,7 @@
                                        (let f ([ctprcd (ctrcd-ctprcd ctrcd)] [crtd rtd] [prtd prtd] [vars '()])
                                          (let ([pp-args (cp0-make-temp #f)]
                                                [new-vars (map (lambda (x) (cp0-make-temp #f))
-                                                           (vector->list (record-type-field-indices crtd)))])
+                                                           (vector->list (record-type-field-names crtd)))])
                                            (set-prelex-immutable-value! pp-args #t)
                                            `(case-lambda ,(make-preinfo-lambda)
                                               (clause (,pp-args) -1
@@ -3678,14 +3660,14 @@
                                                                        (f (ctrcd-ctprcd ctprcd) prtd pprtd vars))]
                                                                     [else
                                                                      (let ([new-vars (map (lambda (x) (cp0-make-temp #f))
-                                                                                       ($record-type-field-indices prtd))])
+                                                                                       (csv7:record-type-field-names prtd))])
                                                                        (build-lambda new-vars
                                                                          `(call ,(app-preinfo ctxt) ,(go (< level 3) rtd rtd-e ctxt)
                                                                             ,(map build-ref (append new-vars vars))
                                                                             ...)))])))]
                                                            [else
                                                             (let ([new-vars (map (lambda (x) (cp0-make-temp #f))
-                                                                              ($record-type-field-indices prtd))])
+                                                                              (csv7:record-type-field-names prtd))])
                                                               (build-lambda new-vars
                                                                 `(call ,(app-preinfo ctxt) ,(go (< level 3) rtd rtd-e ctxt)
                                                                    ,(map build-ref (append new-vars vars)) ...)))])

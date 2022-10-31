@@ -381,7 +381,6 @@
   (define-primitive $record #%$record)
   (define-primitive $record? #%$record?)
   (define-primitive $record-type-descriptor #%$record-type-descriptor)
-  (define-primitive $make-record-type-descriptor* (lambda args (error '$make-record-type-descriptor* "not ready")))
   (define-primitive $make-record-constructor-descriptor #%$make-record-constructor-descriptor)
   (define-primitive $record-type-field-indices #%$record-type-field-indices)
   (define-primitive $object-ref #%$object-ref)
