@@ -681,13 +681,13 @@ floating point returns with (-1 0 -1 ...).
              [else (wrsymbol (symbol->string x) p)])]
           [(pair?) (wrpair x r lev len d? env p)]
           [(string?) (if d? (display-string x p) (wrstring x p))]
-          [(vector?) (wrvector vector-length vector-ref #f x r lev len d? env p)]
+          [(vector?) (wrvector vector-length vector-ref #t #f x r lev len d? env p)]
           [($stencil-vector?) (wrvector $stencil-vector-length $stencil-vector-ref
-                                        (string-append "stencil[" (number->string ($stencil-vector-mask x) 16) "]")
-                                        x r lev len d? env p)]
-          [(fxvector?) (wrvector fxvector-length fxvector-ref "vfx" x r lev len d? env p)]
-          [(flvector?) (wrvector flvector-length flvector-ref "vfl" x r lev len d? env p)]
-          [(bytevector?) (wrvector bytevector-length bytevector-u8-ref "vu8" x r lev len d? env p)]
+                                        #f (string-append (number->string ($stencil-vector-mask x)) "vs")
+                                        x r lev len #t env p)]
+          [(fxvector?) (wrvector fxvector-length fxvector-ref #t "vfx" x r lev len d? env p)]
+          [(flvector?) (wrvector flvector-length flvector-ref #t "vfl" x r lev len d? env p)]
+          [(bytevector?) (wrvector bytevector-length bytevector-u8-ref #t "vu8" x r lev len d? env p)]
           [(flonum?) (wrflonum #f x r d? p)]
           ; catch before record? case
           [($condition?)
@@ -872,8 +872,8 @@ floating point returns with (-1 0 -1 ...).
        (write-char #\) p)])))
 
 (define wrvector
-   (lambda (vlen vref prefix x r lev len d? env p)
-      (let ([size (vlen x)] [pvl (and (not d?) (print-vector-length))])
+   (lambda (vlen vref pvl? prefix x r lev len d? env p)
+      (let ([size (vlen x)] [pvl (and (not d?) pvl? (print-vector-length))])
          (write-char #\# p)
          (when pvl (wrfixits size 10 p))
          (when prefix (display-string prefix p))

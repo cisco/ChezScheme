@@ -658,6 +658,17 @@
     stencil-vector-update
     $stencil-vector-do-update)
 
+  ;; used by the reader:
+  (set-who! $make-empty-stencil-vector
+    (lambda (mask)
+      (let* ([n (fxpopcount mask)]
+             [v ($make-stencil-vector n mask)])
+        (let loop ([i 0])
+          (unless (fx= i n)
+            ($stencil-vector-fill-set! v i 0)
+            (loop (fx+ i 1))))
+        v)))
+
   ;; `$`-prefixed variants work on regular and system stencils, unless
   ;; `system` is also in the name
   (define-stencil-vector-functions

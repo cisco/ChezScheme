@@ -1538,9 +1538,16 @@ efficient functional update through the \scheme{stencil-vector-update}
 function. A stencil vector is useful, for example, to implement
 sparse nodes in a trie.
 
-\index{\scheme{#stencil}}Stencil vectors are written with
-the prefix \scheme{#stencil}, followed by a hexadecimal mask mask in square
-brackets, and followed by a parenthesized sequence of elements.
+\index{\scheme{#vs}}Stencil vectors are written with the prefix
+\scheme{#}, then a mask integer, then \scheme{vs}, and followed by a
+parenthesized sequence of elements. Note that the mask integer
+determines the length of the stencil vector, and it uses the same
+position as the length of a vector, but the mask is not optional.
+Also, the number of elements in the parenthesized sequence must match
+exactly the number of bits set in the mask.
+The stencil vector syntax is disabled in an input stream after
+\scheme{#!r6rs} has been seen by the reader, unless
+\scheme{#!chezscheme} has been seen more recently.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -1559,6 +1566,12 @@ The result is always less than \scheme{(fixnum-width)}.
 \listlibraries
 \endentryheader
 
+\noskip\schemedisplay
+(stencil-vector? (stencil-vector #b11 'x 'y)) ;=> #t
+(stencil-vector? '#3vs(x y)) ;=> #t
+(stencil-vector? '#2(x y)) ;=> #f
+\endschemedisplay
+
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{stencil-vector}{\categoryprocedure}{(stencil-vector \var{mask} \var{obj} \dots)}
@@ -1572,6 +1585,11 @@ The result is always less than \scheme{(fixnum-width)}.
 and the number of supplied \var{obj}s must be the
 same as \scheme{(fxpopcount mask)}.
 
+\schemedisplay
+(stencil-vector #b11 'x 'y) ;=> #3vs(x y)
+(stencil-vector #b10101 'x 'y 'z) ;=> #21vs(x y z)
+\endschemedisplay
+
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{stencil-vector-mask}{\categoryprocedure}{(stencil-vector-mask \var{stencil-vector})}
@@ -1579,6 +1597,13 @@ same as \scheme{(fxpopcount mask)}.
 \returns the mask or length (as determined by the mask) of \var{stencil-vector}
 \listlibraries
 \endentryheader
+
+\schemedisplay
+(stencil-vector-mask '#0vs()) ;= 0
+(stencil-vector-length '#0vs()) ;= 0
+(stencil-vector-mask '#21vs(x y z)) ;= 21
+(stencil-vector-length '#21vs(x y z)) ;= 3
+\endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -1601,6 +1626,11 @@ the stencil vector, use the following calculation:
 
 \scheme{(fxpopcount (fxand (stencil-vector-mask \var{stencil-vector}) (fx- \var{bit} 1)))}
 
+\schemedisplay
+(stencil-vector-ref '#21vs(x y z) 0) ;= x
+(stencil-vector-ref '#21vs(x y z) 2) ;= z
+\endschemedisplay
+
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{stencil-vector-set!}{\categoryprocedure}{(stencil-vector-set! \var{stencil-vector} \var{n} \var{obj})}
@@ -1614,6 +1644,13 @@ the stencil vector, use the following calculation:
 Installs \var{obj} at position \var{n} within \var{stencil-vector}.
 See \scheme{stencil-vector-ref} for more information about positions
 in stencil vectors.
+
+\schemedisplay
+(define sv (stencil-vector #b10101 'x 'y 'z))
+(stencil-vector-set! sv 1 'why)
+sv ;=> #21vs(x why z)
+\endschemedisplay
+
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -1648,6 +1685,16 @@ bits in the \var{stencil-vector} mask. Individual bits in a mask, \var{remove-bi
 and \var{add-bits} are mapped to element positions as described in the documentation
 of \scheme{stencil-vector-ref}. The mask of the new stencil mask is the mask of
 \var{stencil-vector} minus \var{remove-bits} plus \var{add-bits}.
+
+\schemedisplay
+(define st-vec (stencil-vector #b101 'a 'b))
+(stencil-vector-update st-vec #b0 #b10 'c) ;=> #7vs(a c b)
+(stencil-vector-update st-vec #b0 #b1000 'c) ;=> #13vs(a b c)
+st-vec ;=> #5vs(a b)
+(stencil-vector-update st-vec #b1 #b1 'c) ;=> #5vs(c b)
+(stencil-vector-update st-vec #b100 #b100 'c) ;=> #5vs(a c)
+(stencil-vector-update st-vec #b100 #b0) ;=> #1vs(a)
+\endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader

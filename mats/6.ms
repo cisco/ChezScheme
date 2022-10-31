@@ -792,6 +792,13 @@
                          (or (< i 0)
                              (and (fl= (flvector-ref x i) (flvector-ref y i))
                                   (f (1- i))))))]
+                [(stencil-vector? x)
+                 (and (stencil-vector? y)
+                      (fx= (stencil-vector-mask x) (stencil-vector-mask y))
+                      (let f ([i (- (stencil-vector-length x) 1)])
+                         (or (< i 0)
+                             (and (equal? (stencil-vector-ref x i) (stencil-vector-ref y i))
+                                  (f (1- i))))))]
                 [(bytevector? x)
                  (and (bytevector? y)
                       (bytevector=? x y))]
@@ -1161,29 +1168,33 @@
                  (set-cdr! x x)
                  x))))
    (equal? (parameterize ([print-vector-length #f])
-              (format "~s ~s" '#5(1 2 3) '#8vfx(5 7 9 8 8 9 -1)))
-           "#(1 2 3 3 3) #vfx(5 7 9 8 8 9 -1 -1)")
+              (format "~s ~s ~s ~s" '#5(1 2 3) '#8vfx(5 7 9 8 8 9 -1) '#2vfl(5.0 7.0) '#5vs(x y)))
+           "#(1 2 3 3 3) #vfx(5 7 9 8 8 9 -1 -1) #vfl(5.0 7.0) #5vs(x y)")
    (equal? (parameterize ([print-vector-length #t])
-              (format "~s ~s" '#(1 2 3 3 3) '#vfx(5 7 9 8 8 9 -1 -1)))
-           "#5(1 2 3) #8vfx(5 7 9 8 8 9 -1)")
+              (format "~s ~s ~s ~s" '#(1 2 3 3 3) '#vfx(5 7 9 8 8 9 -1 -1) '#2vfl(5.0 7.0) '#5vs(x y)))
+           "#5(1 2 3) #8vfx(5 7 9 8 8 9 -1) #2vfl(5.0 7.0) #5vs(x y)")
    (equal? (parameterize ([print-vector-length #f])
-              (format "~a ~a" '#5(1 2 3) '#8vfx(5 7 9 8 8 9 -1)))
-           "#(1 2 3 3 3) #vfx(5 7 9 8 8 9 -1 -1)")
+              (format "~a ~a ~a ~a" '#5(1 2 3) '#8vfx(5 7 9 8 8 9 -1) '#2vfl(5.0 7.0) '#5vs(x y)))
+           "#(1 2 3 3 3) #vfx(5 7 9 8 8 9 -1 -1) #vfl(5.0 7.0) #5vs(x y)")
    (equal? (parameterize ([print-vector-length #t])
-              (format "~a ~a" '#(1 2 3 3 3) '#vfx(5 7 9 8 8 9 -1 -1)))
-           "#(1 2 3 3 3) #vfx(5 7 9 8 8 9 -1 -1)")
+              (format "~a ~a ~a ~a" '#(1 2 3 3 3) '#vfx(5 7 9 8 8 9 -1 -1) '#2vfl(5.0 7.0) '#5vs(x y)))
+           "#(1 2 3 3 3) #vfx(5 7 9 8 8 9 -1 -1) #vfl(5.0 7.0) #5vs(x y)")
    (equal? (parameterize ([print-vector-length #f])
              (with-output-to-string
                (lambda ()
                  (pretty-print '#5(1 2 3))
-                 (pretty-print '#8vfx(5 7 9 8 8 9 -1)))))
-           "#(1 2 3 3 3)\n#vfx(5 7 9 8 8 9 -1 -1)\n")
+                 (pretty-print '#8vfx(5 7 9 8 8 9 -1))
+                 (pretty-print '#2vfl(5.0 7.0))
+                 (pretty-print '#5vs(x y)))))
+           "#(1 2 3 3 3)\n#vfx(5 7 9 8 8 9 -1 -1)\n#vfl(5.0 7.0)\n#5vs(x y)\n")
    (equal? (parameterize ([print-vector-length #t])
              (with-output-to-string
                (lambda ()
                  (pretty-print '#(1 2 3 3 3))
-                 (pretty-print '#vfx(5 7 9 8 8 9 -1 -1)))))
-           "#5(1 2 3)\n#8vfx(5 7 9 8 8 9 -1)\n")
+                 (pretty-print '#vfx(5 7 9 8 8 9 -1 -1))
+                 (pretty-print '#2vfl(5.0 7.0))
+                 (pretty-print '#5vs(x y)))))
+           "#5(1 2 3)\n#8vfx(5 7 9 8 8 9 -1)\n#2vfl(5.0 7.0)\n#5vs(x y)\n")
    (equal? (parameterize ([print-extended-identifiers #f])
              (with-output-to-string
                (lambda ()
@@ -1853,8 +1864,15 @@
   "; Test error \"invalid syntax #~v,'0dv~s\"\n\n(list #073vf())\n"
   "; Test error \"invalid syntax #v~s\"\n\n(list #vfx[])\n"
   "; Test error \"invalid syntax #~v,'0dv~s\"\n\n(list #073vfx[])\n"
+  "; Test error \"invalid syntax #v~s\"\n\n(list #vfl[])\n"
+  "; Test error \"invalid syntax #~v,'0dv~s\"\n\n(list #073vfl[])\n"
+  "; Test error \"invalid syntax #v~s\"\n\n(list #vs[])\n"
+  "; Test error \"invalid syntax #~v,'0dv~s\"\n\n(list #073vs[])\n"
   "; Test error \"invalid vector length\"\n\n(vector-length #999999999999999999999999999999(a b c))\n\n"
   "; Test error \"invalid fxvector length\"\n\n(fxvector-length #999999999999999999999999999999vfx(1 2 3))\n\n"
+  "; Test error \"invalid flvector length\"\n\n(fxvector-length #999999999999999999999999999999vfl(1.0 2.0 3.0))\n\n"
+  "; Test error \"invalid stencil vector mask\"\n\n(fxvector-length #999999999999999999999999999999vst())\n\n"
+  "; Test error \"invalid stencil vector mask\"\n\n(fxvector-length #18446744073709551615vst())\n\n"
   "; Test error \"invalid bytevector length\"\n\n(bytevector-length #999999999999999999999999999999vu8(1 2 3))\n\n"
   "; Test error \"mark #~s= missing\"\n\n'(what about this?) ; separate top-level S-expression, so ok.\n\n(begin\n  (reverse '(a b . #77#))\n  (cons 1 2))"
   "; Test error \"more than one item found after dot (.)\"\n\n(define foo\n  (lambda (able baker . charlie delta epsilon)\n    'wow))\n\n"
@@ -1867,7 +1885,12 @@
   "; Test error \"too many vector elements supplied\"\n\n(pretty-print '#3(one two three four five six seven))\n"
   "; Test error \"non-fixnum found in fxvector\"\n\n(pretty-print '#vfx(1 2.0 3 4))\n"
   "; Test error \"non-fixnum found in fxvector\"\n\n(pretty-print '#3vfx(1 2.0 3 4))\n"
+  "; Test error \"too many flvector elements supplied\"\n\n(pretty-print '#3vfl(1.0 2.0 3.0 4.0))\n"
+  "; Test error \"non-flonum found in flvector\"\n\n(pretty-print '#vfl(1.0 2 3.0 4.0))\n"
+  "; Test error \"non-flonum found in flvector\"\n\n(pretty-print '#3vfl(1.0 2 3.0 4.0))\n"
   "; Test error \"too many fxvector elements supplied\"\n\n(pretty-print '#3vfx(1 2 3 4))\n"
+  "; Test error \"too many stencil vector elements supplied\"\n\n(pretty-print '#3vs(one two three))\n"
+  "; Test error \"not enough stencil vector elements supplied\"\n\n(pretty-print '#3vs(one))\n"
   "; Test error \"invalid value 2.0 found in bytevector\"\n\n(pretty-print '#vu8(1 2.0 3 4))\n"
   "; Test error \"invalid value -1 found in bytevector\"\n\n(pretty-print '#3vu8(1 -1 3 4))\n"
   "; Test error \"invalid value #f found in bytevector\"\n\n#vu8(1 2 #f\n"
@@ -1932,6 +1955,10 @@
   "; Test error \"unexpected end-of-file reading #~v,'0dv syntax\"\n\"would this be cool?\" #01vf"
   "; Test error \"unexpected end-of-file reading #v syntax\"\n\"would this be cool?\" #vfx"
   "; Test error \"unexpected end-of-file reading #~v,'0dv syntax\"\n\"would this be cool?\" #01vfx"
+  "; Test error \"unexpected end-of-file reading #v syntax\"\n\"would this be cool?\" #vfl"
+  "; Test error \"unexpected end-of-file reading #~v,'0dv syntax\"\n\"would this be cool?\" #01vfl"
+  "; Test error \"unexpected end-of-file reading #v syntax\"\n\"would this be cool?\" #vs"
+  "; Test error \"unexpected end-of-file reading #~v,'0dv syntax\"\n\"would this be cool?\" #01vs"
   "; Test error \"unexpected end-of-file reading list\" (before first element) \n\n  (\n\n   "
   "; Test error \"unexpected end-of-file reading list\"\n\n(lambda (x y z\n  (cond\n    [(< x 1) y]\n    [else z]))\n\n"
   "; Test error \"unexpected end-of-file reading list\" (after dot)\n\n(car '(a b . \n\n"
@@ -1969,6 +1996,10 @@
   "; Test error \"unexpected end-of-file reading vector\"\n\n  (define v '#35(a b \n"
   "; Test error \"unexpected end-of-file reading fxvector\"\n\n  (define v '#vfx(0 1 \n"
   "; Test error \"unexpected end-of-file reading fxvector\"\n\n  (define v '#35vfx(0 1 \n"
+  "; Test error \"unexpected end-of-file reading flvector\"\n\n  (define v '#vfl(0.0 1.0 \n"
+  "; Test error \"unexpected end-of-file reading flvector\"\n\n  (define v '#35vfl(0.0 1.0 \n"
+  "; Test error \"unexpected end-of-file reading stencil vector\"\n\n  (define v '#3vs(0 1 \n"
+  "; Test error \"unexpected end-of-file reading stencil vector\"\n\n  (define v '#3vs(0 1 \n"
   "; Test error \"unexpected end-of-file reading bytevector\"\n\n  (define v '#vu8(0 1 \n"
   "; Test error \"unexpected end-of-file reading bytevector\"\n\n  (define v '#35vu8(0 1 \n"
   "; Test error \"unrecognized record name ~s\"\n#[zsunekunvliwndwalv 1 2 3 4]"
@@ -1999,7 +2030,10 @@
   "; Test error \"#!bwp syntax not allowed in #!r6rs mode\"\n\n#!r6rs #!bwp\n"
   "; Test error \"#vfx(...) fxvector syntax not allowed in #!r6rs mode\"\n\n#!r6rs '#vfx(1 2 3)\n"
   "; Test error \"#<n>vfx(...) fxvector syntax not allowed in #!r6rs mode\"\n\n#!r6rs '#3vfx(1 2 3)\n"
+  "; Test error \"#vfl(...) fxvector syntax not allowed in #!r6rs mode\"\n\n#!r6rs '#vfl(1.0 2.0 3.0)\n"
+  "; Test error \"#<n>vfl(...) fxvector syntax not allowed in #!r6rs mode\"\n\n#!r6rs '#3vfl(1.0 2.0 3.0)\n"
   "; Test error \"#<n>vu8(...) fxvector syntax not allowed in #!r6rs mode\"\n\n#!r6rs '#3vu8(1 2 3)\n"
+  "; Test error \"#<n>vs(...) stencil vector syntax not allowed in #!r6rs mode\"\n\n#!r6rs '#7vs(1 2 3)\n"
   "; Test error \"octal string-character syntax not allowed in #!r6rs mode\"\n\n#!r6rs \"a\\010b\"\n"
   "; Test error \"back-slash symbol escape syntax not allowed in #!r6rs mode\"\n\n#!r6rs ab\\ cd\n"
   "; Test error \"|...| symbol escape syntax not allowed in #!r6rs mode\"\n\n#!r6rs |ab  cd|\n"

@@ -2290,6 +2290,7 @@
   ($make-source-oops [flags single-valued])
   ($make-src-condition [flags single-valued])
   ($make-stencil-vector [sig [(uptr uptr) -> (stencil-vector)]] [flags single-valued])
+  ($make-empty-stencil-vector [sig [(uptr) -> (stencil-vector)]] [flags single-valued])
   ($make-system-stencil-vector [sig [(uptr uptr) -> (ptr)]] [flags single-valued])
   ($make-textual-input/output-port [sig [(string port-handler string string) (string port-handler string string ptr) -> (textual-input/output-port)]] [flags alloc])
   ($make-textual-input-port [sig [(string port-handler string) (string port-handler string ptr) -> (textual-input-port)]] [flags alloc])

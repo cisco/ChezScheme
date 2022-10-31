@@ -4427,23 +4427,23 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-length: 3 is not a stencil vector".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-mask: 3 is not a stencil vector".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 3 is not a stencil vector".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 0 is not a valid index for #stencil[0]()".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 2 is not a valid index for #stencil[3](apple banana)".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: -1 is not a valid index for #stencil[3](apple banana)".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 1267650600228229401496703205376 is not a valid index for #stencil[3](apple banana)".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 1.0 is not a valid index for #stencil[3](apple banana)".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 0 is not a valid index for #stencil[0]()".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 2 is not a valid index for #stencil[3](apple banana)".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: -1 is not a valid index for #stencil[3](apple banana)".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 1267650600228229401496703205376 is not a valid index for #stencil[3](apple banana)".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 1.0 is not a valid index for #stencil[3](apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 0 is not a valid index for #0vs()".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 2 is not a valid index for #3vs(apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: -1 is not a valid index for #3vs(apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 1267650600228229401496703205376 is not a valid index for #3vs(apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-ref: 1.0 is not a valid index for #3vs(apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 0 is not a valid index for #0vs()".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 2 is not a valid index for #3vs(apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: -1 is not a valid index for #3vs(apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 1267650600228229401496703205376 is not a valid index for #3vs(apple banana)".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-set!: 1.0 is not a valid index for #3vs(apple banana)".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: 1 is not a stencil vector".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: mask of stencil vector #stencil[AAAAA](a b c d e f ...) already has bits in 2".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: mask of stencil vector #stencil[AAAAA](a b c d e f ...) does not have all bits in 1".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: mask of stencil vector #699050vs(a b c d e f ...) already has bits in 2".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: mask of stencil vector #699050vs(a b c d e f ...) does not have all bits in 1".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: addition mask 1 does not match given number of items 0".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-update: addition mask 1 does not match given number of items 2".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector-truncate!: 1 is not a stencil vector".
-5_6.mo:Expected error in mat stencil-vector: "stencil-vector-truncate!: new mask 1 for #stencil[0]() is larger than old mask".
+5_6.mo:Expected error in mat stencil-vector: "stencil-vector-truncate!: new mask 1 for #0vs() is larger than old mask".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector: mask 7 does not match given number of items 0".
 5_6.mo:Expected error in mat stencil-vector: "stencil-vector: mask 6 does not match given number of items 0".
 5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector: invalid mask x".
@@ -4455,15 +4455,15 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-length: 3 is not a stencil vector".
 5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-mask: 3 is not a stencil vector".
 5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 3 is not a stencil vector".
-5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 0 is not a valid index for #stencil[0]()".
-5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 0 is not a valid index for #stencil[0]()".
-5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 2 is not a valid index for #stencil[3](apple banana)".
-5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 2 is not a valid index for #stencil[3](apple banana)".
-5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-set!: 0 is not a valid index for #stencil[0]()".
-5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-set!: 0 is not a valid index for #stencil[0]()".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 0 is not a valid index for #0vs()".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 0 is not a valid index for #0vs()".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 2 is not a valid index for #3vs(apple banana)".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-ref: 2 is not a valid index for #3vs(apple banana)".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-set!: 0 is not a valid index for #0vs()".
+5_6.mo:Expected error in mat system-stencil-vector: "$stencil-vector-set!: 0 is not a valid index for #0vs()".
 5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector-update: 1 is not a stencil vector".
 5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector-truncate!: 1 is not a stencil vector".
-5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector-truncate!: new mask 1 for #stencil[0]() is larger than old mask".
+5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector-truncate!: new mask 1 for #0vs() is larger than old mask".
 5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector: mask 7 does not match given number of items 0".
 5_6.mo:Expected error in mat system-stencil-vector: "$system-stencil-vector: mask 6 does not match given number of items 0".
 5_7.mo:Expected error in mat string->symbol: "string->symbol: 3 is not a string".
@@ -4670,8 +4670,15 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: invalid syntax #073vf( at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: expected left paren after #vfx prefix at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: expected left paren after #073vfx prefix at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: expected left paren after #vfl prefix at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid syntax #073vfl[ at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: expected left paren after #vs prefix at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid syntax #073vs[ at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid vector length 999999999999999999999999999999 at line 3, char 17 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid fxvector length 999999999999999999999999999999 at line 3, char 19 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid flvector length 999999999999999999999999999999 at line 3, char 19 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid syntax #~v,'0dv~a( with irritants (<int> 999999999999999999999999999999 "st") at line 3, char 18 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid syntax #000000000000000<int>vst( at line 3, char 18 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid bytevector length 999999999999999999999999999999 at line 3, char 21 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: mark #77= missing at line 6, char 20 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: more than one item found after dot (.) at line 4, char 33 of testfile.ss".
@@ -4684,7 +4691,12 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: too many vector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: non-fixnum found in fxvector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: non-fixnum found in fxvector at line 3, char 24 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: too many flvector elements supplied at line 3, char 16 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-fixnum found in flvector at line 3, char 25 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-fixnum found in flvector at line 3, char 26 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: too many fxvector elements supplied at line 3, char 16 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: too many stencil vector elements supplied at line 3, char 16 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: not enough stencil vector elements supplied at line 3, char 24 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid value 2.0 found in bytevector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid value -1 found in bytevector at line 3, char 24 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: invalid value #f found in bytevector at line 3, char 10 of testfile.ss".
@@ -4749,6 +4761,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid syntax #01vfl at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid syntax #01vs at line 2, char 23 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading list at line 3, char 3 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading list at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading list at line 3, char 7 of testfile.ss".
@@ -4786,6 +4802,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading vector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading fxvector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading fxvector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading flvector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading flvector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading stencil vector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading stencil vector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading bytevector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unexpected end-of-file reading bytevector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: unrecognized record name zsunekunvliwndwalv at line 2, char 3 of testfile.ss".
@@ -4815,7 +4835,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: #!bwp syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: #vfx(...) fxvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: #<n>vfx(...) fxvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: #vfl(...) flvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: #<n>vfl(...) flvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: #<n>vu8(...) bytevector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: #<n>vs(...) stencil vector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: octal string-character syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: non-hex back-slash symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: |...| symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
@@ -5476,8 +5499,15 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: invalid syntax #073vf( at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: expected left paren after #vfx prefix at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: expected left paren after #073vfx prefix at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: expected left paren after #vfl prefix at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid syntax #073vfl[ at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: expected left paren after #vs prefix at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid syntax #073vs[ at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid vector length 999999999999999999999999999999 at line 3, char 17 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid fxvector length 999999999999999999999999999999 at line 3, char 19 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid flvector length 999999999999999999999999999999 at line 3, char 19 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid syntax #~v,'0dv~a( with irritants (<int> 999999999999999999999999999999 "st") at line 3, char 18 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid syntax #000000000000000<int>vst( at line 3, char 18 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid bytevector length 999999999999999999999999999999 at line 3, char 21 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: mark #77= missing at line 6, char 20 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: more than one item found after dot (.) at line 4, char 33 of testfile.ss".
@@ -5490,7 +5520,12 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: too many vector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: non-fixnum found in fxvector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: non-fixnum found in fxvector at line 3, char 24 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: too many flvector elements supplied at line 3, char 16 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-fixnum found in flvector at line 3, char 25 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-fixnum found in flvector at line 3, char 26 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: too many fxvector elements supplied at line 3, char 16 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: too many stencil vector elements supplied at line 3, char 16 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: not enough stencil vector elements supplied at line 3, char 24 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid value 2.0 found in bytevector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid value -1 found in bytevector at line 3, char 24 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: invalid value #f found in bytevector at line 3, char 10 of testfile.ss".
@@ -5555,6 +5590,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid syntax #01vfl at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid syntax #01vs at line 2, char 23 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading list at line 3, char 3 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading list at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading list at line 3, char 7 of testfile.ss".
@@ -5592,6 +5631,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading vector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading fxvector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading fxvector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading flvector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading flvector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading stencil vector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading stencil vector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading bytevector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unexpected end-of-file reading bytevector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: unrecognized record name zsunekunvliwndwalv at line 2, char 3 of testfile.ss".
@@ -5621,7 +5664,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: #!bwp syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: #vfx(...) fxvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: #<n>vfx(...) fxvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: #vfl(...) flvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: #<n>vfl(...) flvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: #<n>vu8(...) bytevector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: #<n>vs(...) stencil vector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: octal string-character syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: non-hex back-slash symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: |...| symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
@@ -6282,8 +6328,15 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: invalid syntax #073vf( at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: expected left paren after #vfx prefix at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: expected left paren after #073vfx prefix at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: expected left paren after #vfl prefix at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid syntax #073vfl[ at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: expected left paren after #vs prefix at line 3, char 7 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid syntax #073vs[ at line 3, char 7 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid vector length 999999999999999999999999999999 at line 3, char 17 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid fxvector length 999999999999999999999999999999 at line 3, char 19 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid flvector length 999999999999999999999999999999 at line 3, char 19 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid syntax #~v,'0dv~a( with irritants (<int> 999999999999999999999999999999 "st") at line 3, char 18 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid syntax #000000000000000<int>vst( at line 3, char 18 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid bytevector length 999999999999999999999999999999 at line 3, char 21 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: mark #77= missing at line 6, char 20 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: more than one item found after dot (.) at line 4, char 33 of testfile.ss".
@@ -6296,7 +6349,12 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: too many vector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: non-fixnum found in fxvector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: non-fixnum found in fxvector at line 3, char 24 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: too many flvector elements supplied at line 3, char 16 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-fixnum found in flvector at line 3, char 25 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-fixnum found in flvector at line 3, char 26 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: too many fxvector elements supplied at line 3, char 16 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: too many stencil vector elements supplied at line 3, char 16 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: not enough stencil vector elements supplied at line 3, char 24 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid value 2.0 found in bytevector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid value -1 found in bytevector at line 3, char 24 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: invalid value #f found in bytevector at line 3, char 10 of testfile.ss".
@@ -6361,6 +6419,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid syntax #01vfl at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading #v prefix at line 2, char 23 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid syntax #01vs at line 2, char 23 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading list at line 3, char 3 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading list at line 3, char 1 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading list at line 3, char 7 of testfile.ss".
@@ -6398,6 +6460,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading vector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading fxvector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading fxvector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading flvector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading flvector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading stencil vector at line 3, char 14 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading stencil vector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading bytevector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unexpected end-of-file reading bytevector at line 3, char 14 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: unrecognized record name zsunekunvliwndwalv at line 2, char 3 of testfile.ss".
@@ -6427,7 +6493,10 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: #!bwp syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: #vfx(...) fxvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: #<n>vfx(...) fxvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: #vfl(...) flvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: #<n>vfl(...) flvector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: #<n>vu8(...) bytevector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: #<n>vs(...) stencil vector syntax is not allowed in #!r6rs mode at line 3, char 9 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: octal string-character syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: non-hex back-slash symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: |...| symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
