@@ -332,7 +332,7 @@
 
   (define-instruction value (+/ovfl)
     [(op (z ur) (x ur) (y ur))
-     `(set! ,(make-live-info) ,z (asm ,null-info ,asm-add/ovfl ,x ,y))])
+     `(set! ,(make-live-info) ,z (asm ,info ,asm-add/ovfl ,x ,y))])
 
   (define-instruction value (-)
     [(op (z ur) (x ur) (y imm12))
@@ -344,7 +344,7 @@
 
   (define-instruction value (-/ovfl)
     [(op (z ur) (x ur) (y ur))
-     `(set! ,(make-live-info) ,z (asm ,null-info ,asm-sub/ovfl ,x ,y))])
+     `(set! ,(make-live-info) ,z (asm ,info ,asm-sub/ovfl ,x ,y))])
 
   (define-instruction value (-/eq)
     [(op (z ur) (x ur) (y ur))
