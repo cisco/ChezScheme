@@ -1305,12 +1305,12 @@
     (lambda (type)
       (rec asm-swap-internal
            (lambda (code* dest src)
-             (let ([t0 %scratch0])
+             (let ([t0 %scratch0] [t1 %scratch1])
                (Trivit (dest src)
                        ;; Hopefully every RISC-V CPU will implement the B extension.
                        (define dance
                          (lambda (right left code*)
-                           (emit srli t0 src right
+                           (emit srli t0 t1 right
                                  (emit andi t0 t0 #xff
                                        (if (= left 0)
                                            (emit or dest dest t0 code*)
@@ -1318,43 +1318,49 @@
                                                  (emit or dest dest t0 code*)))))))
                        (case type
                          [(integer-16)
-                          ;; 1st byte
-                          (emit andi t0 src #xff
-                                (emit slli t0 t0 56
-                                      (emit srai dest t0 48
-                                            ;; 2nd byte
-                                            (dance 8 0 code*))))]
+                          ;; backup src in case src and dest are the same
+                          (emit addi t1 src 0
+                                ;; 1st byte
+                                (emit andi t0 t1 #xff
+                                      (emit slli t0 t0 56
+                                            (emit srai dest t0 48
+                                                  ;; 2nd byte
+                                                  (dance 8 0 code*)))))]
                          [(unsigned-16)
-                          (emit andi t0 src #xff
-                                (emit slli dest t0 8
-                                      (dance 8 0 code*)))]
+                          (emit addi t1 src 0
+                                (emit andi t0 t1 #xff
+                                      (emit slli dest t0 8
+                                            (dance 8 0 code*))))]
                          [(integer-32)
-                          ;; 1st byte
-                          (emit andi t0 src #xff
-                                (emit slli t0 t0 56
-                                      (emit srai dest t0 32
+                          (emit addi t1 src 0
+                                ;; 1st byte
+                                (emit andi t0 t1 #xff
+                                      (emit slli t0 t0 56
+                                            (emit srai dest t0 32
+                                                  ;; 2nd and so on
+                                                  (dance 8 16
+                                                         (dance 16 8
+                                                                (dance 24 0 code*)))))))]
+                         [(unsigned-32)
+                          (emit addi t1 src 0
+                                ;; 1st byte
+                                (emit andi t0 t1 #xff
+                                      (emit slli dest t0 24
                                             ;; 2nd and so on
                                             (dance 8 16
                                                    (dance 16 8
                                                           (dance 24 0 code*))))))]
-                         [(unsigned-32)
-                          ;; 1st byte
-                          (emit andi t0 src #xff
-                                (emit slli dest t0 24
-                                      ;; 2nd and so on
-                                      (dance 8 16
-                                             (dance 16 8
-                                                    (dance 24 0 code*)))))]
                          [(integer-64 unsigned-64)
-                          (emit andi t0 src #xff
-                                (emit slli dest t0 56
-                                      (dance 8 48
-                                             (dance 16 40
-                                                    (dance 24 32
-                                                           (dance 32 24
-                                                                  (dance 40 16
-                                                                         (dance 48 8
-                                                                                (dance 56 0 code*)))))))))]
+                          (emit addi t1 src 0
+                                (emit andi t0 t1 #xff
+                                      (emit slli dest t0 56
+                                            (dance 8 48
+                                                   (dance 16 40
+                                                          (dance 24 32
+                                                                 (dance 32 24
+                                                                        (dance 40 16
+                                                                               (dance 48 8
+                                                                                      (dance 56 0 code*))))))))))]
                          [else (sorry! who "unexpected asm-swap type argument ~s" type)])))))))
 
   (define asm-lock ;;@ check operands of sc.d, see if can be used in both places
