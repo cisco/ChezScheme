@@ -6380,7 +6380,7 @@
          (unless (source-object? src) (syntax-error src "profile subform is not a source object"))
          (build-input-profile src))])))
 
-(global-extend 'core 'begin-unsafe
+(global-extend 'core '$begin-unsafe
   (lambda (e r w ae)
     (syntax-case e ()
       ((_ e1 e2 ...)

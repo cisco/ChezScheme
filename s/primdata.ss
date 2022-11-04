@@ -1053,7 +1053,6 @@
   (add-prefix [flags])
   (alias [flags])
   (annotation-options [flags])
-  (begin-unsafe [flags])
   (case [flags])
   (constructor [flags])
   (critical-section [flags])
@@ -2544,6 +2543,7 @@
 )
 
 (define-symbol-flags* ([libraries] [flags system-keyword])
+  ($begin-unsafe [flags])
   ($case [flags])
   ($chezscheme-csv7 [flags library-uid])
   ($foreign-callable [flags])

@@ -672,12 +672,6 @@ a value when it is referenced. These checks would be skipped at
 \scheme{optimize-level} 3, but the parameters cause them to be skipped
 independent of the value of \scheme{optimize-level}.
 
-The \scheme{begin-unsafe} syntactic form is the same as
-\scheme{begin}, but expands and compiles its body as if
-\scheme{optimize-level} is set to 3. The \scheme{begin-unsafe} form is
-useful in the expansion of a macro that otherwise ensures the safety
-of an expression.
-
 A true value for the \scheme{enable-arithmetic-left-associative}
 parameter ensures that arithmetic operations are performed as
 left-associative, which amounts to a constraint on optimizations.

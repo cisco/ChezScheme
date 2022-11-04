@@ -425,6 +425,9 @@
 (define-syntax $lambda/lift-barrier
   (syntax-rules ()
     [(_ fmls body ...) (lambda fmls body ...)]))
+(define-syntax $begin-unsafe
+  (syntax-rules ()
+    [(_ body0 body ...) (begin body0 body ...)]))
 
 (define-primitive $fasl-target (make-parameter #f))
 (define-primitive $current-mso (make-parameter #f))
