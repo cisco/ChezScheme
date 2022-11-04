@@ -684,7 +684,7 @@ floating point returns with (-1 0 -1 ...).
           [(vector?) (wrvector vector-length vector-ref #t #f x r lev len d? env p)]
           [($stencil-vector?) (wrvector $stencil-vector-length $stencil-vector-ref
                                         #f (string-append (number->string ($stencil-vector-mask x)) "vs")
-                                        x r lev len #t env p)]
+                                        x r lev len d? env p)]
           [(fxvector?) (wrvector fxvector-length fxvector-ref #t "vfx" x r lev len d? env p)]
           [(flvector?) (wrvector flvector-length flvector-ref #t "vfl" x r lev len d? env p)]
           [(bytevector?) (wrvector bytevector-length bytevector-u8-ref #t "vu8" x r lev len d? env p)]
