@@ -55,7 +55,8 @@
    [%Cfparg8 %f17           #f  17]
    [%flreg1  %f1            #f  1]
    [%flreg2  %f2            #f  2]
-   [%flreg3  %f3            #f  3]))
+   [%flreg3  %f3            #f  3]
+   [%fpscratch %f7          #f  7]))
 
 ;;; SECTION 2: instructions
 (module (md-handle-jump)
