@@ -2019,6 +2019,7 @@
   ($ftd-as-box? [flags])
   ($ftd-atomic-category [flags])
   ($ftd-compound? [flags])
+  ($ftd-union? [flags])
   ($ftd-size [flags])
   ($ftd-unsigned? [flags])
   ($ftd->members [flags])

@@ -959,6 +959,14 @@ ftype operators:
       (or (ftd-struct? x)
           (ftd-union? x)
           (ftd-array? x))))
+  (set! $ftd-union?
+        (lambda (x)
+          (or (ftd-union? x)
+              (and (ftd-struct? x)
+                   (ormap (lambda (f) ($ftd-union? (caddr f)))
+                          (ftd-struct-field* x)))
+              (and (ftd-array? x)
+                   ($ftd-union? (ftd-array-ftd x))))))
   (set! $ftd-unsigned?
     (lambda (x)
       (and (ftd-base? x)
