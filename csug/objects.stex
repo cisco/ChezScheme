@@ -121,8 +121,8 @@ pair containing the last element and the terminating object.
 \endentryheader
 
 \noindent
-Like \scheme{list?}, but on the assumption that any pairs involved in the
-result are never mutated further, the result is produced in amoritized
+Like \scheme{list?}, but on the assumption that any pairs traversed while
+computing the result are never mutated further, the result is produced in amoritized
 constant time.
 
 \schemedisplay
@@ -737,6 +737,8 @@ of \var{string} selected by \var{start} and \var{end}.
 
 \section{Vectors}
 
+\index{\scheme{#(} (vector prefix)}%
+\index{#( (vector prefix)@\scheme{#\var{n}(} (vector prefix)}%
 {\ChezScheme} extends the syntax of vectors to allow the length of the
 vector to be specified between the \scheme{#} and open parenthesis, e.g.,
 \scheme{#3(a b c)}.
@@ -884,7 +886,9 @@ R$^7$RS, as the latter states that vectors are self-evaluating.
 \index{fxvectors}%
 Fixnum-only vectors, or ``fxvectors,'' are like vectors but contain
 only fixnums.
-Fxvectors are written with the \scheme{#vfx} prefix in place of the
+\index{\scheme{#vfx(} (fxvector prefix)}%
+\index{#vfx( (fxvector prefix)@\scheme{#\var{n}vfx(} (fxvector prefix)}%
+ Fxvectors are written with the \scheme{#vfx} prefix in place of the
 \scheme{#} prefix for vectors, e.g., \scheme{#vfx(1 2 3)} or
 \scheme{#10vfx(2)}.
 The fxvector syntax is disabled in an input stream after \scheme{#!r6rs}
@@ -1080,7 +1084,9 @@ as \var{fxvector}.
 \index{flvectors}%
 Flonum-only vectors, or ``flvectors,'' are like vectors but contain
 only flonums.
-Flvectors are written with the \scheme{#vfl} prefix in place of the
+\index{\scheme{#vfl(} (flvector prefix)}%
+\index{#vfl( (flvector prefix)@\scheme{#\var{n}vfl(} (flvector prefix)}%
+ Flvectors are written with the \scheme{#vfl} prefix in place of the
 \scheme{#} prefix for vectors, e.g., \scheme{#vfl(1.0 2.0 3.0)} or
 \scheme{#10vfl(2.0)}.
 The flvector syntax is disabled in an input stream after \scheme{#!r6rs}
@@ -1117,7 +1123,7 @@ does not have to be traced during collection.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{flvector}{\categoryprocedure}{(flvector \var{flonum} \dots)}
-\returns an flvector of the fixnums \scheme{\var{flonum} \dots}
+\returns an flvector of the flonums \scheme{\var{flonum} \dots}
 \listlibraries
 \endentryheader
 
@@ -1525,20 +1531,30 @@ as the original given to \scheme{bytevector-compress}.
 
 \section{Stencil Vectors}
 
-\index{stencil vectors}Stencil vectors are like vectors, but a stencil
-vector has a mask fixnum that is accessible via
-\scheme{stencil-vector-mask} and that also determines the stencil
-vector's size. Since the size is limited to
-\scheme{(stencil-vector-mask-width)}, which is no more than the number
-of bits in a fixnum, the size of a stencil vector is limited.
+\index{stencil vectors}
+Stencil vectors are like vectors, but also have a \emph{mask}, accessible
+via \scheme{stencil-vector-mask}, which is a fixnum of no more than
+\scheme{(stencil-vector-mask-width)} bits.  The length of a stencil vector
+is exactly the same as the number of bits set in its mask.  In other
+words, the following expression is true for any stencil vector \scheme{sv}:
+
+\scheme{(fx= (stencil-vector-length sv) (fxpopcount (stencil-vector-mask sv)))}
+
+Since \scheme{(stencil-vector-mask-width)} can be no more than the number
+of bits in a fixnum, the maximum size of a stencil vector is limited.
+
+Other than the \scheme{stencil-vector} constructor, the mask is only
+relevant to the \\ \scheme{stencil-vector-update} and
+\scheme{stencil-vector-truncate!} procedures.
 
 A stencil vector provides a more compact representation than a vector
 with one element dedicated to the mask. It also provides more
 efficient functional update through the \scheme{stencil-vector-update}
-function. A stencil vector is useful, for example, to implement
+procedure. A stencil vector is useful, for example, to implement
 sparse nodes in a trie.
 
-\index{\scheme{#vs}}Stencil vectors are written with the prefix
+\index{#vs( (stencil vector prefix)@\scheme{#\var{n}vs(} (stencil vector prefix)}%
+Stencil vectors are written with the prefix
 \scheme{#}, then a mask integer, then \scheme{vs}, and followed by a
 parenthesized sequence of elements. Note that the mask integer
 determines the length of the stencil vector, and it uses the same
@@ -1593,10 +1609,19 @@ same as \scheme{(fxpopcount mask)}.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{stencil-vector-mask}{\categoryprocedure}{(stencil-vector-mask \var{stencil-vector})}
-\formdef{stencil-vector-length}{\categoryprocedure}{(stencil-vector-length \var{stencil-vector})}
-\returns the mask or length (as determined by the mask) of \var{stencil-vector}
+\returns the mask of \var{stencil-vector}
 \listlibraries
 \endentryheader
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{stencil-vector-length}{\categoryprocedure}{(stencil-vector-length \var{stencil-vector})}
+\returns the length of \var{stencil-vector}
+\listlibraries
+\endentryheader
+
+A stencil vector's length is determined by its mask.  (I.e., this is
+equivalent to \scheme{(fxpopcount (stencil-vector-mask \var{stencil-vector}))}.)
 
 \schemedisplay
 (stencil-vector-mask '#0vs()) ;= 0
@@ -1615,16 +1640,16 @@ same as \scheme{(fxpopcount mask)}.
 \noindent
 \var{n} must be a nonnegative fixnum that is less than the length of \var{stencil-vector}.
 
-Stencil vector elements are accessed by position---unrelated to the
-stencil vector's mask, except that the number of valid positions is
-determined by the mask.
+Stencil vector elements are accessed by position, unrelated to the
+stencil vector's mask (except insofar as the number of valid positions is
+determined by the mask).
 
 Conceptually, each stensil vector element corresponds to a bit in the
-stencil vector's mask. To convert a a bit position \var{bit} to an
+stencil vector's mask (and vice-versa). To convert a (0-based) bit position \var{bit} to an
 index, where the lowest set bit corresponds to the first element of
 the stencil vector, use the following calculation:
 
-\scheme{(fxpopcount (fxand (stencil-vector-mask \var{stencil-vector}) (fx- \var{bit} 1)))}
+\scheme{(fxpopcount (fxand (stencil-vector-mask \var{stencil-vector}) (fx- (fxsll 1 \var{bit}) 1)))}
 
 \schemedisplay
 (stencil-vector-ref '#21vs(x y z) 0) ;= x
@@ -1655,24 +1680,35 @@ sv ;=> #21vs(x why z)
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{stencil-vector-update}{\categoryprocedure}{(stencil-vector-update \var{stencil-vector} \var{remove-bits} \var{add-bits} \var{obj} \dots)}
-\returns a new stencil vector adapted frmo \var{stencil-vector}
+\returns a new stencil vector adapted from \var{stencil-vector}
 \listlibraries
 \endentryheader
 
 \noindent
-\var{remove-bits} and \var{add-bits} must be nonnegative fixnums, and then must be less
-than \scheme{(fxsll 1 (stencil-vector-mask-width))}. Furthermore:
+\var{remove-bits} and \var{add-bits} must be nonnegative fixnums less
+than \\ \scheme{(fxsll 1 (stencil-vector-mask-width))}. Furthermore, all of
+the following must be true:
 
 \begin{itemize}
 
  \item \var{remove-bits}
-       must have a subset of the bits in the mask of \var{stencil-vector},
+       must be a subset of the bits in the mask of \var{stencil-vector}.
+       In other words,
+       \scheme{(logand (stencil-vector-mask \var{stencil-vector}) \var{remove-bits})}
+       must be equal to \var{remove-bits}.
 
   \item \var{add-bits} must have a set of bits that do not overlap the
         subtraction of \var{remove-bits} from the mask of
-        \var{stencil-vector}, and
+        \var{stencil-vector}.  In other words
+        \schemedisplay
+        (logand
+          (logand (stencil-vector-mask \var{stencil-vector}) (lognot \var{remove-bits}))
+          \var{add-bits})
+        \endschemedisplay
+        must be \scheme{0}.
+        % \scheme{(logand (logand (stencil-vector-mask \var{stencil-vector}) (lognot \var{remove-bits})) \var{add-bits})}
 
- \item the number of supplied \var{obj}s must match \scheme{(fxpopcount add-bits)}.
+ \item The number of supplied \var{obj}s must match \scheme{(fxpopcount add-bits)}.
 
 \end{itemize}
 
@@ -1681,9 +1717,9 @@ Returns a new stencil vector that has all of the elements of
 \var{remove-bits}. The new stencil vector also has the given \var{obj}s at
 positions determined by \var{add-bits}. Elements copied from \var{stencil-vector}
 to the new vector retain their relative positions corresponding to their
-bits in the \var{stencil-vector} mask. Individual bits in a mask, \var{remove-bits},
+bits in the \var{stencil-vector} mask. Individual bits in the mask, \var{remove-bits},
 and \var{add-bits} are mapped to element positions as described in the documentation
-of \scheme{stencil-vector-ref}. The mask of the new stencil mask is the mask of
+of \scheme{stencil-vector-ref}. The mask of the new stencil vector is the mask of
 \var{stencil-vector} minus \var{remove-bits} plus \var{add-bits}.
 
 \schemedisplay
@@ -1704,7 +1740,8 @@ st-vec ;=> #5vs(a b)
 \endentryheader
 
 \noindent
-\var{mask} must be a nonnegative fixnum that has fewer bits set than in the current mask of \var{stencil-vector}.
+\var{mask} must be a nonnegative fixnum that does not have more bits set
+than bits set in the current mask of \var{stencil-vector}.
 
 Changes the mask of \var{stencil-vector} to \var{mask}, discarding any
 elements of the vector beyond the first \scheme{(fxpopcount \var{mask})} elements.
@@ -2410,7 +2447,7 @@ cell ;=> (#(a b c) . 3)
 \var{hashtable} must be a hashtable.
 \var{key} may be any Scheme value.
 
-If \var{key} is associated with a value in \var{hashtable}, then it returns a pair
+If \var{key} is associated with a value in \var{hashtable}, then \scheme{hashtable-ref-cell} returns a pair
 whose car is \var{key} and whose cdr is the associated value. Changing the cdr of
 this pair effectively updates the table to associate \var{key} with a new value.
 The \var{key} in the car field should not be changed.
@@ -2440,8 +2477,8 @@ cell ;=> ((#a b c) . 3)
 \noindent
 Identical to the Revised$^6$ Report counterpart, but allowing an optional
 \var{size} argument.
-If \var{size} is specified, then it must be an exact, nonnegative integer, and the
-result vector contains no more than \var{size} elements.
+If \var{size} is specified, then it must be an exact, nonnegative integer; the
+result vector will contain \scheme{(min \var{size} (hashtable-size \var{hashtable}))} elements.
 Different calls to \scheme{hashtable-keys}
 with a \var{size} less than \scheme{(hashtable-size \var{hashtable})}
 may return different subsets of \var{hashtable}'s keys.
@@ -2467,8 +2504,8 @@ may return different subsets of \var{hashtable}'s keys.
 Each value is the value of one of the keys in \var{hashtable}.
 Duplicate values are not removed.
 The values may appear in any order in the returned vector.
-If \var{size} is specified, then it must be an exact, nonnegative integer, and the
-result vector contains no more than \var{size} elements.
+If \var{size} is specified, then it must be an exact, nonnegative integer; the
+result vector will contain \scheme{(min \var{size} (hashtable-size \var{hashtable}))} elements.
 Different calls to \scheme{hashtable-values}
 with a \var{size} less than \scheme{(hashtable-size \var{hashtable})}
 may return different subsets of \var{hashtable}'s values.
@@ -2499,8 +2536,8 @@ not be created.
 \noindent
 Identical to the Revised$^6$ Report counterpart, but allowing an optional
 \var{size} argument.
-If \var{size} is specified, then it must be an exact, nonnegative integer, and the
-result vectors contain no more than \var{size} elements.
+If \var{size} is specified, then it must be an exact, nonnegative integer; the
+result vectors will each contain \scheme{(min \var{size} (hashtable-size \var{hashtable}))} elements.
 Different calls to \scheme{hashtable-entries}
 with a \var{size} less than \scheme{(hashtable-size \var{hashtable})}
 may return different subsets of \var{hashtable}'s entries.
@@ -2524,35 +2561,8 @@ may return different subsets of \var{hashtable}'s entries.
 \noindent
 Each element of the result vector is the value of one of the cells in \var{hashtable}.
 The cells may appear in any order in the returned vector.
-If \var{size} is specified, then it must be an exact, nonnegative integer, and the
-result vector contains no more than \var{size} cells.
-If \var{size} is not specified, then the result vector has \scheme{(hashtable-size \var{hashtable})} elements.
-Different calls to \scheme{hashtable-cells}
-with a \var{size} less than \scheme{(hashtable-size \var{hashtable})}
-may return different subsets of \var{hashtable}'s cells.
-
-\schemedisplay
-(define ht (make-eqv-hashtable))
-(hashtable-set! ht 1 'one)
-(hashtable-set! ht 2 'two)
-(hashtable-cells ht) ;=> #((1 . one) (2 . two)) \var{or} #((2 . two) (1 . one))
-(hashtable-cells ht 1) ;=> #((1 . one)) \var{or} #((2 . two))
-(hashtable-cells ht 0) ;=> #()
-\endschemedisplay
-
-%----------------------------------------------------------------------------
-\entryheader
-\formdef{hashtable-cells}{\categoryprocedure}{(hashtable-cells \var{hashtable})}
-\formdef{hashtable-cells}{\categoryprocedure}{(hashtable-cells \var{hashtable} \var{size})}
-\returns a vector of up to \var{size} elements containing the cells of \var{hashtable}
-\listlibraries
-\endentryheader
-
-\noindent
-Each element of the result vector is the value of one of the cells in \var{hashtable}.
-The cells may appear in any order in the returned vector.
-If \var{size} is specified, then it must be an exact, nonnegative integer, and the
-result vector contains no more than \var{size} cells.
+If \var{size} is specified, then it must be an exact, nonnegative integer; the
+result vector will contain \scheme{(min \var{size} (hashtable-size \var{hashtable}))} elements.
 If \var{size} is not specified, then the result vector has \scheme{(hashtable-size \var{hashtable})} elements.
 Different calls to \scheme{hashtable-cells}
 with a \var{size} less than \scheme{(hashtable-size \var{hashtable})}
@@ -2869,7 +2879,7 @@ opportunity of resizing.
 \var{hashtable} must be an eq hashtable.
 \var{key} may be any Scheme value.
 
-If \var{key} is associated with a value in \var{hashtable}, then it returns a pair
+If \var{key} is associated with a value in \var{hashtable}, then \scheme{eq-hashtable-ref-cell} returns a pair
 whose car is \var{key} and whose cdr is the associated value. Changing the cdr of
 this pair effectively updates the table to associate \var{key} with a new value.
 The \var{key} in the car field should not be changed.
@@ -2916,11 +2926,15 @@ for \var{key} from \var{hashtable}.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{symbol-hashtable?}{\categoryprocedure}{(symbol-hashtable? \var{obj})}
-\returns \scheme{#t} if \var{obj} is an eq hashtable, \scheme{#f} otherwise
+\returns \scheme{#t} if \var{obj} is a symbol hashtable, \scheme{#f} otherwise
 \listlibraries
 \endentryheader
 
-\noskip\schemedisplay
+A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
+and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or
+\scheme{symbol=?}.
+
+\schemedisplay
 (symbol-hashtable? (make-hashtable symbol-hash eq?)) ;=> #t
 (symbol-hashtable? (make-eq-hashtable)) ;=> #f
 \endschemedisplay
@@ -4448,6 +4462,9 @@ is the ``pretty'' name of the gensym (see~\ref{desc:gensym}).
 \var{rtd} must be a record-type descriptor.
 The field names are symbols.
 
+See also the Revised$^6$ Report version of this prodecure (exported from
+the \scheme{(chezscheme)} library) which returns a vector.
+
 \schemedisplay
 (define-record triple ((immutable x1) (mutable x2) (immutable x3)))
 (record-type-field-names (type-descriptor triple)) ;=> (x1 x2 x3)
@@ -4568,7 +4585,7 @@ corresponding field among new fields is mutable. The total number of
 fields in a record type must be a fixnum.
 
 If \var{parent} is a record type descriptor, it must also have
-anonymous fields. The resulting anonynmous-field record type can only
+anonymous fields. The resulting anonymous-field record type can only
 be the parent of a record type with anonymous fields.
 
 When a function like \scheme{record-type-field-names} is applied to an
@@ -4578,7 +4595,7 @@ anonymous-field record type, the field names are all reported as
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{record-type-has-named-fields?}{\categoryprocedure}{(record-type-has-named-fields? \var{rtd})}
-\returns a boolean indicating whether \var{rts} has named fields
+\returns a boolean indicating whether \var{rtd} has named fields
 \listlibraries
 \endentryheader
 
@@ -4671,7 +4688,7 @@ Determines whether \var{obj} is a wrapper procedure produced by either
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{wrapper-procedure-procedure}{\categoryprocedure}{(wrapper-procedure-data \var{w-proc})}
+\formdef{wrapper-procedure-procedure}{\categoryprocedure}{(wrapper-procedure-procedure \var{w-proc})}
 \returns the procedure wrapped by the wrapper procedure \var{proc}
 \listlibraries
 \endentryheader
@@ -4683,7 +4700,7 @@ Determines whether \var{obj} is a wrapper procedure produced by either
 
 \schemedisplay
 (define vector3 (make-wrapper-procedure vector 8 'my-data))
-(arity-wrapper-procedure-data vector3) ; => #<procedure vector>
+(wrapper-procedure-procedure vector3) ; => #<procedure vector>
 \endschemedisplay
 
 %----------------------------------------------------------------------------
@@ -4700,7 +4717,7 @@ Determines whether \var{obj} is a wrapper procedure produced by either
 
 \schemedisplay
 (define vector3 (make-wrapper-procedure vector 8 'my-data))
-(arity-wrapper-procedure-data vector3) ; => 'my-data
+(wrapper-procedure-data vector3) ; => 'my-data
 \endschemedisplay
 
 %----------------------------------------------------------------------------
@@ -4725,7 +4742,7 @@ Changes the data stored in \var{w-proc} to \var{data}.
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{set-wrapper-procedure!}{\categoryprocedure}{(set-wrapper-procedure-data! \var{w-proc} \var{proc})}
+\formdef{set-wrapper-procedure!}{\categoryprocedure}{(set-wrapper-procedure! \var{w-proc} \var{proc})}
 \returns unspecified
 \listlibraries
 \endentryheader
@@ -4736,8 +4753,10 @@ Changes the data stored in \var{w-proc} to \var{data}.
 \scheme{make-arity-wrapper-procedure}, and \var{proc} must be
 a procedure.
 
-Changes \var{w-proc} so that it behaves the same as \var{proc}, except that
-the result is unchanged for \scheme{(procedure-arity-mask \var{w-proc})}.
+Changes \var{w-proc} so that it behaves the same as \var{proc}, leaving the
+results of \\ \scheme{(procedure-arity-mask \var{w-proc})} and
+\scheme{(wrapper-procedure-data \var{w-proc})} unchanged.
+
 
 \schemedisplay
 (define vector3 (make-wrapper-procedure vector 8 'my-data))

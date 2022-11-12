@@ -828,7 +828,7 @@ Otherwise, the expander loads the source file.
 (Loading the source file actually causes the code to be compiled,
 assuming the default value of \scheme{current-eval}, but the compiled
 code is not saved to an object file.)
-The \scheme{library-timestamp-mode} parameter controls the meaining of ``older''
+The \scheme{library-timestamp-mode} parameter controls the meaning of ``older''
 for comparing library sources and object files.
 An exception is raised during this process if a
 source or object file exists but is not readable or if an object

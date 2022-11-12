@@ -95,14 +95,14 @@ Threads created by foreign code using some means other than
 or calling any Scheme procedures.
 
 %----------------------------------------------------------------------------
-\noskipentryheader
+\entryheader
 \formdef{thread-join}{\categoryprocedure}{(thread-join \var{thread})}
 \returns unspecified
 \listlibraries
 \endnoskipentryheader
 
 \noindent
-Waits until \var{thread} has commpleted.
+Waits until \var{thread} has completed.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -133,7 +133,7 @@ relationship to the process id returned by
 in all threads.
 
 %----------------------------------------------------------------------------
-\noskipentryheader
+\entryheader
 \formdef{thread-preserve-ownership!}{\categoryprocedure}{(thread-preserve-ownership!)}
 \formdef{thread-preserve-ownership!}{\categoryprocedure}{(thread-preserve-ownership! \var{thread})}
 \returns unspecified

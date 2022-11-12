@@ -253,7 +253,7 @@ When called with a single argument, which must be an exception state,
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{create-exception-state}{\categoryprocedure}{(create-exception-state)}
-\formdef{create-exception-state}{\categoryprocedure}{(create-exception-state \var{procedure})}
+\formdef{create-exception-state}{\categoryprocedure}{(create-exception-state \var{handler})}
 \listlibraries
 \endentryheader
 
@@ -275,33 +275,33 @@ to the value of the following expression.
 \listlibraries
 \endentryheader
 
-\scheme{assert-unreachable} is used an assertion and optimization hint
-in an expression that must not be reached.
+\scheme{assert-unreachable} is an assertion with the special property that
+at optimize-level 3 the optimizer can assume that the any application of
+\scheme{assert-unreachable} is, in fact, not reachable.
 
-When a safe reference to the procedure is applied, it acts as an
-assertion. In that case, an exception is raised if control reaches the
-application.
+In code expanded or compiled at optimize-levels less than 3, invoking
+\scheme{assert-unreachable} raises a non-continuable exception with
+condition type \scheme{&assertion}.
 
-When an unsafe reference to the procedure is applied, the behavior of
-the application is undefined, which gives the compiler liberty to pick
-convenient or efficient behavior. For example, the expression
-
-\schemedisplay
-(lambda (x)
-  (if (pair? x)
-      (car x)
-      (#3%assert-unreachable)))
-\endschemedisplay
-
-is compiled to code equivalent to
+In code expanded or compiled at optimize-level 3, the behavior of invoking
+\scheme{assert-unreachable} is undefined, which gives the compiler liberty to pick
+convenient or efficient behavior. For example:
 
 \schemedisplay
-(lambda (x) (#3%car x))
+(print-gensym #f)
+(optimize-level 3)
+(expand/optimize
+  '(lambda (x)
+     (if (pair? x)
+         (car x)
+         (assert-unreachable)))))
+;=> (lambda (x) (#3%car x))
 \endschemedisplay
 
 because choosing to make \scheme{(assert-unreachable)} behave the same
 as \scheme{(#3%car x)} makes both branches of the \scheme{if} the
-same, and then \scheme{pair?} test can be eliminated.
+same, and then \scheme{pair?} test can be eliminated (since it has no side
+effects).
 
 \section{Interrupts\label{SECTSYSTEMINTERRUPTS}}
 
@@ -1589,12 +1589,12 @@ input from a list of objects and sends output to an arbitrary binary
 output port.
 \var{sfd} is used to associate block-profiling information with the
 input file name encapsulated within \var{sfd}.
-If \var{wpoop} is present, \scheme{compile-to-port} sends whole-program optimization information
+If \var{wpoop} is present and not \scheme{#f}, \scheme{compile-to-port} sends whole-program optimization information
 to \var{wpoop} for use by \scheme{compile-whole-program}, as if
 (and regardless of whether) \scheme{generate-wpo-files} is set.
-If \var{covop} is present, \var{compile-to-port} sends coverage information to
+If \var{covop} is present and not \scheme{#f}, \scheme{compile-to-port} sends coverage information to
 \var{covop}, as if (and regardless of whether) \scheme{generate-covin-files} is set.
-If \var{machine} is present, \scheme{compile-to-port} compiles for the specified machine type.
+If \var{mach} is present, \scheme{compile-to-port} compiles for the specified machine type.
 If \var{hostop} is present, \scheme{compile-to-port} compiles for the host machine type
 to \var{hostp} (in addition to writing for \var{machine} to \var{op}, whether or not
 the machine types are the same).
@@ -1603,16 +1603,21 @@ The ports are not closed automatically after compilation under the assumption
 the program that opens the port and invokes \scheme{compile-to-port}
 will take care of closing the port.
 
-If \var{ext} is present, it is used like
-the predicate supplied to \scheme{fasl-write}. In that case, a
-corresponding vector must be provided to
+If \var{ext} is present and not \scheme{#f}, it is used like
+the \var{externals-pred} predicate supplied to \scheme{fasl-write}. In that case, a
+corresponding vector must be provided to\\
 \scheme{load-compiled-from-port} to load the compiled code, analogous
 to the vector supplied to \scheme{fasl-read}.
 
-If \var{nortds?} is present and true, then any record types
-relevant to the compiled code must be declared in the loading context,
-and the loading context is assumed to have compatible registrations
-using the same unique ID.
+Similarly, if \var{nortds?} is present and true, it is used like the
+\var{omit-rtds?} argument supplied to \scheme{fasl-write}:  Any record types
+relevant to the compiled code are not written to the output port.  When
+the compiled code is later loaded, these record types must already
+be declared in the loading context, and the
+loading context is assumed to have compatible record-type
+registrations using the same unique ID.  Behavior if the loading context
+has an \emph{incompatible} record-type registration using the same
+(ostensibly unique) ID is undefined.
 
 When \var{objs} contains a single list-structured element whose
 first-element is the symbol \scheme{top-level-program},
@@ -1831,7 +1836,7 @@ files to avoid making a single, over-large source C file. The
 output file in \var{c-paths}, where each function name is defined as a
 function of no arguments to register the file's chunks with the
 system. This registration must be performed before the converted
-cmopiled code is run. Every set of chunks registered in this way must
+compiled code is run. Every set of chunks registered in this way must
 use a distinct index range, where \var{start-index} provides the
 starting index for this set, and the result value is one more than the
 index of the last chunk written to the \var{c-paths} sources.
@@ -2383,9 +2388,9 @@ or \scheme{visit}.
 \endentryheader
 
 \noindent
-This parameter determines a procedure that is called by the macro
-expander. The procedure receives a symbol and returns a fresh symbol
-that the expander uses for a top-level binding, as a record uid,
+This parameter must be set to a procedure that accepts one argument, a
+symbol, and returns a fresh symbol.  This procedure is called by the macro
+expander to get symbols to use for a top-level binding, as a record uid,
 or to identify a library compilation. The default procedure converts the
 symbol to a string and passes it to \scheme{gensym}.
 
@@ -2404,7 +2409,7 @@ For example, while expanding the following \scheme{library}, the
   (def))
 \endschemedisplay
 
-The \scheme{current-generate-id} procedure is called on \scheme{a-lib}
+The procedure held by the \scheme{current-generate-id} parameter is called on \scheme{a-lib}
 to generate a symbol that identifies this particular library
 compilation, as opposed to the compilation of a different library
 named \scheme{(a-lib)}. It is called on \scheme{a-var} the first time
@@ -2481,7 +2486,7 @@ deletes the definition of \scheme{x} or introduces a macro-generated
 definition of \scheme{x} before the direct definition, then the
 previously compiled \scheme{y.ss} is unlikely to refer to the correct
 definition of \scheme{x} in the new compilation of \scheme{x.ss}.
-Configure \scheme{make-x-generator} this way only in situations where
+Configure \scheme{current-generate-id} this way only in situations where
 the potential for unspecified failure is more tolerable than
 recompilation.
 
@@ -3090,7 +3095,7 @@ reach this decision if the effort and outer unroll limits are large.
 \listlibraries
 \endentryheader
 
-A parameter that controls whether the compiler attempts to improve
+A parameter that controls whether the compiler attempts to optimize
 programs by performing a pass similar to type inference, which can
 avoid more checks and statically resolve more predicates than
 \scheme{cp0} by itself, but at the cost of extra compile time. The
@@ -4946,7 +4951,7 @@ reserved but not currently occupied memory, and is thus an accurate
 measure of the amount of heap memory currently reserved from the
 operating system for the current process. The result is only for
 Scheme's storage management, however, so it does not include sizes
-for externally allocated objects that are represented by phantom bytevectors.
+for externally allocated objects (even those that are represented by phantom bytevectors).
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -5590,8 +5595,7 @@ threaded versions of the system).
 \listlibraries
 \endentryheader
 
-When \var{show-pre-release?} is \scheme{#f} or not provided, the
-version string is in the form
+The version string is in the form
 
 \schemedisplay
 "Chez Scheme Version \var{version}"
@@ -5605,10 +5609,17 @@ for {\ChezScheme}, and
 
 for {\PetiteChezScheme}.
 
-When \var{show-pre-release?} is \scheme{#t}, the result is different
-only for a pre-release version where \scheme{scheme-pre-release}
-produces a number. In that case, \scheme{"-alpha.\var{pre}"} is
-appended to the end of the string.
+\var{version} includes the major, minor, and patch version numbers
+separated by \scheme{.}.  If \var{show-pre-release?} is provided and is a
+true value, and the current version is a pre-release version (i.e.,
+\scheme{(scheme-pre-release)} is a number), then \var{version}
+additionally has \scheme{-pre-release.} and the pre-release number
+appended.
+
+\schemedisplay
+(scheme-version) ;=> "Chez Scheme Version 9.9.9"
+(scheme-version #t) ;=> "Chez Scheme Version 9.9.9-pre-release.11"
+\endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -5619,12 +5630,12 @@ appended to the end of the string.
 
 Each of the three return values is a nonnegative fixnum.
 
-In {\ChezScheme} Version 9.5.7 or 9.5.7-alpha.3:
+In {\ChezScheme} Version 9.7.3 or 9.7.3-pre-release.3:
 
 \schemedisplay
 (scheme-version-number) ;=> 9
-                        ;== 5
                         ;== 7
+                        ;== 3
 \endschemedisplay
 
 
@@ -5640,14 +5651,14 @@ is \scheme{#f} for a release version (which is \emph{after} any
 version that has a pre-release number and the same major, minor, and
 patch number).
 
-In {\ChezScheme} Version 9.5.7:
+In {\ChezScheme} Version 9.7.3:
 
 \schemedisplay
 (scheme-pre-release) ;=> #f
 \endschemedisplay
 
 
-In {\ChezScheme} Version 9.5.7-alpha.3:
+In {\ChezScheme} Version 9.7.3-pre-release.3:
 
 \schemedisplay
 (scheme-pre-release) ;=> 3

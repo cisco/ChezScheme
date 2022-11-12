@@ -208,22 +208,21 @@ One-shot continuations are continuations that may be invoked at most
 once, whether explicitly or implicitly.
 They are obtained with \scheme{call/1cc}.
 
-Continuation \textit{marks} support efficient annotation and
-inspection of continuations. Each continuation has an immediate table
-of marks, where each mark is a key--value pair. An immediate table is
-updated using \scheme{with-continuation-mark} form to supply a key and
-value; if the key already exists in the table, its value is replaced
-with the new one, otherwise the key--value pair is added to the table.
-Although each continuation has a single immediate table of marks, a
-continuation may extend another continuation that has its own marks,
-and the \scheme{curent-continuation-attachments} function captures the
-sequence of mark tables for a continuation and all continuations that
-it extends; the captred value is called a \emph{mark set}. Functions
-such as \scheme{continuation-mark-set-first},
+Continuation \textit{marks} support efficient annotation of continuations
+and inspection of those annotations. Each continuation has a table of
+marks, where each mark is a key--value pair.  This table is updated using
+the \scheme{with-continuation-mark} form to associate a key with a value,
+replacing any existing association for that key.  Although each
+continuation has a single immediate table of marks, a continuation may
+extend another continuation that has its own marks.  The
+\scheme{current-continuation-marks} function captures the sequence of mark
+tables for a continuation and all continuations that it extends; the
+captured value is called a \emph{mark set}. Functions such as
+\scheme{continuation-mark-set-first},
 \scheme{continuation-mark-set->list}, and
-\scheme{continuation-mark-set->iterator} can be used to inspect the
-captured marks. When a continuation is captured with \scheme{call/cc},
-only the marks of the rest of the continuation are captured, and
+\scheme{continuation-mark-set->iterator} can be used to inspect mark
+sets. When a continuation is captured with \scheme{call/cc}, only the
+marks of the rest of the continuation are captured, and
 \scheme{continuation-next-marks} returns the captured marks.
 
 %----------------------------------------------------------------------------
@@ -412,15 +411,15 @@ in their tables, the size tends to be much less than the bound.
 
 \noindent Extracts the first value found for \var{key} in
 \var{mark-set}, checking the mark table of a continuation before
-checking the table of a continuation that it extends. Keys are
+checking the table of the continuation that it extends (if any). Keys are
 compared using \scheme{eq?}. If no mark for \var{key} is found,
 \var{none-val} is returned; if \var{none-val} is not provided, it
 defaults to \scheme{#f}.
 
 This function takes amortized time proportional to the number of
 distinct values used as keys in \var{mark-set}. Typically the number of
-keys used in an applicaiton is bounded, which makes the computation
-amortized constant-time.
+keys used in an application is bounded, which makes the computation
+amortized constant-time for those applications.
 
 \schemedisplay
 (with-continuation-mark
@@ -445,12 +444,13 @@ amortized constant-time.
 \listlibraries
 \endentryheader
 
-\noindent Returns the list of all values found for \var{key} in
-\var{mark-set}, where the mark for a continuation appears before the
-marks of another continuation that it extends. Keys are compared using
+\noindent Returns the list of all values associated with \var{key} in
+\var{mark-set}, with the value from a continuation's mark
+table appearing before the values from the mark tables of any other
+continuation that it extends.  Keys are compared using
 \scheme{eq?}.
 
-This function takes time proportional to the side of the captured mark
+This function takes time proportional to the size of the captured mark
 set.
 
 \schemedisplay
@@ -477,7 +477,7 @@ set.
 \endentryheader
 
 \noindent Generalizes the mark set traversal of
-\scheme{continuation-mark-set->set} to a functional iterator. The
+\scheme{continuation-mark-set->list} to a functional iterator. The
 \var{mark-set} argument must be a continuation mark set, and the
 \var{key-vector} argument must be a vector of values to be used as
 keys. The result is an iterator procedure of zero arguments.
@@ -486,22 +486,25 @@ Calling the result iterator procedure (with no arguments) returns two values:
 
 \begin{itemize}
 
-\item The first result is either a vector of values, one for each key
-in \var{key-vector} and drawn from a single continuation's mark table,
-or \scheme{#f} if no more values for any keys are available. The given
-\var{none-val}, which defaults to \scheme{#f}, is used for a key that
-has no value in the table. Only mark tables with one of the keys in
-\var{key-vector} are represented in the iteration, so a result vector
-will never contain only \var{non-val}.
+\item The first result is either a vector of values, one for each key in
+  \var{key-vector} (in the order given in \var{key-vector}) and drawn from
+  a single continuation's mark table, or \scheme{#f} if no more values for
+  any keys are available. The given \var{none-val}, which defaults to
+  \scheme{#f}, is used for each key that has no value in the table. Only
+  mark tables with mappings for at least one of the keys in
+  \var{key-vector} are represented in the iteration, so a result vector
+  will never consist solely of \var{none-val} values (unless one or more of the keys
+  is explicitly mapped to \var{none-val}).
 
-\item The second result result is a new iterator procedure to obtain
+\item The second result is a new iterator procedure to obtain
 the next vector of values, and so on. When the first result is
 \scheme{#f}, the second result is an iterator procedure that will still
-return \scheme{#f}.
+return \scheme{#f} as its first result (and a procedure functionally
+equivalent to itself as the second result).
 
 \end{itemize}
 
-Obtaining an iterator from \scheme{continuation-mark-set->set} takes
+Obtaining an iterator from \scheme{continuation-mark-set->iterator} takes
 constant time. Each call to an iterator takes time proportional to the
 size of continuation mark tables that are traversed to find one of the
 keys in \var{key-vector}.
@@ -534,18 +537,19 @@ keys in \var{key-vector}.
 \noindent Similar to
 %
 \schemedisplay
- (call-with-continuation-mark-first (current-continuation-marks) \var{key} \var{none-val})
+ (continuation-mark-set-first (current-continuation-marks) \var{key} \var{none-val})
 \endschemedisplay
 %
-but only the immediate continuation is checked, and the result is
-delivered to \var{proc} instead of returned. The \var{proc} is called
-in tail position, so it's continuation is the same as the one whose
+but only the immediate continuation's mark table is checked, and the result is
+delivered to \var{proc} instead of returned. The \var{proc}, which must be
+a procedure that accepts one argument, is called
+in tail position, so its continuation is the same as the one whose
 table is checked.
 
 \schemedisplay
 (with-continuation-mark
  'key "val"
- (call-with-immediate-continuation-mark 'key list)) ; => ("val2")
+ (call-with-immediate-continuation-mark 'key list)) ; => ("val")
 
 (with-continuation-mark
  'key "val"
@@ -564,8 +568,9 @@ table is checked.
 \listlibraries
 \endentryheader
 
-\noindent \var{continuation} must be a continuation, and
-\var{procedure} must be a procedure that accepts zero arguments.
+\noindent \var{continuation} must be a continuation,
+\var{procedure} must be a procedure that accepts zero arguments, and
+\var{mark-set} (if provided) must be a continuation mark set.
 
 Applies \var{procedure} to zero arguments with \var{continuation} as
 the continuation of the call, escaping from the current continuation.

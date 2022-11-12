@@ -194,7 +194,9 @@ For example, \scheme{#\000} is equivalent to \scheme{#\nul}.
 
 {\ChezScheme}'s fxvectors, or fixnum vectors, are printed like vectors
 but with the prefix \scheme{#vfx(} in place of \scheme{#(}.
-Vectors, bytevectors, and fxvectors may be printed with an explicit length
+Similarly, flvectors, or flonum vectors, are printed with the prefix
+\scheme{#vfl(}, and stencil vectors with the prefix \scheme{#\var{n}vs(}.
+Vectors, bytevectors, fxvectors, and flvectors may be printed with an explicit length
 prefix, and when the explicit length prefix is specified, duplicate
 trailing elements may be omitted.
 For example,
@@ -202,6 +204,8 @@ For example,
 \index{#( (vector prefix)@\scheme{#\var{n}(} (vector prefix)}\scheme{#3(a b c)},
 and a vector of length 100 containing all zeros may be printed as
 \scheme{#100(0)}.
+Stencil vectors have a mask rather than an explicit length prefix, and it
+is always included in the printed representation.
 
 {\ChezScheme}'s boxes are printed with a
 \index{\scheme{#&} (box prefix)}\scheme{#&} prefix, e.g.,
@@ -247,6 +251,12 @@ In addition to the standard delimiters (whitespace, open and close
 parentheses, open and close brackets, double quotes, semi-colon,
 and \scheme{#}), {\ChezScheme} also treats as delimiters
 open and close braces, single quote, backward quote, and comma.
+
+Finally, {\ChezScheme} accepts \index{\scheme{#true}}\scheme{#true} and
+\index{\scheme{#false}}\scheme{#false} as alternative spellings of the booleans
+\scheme{#t} and \scheme{#f}. Like the external representation of numbers, case
+is not significant; for example, \scheme{#T}, \scheme{#True} and \scheme{#TRUE}
+are all equivalent.
 
 The {\ChezScheme} lexical extensions described above are disabled in an
 input stream after an \scheme{#!r6rs} comment directive has been seen,

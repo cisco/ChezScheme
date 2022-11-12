@@ -349,7 +349,7 @@ dividing \var{fixnum_1} by the product of the remaining arguments
 \noindent
 These functions are like \scheme{fx+}, \scheme{fx-}, \scheme{fx*}, and
 \scheme{fxsll}, but when the result is too large to fit in a fixnum,
-as many high bits of the result are discarded to make the result representable
+as many high bits of the result as necessary are discarded to make the result representable
 as a fixnum.
 
 %----------------------------------------------------------------------------
@@ -574,7 +574,7 @@ are considered nonpositive and nonnegative.
 
 \noindent
 Potentially discards precision from \var{fl} so that the result is
-representable as an 32-bit IEEE floating-point number.
+representable as a 32-bit IEEE floating-point number.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -1471,11 +1471,11 @@ random seed to the argument.
 \formdef{make-pseudo-random-generator}{\categoryprocedure}{(make-pseudo-random-generator)}
 \returns a fresh pseudo-random generator
 \listlibraries
-\endnoskipentryheader
+\endentryheader
 
 \noindent
 Creates a pseduo-random generator state for use with
-\scheme{pseduo-random-generator-next!}. This generator use a more
+\scheme{pseduo-random-generator-next!}. This generator uses a more
 modern algorithm than \scheme{random} and generates number sequences
 that better approximate true randomness.
 
@@ -1488,7 +1488,7 @@ programs but not good enough for security purposes.
 \formdef{pseudo-random-generator?}{\categoryprocedure}{(pseudo-random-generator? \var{val})}
 \returns a boolean
 \listlibraries
-\endnoskipentryheader
+\endentryheader
 
 \noindent
 Checks whether \var{val} is a pseudo-random generator state.
@@ -1499,7 +1499,7 @@ Checks whether \var{val} is a pseudo-random generator state.
 \formdef{pseudo-random-generator-next!}{\categoryprocedure}{(pseudo-random-generator-next! \var{prgen} \var{below-int})}
 \returns a pseduo-random number
 \listlibraries
-\endnoskipentryheader
+\endentryheader
 
 \noindent
 \var{prgen} must be a psuedo-random generator state. If \var{below-int} is
@@ -1516,7 +1516,7 @@ and \scheme{below-int} (exclusive).
 \formdef{pseudo-random-generator-seed!}{\categoryprocedure}{(pseudo-random-generator-seed! \var{prgen} \var{seed-int})}
 \returns unspecified
 \listlibraries
-\endnoskipentryheader
+\endentryheader
 
 \noindent
 \var{prgen} must be a psuedo-random generator state, and \var{seed-int} must
@@ -1535,7 +1535,7 @@ generator into an unpredictable state.
 \formdef{vector->pseudo-random-generator!}{\categoryprocedure}{(vector->pseudo-random-generator! \var{prgen} \var{vec})}
 \returns unspecified
 \listlibraries
-\endnoskipentryheader
+\endentryheader
 
 \noindent
 \var{prgen} must be a psuedo-random generator state, and \var{vec} must

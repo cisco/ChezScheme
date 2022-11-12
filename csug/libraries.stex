@@ -1026,7 +1026,7 @@ the object file is missing, older than the corresponding source file,
 older than any source files included (via \index{\scheme{include}}\scheme{include}) when the
 object file was created, or itself requires a library that has or must
 be recompiled, as described in Section~\ref{SECTUSELIBRARIES}.
-The \scheme{library-timestamp-mode} parameter controls the meaining of ``older.''
+The \scheme{library-timestamp-mode} parameter controls the meaning of ``older.''
 The default initial value of this parameter is \scheme{#f}.
 It can be set to \scheme{#t} via the command-line option
 \index{\scheme{--compile-imported-libraries} command-line option}\scheme{--compile-imported-libraries}.
