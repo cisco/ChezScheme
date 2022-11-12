@@ -2991,13 +2991,13 @@
                          [else #f])
                        (bind #f ([e e])
                          ; eval a second so the address is not live across any calls
-                         (bind #t ([a a])
+                         (bind #t uptr ([a a]) ; uptr for clarity, though safe given eval order
                            (build-seq
                              (build-assign a %zero 0 e)
                              (%inline remember ,a))))
                        (bind #t ([e e])
                          ; eval a second so the address is not live across any calls
-                         (bind #t ([a a])
+                         (bind #t uptr ([a a]) ; uptr for clarity, though safe given eval order
                            (build-seq
                              (build-assign a %zero 0 e)
                              `(if ,(%type-check mask-fixnum type-fixnum ,e)
