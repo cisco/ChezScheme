@@ -2427,6 +2427,9 @@ for manipulating hashtable entries is that the value associated with
 a key may be read or written many times with only a single hashtable
 lookup.
 
+If \var{hashtable} is immutable, the \var{key} should be a key already in the table,
+and the cdr of the resulting pair should not be changed.
+
 \schemedisplay
 (define ht (make-eq-hashtable))
 (define v (vector 'a 'b 'c))
@@ -2451,6 +2454,7 @@ If \var{key} is associated with a value in \var{hashtable}, then \scheme{hashtab
 whose car is \var{key} and whose cdr is the associated value. Changing the cdr of
 this pair effectively updates the table to associate \var{key} with a new value.
 The \var{key} in the car field should not be changed.
+If \var{hashtable} is immutable, the cdr field of the pair should not be changed.
 
 If \var{key} is not in \var{hashtable}, then \scheme{#f} is returned.
 
@@ -2567,6 +2571,11 @@ If \var{size} is not specified, then the result vector has \scheme{(hashtable-si
 Different calls to \scheme{hashtable-cells}
 with a \var{size} less than \scheme{(hashtable-size \var{hashtable})}
 may return different subsets of \var{hashtable}'s cells.
+
+Changing the cdr of a pair in the result vector effectively updates
+the table to associate car of the pair with a new value. The car of a
+pair in the result vector should not be changed. If \var{hashtable} is
+immutable, no pair in the vector should be changed.
 
 \schemedisplay
 (define ht (make-eqv-hashtable))
@@ -2840,6 +2849,9 @@ Changing the cdr of this pair effectively updates the table to
 associate \var{key} with a new value.
 The \var{key} should not be changed.
 
+If \var{hashtable} is immutable, the \var{key} should be a key already in the table,
+and the cdr of the resulting pair should not be changed.
+
 \schemedisplay
 (define ht (make-eq-hashtable))
 (define v (vector 'a 'b 'c))
@@ -2883,6 +2895,7 @@ If \var{key} is associated with a value in \var{hashtable}, then \scheme{eq-hash
 whose car is \var{key} and whose cdr is the associated value. Changing the cdr of
 this pair effectively updates the table to associate \var{key} with a new value.
 The \var{key} in the car field should not be changed.
+If \var{hashtable} is immutable, the cdr field of the pair should not be changed.
 
 If \var{key} is not in \var{hashtable}, then \scheme{#f} is returned.
 
@@ -3078,6 +3091,9 @@ Changing the cdr of this pair effectively updates the table to
 associate \var{key} with a new value.
 The \var{key} should not be changed.
 
+If \var{hashtable} is immutable, the \var{key} should be a key already in the table,
+and the cdr of the resulting pair should not be changed.
+
 \schemedisplay
 (define ht (make-hashtable symbol-hash eq?))
 (define k 'a-key)
@@ -3095,7 +3111,7 @@ cell ;=> (a-key . 3)
 \listlibraries
 \endentryheader
 
-\var{hashtable} must be a mutable symbol hashtable.
+\var{hashtable} must be a symbol hashtable.
 (A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
 and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or \scheme{symbol=?}.)
 \var{key} must be a symbol.
@@ -3104,6 +3120,7 @@ If \var{key} is associated with a value in \var{hashtable}, then it returns a pa
 whose car is \var{key} and whose cdr is the associated value. Changing the cdr of
 this pair effectively updates the table to associate \var{key} with a new value.
 The \var{key} in the car field should not be changed.
+If \var{hashtable} is immutable, the cdr field of the pair should not be changed.
 
 If \var{key} is not in \var{hashtable}, then \scheme{#f} is returned.
 
