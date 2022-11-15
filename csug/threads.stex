@@ -592,7 +592,7 @@ of the containing object.
 \section{Memory Consistency\label{SECTSMGMTMEMMODEL}}
 
 Scheme threads can expose the memory-consistency model of the
-underlying processor, except to the degree that it would interefere
+underlying processor, except to the degree that it would interfere
 with the memory safety of Scheme programs. For example, if two threads
 share a vector, then a \scheme{vector-set!} in one thread will not
 allow the other thread to read the vector and see a partially

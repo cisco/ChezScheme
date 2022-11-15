@@ -725,7 +725,7 @@ can never become inaccessible unless the cycle is broken or some of
 the relevant guardians are dropped by the program, and each
 registered object's representative (if different from the object) can
 contribute to such cycles. If an object is registered to an ordered
-custodian with a representative that is different from the object but
+guardian with a representative that is different from the object but
 that references the object, then the object is in a cycle and will not
 become inaccessible unless the reference from the representative to
 the object is destroyed. Weak references do not count, so objects that

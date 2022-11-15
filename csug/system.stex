@@ -2929,8 +2929,8 @@ The algorithm used by the optimizer is described in detail in the paper
 
 \scheme{cptypes} performs additional optimizations based on type
 information about primitives, such as the fact that \scheme{+} always
-returns a number; since it primarily removes unneecssary run-time
-checks, \scheme{cptypes} primarly benefits compilation in safe mode.
+returns a number; since it primarily removes unnecessary run-time
+checks, \scheme{cptypes} primarily benefits compilation in safe mode.
 The \scheme{cptypes} pass can be independently disabled through the
 \scheme{enable-type-recovery} parameter.
 
@@ -5192,7 +5192,7 @@ hence whether the backreferences reported by the procedure
 The parameter is set to \scheme{#f} by default, since backreference recording
 adds overhead to collection.
 
-Beware that backreference recording can have small performance affects
+Beware that backreference recording can have small performance effects
 even after it is disabled---at least until the next collection over
 the same generations---since backreference records constrain the way
 that the collector stores some objects.
@@ -5646,7 +5646,7 @@ In {\ChezScheme} Version 9.7.3 or 9.7.3-pre-release.3:
 \listlibraries
 \endentryheader
 
-The return value is a positve fixnum for a pre-release version, or it
+The return value is a positive fixnum for a pre-release version, or it
 is \scheme{#f} for a release version (which is \emph{after} any
 version that has a pre-release number and the same major, minor, and
 patch number).

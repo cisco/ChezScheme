@@ -714,7 +714,7 @@ is \scheme{0} if \var{start} equals \var{end}.
 \formdef{string-grapheme-count}{\categoryprocedure}{(string-grapheme-count \var{string})}
 \formdef{string-grapheme-count}{\categoryprocedure}{(string-grapheme-count \var{string} \var{start})}
 \formdef{string-grapheme-count}{\categoryprocedure}{(string-grapheme-count \var{string} \var{start} \var{end})}
-\returns a boolean indincating whether the character has a property
+\returns the number of Unicode grapheme clusters (see below)
 \listlibraries
 \endentryheader
 
@@ -4654,7 +4654,7 @@ is called, the given arguments are compared to the given arity mask, and an erro
 if the argument count does not match. The result of \scheme{make-wrapper-procedure},
 in contrast, does not enforce the given arity mask.
 
-The \var{data} argument can be any value, and it can be retrived from
+The \var{data} argument can be any value, and it can be retrieved from
 the result procedure with \scheme{wrapper-procedure-data}.
 
 \schemedisplay
