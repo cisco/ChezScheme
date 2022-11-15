@@ -5488,9 +5488,10 @@
 
 (mat $begin-unsafe
   (equivalent-expansion?
-   (expand/optimize '(lambda (x)
-                       (import (only $system $begin-unsafe))
-                       (let () (fx+ 2 ($begin-unsafe (fx+ 1 x))))))
+   (parameterize ([#%$suppress-primitive-inlining #f])
+     (expand/optimize '(lambda (x)
+                         (import (only $system $begin-unsafe))
+                         (let () (fx+ 2 ($begin-unsafe (fx+ 1 x)))))))
    (if (fx= (optimize-level) 3)
        '(lambda (x) (#3%fx+ 2 (#3%fx+ 1 x)))
        '(lambda (x) (#2%fx+ 2 (#3%fx+ 1 x)))))
