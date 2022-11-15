@@ -282,6 +282,8 @@
           [(fasl-type-immediate fasl-type-entry fasl-type-library fasl-type-library-code)
            (fasl-atom ty (read-uptr p))]
           [(fasl-type-graph) (read-fasl p (let ([new-g (make-vector (read-uptr p) #f)])
+                                            (unless (zero? (read-uptr p))
+                                              (bogus "fasl content needs an external vector in ~a"  (port-name p)))
                                             (when g
                                               (let ([delta (fx- (vector-length new-g) (vector-length g))])
                                                 (let loop ([i 0])
@@ -444,7 +446,7 @@
           [rtd-ref (uid) (build-graph! x t (lambda () (build! uid #t)))]
           [closure (offset c) (build-graph! x t (lambda () (build! c t)))]
           [flonum (high low) (build-graph! x t void)]
-          [small-integer (iptr) (void)]
+          [small-integer (iptr) (build-graph! x t void)]
           [large-integer (sign vuptr) (build-graph! x t void)]
           [eq-hashtable (mutable? subtype minlen veclen vpfasl)
            (build-graph! x t
@@ -494,7 +496,8 @@
                         (let ([n (table-count t)])
                           (unless (fx= n 0)
                             (put-u8 p (constant fasl-type-graph))
-                            (put-uptr p n)))
+                            (put-uptr p n)
+                            (put-uptr p 0)))
                         (write-fasl p t fasl)
                         (extractor))])
           ($write-fasl-bytevectors p bv* size situation (constant fasl-type-fasl)))))

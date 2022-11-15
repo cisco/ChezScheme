@@ -4575,6 +4575,8 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat fasl: "fasl-write: 10 is not #f or a procedure".
 6.mo:Expected error in mat fasl: "fasl-read: not a vector #f".
 6.mo:Expected error in mat fasl: "fasl-read: not a vector 10".
+6.mo:Expected error in mat fasl: "incompatible external vector length 0, expected 1".
+6.mo:Expected error in mat fasl: "incompatible external vector length 1, expected 2".
 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format".
 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too many arguments for control string "~a~a~a~s" in call to format".
 6.mo:Expected warning in mat cp1in-verify-format-warnings: "compile: too few arguments for control string "~a~~~s" in call to format at line 1, char 28 of testfile.ss".

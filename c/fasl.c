@@ -1125,9 +1125,10 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             *x = S_phantom_bytevector(uptrin(f));
             return;
         case fasl_type_graph: {
-            uptr len = uptrin(f), len2, i;
+            uptr len = uptrin(f), len2 = uptrin(f), tlen = (uptr)Svector_length(t), i;
             ptr new_t = S_vector(len);
-            len2 = Svector_length(t);
+            if ((tlen < len2) && (len2 != 0)) /* allowing a vector when not needed helps with `load-compiled-from-port` */
+              S_error2("", "incompatible external vector length ~d, expected ~d", FIX(tlen), FIX(len2));
             if (len2 > len) len2 = len;
             for (i = 0; i < len2; i++)
               INITVECTIT(new_t, i+(len-len2)) = Svector_ref(t, i);

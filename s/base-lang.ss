@@ -122,33 +122,7 @@
     (lambda (x)
       (and (integer? x) (exact? x))))
 
-  (meta-cond
-    [(or (eq? (constant fixnum-bits) (fixnum-width))
-         ;; make sure this case is selected for cross-compilation (as opposed
-         ;; to compilation of a patch file in preparation for cross compilation):
-         (eq? (constant machine-type-name) ($target-machine)))
-     (define target-fixnum? fixnum?)
-     (define target-bignum? bignum?)]
-    [(< (constant fixnum-bits) (fixnum-width))
-     (define target-fixnum?
-       (lambda (x)
-         (and (fixnum? x)
-              (fx<= (constant most-negative-fixnum) x (constant most-positive-fixnum)))))
-     (define target-bignum?
-       (lambda (x)
-         (or (bignum? x)
-             (and (fixnum? x)
-                  (not (fx<= (constant most-negative-fixnum) x (constant most-positive-fixnum)))))))]
-    [else
-     (define target-fixnum?
-       (lambda (x)
-         (or (fixnum? x)
-             (and (bignum? x)
-                  (<= (constant most-negative-fixnum) x (constant most-positive-fixnum))))))
-     (define target-bignum?
-       (lambda (x)
-         (and (bignum? x)
-              (not (<= (constant most-negative-fixnum) x (constant most-positive-fixnum))))))])
+  (include "target-fixnum.ss")
 
   (define $prelex?
     (lambda (x)

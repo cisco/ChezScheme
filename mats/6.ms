@@ -1022,6 +1022,31 @@
                                                                                   (eq? v 'coconut))))
     (equal? '(apple (B cream pie) (vector C B cream))
             (fasl-read (open-bytevector-input-port (get)) 'load '#(B C))))
+
+  (error?
+   (let-values ([(o get) (open-bytevector-output-port)])
+     (fasl-write '(apple banana cream pie) o (lambda (v) (eq? v 'banana)))
+     ;; missing externals vector:
+     (fasl-read (open-bytevector-input-port (get)))))
+
+  (error?
+   (let-values ([(o get) (open-bytevector-output-port)])
+     (fasl-write '(apple banana cream pie) o (lambda (v) (or (eq? v 'banana)
+                                                             (eq? v 'pie))))
+     ;; too-small externals vector:
+     (fasl-read (open-bytevector-input-port (get)) 'load '#(A))))
+
+  ;; check sharing of numbers that may or may not be bignums
+  (andmap (lambda (v)
+            (let-values ([(o get) (open-bytevector-output-port)])
+              (fasl-write (list v v) o)
+              (let ([l (fasl-read (open-bytevector-input-port (get)))])
+                (eq? (car l) (cadr l)))))
+          (list 0 -1 1
+                (expt 2 29) (expt 2 30) (expt 2 31) (expt 2 32)
+                (expt 2 59) (expt 2 60) (expt 2 61) (expt 2 62) (expt 2 63) (expt 2 64)
+                (expt 2 80)))
+
 )
 
 (mat fasl-depth

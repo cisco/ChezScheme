@@ -61,13 +61,22 @@
         rtd
         ($remake-rtd rtd (let () (include "layout.ss") compute-field-offsets)))))
 
-(define intern-bignum
-  (lambda (x t)
-    (when (not (table-bignums t))
-      (table-bignums-set! t (make-hashtable equal-hash equal?)))
-    (cdr (hashtable-cell (table-bignums t) x x))))
-
 (include "fasl-helpers.ss")
+(include "target-fixnum.ss")
+
+(define maybe-intern-bignum
+  ;; When we cross-compile on a 32-bit machine for a 64-bit machine or
+  ;; vice versa, constant folding or reading separate instances of an
+  ;; integer can produce different sharing. To avoid structural
+  ;; differences in fasled boot files, intern bignums in 'system mode.
+  (lambda (x t)
+    (cond
+      [(and (bignum? x)
+            (eq? (subset-mode) 'system))
+       (when (not (table-bignums t))
+         (table-bignums-set! t (make-hashtable equal-hash equal?)))
+       (cdr (hashtable-cell (table-bignums t) x x))]
+      [else x])))
 
 (define bld-pair
    (lambda (x t a? d)
@@ -176,7 +185,8 @@
                    (printf "entries = ~s, ba = ~s, count = ~s\n" n (bytes-allocated) (table-count t))))
              (cond
                [(let ([pred (table-external?-pred t)])
-                  (and pred (pred x)))
+                  (and pred
+                       (pred x)))
                 ;; Don't traverse; just record as external. We'll
                 ;; assign positions to externals after the graph
                 ;; has been fully traversed.
@@ -213,6 +223,10 @@
 (define bld
    (lambda (x t a? d)
       (cond
+        [(fixnum? x) (if (target-bignum? x)
+                         (bld-graph x t a? d #t bld-simple)
+                         (bld-simple x t a? d))]
+        [($immediate? x) (bld-simple x t a? d)]
         [(pair? x) (bld-graph x t a? d #t bld-pair)]
         [(vector? x) (bld-graph x t a? d #t bld-vector)]
         [($stencil-vector? x) (bld-graph x t a? d #t bld-stencil-vector)]
@@ -226,7 +240,9 @@
         [(symbol-hashtable? x) (bld-graph x t a? d #t bld-ht)]
         [($record? x) (bld-graph x t a? d #t bld-record)]
         [(box? x) (bld-graph x t a? d #t bld-box)]
-        [(bignum? x) (bld-graph (intern-bignum x t) t a? d #t bld-simple)]
+        [(bignum? x) (if (target-fixnum? x)
+                         (bld-simple x t a? d)
+                         (bld-graph (maybe-intern-bignum x t) t a? d #t bld-simple))]
         [else (bld-graph x t a? d #t bld-simple)])))
 
 (module (small-integer? large-integer?)
@@ -627,7 +643,7 @@
        (put-uptr p (logand n #xFFFFFFFF)))))
 
 (define wrf-phantom
-  (lambda (x p)
+  (lambda (x p t a?)
     (put-u8 p (constant fasl-type-phantom))
     (put-uptr p (phantom-bytevector-length x))))
 
@@ -656,7 +672,9 @@
       (cond
          [(symbol? x) (wrf-graph x p t a? wrf-symbol)]
          [(pair? x) (wrf-graph x p t a? wrf-pair)]
-         [(small-integer? x) (wrf-small-integer x p t a?)]
+         [(small-integer? x) (if (target-fixnum? x)
+                                 (wrf-small-integer x p t a?)
+                                 (wrf-graph (maybe-intern-bignum x t) p t a? wrf-small-integer))]
          [(null? x) (wrf-immediate (constant snil) p)]
          [(not x) (wrf-immediate (constant sfalse) p)]
          [(eq? x #t) (wrf-immediate (constant strue) p)]
@@ -680,7 +698,9 @@
          [($stencil-vector? x) (wrf-graph x p t a? wrf-stencil-vector)]
          [(char? x) (wrf-char x p)]
          [(box? x) (wrf-graph x p t a? wrf-box)]
-         [(large-integer? x) (wrf-graph (if (bignum? x) (intern-bignum x t) x) p t a? wrf-large-integer)]
+         [(large-integer? x) (if (target-fixnum? x)
+                                 (wrf-large-integer x p t a?)
+                                 (wrf-graph (maybe-intern-bignum x t) p t a? wrf-large-integer))]
          [(ratnum? x) (wrf-graph x p t a? wrf-ratnum)]
          [(flonum? x) (wrf-graph x p t a? wrf-flonum)]
          [($inexactnum? x) (wrf-graph x p t a? wrf-inexactnum)]
@@ -691,7 +711,7 @@
          [(eq? x (void)) (wrf-immediate (constant svoid) p)]
          [(eq? x '#0=#0#) (wrf-immediate (constant black-hole) p)]
          [($rtd-counts? x) (wrf-immediate (constant sfalse) p)]
-         [(phantom-bytevector? x) (wrf-phantom x p)]
+         [(phantom-bytevector? x) (wrf-graph x p t a? wrf-phantom)]
          [else (wrf-invalid x p t a?)])))
 
 (module (start)
@@ -704,7 +724,8 @@
                       (let ([n (table-count t)])
                         (unless (fx= n 0)
                           (put-u8 p (constant fasl-type-graph))
-                          (put-uptr p n)))
+                          (put-uptr p n)
+                          (put-uptr p (table-external-count t))))
                       (let ([begins (extract-begins t)])
                         (unless (null? begins)
                           (put-u8 p (constant fasl-type-begin))

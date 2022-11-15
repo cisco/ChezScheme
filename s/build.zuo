@@ -121,7 +121,7 @@
 (define type-src-names
   ;; files that are `include`d by other files:
   (list "base-lang.ss" "expand-lang.ss" "primref.ss" "types.ss" "io-types.ss"
-        "fasl-helpers.ss" "hashtable-types.ss" "strip-types.ss"))
+        "fasl-helpers.ss" "hashtable-types.ss" "strip-types.ss" "target-fixnum.ss"))
 
 (define cpnanopass-src-names
   ;; files that are `include`d by "cpnanopass.ss" and "cpprim.ss"
