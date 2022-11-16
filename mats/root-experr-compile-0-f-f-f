@@ -69,8 +69,8 @@ primvars.mo:Expected error testing (reference-address->object (quote #!eof)): Ex
 primvars.mo:Expected error testing (reference-address->object (quote #f)): Exception in reference-address->object: invalid address #f
 primvars.mo:Expected error testing (reference*-address->object (quote #!eof)): Exception in reference*-address->object: invalid address #!eof
 primvars.mo:Expected error testing (reference*-address->object (quote #f)): Exception in reference*-address->object: invalid address #f
-primvars.mo:Expected error testing (set-wrapper-procedure! 1.0+2.0i (quote 0)): Exception in set-wrapper-procedure!: 1.0+2.0i is not a wrapper procedure
-primvars.mo:Expected error testing (set-wrapper-procedure! 1.0+2.0i (quote #f)): Exception in set-wrapper-procedure!: 1.0+2.0i is not a wrapper procedure
+primvars.mo:Expected error testing (set-wrapper-procedure-procedure! 1.0+2.0i (quote 0)): Exception in set-wrapper-procedure-procedure!: 1.0+2.0i is not a wrapper procedure
+primvars.mo:Expected error testing (set-wrapper-procedure-procedure! 1.0+2.0i (quote #f)): Exception in set-wrapper-procedure-procedure!: 1.0+2.0i is not a wrapper procedure
 primvars.mo:Expected error testing (string-grapheme-count "a" (quote #!eof)): Exception in string-grapheme-count: #!eof is not a valid start index for "a"
 primvars.mo:Expected error testing (string-grapheme-count "a" (quote #f)): Exception in string-grapheme-count: #f is not a valid start index for "a"
 primvars.mo:Expected error testing (string-grapheme-span "a" (quote #!eof)): Exception in string-grapheme-span: #!eof is not a valid start index for "a"
@@ -4208,11 +4208,11 @@ misc.mo:Expected error in mat wrapper-procedure: "incorrect number of arguments 
 misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: 1 is not a wrapper procedure".
 misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: #<procedure> is not a wrapper procedure".
 misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: #<procedure> is not a wrapper procedure".
-misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure!)".
-misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
-misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: 1 is not a wrapper procedure".
-misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: #<procedure> is not a wrapper procedure".
-misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: #<procedure> is not a wrapper procedure".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure-procedure!)".
+misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure-procedure! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
+misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-procedure!: 1 is not a wrapper procedure".
+misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-procedure!: #<procedure> is not a wrapper procedure".
+misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-procedure!: #<procedure> is not a wrapper procedure".
 misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure-data!)".
 misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure-data! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
 misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-data!: 1 is not a wrapper procedure".

@@ -4759,7 +4759,7 @@ Changes the data stored in \var{w-proc} to \var{data}.
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{set-wrapper-procedure!}{\categoryprocedure}{(set-wrapper-procedure! \var{w-proc} \var{proc})}
+\formdef{set-wrapper-procedure-procedure!}{\categoryprocedure}{(set-wrapper-procedure-procedure! \var{w-proc} \var{proc})}
 \returns unspecified
 \listlibraries
 \endentryheader
@@ -4778,7 +4778,7 @@ results of \\ \scheme{(procedure-arity-mask \var{w-proc})} and
 \schemedisplay
 (define vector3 (make-wrapper-procedure vector 8 'my-data))
 (vector3 1 2 3) ; => #(1 2 3)
-(set-wrapper-procedure! vector3 list)
+(set-wrapper-procedure-procedure! vector3 list)
 (vector3 1 2 3) ; => (1 2 3)
 \endschemedisplay
 

@@ -1702,7 +1702,7 @@
   (set-timer [sig [(ufixnum) -> (ufixnum)]] [flags true])
   (set-top-level-value! [sig [(symbol ptr) (symbol ptr environment) -> (void)]] [flags true])
   (set-virtual-register! [sig [(sub-index ptr) -> (void)]] [flags true])
-  (set-wrapper-procedure! [sig [(ptr procedure) -> (void)]] [flags true])
+  (set-wrapper-procedure-procedure! [sig [(ptr procedure) -> (void)]] [flags true])
   (set-wrapper-procedure-data! [sig [(ptr ptr) -> (void)]] [flags true])
   (sinh [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
   (sleep [sig [(time) -> (void)]] [flags true])

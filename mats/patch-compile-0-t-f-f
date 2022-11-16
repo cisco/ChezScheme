@@ -3998,11 +3998,11 @@
   misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: 1 is not a wrapper procedure".
   misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: #<procedure> is not a wrapper procedure".
   misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: #<procedure> is not a wrapper procedure".
-! misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure!)".
-! misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
-  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: 1 is not a wrapper procedure".
-  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: #<procedure> is not a wrapper procedure".
-  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: #<procedure> is not a wrapper procedure".
+! misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure-procedure!)".
+! misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure-procedure! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
+  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-procedure!: 1 is not a wrapper procedure".
+  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-procedure!: #<procedure> is not a wrapper procedure".
+  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-procedure!: #<procedure> is not a wrapper procedure".
 ! misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure-data!)".
 ! misc.mo:Expected error in mat wrapper-procedure: "incorrect argument count in call (set-wrapper-procedure-data! (make-arity-wrapper-procedure (lambda args args) 1 #f))".
   misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-data!: 1 is not a wrapper procedure".
@@ -4012,11 +4012,11 @@
   misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: 1 is not a wrapper procedure".
   misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: #<procedure> is not a wrapper procedure".
   misc.mo:Expected error in mat wrapper-procedure: "wrapper-procedure-data: #<procedure> is not a wrapper procedure".
-! misc.mo:Expected error in mat wrapper-procedure: "incorrect number of arguments 0 to #<procedure set-wrapper-procedure!>".
-! misc.mo:Expected error in mat wrapper-procedure: "incorrect number of arguments 1 to #<procedure set-wrapper-procedure!>".
-  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: 1 is not a wrapper procedure".
-  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: #<procedure> is not a wrapper procedure".
-  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure!: #<procedure> is not a wrapper procedure".
+! misc.mo:Expected error in mat wrapper-procedure: "incorrect number of arguments 0 to #<procedure set-wrapper-procedure-procedure!>".
+! misc.mo:Expected error in mat wrapper-procedure: "incorrect number of arguments 1 to #<procedure set-wrapper-procedure-procedure!>".
+  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-procedure!: 1 is not a wrapper procedure".
+  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-procedure!: #<procedure> is not a wrapper procedure".
+  misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-procedure!: #<procedure> is not a wrapper procedure".
 ! misc.mo:Expected error in mat wrapper-procedure: "incorrect number of arguments 0 to #<procedure set-wrapper-procedure-data!>".
 ! misc.mo:Expected error in mat wrapper-procedure: "incorrect number of arguments 1 to #<procedure set-wrapper-procedure-data!>".
   misc.mo:Expected error in mat wrapper-procedure: "set-wrapper-procedure-data!: 1 is not a wrapper procedure".
