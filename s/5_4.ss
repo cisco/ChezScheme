@@ -910,14 +910,14 @@
             [(fx= prev CR) 
              (if (fx= prop LF)
                  (values #t (init-state))
-                 (values #t (prop-state)))]
+                 (values #t (next-state)))]
             ;; some of GB3 and some of GB5
             [(fx= prop CR)
              (values (fx> state 0) (prop-state))]
             ;; rest of GB4 
             [(or (fx= prev Control)
                  (fx= prev LF))
-             (values #t (prop-state))]
+             (values #t (next-state))]
             ;; rest of GB5
             [(or (fx= prop Control)
                  (fx= prop LF))

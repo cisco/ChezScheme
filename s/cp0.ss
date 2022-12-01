@@ -2565,7 +2565,7 @@
          (nanopass-case (Lsrc Expr) (value-visit-operand! body)
            [(case-lambda ,preinfo (clause () ,interface ,e))
             (guard (simple? e))
-            (residualize-seq (list val) '() ctxt)
+            (residualize-seq (list val) (list body) ctxt)
             (make-1seq (app-ctxt ctxt) (value-visit-operand! val) e)]
            [else #f])])
 
@@ -2574,7 +2574,7 @@
          (nanopass-case (Lsrc Expr) (value-visit-operand! body)
            [(case-lambda ,preinfo (clause (,x) ,interface ,e))
             (guard (not (prelex-was-referenced x)))
-            (residualize-seq (list def-val) '() ctxt)
+            (residualize-seq (list def-val) (list body) ctxt)
             (make-1seq (app-ctxt ctxt) (value-visit-operand! def-val) e)]
            [else #f])])
 
@@ -2583,7 +2583,7 @@
          (nanopass-case (Lsrc Expr) (value-visit-operand! body)
            [(case-lambda ,preinfo (clause (,x) ,interface ,e))
             (guard (not (prelex-was-referenced x)))
-            (residualize-seq (list def-val) '() ctxt)
+            (residualize-seq (list def-val) (list body) ctxt)
             (make-1seq (app-ctxt ctxt) (value-visit-operand! def-val) e)]
            [else #f])])
 
@@ -2595,7 +2595,7 @@
             [(call ,preinfo ,pr)
              (guard (eq? (primref-name pr) 'current-continuation-marks))
              (let ([vals (map value-visit-operand! more)])
-               (residualize-seq more '() ctxt)
+               (residualize-seq more (list set) ctxt)
                (build-primcall preinfo level '$continuation-mark-set-first vals))]
             [else #f]))])
 
