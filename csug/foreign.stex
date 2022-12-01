@@ -3321,7 +3321,7 @@ the pointer points and may copy other data over the object.
 \noindent
 \scheme{Srecord_type} and \scheme{Srecord_type_parent} correspond to the
 Scheme procedures \scheme{record-rtd} and \scheme{record-type-parent}.
-\scheme{Srecord_type_size} is the allocation size in bytes of an
+\scheme{Srecord_type_size} returns the allocation size in bytes of an
 instance of the record type.
 The \scheme{Srecord_uniform_ref} accessor should be used only on
 records whose fields are all Scheme values, which is a record
