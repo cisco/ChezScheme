@@ -564,6 +564,12 @@ static int s_ee_write_char(wchar_t c) {
 
   GetConsoleScreenBufferInfo(hStdout, &post_info);
 
+  if (post_info.dwCursorPosition.X == post_info.dwSize.X-1) {
+    /* We don't know whether the cursor advanced as much as it would
+       earlier in the line, so return -128 to mean "unknown". */
+    return -128;
+  }
+
   return post_info.dwCursorPosition.X - pre_info.dwCursorPosition.X;
 }
 
