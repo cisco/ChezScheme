@@ -1433,3 +1433,29 @@
         (mutex-release m)
         #t))
   )
+
+(mat list?
+  (let ()
+    ;; check that `list?` doesn't crash if the input is
+    ;; mutated to go from a list to non-list
+    (define N 10000)
+    (define Q 100)
+    (define ml (let loop ([i N])
+                 (if (zero? i)
+                     '()
+                     (cons i (loop (sub1 i))))))
+    (define mid (list-tail ml (floor (* N 1/4))))
+    (define mid-rest (cdr mid))
+    (boolean?
+     (let find-crash ([j 0])
+       (define e (make-engine (lambda () (list? ml))))
+       (printf "trying fuel ~s\n" j)
+       (set-cdr! mid mid-rest)
+       (e (floor (* (/ j Q) N))
+          (lambda (t v) v)
+          (lambda (e2)
+            (set-cdr! mid 0)
+            (e2 N (lambda (t v) v) (lambda (e2) "still not done"))
+            (or (= j Q)
+                (find-crash (add1 j))))))))
+  )

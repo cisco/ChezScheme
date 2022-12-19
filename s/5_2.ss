@@ -27,7 +27,16 @@
              (let ([hare (cdr hare)])
                 (if (pair? hare)
                     (and (not (eq? hare tortoise))
-                         (loop (cdr hare) (cdr tortoise)))
+                         (loop (cdr hare)
+                               ;; The intend of the pair test of `tortoise` is to
+                               ;; avoid a crash if the list is mutated. We can't
+                               ;; necessarily do something good at this point, but
+                               ;; to accomodate the case that the list is mutated
+                               ;; to give it a longer tail, we restart from
+                               ;; the current hare if the tortoise goes bad.
+                               (if (pair? tortoise)
+                                   (cdr tortoise)
+                                   hare)))
                     (null? hare)))
              (null? hare)))))
 
