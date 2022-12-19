@@ -223,11 +223,11 @@ Inspect marks with these functions:
 \schemedisplay
 current-continuation-marks
 continuation-next-marks
-continuation-mark-set-first
-continuation-mark-set->list
-continuation-mark-set->iterator
+continuation-marks-first
+continuation-marks->list
+continuation-marks->iterator
 call-with-immediate-continuation-mark
-continuation-mark-set?
+continuation-marks?
 \endschemedisplay
 
 The \scheme{call-in-continuation} function can invoke a continuation

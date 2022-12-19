@@ -2587,7 +2587,7 @@
             (make-1seq (app-ctxt ctxt) (value-visit-operand! def-val) e)]
            [else #f])])
 
-      (define-inline 2 continuation-mark-set-first
+      (define-inline 2 continuation-marks-first
         [(set . more)
          (and
           (<= 1 (length more) 2)
@@ -2596,7 +2596,7 @@
              (guard (eq? (primref-name pr) 'current-continuation-marks))
              (let ([vals (map value-visit-operand! more)])
                (residualize-seq more (list set) ctxt)
-               (build-primcall preinfo level '$continuation-mark-set-first vals))]
+               (build-primcall preinfo level '$continuation-marks-first vals))]
             [else #f]))])
 
       (define-inline 2 list

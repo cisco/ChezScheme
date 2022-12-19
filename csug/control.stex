@@ -216,12 +216,11 @@ replacing any existing association for that key.  Although each
 continuation has a single immediate table of marks, a continuation may
 extend another continuation that has its own marks.  The
 \scheme{current-continuation-marks} function captures the sequence of mark
-tables for a continuation and all continuations that it extends; the
-captured value is called a \emph{mark set}. Functions such as
-\scheme{continuation-mark-set-first},
-\scheme{continuation-mark-set->list}, and
-\scheme{continuation-mark-set->iterator} can be used to inspect mark
-sets. When a continuation is captured with \scheme{call/cc}, only the
+tables for a continuation and all continuations that it extends. Functions such as
+\scheme{continuation-marks-first},
+\scheme{continuation-marks->list}, and
+\scheme{continuation-marks->iterator} can be used to inspect mark
+sequences. When a continuation is captured with \scheme{call/cc}, only the
 marks of the rest of the continuation are captured, and
 \scheme{continuation-next-marks} returns the captured marks.
 
@@ -332,45 +331,45 @@ added to the table.
 
 (with-continuation-mark
  'key "val"
- (continuation-mark-set-first (current-continuation-marks)
-                              'key)) ; => "val"
+ (continuation-marks-first (current-continuation-marks)
+                           'key)) ; => "val"
 
 (with-continuation-mark
  'key "val"
- (continuation-mark-set-first (current-continuation-marks)
-                              'other-key)) ; => #f
-
-(with-continuation-mark
- 'key "val"
- (with-continuation-mark
-  'key "val2"
-  (continuation-mark-set-first (current-continuation-marks)
-                               'key))) ; => "val2"
+ (continuation-marks-first (current-continuation-marks)
+                           'other-key)) ; => #f
 
 (with-continuation-mark
  'key "val"
  (with-continuation-mark
   'key "val2"
-  (continuation-mark-set->list (current-continuation-marks)
-                               'key))) ; => ("val2")
+  (continuation-marks-first (current-continuation-marks)
+                            'key))) ; => "val2"
+
+(with-continuation-mark
+ 'key "val"
+ (with-continuation-mark
+  'key "val2"
+  (continuation-marks->list (current-continuation-marks)
+                            'key))) ; => ("val2")
 
 (with-continuation-mark
  'key "val"
  (values
   (with-continuation-mark
    'key "val2"
-   (continuation-mark-set->list (current-continuation-marks)
-                                'key)))) ; => ("val2" "val")
+   (continuation-marks->list (current-continuation-marks)
+                             'key)))) ; => ("val2" "val")
 \endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{continuation-mark-set?}{\categoryprocedure}{(continuation-mark-set? \var{obj})}
+\formdef{continuation-marks?}{\categoryprocedure}{(continuation-marks? \var{obj})}
 \returns boolean
 \listlibraries
 \endentryheader
 
-\noindent A predicate that recognizes a continuation mark set, which
+\noindent A predicate that recognizes a continuation mark sequence, which
 can be produced by the functions \scheme{current-continuation-marks} and
 \scheme{continuation-next-marks}.
 
@@ -378,7 +377,7 @@ can be produced by the functions \scheme{current-continuation-marks} and
 \entryheader
 \formdef{current-continuation-marks}{\categoryprocedure}{(current-continuation-marks)}
 \formdef{continuation-next-marks}{\categoryprocedure}{(continuation-next-marks \var{cont})}
-\returns a continuation mark set
+\returns a continuation mark sequence
 \listlibraries
 \endentryheader
 
@@ -388,7 +387,7 @@ current continuation's marks in the case of
 \var{cont} in the case of \scheme{continuation-next-marks}. In the
 latter case, \var{cont} must be a continuation.
 
-This function takes constant time. The size of the resulting mark set
+This function takes constant time. The size of the resulting mark sequence
 is proportional to the number of distinct key--value mappings in the
 overall mark-table sequence; that size is bounded by the length of the
 continuation times the number of distinct values used as keys, but
@@ -396,28 +395,28 @@ since many continuations have no keys or fewer than all possible keys
 in their tables, the size tends to be much less than the bound.
 
 \schemedisplay
-(continuation-mark-set? (current-continuation-marks)) ; => #t
-(continuation-mark-set? (continuation-next-marks
-                         (call/cc (lambda (k) k)))) ; => #t
+(continuation-marks? (current-continuation-marks)) ; => #t
+(continuation-marks? (continuation-next-marks
+                      (call/cc (lambda (k) k)))) ; => #t
 \endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{continuation-mark-set-first}{\categoryprocedure}{(continuation-mark-set-first \var{mark-set} \var{key})}
-\formdef{continuation-mark-set-first}{\categoryprocedure}{(continuation-mark-set-first \var{mark-set} \var{key} \var{none-val})}
-\returns the value for \var{key} in \var{mark-set} or \var{none-val}
+\formdef{continuation-marks-first}{\categoryprocedure}{(continuation-marks-first \var{marks} \var{key})}
+\formdef{continuation-marks-first}{\categoryprocedure}{(continuation-marks-first \var{marks} \var{key} \var{none-val})}
+\returns the value for \var{key} in \var{marks} or \var{none-val}
 \listlibraries
 \endentryheader
 
 \noindent Extracts the first value found for \var{key} in
-\var{mark-set}, checking the mark table of a continuation before
+\var{marks}, checking the mark table of a continuation before
 checking the table of the continuation that it extends (if any). Keys are
 compared using \scheme{eq?}. If no mark for \var{key} is found,
 \var{none-val} is returned; if \var{none-val} is not provided, it
 defaults to \scheme{#f}.
 
 This function takes amortized time proportional to the number of
-distinct values used as keys in \var{mark-set}. Typically the number of
+distinct values used as keys in \var{marks}. Typically the number of
 keys used in an application is bounded, which makes the computation
 amortized constant-time for those applications.
 
@@ -427,31 +426,31 @@ amortized constant-time for those applications.
  (values
   (with-continuation-mark
    'key "val2"
-   (continuation-mark-set-first (current-continuation-marks)
-                                'key)))) ; => "val2"
+   (continuation-marks-first (current-continuation-marks)
+                             'key)))) ; => "val2"
 
 (with-continuation-mark
  'key "val"
- (continuation-mark-set-first (current-continuation-marks)
-                              'other
-                              "nope")) ; => "nope"
+ (continuation-marks-first (current-continuation-marks)
+                           'other
+                           "nope")) ; => "nope"
 \endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{continuation-mark-set->list}{\categoryprocedure}{(continuation-mark-set->list \var{mark-set} \var{key})}
+\formdef{continuation-marks->list}{\categoryprocedure}{(continuation-marks->list \var{marks} \var{key})}
 \returns a list
 \listlibraries
 \endentryheader
 
 \noindent Returns the list of all values associated with \var{key} in
-\var{mark-set}, with the value from a continuation's mark
+\var{marks}, with the value from a continuation's mark
 table appearing before the values from the mark tables of any other
 continuation that it extends.  Keys are compared using
 \scheme{eq?}.
 
 This function takes time proportional to the size of the captured mark
-set.
+sequence.
 
 \schemedisplay
 (with-continuation-mark
@@ -459,26 +458,26 @@ set.
  (values
   (with-continuation-mark
    'key "val2"
-   (continuation-mark-set->list (current-continuation-marks)
-                                'key)))) ; => ("val2" "val")
+   (continuation-marks->list (current-continuation-marks)
+                             'key)))) ; => ("val2" "val")
 
 (with-continuation-mark
  'key "val"
- (continuation-mark-set->list (current-continuation-marks)
-                              'other)) ; => ()
+ (continuation-marks->list (current-continuation-marks)
+                           'other)) ; => ()
 \endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{continuation-mark-set->iterator}{\categoryprocedure}{(continuation-mark-set->iterator \var{mark-set} \var{key-vector})}
-\formdef{continuation-mark-set->iterator}{\categoryprocedure}{(continuation-mark-set->iterator \var{mark-set} \var{key-vector} \var{none-val})}
+\formdef{continuation-marks->iterator}{\categoryprocedure}{(continuation-marks->iterator \var{marks} \var{key-vector})}
+\formdef{continuation-marks->iterator}{\categoryprocedure}{(continuation-marks->iterator \var{marks} \var{key-vector} \var{none-val})}
 \returns a procedure
 \listlibraries
 \endentryheader
 
-\noindent Generalizes the mark set traversal of
-\scheme{continuation-mark-set->list} to a functional iterator. The
-\var{mark-set} argument must be a continuation mark set, and the
+\noindent Generalizes the mark sequence traversal of
+\scheme{continuation-marks->list} to a functional iterator. The
+\var{marks} argument must be a continuation mark sequence, and the
 \var{key-vector} argument must be a vector of values to be used as
 keys. The result is an iterator procedure of zero arguments.
 
@@ -504,7 +503,7 @@ equivalent to itself as the second result).
 
 \end{itemize}
 
-Obtaining an iterator from \scheme{continuation-mark-set->iterator} takes
+Obtaining an iterator from \scheme{continuation-marks->iterator} takes
 constant time. Each call to an iterator takes time proportional to the
 size of continuation mark tables that are traversed to find one of the
 keys in \var{key-vector}.
@@ -517,7 +516,7 @@ keys in \var{key-vector}.
   (values
    (with-continuation-mark
     'key "val2"
-    (let loop ([iter (continuation-mark-set->iterator
+    (let loop ([iter (continuation-marks->iterator
                       (current-continuation-marks)
                       '#(key other))])
       (let-values ([(vec iter) (iter)])
@@ -537,7 +536,7 @@ keys in \var{key-vector}.
 \noindent Similar to
 %
 \schemedisplay
- (continuation-mark-set-first (current-continuation-marks) \var{key} \var{none-val})
+ (continuation-marks-first (current-continuation-marks) \var{key} \var{none-val})
 \endschemedisplay
 %
 but only the immediate continuation's mark table is checked, and the result is
@@ -563,14 +562,14 @@ table is checked.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{call-in-continuation}{\categoryprocedure}{(call-in-continuation \var{continuation} \var{procedure})}
-\formdef{call-in-continuation}{\categoryprocedure}{(call-in-continuation \var{continuation} \var{mark-set} \var{procedure})}
+\formdef{call-in-continuation}{\categoryprocedure}{(call-in-continuation \var{continuation} \var{marks} \var{procedure})}
 \returns does not return
 \listlibraries
 \endentryheader
 
 \noindent \var{continuation} must be a continuation,
 \var{procedure} must be a procedure that accepts zero arguments, and
-\var{mark-set} (if provided) must be a continuation mark set.
+\var{marks} (if provided) must be a continuation mark sequence.
 
 Applies \var{procedure} to zero arguments with \var{continuation} as
 the continuation of the call, escaping from the current continuation.
@@ -579,9 +578,9 @@ except that the values delivered to the continuation are the ones
 produced by \var{procedure} as it runs within the applied
 continuation.
 
-If \var{mark-set} is not provided, then \var{procedure} starts with no
-immediate mark table. Otherwise, \var{mark-set} must be
-consistent with the result of \scheme{continuation-next-mark-set} on
+If \var{marks} is not provided, then \var{procedure} starts with no
+immediate mark table. Otherwise, \var{marks} must be
+consistent with the result of \scheme{continuation-next-marks} on
 \var{continuation}: either the same content or one additional mark
 table, and the additional mark table becomes the immediate mark table
 when calling \var{procedure}.

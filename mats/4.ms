@@ -3662,49 +3662,49 @@
  )
 
 (mat continuation-marks
-  (error? (continuation-mark-set-first))
-  (error? (continuation-mark-set-first #f 'x))
-  (error? (continuation-mark-set-first 'oops 'x))
-  (error? (continuation-mark-set-first 'oops 'x 'y))
-  (error? (continuation-mark-set-first (current-continuation-marks) 'x 'y 'z))
-  (error? (continuation-mark-set->list))
-  (error? (continuation-mark-set->list #f))
-  (error? (continuation-mark-set->list 'oops))
-  (error? (continuation-mark-set->list (current-continuation-marks) 'x 'y))
-  (error? (continuation-mark-set->iterator))
-  (error? (continuation-mark-set->iterator #f))
-  (error? (continuation-mark-set->iterator 'oops))
-  (error? (continuation-mark-set->iterator (current-continuation-marks) 'y 'z))
+  (error? (continuation-marks-first))
+  (error? (continuation-marks-first #f 'x))
+  (error? (continuation-marks-first 'oops 'x))
+  (error? (continuation-marks-first 'oops 'x 'y))
+  (error? (continuation-marks-first (current-continuation-marks) 'x 'y 'z))
+  (error? (continuation-marks->list))
+  (error? (continuation-marks->list #f))
+  (error? (continuation-marks->list 'oops))
+  (error? (continuation-marks->list (current-continuation-marks) 'x 'y))
+  (error? (continuation-marks->iterator))
+  (error? (continuation-marks->iterator #f))
+  (error? (continuation-marks->iterator 'oops))
+  (error? (continuation-marks->iterator (current-continuation-marks) 'y 'z))
   (error? (continuation-next-marks 'oops))
   (error? (call-with-immediate-continuation-mark #f #f))
   (error? (call-with-immediate-continuation-mark #f #f #f))
 
-  (continuation-mark-set? (current-continuation-marks))
-  (continuation-mark-set? (continuation-next-marks (call/cc (lambda (k) k))))
-  (not (continuation-mark-set? #f))
-  (not (continuation-mark-set? 'other))
+  (continuation-marks? (current-continuation-marks))
+  (continuation-marks? (continuation-next-marks (call/cc (lambda (k) k))))
+  (not (continuation-marks? #f))
+  (not (continuation-marks? 'other))
 
   (equal? 10 (with-continuation-mark 'x 'y 10))
-  (equal? 'xv (with-continuation-mark 'x 'xv (continuation-mark-set-first (current-continuation-marks) 'x)))
-  (equal? #f (with-continuation-mark 'x 'xv (continuation-mark-set-first (current-continuation-marks) 'nonesuch)))
-  (equal? 'none (with-continuation-mark 'x 'xv (continuation-mark-set-first (current-continuation-marks) 'nonesuch 'none)))
-  (equal? 'xv (with-continuation-mark 'x 'xv (continuation-mark-set-first (current-continuation-marks) 'x)))
+  (equal? 'xv (with-continuation-mark 'x 'xv (continuation-marks-first (current-continuation-marks) 'x)))
+  (equal? #f (with-continuation-mark 'x 'xv (continuation-marks-first (current-continuation-marks) 'nonesuch)))
+  (equal? 'none (with-continuation-mark 'x 'xv (continuation-marks-first (current-continuation-marks) 'nonesuch 'none)))
+  (equal? 'xv (with-continuation-mark 'x 'xv (continuation-marks-first (current-continuation-marks) 'x)))
   (equal? 'xv1 (with-continuation-mark
                    'x 'xv0
                  (with-continuation-mark
                      'x 'xv1
-                   (continuation-mark-set-first (current-continuation-marks) 'x))))
+                   (continuation-marks-first (current-continuation-marks) 'x))))
   (equal? '(xv1) (with-continuation-mark
                      'x 'xv0
                    (with-continuation-mark
                        'x 'xv1
-                     (continuation-mark-set->list (current-continuation-marks) 'x))))
+                     (continuation-marks->list (current-continuation-marks) 'x))))
   (equal? '((xv1 xv0)) (with-continuation-mark
                            'x 'xv0
                          (list
                           (with-continuation-mark
                               'x 'xv1
-                            (continuation-mark-set->list (current-continuation-marks) 'x)))))
+                            (continuation-marks->list (current-continuation-marks) 'x)))))
 
   (equal? '#&xv (with-continuation-mark
                     'x 'xv
@@ -3731,10 +3731,10 @@
               (cons (vector->list vec)
                     (loop iter))
               '()))))
-    (define $continuation-mark-set->lists
+    (define $continuation-marks->lists
       (case-lambda
-       [(marks keys) ($mark-iter->lists (continuation-mark-set->iterator marks (list->vector keys)))]
-       [(marks keys no) ($mark-iter->lists (continuation-mark-set->iterator marks (list->vector keys) no))]))
+       [(marks keys) ($mark-iter->lists (continuation-marks->iterator marks (list->vector keys)))]
+       [(marks keys no) ($mark-iter->lists (continuation-marks->iterator marks (list->vector keys) no))]))
     #t)
   
   (equal? '((xv1 yv)) (with-continuation-mark
@@ -3743,26 +3743,26 @@
                             'y 'yv
                           (with-continuation-mark
                               'x 'xv1
-                            ($continuation-mark-set->lists (current-continuation-marks) '(x y))))))
+                            ($continuation-marks->lists (current-continuation-marks) '(x y))))))
   (equal? '(((xv1 #f) (#f yv))) (with-continuation-mark
                                     'y 'yv
                                   (list
                                    (with-continuation-mark
                                        'x 'xv1
-                                     ($continuation-mark-set->lists (current-continuation-marks) '(x y))))))
+                                     ($continuation-marks->lists (current-continuation-marks) '(x y))))))
   (equal? '(((xv1 no) (no yv))) (with-continuation-mark
                                     'y 'yv
                                   (list
                                    (with-continuation-mark
                                        'x 'xv1
-                                     ($continuation-mark-set->lists (current-continuation-marks) '(x y) 'no)))))
+                                     ($continuation-marks->lists (current-continuation-marks) '(x y) 'no)))))
   (equal? '((((xv1 #f) (#f yv)))) (with-continuation-mark
                                       'y 'yv
                                     (list
                                      (list
                                       (with-continuation-mark
                                           'x 'xv1
-                                        ($continuation-mark-set->lists (current-continuation-marks) '(x y)))))))
+                                        ($continuation-marks->lists (current-continuation-marks) '(x y)))))))
   (equal? '((((xv1 #f) (xv0 yv)))) (with-continuation-mark
                                        'x 'xv0
                                      (with-continuation-mark
@@ -3773,15 +3773,15 @@
                                           (list
                                            (with-continuation-mark
                                                'x 'xv1
-                                             ($continuation-mark-set->lists (current-continuation-marks) '(x y)))))))))
+                                             ($continuation-marks->lists (current-continuation-marks) '(x y)))))))))
 
-  (equal? '() (continuation-mark-set->list
+  (equal? '() (continuation-marks->list
                (continuation-next-marks (with-continuation-mark
                                             'x 'xv
                                           (call/cc (lambda (k) k))))
                'x))
 
-  (equal? '(xv) (continuation-mark-set->list
+  (equal? '(xv) (continuation-marks->list
                  (continuation-next-marks (car
                                            (with-continuation-mark
                                                'x 'xv
@@ -3797,8 +3797,8 @@
         (if (zero? depth)
             (let loop ([i N])
               (or (zero? i)
-                  (and (eq? 'yes (continuation-mark-set-first (current-continuation-marks) 'x))
-                       (eq? 'half (continuation-mark-set-first (current-continuation-marks) 'half-way))
+                  (and (eq? 'yes (continuation-marks-first (current-continuation-marks) 'x))
+                       (eq? 'half (continuation-marks-first (current-continuation-marks) 'half-way))
                        (loop (sub1 i)))))
             (#%$value
              (if (= depth (quotient N 2))

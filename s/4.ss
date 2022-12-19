@@ -389,12 +389,12 @@
                     ($current-winders new)))))))))
   )
 
-(set! continuation-mark-set?
+(set! continuation-marks?
       (let* ([mark-cache-key '#{cache-key mpsiogk70mywwtrxxqyso7lht-0}]
              [mark-not-found-key mark-cache-key])
-        (define-record-type continuation-mark-set
+        (define-record-type continuation-marks
           (fields (immutable markss))
-          (nongenerative #{continuation-mark-set c32ju6acq6xzgmortvhjrnb9b-1})
+          (nongenerative #{continuation-marks c32ju6acq6xzgmortvhjrnb9b-1})
           (opaque #t)
           (sealed #t))
 
@@ -402,7 +402,7 @@
         ;; values; the first thing in the list may be a cache, which should
         ;; be discarded if the mark table is updated
 
-        (define (do-continuation-mark-set-first markss key none-v)
+        (define (do-continuation-marks-first markss key none-v)
           (let loop ([markss markss] [slow-markss markss] [i 0])
             (define (result found)
               ;; cache at half the depth we had to look:
@@ -464,24 +464,24 @@
 
         (set-who! current-continuation-marks
           (lambda ()
-            (make-continuation-mark-set ($current-attachments))))
+            (make-continuation-marks ($current-attachments))))
 
         (set-who! continuation-next-marks
           (lambda (c)
             (unless ($continuation? c)
               ($oops who "~s is not a continuation" c))
-            (make-continuation-mark-set ($continuation-attachments c))))
+            (make-continuation-marks ($continuation-attachments c))))
 
-        (set-who! continuation-mark-set->iterator
-          (rec continuation-mark-set->iterator
+        (set-who! continuation-marks->iterator
+          (rec continuation-marks->iterator
                (case-lambda
-                [(set keys) (continuation-mark-set->iterator set keys #f)]
+                [(set keys) (continuation-marks->iterator set keys #f)]
                 [(set keys none-val)
-                 (unless (continuation-mark-set? set)
-                   ($oops who "~s is not a continuation mark set" set))
+                 (unless (continuation-marks? set)
+                   ($oops who "~s is not a continuation mark sequence" set))
                  (unless (vector? keys)
                    ($oops who "~s is not a vector" keys))
-                 (let gen ([markss (continuation-mark-set-markss set)])
+                 (let gen ([markss (continuation-marks-markss set)])
                    (lambda ()
                      (let loop ([markss markss])
                        (cond
@@ -502,11 +502,11 @@
                                         (gen (cdr markss)))
                                 (loop (cdr markss))))]))))])))
 
-        (set-who! continuation-mark-set->list
+        (set-who! continuation-marks->list
           (lambda (set key)
-            (unless (continuation-mark-set? set)
-              ($oops who "~s is not a continuation mark set" set))
-            (let loop ([markss (continuation-mark-set-markss set)])
+            (unless (continuation-marks? set)
+              ($oops who "~s is not a continuation mark sequence" set))
+            (let loop ([markss (continuation-marks-markss set)])
               (cond
                 [(null? markss) '()]
                 [else
@@ -516,20 +516,20 @@
                          (cons (cdr a) (loop (cdr markss)))
                          (loop (cdr markss)))))]))))
 
-        (set-who! continuation-mark-set-first
-          (rec continuation-mark-set-first
+        (set-who! continuation-marks-first
+          (rec continuation-marks-first
                (case-lambda
-                [(set key) (continuation-mark-set-first set key #f)]
+                [(set key) (continuation-marks-first set key #f)]
                 [(set key none-v)
-                 (unless (continuation-mark-set? set)
-                   ($oops who "~s is not a continuation mark set" set))
-                 (do-continuation-mark-set-first (continuation-mark-set-markss set) key none-v)])))
+                 (unless (continuation-marks? set)
+                   ($oops who "~s is not a continuation mark sequence" set))
+                 (do-continuation-marks-first (continuation-marks-markss set) key none-v)])))
 
         ;; co0 shortcuts an immediate `(current-continuation-marks)`:
-        (set-who! $continuation-mark-set-first
+        (set-who! $continuation-marks-first
           (case-lambda
-           [(key) (do-continuation-mark-set-first ($current-attachments) key #f)]
-           [(key none-v) (do-continuation-mark-set-first ($current-attachments) key none-v)]))
+           [(key) (do-continuation-marks-first ($current-attachments) key #f)]
+           [(key none-v) (do-continuation-marks-first ($current-attachments) key none-v)]))
 
         (set-who! call-with-immediate-continuation-mark
           (rec call-with-immediate-continuation-mark
@@ -554,16 +554,16 @@
             ($call-in-continuation c proc)]
            [(c set proc)
             (unless ($continuation? c) ($oops who "~s is not a continuation" c))
-            (unless (continuation-mark-set? set) ($oops who "~s is not a continuation mark set" set))
+            (unless (continuation-marks? set) ($oops who "~s is not a continuation mark sequence" set))
             (unless (procedure? proc) ($oops who "~s is not a procedure" proc))
-            (let ([markss (continuation-mark-set-markss set)]
+            (let ([markss (continuation-marks-markss set)]
                   [c-markss ($continuation-attachments c)])
               (unless (or (eq? markss c-markss)
                           (and (pair? markss) (eq? (cdr markss) c-markss)))
-                ($oops who "~s is not an extension of the mark set of ~s" set c))
+                ($oops who "~s is not an extension of the marks of ~s" set c))
               ($call-in-continuation c markss proc))]))
 
-        continuation-mark-set?))
+        continuation-marks?))
 
 ;;; make-promise and force
 
