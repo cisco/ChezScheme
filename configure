@@ -89,6 +89,7 @@ empetite=no
 moreBootFiles=
 preloadBootFiles=
 alwaysUseBootFile=
+skipSubmoduleUpdate=
 
 # On WSL, set OS to "Windows_NT" (as already set in MSYS2) to create a
 # Windows build instead of a Linux (on Windows) build:
@@ -255,6 +256,9 @@ while [ $# != 0 ] ; do
     --force)
       forceworkarea=yes
       enableFrompb=no
+      ;;
+    --as-is)
+      skipSubmoduleUpdate=yes
       ;;
     --installprefix=*)
       installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
@@ -576,6 +580,7 @@ if [ "$help" = "yes" ]; then
   echo "  --[no]gzip-man-pages              compress manual pages ($gzipmanpages)"
   echo "  --workarea=<pathname>             build directory ($w)"
   echo "  --force                           disable use of pb to (re)build boot files"
+  echo "  --as-is                           skip Git submodule update"
   echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   C preprocessor flags"
   echo "  CFLAGS=<C compiler flags>         C compiler flags"
@@ -788,10 +793,19 @@ if [ "$addflags" = "yes" ] ; then
   fi
 fi
 
+if [ "$skipSubmoduleUpdate" != "yes" ] ; then
+  if [ -d '.git' ] && command -v git >/dev/null 2>&1 ; then
+    git submodule update --init --depth 1
+  fi
+fi
+
 submod_instructions () {
-    echo $1"; trying Git submodules checkout"
-    git submodule init
-    git submodule update
+    echo $1
+    if [ -d '.git' ] ; then
+        echo "Initialize and update submodules, probably something like this:"
+        echo "  git submodule update --init --depth 1"
+    fi
+    exit 1
 }
 
 if [ ! -f "$srcdir"/zuo/configure ] ; then
