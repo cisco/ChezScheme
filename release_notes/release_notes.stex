@@ -361,7 +361,9 @@ The \scheme{make-weak-hashtable} and \scheme{make-ephemeron-hashtable}
 functions support weak and ephemeron hash tables with arbitrary
 equality and hashing functions.
 
-New operations on hashtable cells resemble procedures like
+Operations for hashtable cells now raise an exception when given an
+immutable hashtable.
+New operations for hashtable cells resemble procedures like
 \scheme{hashtable-keys} or \scheme{hashtable-ref}:
 
 \schemedisplay

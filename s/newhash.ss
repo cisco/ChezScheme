@@ -723,10 +723,12 @@ Documentation notes:
         ($oops 'eq-hashtable-ref "~s is not an eq hashtable" h))
       (#3%eq-hashtable-ref h x v)))
 
-  (set! eq-hashtable-ref-cell
+  (set-who! eq-hashtable-ref-cell
     (lambda (h x)
       (unless (eq-ht? h)
-        ($oops 'eq-hashtable-ref-cell "~s is not an eq hashtable" h))
+        ($oops who "~s is not an eq hashtable" h))
+      (unless (xht-mutable? h)
+        ($oops who "~s is not mutable" h))
       (#3%eq-hashtable-ref-cell h x)))
 
   (set! eq-hashtable-contains?
@@ -753,16 +755,20 @@ Documentation notes:
         ($oops 'eq-hashtable-update! "~s is not a procedure" p))
       (#3%eq-hashtable-update! h x p v)))
 
-  (set! eq-hashtable-cell
+  (set-who! eq-hashtable-cell
     (lambda (h x v)
       (unless (eq-ht? h)
-        ($oops 'eq-hashtable-cell "~s is not an eq hashtable" h))
+        ($oops who "~s is not an eq hashtable" h))
+      (unless (xht-mutable? h)
+        ($oops who "~s is not mutable" h))
       (#3%eq-hashtable-cell h x v)))
 
-  (set! eq-hashtable-try-atomic-cell
+  (set-who! eq-hashtable-try-atomic-cell
     (lambda (h x v)
       (unless (eq-ht? h)
-        ($oops 'eq-hashtable-try-atomic-cell "~s is not an eq hashtable" h))
+        ($oops who "~s is not an eq hashtable" h))
+      (unless (xht-mutable? h)
+        ($oops who "~s is not mutable" h))
       (#3%eq-hashtable-try-atomic-cell h x v)))
 
   (set! eq-hashtable-delete!
@@ -813,6 +819,7 @@ Documentation notes:
       (lambda (h x)
         (unless (symbol-ht? h) ($oops who "~s is not a symbol hashtable" h))
         (unless (symbol? x) ($oops who "~s is not a symbol" x))
+        (unless (xht-mutable? h) ($oops who "~s is not mutable" h))
         (#3%symbol-hashtable-ref-cell h x)))
 
   (set-who! symbol-hashtable-contains?
@@ -841,6 +848,7 @@ Documentation notes:
     (lambda (h x v)
       (unless (symbol-ht? h) ($oops who "~s is not a symbol hashtable" h))
       (unless (symbol? x) ($oops who "~s is not a symbol" x))
+      (unless (xht-mutable? h) ($oops who "~s is not mutable" h))
       (#3%symbol-hashtable-cell h x v)))
 
   (set-who! symbol-hashtable-delete!
@@ -864,15 +872,17 @@ Documentation notes:
 
   (set-who! hashtable-ref-cell
     (lambda (h x)
+      (define (check-mutable)
+        (unless (xht-mutable? h) ($oops who "~s is not mutable" h)))
       (unless (xht? h)
         ($oops who "~s is not a hashtable" h))
       (case (xht-type h)
-        [(eq) (#3%eq-hashtable-ref-cell h x)]
+        [(eq) (check-mutable) (#3%eq-hashtable-ref-cell h x)]
         [(symbol)
          (unless (symbol? x) ($oops 'symbol-hash "~s is not a symbol" x))
          (#3%symbol-hashtable-ref-cell h x)]
-        [(eqv) ($eqv-hashtable-ref-cell h x who)]
-        [else ($gen-hashtable-ref-cell h x who)])))
+        [(eqv) (check-mutable) ($eqv-hashtable-ref-cell h x who)]
+        [else (check-mutable) ($gen-hashtable-ref-cell h x who)])))
 
   (set-who! hashtable-contains?
     (lambda (h x)
@@ -918,15 +928,18 @@ Documentation notes:
 
   (set-who! hashtable-cell
     (lambda (h x v)
+      (define (check-mutable)
+        (unless (xht-mutable? h) ($oops who "~s is not mutable" h)))
       (unless (xht? h)
         ($oops who "~s is not a hashtable" h))
       (case (xht-type h)
-        [(eq) (#3%eq-hashtable-cell h x v)]
+        [(eq) (check-mutable) (#3%eq-hashtable-cell h x v)]
         [(symbol)
          (unless (symbol? x) ($oops 'symbol-hash "~s is not a symbol" x))
+         (check-mutable)
          (#3%symbol-hashtable-cell h x v)]
-        [(eqv) ($eqv-hashtable-cell h x v who)]
-        [else ($gen-hashtable-cell h x v who)])))
+        [(eqv) (check-mutable) ($eqv-hashtable-cell h x v who)]
+        [else (check-mutable) ($gen-hashtable-cell h x v who)])))
 
   (set-who! hashtable-delete!
     (lambda (h x)
@@ -1064,6 +1077,8 @@ Documentation notes:
      [(h max-sz)
       (unless (xht? h)
         ($oops who "~s is not a hashtable" h))
+      (unless (xht-mutable? h)
+        ($oops who "~s is not mutable" h))
       (unless (and (integer? max-sz) (exact? max-sz) (not (negative? max-sz)))
         ($oops who "~s is not a valid length" max-sz))
       (let ([max-sz (if (fixnum? max-sz) max-sz (hashtable-size h))])
@@ -1072,7 +1087,8 @@ Documentation notes:
           [(eqv) ($eqv-hashtable-cells h max-sz)]
           [(generic) ($gen-hashtable-cells h max-sz)]
           [else ($ht-hashtable-cells h max-sz)]))]
-     [(h) (hashtable-cells h (hashtable-size h))]))
+     [(h)
+      (hashtable-cells h (and (xht? h) (hashtable-size h)))]))
 
   (set! hashtable-size
     (let ([$gen-ht-size (lambda (h)

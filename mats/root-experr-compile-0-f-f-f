@@ -35,8 +35,6 @@ primvars.mo:Expected error testing (expand 1.0+2.0i (quote #f) 1.0+2.0i 1.0+2.0i
 primvars.mo:Expected error testing (expand 1.0+2.0i (quote ((a . b))) 1.0+2.0i 1.0+2.0i "a"): Exception in sc-expand: ((a . b)) is not an environment
 primvars.mo:Expected error testing (expand 1.0+2.0i (quote #f) 1.0+2.0i 1.0+2.0i "a"): Exception in sc-expand: #f is not an environment
 primvars.mo:Expected error testing (expand 1.0+2.0i *env 1.0+2.0i 1.0+2.0i (quote a)): Exception in sc-expand: a is not a string or #f
-primvars.mo:Expected error testing (hashtable-cells (quote ((a . b)))): Exception in hashtable-size: ((a . b)) is not a hashtable
-primvars.mo:Expected error testing (hashtable-cells (quote #f)): Exception in hashtable-size: #f is not a hashtable
 primvars.mo:Expected error testing (load-compiled-from-port 1.0+2.0i (quote "a")): Exception in load-compiled-from-port: 1.0+2.0i is not a binary input port
 primvars.mo:Expected error testing (load-compiled-from-port 1.0+2.0i (quote #f)): Exception in load-compiled-from-port: 1.0+2.0i is not a binary input port
 primvars.mo:Expected error testing (make-input-port (quote 0) "a"): Exception in make-input-port: fixnum handler no longer supported; use open-fd-input-port
@@ -634,19 +632,19 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
 4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
 4.mo:Expected error in mat continuation-attachments: "attempt to apply non-procedure also-something-else".
-4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-mark-set-first)".
-4.mo:Expected error in mat continuation-marks: "continuation-mark-set-first: #f is not a continuation mark set".
-4.mo:Expected error in mat continuation-marks: "continuation-mark-set-first: oops is not a continuation mark set".
-4.mo:Expected error in mat continuation-marks: "continuation-mark-set-first: oops is not a continuation mark set".
-4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-mark-set-first (current-continuation-marks) (quote x) (quote y) (quote z))".
-4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-mark-set->list)".
-4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-mark-set->list #f)".
-4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-mark-set->list (quote oops))".
-4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-mark-set->list (current-continuation-marks) (quote x) (quote y))".
-4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-mark-set->iterator)".
-4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-mark-set->iterator #f)".
-4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-mark-set->iterator (quote oops))".
-4.mo:Expected error in mat continuation-marks: "continuation-mark-set->iterator: y is not a vector".
+4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-marks-first)".
+4.mo:Expected error in mat continuation-marks: "continuation-marks-first: #f is not a continuation mark sequence".
+4.mo:Expected error in mat continuation-marks: "continuation-marks-first: oops is not a continuation mark sequence".
+4.mo:Expected error in mat continuation-marks: "continuation-marks-first: oops is not a continuation mark sequence".
+4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-marks-first (current-continuation-marks) (quote x) (quote y) (quote z))".
+4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-marks->list)".
+4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-marks->list #f)".
+4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-marks->list (quote oops))".
+4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-marks->list (current-continuation-marks) (quote x) (quote y))".
+4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-marks->iterator)".
+4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-marks->iterator #f)".
+4.mo:Expected error in mat continuation-marks: "incorrect argument count in call (continuation-marks->iterator (quote oops))".
+4.mo:Expected error in mat continuation-marks: "continuation-marks->iterator: y is not a vector".
 4.mo:Expected error in mat continuation-marks: "continuation-next-marks: oops is not a continuation".
 4.mo:Expected error in mat continuation-marks: "call-with-immediate-continuation-mark: #f is not a procedure".
 4.mo:Expected error in mat continuation-marks: "call-with-immediate-continuation-mark: #f is not a procedure".
@@ -658,9 +656,9 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 4.mo:Expected error in mat call-in-continuation: "incorrect argument count in call (call-in-continuation 1)".
 4.mo:Expected error in mat call-in-continuation: "call-in-other-continuation: 1 is not a continuation".
 4.mo:Expected error in mat call-in-continuation: "call-in-other-continuation: #<procedure> is not a continuation".
-4.mo:Expected error in mat call-in-continuation: "call-in-continuation: #f is not a continuation mark set".
-4.mo:Expected error in mat call-in-continuation: "call-in-continuation: (1 2 3) is not a continuation mark set".
-4.mo:Expected error in mat call-in-continuation: "call-in-continuation: #<continuation-mark-set> is not an extension of the mark set of #<continuation>".
+4.mo:Expected error in mat call-in-continuation: "call-in-continuation: #f is not a continuation mark sequence".
+4.mo:Expected error in mat call-in-continuation: "call-in-continuation: (1 2 3) is not a continuation mark sequence".
+4.mo:Expected error in mat call-in-continuation: "call-in-continuation: #<continuation-marks> is not an extension of the marks of #<continuation>".
 4.mo:Expected error in mat refcount-guardians: "unrecognized ftype name NO!".
 4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
 4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
@@ -8276,10 +8274,12 @@ hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in 
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cell $ht (quote a))".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cell $ht (quote a) (quote b) (quote c))".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-cell: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-cell: #<eq hashtable> is not mutable".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ref-cell)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ref-cell $ht)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ref-cell $ht (quote a) (quote b))".
-hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-ref-cell (quote (hash . table)) (quote a) (quote b))".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-ref-cell: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-ref-cell: #<eq hashtable> is not mutable".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-delete!)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-delete! $ht)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-delete! $ht (quote a) (quote b))".
@@ -8318,9 +8318,12 @@ hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in 
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-entries: (hash . table) is not a hashtable".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cells)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-cells $ht 72 43)".
-hash.mo:Expected error in mat hashtable-arguments: "hashtable-size: (hash . table) is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: 5 is not a hashtable".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: (hash . table) is not a hashtable".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: -79 is not a valid length".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: not-an-unsigned-integer is not a valid length".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: #<eq hashtable> is not mutable".
+hash.mo:Expected error in mat hashtable-arguments: "hashtable-cells: #<eq hashtable> is not mutable".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-hash-function)".
 hash.mo:Expected error in mat hashtable-arguments: "incorrect argument count in call (hashtable-hash-function $ht $ht)".
 hash.mo:Expected error in mat hashtable-arguments: "hashtable-hash-function: (hash . table) is not an eq hashtable".
@@ -8394,15 +8397,18 @@ hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count 
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-cell $wht (quote a))".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-cell $wht (quote a) (quote b) (quote c))".
 hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-cell: (hash . table) is not an eq hashtable".
+hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-cell: #<eq hashtable> is not mutable".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref-cell)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref-cell $wht)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-ref-cell $wht (quote a) (quote b))".
 hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-ref-cell: (hash . table) is not an eq hashtable".
+hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-ref-cell: #<eq hashtable> is not mutable".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-try-atomic-cell)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-try-atomic-cell $wht)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-try-atomic-cell $wht (quote a))".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-try-atomic-cell $wht (quote a) (quote b) (quote c))".
 hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-try-atomic-cell: (hash . table) is not an eq hashtable".
+hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-try-atomic-cell: #<eq hashtable> is not mutable".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-weak?)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "incorrect argument count in call (eq-hashtable-weak? $ht 3)".
 hash.mo:Expected error in mat eq-hashtable-arguments: "eq-hashtable-weak?: (hash . table) is not an eq hashtable".
@@ -8458,7 +8464,9 @@ hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument co
 hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-cell: (hash . table) is not a symbol hashtable".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-cell: #<eq hashtable> is not a symbol hashtable".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-cell: (a) is not a symbol".
+hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-cell: (a) is not a symbol".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hash: (a) is not a symbol".
+hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-cell: #<hashtable> is not mutable".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref-cell)".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref-cell $symht)".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "incorrect argument count in call (symbol-hashtable-ref-cell $symht (quote a) (quote b))".
@@ -8466,6 +8474,7 @@ hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-ref-
 hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-ref-cell: #<eq hashtable> is not a symbol hashtable".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-ref-cell: (a) is not a symbol".
 hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hash: (a) is not a symbol".
+hash.mo:Expected error in mat symbol-hashtable-arguments: "symbol-hashtable-ref-cell: #<hashtable> is not mutable".
 hash.mo:Expected error in mat eqv-hashtable-arguments: "incorrect argument count in call (make-weak-eqv-hashtable 3 #t)".
 hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument -1".
 hash.mo:Expected error in mat eqv-hashtable-arguments: "make-weak-eqv-hashtable: invalid size argument #t".

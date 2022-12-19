@@ -1,7 +1,7 @@
-*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	2022-10-31 15:58:51.000000000 +0800
---- output-compile-0-f-t-f-experr/errors-compile-0-f-t-f	2022-10-31 15:58:46.000000000 +0800
+*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	2022-12-19 11:48:23.000000000 +0800
+--- output-compile-0-f-t-f-experr/errors-compile-0-f-t-f	2022-12-19 11:48:18.000000000 +0800
 ***************
-*** 209,215 ****
+*** 207,213 ****
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable c".
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable m".
@@ -9,7 +9,7 @@
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable y".
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
---- 209,215 ----
+--- 207,213 ----
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable c".
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable m".
@@ -18,7 +18,7 @@
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
 ***************
-*** 228,234 ****
+*** 226,232 ****
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable b".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable a".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
@@ -26,7 +26,7 @@
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable f".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable c".
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
---- 228,234 ----
+--- 226,232 ----
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable b".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable a".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
@@ -35,7 +35,7 @@
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable c".
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
 ***************
-*** 275,284 ****
+*** 273,282 ****
   3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
   3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
   3.mo:Expected error in mat mrvs: "returned 0 values to single value return context".
@@ -46,7 +46,7 @@
   3.mo:Expected error in mat mrvs: "variable $mrvs-foo is not bound".
   3.mo:Expected error in mat mrvs: "attempt to apply non-procedure 17".
   3.mo:Expected error in mat mrvs: "returned 2 values to single value return context".
---- 275,284 ----
+--- 273,282 ----
   3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
   3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
   3.mo:Expected error in mat mrvs: "returned 0 values to single value return context".
@@ -58,7 +58,7 @@
   3.mo:Expected error in mat mrvs: "attempt to apply non-procedure 17".
   3.mo:Expected error in mat mrvs: "returned 2 values to single value return context".
 ***************
-*** 4096,4102 ****
+*** 4094,4100 ****
   misc.mo:Expected error in mat cpletrec: "foreign-procedure: no entry for "foo"".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable q".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable bar".
@@ -66,7 +66,7 @@
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable b".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable b".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable a".
---- 4096,4102 ----
+--- 4094,4100 ----
   misc.mo:Expected error in mat cpletrec: "foreign-procedure: no entry for "foo"".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable q".
   misc.mo:Expected error in mat cpletrec: "attempt to reference undefined variable bar".
