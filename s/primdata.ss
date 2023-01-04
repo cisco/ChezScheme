@@ -135,9 +135,9 @@
   (flsqrt [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs unboxed-arguments])
   (flexpt [sig [(flonum flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs unboxed-arguments])
   (make-no-infinities-violation [sig [() -> (condition)]] [flags pure unrestricted alloc])
-  (no-infinities-violation? [sig [(ptr) -> (ptr)]] [flags pure unrestricted mifoldable discard])
+  (no-infinities-violation? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (make-no-nans-violation [sig [() -> (condition)]] [flags pure unrestricted alloc])
-  (no-nans-violation? [sig [(ptr) -> (ptr)]] [flags pure unrestricted mifoldable discard])
+  (no-nans-violation? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (fixnum->flonum [sig [(fixnum) -> (flonum)]] [flags arith-op cp02 safeongoodargs])
 )
 
