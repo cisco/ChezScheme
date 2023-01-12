@@ -723,10 +723,10 @@ original source file's path.
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Unicode 14.0 Support (9.6.0)}
+\subsection{Unicode 15.0 Support (9.6.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,
-and Unicode-related bytevector operations have now been updated to Unicode 14.0.
+and Unicode-related bytevector operations have now been updated to Unicode 15.0.
 
 \subsection{Basic ftypes can be referenced, even if shadowed by syntactic binding (9.5.8)}
 
