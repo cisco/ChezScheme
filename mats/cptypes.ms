@@ -1423,15 +1423,27 @@
   (cptypes-equivalent-expansion?
     '(lambda (x) (fixnum? (bitwise-and x 7)))
     '(lambda (x) (bitwise-and x 7) #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (fixnum? (bitwise-and x (most-positive-fixnum))))
+    '(lambda (x) (bitwise-and x (most-positive-fixnum)) #t))
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (fixnum? (bitwise-and x -7)))
          '(lambda (x) (bitwise-and x -7) #t)))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (fixnum? (bitwise-and x (add1 (most-positive-fixnum)))))
+         '(lambda (x) (bitwise-and x (add1 (most-positive-fixnum))) #t)))
   (cptypes-equivalent-expansion?
     '(lambda (x) (fixnum? (bitwise-ior x -7)))
     '(lambda (x) (bitwise-ior x -7) #t))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (fixnum? (bitwise-ior x (most-negative-fixnum))))
+    '(lambda (x) (bitwise-ior x (most-negative-fixnum)) #t))
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (fixnum? (bitwise-ior x 7)))
          '(lambda (x) (bitwise-ior x 7) #t)))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (fixnum? (bitwise-ior x (sub1 (most-negative-fixnum)))))
+         '(lambda (x) (bitwise-ior x (sub1 (most-negative-fixnum))) #t)))
   (cptypes-equivalent-expansion?
     '(lambda (f x) (when (fixnum? x) (bitwise-and (f) x)))
     '(lambda (f x) (when (fixnum? x)

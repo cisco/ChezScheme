@@ -1035,13 +1035,15 @@ Notes:
 
         (define-specialize/bitwise 2 bitwise-and
                                      fxand
-                                     (lambda (r*) (ormap (lambda (r) (check-constant-is? r (lambda (x) (target-fixnum? x)
-                                                                                                       (>= x 0))))
+                                     (lambda (r*) (ormap (lambda (r) (check-constant-is? r (lambda (x) 
+                                                                                             (and (target-fixnum? x)
+                                                                                                  (>= x 0)))))
                                                          r*)))
         (define-specialize/bitwise 2 bitwise-ior
                                      fxior
-                                     (lambda (r*) (ormap (lambda (r) (check-constant-is? r (lambda (x) (target-fixnum? x)
-                                                                                                       (< x 0))))
+                                     (lambda (r*) (ormap (lambda (r) (check-constant-is? r (lambda (x)
+                                                                                             (and (target-fixnum? x)
+                                                                                                  (< x 0)))))
                                                          r*)))
         (define-specialize/bitwise 2 bitwise-xor fxxor (lambda (r*) #f))
         (define-specialize/bitwise 2 bitwise-not fxnot (lambda (r*) #f))
