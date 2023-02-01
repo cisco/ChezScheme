@@ -17,7 +17,7 @@ include Mf-base
 
 # -m: emulation, can be seen by -V
 ${KernelO}: ${kernelobj} ${zlibDep} ${LZ4Dep}
-	${LD} -melf64lloongarch_lp64 -r -X -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
+	${LD} -m elf64loongarch -r -X -o ${KernelO} ${kernelobj} ${zlibLib} ${LZ4Lib}
 
 ${KernelLib}: ${kernelobj}
 	${AR} ${ARFLAGS} ${KernelLib} ${kernelobj}
