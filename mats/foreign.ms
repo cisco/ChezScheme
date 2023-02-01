@@ -2688,8 +2688,8 @@
               (eqv? pid^ pid)))))))
 )
 
-;; varargs ABI not supported for arm32le (yet)
-(unless (memq (machine-type) '(arm32le tarm32le))
+;; varargs ABI not supported for arm32le, [t]rv64le, [t]la64le (yet)
+(unless (memq (machine-type) '(arm32le tarm32le rv64le trv64le la64le tla64le))
   (mat varargs
     (begin
       (define load-libc
