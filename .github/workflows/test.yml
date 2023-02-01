@@ -11,6 +11,10 @@ jobs:
             os: macos-11
           - machine: ta6osx
             os: macos-11
+          - machine: a6osx
+            os: macos-12
+          - machine: ta6osx
+            os: macos-12
           - machine: i3le
             os: ubuntu-20.04
           - machine: ti3le
@@ -19,6 +23,10 @@ jobs:
             os: ubuntu-20.04
           - machine: ta6le
             os: ubuntu-20.04
+          - machine: a6le
+            os: ubuntu-22.04
+          - machine: ta6le
+            os: ubuntu-22.04
           - machine: i3nt
             os: windows-2019
           - machine: i3nt
@@ -47,7 +55,7 @@ jobs:
         if: ${{ runner.os == 'Windows' }}
         run: git config --global core.autocrlf false
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup 32-bit Linux
         if: ${{ endsWith(matrix.config.machine, 'i3le') }}
         run: |
@@ -64,7 +72,7 @@ jobs:
         run: tar -c -h -z -f $TARGET_MACHINE.tgz $TARGET_MACHINE
       - name: Upload archive
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.config.machine }}
           path: ${{ matrix.config.machine }}.tgz
