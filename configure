@@ -323,7 +323,7 @@ while [ $# != 0 ] ; do
 done
 
 if [ "$bits" = "" ] ; then
-  if uname -a | egrep 'amd64|x86_64|riscv64' > /dev/null 2>&1 ; then
+  if uname -a | egrep 'amd64|x86_64|riscv64|loongarch64' > /dev/null 2>&1 ; then
     bits=64
   else
     bits=32
