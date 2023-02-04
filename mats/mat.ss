@@ -380,6 +380,13 @@
                           (or (fx< i 0)
                               (and (fx= (fxvector-ref x i) (fxvector-ref y i))
                                    (f (fx1- i))))))]
+                  [(flvector? x)
+                   (and (flvector? y)
+                        (fx= (flvector-length x) (flvector-length y))
+                        (let f ([i (fx- (flvector-length x) 1)])
+                          (or (fx< i 0)
+                              (and (eqv? (flvector-ref x i) (flvector-ref y i))
+                                   (f (fx1- i))))))]
                   [(box? x) (and (box? y) (e? (unbox x) (unbox y)))]
                   [else #f])
                 (begin

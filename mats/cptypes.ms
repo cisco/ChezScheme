@@ -1527,3 +1527,10 @@
     '(lambda (x) (+ (#%$call-consuming-continuation-attachment 'a (lambda (a) (error 'x "no ~s" a))) 1))
     '(lambda (x) (#%$call-consuming-continuation-attachment 'a (lambda (a) (error 'x "no ~s" a))))))
 )
+
+(mat cptypes-null-vectors
+  ; check that equivalent-expansion? is comparing flvectors correctly
+  (equivalent-expansion? #vfl(7.0) #vfl(7.0))
+  (equivalent-expansion? #vfl(+nan.0) #vfl(+nan.0))
+  (not (equivalent-expansion? #vfl(0.0) #vfl(-0.0)))
+)
