@@ -118,49 +118,44 @@
        (let f () (if n n (begin ($yield) (f)))))
      (get-process-id))
   ($thread-check)
-  (equal?
-    (let ()
-      (define fat+
-        (lambda (x y)
-          (if (zero? y)
-              x
-              (fat+ (1+ x) (1- y)))))
-      (define fatfib
-        (lambda (x)
-          (if (< x 2)
-              1
-              (fat+ (fatfib (1- x)) (fatfib (1- (1- x)))))))
-      (define iota
-        (case-lambda
-          [(n) (iota 0 n)]
-          [(i n)
-           (if (= n 0)
-               '()
-               (cons i (iota (+ i 1) (- n 1))))]))
-      (define-syntax parallel-list
-        (syntax-rules ()
-          [(_ x ...)
-           (let ([v (make-vector (length '(x ...)) #f)]
-                 [m (make-mutex)]
-                 [c (make-condition)]
-                 [n (length '(x ...))])
-             (with-mutex m
-               (map (lambda (p i) (p i))
-                 (list (lambda (i)
-                         (fork-thread
-                          (lambda ()
-                            (vector-set! v i x)
-                            (with-mutex m
-                              (set! n (- n 1))
-                              (when (= n 0)
-                                (condition-signal c))))))
-                       ...)
-                 (iota (length '(x ...))))
-               (and (condition-wait c m #;(make-time 'time-duration 0 60))
-                    (vector->list v))))]))
+  (let ()
+    (define fat+
+      (lambda (x y)
+        (if (zero? y)
+            x
+            (fat+ (1+ x) (1- y)))))
+    (define fatfib
+      (lambda (x)
+        (if (< x 2)
+            1
+            (fat+ (fatfib (1- x)) (fatfib (1- (1- x)))))))
+    (define-syntax parallel-list
+      (syntax-rules ()
+        [(_ x ...)
+         (let ([v (make-vector (length '(x ...)) #f)]
+               [m (make-mutex)]
+               [c (make-condition)]
+               [n (length '(x ...))])
+           (and
+            (with-mutex m
+              (map (lambda (p i) (p i))
+                (list (lambda (i)
+                        (fork-thread
+                         (lambda ()
+                           (vector-set! v i x)
+                           (with-mutex m
+                             (set! n (- n 1))
+                             (when (= n 0)
+                               (condition-signal c))))))
+                  ...)
+                (iota (length '(x ...))))
+              (condition-wait c m (make-time 'time-duration 0 60)))
+            (vector->list v)))]))
+    (define result
       (parallel-list (fatfib 26) (fatfib 27) (fatfib 28)
         (fatfib 29) (fatfib 30) (fatfib 31)))
-    '(196418 317811 514229 832040 1346269 2178309))
+    (or (equal? result '(196418 317811 514229 832040 1346269 2178309))
+        (errorf #f "result=~s" result)))
   ($thread-check)
   (let ([m (make-mutex)] [c (make-condition)])
     (with-mutex m
