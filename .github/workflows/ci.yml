@@ -8,21 +8,21 @@ jobs:
       matrix:
         config:
           - machine: tpb
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             configure: --pb --threads --enable-libffi
             test: test-some-fast
           - machine: a6osx
-            os: macos-11
+            os: macos-12
           - machine: ta6osx
-            os: macos-11
+            os: macos-12
           - machine: i3le
-            os: ubuntu-20.04
+            os: ubuntu-22.04
           - machine: ti3le
-            os: ubuntu-20.04
+            os: ubuntu-22.04
           - machine: a6le
-            os: ubuntu-20.04
+            os: ubuntu-22.04
           - machine: ta6le
-            os: ubuntu-20.04
+            os: ubuntu-22.04
           - machine: i3nt
             os: windows-2022
             toolchain: vs
@@ -53,7 +53,7 @@ jobs:
         if: ${{ runner.os == 'Windows' }}
         run: git config --global core.autocrlf false
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: 'recursive'
       - name: Setup 32-bit Linux
@@ -72,7 +72,7 @@ jobs:
         run: tar -c -h -z -f $TARGET_MACHINE$TOOLCHAIN.tgz $TARGET_MACHINE
       - name: Upload archive
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}
           path: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}.tgz
