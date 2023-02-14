@@ -69,13 +69,13 @@ jobs:
         run: .github/workflows/test.sh
       - name: Archive workspace
         if: always()
-        run: tar -c -h -z -f $TARGET_MACHINE.tgz $TARGET_MACHINE
+        run: tar -c -h -z -f $TARGET_MACHINE$TOOLCHAIN.tgz $TARGET_MACHINE
       - name: Upload archive
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.config.machine }}
-          path: ${{ matrix.config.machine }}.tgz
+          name: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}
+          path: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}.tgz
       - name: Check test results
         run: |
           cat $TARGET_MACHINE/mats/summary
