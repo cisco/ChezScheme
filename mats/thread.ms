@@ -144,20 +144,20 @@
                  [m (make-mutex)]
                  [c (make-condition)]
                  [n (length '(x ...))])
-             (map (lambda (p i) (p i))
-               (list (lambda (i)
-                       (fork-thread
-                        (lambda ()
-                          (vector-set! v i x)
-                          (with-mutex m
-                            (set! n (- n 1))
-                            (when (= n 0)
-                              (condition-signal c))))))
-                     ...)
-               (iota (length '(x ...))))
-             (and (with-mutex m
-                    (condition-wait c m #;(make-time 'time-duration 0 60)))
-                  (vector->list v)))]))
+             (with-mutex m
+               (map (lambda (p i) (p i))
+                 (list (lambda (i)
+                         (fork-thread
+                          (lambda ()
+                            (vector-set! v i x)
+                            (with-mutex m
+                              (set! n (- n 1))
+                              (when (= n 0)
+                                (condition-signal c))))))
+                       ...)
+                 (iota (length '(x ...))))
+               (and (condition-wait c m #;(make-time 'time-duration 0 60))
+                    (vector->list v))))]))
       (parallel-list (fatfib 26) (fatfib 27) (fatfib 28)
         (fatfib 29) (fatfib 30) (fatfib 31)))
     '(196418 317811 514229 832040 1346269 2178309))
