@@ -2346,3 +2346,5 @@
 - Unicode 15.0 support
     unicode/* mats/5_4.ms
 - update zlib to version 1.2.13
+- fix race condition in thread mat
+    mats/thread.ms
