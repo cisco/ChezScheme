@@ -156,7 +156,7 @@
                      ...)
                (iota (length '(x ...))))
              (and (with-mutex m
-                    (condition-wait c m (make-time 'time-duration 0 60)))
+                    (condition-wait c m #;(make-time 'time-duration 0 60)))
                   (vector->list v)))]))
       (parallel-list (fatfib 26) (fatfib 27) (fatfib 28)
         (fatfib 29) (fatfib 30) (fatfib 31)))
