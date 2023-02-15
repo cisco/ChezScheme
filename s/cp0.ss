@@ -906,6 +906,16 @@
                                 (make-if ctxt sc e11 (non-result-exp e12 e2) (non-result-exp e13 e3)))])))
                   #f)]
              [else #f])]
+          [(nanopass-case (Lsrc Expr) (result-exp e1)
+             [(call ,preinfo ,e10 ,e11 ,e12)
+              (guard (and (primref? e10) (memq (primref-name e10) '(eq? eqv?))))
+              (if (and (or (and (record-equal? e11 e2 'value) (record-equal? e12 e3 'value))
+                           (and (record-equal? e11 e3 'value) (record-equal? e12 e2 'value)))
+                       (simple? e2)
+                       (simple? e3))
+                  (non-result-exp e1 (make-1seq ctxt e2 e3))
+                  #f)]
+             [else #f])]
           [else
            (bump sc 1)
            `(if ,e1 ,e2 ,e3)])))

@@ -928,7 +928,28 @@
       (expand/optimize
         '(lambda (x) (if x x #f))))
     '(lambda (x) x))
- ; verify optimization of (if s s #f) => s
+ ; verify optimization of (if (eq? x y) x y)  => (begin x y) => y
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2] [compile-profile #f])
+      (expand/optimize
+        '(lambda (x y) (if (eq? x y) x y))))
+    '(lambda (x y) y))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2] [compile-profile #f])
+      (expand/optimize
+        '(lambda (x y) (if (eq? y x) x y))))
+    '(lambda (x y) y))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2] [compile-profile #f])
+      (expand/optimize
+        '(lambda (y) (if (eq? 'x y) 'x y))))
+    '(lambda (y) y))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2] [compile-profile #f])
+      (expand/optimize
+        '(lambda (y) (if (eq? y 'x) 'x y))))
+    '(lambda (y) y))
+ ; verify optimization of or pattern
   (equivalent-expansion?
     (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2] [compile-profile #f])
       (expand/optimize
