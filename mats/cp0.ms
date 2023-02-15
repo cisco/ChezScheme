@@ -1032,6 +1032,17 @@
       (expand/optimize
         `(if (not (or #t (futz))) 17 32)))
     32)
+  ; verify expansion of (eq? _ #f) pattern
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 2])
+      (expand/optimize
+        `(lambda (x) (eq? x #f))))
+    `(lambda (x) (if x #f #t)))
+  (equivalent-expansion?
+    (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 x))] [optimize-level 2])
+      (expand/optimize
+        `(lambda (x) (if (eq? x #f) 1 2))))
+    `(lambda (x) (if x 2 1)))
 )
 
 (mat expand-output

@@ -2659,7 +2659,17 @@
         [args #f])
 
       (define-inline 2 (eq? eqv? equal?)
-        [(arg1 arg2) (handle-equality ctxt arg1 (list arg2))])
+        [(arg1 arg2) (or (handle-equality ctxt arg1 (list arg2))
+                         (let ([val1 (value-visit-operand! arg1)]
+                               [val2 (value-visit-operand! arg2)])
+                           (cond
+                             [(cp0-constant? not (result-exp val1))
+                              (residualize-seq (list arg2) (list arg1) ctxt)
+                              (make-if ctxt sc val2 false-rec true-rec)]
+                             [(cp0-constant? not (result-exp val2))
+                              (residualize-seq (list arg1) (list arg2) ctxt)
+                              (make-if ctxt sc val1 false-rec true-rec)]
+                             [else #f])))])
 
       (define-inline 3 (bytevector=? enum-set=? bound-identifier=? free-identifier=? ftype-pointer=? literal-identifier=? time=?)
         [(arg1 arg2) (handle-equality ctxt arg1 (list arg2))])
