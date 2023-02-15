@@ -1491,4 +1491,5 @@
   (check-tortoise-hare (lambda (l) (remp string? l)))
   (check-tortoise-hare (lambda (l) (filter integer? l)))
   (check-tortoise-hare (lambda (l) (partition integer? l) 'ok))
+  (check-tortoise-hare generate-temporaries)
   )
