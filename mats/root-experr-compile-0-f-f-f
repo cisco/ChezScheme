@@ -58,11 +58,11 @@ primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fi
 primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (quote 1/2)): Exception in make-sstats: gc-bytes value 1/2 is not an exact integer
 primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (quote #f)): Exception in make-sstats: gc-bytes value #f is not an exact integer
 primvars.mo:Expected error testing (pseudo-random-generator->vector (quote #f)): Exception in pseudo-random-generator->vector: not a pseudo-random generator #f
-primvars.mo:Expected error testing (pseudo-random-generator-seed! *pseudo-random-generator (quote #!eof)): Exception: variable *pseudo-random-generator is not bound
-primvars.mo:Expected error testing (pseudo-random-generator-seed! *pseudo-random-generator (quote #f)): Exception: variable *pseudo-random-generator is not bound
+primvars.mo:Expected error testing (pseudo-random-generator-seed! *pseudo-random-generator (quote #!eof)): Exception in pseudo-random-generator-seed!: not a nonnegative exact integer #!eof
+primvars.mo:Expected error testing (pseudo-random-generator-seed! *pseudo-random-generator (quote #f)): Exception in pseudo-random-generator-seed!: not a nonnegative exact integer #f
 primvars.mo:Expected error testing (pseudo-random-generator-next! (quote #f)): Exception in pseudo-random-generator-next!: not a pseudo-random generator #f
-primvars.mo:Expected error testing (pseudo-random-generator-next! (quote #!eof) *pseudo-random-generator): Exception: variable *pseudo-random-generator is not bound
-primvars.mo:Expected error testing (pseudo-random-generator-next! (quote #f) *pseudo-random-generator): Exception: variable *pseudo-random-generator is not bound
+primvars.mo:Expected error testing (pseudo-random-generator-next! (quote #!eof) *pseudo-random-generator): Exception in pseudo-random-generator-next!: not a pseudo-random generator #!eof
+primvars.mo:Expected error testing (pseudo-random-generator-next! (quote #f) *pseudo-random-generator): Exception in pseudo-random-generator-next!: not a pseudo-random generator #f
 primvars.mo:Expected error testing (reference-address->object (quote #!eof)): Exception in reference-address->object: invalid address #!eof
 primvars.mo:Expected error testing (reference-address->object (quote #f)): Exception in reference-address->object: invalid address #f
 primvars.mo:Expected error testing (reference*-address->object (quote #!eof)): Exception in reference*-address->object: invalid address #!eof
@@ -76,8 +76,8 @@ primvars.mo:Expected error testing (string-grapheme-span "a" (quote #f)): Except
 primvars.mo:Expected error testing (vector->pseudo-random-generator (quote "a")): Exception in vector->pseudo-random-generator: not a valid pseudo-random generator state vector "a"
 primvars.mo:Expected error testing (vector->pseudo-random-generator (quote #f)): Exception in vector->pseudo-random-generator: not a valid pseudo-random generator state vector #f
 primvars.mo:Expected error testing (vector->pseudo-random-generator! (quote #f) (quote #(a))): Exception in vector->pseudo-random-generator!: not a pseudo-random generator #f
-primvars.mo:Expected error testing (vector->pseudo-random-generator! *pseudo-random-generator (quote "a")): Exception: variable *pseudo-random-generator is not bound
-primvars.mo:Expected error testing (vector->pseudo-random-generator! *pseudo-random-generator (quote #f)): Exception: variable *pseudo-random-generator is not bound
+primvars.mo:Expected error testing (vector->pseudo-random-generator! *pseudo-random-generator (quote "a")): Exception in vector->pseudo-random-generator!: not a valid pseudo-random generator state vector "a"
+primvars.mo:Expected error testing (vector->pseudo-random-generator! *pseudo-random-generator (quote #f)): Exception in vector->pseudo-random-generator!: not a valid pseudo-random generator state vector #f
 primvars.mo:Expected error testing (verify-loadability (quote #!eof)): Exception in verify-loadability: invalid situation #!eof; should be one of load, visit, or revisit
 primvars.mo:Expected error testing (verify-loadability (quote #f)): Exception in verify-loadability: invalid situation #f; should be one of load, visit, or revisit
 primvars.mo:Expected error in mat make-parameter: "make-parameter: 2 is not a procedure".

@@ -1,5 +1,5 @@
-*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	2022-12-19 11:48:23.000000000 +0800
---- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	2022-12-19 11:52:50.000000000 +0800
+*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	Fri Feb 24 19:33:45 2023
+--- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Fri Feb 24 19:38:21 2023
 ***************
 *** 175,181 ****
   3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
@@ -4546,22 +4546,24 @@
   7.mo:Expected error in mat top-level-value-functions: "define-top-level-value: #<environment *scheme*> is not a symbol".
   7.mo:Expected error in mat top-level-value-functions: "variable i-am-not-bound-i-hope is not bound".
 ***************
-*** 8130,8136 ****
+*** 8130,8137 ****
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure>".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure constructor>".
+- record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar> as foo".
---- 8130,8136 ----
+  record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
+--- 8130,8137 ----
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure>".
-! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
++ record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar> as foo".
+  record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
 ***************
 *** 8221,8340 ****
   hash.mo:Expected error in mat old-hash-table: "hash-table-for-each: ((a . b)) is not an eq hashtable".

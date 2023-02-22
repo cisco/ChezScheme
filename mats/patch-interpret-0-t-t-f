@@ -1,5 +1,5 @@
-*** output-compile-0-t-t-f-experr/errors-compile-0-t-t-f	2022-12-19 11:54:09.000000000 +0800
---- output-interpret-0-t-t-f-experr/errors-interpret-0-t-t-f	2022-12-19 11:54:35.000000000 +0800
+*** output-compile-0-t-t-f-experr/errors-compile-0-t-t-f	Fri Feb 24 19:40:20 2023
+--- output-interpret-0-t-t-f-experr/errors-interpret-0-t-t-f	Fri Feb 24 19:40:04 2023
 ***************
 *** 24,31 ****
   primvars.mo:Expected error testing (call-in-continuation 1.0+2.0i (quote #f) values): Exception in call-in-continuation: 1.0+2.0i is not a continuation
@@ -199,21 +199,23 @@
   4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
   4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
 ***************
-*** 7691,7697 ****
+*** 7691,7698 ****
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
-! 7.mo:Expected error in mat eval: "compile: 7 is not an environment".
+- 7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
---- 7691,7697 ----
+  7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
+--- 7691,7698 ----
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
-! 7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
   7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
++ 7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
+  7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
 ***************
 *** 7891,7898 ****

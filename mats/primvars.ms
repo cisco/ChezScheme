@@ -341,6 +341,7 @@
             (def *cost-center (make-cost-center))
             (def *date (current-date))
             (def *phantom-bytevector (make-phantom-bytevector 10))
+            (def *pseudo-random-generator (make-pseudo-random-generator))
             (def *eq-hashtable (make-eq-hashtable))
             (def *ftype-pointer (make-ftype-pointer double 0))
             (def *symbol-hashtable (make-hashtable symbol-hash eq?))
