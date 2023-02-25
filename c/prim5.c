@@ -872,8 +872,7 @@ static ptr s_flush_instruction_cache(void) {
     return Svoid;
 }
 
-static ptr s_make_code(flags, free, name, arity_mark, n, info, pinfos)
-                       iptr flags, free, n; ptr name, arity_mark, info, pinfos; {
+static ptr s_make_code(iptr flags, iptr free, ptr name, ptr arity_mark, iptr n, ptr info, ptr pinfos) {
     ptr co;
 
     tc_mutex_acquire()
