@@ -270,7 +270,7 @@ void S_foreign_entry(void) {
     AC0(tc) = x;
 }
 
-static void *lookup_foreign_entry(s) const char *s; {
+static void *lookup_foreign_entry(const char *s) {
   return ptr_to_addr(lookup(s));
 }
 

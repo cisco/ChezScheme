@@ -259,7 +259,7 @@ ptr S_fork_thread(ptr thunk) {
   return thread;
 }
 
-static s_thread_rv_t start_thread(p) void *p; {
+static s_thread_rv_t start_thread(void *p) {
   ptr tc = (ptr)p; ptr cp;
 
   s_thread_setspecific(S_tc_key, tc);
