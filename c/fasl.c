@@ -1878,8 +1878,7 @@ static uptr sparc64_get_literal(void *address) {
   return item;
 }
 
-static U32 adjust_delay_inst(delay_inst, old_call_addr, new_call_addr)
-      U32 delay_inst; U32 *old_call_addr, *new_call_addr; {
+static U32 adjust_delay_inst(U32 delay_inst, U32 *old_call_addr, U32 *new_call_addr) {
   INT offset;
 
   offset = sizeof(U32) * (old_call_addr - new_call_addr);
