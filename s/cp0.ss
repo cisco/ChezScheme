@@ -2658,6 +2658,48 @@
               empty-flvector-rec)]
         [args #f])
 
+      (define-inline 2 vector->immutable-vector
+        [(e) (let ([e-val (value-visit-operand! e)])
+               (nanopass-case (Lsrc Expr) (result-exp e-val)
+                 [(quote ,d)
+                  (cond
+                    [(immutable-vector? d)
+                     (residualize-seq (list e) '() ctxt)
+                      e-val]
+                    [(eq? d '#())
+                     (residualize-seq '() (list e) ctxt)
+                     `(quote ,(vector->immutable-vector '#()))]
+                    [else #f])]
+                 [else #f]))])
+
+      (define-inline 2 string->immutable-string
+        [(e) (let ([e-val (value-visit-operand! e)])
+               (nanopass-case (Lsrc Expr) (result-exp e-val)
+                 [(quote ,d)
+                  (cond
+                    [(immutable-string? d)
+                     (residualize-seq (list e) '() ctxt)
+                      e-val]
+                    [(eq? d "")
+                     (residualize-seq '() (list e) ctxt)
+                     `(quote ,(string->immutable-string ""))]
+                    [else #f])]
+                 [else #f]))])
+
+      (define-inline 2 bytevector->immutable-bytevector
+        [(e) (let ([e-val (value-visit-operand! e)])
+               (nanopass-case (Lsrc Expr) (result-exp e-val)
+                 [(quote ,d)
+                  (cond
+                    [(immutable-bytevector? d)
+                     (residualize-seq (list e) '() ctxt)
+                      e-val]
+                    [(eq? d '#vu8())
+                     (residualize-seq '() (list e) ctxt)
+                     `(quote ,(bytevector->immutable-bytevector '#vu8()))]
+                    [else #f])]
+                 [else #f]))])
+
       (define-inline 2 (eq? eqv? equal?)
         [(arg1 arg2) (or (handle-equality ctxt arg1 (list arg2))
                          (let ([val1 (value-visit-operand! arg1)]

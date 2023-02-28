@@ -1179,7 +1179,7 @@
   (bytevector [sig [(u8/s8 ...) -> (bytevector)]] [flags alloc cp02])
   (bytevector->s8-list [sig [(bytevector) -> (list)]] [flags alloc])
   (bytevector-truncate! [sig [(bytevector length) -> (bytevector)]] [flags true])
-  (bytevector->immutable-bytevector [sig [(bytevector) -> (bytevector)]] [flags alloc safeongoodargs])
+  (bytevector->immutable-bytevector [sig [(bytevector) -> (bytevector)]] [flags alloc cp02 safeongoodargs])
   (bytevector-reference-ref [sig [(sub-bytevector sub-index) -> (ptr)]] [flags mifoldable discard])
   (bytevector-reference*-ref [sig [(sub-bytevector sub-index) -> (ptr)]] [flags mifoldable discard])
   (bytevector-reference-set! [sig [(sub-bytevector sub-index sub-ptr) -> (void)]] [flags true])
@@ -1765,7 +1765,7 @@
   (string-ci>=? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs])  ; not restricted to 2+ arguments
   (string-ci>? [sig [(string string ...) -> (boolean)]] [flags mifoldable discard safeongoodargs ieee r5rs])   ; not restricted to 2+ arguments
   (string-copy! [sig [(string sub-length string sub-length sub-length) -> (void)]] [flags true])
-  (string->immutable-string [sig [(string) -> (string)]] [flags alloc safeongoodargs])
+  (string->immutable-string [sig [(string) -> (string)]] [flags alloc cp02 safeongoodargs])
   (string->uninterned-symbol [sig [(string) -> (uninterned-symbol)]] [flags true discard safeongoodargs])
   (string-grapheme-count [sig [(string) -> (uptr)] [(string sub-index) -> (uptr)] [(string sub-index sub-index) -> (uptr)]] [flags true])
   (string-grapheme-span [sig [(string sub-index) -> (uptr)] [(string sub-index sub-index) -> (uptr)]] [flags true])
@@ -1829,7 +1829,7 @@
   (utf-16be-codec [sig [() -> (codec)]] [flags pure unrestricted true])
   (vector-cas! [sig [(vector sub-index ptr ptr) -> (boolean)]] [flags cptypes2])
   (vector-copy [sig [(vector) -> (vector)]] [flags alloc safeongoodargs])
-  (vector->immutable-vector [sig [(vector) -> (vector)]] [flags alloc safeongoodargs])
+  (vector->immutable-vector [sig [(vector) -> (vector)]] [flags alloc cp02 safeongoodargs])
   (vector->pseudo-random-generator [sig [(vector) -> (pseudo-random-generator)]] [flags])
   (vector->pseudo-random-generator! [sig [(pseudo-random-generator vector) -> (void)]] [flags])
   (vector-set-fixnum! [sig [(vector sub-index fixnum) -> (void)]] [flags true])
