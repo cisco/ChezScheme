@@ -73,9 +73,11 @@ primvars.mo:Expected error testing (string-grapheme-count "a" (quote #!eof)): Ex
 primvars.mo:Expected error testing (string-grapheme-count "a" (quote #f)): Exception in string-grapheme-count: #f is not a valid start index for "a"
 primvars.mo:Expected error testing (string-grapheme-span "a" (quote #!eof)): Exception in string-grapheme-span: #!eof is not a valid start index for "a"
 primvars.mo:Expected error testing (string-grapheme-span "a" (quote #f)): Exception in string-grapheme-span: #f is not a valid start index for "a"
+primvars.mo:Expected error testing (vector->pseudo-random-generator (quote #())): Exception in vector->pseudo-random-generator: not a valid pseudo-random generator state vector #()
 primvars.mo:Expected error testing (vector->pseudo-random-generator (quote "a")): Exception in vector->pseudo-random-generator: not a valid pseudo-random generator state vector "a"
 primvars.mo:Expected error testing (vector->pseudo-random-generator (quote #f)): Exception in vector->pseudo-random-generator: not a valid pseudo-random generator state vector #f
 primvars.mo:Expected error testing (vector->pseudo-random-generator! (quote #f) (quote #(a))): Exception in vector->pseudo-random-generator!: not a pseudo-random generator #f
+primvars.mo:Expected error testing (vector->pseudo-random-generator! *pseudo-random-generator (quote #())): Exception in vector->pseudo-random-generator!: not a valid pseudo-random generator state vector #()
 primvars.mo:Expected error testing (vector->pseudo-random-generator! *pseudo-random-generator (quote "a")): Exception in vector->pseudo-random-generator!: not a valid pseudo-random generator state vector "a"
 primvars.mo:Expected error testing (vector->pseudo-random-generator! *pseudo-random-generator (quote #f)): Exception in vector->pseudo-random-generator!: not a valid pseudo-random generator state vector #f
 primvars.mo:Expected error testing (verify-loadability (quote #!eof)): Exception in verify-loadability: invalid situation #!eof; should be one of load, visit, or revisit

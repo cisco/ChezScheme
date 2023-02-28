@@ -1528,7 +1528,54 @@
     '(lambda (x) (#%$call-consuming-continuation-attachment 'a (lambda (a) (error 'x "no ~s" a))))))
 )
 
+(mat cptypes-boxes
+  (test-chain* '((lambda (x) (eq? x '#&7)) box?))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (or (eq? x '#&7) (eq? x '#&8)) (box? x)))
+   '(lambda (x) (when (or (eq? x '#&7) (eq? x '#&8)) #t)))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (set-box! x 7) (box? x))
+   '(lambda (x) (set-box! x 7) #t))
+)
+
+(define (test-null-vector vec? null-vec other-vec vec-set! val)
+  (and (test-chain `((lambda (x) (eq? x ',null-vec)) ,vec?))
+       (test-chain* `((lambda (x) (eq? x ',other-vec)) ,vec?))
+       (test-disjoint* `((lambda (x) (eq? x ',null-vec)) (lambda (x) (eq? x ',other-vec))))
+       (cptypes-equivalent-expansion?
+        `(lambda (x) (when (or (eq? x ',null-vec) (eq? x ',other-vec)) (,vec? x)))
+        `(lambda (x) (when (or (eq? x ',null-vec) (eq? x ',other-vec)) #t)))
+       (cptypes-equivalent-expansion?
+        `(lambda (x) (when (or (eq? x ',other-vec) (eq? x ',null-vec)) (,vec? x)))
+        `(lambda (x) (when (or (eq? x ',other-vec) (eq? x ',null-vec)) #t)))
+       (cptypes-equivalent-expansion?
+        `(lambda (x) (,vec-set! x 0 ,val) (,vec? x))
+        `(lambda (x) (,vec-set! x 0 ,val) #t))
+       (cptypes-equivalent-expansion?
+        `(lambda (x) (,vec-set! x 0 ,val) (eq? x ',null-vec))
+        `(lambda (x) (,vec-set! x 0 ,val) #f))))
+
 (mat cptypes-null-vectors
+  (test-null-vector 'vector? '#() '#(7) 'vector-set! 7)
+  (test-null-vector 'vector? (vector->immutable-vector '#()) (vector->immutable-vector '#(7)) 'vector-set! 7)
+  (test-null-vector 'string? "" "7" 'string-set! #\7)
+  (test-null-vector 'string? (string->immutable-string "") (string->immutable-string "7") 'string-set! #\7)
+  (test-null-vector 'bytevector? '#vu8() '#vu8(7) 'bytevector-u8-set! 7)
+  (test-null-vector 'bytevector? (bytevector->immutable-bytevector '#vu8()) (bytevector->immutable-bytevector '#vu8(7)) 'bytevector-u8-set! 7)
+  (test-null-vector 'bytevector? '#vu8() '#vu8(249) 'bytevector-s8-set! -7)
+  (test-null-vector 'bytevector? (bytevector->immutable-bytevector '#vu8()) (bytevector->immutable-bytevector '#vu8(249)) 'bytevector-s8-set! -7)
+  (test-null-vector 'fxvector? '#vfx() '#vfx(7) 'fxvector-set! 7)
+  (test-null-vector 'flvector? '#vfl() '#vfl(7.0) 'flvector-set! 7.0)
+
+  (test-disjoint '((lambda (x) (eq? x '#()))
+                   (lambda (x) (eq? x (vector->immutable-vector '#())))
+                   (lambda (x) (eq? x ""))
+                   (lambda (x) (eq? x (string->immutable-string "")))
+                   (lambda (x) (eq? x #vu8()))
+                   (lambda (x) (eq? x (bytevector->immutable-bytevector #vu8())))
+                   (lambda (x) (eq? x #vfx()))
+                   (lambda (x) (eq? x #vfl()))))
+
   ; check that equivalent-expansion? is comparing flvectors correctly
   (equivalent-expansion? #vfl(7.0) #vfl(7.0))
   (equivalent-expansion? #vfl(+nan.0) #vfl(+nan.0))

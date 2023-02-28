@@ -581,12 +581,12 @@ Notes:
       [(okay-to-copy? d) ir]
       [(list? d) '$list-pair] ; quoted list should not be modified.
       [(pair? d) 'pair]
-      [(box? d) 'box]
-      [(vector? d) 'vector]
-      [(string? d) 'string]
-      [(bytevector? d) 'bytevector]
-      [(fxvector? d) 'fxvector]
-      [(flvector? d) 'flvector]
+      [(box? d) box-pred]
+      [(vector? d) vector*-pred]
+      [(string? d) string*-pred]
+      [(bytevector? d) bytevector*-pred]
+      [(fxvector? d) fxvector*-pred]
+      [(flvector? d) flvector*-pred]
       [else #f]))
 
   (define (rtd->record-predicate rtd extend?)

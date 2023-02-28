@@ -347,6 +347,10 @@
             (def *symbol-hashtable (make-hashtable symbol-hash eq?))
             (def *genny (gensym))
             (def *old-hash-table (make-hash-table))
+            (def *immutable-bpx (box-immutable 'a))
+            (def *immutable-bytevector (bytevector->immutable-bytevector '#vu8(0)))
+            (def *immutable-string (string->immutable-string "a"))
+            (def *immutable-vector (vector->immutable-vector '#(a)))
             (let ()
               (define rtd (make-record-type-descriptor 'foo #f #f #f #f '#((mutable x))))
               (define rcd (make-record-constructor-descriptor rtd #f #f))
@@ -421,6 +425,10 @@
               [(guardian) (make-guardian) values "oops" #f]
               [(hashtable) *eq-hashtable '((a . b)) #f]
               [(identifier) #'x 'x 17 #f]
+              [(immutable-box) *immutable-box &a '((a)) #f]
+              [(immutable-bytevector) *immutable-bytevector '#vu8(0) "a" #f]
+              [(immutable-string) *immutable-string "a" 'a #f]
+              [(immutable-vector) *immutable-vector '#(a) "a" #f]
               [(import-spec) '(chezscheme) 0 '(a . b) #f]
               [(input-port) (current-input-port) 0 *binary-output-port *textual-output-port #f]
               [(integer) 0.0 1/2 1.0+0.0i 'a #f]
@@ -452,6 +460,11 @@
               [(maybe-who) 'who 17]
               [(maybe-timeout) *time 371]
               [(message-condition) (make-message-condition 17) (make-who-condition 'who) 'q #f]
+              [(nonempty-bytevector) '#vu8(0) '#vu8() "a" #f]
+              [(nonempty-flvector) '#vfl(0.0) '#vfl() "a" #f]
+              [(nonempty-fxvector) '#vfx(0) '#vfx() "a" #f]
+              [(nonempty-string) "a" "" 'a #f]
+              [(nonempty-vector) '#(a) '#() "a" #f]
               [(number) 1+2i 'oops #f]
               [(nzuint) 1 0 'a #f]
               [(old-hash-table) *old-hash-table '((a . b)) #f]
