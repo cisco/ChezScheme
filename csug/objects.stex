@@ -2274,8 +2274,8 @@ for \var{key} from \var{hashtable}.
 \listlibraries
 \endentryheader
 
-(A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
-and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or \scheme{symbol=?}.)
+A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
+and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or \scheme{symbol=?}.
 
 \schemedisplay
 (symbol-hashtable? (make-hashtable symbol-hash eq?)) ;=> #t
