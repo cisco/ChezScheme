@@ -2348,3 +2348,5 @@
 - update zlib to version 1.2.13
 - fix race condition in thread mat
     mats/thread.ms
+- fix documentation of symbol-hashtable?
+    csug/objects.stex

@@ -2270,11 +2270,14 @@ for \var{key} from \var{hashtable}.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{symbol-hashtable?}{\categoryprocedure}{(symbol-hashtable? \var{obj})}
-\returns \scheme{#t} if \var{obj} is an eq hashtable, \scheme{#f} otherwise
+\returns \scheme{#t} if \var{obj} is a symbol hashtable, \scheme{#f} otherwise
 \listlibraries
 \endentryheader
 
-\noskip\schemedisplay
+A symbol hashtable is a hashtable created with hash function \scheme{symbol-hash}
+and equivalence function \scheme{eq?}, \scheme{eqv?}, \scheme{equal?}, or \scheme{symbol=?}.
+
+\schemedisplay
 (symbol-hashtable? (make-hashtable symbol-hash eq?)) ;=> #t
 (symbol-hashtable? (make-eq-hashtable)) ;=> #f
 \endschemedisplay
