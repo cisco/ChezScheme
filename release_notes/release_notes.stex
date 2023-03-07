@@ -148,9 +148,12 @@ checks or conditionals. For example, within
 assuming that the variable \scheme{x} is never
 mutated, then it holds a flonum value within \var{E2}, so
 arithmetic can be specialized to flonum operations. Type inference
-increases compile time for the expectation of reducing run-time checks,
-and its effectiveness depends on the program and whether it is
-compiled in safe mode; inference can be disabled by setting
+requires an additional pass for compilation, but when compiling in
+safe mode, the pass tends to more than pay for itself; reduced checks
+and error handling create less work for later compilation passes.
+Even when many checks are removed, run-time performance may improve
+only modestly on modern hardware, since the removed branches are
+perfectly predicatble. Inference can be disabled by setting
 \scheme{enable-type-recovery} to \scheme{#f}.
 
 The compiler can infer more than previously about procedures that
