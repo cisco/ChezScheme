@@ -7565,11 +7565,10 @@
       
       (define build-return-code
         (lambda (e-ra)
+          (safe-assert (= (constant compact-return-address-toplink-disp)
+                          (constant return-address-toplink-disp)))
           (bind #t ([ra e-ra])
-            (bind #t ([t `(if ,(%inline logtest ,(%mref ,ra ,(constant compact-return-address-mask+size+mode-disp))
-                                        ,(%constant compact-header-mask))
-                              ,(%inline + ,ra ,(%constant compact-return-address-toplink-disp))
-                              ,(%inline + ,ra ,(%constant return-address-toplink-disp)))])
+            (bind #t ([t (%inline + ,ra ,(%constant compact-return-address-toplink-disp))])
               (%inline - ,t ,(%mref ,t 0))))))
       (define build-return-offset
         (lambda (e-ra)

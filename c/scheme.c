@@ -348,7 +348,13 @@ static void idiot_checks(void) {
     fprintf(stderr, "reference displacement does not match bytevector or flvector displacement\n");
     oops = 1;
   }
-  
+
+  if ((size_rp_header - (uptr)TO_PTR(&RPHEADERTOPLINK((ptr)0)))
+      != (size_rp_compact_header - (uptr)TO_PTR(&RPCOMPACTHEADERTOPLINK((ptr)0)))) {
+    fprintf(stderr, "compact and non-compact top-link displacements from end do not match\n");
+    oops = 1;
+  }
+
   if (reference_disp >= (allocation_segment_tail_padding
                          /* to determine the minimum distince from the start of an
                             alocated object to the end of its alloted space, take the

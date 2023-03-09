@@ -330,16 +330,14 @@ typedef struct _dirtycardinfo {
 #define ENTRYFRAMESIZE(x) (ISENTRYCOMPACT(x)                            \
                            ? ((COMPACTENTRYFIELD(x, compact_frame_words_offset) & compact_frame_words_mask) << log2_ptr_bytes) \
                            : RPHEADERFRAMESIZE((uptr)(x) - size_rp_header))
-#define ENTRYOFFSET(x) (ISENTRYCOMPACT(x)                               \
-                        ? RPCOMPACTHEADERTOPLINK((uptr)(x) - size_rp_compact_header) \
-                        : RPHEADERTOPLINK((uptr)(x) - size_rp_header))
-#define ENTRYOFFSETADDR(x) (ISENTRYCOMPACT(x)                               \
-                            ? &RPCOMPACTHEADERTOPLINK((uptr)(x) - size_rp_compact_header) \
-                            : &RPHEADERTOPLINK((uptr)(x) - size_rp_header))
 #define ENTRYLIVEMASK(x) (ISENTRYCOMPACT(x)                             \
                           ? FIX(COMPACTENTRYFIELD(x, compact_frame_mask_offset)) \
                           : RPHEADERLIVEMASK((uptr)(x) - size_rp_header))
 #define ENTRYNONCOMPACTLIVEMASKADDR(x) (&RPHEADERLIVEMASK((uptr)(x) - size_rp_header))
+
+/* `top-link` must be a fixed distance from end or header, whether compact or not: */
+#define ENTRYOFFSET(x) (RPCOMPACTHEADERTOPLINK((uptr)(x) - size_rp_compact_header))
+#define ENTRYOFFSETADDR(x) (&ENTRYOFFSET(x))
 
 #define PORTFD(x) ((iptr)PORTHANDLER(x))
 #define PORTGZFILE(x) ((gzFile)(PORTHANDLER(x)))

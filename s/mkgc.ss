@@ -1026,47 +1026,47 @@
    (when (< fp base)
      (S_error_abort "sweep_stack(gc): malformed stack"))
    (set! fp (- fp (ENTRYFRAMESIZE ret)))
-   (let* ([pp : ptr* (cast ptr* (TO_VOIDP fp))]
-          [oldret : iptr ret])
+   (let* ([oldret : iptr ret]
+          [num : ptr (ENTRYLIVEMASK oldret)] ; keep close to `ENTRYFRAMESIZE`
+          [pp : ptr* (cast ptr* (TO_VOIDP fp))])
      (set! ret (cast iptr (* pp)))
      (trace-return NO-COPY-MODE (* pp))
-     (let* ([num : ptr (ENTRYLIVEMASK oldret)])
-       (cond
-         [(Sfixnump num)
-          (let* ([mask : uptr (UNFIX num)])
-            (while
-             :? (!= mask 0)
-             (set! pp += 1)
-             (when (& mask #x0001)
-               (trace-pure (* pp)))
-             (set! mask >>= 1)))]
+     (cond
+       [(Sfixnump num)
+        (let* ([mask : uptr (UNFIX num)])
+          (while
+           :? (!= mask 0)
+           (set! pp += 1)
+           (when (& mask #x0001)
+             (trace-pure (* pp)))
+           (set! mask >>= 1)))]
+       [else
+        (case-mode
+         [(check) (check-bignum num)]
          [else
-          (case-mode
-           [(check) (check-bignum num)]
-           [else
-            (define n_si : seginfo* (SegInfo (ptr_get_segment num)))
-            (cond
-              [(! (-> n_si old_space))]
-              [(SEGMENT_IS_LOCAL n_si num)
-               (trace-pure (* (ENTRYNONCOMPACTLIVEMASKADDR oldret)))
-               (set! num  (ENTRYLIVEMASK oldret))]
-              [else
-               (case-mode
-                [(measure)]
-                [else (RECORD_REMOTE n_si)])
-               (set! num S_G.zero_length_bignum)])])
-          (let* ([index : iptr (BIGLEN num)])
-            (while
-             :? (!= index 0)
-             (set! index -= 1)
-             (let* ([bits : INT bigit_bits]
-                    [mask : bigit (bignum-data num index)])
-               (while
-                :? (> bits 0)
-                (set! bits -= 1)
-                (set! pp += 1)
-                (when (& mask 1) (trace-pure (* pp)))
-                (set! mask >>= 1)))))])))))
+          (define n_si : seginfo* (SegInfo (ptr_get_segment num)))
+          (cond
+            [(! (-> n_si old_space))]
+            [(SEGMENT_IS_LOCAL n_si num)
+             (trace-pure (* (ENTRYNONCOMPACTLIVEMASKADDR oldret)))
+             (set! num  (ENTRYLIVEMASK oldret))]
+            [else
+             (case-mode
+              [(measure)]
+              [else (RECORD_REMOTE n_si)])
+             (set! num S_G.zero_length_bignum)])])
+        (let* ([index : iptr (BIGLEN num)])
+          (while
+           :? (!= index 0)
+           (set! index -= 1)
+           (let* ([bits : INT bigit_bits]
+                  [mask : bigit (bignum-data num index)])
+             (while
+              :? (> bits 0)
+              (set! bits -= 1)
+              (set! pp += 1)
+              (when (& mask 1) (trace-pure (* pp)))
+              (set! mask >>= 1)))))]))))
 
 (define-trace-macro (trace-return copy-field field)
   (case-mode

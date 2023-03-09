@@ -8489,6 +8489,10 @@
               (let* ([code* (cons* `(,size . ,fs)
                                    (aop-cons* `(asm "frame size:" ,fs)
                                               code*))]
+                     [code* (cons*
+                             '(code-top-link)
+                             (aop-cons* `(asm code-top-link)
+                                        code*))]
                      [code* (cons* (if (target-fixnum? lpm)
                                        `(,size . ,(fix lpm))
                                        `(abs 0 (object ,lpm)))
@@ -8499,11 +8503,7 @@
                                 (cons*
                                  mrv-error
                                  (aop-cons* `(asm "mrv point:" ,mrv-error)
-                                            code*)))]
-                     [code* (cons*
-                             '(code-top-link)
-                             (aop-cons* `(asm code-top-link)
-                                        code*))])
+                                            code*)))])
                 code*)))))
 
       (define asm-rp-compact-header
