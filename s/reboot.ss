@@ -541,8 +541,13 @@
   fn)
 
 (define-primitive ($make-read p . more)
-  (lambda ()
-    (read p)))
+  (let ([l (filtered-file->exps p)])
+    (lambda ()
+      (if (null? l)
+          #!eof
+          (let ([a (car l)])
+            (set! l (cdr l))
+            a)))))
 
 (define-primitive ($map who f . ls)
   (apply map f ls))
@@ -575,7 +580,9 @@
 (define (filtered-file->exps s)
   (cond
     [need-vector-filter?
-     (call-with-input-file
+     ((if (input-port? s)
+          (lambda (s proc) (proc s))
+          call-with-input-file)
       s
       (lambda (i)
         (let* ([str (get-string-all i)]
@@ -627,6 +634,7 @@
                        (vec-loop (add1 i))))
                    v)]
                 [else r]))))))]
+    [(input-port? s) (input->exps s)]
     [else (file->exps s)]))
 
 (define (noisy-compile-and-load s)
