@@ -572,8 +572,8 @@ Notes:
     (cond
       [(#3%$record? d) '$record] ;check first to avoid double representation of rtd
       [(okay-to-copy? d) ir]
-      [(list? d) '$list-pair] ; quoted list should not be modified.
-      [(pair? d) 'pair]
+      [(list? d) list-pair-pred] ; quoted list should not be modified.
+      [(pair? d) pair-pred]
       [(box? d) box-pred]
       [(vector? d) vector*-pred]
       [(string? d) string*-pred]
@@ -1069,12 +1069,12 @@ Notes:
 
       (define-specialize 2 list
         [() (values null-rec null-rec ntypes #f #f)] ; should have been reduced by cp0
-        [e* (values `(call ,preinfo ,pr ,e* ...) 'pair ntypes #f #f)])
+        [e* (values `(call ,preinfo ,pr ,e* ...) pair-pred ntypes #f #f)])
 
       (define-specialize 2 cdr
         [(v) (values `(call ,preinfo ,pr ,v)
                      (cond
-                       [(predicate-implies? (predicate-intersect (get-type v) 'pair) '$list-pair)
+                       [(predicate-implies? (predicate-intersect (get-type v) pair-pred) list-pair-pred)
                         $list-pred]
                        [else
                         ptr-pred])
@@ -1515,7 +1515,7 @@ Notes:
     (define (cut-r* r* n)
       (let loop ([i n] [r* r*])
         (if (fx= i 0)
-            (list (if (null? r*) null-rec 'pair))
+            (list (if (null? r*) null-rec pair-pred))
             (cons (car r*) (loop (fx- i 1) (cdr r*))))))
     (let*-values ([(ntypes e* r* t* t-t* f-t*)
                    (map-Expr/delayed e* oldtypes plxc)])
@@ -1909,7 +1909,7 @@ Notes:
       [(immutable-list (,[e* 'value types plxc -> e* r* t* t-t* f-t*] ...)
                        ,[e 'value types plxc -> e ret types t-types f-types])
        (values `(immutable-list (,e*  ...) ,e)
-               (if (null? e*) null-rec '$list-pair) types #f #f)]
+               (if (null? e*) null-rec $list-pred) types #f #f)]
       [(immutable-vector (,[e* 'value types plxc -> e* r* t* t-t* f-t*] ...)
                          ,[e 'value types plxc -> e ret types t-types f-types])
        (values `(immutable-vector (,e*  ...) ,e)
