@@ -695,15 +695,15 @@
   (fold-left [sig [(procedure ptr list list ...) -> (ptr ...)]] [flags cp03])
   (fold-right [sig [(procedure ptr list list ...) -> (ptr ...)]] [flags cp03])
   (remp [sig [(procedure list) -> (list)]] [flags true cp03])
-  (remove [sig [(ptr list) -> (list)]] [flags alloc cp02]) ; mifoldable discard could break eq?
+  (remove [sig [(ptr list) -> (list)]] [flags true cp02]) ; mifoldable discard could break eq?
   (remv [sig [(ptr list) -> (list)]] [flags alloc cp02]) ; mifoldable discard could break eq?
   (remq [sig [(ptr list) -> (list)]] [flags alloc cp02]) ; mifoldable discard could break eq?
   (memp [sig [(procedure sub-ptr) -> (ptr)]] [flags cp03])
-  (member [sig [(ptr sub-ptr) -> (ptr)]] [flags mifoldable discard cp02 ieee r5rs])
+  (member [sig [(ptr sub-ptr) -> (ptr)]] [flags mifoldable cp02 ieee r5rs])
   (memv [sig [(ptr sub-ptr) -> (ptr)]] [flags mifoldable discard cp02 ieee r5rs])
   (memq [sig [(ptr sub-ptr) -> (ptr)]] [flags mifoldable discard cp02 ieee r5rs])
   (assp [sig [(procedure sub-ptr) -> (ptr)]] [flags cp03])
-  (assoc [sig [(ptr sub-ptr) -> (ptr)]] [flags mifoldable discard cp02 ieee r5rs])
+  (assoc [sig [(ptr sub-ptr) -> (ptr)]] [flags mifoldable cp02 ieee r5rs])
   (assv [sig [(ptr sub-ptr) -> (ptr)]] [flags mifoldable discard cp02 ieee r5rs])
   (assq [sig [(ptr sub-ptr) -> (ptr)]] [flags mifoldable discard cp02 ieee r5rs])
   (cons* [sig [(ptr) -> (ptr)] [(ptr ptr ptr ...) -> ((ptr . ptr))]] [flags unrestricted discard cp02])

@@ -1955,6 +1955,14 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Optimization bug in \protect\scheme{remove},
+  \protect\scheme{member} and \protect\scheme{assoc}}
+
+When \scheme{remove}, \scheme{member} or \scheme{assoc} were used in
+\scheme{optimize-level} 3 in a position where the result was discarded,
+a bug in the source code optimizer could drop the call even though the first
+argument may be a record with a custom equality predicate that has side effects.
+
 \subsection{Foreign-callable floating-point argument allocation for x86 (9.6.0)}
 
 When a foreign callable receives a \scheme{double} or \scheme{float} argument, the
