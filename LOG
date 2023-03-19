@@ -2350,3 +2350,7 @@
     mats/thread.ms
 - fix documentation of symbol-hashtable?
     csug/objects.stex
+- fix flags in signature of remove, member and assoc
+  they can not be discarded in case they are comparing records
+  with a custom equal procedure that has side effects.
+    s/primdata.ss mats/5_2.ms release_notes/release_notes.stex
