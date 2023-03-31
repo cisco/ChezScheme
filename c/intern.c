@@ -361,7 +361,7 @@ void S_intern_gensym(ptr sym) {
                tc_mutex_release()
                S_error1("intern-gensym", "unique name ~s already interned", uname_str);
             }
-            if (Sstring_ref(str, i) != uname[i]) break;
+            if (STRIT(str, i) != uname[i]) break;
           }
        }
     }

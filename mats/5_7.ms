@@ -84,7 +84,22 @@
   (equal?
     (gensym->unique-string '#{g0 e6sfz8u1obe67hsew4stu0-0})
     "e6sfz8u1obe67hsew4stu0-0")
-)  
+  (error? ; unique name already interned
+    (let* ([s (gensym->unique-string (gensym))]
+           [l (string-length s)]
+           [k (substring s 0 (- l 1))]
+           [n (string->number (substring s (- l 1) l))]
+           [next-un (string-append k (number->string (+ n 1)))])
+      (gensym "pn" next-un)
+      (guard (c [(and (who-condition? c)
+                      (equal? (condition-who c) "intern-gensym")
+                      (format-condition? c)
+                      (equal? (condition-message c) "unique name ~s already interned")
+                      (irritants-condition? c)
+                      (equal? (condition-irritants c) (list next-un)))
+                 (errorf (condition-who c) (condition-message c) "[SOME UNIQUE NAME]")])
+        (gensym->unique-string (gensym)))))
+)
 
 (mat putprop-getprop
     (begin (putprop 'xyz 'key 'value) (eq? (getprop 'xyz 'key) 'value))

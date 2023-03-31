@@ -2354,3 +2354,6 @@
   they can not be discarded in case they are comparing records
   with a custom equal procedure that has side effects.
     s/primdata.ss mats/5_2.ms release_notes/release_notes.stex
+- fix a character comparison bug in S_intern_gensym
+    c/intern.c mats/5_7.ms mats/root-experr-compile-0-f-f-f
+    mats/root-experr-compile-2-f-f-f

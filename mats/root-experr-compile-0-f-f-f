@@ -4189,6 +4189,7 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_7.mo:Expected error in mat gensym->unique-string: "gensym->unique-string: "spam" is not a gensym".
 5_7.mo:Expected error in mat gensym->unique-string: "gensym->unique-string: 3 is not a gensym".
 5_7.mo:Expected error in mat gensym->unique-string: "gensym->unique-string: spam is not a gensym".
+5_7.mo:Expected error in mat gensym->unique-string: "intern-gensym: unique name "[SOME UNIQUE NAME]" already interned".
 5_7.mo:Expected error in mat putprop-getprop: "getprop: 3 is not a symbol".
 5_7.mo:Expected error in mat putprop-getprop: "putprop: "hi" is not a symbol".
 5_7.mo:Expected error in mat putprop-getprop: "property-list: (a b c) is not a symbol".
