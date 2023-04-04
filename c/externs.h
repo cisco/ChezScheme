@@ -198,7 +198,7 @@ extern ptr S_intern(const unsigned char *s);
 extern ptr S_intern_sc(const string_char *s, iptr n, ptr name_str);
 extern ptr S_intern3(const string_char *pname, iptr plen, const string_char *uname, iptr ulen, ptr pname_str, ptr uame_str);
 extern ptr S_intern4(ptr sym);
-extern void S_intern_gensym(ptr g);
+extern void S_intern_gensym(ptr sym, ptr sym_name);
 extern void S_retrofit_nonprocedure_code(void);
 extern ptr S_mkstring(const string_char *s, iptr n);
 extern I32 S_symbol_hash32(ptr str);

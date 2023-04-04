@@ -86,7 +86,29 @@
   (equal?
     (gensym->unique-string '#{g0 e6sfz8u1obe67hsew4stu0-0})
     "e6sfz8u1obe67hsew4stu0-0")
-)  
+  (let* ([s (gensym->unique-string (gensym))]
+         [l (string-length s)]
+         [k (substring s 0 (- l 1))]
+         [n (string->number (substring s (- l 1) l))]
+         [next-un (string-append k (number->string (+ n 1)))])
+    (define thief (gensym "pn" next-un)) ; steals next-un
+    (define gs (gensym))
+    (guard (c [(and (who-condition? c)
+                    (equal? (condition-who c) "intern-gensym")
+                    (format-condition? c)
+                    (equal? (condition-message c) "unique name ~s already interned")
+                    (irritants-condition? c)
+                    (equal? (condition-irritants c) (list next-un)))
+               ; This exception is expected, swallow it.
+               (void)])
+      (gensym->unique-string gs)
+      (error "mat" "(gensym->unique-string gs) is expected to fail but succeeded"))
+    ; A second try of (gensym->unique-string gs) should succeed
+    ; and gs should be properly interned.
+    (let ([gs-un (gensym->unique-string gs)])
+      (and (eq? gs (gensym (symbol->string gs) gs-un))
+           (not (equal? gs-un (gensym->unique-string thief))))))
+)
 
 (mat putprop-getprop
     (begin (putprop 'xyz 'key 'value) (eq? (getprop 'xyz 'key) 'value))

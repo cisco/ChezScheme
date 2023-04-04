@@ -226,7 +226,7 @@
 
 (define $intern-gensym
   (foreign-procedure "(cs)s_intern_gensym"
-    (scheme-object)
+    (scheme-object scheme-object)
     void))
 
 (define cpu-time

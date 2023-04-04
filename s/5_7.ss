@@ -175,15 +175,12 @@
                 (if (not name)
                     (let ([uname (generate-unique-name)])
                       ($string-set-immutable! uname)
-                      ($set-symbol-name! sym
-                        (cons uname (generate-pretty-name)))
-                      ($intern-gensym sym)
+                      ($intern-gensym sym (cons uname (generate-pretty-name)))
                       uname)
                     (or (car name)
                         (let ([uname (generate-unique-name)])
                           ($string-set-immutable! uname)
-                          (set-car! name uname)
-                          ($intern-gensym sym)
+                          ($intern-gensym sym (cons uname (cdr name)))
                           uname))))))))))
   (set! gensym-prefix
     (case-lambda

@@ -268,8 +268,8 @@ ptr S_intern3(const string_char *pname, iptr plen, const string_char *uname, ipt
   return sym;
 }
 
-void S_intern_gensym(ptr sym) {
-  ptr uname_str = Scar(SYMNAME(sym));
+void S_intern_gensym(ptr sym, ptr sym_name) {
+  ptr uname_str = Scar(sym_name);
   const string_char *uname = &STRIT(uname_str, 0);
   iptr ulen = Sstring_length(uname_str);
   iptr hc = hash_uname(uname, ulen);
@@ -297,6 +297,7 @@ void S_intern_gensym(ptr sym) {
     b = b->next;
   }
 
+  SETSYMNAME(sym, sym_name);
   INITSYMHASH(sym) = FIX(hc);
   oblist_insert(sym, idx, GENERATION(sym));
 
