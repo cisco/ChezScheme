@@ -387,10 +387,14 @@ static void do_error(iptr type, const char *who, const char *s, ptr args) {
                        Scons(Sstring_utf8(s, -1), args)));
 
 #ifdef PTHREADS
-    while (S_mutex_is_owner(&S_alloc_mutex))
+    while (S_mutex_is_owner(&S_alloc_mutex) && (S_tc_mutex_depth > 0)) {
+      S_tc_mutex_depth -= 1;
       S_mutex_release(&S_alloc_mutex);
-    while (S_mutex_is_owner(&S_tc_mutex))
+    }
+    while (S_mutex_is_owner(&S_tc_mutex) && (S_alloc_mutex_depth > 0)) {
+      S_alloc_mutex_depth -= 1;
       S_mutex_release(&S_tc_mutex);
+    }
 #endif /* PTHREADS */
 
     /* in case error is during fasl read: */

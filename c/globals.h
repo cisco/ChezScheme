@@ -39,7 +39,9 @@ EXTERN s_thread_key_t S_tc_key;
 EXTERN scheme_mutex_t S_tc_mutex;
 EXTERN s_thread_cond_t S_collect_cond;
 EXTERN s_thread_cond_t S_collect_thread0_cond;
+EXTERN INT S_tc_mutex_depth;  /* counts how many acquires are by kernel */
 EXTERN scheme_mutex_t S_alloc_mutex; /* ordered after S_tc_mutex */
+EXTERN INT S_alloc_mutex_depth;  /* counts how many acquires are by kernel */
 EXTERN s_thread_cond_t S_terminated_cond;
 EXTERN int S_collect_waiting_threads;
 EXTERN ptr S_collect_waiting_tcs[maximum_parallel_collect_threads];

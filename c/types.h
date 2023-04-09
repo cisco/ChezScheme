@@ -402,16 +402,20 @@ typedef struct {
 #define tc_mutex_acquire() do {                 \
     assert_no_alloc_mutex();                    \
     S_mutex_acquire(&S_tc_mutex);               \
+    S_tc_mutex_depth += 1;                      \
   } while (0);
 #define tc_mutex_release() do {                 \
+    S_tc_mutex_depth -= 1;                      \
     S_mutex_release(&S_tc_mutex);               \
   } while (0);
 
 /* Allocation mutex is ordered after tc mutex */
 #define alloc_mutex_acquire() do {              \
     S_mutex_acquire(&S_alloc_mutex);            \
+    S_alloc_mutex_depth += 1;                   \
   } while (0);
 #define alloc_mutex_release() do {              \
+    S_alloc_mutex_depth -= 1;                   \
     S_mutex_release(&S_alloc_mutex);            \
   } while (0);
 
