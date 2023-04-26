@@ -2762,10 +2762,14 @@
           (lambda (multiple-ref? type e)
             (if (no-need-to-bind? multiple-ref? e)
                 (values e values)
-                (let ([t (make-tmp 't type)])
-                  (values t
-                    (lambda (body)
-                      `(let ([,t ,e]) ,body)))))))
+                (let-values ([(type e)
+                              (nanopass-case (L7 Expr) e
+                                [(raw ,e) (values 'uptr e)]
+                                [else (values type e)])])
+                  (let ([t (make-tmp 't type)])
+                    (values t
+                      (lambda (body)
+                        `(let ([,t ,e]) ,body))))))))
         (define list-binder
           (lambda (multiple-ref? type e*)
             (if (null? e*)
@@ -2869,7 +2873,7 @@
            (lambda (e)
              (nanopass-case (L7 Expr) e
                [(quote ,d) (guard (target-fixnum? d)) `(immediate ,d)]
-               [else (%inline sra ,e ,(%constant fixnum-offset))])))
+               [else `(raw ,(%inline sra ,e ,(%constant fixnum-offset)))])))
         (define build-not
           (lambda (e)
             `(if ,e ,(%constant sfalse) ,(%constant strue))))
@@ -2991,13 +2995,13 @@
                          [else #f])
                        (bind #f ([e e])
                          ; eval a second so the address is not live across any calls
-                         (bind #t ([a a])
+                         (bind #t uptr ([a a]) ; uptr for clarity, though safe given eval order
                            (build-seq
                              (build-assign a %zero 0 e)
                              (%inline remember ,a))))
                        (bind #t ([e e])
                          ; eval a second so the address is not live across any calls
-                         (bind #t ([a a])
+                         (bind #t uptr ([a a]) ; uptr for clarity, though safe given eval order
                            (build-seq
                              (build-assign a %zero 0 e)
                              `(if ,(%type-check mask-fixnum type-fixnum ,e)
@@ -3227,19 +3231,20 @@
           (lambda (value width)
             (if (fx> (constant fixnum-bits) width)
                 (build-unfix value)
-                `(seq
-                   (set! ,%ac0 ,value)
-                   (if ,(%type-check mask-fixnum type-fixnum ,%ac0)
-                       ,(build-unfix %ac0)
-                       (seq
-                         (set! ,%ac0
-                           (inline
-                             ,(cond
-                                [(fx<= width 32) (intrinsic-info-asmlib dofargint32 #f)]
-                                [(fx<= width 64) (intrinsic-info-asmlib dofargint64 #f)]
-                                [else ($oops who "can't handle width ~s" width)])
-                             ,%asmlibcall))
-                         ,%ac0))))))
+                `(raw ;; use a uptr temporary in bind or when flattening
+                   (seq
+                    (set! ,%ac0 ,value)
+                    (if ,(%type-check mask-fixnum type-fixnum ,%ac0)
+                        ,(build-unfix %ac0)
+                        (seq
+                          (set! ,%ac0
+                            (inline
+                              ,(cond
+                                 [(fx<= width 32) (intrinsic-info-asmlib dofargint32 #f)]
+                                 [(fx<= width 64) (intrinsic-info-asmlib dofargint64 #f)]
+                                 [else ($oops who "can't handle width ~s" width)])
+                              ,%asmlibcall))
+                          ,%ac0)))))))
         (define ptr-type (constant-case ptr-bits
                            [(32) 'unsigned-32]
                            [(64) 'unsigned-64]
@@ -3531,7 +3536,7 @@
                [(double-float)
                 `(inline ,(make-info-load 'unsigned-64 #t) ,%store
                    ,base ,index (immediate ,offset)
-                   ,(%mref ,value ,(constant flonum-data-disp)))]
+                   (raw ,(%mref ,value ,(constant flonum-data-disp))))]
                ; 40-bit+ only on 64-bit machines
                [(integer-16 integer-24 integer-32 integer-40 integer-48 integer-56 integer-64
                  unsigned-16 unsigned-24 unsigned-32 unsigned-40 unsigned-48 unsigned-56 unsigned-64)
@@ -3623,7 +3628,10 @@
                   e
                   (if (fx< delta 0)
                       (%inline sll ,e (immediate ,(fx- delta)))
-                      (%inline srl ,e (immediate ,delta)))))))
+                      (let ([shift-e (%inline srl ,e (immediate ,delta))])
+                        (if (fx= target-shift (constant fixnum-offset))
+                            shift-e
+                            `(raw ,shift-e))))))))
         (define extract-length
           (lambda (t/l length-offset)
             (%inline logand
@@ -3775,7 +3783,7 @@
         (define make-ftype-pointer-equal?
           (lambda (e1 e2)
             (bind #f (e1 e2)
-              (%inline eq?
+              (%inline eq? ;; raw operands safe given bind
                 ,(%mref ,e1 ,(constant record-data-disp))
                 ,(%mref ,e2 ,(constant record-data-disp))))))
         (define make-ftype-pointer-null?
@@ -6486,20 +6494,21 @@
         (define-inline 3 $fleqv?
           [(e1 e2)
            (constant-case ptr-bits
-             [(32) (build-and
-                     (%inline eq?
-                       ,(%mref ,e1 ,(constant flonum-data-disp))
-                       ,(%mref ,e2 ,(constant flonum-data-disp)))
-                     (%inline eq?
-                       ,(%mref ,e1 ,(fx+ (constant flonum-data-disp) 4))
-                       ,(%mref ,e2 ,(fx+ (constant flonum-data-disp) 4))))]
+             [(32)
+              (bind #t (e1 e2) ;; could omit raw due to bind, but that would look amiss beside 64-bit case
+                (build-and
+                  (%inline eq?
+                    (raw ,(%mref ,e1 ,(constant flonum-data-disp)))
+                    (raw ,(%mref ,e2 ,(constant flonum-data-disp))))
+                  (%inline eq?
+                    (raw ,(%mref ,e1 ,(fx+ (constant flonum-data-disp) 4)))
+                    (raw ,(%mref ,e2 ,(fx+ (constant flonum-data-disp) 4))))))]
              [(64) (%inline eq?
-                     ,(%mref ,e1 ,(constant flonum-data-disp))
-                     ,(%mref ,e2 ,(constant flonum-data-disp)))]
+                     (raw ,(%mref ,e1 ,(constant flonum-data-disp)))
+                     (raw ,(%mref ,e2 ,(constant flonum-data-disp))))]
              [else ($oops 'compiler-internal
                      "$fleqv doesn't handle ptr-bits = ~s"
                      (constant ptr-bits))])])
-
 
         (let ()
           (define build-flop-1
@@ -6573,7 +6582,7 @@
                               ,(%mref ,e ,disp-low))))])
                     ,t)))))
 
-          ;; TODO: Rather then reducing here, (which will allocate a new flonum for each interim result)
+          ;; TODO: Rather than reducing here, (which will allocate a new flonum for each interim result)
           ;; we could allocate a single flonum and reuse it until the final result is calculated.
           ;; Better yet, we could do this across nested fl operations, so that only one flonum is
           ;; allocated across nested fl+, fl*, fl-, fl/ etc. operation
@@ -6982,8 +6991,8 @@
           (define build-fx+raw
             (lambda (fx-arg raw-arg)
               (if (constant? (lambda (x) (eqv? x 0)) fx-arg)
-                  raw-arg
-                  (%inline + ,raw-arg ,(build-unfix fx-arg)))))
+                  raw-arg ;; already marked raw
+                  `(raw ,(%inline + ,raw-arg ,(build-unfix fx-arg))))))
           (define $extract-fptr-address
             (lambda (e-fptr)
               (define suppress-unsafe-cast
@@ -7004,7 +7013,7 @@
                    (eq? (primref-name pr) '$fptr-fptr-ref)
                    (all-set? (prim-mask unsafe) (primref-flags pr)))
                  (let-values ([(e-index imm-offset) (offset-expr->index+offset e2)])
-                   (bind #f (e-index e3)
+                   (bind #f (e-index e3) ;; evaluate e3 for effect
                      `(inline ,(make-info-load ptr-type #f) ,%load
                         ,($extract-fptr-address e1)
                         ,e-index (immediate ,imm-offset))))]
@@ -7013,7 +7022,8 @@
                  (guard
                    (eq? (primref-name pr) '$fptr-&ref)
                    (all-set? (prim-mask unsafe) (primref-flags pr)))
-                 (build-fx+raw e2 ($extract-fptr-address e1))]
+                 (bind #f (e3) ;; evaluate e3 for effect
+                   (build-fx+raw e2 ($extract-fptr-address e1)))]
                 ; skip allocation and dereference of ftype-pointer for $make-fptr
                 [(call ,info ,mdcl ,pr ,e1 ,e2) ; e1, e2 = ftd, (ptr) addr
                  (guard
@@ -7025,13 +7035,13 @@
                       (eq? (primref-name pr) 'ftype-pointer-address)
                       (all-set? (prim-mask unsafe) (primref-flags pr)))
                     (bind #f (e1)
-                      (%mref ,e3 ,(constant record-data-disp)))]
+                      `(raw ,(%mref ,e3 ,(constant record-data-disp))))]
                    [else
                     (bind #f (e1)
                       (ptr->integer e2 (constant ptr-bits)))])]
                 [else
-                 `(inline ,(make-info-load ptr-type #f) ,%load ,(suppress-unsafe-cast e-fptr) ,%zero
-                    ,(%constant record-data-disp))])))
+                 `(raw (inline ,(make-info-load ptr-type #f) ,%load ,(suppress-unsafe-cast e-fptr) ,%zero
+                    ,(%constant record-data-disp)))])))
           (let ()
             (define-inline 3 $fptr-offset-addr
               [(e-fptr e-offset)
@@ -9560,16 +9570,20 @@
       (definitions
         (define local*)
         (define make-tmp
-          (lambda (x)
-            (import (only np-languages make-tmp))
-            (let ([x (make-tmp x)])
-              (set! local* (cons x local*))
-              x)))
+          (lambda (x ir)
+            (define (mktmp type)
+              (import (only np-languages make-tmp))
+              (let ([x (make-tmp x type)])
+                (set! local* (cons x local*))
+                x))
+            (nanopass-case (L9.75 Expr) ir
+              [(raw ,e) (values (mktmp 'uptr) e)]
+              [else (values (mktmp 'ptr) ir)])))
         (define Ref
           (lambda (ir setup*)
             (if (var? ir)
                 (values ir setup*)
-                (let ([tmp (make-tmp 't)])
+                (let-values ([(tmp ir) (make-tmp 't ir)])
                   (values tmp (cons (Rhs ir tmp) setup*))))))
         (define Lvalue?
           (lambda (x)
@@ -9643,7 +9657,7 @@
          (values t (cons e0 setup*))]
         [(pariah) (values (%constant svoid) (list (with-output-language (L10 Expr) `(pariah))))]
         [else
-         (let ([tmp (make-tmp 't)])
+         (let-values ([(tmp ir) (make-tmp 't ir)])
            (values tmp (list (Rhs ir tmp))))])
       (Expr : Expr (ir k) -> Expr ()
         [(inline ,info ,prim ,e1* ...)

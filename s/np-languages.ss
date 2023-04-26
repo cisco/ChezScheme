@@ -430,6 +430,12 @@
          ; moved up one language to support closure instrumentation
          (inline info prim e* ...)                     => (inline info prim e* ...)
          (call info mdcl (maybe e0) e1 ...)            => (call mdcl e0 e1 ...)
+         ; use (raw e) to mark a raw non-immediate rvalue in expand-inline
+         ; (np-expand-primitives) so that we use a uptr temporary in bind or
+         ; when flattening the code in np-remove-complex-opera*; raw is optional
+         ; where we already bind or assign to a uptr temporary or where we
+         ; ensure the value is not live across a call
+         (raw e)
          (set! lvalue e)
          ; these two forms are added here so expand-inline handlers can expand into them
          (values info e* ...)
@@ -670,6 +676,7 @@
          (let ([x e] ...) body)
          (set! lvalue e)
          (mvcall info e1 e2)
+         (raw e)
          (foreign-call info e e* ...))
       (+ rhs
          (values info t* ...)

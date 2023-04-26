@@ -2357,6 +2357,16 @@
 - fix a character comparison bug in S_intern_gensym
     c/intern.c mats/5_7.ms mats/root-experr-compile-0-f-f-f
     mats/root-experr-compile-2-f-f-f
+- fix crash at optimize-level 2 and higher caused by the compiler generating an
+  invalid live-pointer mask when expanding certain primitive calls that store
+  raw data on the stack and whose operands contain calls.
+  Some primitives generate raw intermediate values. When these values are live
+  across a call, the compiler saves them on the stack but could mistakenly
+  include them in the live-pointer mask. A subsequent garbage collection could
+  crash if it attempted to process a raw value as a Scheme object based on the
+  live-pointer mask.
+    mats/bytevector.ms mats/ftype.ms mats/record.ms s/cpnanopass.ss
+    s/np-languages.ss
 - fix gensym->unique-string to leave symbol unchanged on failure
     c/externs.h c/intern.c mats/5_7.ms s/5_7.ss s/prims.ss boot/*
     mats/root-experr-compile-0-f-f-f mats/root-experr-compile-2-f-f-f
