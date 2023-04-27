@@ -420,7 +420,7 @@ static IBOOL next_path(char *path, const char *name, const char *ext, const char
 static const char *path_last(const char *path);
 static char *get_defaultheapdirs(void);
 
-static const char *path_last(p) const char *p; {
+static const char *path_last(const char *p) {
   const char *s;
 #ifdef WIN32
   char c;

@@ -325,7 +325,7 @@ iptr S_find_segments(ISPC s, IGEN g, iptr n) {
  * allocates a group of n contiguous fresh segments, returning the
  * segment number of the first segment of the group.
  */
-static seginfo *allocate_segments(nreq) uptr nreq; {
+static seginfo *allocate_segments(uptr nreq) {
   uptr nact, bytes, base; void *addr;
   iptr i;
   chunkinfo *chunk; seginfo *si;
