@@ -88,8 +88,12 @@
     "e6sfz8u1obe67hsew4stu0-0")
   (let* ([s (gensym->unique-string (gensym))]
          [l (string-length s)]
-         [k (substring s 0 (- l 1))]
-         [n (string->number (substring s (- l 1) l))]
+         [dash-pos (let loop ([i (- l 1)])
+                     (if (char=? #\- (string-ref s i))
+                         (add1 i)
+                         (loop (sub1 i))))]
+         [k (substring s 0 dash-pos)]
+         [n (string->number (substring s dash-pos l))]
          [next-un (string-append k (number->string (+ n 1)))])
     (define thief (gensym "pn" next-un)) ; steals next-un
     (define gs (gensym))
