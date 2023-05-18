@@ -238,8 +238,12 @@
                  (do ([i ,(opt 'cp0 'integer) (fx- i 1)] [x x (cp0 x)])
                      ((fx= i 0) x))))
       (collect-trip-bytes (expt 2 24))
-      (collect-request-handler (lambda () (collect 0 1)))
-      (collect 1 2)))
+      ;; Adjusting the collect request handler trades space for speed;
+      ;; when running pb, though, GC isn't the bottleneck, and there's
+      ;; a danger of using too much memory on a 32-bit platform
+      (unless (eq? 'pb (machine-type))
+        (collect-request-handler (lambda () (collect 0 1)))
+        (collect 1 2))))
 
   ;; Script to compile the final version of file, where a certain
   ;; amount of configuration is in a file that is loaded before this
