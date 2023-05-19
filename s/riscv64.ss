@@ -2740,7 +2740,10 @@
                               (lambda (info)
                                 (define callee-save-regs+ra (cons* %ra
                                                                    ;; reserved:
-                                                                   %tc
+                                                                   ;; Need to manually save all since they are not in allocable list.
+                                                                   ;; If not saved, C code may have its data lost after jumping
+                                                                   ;; into Scheme, e.g., call_many_times_bv().
+                                                                   %tc %sfp %ap
                                                                    ;; allocable:
                                                                    (get-allocable-callee-save-regs 'all)))
                                 (let ([arg-type* (info-foreign-arg-type* info)]

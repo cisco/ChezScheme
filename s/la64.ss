@@ -2744,7 +2744,7 @@
                               (lambda (info)
                                 (define callee-save-regs+ra (cons* %ra
                                                                    ;; reserved:
-                                                                   %tc
+                                                                   %tc %sfp %ap
                                                                    ;; allocable:
                                                                    (get-allocable-callee-save-regs 'all)))
                                 (let ([arg-type* (info-foreign-arg-type* info)]
