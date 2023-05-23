@@ -3072,6 +3072,7 @@
            (values
              `(if ,e0 ,(wrap-oc oc1 (wrap-tc tc1 e1)) ,(wrap-oc oc2 (wrap-tc tc2 e2)))
              oc tc))]
+        [(raw ,[e #f -> e oc tc]) (values `(raw ,e) oc tc)]
         [(seq ,[e0 #f -> e0 oc0 tc0] ,[e1 oc1 tc1])
          (values `(seq ,e0 ,e1) (combine-seq oc0 oc1) (combine-seq tc0 tc1))])
       (CaseLambdaClause : CaseLambdaClause (ir force-overflow?) -> CaseLambdaClause ()

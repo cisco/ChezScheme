@@ -608,6 +608,16 @@
    (test-cp0-expansion eqv? '(fx*) 1)
    (test-cp0-expansion eqv? '(fx* 3) 3)
    (test-cp0-expansion eqv? '(fx* 3 4 5) 60)
+
+   ;; regression test for stack overflow checking and `raw` wrapper
+   (equal? 0
+           (call/cc
+            (lambda (esc)
+              (let loop ([i 100000])
+                (if (fx= i 0)
+                    (esc 0)
+                    (fx* i (loop (fx- i 1))))))))
+
  )
 
 (mat r6rs:fx*
