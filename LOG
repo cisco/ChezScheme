@@ -2370,3 +2370,6 @@
 - fix gensym->unique-string to leave symbol unchanged on failure
     c/externs.h c/intern.c mats/5_7.ms s/5_7.ss s/prims.ss boot/*
     mats/root-experr-compile-0-f-f-f mats/root-experr-compile-2-f-f-f
+- fix repair to invalid live-pointer mask, where a pass did not handle the
+  new raw-data form correctly
+    mats/fx.ms s/cpnanopass.ss
