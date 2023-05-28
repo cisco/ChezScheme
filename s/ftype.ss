@@ -975,7 +975,7 @@ ftype operators:
              [else #f]))))
   (set! $ftd->members
     (lambda (x)
-      ;; Currently used for x86_64 and arm32 ABI: Returns a list of
+      ;; Currently used for x86_64, arm32, rv64 and la64 ABI: Returns a list of
       ;;  (list 'integer/'float size offset)
       (let loop ([x x] [offset 0] [accum '()])
         (cond
