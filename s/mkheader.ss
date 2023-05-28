@@ -784,7 +784,7 @@
            (pr "  __asm__ __volatile__ (\"st.d $r0, %0, 0    \\n\\t\" \\~%")
            (pr "                        : \\~%")
            (pr "                        : \"r\" (addr) \\~%")
-           (pr "                        : \"memory\", \"r12\")~%")
+           (pr "                        : \"memory\")~%")
 
            (nl)
            (pr "#define LOCKED_INCR(addr, ret)                                  \\~%")
