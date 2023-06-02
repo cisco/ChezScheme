@@ -10,7 +10,7 @@
   (allocable
    [%ac0 %x19 #t 19]
    [%xp  %x20 #t 20]
-   [%ts  %x5  #f 5]
+   [%ts  %x23 #t 23]
    [%td  %x21 #t 21]
    [%cp  %x22 #t 22]
    [     %x10 %Carg1 %Cretval #f 10]
@@ -23,6 +23,7 @@
    [     %x17 %Carg8 #f 17]
 ;; [     %x3         #f 3] ; gp, unallocatable
 ;; [     %x4         #f 4] ; tp, unallocatable
+   [     %x5  #f 5]
    [     %x6  #f 6]
    [     %x7  #f 7]
 ;; [     %x18 #t 18]
@@ -30,7 +31,6 @@
 ;; [     %x20 #t 20]
 ;; [     %x21 #t 21]
 ;; [     %x22 #t 22]
-   [     %x23 #t 23]
    [     %x24 #t 24]
    [     %x25 #t 25]
    [     %x26 #t 26]
@@ -1966,7 +1966,10 @@
                                 ;; A compound value of more than one word and less than
                                 ;; two can use two registers, if available.
                                 (let* ([size ($ftd-size ftd)]
-                                       [members ($ftd->members ftd)]
+                                       ;; Reverse the result so the 'mix case below
+                                       ;; gives the right regs when both are floats/doubles.
+                                       ;; Same for la64.
+                                       [members (reverse ($ftd->members ftd))]
                                        [type-of car]
                                        [size-of cadr]
                                        [offset-of caddr])
@@ -2418,9 +2421,9 @@
                                                            (%seq
                                                             ,(if (fp-reg? r1)
                                                                  (if (fx= 4 (car sizes))
-                                                                     `(inline ,(make-info-loadfl r1) ,%store-single ,%Carg3 ,%zero (immediate 0))
-                                                                     `(inline ,(make-info-loadfl r1) ,%store-double ,%Carg3 ,%zero (immediate 0)))
-                                                                 (reg-to-memory %Carg3 0 (car sizes) r1))
+                                                                     `(inline ,(make-info-loadfl r1) ,%store-single ,%Carg3 ,%zero (immediate ,(car offsets)))
+                                                                     `(inline ,(make-info-loadfl r1) ,%store-double ,%Carg3 ,%zero (immediate ,(car offsets))))
+                                                                 (reg-to-memory %Carg3 (car offsets) (car sizes) r1))
                                                             ,(if (fp-reg? r2)
                                                                  (if (fx= 4 (cadr sizes))
                                                                      `(inline ,(make-info-loadfl r2) ,%store-single ,%Carg3 ,%zero (immediate ,(cadr offsets)))
@@ -2743,7 +2746,7 @@
                                                                    ;; Need to manually save all since they are not in allocable list.
                                                                    ;; If not saved, C code may have its data lost after jumping
                                                                    ;; into Scheme, e.g., call_many_times_bv().
-                                                                   %tc %sfp %ap
+                                                                   %tc %sfp %ap %trap
                                                                    ;; allocable:
                                                                    (get-allocable-callee-save-regs 'all)))
                                 (let ([arg-type* (info-foreign-arg-type* info)]

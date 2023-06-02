@@ -3,15 +3,15 @@
    [%tc  %r22 #t 22]
    [%sfp %r23 #t 23]
    [%ap  %r24 #t 24]
-   [%trap %x25 #t 25])
+   [%trap %r25 #t 25])
   (allocable
-   [%ac0 %r14 #f 14]
-   [%xp  %r15 #f 15]
-   [%ts  %r16 #f 16]
-   [%td  %r17 #f 17]
+   [%ac0 %r26 #t 26]
+   [%xp  %r27 #t 27]
+   [%ts  %r28 #t 28]
+   [%td  %r29 #t 29]
    ;; [%ac1 %r18 %deact #f 18]
    ;; [%yp  %r19 #f 19]
-   [%cp  %r20 #f 20]
+   [%cp  %r30 #t 30]
    [     %r4  %Carg1 %Cretval #f 4]
    [     %r5  %Carg2 #f 5]
    [     %r6  %Carg3 #f 6]
@@ -22,20 +22,25 @@
    [     %r11 %Carg8 #f 11]
    ;; [     %r12 #f 12]
    ;; [     %r13 #f 13]
+   [     %r14 #f 14]
+   [     %r15 #f 15]
+   [     %r16 #f 16]
+   [     %r17 #f 17]
    ;; [     %r2  #f 2] ; tp, unallocatable
    ;; [     %r18 #f 18]
    [     %r19 #f 19]
+   [     %r20 #f 20]
    ;; [     %r20 #t 20]
    ;; [     %r21 #t 21] ; reserved
    ;; [     %r22 #t 22]
    ;; [     %r23 #t 23]
    ;; [     %r24 #t 24]
    ;; [     %r25 #t 25]
-   [     %r26 #t 26]
-   [     %r27 #t 27]
-   [     %r28 #t 28]
-   [     %r29 #t 29]
-   [     %r30 #t 30]
+   ;; [     %r26 #t 26]
+   ;; [     %r27 #t 27]
+   ;; [     %r28 #t 28]
+   ;; [     %r29 #t 29]
+   ;; [     %r30 #t 30]
    [     %r31 #t 31]
    )
   (machine-dependent
@@ -834,6 +839,7 @@
   (define-op bl imm28-op #b10101)
 
   (define-op ibar sync-op #b111000011100101)
+  (define-op dbar sync-op #b111000011100100)
 
   #|
   cd(cc reg)=0
@@ -938,7 +944,8 @@
   (define sync-op
     (lambda (op opcode code*)
       (emit-code (op code*)
-                 [0 opcode])))
+                 [15 opcode]
+                 [0 0])))
 
   (define-who fp-cmp-op
     (lambda (op opcode cmp src0 src1 code*)
@@ -1112,6 +1119,7 @@
       [(byte-fields (n e) ...)
        (andmap fixnum? (datum (n ...)))
        (fx+ (bitwise-arithmetic-shift-left e n) ...)]))
+
   ;; for building 32-bit immediate
   (define upper20-32
     (lambda (x)
@@ -1594,7 +1602,7 @@
 
   (define asm-fence ;;@ maybe use dbar
     (lambda (code*)
-      (emit ibar code*)))
+      (emit dbar code*)))
 
   (define ax-mov32
     (lambda (dest n code*) ;;@ todo check 32bit load semantics
@@ -1970,7 +1978,7 @@
                                 ;; A compound value of more than one word and less than
                                 ;; two can use two registers, if available.
                                 (let* ([size ($ftd-size ftd)]
-                                       [members ($ftd->members ftd)]
+                                       [members (reverse ($ftd->members ftd))]
                                        [type-of car]
                                        [size-of cadr]
                                        [offset-of caddr])
@@ -2422,9 +2430,9 @@
                                                            (%seq
                                                             ,(if (fp-reg? r1)
                                                                  (if (fx= 4 (car sizes))
-                                                                     `(inline ,(make-info-loadfl r1) ,%store-single ,%Carg3 ,%zero (immediate 0))
-                                                                     `(inline ,(make-info-loadfl r1) ,%store-double ,%Carg3 ,%zero (immediate 0)))
-                                                                 (reg-to-memory %Carg3 0 (car sizes) r1))
+                                                                     `(inline ,(make-info-loadfl r1) ,%store-single ,%Carg3 ,%zero (immediate ,(car offsets)))
+                                                                     `(inline ,(make-info-loadfl r1) ,%store-double ,%Carg3 ,%zero (immediate ,(car offsets))))
+                                                                 (reg-to-memory %Carg3 (car offsets) (car sizes) r1))
                                                             ,(if (fp-reg? r2)
                                                                  (if (fx= 4 (cadr sizes))
                                                                      `(inline ,(make-info-loadfl r2) ,%store-single ,%Carg3 ,%zero (immediate ,(cadr offsets)))
@@ -2744,7 +2752,7 @@
                               (lambda (info)
                                 (define callee-save-regs+ra (cons* %ra
                                                                    ;; reserved:
-                                                                   %tc %sfp %ap
+                                                                   %tc %sfp %ap %trap
                                                                    ;; allocable:
                                                                    (get-allocable-callee-save-regs 'all)))
                                 (let ([arg-type* (info-foreign-arg-type* info)]
