@@ -15,6 +15,10 @@ jobs:
             os: macos-12
           - machine: ta6osx
             os: macos-12
+          - machine: a6osx
+            os: macos-13
+          - machine: ta6osx
+            os: macos-13
           - machine: i3le
             os: ubuntu-20.04
           - machine: ti3le
