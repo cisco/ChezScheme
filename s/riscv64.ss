@@ -2289,7 +2289,7 @@
                                      [load-single-indirect-reg
                                       (lambda (fpreg)
                                         (lambda (x)
-                                          `(inline ,(make-info-loadfl fpreg) ,%load-double->single ,x ,%zero (immediate 0))))]
+                                          `(inline ,(make-info-loadfl fpreg) ,%load-single ,x ,%zero (immediate 0))))]
                                      [load-two-indirect-regs
                                       (lambda (regs sizes offsets)
                                         (lambda (x)
