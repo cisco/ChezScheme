@@ -5675,8 +5675,9 @@ evaluating module init
               (parameterize ([print-vector-length #t]) (pretty-print v))
               #t))))))
   (parameterize ([collect-maximum-generation 4]
-                 [collect-generation-radix 4]
-                 [collect-trip-bytes (expt 2 20)])
+                 [collect-generation-radix 2]
+                 [collect-trip-bytes (expt 2 20)]
+                 [collect-maximum-generation-threshold-factor 0])
     (collect (collect-maximum-generation))
     (let ([b0 (maximum-memory-bytes)])
       (define tail-spin
@@ -5688,6 +5689,30 @@ evaluating module init
       (let ([b1 (maximum-memory-bytes)])
         (or (< (- b1 b0) (expt 2 24))
             (errorf #f "b0 = ~s, b1 = ~s, b1-b0 = ~s" b0 b1 (- b1 b0))))))
+  (begin
+    (define try-gc-threshold
+      (lambda (gc-max?)
+        (let* ([v (gensym)]
+               [w (weak-cons v '())])
+          (parameterize ([collect-maximum-generation 4]
+                         [collect-generation-radix 4]
+                         [collect-trip-bytes (expt 2 20)]
+                         [collect-maximum-generation-threshold-factor (if gc-max? 0 1000)])
+            (collect (collect-maximum-generation))
+            (set! v #f)
+            (let ()
+              (define tail-spin
+                (lambda (n)
+                  (do ([i 1 (fx+ i 1)] [next (cons 0 '()) (cdr next)])
+                      ((fx= i n))
+                    (set-cdr! next (cons i '())))))
+              (tail-spin 50000000)
+              (if gc-max?
+                  (eq? #!bwp (car w))
+                  (symbol? (car w))))))))
+    #t)
+  (try-gc-threshold #t)
+  (try-gc-threshold #f)
  )
 
 (mat object-counts

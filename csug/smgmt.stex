@@ -93,6 +93,23 @@ If \scheme{collect-generation-radix} is set to 4, the system thus
 collects generation 0 every time, generation 1 every 4 times,
 generation 2 every 16 times, and so on.
 
+The maximum generation $mg$ is collected on the gc-trip schedule only
+if the total amount of allocated memory before collection is $k$ times
+the total amount of allocated memory after the previous collection of
+$mg$, where the $k$ is the value of
+\index{\scheme{collect-maximum-generation-threshold-factor}}\scheme{collect-maximum-generation-threshold-factor}.
+If a collection of $mg$ is skipped by this rule, then gc-trip is
+rewound to the previous value that is a multiple of $r^{mg-1}$ (so
+that the next time to collect $mg-1$ is potentially also a time to
+collect $mg$). The intent of this $k$ factor is to avoid unnecessary
+traversal of long-lived objects when rapidly allocating short-lived
+objects; for objects that will live until the end of a process, promoting
+them to the static generation can be even more effective, but
+promotion requires additional reasoning to ensure that an object is
+not retained inappropriately, while the
+\scheme{collect-maximum-generation-threshold-factor} parameter allows
+the collector to adapt more automatically.
+
 When \scheme{collect} is invoked with arguments, the generations to be
 collected and their target generations are determined by the arguments.
 In addition, the first argument \var{cg} affects the value of gc-trip;
@@ -264,6 +281,30 @@ Setting \scheme{collect-generation-radix} to one forces all generations
 to be collected each time a collection occurs.
 Setting \scheme{collect-generation-radix} to a very large number
 effectively delays collection of older generations indefinitely.
+
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{collect-maximum-generation-threshold-factor}{\categoryglobalparameter}{collect-maximum-generation-threshold-factor}
+\listlibraries
+\endentryheader
+
+\noindent
+This parameter determines how often the maximum generation is collected
+when \scheme{collect} is invoked without arguments, as by the default
+collect-request handler.
+Its value must be a nonnegative real number.
+The maximum generation is collected only when the total amount of allocated
+memory before a collection is $k$ times the amount of memory allocated
+after the most recent collection of the maximum generation, where $k$
+is the value of \scheme{collect-maximum-generation-threshold-factor}.
+
+Setting \scheme{collect-maximum-generation-threshold-factor} to zero
+causes every regularly scheduled collection of the maximum generation
+to take place. Setting the value of
+\scheme{collect-maximum-generation-threshold-factor} to a large number
+can increase peak memory use by delaying collection of the maximum
+generation.
 
 
 %----------------------------------------------------------------------------

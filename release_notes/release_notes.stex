@@ -210,6 +210,18 @@ compared to a pure copying collector. The
 \scheme{in-place-minimum-generation} parameter tunes the hybrid by
 selecting the youngest generation at which marking is used.
 
+The \scheme{collect-maximum-generation-threshold-factor} parameter is
+used by \scheme{collect} when called with no arguments. In the case
+that the maximum generation would be collected based on the gc-trip
+counter, it is collected only when the total memory use is at least $k$
+times the memory use just after the most recent collection of the maximum
+generation, where the parameter's value is $k$. The default value of 2
+helps the collector adapt to the scenario that a program has much more
+long-lived data than short-lived data, and where the program does not
+explicitly promote its long-lived data to the static generation.
+Setting the parameter to 0 makes \scheme{collect} behave as in
+previous versions of Chez Scheme.
+
 See also Sections~\ref{sec:gc-reflect} and \ref{sec:ffi-storage} for
 related new functionality.
 

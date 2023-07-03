@@ -534,6 +534,7 @@
       [sub-flonum (cons 'bottom flonum-pred)]
       [maybe-flonum maybe-flonum-pred]
       [real real-pred]
+      [sub-real (cons 'bottom real-pred)]
       [rational (cons 'exact-integer real-pred)]
       [integer integer-pred]
       [(uinteger sub-integer) (cons 'bottom integer-pred)]

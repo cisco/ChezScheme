@@ -914,6 +914,7 @@
   (cd [sig [() -> (pathname)] [(pathname) -> (void)]] [flags])
   (collect-generation-radix [sig [() -> (ufixnum)] [(sub-ufixnum) -> (void)]] [flags])
   (collect-maximum-generation [sig [() -> (ufixnum)] [(sub-ufixnum) -> (void)]] [flags])
+  (collect-maximum-generation-threshold-factor [sig [() -> (real)] [(sub-real) -> (void)]] [flags])
   (collect-notify [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (collect-request-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (collect-trip-bytes [sig [() -> (ufixnum)] [(ufixnum) -> (void)]] [flags])

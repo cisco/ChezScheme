@@ -609,6 +609,14 @@
             ($oops 'collect-generation-radix "~s is not a positive fixnum" v))
          v)))
 
+(define collect-maximum-generation-threshold-factor
+  (make-parameter
+   2
+   (lambda (v)
+     (unless (and (real? v) (not (negative? v)))
+       ($oops 'collect-maximum-generation-threshold-factor "~s is not a nonnegative real" v))
+     v)))
+  
 (define $reset-protect
   (lambda (body out)
     ((call/cc
@@ -800,13 +808,15 @@
   (define gc-bytes 0)
   (define gc-count 0)
   (define start-bytes 0)
+  (define allocated-after-max 0)
   (define docollect
     (let ([do-gc (foreign-procedure "(cs)do_gc" (int int int ptr) ptr)])
       (lambda (p)
         (with-tc-mutex
           (unless (= $active-threads 1)
             ($oops 'collect "cannot collect when multiple threads are active"))
-          (let-values ([(trip g gmintarget gmaxtarget count-roots) (p gc-trip)])
+          (let-values ([(trip g gmintarget gmaxtarget count-roots reset-alloc-after?)
+                        (p gc-trip allocated-after-max)])
             (set! gc-trip trip)
             (let ([cpu (current-time 'time-process)] [real (current-time 'time-monotonic)])
               (set! gc-bytes (+ gc-bytes (bytes-allocated)))
@@ -824,10 +834,13 @@
                 (when (collect-notify)
                   (fprintf (console-output-port) "done]~%")
                   (flush-output-port (console-output-port)))
-                (set! gc-bytes (- gc-bytes (bytes-allocated)))
-                (set! gc-cpu (add-duration gc-cpu (time-difference (current-time 'time-process) cpu)))
-                (set! gc-real (add-duration gc-real (time-difference (current-time 'time-monotonic) real)))
-                (set! gc-count (1+ gc-count))
+                (let ([allocated (bytes-allocated)])
+                  (when reset-alloc-after?
+                    (set! allocated-after-max allocated))
+                  (set! gc-bytes (- gc-bytes allocated))
+                  (set! gc-cpu (add-duration gc-cpu (time-difference (current-time 'time-process) cpu)))
+                  (set! gc-real (add-duration gc-real (time-difference (current-time 'time-monotonic) real)))
+                  (set! gc-count (1+ gc-count)))
                 gc-result)))))))
   (define collect-init
     (lambda ()
@@ -836,7 +849,8 @@
       (set! gc-real (make-time 'time-collector-real 0 0))
       (set! gc-count 0)
       (set! gc-bytes 0)
-      (set! start-bytes (bytes-allocated))))
+      (set! start-bytes (bytes-allocated))
+      (set! allocated-after-max start-bytes)))
   (set! $gc-real-time (lambda () gc-real))
   (set! $gc-cpu-time (lambda () gc-cpu))
   (set! initial-bytes-allocated (lambda () start-bytes))
@@ -858,31 +872,40 @@
     (define collect0
       (lambda ()
         (docollect
-          (lambda (gct)
+          (lambda (gct prev-allocated-after-max)
             (let ([gct (+ gct 1)])
               (let ([cmg (collect-maximum-generation)])
                 (let loop ([g cmg])
                   (if (= (modulo gct (expt (collect-generation-radix) g)) 0)
                       (if (fx= g cmg)
-                          (values 0 g (fxmin g 1) g #f)
-                          (values gct g 1 (fx+ g 1) #f))
+                          (let ([allocated (bytes-allocated)])
+                            (if (>= allocated (* prev-allocated-after-max
+                                                 (collect-maximum-generation-threshold-factor)))
+                                (values 0 g g g #f #t)
+                                ;; GC the next-to-max collection this time, but arrange to
+                                ;; check the max for the next time that we'd collect the
+                                ;; next-to-max generation:
+                                (let ([gct (- gct (expt (collect-generation-radix) (- cmg 1)))])
+                                  (values gct (fx- g 1) 1 g #f #f))))
+                          (values gct g 1 (fx+ g 1) #f #f))
                       (loop (fx- g 1))))))))))
     (define collect2
       (lambda (g gmintarget gmaxtarget count-roots)
         (docollect
-          (lambda (gct)
-            (values 
-             ; make gc-trip to look like we've just collected generation g
-             ; w/o also having collected generation g+1
-              (if (fx= g (collect-maximum-generation))
-                  0
-                  (let ([gct (+ gct 1)])
-                    (define (trip g)
-                      (let ([n (expt (collect-generation-radix) g)])
-                        (+ gct (modulo (- n gct) n))))
-                    (let ([next (trip g)] [limit (trip (fx+ g 1))])
-                      (if (< next limit) next (- limit 1)))))
-              g gmintarget gmaxtarget count-roots)))))
+          (lambda (gct prev-allocated-after-max)
+            (let ([max-gen? (fx= g (collect-maximum-generation))])
+              (values 
+               ; make gc-trip to look like we've just collected generation g
+               ; w/o also having collected generation g+1
+               (if max-gen?
+                   0
+                   (let ([gct (+ gct 1)])
+                     (define (trip g)
+                       (let ([n (expt (collect-generation-radix) g)])
+                         (+ gct (modulo (- n gct) n))))
+                     (let ([next (trip g)] [limit (trip (fx+ g 1))])
+                       (if (< next limit) next (- limit 1)))))
+               g gmintarget gmaxtarget count-roots max-gen?))))))
     (case-lambda
       [() (collect0)]
       [(g)

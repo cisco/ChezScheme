@@ -89,6 +89,9 @@ primvars.mo:Expected error in mat parameterize: "incorrect number of arguments 0
 primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: a is not a positive fixnum".
 primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: -1 is not a positive fixnum".
 primvars.mo:Expected error in mat collect-generation-radix: "collect-generation-radix: 0 is not a positive fixnum".
+primvars.mo:Expected error in mat collect-maximum-generation-threshold-factor: "collect-maximum-generation-threshold-factor: a is not a nonnegative real".
+primvars.mo:Expected error in mat collect-maximum-generation-threshold-factor: "collect-maximum-generation-threshold-factor: -1 is not a nonnegative real".
+primvars.mo:Expected error in mat collect-maximum-generation-threshold-factor: "collect-maximum-generation-threshold-factor: 1+2i is not a nonnegative real".
 primvars.mo:Expected error in mat collect-request-handler: "collect-request-handler: #f is not a procedure".
 primvars.mo:Expected error in mat collect-trip-bytes: "collect-trip-bytes: -100 is not a positive fixnum".
 primvars.mo:Expected error in mat collect-trip-bytes: "collect-trip-bytes: <int> is not a positive fixnum".

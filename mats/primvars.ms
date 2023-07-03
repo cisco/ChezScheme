@@ -498,7 +498,7 @@
               [(string) "a" 'a #f]
               [(string/bytevector) no-good]
               [(sub-ptr) no-good]
-              [(sub-uint sub-ufixnum sub-index sub-length sub-list sub-fixnum sub-flonum sub-integer sub-number sub-port sub-rtd sub-sint sub-string sub-symbol sub-textual-output-port sub-vector) no-good #!eof #f]
+              [(sub-uint sub-ufixnum sub-index sub-length sub-real sub-list sub-fixnum sub-flonum sub-integer sub-number sub-port sub-rtd sub-sint sub-string sub-symbol sub-textual-output-port sub-vector) no-good #!eof #f]
               [(maybe-sub-rcd maybe-sub-symbol) no-good #!eof]
               [(symbol) 'a 0 "a" #f]
               [(symbol-hashtable) *symbol-hashtable *eq-hashtable '() #f]
@@ -807,6 +807,19 @@
    (error? (collect-generation-radix 'a))
    (error? (collect-generation-radix -1))
    (error? (collect-generation-radix 0))
+ )
+
+(mat collect-maximum-generation-threshold-factor
+   (real? (collect-maximum-generation-threshold-factor))
+   (not (negative? (collect-maximum-generation-threshold-factor)))
+   (ok collect-maximum-generation-threshold-factor 0)
+   (ok collect-maximum-generation-threshold-factor 1)
+   (ok collect-maximum-generation-threshold-factor 2)
+   (ok collect-maximum-generation-threshold-factor 0.5)
+   (ok collect-maximum-generation-threshold-factor 1/2)
+   (error? (collect-maximum-generation-threshold-factor 'a))
+   (error? (collect-maximum-generation-threshold-factor -1))
+   (error? (collect-maximum-generation-threshold-factor 1+2i))
  )
 
 (mat collect-notify
