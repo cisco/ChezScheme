@@ -2373,3 +2373,7 @@
 - fix repair to invalid live-pointer mask, where a pass did not handle the
   new raw-data form correctly
     mats/fx.ms s/cpnanopass.ss
+- change the default expeditor history file on non-Windows systems to
+  "$XDG_STATE_HOME/chezscheme/history" and document the existing Windows
+  default, "%APPDATA%\Chez Scheme\History"
+    scheme.1.in s/expeditor.ss csug/csug.bib csug/use.stex

@@ -195,7 +195,7 @@ The expression editor does not run if the TERM environment variable is
 not set, if the standard input or output files have been redirected, or
 if the --eedisable command-line option has been used.
 The history is saved across sessions, by default, in the file
-\*(lq$HOME/.chezscheme_history\*(rq.
+\*(lq$XDG_STATE_HOME/chezscheme/history\*(rq.
 The --eehistory command-line option
 can be used to specify a different
 location for the history file or to disable the saving and restoring of

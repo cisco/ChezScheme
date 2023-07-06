@@ -345,12 +345,34 @@ The expression editor does not run if the TERM environment variable is not
 set (on Unix-based systems), if the standard input or output files have
 been redirected, or if the \scheme{--eedisable} command-line option
 (Section~\ref{SECTUSECOMMANDLINE}) has been used.
-The history is saved across sessions, by default, in the file
-``.chezscheme\_history'' in the user's home directory.
+By default, the history is saved across sessions.
 The \scheme{--eehistory} command-line option
-(Section~\ref{SECTUSECOMMANDLINE}) can be used to specify a different
-location for the history file or to disable the saving and restoring of
-the history file.
+(Section~\ref{SECTUSECOMMANDLINE}) can be used to
+disable the saving and restoring of the history file or to specify an
+alternate location for the history file.
+The default location depends on the operating system:
+\begin{itemize}
+\item
+On Windows, the default file is
+``\scheme{%APPDATA%\Chez Scheme\History}'', where the value of
+\scheme{%APPDATA%} is typically
+``\scheme{C:\Users\\var{username}\AppData\Roaming}''.
+If the \scheme{%APPDATA%} environment variable is not set, the file
+``\scheme{%HOME%\.chezscheme_history}'' is used instead.
+If the \scheme{%HOME%} environment variable is also not set, the file
+``\scheme{.chezscheme_history}'' in the current directory is used.
+
+\item
+On other systems, the default file is
+``\scheme{$XDG_STATE_HOME/chezscheme/history}'', where the default
+value of \scheme{$XDG_STATE_HOME}, per the XDG Base Directory
+Specification~\cite{xdg-base-directory}, is
+``\scheme{$HOME/.local/state}''.
+For compatibility with older versions of Chez Scheme, if the file
+``\scheme{$XDG_STATE_HOME/chezscheme/history}'' does not exist, but
+the file ``\scheme{~/.chezscheme_history}'' does exist, the existing
+file is used instead of creating a new one.
+\end{itemize}
 
 Keys for nearly all printing characters (letters, digits, and special
 characters) are ``self inserting'' by default.

@@ -52,7 +52,29 @@
                   (lambda (home)
                     (format "~a\\.chezscheme_history" home))]
                  [else ".chezscheme_history"])
-               "~/.chezscheme_history")
+               (let* ([xdg-state-home
+                       (let ([from-env (getenv "XDG_STATE_HOME")])
+                         (if (and from-env (path-absolute? from-env))
+                             from-env
+                             (format "~a/.local/state"
+                                     (or (getenv "HOME") "~"))))]
+                      [xdg-dir (format "~a/chezscheme" xdg-state-home)]
+                      [xdg-file (format "~a/history" xdg-dir)]
+                      [old-file "~/.chezscheme_history"])
+                 (cond
+                  [(file-exists? xdg-file)
+                   xdg-file]
+                  [(file-exists? old-file)
+                   old-file]
+                  [else
+                   (let mkdir-p ([dir xdg-dir])
+                     (unless (file-exists? dir)
+                       (let ([parent (path-parent dir)])
+                         (unless (equal? parent dir)
+                           (mkdir-p parent))
+                         ;; spec says create w/ #o700
+                         (guard (c [#t (void)]) (mkdir dir #o700)))))
+                   xdg-file])))
              s)]
         [else ($oops '$expeditor-history-file "~s is not #f or a string" s)]))))
           
