@@ -1118,7 +1118,7 @@
     (lambda (code* dest src0 src1)
       (Trivit (dest src0 src1)
               (emit mul dest src0 src1 code*))))
-
+#;
   (define asm-mul/ovfl
     (lambda (code* dest src0 src1)
       (Trivit (dest src0 src1)
@@ -1132,6 +1132,17 @@
                                       (emit srli %cond dest 63 ; 1 => negative in `dest`
                                             (emit or %scratch0 %scratch0 %cond ; combine negativity of results
                                                   (emit xor %cond %scratch0 %scratch1 ; 0 => expectation matches => no overflow
+                                                        code*))))))))))
+  (define asm-mul/ovfl
+    (lambda (code* dest src0 src1)
+      (Trivit (dest src0 src1)
+              (emit mulh %scratch1 src0 src1
+                    (emit mul dest src0 src1
+                          (emit srai %cond dest 63
+                                (emit bne %scratch1 %cond 12
+                                      (emit addi %cond %real-zero 0
+                                            (emit jal %real-zero 8
+                                                  (emit addi %cond %real-zero 1
                                                         code*))))))))))
 
   (define asm-div
@@ -1795,7 +1806,7 @@
                 [(index) (n ireg breg)
                  (safe-assert (eqv? n 0))
                  (emit add %scratch1 ireg breg
-                       (emit ld %jump %cond 0
+                       (emit ld %jump %scratch1 0
                              (emit jalr %real-zero %jump 0 '())))]
                 [else (sorry! who "unexpected src ~s" src)]))))
 
@@ -2284,7 +2295,7 @@
                                      [load-double-indirect-reg
                                       (lambda (fpreg)
                                         (lambda (x)
-                                          ;; data in ftd, so flonum-data-disp needed
+                                          ;; data in ftd, so flonum-data-disp not needed
                                           `(inline ,(make-info-loadfl fpreg) ,%load-double ,x ,%zero (immediate 0))))]
                                      [load-single-indirect-reg
                                       (lambda (fpreg)
