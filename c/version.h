@@ -412,6 +412,7 @@ typedef char *memcpy_t;
 typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
+#define FLUSHCACHE
 //#ifndef DISABLE_X11
 //#define LIBX11 "libX11.so"
 //#endif
@@ -447,6 +448,7 @@ typedef char *memcpy_t;
 typedef int tputsputcchar;
 #define LOCKF
 #define DIRMARKERP(c) ((c) == '/')
+#define FLUSHCACHE
 //#ifndef DISABLE_X11
 //#define LIBX11 "libX11.so"
 //#endif
