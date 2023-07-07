@@ -506,38 +506,47 @@
        '(#t #t))
       (#%$enable-check-heap))
 
-  (or (equal?
-        (let ([v1 (make-vector 95000 (make-vector 95000 0))]
-              [v2 (make-vector 95000 (make-vector 95000 0))])
-          (let ([t0 (current-time 'time-process)])
-            (let ([ans (equal? v1 v2)])
-              (list
+ ;; loongarch and riscv are still quite slow nowadays
+ (meta-cond
+   [(memq (machine-type) '(la64le tla64le rv64le trv64le))
+    #t]
+   [else
+    (or (equal?
+         (let ([v1 (make-vector 95000 (make-vector 95000 0))]
+               [v2 (make-vector 95000 (make-vector 95000 0))])
+           (let ([t0 (current-time 'time-process)])
+             (let ([ans (equal? v1 v2)])
+               (list
                 ans
                 (let ([t (current-time 'time-process)])
                   (> (+ (* (- (time-second t) (time-second t0)) 1000000000)
                         (- (time-nanosecond t) (time-nanosecond t0)))
                      100000000))))))
-        '(#t #f))
-      (#%$enable-check-heap))
+         '(#t #f))
+        (#%$enable-check-heap))])
 
-  (or (equal?
-        (let ([n 100000])
-          (let ([f (lambda (n)
-                     (let ([ls (make-list n 0)])
-                       (set-cdr! (last-pair ls) ls)
-                       ls))])
-            (let ([v1 (f n)] [v2 (f (- n 1))])
-              (let ([t0 (current-time 'time-process)])
-                (let ([ans (equal? v1 v2)])
-                  (let ([t (current-time 'time-process)])
-                    (list
+ (meta-cond
+   [(memq (machine-type) '(la64le tla64le rv64le trv64le))
+    #t]
+   [else
+    (or (equal?
+         (let ([n 100000])
+           (let ([f (lambda (n)
+                      (let ([ls (make-list n 0)])
+                        (set-cdr! (last-pair ls) ls)
+                        ls))])
+             (let ([v1 (f n)] [v2 (f (- n 1))])
+               (let ([t0 (current-time 'time-process)])
+                 (let ([ans (equal? v1 v2)])
+                   (let ([t (current-time 'time-process)])
+                     (list
                       ans
                       (< (+ (* (- (time-second t) (time-second t0)) 1000000000)
                             (- (time-nanosecond t) (time-nanosecond t0)))
                          200000000))))))))
-        '(#t #t))
-      (#%$enable-check-heap))
-)
+         '(#t #t))
+        (#%$enable-check-heap))])
+ )
 
 (mat boolean?
     (boolean? #t)
