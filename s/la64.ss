@@ -339,7 +339,7 @@
 
   (define-instruction value (+/ovfl)
     [(op (z ur) (x ur) (y ur))
-     `(set! ,(make-live-info) ,z (asm ,null-info ,asm-add/ovfl ,x ,y))])
+     `(set! ,(make-live-info) ,z (asm ,info ,asm-add/ovfl ,x ,y))])
 
   (define-instruction value (-)
     [(op (z ur) (x ur) (y imm12))
@@ -351,7 +351,7 @@
 
   (define-instruction value (-/ovfl)
     [(op (z ur) (x ur) (y ur))
-     `(set! ,(make-live-info) ,z (asm ,null-info ,asm-sub/ovfl ,x ,y))])
+     `(set! ,(make-live-info) ,z (asm ,info ,asm-sub/ovfl ,x ,y))])
 
   (define-instruction value (-/eq)
     [(op (z ur) (x ur) (y ur))
@@ -363,7 +363,7 @@
 
   (define-instruction value (*/ovfl)
     [(op (z ur) (x ur) (y ur))
-     `(set! ,(make-live-info) ,z (asm ,null-info ,asm-mul/ovfl ,x ,y))])
+     `(set! ,(make-live-info) ,z (asm ,info ,asm-mul/ovfl ,x ,y))])
 
   (define-instruction value (/)
     [(op (z ur) (x ur) (y ur))
@@ -1215,6 +1215,7 @@
       (Trivit (dest src0 src1)
               (emit mul.d dest src0 src1 code*))))
 
+  #;
   (define asm-mul/ovfl
     (lambda (code* dest src0 src1)
       (Trivit (dest src0 src1)
@@ -1226,6 +1227,17 @@
                                             (emit or %scratch0 %scratch0 %cond
                                                   (emit xor %cond %scratch0 %scratch1 code*))))))))))
 
+  (define asm-mul/ovfl
+    (lambda (code* dest src0 src1)
+      (Trivit (dest src0 src1)
+              (emit mulh.d %scratch1 src0 src1
+                    (emit mul.d dest src0 src1
+                          (emit srai.d %cond dest 63
+                                (emit bne %scratch1 %cond 12
+                                      (emit addi.d %cond %real-zero 0
+                                            (emit b 8
+                                                  (emit addi.d %cond %real-zero 1
+                                                        code*))))))))))
   (define asm-div
     (lambda (code* dest src0 src1)
       (Trivit (dest src0 src1)
@@ -1488,7 +1500,7 @@
     ;;   addi.d t1, new, 0
     ;;   bne  t0, old, L
     ;;   sc.d   t1, [addr], 0 # t1==0 if store fails
-    ;;   sltu %cond, %real-zero, t1    # %cond=1 if t1=0(succeed)
+    ;;   sltu %cond, %real-zero, t1    # %cond=1 if t1>0(succeed)
     ;;L:
     (lambda (code* addr old new t0 t1)
       (Trivit (addr old new t0 t1)
@@ -2293,7 +2305,7 @@
                                      [load-double-indirect-reg
                                       (lambda (fpreg)
                                         (lambda (x)
-                                          ;; data in ftd, so flonum-data-disp needed
+                                          ;; data in ftd, so flonum-data-disp not needed
                                           `(inline ,(make-info-loadfl fpreg) ,%load-double ,x ,%zero (immediate 0))))]
                                      [load-single-indirect-reg
                                       (lambda (fpreg)
