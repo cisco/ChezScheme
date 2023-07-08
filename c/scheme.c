@@ -989,7 +989,7 @@ extern void Sscheme_init(void (*abnormal_exit)(void)) {
     case BOOTING:
       fprintf(stderr, "error (Sscheme_init): already initialized\n");
       S_abnormal_exit();
-      break;
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case UNINITIALIZED:
     case DEINITIALIZED:
       break;
@@ -1075,7 +1075,7 @@ extern void Sbuild_heap(const char *kernel, void (*custom_init)(void)) {
     case RUNNING:
       fprintf(stderr, "error (Sbuild_heap): already running\n");
       S_abnormal_exit();
-      break;
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case BOOTING:
       break;
   }
@@ -1183,7 +1183,7 @@ extern INT Sscheme_start(INT argc, const char *argv[]) {
     case BOOTING:
       fprintf(stderr, "error (Sscheme_start): no heap built yet; call Sbuild_heap first\n");
       S_abnormal_exit();
-      break;
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case RUNNING:
       break;
   }
@@ -1219,7 +1219,7 @@ static INT run_script(const char *who, const char *scriptfile, INT argc, const c
     case BOOTING:
       fprintf(stderr, "error (%s): no heap built yet; call Sbuild_heap first\n", who);
       S_abnormal_exit();
-      break;
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case RUNNING:
       break;
   }
@@ -1269,7 +1269,7 @@ extern void Sscheme_deinit(void) {
     case BOOTING:
       fprintf(stderr, "error (Sscheme_deinit): not yet running\n");
       S_abnormal_exit();
-      break;
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case RUNNING:
       break;
   }

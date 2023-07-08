@@ -673,11 +673,11 @@ static void handle_signal(INT sig, UNUSED siginfo_t *si, UNUSED void *data) {
         case SIGILL:
             RESET_SIGNAL
             S_error_reset("illegal instruction");
-	    break;
+	    break;	/* Pacify compilers treating fallthrough warnings as errors */
         case SIGFPE:
             RESET_SIGNAL
             S_error_reset("arithmetic overflow");
-	    break;
+	    break;	/* Pacify compilers treating fallthrough warnings as errors */
 #ifdef SIGBUS
         case SIGBUS:
 #endif /* SIGBUS */
