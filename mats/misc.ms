@@ -2439,7 +2439,10 @@
 
   ((lambda (x)
      (and (time<? (make-time 'time-duration 0 0) x)
-          (or (time<? x (make-time 'time-duration 0 20))
+          (or (time<? x (make-time 'time-duration 0
+                                   (meta-cond
+                                     [(memq (machine-type) '(rv64le trv64le)) 40]
+                                     [else 20])))
               (#%$enable-check-heap))))
    (begin
      ($cc-fib 30)
