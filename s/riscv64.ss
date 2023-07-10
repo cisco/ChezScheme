@@ -43,9 +43,9 @@
    [%real-zero %x0 #f 0]
    [%ra   %x1 #f 1]
    [%sp   %x2 #t 2]
+   ;; for carry/ovfl flag, since RISC-V has no flag regs
    [%cond %x29 #f 29]
    [%scratch0 %jump %x30 #f 30]
-   ;; for carry/ovfl flag, since RISC-V has no flag regs
    [%scratch1 %x31 #f 31]
    [%Cfparg1 %Cfpretval %f10 #f 10]
    [%Cfparg2 %f11           #f  11]
