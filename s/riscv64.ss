@@ -673,29 +673,21 @@
                   (lambda (r)
                     (with-output-language (L15d Effect)
                                           `(asm ,info ,asm-lock ,r))))
-        ;; ,%scratch1 == 0 (result of sc.d) if lock is acquired
+        ;; %scratch1 == 0 (result of sc.d) if lock is acquired
         `(asm ,info-cc-eq ,asm-eq ,%scratch1 ,%real-zero))])
 
     (define-instruction effect (locked-incr! locked-decr!)
       [(op (x ur) (y ur) (w imm12))
        (lea->reg x y w
                  (lambda (r)
-                   (let ([u1 (make-tmp 'u1)] [u2 (make-tmp 'u2)])
-                     (seq
-                      `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
-                      `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
-                      `(asm ,null-info ,(asm-lock+/- op) ,r ,u1 ,u2)))))])
+                   `(asm ,info ,(asm-lock+/- op) ,r)))])
 
     (define-instruction effect (cas)
       [(op (x ur) (y ur) (w imm12) (old ur) (new ur))
        (lea->reg x y w
                  (lambda (r)
-                   (let ([u1 (make-tmp 'u1)] [u2 (make-tmp 'u2)])
-                     (seq
-                      `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
-                      `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
-                      `(asm ,info ,asm-cas ,r ,old ,new ,u1 ,u2)))))]))
-
+                   `(asm ,info ,asm-cas ,r ,old ,new)))])
+    )
 
   (define-instruction effect (pause)
     [(op) `(asm ,info ,asm-fence)])
@@ -875,8 +867,8 @@
     (lambda (op opcode funct5 dest rs1 rs2 code*)
       (emit-code (op dest rs1 rs2 code*)
                  [27 funct5]
-                 [26 #b0] ;;@ todo
-                 [25 #b0]
+                 [26 #b1]
+                 [25 #b1]
                  [20 (if (eq? op 'lr.d)
                          #b00000
                          (ax-ea-reg-code rs2))]
@@ -1404,8 +1396,8 @@
   (define asm-lock
     ;; lr.d t0, addr, 0
     ;; bne  t0, x0, L
-    ;; addi t0 r0, 1
-    ;; sc.d t0 addr t0
+    ;; addi t0, x0, 1
+    ;; sc.d t0, addr, t0
     ;; L:
     ;; compare t0 and 0
     ;;
@@ -1427,35 +1419,40 @@
     ;;    bne  t1, %real-zero, S
     ;;    sltiu %cond t0 1 # set %cond if t0=0
     (lambda (op)
-      (lambda (code* addr t0 t1)
-        (Trivit (addr t0 t1)
-                (emit lr.d t0 addr '()
-                      (let ([code* (emit sc.d t1 addr t0
-                                         (emit bne t1 %real-zero -12
-                                               (emit sltiu %cond t0 1 code*)))])
-                        (case op
-                          [(locked-incr!) (emit addi t0 t0 1 code*)]
-                          [(locked-decr!) (emit addi t0 t0 -1 code*)]
-                          [else (sorry! who "unexpected op ~s" op)])))))))
+      (lambda (code* addr)
+        (Trivit (addr)
+                (let ([t0 %scratch0]
+                      [t1 %scratch1])
+                  (emit lr.d t0 addr '()
+                        (let ([code* (emit sc.d t1 addr t0
+                                           (emit bne t1 %real-zero -12
+                                                 (emit sltiu %cond t0 1 code*)))])
+                          (case op
+                            [(locked-incr!) (emit addi t0 t0 1 code*)]
+                            [(locked-decr!) (emit addi t0 t0 -1 code*)]
+                            [else (sorry! who "unexpected op ~s" op)]))))))))
 
   (define asm-cas
     ;;cas:
-    ;;   lr.d t0, addr
-    ;;   bne  t0, old, L
-    ;;   sc.d t1, new, [addr] # t1!=0 if store fails
-    ;;   sltiu %cond t1 1     # %cond=1 if t1==0(succeed)
-    ;;   jal $x0, 8
-    ;;L:
-    ;;   xor %cond, %cond, %cond
-    (lambda (code* addr old new t0 t1)
-      (Trivit (addr old new t0 t1)
-              (emit lr.d t0 addr '()
-                    (emit bne t0 old 16
-                          (emit sc.d t1 addr new
-                                (emit sltiu %cond t1 1
-                                      (emit jal %real-zero 8
-                                            ;; in case %cond contains some other value
-                                            (emit xor %cond %cond %cond code*)))))))))
+    ;;   lr.d  t0, addr
+    ;;   bne   t0, old, L0
+    ;;   sc.d  t1, new, [addr]  # t1!=0 if store fails
+    ;;   sltiu %cond, t1, 1     # %cond=1 if t1==0(succeed)
+    ;;   jal   x0, L1
+    ;;L0:
+    ;;   xor   %cond, %cond, %cond
+    ;;L1:
+    (lambda (code* addr old new)
+      (Trivit (addr old new)
+              (let ([t0 %scratch0]
+                    [t1 %scratch1])
+                (emit lr.d t0 addr '()
+                      (emit bne t0 old 16
+                            (emit sc.d t1 addr new
+                                  (emit sltiu %cond t1 1
+                                        (emit jal %real-zero 8
+                                              ;; in case %cond contains some other value
+                                              (emit xor %cond %cond %cond code*))))))))))
 
   (define-who asm-relop
     (lambda (info)
