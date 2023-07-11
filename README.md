@@ -1,7 +1,5 @@
 [![test](https://github.com/cisco/ChezScheme/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/cisco/ChezScheme/actions/workflows/test.yml)
 
-Chez Scheme with extra experimental support for RISC-V 64-bit ([t]rv64le) and LoongArch 64-bit ([t]la64le) architectures.
-
 Chez Scheme is both a programming language and an implementation
 of that language, with supporting tools and documentation.
 

@@ -831,7 +831,7 @@
            (pr "       ret = _ret_;                                            \\~%")
            (pr "  } while (0)~%")]
           [else
-           ($oops who "asm locking code is not yet defined for ~s" (constant architecture))]))))
+            ($oops who "asm locking code is not yet defined for ~s" (constant architecture))]))))
 
   (set! mkequates.h
     (lambda (ofn)
