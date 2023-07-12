@@ -1462,7 +1462,7 @@
                                   (emit sc.d t0 addr 0
                                         (emit sltu t0 %real-zero t0
                                               (emit b 8
-                                                    (emit xor t0 t0 t0 code*))))))))))))
+                                                    (emit xor t0 t0 t0 code*)))))))))))
 
   (define-who asm-lock+/-
     ;;S:
@@ -1510,7 +1510,7 @@
                                         (emit sltu %cond %real-zero t1
                                               (emit b 8
                                                     ;; in case %cond contains other value
-                                                    (emit xor %cond %cond %cond code*))))))))))))
+                                                    (emit xor %cond %cond %cond code*)))))))))))
 
   (define-who asm-relop
     (lambda (info)
