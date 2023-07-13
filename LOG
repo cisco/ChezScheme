@@ -2373,3 +2373,13 @@
 - fix repair to invalid live-pointer mask, where a pass did not handle the
   new raw-data form correctly
     mats/fx.ms s/cpnanopass.ss
+- add support for 64-bit RISC-V ([t]rv64le) and 64-bit LoongArch ([t]la64le)
+    boot/la64le/* boot/tla64le/* boot/rv64le/* boot/trv64le/*
+    c/Mf-la64le c/Mf-tla64le c/Mf-rv64le c/Mf-trv64le
+    c/fasl.c c/la64le.c c/rv64le.c c/version.h configure workarea
+    mats/5_1.ms mats/bytevector.ms mats/foreign.ms mats/ftype.ms mats/misc.ms
+    mats/Mf-la64le mats/Mf-tla64le mats/Mf-rv64le mats/Mf-trv64le
+    s/Mf-la64le s/Mf-tla64le s/Mf-rv64le s/Mf-trv64le
+    s/cmacros.ss s/compile.ss s/cpnanopass.ss s/ftype.ss s/np-languages.ss
+    s/primdata.ss s/mkheader.ss s/la64.ss s/riscv64.ss
+    s/rv64le.def s/tla64le.def s/trv64le.def s/la64le.def
