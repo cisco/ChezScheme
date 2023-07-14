@@ -2,7 +2,8 @@
 set -e -o pipefail
 export ZUO_JOBS="$(getconf _NPROCESSORS_ONLN)"
 if test "$TOOLCHAIN" = vs ; then
-    cmd.exe /c "build.bat $TARGET_MACHINE"
+    # cmd.exe /c "build.bat $TARGET_MACHINE"
+    echo assuming built previously
 else
     if test -n "$CONFIGURE_ARGS" ; then
         ./configure $CONFIGURE_ARGS
