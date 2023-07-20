@@ -270,6 +270,7 @@
     (map at-source
          '(;; prettysrc is src to use for pretty-print test; we leave out mat files
            ;; with cycles, e.g., primvars.ms, misc.ms, 4.ms, 5_1.ms, hash.ms
+           ;; Note: the tests expect these files to be ASCII.
            "3.ms" "5_3.ms" "5_4.ms" "5_5.ms" "bytevector.ms" "thread.ms" "profile.ms"
            "5_6.ms" "5_7.ms" "5_8.ms" "6.ms" "io.ms" "format.ms" "7.ms" "record.ms" "enum.ms" "8.ms"
            "fx.ms" "fl.ms" "cfl.ms" "foreign.ms" "unix.ms" "windows.ms" "examples.ms" "ieee.ms" "date.ms"

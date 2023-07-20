@@ -3260,6 +3260,9 @@
                                     (let ([c1 (string-ref buf i)] [c2 (get-char ip2)])
                                       (if (char=? c1 c2)
                                           (test (+ 1 i) (+ pos 1))
+                                          ;; The test may fail here if prettytest.ss is not ASCII.
+                                          ;; See the definition of prettysrc in mats/Mf-base.
+                                          ;; Fix by using escapes for Unicode characters in those files.
                                           (errorf #f "ip1 c = ~s =/= ip2 c = ~s at pos ~s" c1 c2 pos))))))))))))))))
     (define (in fn compressed? codec)
       (open-file-input-port fn
