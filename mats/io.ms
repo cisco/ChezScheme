@@ -5193,6 +5193,90 @@
   (error? ($readit #f "#!no-fold-case #\\newLine"))
 )
 
+(mat append-blocks
+  (begin
+    (define test-str "A full \x1F315;.")
+    (define (bytes-for thunk)
+      (collect (collect-maximum-generation))
+      (let* ([s0 (statistics)]
+             [s1 (statistics)] ;; measure overhead
+             [val (thunk)]
+             [s2 (statistics)])
+        (values val
+          (sstats-bytes
+           (sstats-difference
+            (sstats-difference s2 s1)
+            (sstats-difference s1 s0))))))
+    (define (predicted-one-block two-blocks make-buffer two-block-buffer-len one-block-buffer-len)
+      ;; originally we allocated a result-sized obj (and copy! the data) whether
+      ;; we had a single block or more, so the allocation for the one-block case
+      ;; would have been:
+      (let-values ([(_2 two-block-overhead)
+                    ;; two-block case allocates two buffers and two pairs
+                    (bytes-for
+                     (lambda ()
+                       (cons (cons (make-buffer two-block-buffer-len) 0)
+                         (make-buffer two-block-buffer-len))))]
+                   [(_1 one-block-overhead)
+                    ;; one-block case allocates no pairs and one buffer
+                    (bytes-for (lambda () (make-buffer one-block-buffer-len)))])
+        (- two-blocks (- two-block-overhead one-block-overhead))))
+    (define (test-alloc open-port use-port buffer-size expected)
+      (let ([ip (open-port "testfile.ss")])
+        (parameterize ([file-buffer-size buffer-size])
+          (let-values ([(actual bytes) (bytes-for (lambda () (use-port ip)))])
+            (close-port ip)
+            (assert (equal? expected actual))
+            bytes))))
+    (define (check open-port use-port make-buffer ->len expected)
+      (let* ([len (->len expected)]
+             ;; just at the threshold where we read into the same block
+             [one-block-buffer-len (* 2 (+ len 1))]
+             [one-block (test-alloc open-port use-port one-block-buffer-len expected)]
+             ;; just at the threshold where we allocate another file-buffer-size chunk
+             [two-block-buffer-len (* 2 len)]
+             [two-blocks (test-alloc open-port use-port two-block-buffer-len expected)])
+        (and (< one-block two-blocks) ;; despite larger file-buffer-size, since one buffer not two
+             (< one-block
+                (predicted-one-block two-blocks make-buffer
+                  two-block-buffer-len one-block-buffer-len)))))
+    (parameterize ([current-transcoder (native-transcoder)])
+      (call-with-output-file "testfile.ss"
+        (lambda (op) (display-string test-str op))
+        '(replace)))
+    #t)
+  ;; get-string-all where result size is less than half of file-buffer-size
+  (check open-input-file get-string-all make-string string-length test-str)
+  ;; get-string-n where result size is less than half of file-buffer-size and
+  ;; requested count is more than file-buffer-size
+  (check open-input-file (lambda (ip) (get-string-n ip (fx+ (file-buffer-size) 1)))
+    make-string string-length test-str)
+  ;; get-bytevector-all where result size is less than half of file-buffer-size
+  (check open-file-input-port get-bytevector-all make-bytevector bytevector-length (string->utf8 test-str))
+  ;; get-bytevector-n where result size is less than half of file-buffer-size and
+  ;; requested count is more than file-buffer-size
+  (check open-file-input-port (lambda (ip) (get-bytevector-n ip (fx+ (file-buffer-size) 1)))
+    make-bytevector bytevector-length (string->utf8 test-str))
+  ;; bytevector->string one-block vs. two-block case
+  (let* ([test-str "\x1F311;\x1F312;\x1F313;\x1F314;\x1F315;\x1F316;\x1F317;\x1F318;"]
+         [bv (string->utf8 test-str)]
+         [str-len (string-length test-str)]
+         [bv-len (bytevector-length bv)]
+         [one-block-buffer-len (* 2 (+ str-len 1))]
+         [two-block-buffer-len (* 2 str-len)]
+         [tx (native-transcoder)])
+    (define (check-b->s buffer-size)
+      (parameterize ([file-buffer-size buffer-size])
+        (let-values ([(actual bytes) (bytes-for (lambda () (bytevector->string bv tx)))])
+          (assert (equal? actual test-str))
+          bytes)))
+    ;; ensure that we can distinguish one- and two-block case
+    (assert (> bv-len one-block-buffer-len))
+    (< (check-b->s one-block-buffer-len)
+       (predicted-one-block (check-b->s two-block-buffer-len)
+         make-string two-block-buffer-len one-block-buffer-len)))
+  )
+
 (mat print-parameters
   (error? (print-precision "off"))
   (error? (print-select-flonum-exponential-format #f))

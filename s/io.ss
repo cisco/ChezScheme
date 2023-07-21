@@ -3798,13 +3798,15 @@ implementation notes:
                           (loop next min (fx- max n))))))))))
 
     (define (append-blocks size block-size block blocks)
-      (let ([buffer (#2%make-bytevector size)])
-        (let loop ([block-size block-size] [block block] [blocks blocks] [end size])
-          (let ([end (fx- end block-size)])
-            (bytevector-copy! block 0 buffer end block-size)
-            (if (null? blocks)
-                buffer
-                (loop (caar blocks) (cdar blocks) (cdr blocks) end))))))
+      (if (null? blocks)
+          (bytevector-truncate! block size)
+          (let ([buffer (#2%make-bytevector size)])
+            (let loop ([block-size block-size] [block block] [blocks blocks] [end size])
+              (let ([end (fx- end block-size)])
+                (bytevector-copy! block 0 buffer end block-size)
+                (if (null? blocks)
+                    buffer
+                    (loop (caar blocks) (cdar blocks) (cdr blocks) end)))))))
 
     (set-who! get-bytevector-n
       (lambda (binary-input-port count)
@@ -3940,13 +3942,15 @@ implementation notes:
                           (loop next min (fx- max n))))))))))
 
     (define (append-blocks size block-size block blocks)
-      (let ([buffer (#2%make-string size)])
-        (let loop ([block-size block-size] [block block] [blocks blocks] [end size])
-          (let ([end (fx- end block-size)])
-            (string-copy! block 0 buffer end block-size)
-            (if (null? blocks)
-                buffer
-                (loop (caar blocks) (cdar blocks) (cdr blocks) end))))))
+      (if (null? blocks)
+          (string-truncate! block size)
+          (let ([buffer (#2%make-string size)])
+            (let loop ([block-size block-size] [block block] [blocks blocks] [end size])
+              (let ([end (fx- end block-size)])
+                (string-copy! block 0 buffer end block-size)
+                (if (null? blocks)
+                    buffer
+                    (loop (caar blocks) (cdar blocks) (cdr blocks) end)))))))
 
     (define $get-string-all
       (lambda (who textual-input-port)

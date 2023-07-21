@@ -2391,3 +2391,7 @@
     mats/patch-interpret-0-f-f-f mats/patch-interpret-0-f-t-f
     mats/root-experr-compile-0-f-f-f mats/root-experr-compile-2-f-f-f
     release_notes/release_notes.stex s/io.ss s/primdata.ss
+- avoid extra allocation and copying when we have a single block in the
+  append-blocks procedures used by get-bytevector-all, get-bytevector-n,
+  $get-string-all, and get-string-n
+    mats/io.ms release_notes/release_notes.stex s/io.ss

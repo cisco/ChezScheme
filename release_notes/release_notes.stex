@@ -3611,4 +3611,16 @@ constructors created by a record definition in one library and exported
 by another are inlined in the importing library, just as if the record
 type were defined in the importing library.
 
+\subsection{Reduced allocation and copying}
+
+The
+\scheme{bytevector->string},
+\scheme{get-bytevector-all},
+\scheme{get-bytevector-n},
+\scheme{get-string-all}, and
+\scheme{get-string-n} procedures
+may avoid extra allocation and copying when the result is not more than
+\scheme{file-buffer-size} and no intermediate reads need to be stitched
+together to form the result.
+
 \end{document}
