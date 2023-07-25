@@ -2395,3 +2395,5 @@
   append-blocks procedures used by get-bytevector-all, get-bytevector-n,
   $get-string-all, and get-string-n
     mats/io.ms release_notes/release_notes.stex s/io.ss
+- reduce allocation and copying for certain cases in bytevector->string
+    mats/io.ms release_notes/release_notes.stex s/io.ss
