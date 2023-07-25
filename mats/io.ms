@@ -4021,6 +4021,7 @@
 
 (mat encode/decode-consistency
   (parameters
+   [file-buffer-size 1 (file-buffer-size)] ;; aim to hit one-block? #t and #f cases of $get-string-all
    [transcoded-port-buffer-size 1 (transcoded-port-buffer-size)]
    [make-codec-buffer (lambda (bp) (make-bytevector 4)) (make-codec-buffer)])
  ; verify that encoding/decoding is consistent (but not necessarily correct)
@@ -5257,6 +5258,15 @@
   ;; requested count is more than file-buffer-size
   (check open-file-input-port (lambda (ip) (get-bytevector-n ip (fx+ (file-buffer-size) 1)))
     make-bytevector bytevector-length (string->utf8 test-str))
+  ;; bytevector->string case where input bv-len <= file-buffer-size
+  (let ([bv (string->utf8 test-str)] [tx (native-transcoder)])
+    (define (check-b->s buffer-size)
+      (parameterize ([file-buffer-size buffer-size])
+        (let-values ([(actual bytes) (bytes-for (lambda () (bytevector->string bv tx)))])
+          (assert (equal? actual test-str))
+          bytes)))
+    (< (check-b->s (bytevector-length bv))
+       (check-b->s (fx- (bytevector-length bv) 1))))
   ;; bytevector->string one-block vs. two-block case
   (let* ([test-str "\x1F311;\x1F312;\x1F313;\x1F314;\x1F315;\x1F316;\x1F317;\x1F318;"]
          [bv (string->utf8 test-str)]
@@ -5271,6 +5281,7 @@
           (assert (equal? actual test-str))
           bytes)))
     ;; ensure that we can distinguish one- and two-block case
+    ;; without hitting the input bv-len <= file-buffer-size case
     (assert (> bv-len one-block-buffer-len))
     (< (check-b->s one-block-buffer-len)
        (predicted-one-block (check-b->s two-block-buffer-len)

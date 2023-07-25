@@ -3613,6 +3613,10 @@ type were defined in the importing library.
 
 \subsection{Reduced allocation and copying}
 
+When given a bytevector whose length is less than \scheme{file-buffer-size},
+\scheme{bytevector->string} now allocates the minimum size string buffer,
+internal ioffsets fxvector, and internal codec buffer.
+The size of each was formerly hardcoded at 1024.
 The
 \scheme{bytevector->string},
 \scheme{get-bytevector-all},

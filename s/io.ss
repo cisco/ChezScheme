@@ -3453,8 +3453,9 @@ implementation notes:
                  (eof-object)
                  (let ([index (binary-port-input-index p)]
                        [count (fxmin count port-count)])
-                   (bytevector-copy! (binary-port-input-buffer p) index
-                                     bv start count)
+                   (unless (and (fx= index start) (eq? bv (binary-port-input-buffer p)))
+                     (bytevector-copy! (binary-port-input-buffer p) index
+                       bv start count))
                    (set-binary-port-input-index! p (fx+ index count))
                    count))))]
         [clear-input
@@ -3953,27 +3954,26 @@ implementation notes:
                     (loop (caar blocks) (cdar blocks) (cdr blocks) end)))))))
 
     (define $get-string-all
-      (lambda (who textual-input-port)
-        (let ([buffer-size (file-buffer-size)])
-          (let ([get-some (port-handler-get-some ($port-handler textual-input-port))])
-            (let loop ([size 0]
-                       [next-block-index 0]
-                       [next-block (make-string buffer-size)]
-                       [blocks '()])
-              (let ([next-size (get-some who textual-input-port
-                                 next-block next-block-index
-                                 (fx- buffer-size next-block-index))])
-                (if (eof-object? next-size)
-                    (if (eq? size 0)
-                        (eof-object)
-                        (append-blocks size next-block-index next-block blocks))
-                    (let ([size (fx+ size next-size)]
-                          [next-block-index (fx+ next-block-index next-size)])
-                      (if (fx>= next-block-index (fxquotient buffer-size 2))
-                          (loop size 0
-                            (make-string buffer-size)
-                            (cons (cons next-block-index next-block) blocks))
-                          (loop size next-block-index next-block blocks))))))))))
+      (lambda (who textual-input-port buffer-size one-block?)
+        (let ([get-some (port-handler-get-some ($port-handler textual-input-port))])
+          (let loop ([size 0]
+                     [next-block-index 0]
+                     [next-block (make-string buffer-size)]
+                     [blocks '()])
+            (let ([next-size (get-some who textual-input-port
+                               next-block next-block-index
+                               (fx- buffer-size next-block-index))])
+              (if (eof-object? next-size)
+                  (if (eq? size 0)
+                      (eof-object)
+                      (append-blocks size next-block-index next-block blocks))
+                  (let ([size (fx+ size next-size)]
+                        [next-block-index (fx+ next-block-index next-size)])
+                    (if (and (not one-block?) (fx>= next-block-index (fxquotient buffer-size 2)))
+                        (loop size 0
+                          (make-string buffer-size)
+                          (cons (cons next-block-index next-block) blocks))
+                        (loop size next-block-index next-block blocks)))))))))
 
     (set-who! get-string-n
       (lambda (textual-input-port count)
@@ -4054,7 +4054,7 @@ implementation notes:
       (lambda (textual-input-port)
         (unless (and (input-port? textual-input-port) (textual-port? textual-input-port))
           ($oops who "~s is not a textual input port" textual-input-port))
-        ($get-string-all who textual-input-port)))
+        ($get-string-all who textual-input-port (file-buffer-size) #f)))
 
     (set-who! bytevector->string
       (lambda (bv tx)
@@ -4062,7 +4062,19 @@ implementation notes:
           ($oops who "~s is not a bytevector" bv))
         (unless ($transcoder? tx)
           ($oops who "~s is not a transcoder" tx))
-        (let ([str ($get-string-all who (open-bytevector-input-port bv tx))])
+        (let* ([bv-len (bytevector-length bv)]
+               [default (file-buffer-size)]
+               ;; We only call transcoded-port's get-some handler and always
+               ;; with our own buffer, so minimize the port's unused string
+               ;; buffer and associated ioffsets fxvector.
+               [bp (parameterize ([transcoded-port-buffer-size 1])
+                     (open-bytevector-input-port bv tx))]
+               ;; With current codecs, bv-len is an upper bound on the length of str.
+               ;; We leave room for one exta char so that $get-string-all can loop to
+               ;; realize it's at eof.
+               [str (if (and (fx<= bv-len default) (fx< bv-len (most-positive-fixnum)))
+                        ($get-string-all who bp (fx+ bv-len 1) #t)
+                        ($get-string-all who bp default #f))])
           (if (eof-object? str) "" str))))
     )
 
