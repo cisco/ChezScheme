@@ -219,13 +219,13 @@
              (let* ([r (fl/ d c)]
                     [den (fl+ c (fl* r d))])
                (fl-make-rectangular
-                (fl/ a den)
-                (fl/ (fl- (fl* a r)) den)))
+                (fl/ x den)
+                (fl/ (fl- (fl* x r)) den)))
              (let* ([r (fl/ c d)]
                     [den (fl+ d (fl* r c))])
                (fl-make-rectangular
-                (fl/ (fl* a r) den)
-                (fl/ (fl- a) den)))))]
+                (fl/ (fl* x r) den)
+                (fl/ (fl- x) den)))))]
       [else
        ;; a+bi / c+di => (a+b(d/c))/(c+d(d/c)) + ((b-a(d/c))/(c+d(d/c)))i  if |c| >  |d|
        ;; a+bi / c+di => (b+a(c/d))/(d+c(c/d)) + ((a-b(c/d))/(d+c(c/d)))i  if |c| <= |d|
