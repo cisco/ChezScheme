@@ -2373,5 +2373,5 @@
 - fix repair to invalid live-pointer mask, where a pass did not handle the
   new raw-data form correctly
     mats/fx.ms s/cpnanopass.ss
-- fix cfl/ produces unwanted nan if denominator contains +/-infinity
-    s/library.ss
+- fix cfl/ and / produces unwanted nan if denominator contains +/-infinity
+    s/library.ss s/5_3.ss

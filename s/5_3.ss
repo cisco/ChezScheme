@@ -2325,18 +2325,34 @@
           [else (nonnumber-error who x)])]
        [($exactnum? $inexactnum?)
         (type-case x
+          ;; Robert L. Smith, Algorithm 116
           [(fixnum? bignum? ratnum? flonum?)
-           ;; a / c+di => c(a/(cc+dd)) + (-d(a/cc+dd))i
            (let ([c (real-part y)] [d (imag-part y)])
-             (let ([t (/ x (+ (* c c) (* d d)))])
-               (make-rectangular (* c t) (- (* d t)))))]
+             (if (> (abs c) (abs d))
+                 (let* ([r (/ d c)]
+                        [den (+ c (* r d))])
+                   (make-rectangular
+                    (/ x den)
+                    (/ (- (* x r)) den)))
+                 (let* ([r (/ c d)]
+                        [den (+ d (* r c))])
+                   (make-rectangular
+                    (/ (* x r) den)
+                    (/ (- x) den)))))]
           [($exactnum? $inexactnum?)
-           ;; a+bi / c+di => (ac+bd)/(cc+dd) + ((bc-ad)/(cc+dd))i
            (let ([a (real-part x)] [b (imag-part x)]
-                                   [c (real-part y)] [d (imag-part y)])
-             (let ([t (+ (* c c) (* d d))])
-               (make-rectangular (/ (+ (* a c) (* b d)) t)
-                 (/ (- (* b c) (* a d)) t))))]
+                 [c (real-part y)] [d (imag-part y)])
+             (if (> (abs c) (abs d))
+                 (let* ([r (/ d c)]
+                        [den (+ c (* r d))])
+                   (make-rectangular
+                    (/ (+ a (* b r)) den)
+                    (/ (- b (* a r)) den)))
+                 (let* ([r (/ c d)]
+                        [den (+ d (* r c))])
+                   (make-rectangular
+                    (/ (+ (* a r) b) den)
+                    (/ (- (* b r) a) den)))))]
           [else (nonnumber-error who x)])]
        [else (nonnumber-error who y)])))
 
