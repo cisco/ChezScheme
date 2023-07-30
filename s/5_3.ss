@@ -565,11 +565,10 @@
                            [(or (fl> x theta) (fl> ay theta))
                             ; RP(1/z) +/- (pi/2)i
                             (fl-make-rectangular
-                               (cond
-                                  [(fl> x ay) (fl/ (fl+ x (fl* (fl/ y x) y)))]
-                                  [(fl< x ay) (let ([r (fl/ y x)])
-                                                 (fl/ r (fl+ (fl* x r) y)))]
-                                  [else (fl/ (fl+ x ay))])
+                               (if (fl> (flabs x) (flabs y))
+                                   (fl/ (fl+ x (fl* (fl/ y x) y)))
+                                   (let ([r (fl/ x y)])
+                                     (fl/ r (fl+ y (fl* r x)))))
                                (if (negated-flonum? y) pi/2 -pi/2))]
                            [(fl= x 1.0)
                             (let ([k (fl+ ay rho)])
