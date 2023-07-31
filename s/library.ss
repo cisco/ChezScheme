@@ -215,8 +215,8 @@
               (fl/ ($inexactnum-real-part x) y)
               (fl/ ($inexactnum-imag-part x) y)))]
       [(flonum? x)
-      ;; a / c+di => a/(c+d(d/c)) + (-a(d/c)/(c+d(d/c)))i if |c| >= |d|
-      ;; a / c+di => a(c/d)/(d+c(c/d)) + (a/(d+c(c/d)))i if |c| < |d|
+       ;; a / c+di => a/(c+d(d/c)) + (-a(d/c)/(c+d(d/c)))i if |c| >= |d|
+       ;; a / c+di => a(c/d)/(d+c(c/d)) + (a/(d+c(c/d)))i if |c| < |d|
        (let ([c ($inexactnum-real-part y)] [d ($inexactnum-imag-part y)])
          (if (fl>= (flabs c) (flabs d))
              (let* ([r (fl/ d c)]
@@ -230,8 +230,8 @@
                   (fl/ (fl* x r) den)
                   (fl/ (fl- x) den)))))]
       [else
-      ;; a+bi / c+di => (a+b(d/c))/(c+d(d/c)) + ((b-a(d/c))/(c+d(d/c)))i if |c| >= |d|
-      ;; a+bi / c+di => (b+a(c/d))/(d+c(c/d)) + ((a-b(c/d))/(d+c(c/d)))i if |c| < |d|
+       ;; a+bi / c+di => (a+b(d/c))/(c+d(d/c)) + ((b-a(d/c))/(c+d(d/c)))i if |c| >= |d|
+       ;; a+bi / c+di => (b+a(c/d))/(d+c(c/d)) + ((a-b(c/d))/(d+c(c/d)))i if |c| < |d|
        (let ([a ($inexactnum-real-part x)] [b ($inexactnum-imag-part x)]
              [c ($inexactnum-real-part y)] [d ($inexactnum-imag-part y)])
          (if (fl>= (flabs c) (flabs d))
