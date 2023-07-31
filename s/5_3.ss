@@ -565,7 +565,7 @@
                            [(or (fl> x theta) (fl> ay theta))
                             ; RP(1/z) +/- (pi/2)i
                             (fl-make-rectangular
-                               (if (fl> x ay)
+                               (if (fl>= x ay)
                                    (fl/ (fl+ x (fl* (fl/ y x) y)))
                                    (let ([r (fl/ x y)])
                                      (fl/ r (fl+ y (fl* r x)))))
