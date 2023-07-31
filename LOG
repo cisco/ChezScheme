@@ -2373,6 +2373,5 @@
 - fix repair to invalid live-pointer mask, where a pass did not handle the
   new raw-data form correctly
     mats/fx.ms s/cpnanopass.ss
-- fix cfl/, /, atan, and atanh produces unwanted nan if denominator
-  contains +/-infinity
+- use more robust complex number division algorithm from Robert L. Smith, Aug. 1962
     s/library.ss s/5_3.ss mats/5_3.ms

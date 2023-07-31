@@ -204,44 +204,47 @@
           (fl- ($inexactnum-imag-part x) ($inexactnum-imag-part y)))]))
 
 (define-library-entry (cfl/ x y)
-   ;; Robert L. Smith, Algorithm 116
+   ;; See "Algorithm 116: Complex Division" by Robert L. Smith,
+   ;; Communications of the ACM, Volume 5, Issue 8, Aug. 1962
    (cond
       [(flonum? y)
-       ;; a+bi/c => a/c + (b/c)i
+       ;; a+bi / c => a/c + (b/c)i
        (if (flonum? x)
            (fl/ x y)
            (fl-make-rectangular
               (fl/ ($inexactnum-real-part x) y)
               (fl/ ($inexactnum-imag-part x) y)))]
       [(flonum? x)
+      ;; a / c+di => a/(c+d(d/c)) + (-a(d/c)/(c+d(d/c)))i if |c| >= |d|
+      ;; a / c+di => a(c/d)/(d+c(c/d)) + (a/(d+c(c/d)))i if |c| < |d|
        (let ([c ($inexactnum-real-part y)] [d ($inexactnum-imag-part y)])
-         (if (fl> (flabs c) (flabs d))
+         (if (fl>= (flabs c) (flabs d))
              (let* ([r (fl/ d c)]
                     [den (fl+ c (fl* r d))])
                (fl-make-rectangular
-                (fl/ x den)
-                (fl/ (fl- (fl* x r)) den)))
+                  (fl/ x den)
+                  (fl/ (fl- (fl* x r)) den)))
              (let* ([r (fl/ c d)]
                     [den (fl+ d (fl* r c))])
                (fl-make-rectangular
-                (fl/ (fl* x r) den)
-                (fl/ (fl- x) den)))))]
+                  (fl/ (fl* x r) den)
+                  (fl/ (fl- x) den)))))]
       [else
-       ;; a+bi / c+di => (a+b(d/c))/(c+d(d/c)) + ((b-a(d/c))/(c+d(d/c)))i  if |c| >  |d|
-       ;; a+bi / c+di => (b+a(c/d))/(d+c(c/d)) + ((a-b(c/d))/(d+c(c/d)))i  if |c| <= |d|
+      ;; a+bi / c+di => (a+b(d/c))/(c+d(d/c)) + ((b-a(d/c))/(c+d(d/c)))i if |c| >= |d|
+      ;; a+bi / c+di => (b+a(c/d))/(d+c(c/d)) + ((a-b(c/d))/(d+c(c/d)))i if |c| < |d|
        (let ([a ($inexactnum-real-part x)] [b ($inexactnum-imag-part x)]
              [c ($inexactnum-real-part y)] [d ($inexactnum-imag-part y)])
-         (if (fl> (flabs c) (flabs d))
+         (if (fl>= (flabs c) (flabs d))
              (let* ([r (fl/ d c)]
                     [den (fl+ c (fl* r d))])
                (fl-make-rectangular
-                (fl/ (fl+ a (fl* b r)) den)
-                (fl/ (fl- b (fl* a r)) den)))
+                  (fl/ (fl+ a (fl* b r)) den)
+                  (fl/ (fl- b (fl* a r)) den)))
              (let* ([r (fl/ c d)]
                     [den (fl+ d (fl* r c))])
                (fl-make-rectangular
-                (fl/ (fl+ (fl* a r) b) den)
-                (fl/ (fl- (fl* b r) a) den)))))]))
+                  (fl/ (fl+ (fl* a r) b) den)
+                  (fl/ (fl- (fl* b r) a) den)))))]))
 
 (let ()
   (define char-oops
