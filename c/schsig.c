@@ -729,13 +729,16 @@ static void handle_signal(INT sig, UNUSED siginfo_t *si, UNUSED void *data) {
         case SIGQUIT:
             RESET_SIGNAL
             S_abnormal_exit();
+	    break;	/* Pacify compilers treating fallthrough warnings as errors */
 #endif /* SIGQUIT */
         case SIGILL:
             RESET_SIGNAL
             S_error_reset("illegal instruction");
+	    break;	/* Pacify compilers treating fallthrough warnings as errors */
         case SIGFPE:
             RESET_SIGNAL
             S_error_reset("arithmetic overflow");
+	    break;	/* Pacify compilers treating fallthrough warnings as errors */
 #ifdef SIGBUS
         case SIGBUS:
 #endif /* SIGBUS */
@@ -748,9 +751,11 @@ static void handle_signal(INT sig, UNUSED siginfo_t *si, UNUSED void *data) {
             else
                 S_error_reset("invalid memory reference");
           }
+	    break;
         default:
             RESET_SIGNAL
             S_error_reset("unexpected signal");
+	    break;
     }
 }
 
