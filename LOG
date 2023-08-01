@@ -2373,3 +2373,6 @@
 - fix repair to invalid live-pointer mask, where a pass did not handle the
   new raw-data form correctly
     mats/fx.ms s/cpnanopass.ss
+- use Robert L. Smith's 1962 complex number division algorithm to avoid nans in
+  situations involving infinite denominators
+    s/library.ss s/5_3.ss mats/5_3.ms

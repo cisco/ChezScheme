@@ -2635,6 +2635,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Division by an infinite complex number sometimes incorrectly returns +nan.0 (9.6.0)}
+
+A bug that caused \scheme{/}, \scheme{cfl/}, \scheme{atan}, and \scheme{atanh} to return
+an incorrect real or imaginary +nan.0 component has been fixed. The inexact complex number
+division routine now uses Robert L. Smith's 1962 algorithm.
+
 \subsection{Invalid live-pointer mask for some inline primitive calls (9.6.0)}
 
 Fixed a crash at optimize-level 2 and higher caused by the compiler generating

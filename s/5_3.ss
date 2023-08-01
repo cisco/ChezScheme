@@ -760,16 +760,15 @@
                (let ([rho (fl/ theta)] [-pi/2 (fl- pi/2)])
                   (lambda (x y)
                      ; x is positive
-                     (let ([ay (abs y)])
+                     (let ([ay (flabs y)])
                         (cond
                            [(or (fl> x theta) (fl> ay theta))
                             ; RP(1/z) +/- (pi/2)i
                             (fl-make-rectangular
-                               (cond
-                                  [(fl> x ay) (fl/ (fl+ x (fl* (fl/ y x) y)))]
-                                  [(fl< x ay) (let ([r (fl/ y x)])
-                                                 (fl/ r (fl+ (fl* x r) y)))]
-                                  [else (fl/ (fl+ x ay))])
+                               (if (fl>= x ay)
+                                   (fl/ (fl+ x (fl* (fl/ y x) y)))
+                                   (let ([r (fl/ x y)])
+                                     (fl/ r (fl+ y (fl* r x)))))
                                (if (negated-flonum? y) pi/2 -pi/2))]
                            [(fl= x 1.0)
                             (let ([k (fl+ ay rho)])
@@ -2792,51 +2791,27 @@
               (make-rectangular (/ (real-part x) y) (/ (imag-part x) y))]
              [else (nonnumber-error who x)])]
          [($exactnum? $inexactnum?)
+          ;; See "Algorithm 116: Complex Division" by Robert L. Smith,
+          ;; Communications of the ACM, Volume 5, Issue 8, Aug. 1962
+          ;; a+bi / c+di => (a+b(d/c))/(c+d(d/c)) + ((b-a(d/c))/(c+d(d/c)))i if |c| >= |d|
+          ;; a+bi / c+di => (b+a(c/d))/(d+c(c/d)) + ((a-b(c/d))/(d+c(c/d)))i if |c| < |d|
           (type-case x
-             [(fixnum? bignum? ratnum? flonum?)
-              ;; a / c+di => c(a/(cc+dd)) + (-d(a/cc+dd))i
-              (if (eq? x 0)
-                  0
-                  (let ([c (real-part y)] [d (imag-part y)])
-                    (let ([t (/ x (+ (* c c) (* d d)))])
-                      (make-rectangular (* c t) (- (* d t))))))]
-             [($exactnum? $inexactnum?)
-              (let ([a (real-part x)] [b (imag-part x)]
-                    [c (real-part y)] [d (imag-part y)])
-                ;; a+bi / c+di => (ac+bd)/(cc+dd) + ((bc-ad)/(cc+dd))i
-                (define (simpler-divide a b c d)
-                  ;; Direct calculuation does not work as well for complex numbers with
-                  ;; large parts, such as `(/ 1e+300+1e+300i 4e+300+4e+300i)`, but it
-                  ;; works better for small parts, as in `(/ 0.0+0.0i 1+1e-320i)`
-                  (let ([t (+ (* c c) (* d d))])
-                    (make-rectangular (/ (+ (* a c) (* b d)) t)
-                                      (/ (- (* b c) (* a d)) t))))
-                ;; Let r = c/d or d/c, depending on which is larger
-                (cond
-                 [(or (eq? c 0) (and ($exactnum? x) ($exactnum? y)))
-                  (simpler-divide a b c d)]
-                 [(< (abs c) (abs d))
-                  (let ([r (/ d c)])
-                    (if (infinite? r)
-                        ;; Too large; try form that works better with small c or d
-                        (simpler-divide a b c d)
-                        ;; a+bi / c+di => 
-                        (let ([x (+ c (* d r))]) ; x = c+dd/c = (cc+dd)/c
-                          ;; (a+br)/x + ((b-ar)/x)i = (a+bd/c)c/(cc+dd) + ((b-ad/c)c/(cc+dd))i
-                          ;; = (ac+bd)/(cc+dd) + ((bc-ad)/(cc+dd))i
-                          (make-rectangular (/ (+ a (* b r)) x)
-                                            (/ (- b (* a r)) x)))))]
-                 [else
-                  (let ([r (/ c d)])
-                    (if (infinite? r)
-                        ;; Too large; try form that works better with small c or d
-                        (simpler-divide a b c d)
-                        (let ([x (+ d (* c r))]) ; x = d+cc/d = (cc+dd)/d
-                          ;; (b+ar)/x + ((br-a)/x)i = (b+ac/d)d/(cc+dd) + ((bc/d-a)d/(cc+dd))i
-                          ;; = (bd+ac)/(cc+dd) + ((bc-ad)/(cc+dd))i
-                          (make-rectangular (/ (+ b (* a r)) x)
-                                            (/ (- (* b r) a) x)))))]))]
-             [else (nonnumber-error who x)])]
+            [(fixnum? bignum? ratnum? flonum?)
+             (let ([c (real-part y)] [d (imag-part y)])
+               (if (>= (abs c) (abs d))
+                   (let* ([r (/ d c)] [den (+ c (* r d))])
+                     (make-rectangular (/ x den) (/ (- (* x r)) den)))
+                   (let* ([r (/ c d)] [den (+ d (* r c))])
+                     (make-rectangular (/ (* x r) den) (/ (- x) den)))))]
+            [($exactnum? $inexactnum?)
+             (let ([a (real-part x)] [b (imag-part x)]
+                   [c (real-part y)] [d (imag-part y)])
+               (if (>= (abs c) (abs d))
+                   (let* ([r (/ d c)] [den (+ c (* r d))])
+                     (make-rectangular (/ (+ a (* b r)) den) (/ (- b (* a r)) den)))
+                   (let* ([r (/ c d)] [den (+ d (* r c))])
+                     (make-rectangular (/ (+ (* a r) b) den) (/ (- (* b r) a) den)))))]
+            [else (nonnumber-error who x)])]
          [else (nonnumber-error who y)])))
 
 (set! conjugate

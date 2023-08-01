@@ -1853,6 +1853,15 @@
     (cfl~= (/ -8.0+6.0i +2.0i) 3.0+4.0i)
     (cfl~= (/ +26.0i 3.0+2.0i) 4.0+6.0i)
     (eqv? (/ 0 3.0+2.0i) 0)
+    (cfl~= (/ 1.0+0.0i +inf.0-1.0i) 0.0+0.0i)
+    (cfl~= (/ 1.0+0.0i 1.0-inf.0i) 0.0+0.0i)
+    (cfl~= (/ 1.0 +inf.0-1.0i) 0.0+0.0i)
+    (cfl~= (/ 1.0 1.0-inf.0i) 0.0+0.0i)
+    (cfl~= (/ +inf.0-1.0i) 0.0+0.0i)
+    (cfl~= (/ 1.0-inf.0i) 0.0+0.0i)
+    (eqv? (/ -5/2+5i 1/2+i) 3+4i)
+    (cfl~= (/ -5/2+5i 0.5+1.0i) 3.0+4.0i)
+    (cfl~= (/ -2.5+5.0i 1/2+i) 3.0+4.0i)
     (let ([v '#(100 32.23 22/33 44-79i 2.9+8.7i)])
        (let f ([i 0])
           (or (= i (vector-length v))
@@ -3114,6 +3123,7 @@
     (fl~= (atan 10.0 -10.0) (angle -10.0+10.0i))
     (fl~= (atan 10 -10.0) (atan 10.0 -10.0))
     (fl~= (atan 10 -10.0) (atan 10.0 -10))
+    (cfl~= (atan +inf.0+0.0i) (atan +inf.0))
  )
 
 (mat sinh
@@ -3212,6 +3222,8 @@
     (let ([z 2.3-3.2i])
        (let ([c (cosh z)] [s (sinh z)])
           (cfl~= (- (* c c) (* s s)) 1.0)))
+    (cfl~= (atanh 0.0+inf.0i) (atanh +inf.0))
+    (nan? (real-part (atanh +inf.0+inf.0i)))
  )
 
 (mat ash
