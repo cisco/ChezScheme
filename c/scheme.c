@@ -985,9 +985,11 @@ extern void Sscheme_init(void (*abnormal_exit)(void)) {
     case RUNNING:
       fprintf(stderr, "error (Sscheme_init): call Sscheme_deinit first to terminate\n");
       S_abnormal_exit();
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case BOOTING:
       fprintf(stderr, "error (Sscheme_init): already initialized\n");
       S_abnormal_exit();
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case UNINITIALIZED:
     case DEINITIALIZED:
       break;
@@ -1069,9 +1071,11 @@ extern void Sbuild_heap(const char *kernel, void (*custom_init)(void)) {
     case DEINITIALIZED:
       fprintf(stderr, "error (Sbuild_heap): uninitialized; call Sscheme_init first\n");
       if (current_state == UNINITIALIZED) exit(1); else S_abnormal_exit();
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case RUNNING:
       fprintf(stderr, "error (Sbuild_heap): already running\n");
       S_abnormal_exit();
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case BOOTING:
       break;
   }
@@ -1175,9 +1179,11 @@ extern INT Sscheme_start(INT argc, const char *argv[]) {
     case DEINITIALIZED:
       fprintf(stderr, "error (Sscheme_start): uninitialized; call Sscheme_init and Sbuild_heap first\n");
       if (current_state == UNINITIALIZED) exit(1); else S_abnormal_exit();
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case BOOTING:
       fprintf(stderr, "error (Sscheme_start): no heap built yet; call Sbuild_heap first\n");
       S_abnormal_exit();
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case RUNNING:
       break;
   }
@@ -1209,9 +1215,11 @@ static INT run_script(const char *who, const char *scriptfile, INT argc, const c
     case DEINITIALIZED:
       fprintf(stderr, "error (%s): uninitialized; call Sscheme_init and Sbuild_heap first\n", who);
       if (current_state == UNINITIALIZED) exit(1); else S_abnormal_exit();
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case BOOTING:
       fprintf(stderr, "error (%s): no heap built yet; call Sbuild_heap first\n", who);
       S_abnormal_exit();
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case RUNNING:
       break;
   }
@@ -1257,9 +1265,11 @@ extern void Sscheme_deinit(void) {
     case DEINITIALIZED:
       fprintf(stderr, "error (Sscheme_deinit): not yet initialized or running\n");
       if (current_state == UNINITIALIZED) exit(1); else S_abnormal_exit();
+      break;   /* Pacify compilers treating fallthrough warnings as errors */
     case BOOTING:
       fprintf(stderr, "error (Sscheme_deinit): not yet running\n");
       S_abnormal_exit();
+      break;	/* Pacify compilers treating fallthrough warnings as errors */
     case RUNNING:
       break;
   }
