@@ -1457,6 +1457,7 @@
   (ieee-environment [sig [() -> (environment)]] [flags unrestricted alloc])
   (immutable-string? [sig [(ptr) -> (boolean)]] [pred immutable-string] [flags pure unrestricted mifoldable discard])
   (immutable-box? [sig [(ptr) -> (boolean)]] [pred immutable-box] [flags pure unrestricted mifoldable discard])
+  (immutable-vector [sig [(ptr ...) -> (immutable-vector)]] [flags unrestricted pure mifoldable alloc cp02])
   (immutable-vector? [sig [(ptr) -> (boolean)]] [pred immutable-vector] [flags pure unrestricted mifoldable discard])
   (immutable-bytevector? [sig [(ptr) -> (boolean)]] [pred immutable-bytevector] [flags pure unrestricted mifoldable discard])
   (initial-bytes-allocated [sig [() -> (uint)]] [flags unrestricted alloc])

@@ -117,6 +117,8 @@
          (values `(cte-optimization-loc ,box ,e ,exts) size)]
         [(immutable-list (,[e* size*] ...) ,[e size])
          (values `(immutable-list (,e* ...) ,e) (apply fx+ size size*))]
+        [(immutable-vector (,[e* size*] ...) ,[e size])
+         (values `(immutable-vector (,e* ...) ,e) (apply fx+ size size*))]
         [(quote ,d) (values `(quote ,d) 1)]
         [(ref ,maybe-src ,x) (values `(ref ,maybe-src ,x) 1)]
         [,pr (values pr 1)]

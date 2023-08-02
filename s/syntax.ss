@@ -8325,7 +8325,7 @@
                      #,(if (or (= (optimize-level) 3) (identifier? #'formals))
                            #'(lambda formals (vector ffml ...))
                            #`(case-lambda
-                               [formals (vector ffml ...)]
+                               [formals (immutable-vector ffml ...)]
                                [args #,($make-source-oops #'define-values
                                          "incorrect number of values from rhs"
                                          #'expr)])))))

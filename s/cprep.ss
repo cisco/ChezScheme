@@ -226,6 +226,7 @@
                [(record-type ,rtd ,[e]) `(record-type ,rtd ,e)]
                [(record-cd ,rcd ,rtd-expr ,[e]) `(record-cd ,rcd ,e)]
                [(immutable-list (,e* ...) ,[e]) e]
+               [(immutable-vector (,e* ...) ,[e]) e]
                [(moi) ''moi]
                [(pariah) `(pariah (void))]
                [(profile ,src) `(void)]

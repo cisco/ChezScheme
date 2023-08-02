@@ -125,6 +125,7 @@ Notes:
                  [(case-lambda ,preinfo ,cl* ...) #t]
                  [(set! ,maybe-src ,x ,e) #t]
                  [(immutable-list (,e* ...) ,e) #t]
+                 [(immutable-vector (,e* ...) ,e) #t]
                  [,pr #t]
                  [(record-cd ,rcd ,rtd-expr ,e) #t]
                  [(record-ref ,rtd ,type ,index ,e) #t]
@@ -203,6 +204,8 @@ Notes:
           [(record-cd ,rcd ,rtd-expr ,e)
            (make-1seq 'effect rtd-expr e void-rec)]
           [(immutable-list (,e* ...) ,e)
+           (make-1seq 'effect (make-1seq* 'effect e*) e void-rec)]
+          [(immutable-vector (,e* ...) ,e)
            (make-1seq 'effect (make-1seq* 'effect e*) e void-rec)]
           [(moi) void-rec]
           [else ir]
@@ -1888,6 +1891,10 @@ Notes:
                        ,[e 'value types plxc -> e ret types t-types f-types])
        (values `(immutable-list (,e*  ...) ,e)
                (if (null? e*) null-rec '$list-pair) types #f #f)]
+      [(immutable-vector (,[e* 'value types plxc -> e* r* t* t-t* f-t*] ...)
+                         ,[e 'value types plxc -> e ret types t-types f-types])
+       (values `(immutable-vector (,e*  ...) ,e)
+               ret types #f #f)]
       [(moi) (values ir #f types #f #f)]
       [(pariah) (values ir void-rec types #f #f)]
       [(cte-optimization-loc ,box ,[e 'value types plxc -> e ret types t-types f-types] ,exts)

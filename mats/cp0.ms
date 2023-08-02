@@ -2869,6 +2869,26 @@
                  (begin (#%write 'f) ($yyy-ok))
                  (begin (#%write 'g) ($zzz-ok))))
              (begin (#%write 'h) 3))))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+      (expand/optimize
+        '(immutable-vector 1 2 3)))
+    ''#(1 2 3))
+  (equivalent-expansion?
+    (parameterize ([enable-cp0 #t] [#%$suppress-primitive-inlining #f] [optimize-level 2])
+      (expand/optimize
+        '(lambda (x)
+           (let ([v (begin (write 'a) (immutable-vector x 2 3))])
+             (list
+               (begin (write 'b) (vector-ref v 0))
+               (begin (write 'c) (vector-ref v 1))
+               (begin (write 'd) (vector-ref v 2)))))))
+    '(lambda (x)
+       (#2%write 'a)
+       (#2%list
+         (begin (#2%write 'b) x)
+         (begin (#2%write 'c) 2)
+         (begin (#2%write 'd) 3))))
  )
 
 (mat let-pushing

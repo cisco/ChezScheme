@@ -1078,6 +1078,8 @@
                            `(record ,rtd ,rtd-expr ,e* ...)]
                           [(immutable-list (,[e*] ...) ,[e])
                            `(immutable-list (,e* ...) ,e)]
+                          [(immutable-vector (,[e*] ...) ,[e])
+                           `(immutable-vector (,e* ...) ,e)]
                           [(pariah) e]
                           [(profile ,src) e]
                           [else (exit #f)]))))
@@ -1180,6 +1182,7 @@
               [(foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type) (memoize (pure? e))]
               [(letrec* ([,x* ,e*] ...) ,body) (memoize (and (andmap pure1? e*) (pure? body)))]
               [(immutable-list (,e* ...) ,e) (memoize (and (andmap pure1? e*) (pure? e)))]
+              [(immutable-vector (,e* ...) ,e) (memoize (and (andmap pure1? e*) (pure? e)))]
               [(profile ,src) #t]
               [(cte-optimization-loc ,box ,e ,exts) (memoize (pure? e))]
               [(moi) #t]
@@ -1244,6 +1247,7 @@
               [(foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type) (memoize (ivory1? e))]
               [(letrec* ([,x* ,e*] ...) ,body) (memoize (and (andmap ivory1? e*) (ivory? body)))]
               [(immutable-list (,e* ...) ,e) (memoize (and (andmap ivory1? e*) (ivory? e)))]
+              [(immutable-vector (,e* ...) ,e) (memoize (and (andmap ivory1? e*) (ivory? e)))]
               [(profile ,src) #t]
               [(cte-optimization-loc ,box ,e ,exts) (memoize (ivory? e))]
               [(moi) #t]
@@ -1284,6 +1288,7 @@
               [(seq ,e1 ,e2) (memoize (and (simple? e1) (simple? e2)))]
               [(set! ,maybe-src ,x ,e) #f]
               [(immutable-list (,e* ...) ,e) (memoize (and (andmap simple1? e*) (simple? e)))]
+              [(immutable-vector (,e* ...) ,e) (memoize (and (andmap simple1? e*) (simple? e)))]
               [(letrec ([,x* ,e*] ...) ,body) (memoize (and (andmap simple1? e*) (simple? body)))]
               [(letrec* ([,x* ,e*] ...) ,body) (memoize (and (andmap simple1? e*) (simple? body)))]
               [,pr #t]
@@ -1335,6 +1340,7 @@
               [(seq ,e1 ,e2) (memoize (and (simple/profile? e1) (simple/profile? e2)))]
               [(set! ,maybe-src ,x ,e) #f]
               [(immutable-list (,e* ...) ,e) (memoize (and (andmap simple/profile1? e*) (simple/profile? e)))]
+              [(immutable-vector (,e* ...) ,e) (memoize (and (andmap simple/profile1? e*) (simple/profile? e)))]
               [(letrec ([,x* ,e*] ...) ,body) (memoize (and (andmap simple/profile1? e*) (simple/profile? body)))]
               [(letrec* ([,x* ,e*] ...) ,body) (memoize (and (andmap simple/profile1? e*) (simple/profile? body)))]
               [,pr #t]
@@ -1418,6 +1424,7 @@
               [(record-set! ,rtd ,type ,index ,e1 ,e2) #f]
               [(record ,rtd ,rtd-expr ,e* ...) #f]
               [(immutable-list (,e* ...) ,e) #f]
+              [(immutable-vector (,e* ...) ,e) #f]
               [(cte-optimization-loc ,box ,e ,exts) (memoize (boolean-valued? e))]
               [(profile ,src) #f]
               [(set! ,maybe-src ,x ,e) #f]
@@ -1508,6 +1515,7 @@
               [(seq ,e1 ,e2) (memoize (single-valued e2))]
               [(set! ,maybe-src ,x ,e) #t]
               [(immutable-list (,e* ...) ,e) #t]
+              [(immutable-vector (,e* ...) ,e) #t]
               [(letrec ([,x* ,e*] ...) ,body) (memoize (single-valued body))]
               [(letrec* ([,x* ,e*] ...) ,body) (memoize (single-valued body))]
               [,pr #t]
@@ -1950,6 +1958,19 @@
                    sc))]
             [(immutable-list (,e* ...) ,e)
              `(immutable-list (,e* ...)
+                ,(residualize-ref maybe-src
+                   (nanopass-case (Lsrc Expr) e
+                     [(ref ,maybe-src ,x)
+                      (guard (not (prelex-was-assigned x))
+                        ; protect against (letrec ([x x]) ---)
+                        (not (eq? x id)))
+                      (when (prelex-was-multiply-referenced id)
+                        (set-prelex-was-multiply-referenced! x #t))
+                      x]
+                     [else id])
+                   sc))]
+            [(immutable-vector (,e* ...) ,e)
+             `(immutable-vector (,e* ...)
                 ,(residualize-ref maybe-src
                    (nanopass-case (Lsrc Expr) e
                      [(ref ,maybe-src ,x)
@@ -2633,6 +2654,38 @@
               (residualize-seq '() '() ctxt)
               empty-vector-rec)]
         [args #f])
+
+      (define-inline 2 immutable-vector
+        [() (begin
+              (residualize-seq '() '() ctxt)
+              `(quote ,(immutable-vector)))]
+        [opnd*
+         (or (let ([e* (objs-if-constant (value-visit-operands! opnd*))])
+               (and e*
+                    (begin
+                      (residualize-seq '() opnd* ctxt)
+                      `(quote ,(apply immutable-vector e*)))))
+             (begin
+               (residualize-seq opnd* '() ctxt)
+               (let loop ([e* (value-visit-operands! opnd*)]
+                          [lhs* '()]
+                          [rhs* '()]
+                          [re* '()])
+                 (if (null? e*)
+                     (let ([e* (reverse re*)])
+                       (let ([e `(immutable-vector (,e* ...)
+                                   ,(build-primcall 3 'immutable-vector e*))])
+                         (if (null? lhs*)
+                             e
+                             (build-let lhs* rhs* e))))
+                     (let ([e (car e*)] [e* (cdr e*)])
+                       (if (nanopass-case (Lsrc Expr) e
+                             [(quote ,d) #t]
+                             [(ref ,maybe-src ,x) (not (prelex-was-assigned x))]
+                             [else #f])
+                           (loop e* lhs* rhs* (cons e re*))
+                           (let ([t (cp0-make-temp #t)])
+                             (loop e* (cons t lhs*) (cons e rhs*) (cons (build-ref t) re*)))))))))])
 
       (define-inline 2 string
         [() (begin
@@ -4046,6 +4099,7 @@
               [(fcallable (,conv* ...) ,e (,arg-type* ...) ,result-type) #t]
               [(record-set! ,rtd ,type ,index ,e1 ,e2) #t]
               [(immutable-list (,e* ...) ,e) #t]
+              [(immutable-vector (,e* ...) ,e) #t]
               [else #f])))
         (define one-arg-case
           (lambda (?x ctxt)
@@ -5044,7 +5098,17 @@
         (define true (lambda (x) #t))
 
         (define-inline 2 vector-ref
-          [(?x ?i) (tryref ctxt ?x ?i 'vector #f)])
+          [(?x ?i)
+           (or (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?x))
+                 [(immutable-vector (,e* ...) ,e)
+                  (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?i))
+                    [(quote ,d)
+                     (guard (fixnum? d) (#%$fxu< d (length e*)))
+                     (residualize-seq '() (app-opnds ctxt) ctxt)
+                     (list-ref e* d)]
+                    [else #f])]
+                 [else #f])
+               (tryref ctxt ?x ?i 'vector #f))])
 
         (define-inline 2 string-ref
           [(?x ?i) (tryref ctxt ?x ?i 'string char?)])
@@ -5612,7 +5676,15 @@
       [(record-type ,rtd ,e) (cp0 e ctxt env sc wd name moi)]
       [(record-cd ,rcd ,rtd-expr ,e) (cp0 e ctxt env sc wd name moi)]
       [(immutable-list (,[cp0 : e* 'value env sc wd #f moi -> e*] ...) ,[cp0 : e ctxt env sc wd name moi -> e])
-       `(immutable-list (,e*  ...) ,e)]
+       (context-case ctxt
+         [(effect) (make-seq ctxt e void-rec)]
+         [(test) (make-seq ctxt e true-rec)]
+         [else `(immutable-list (,e*  ...) ,e)])]
+      [(immutable-vector (,[cp0 : e* 'value env sc wd #f moi -> e*] ...) ,[cp0 : e ctxt env sc wd name moi -> e])
+       (context-case ctxt
+         [(effect) (make-seq ctxt e void-rec)]
+         [(test) (make-seq ctxt e true-rec)]
+         [else `(immutable-vector (,e*  ...) ,e)])]
       [(moi) (if moi `(quote ,moi) ir)]
       [(pariah) ir]
       [(cte-optimization-loc ,box ,[cp0 : e ctxt env sc wd name moi -> e] ,exts)

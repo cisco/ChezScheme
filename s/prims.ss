@@ -29,6 +29,7 @@
 (define list ($hand-coded 'list-procedure))
 (define $record ($hand-coded '$record-procedure))
 (define vector ($hand-coded 'vector-procedure))
+(define immutable-vector ($hand-coded 'immutable-vector-procedure))
 (define cons* ($hand-coded 'cons*-procedure))
 (define list* ($hand-coded 'list*-procedure))
 (define $apply ($hand-coded '$apply-procedure))
