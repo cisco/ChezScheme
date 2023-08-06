@@ -1168,7 +1168,8 @@
               ;; while it was part of the continuation
               (or (eq? (current-eval) interpret) ; interpreter continuation is not precise enough
                   (and (> (car pre-sizes) N)
-                       (< (car post-sizes) N))))))))
+                       (< (car post-sizes) N))
+                  (error "failed ~s ~s ~s" pre-sizes N post-sizes)))))))
   )
 
 (mat collect+compute-size-increments
