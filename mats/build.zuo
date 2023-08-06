@@ -185,7 +185,7 @@
      (hash 'eval "interpret" 'spi "f" 'cp0 "f" 'name "spi")
      (hash 'eval "interpret" 'spi "f" 'cp0 "t" 'name "spi-cp0")
      (hash 'eval "interpret" 'spi "t" 'cp0 "f" 'ctb "(/ (collect-trip-bytes) 64)" 'hci "503" 'name "spi-ctb")
-     (hash 'eval "interpret" 'spi "t" 'cp0 "t" 'cgr "2" 'hci "101" 'p "t" 'name "chi-cgr-p")))))
+     (hash 'eval "interpret" 'spi "t" 'cp0 "t" 'cgr "2" 'hci "101" 'p "t" 'name "hci-cgr-p")))))
 
 ;; Adjust combinations generated below with extra options to match
 ;; cases above where the option affects exception messages

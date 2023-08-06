@@ -4214,7 +4214,8 @@
             (and (equal? (x2) x2)
                  (not (x1))
                  (not (x2))))))
-   (parameterize ([collect-trip-bytes (expt 2 24)])
+   (parameterize ([collect-trip-bytes (expt 2 24)]
+                  [collect-maximum-generation-threshold-factor 0])
      (let ([k 1000000])
        (let ([g (make-guardian)])
          (let f ([n k])
@@ -4229,7 +4230,8 @@
                [else (collect) (f n)])))
          #t)))
    ;; same for ordered:
-   (parameterize ([collect-trip-bytes (expt 2 24)])
+   (parameterize ([collect-trip-bytes (expt 2 24)]
+                  [collect-maximum-generation-threshold-factor 0])
      (let ([k 1000000])
        (let ([g (make-guardian #t)])
          (let f ([n k])
@@ -4451,7 +4453,7 @@
    ;; self representative doesn't count as cycle
    (let ([g (make-guardian #t)])
      (let ([s (gensym)])
-       (g s  s))
+       (g s s))
      (collect)
      (symbol? (g)))
    ;; try a longer cycle:
