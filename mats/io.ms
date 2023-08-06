@@ -5214,15 +5214,16 @@
     (define test-str "A full \x1F315;.")
     (define (bytes-for thunk)
       (collect (collect-maximum-generation))
-      (let* ([s0 (statistics)]
-             [s1 (statistics)] ;; measure overhead
-             [val (thunk)]
-             [s2 (statistics)])
-        (values val
-          (sstats-bytes
-           (sstats-difference
-            (sstats-difference s2 s1)
-            (sstats-difference s1 s0))))))
+      (with-interrupts-disabled
+        (let* ([s0 (statistics)]
+               [s1 (statistics)] ;; measure overhead
+               [val (thunk)]
+               [s2 (statistics)])
+          (values val
+            (sstats-bytes
+             (sstats-difference
+              (sstats-difference s2 s1)
+              (sstats-difference s1 s0)))))))
     (define (predicted-one-block two-blocks make-buffer two-block-buffer-len one-block-buffer-len)
       ;; originally we allocated a result-sized obj (and copy! the data) whether
       ;; we had a single block or more, so the allocation for the one-block case
