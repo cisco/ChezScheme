@@ -2397,3 +2397,4 @@
     mats/io.ms release_notes/release_notes.stex s/io.ss
 - reduce allocation and copying for certain cases in bytevector->string
     mats/io.ms release_notes/release_notes.stex s/io.ss
+- update zlib to version 1.3
