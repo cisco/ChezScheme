@@ -203,8 +203,8 @@ static void sweep_in_old(thread_gc *tgc, ptr p);
 static void sweep_object_in_old(thread_gc *tgc, ptr p);
 static IBOOL object_directly_refers_to_self(ptr p);
 static ptr copy_stack(thread_gc *tgc, ptr old, iptr *length, iptr clength);
-static void resweep_weak_pairs(seginfo *oldweakspacesegments);
-static void forward_or_bwp(ptr *pp, ptr p);
+static void resweep_weak_pairs(thread_gc *tgc, seginfo *oldweakspacesegments);
+static void forward_or_bwp(thread_gc *tgc, IGEN from_g, ptr *pp, ptr p);
 static void sweep_generation(thread_gc *tgc);
 static iptr sweep_from_stack(thread_gc *tgc);
 static void enlarge_stack(thread_gc *tgc, ptr *stack, ptr *stack_start, ptr *stack_limit, uptr grow_at_least);
@@ -630,6 +630,8 @@ static void do_relocate_pure_in_owner(thread_gc *tgc, ptr *ppp) {
 # define relocate_impure_help(PPP, PP, FROM_G) do {(void)FROM_G; relocate_pure_help(PPP, PP);} while (0)
 # define relocate_impure(PPP, FROM_G) do {(void)FROM_G; relocate_pure(PPP);} while (0)
 
+# define NO_DIRTY_NEWSPACE_UNUSED    UNUSED
+
 #else /* !NO_DIRTY_NEWSPACE_POINTERS */
 
 #define relocate_impure(ppp, from_g) do {                       \
@@ -668,6 +670,8 @@ static void do_relocate_pure_in_owner(thread_gc *tgc, ptr *ppp) {
     else                                                         \
       to_g = copy(tgc, p, si, dest);                             \
   } while (0)
+
+# define NO_DIRTY_NEWSPACE_UNUSED    /* empty */
 
 #endif /* !NO_DIRTY_NEWSPACE_POINTERS */
 
@@ -1011,7 +1015,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
           si->next = oldspacesegments;
           oldspacesegments = si;
           si->old_space = 1;
-          /* update generation now, both to compute the target generation,<
+          /* update generation now, both to compute the target generation,
              and so that any updated dirty references will record the correct
              new generation; also used for a check in S_dirty_set */
           si->generation = compute_target_generation(si->generation);
@@ -1557,7 +1561,7 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
 
   /* handle weak pairs */
     resweep_dirty_weak_pairs(tgc);
-    resweep_weak_pairs(oldweakspacesegments);
+    resweep_weak_pairs(tgc, oldweakspacesegments);
 
    /* still-pending ephemerons all go to bwp */
     finish_pending_ephemerons(tgc, oldspacesegments);
@@ -1855,7 +1859,7 @@ static void push_remote_sweep(thread_gc *tgc, ptr p, thread_gc *remote_tgc) {
     }                                             \
   } while (0)
 
-static void resweep_weak_pairs(seginfo *oldweakspacesegments) {
+static void resweep_weak_pairs(thread_gc *tgc, seginfo *oldweakspacesegments) {
     IGEN from_g;
     ptr *pp, p, *nl, ls;
     seginfo *si;
@@ -1870,7 +1874,7 @@ static void resweep_weak_pairs(seginfo *oldweakspacesegments) {
         nl = TO_VOIDP(s_tgc->next_loc[from_g][space_weakpair]);
         while (pp != nl) {
           p = *pp;
-          forward_or_bwp(pp, p);
+          forward_or_bwp(tgc, from_g, pp, p);
           pp += 2;
         }
       }
@@ -1879,7 +1883,7 @@ static void resweep_weak_pairs(seginfo *oldweakspacesegments) {
    for (si = resweep_weak_segments; si != NULL; si = si->sweep_next) {
      pp = TO_VOIDP(build_ptr(si->number, 0));
      while ((p = *pp) != forward_marker) {
-       forward_or_bwp(pp, p);
+       forward_or_bwp(tgc, si->generation, pp, p);
        pp += 2;
      }
    }
@@ -1895,25 +1899,41 @@ static void resweep_weak_pairs(seginfo *oldweakspacesegments) {
            /* Assuming 4 pairs per 8 words */
            pp = TO_VOIDP(build_ptr(si->number, (i << (log2_ptr_bytes+3))));
            if (mask & 0x1)
-             forward_or_bwp(pp, *pp);
+             forward_or_bwp(tgc, si->generation, pp, *pp);
            pp += 2;
            if (mask & 0x4)
-             forward_or_bwp(pp, *pp);
+             forward_or_bwp(tgc, si->generation, pp, *pp);
            pp += 2;
            if (mask & 0x10)
-             forward_or_bwp(pp, *pp);
+             forward_or_bwp(tgc, si->generation, pp, *pp);
            pp += 2;
            if (mask & 0x40)
-             forward_or_bwp(pp, *pp);
+             forward_or_bwp(tgc, si->generation, pp, *pp);
          }
        }
      }
    }
 }
 
-static void forward_or_bwp(ptr *pp, ptr p) {
+static void forward_or_bwp(NO_DIRTY_NEWSPACE_UNUSED thread_gc *tgc, NO_DIRTY_NEWSPACE_UNUSED IGEN from_g,
+                           ptr *pp, ptr p) {
   seginfo *si;
- /* adapted from relocate */
+#ifndef NO_DIRTY_NEWSPACE_POINTERS
+  /* adapted from relocate_impure_help_help */
+  if (!FIXMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL) {
+    IGEN __to_g;
+    if (!si->old_space || new_marked(si, p)) {
+      __to_g = TARGET_GENERATION(si);
+    } else if (FORWARDEDP(p, si)) {
+      *pp = GET_FWDADDRESS(p);
+      __to_g = TARGET_GENERATION(si);
+    } else {
+      *pp = Sbwp_object;
+      __to_g = static_generation;
+    }
+    if (__to_g < from_g) S_record_new_dirty_card(tgc, pp, __to_g);
+  }
+#else
   if (!FIXMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->old_space && !new_marked(si, p)) {
     if (FORWARDEDP(p, si)) {
       *pp = GET_FWDADDRESS(p);
@@ -1921,6 +1941,7 @@ static void forward_or_bwp(ptr *pp, ptr p) {
       *pp = Sbwp_object;
     }
   }
+#endif
 }
 
 static iptr sweep_generation_pass(thread_gc *tgc) {

@@ -4819,6 +4819,22 @@
               (begin (set-car! x (cons 'd 'e)) (equal? (car x) '(d . e)))
               (begin (collect (collect-maximum-generation))
                      (bwp-object? (car x))))))
+   ;; check interaction of weak pairs, generations, and specific target generations for collection
+   (with-interrupts-disabled
+    (parameterize ([#%$enable-check-heap #t])
+      (let ([key "key"])
+        (let ([e (weak-cons key #f)])
+          (collect 0 1 1)
+          (let ([key2 (gensym key)])
+            ;; e is gen 1, key2 is gen 0:
+            (set-car! e key2)
+            (collect 1 1 2)
+            ;; Now, e is gen 1, key2 is gen 0
+            (and (eq? (car e) key2)
+                 (begin
+                   (collect 1 2 2)
+                   ;; Check that the GC update the reference to `key2` in `e`:
+                   (eq? (car e) key2))))))))
  )
 
 (mat ephemeron
@@ -4993,20 +5009,21 @@
    ;; ----------------------------------------
    ;; Check interaction of mutation and incremental generation promotion
 
-   (parameterize ([collect-request-handler void] [collect-maximum-generation (max (collect-maximum-generation) 2)])
-    (let ([key "key"])
-      (let ([e (ephemeron-cons key #f)])
-        (collect 0 1 1)
-        (let ([key2 (gensym key)])
-          ;; e is gen 1, key2 is gen 0:
-          (set-car! e key2)
-          (collect 1 1 2)
-          ;; Now, e is gen 1, key2 is gen 0
-          (and (eq? (car e) key2)
-               (begin
-                 (collect 1 2 2)
-                 ;; Check that the GC update the reference to `key2` in `e`:
-                 (eq? (car e) key2)))))))
+   (with-interrupts-disabled
+    (parameterize ([#%$enable-check-heap #t])
+      (let ([key "key"])
+        (let ([e (ephemeron-cons key #f)])
+          (collect 0 1 1)
+          (let ([key2 (gensym key)])
+            ;; e is gen 1, key2 is gen 0:
+            (set-car! e key2)
+            (collect 1 1 2)
+            ;; Now, e is gen 1, key2 is gen 0
+            (and (eq? (car e) key2)
+                 (begin
+                   (collect 1 2 2)
+                   ;; Check that the GC update the reference to `key2` in `e`:
+                   (eq? (car e) key2))))))))
 
    ;; ----------------------------------------
    ;; Check GC interaction with zero-sized contnuations - unlikely
