@@ -64,7 +64,7 @@ static void sweep_locked_ptrs(ptr *p, iptr n FORMAL_CTGS);
 static void sweep_locked(ptr tc, ptr p, IBOOL sweep_pure FORMAL_CTGS);
 static ptr copy_stack(ptr old, iptr *length, iptr clength FORMAL_CTGS);
 static void resweep_weak_pairs(ONLY_FORMAL_CTGS);
-static void forward_or_bwp(ptr *pp, ptr p);
+static void forward_or_bwp(IGEN from_g, ptr *pp, ptr p FORMAL_CTGS);
 static void sweep_generation(ptr tc FORMAL_CTGS);
 #ifndef NO_LOCKED_OLDSPACE_OBJECTS
 static iptr size_object(ptr p);
@@ -1110,12 +1110,12 @@ void GCENTRY GCENTRY_PROTO(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg) {
       for (ls = S_G.locked_objects[g]; ls != Snil; ls = Scdr(ls)) {
         ptr x = Scar(ls);
         if (Spairp(x) && (SPACE(x) & ~(space_old|space_locked)) == space_weakpair)
-          forward_or_bwp(&INITCAR(x), Scar(x));
+          forward_or_bwp(g, &INITCAR(x), Scar(x) ACTUAL_CTGS);
       }
       for (ls = S_G.unlocked_objects[g]; ls != Snil; ls = Scdr(ls)) {
         ptr x = Scar(ls);
         if (Spairp(x) && (SPACE(x) & ~(space_old|space_locked)) == space_weakpair)
-          forward_or_bwp(&INITCAR(x), Scar(x));
+          forward_or_bwp(g, &INITCAR(x), Scar(x) ACTUAL_CTGS);
       }
     }
 
@@ -1128,7 +1128,7 @@ void GCENTRY GCENTRY_PROTO(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg) {
       x = *(vp = &INITVECTIT(v, 0));
       do {
         if (Spairp(x) && (SPACE(x) & ~(space_old|space_locked)) == space_weakpair) {
-          forward_or_bwp(&INITCAR(x), Scar(x));
+          forward_or_bwp(GENERATION(x), &INITCAR(x), Scar(x) ACTUAL_CTGS);
         }
       } while (--i != 0 && (x = *++vp) != MAXPTR);
     }
@@ -1392,13 +1392,14 @@ static void resweep_weak_pairs(ONLY_FORMAL_CTGS) {
     for (from_g = MIN_TG; from_g <= MAX_TG; from_g += 1) {
       sweep_loc[from_g][space_weakpair] = orig_next_loc[from_g][space_weakpair];
       sweep_space(space_weakpair, from_g, {
-          forward_or_bwp(pp, p);
+          forward_or_bwp(from_g, pp, p ACTUAL_CTGS);
           pp += 2;
       })
     }
 }
 
-static void forward_or_bwp(ptr *pp, ptr p) {
+#ifdef NO_DIRTY_NEWSPACE_POINTERS
+static void forward_or_bwp(UNUSED IGEN from_g, ptr *pp, ptr p) {
   seginfo *si;
  /* adapted from relocate */
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->space & space_old && !locked(p)) {
@@ -1409,6 +1410,27 @@ static void forward_or_bwp(ptr *pp, ptr p) {
     }
   }
 }
+#else
+static void forward_or_bwp(IGEN from_g, ptr *pp, ptr p FORMAL_CTGS) {
+  seginfo *si;
+ /* adapted from relocate_impure */
+  if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL) {
+    IGEN __to_g;
+    if (si->space & space_old && !locked(p)) {
+      if (FWDMARKER(p) == forward_marker && TYPEBITS(p) != type_flonum) {
+        *pp = FWDADDRESS(p);
+        __to_g = compute_target_generation(si->generation ACTUAL_CTGS);
+      } else {
+        *pp = Sbwp_object;
+        __to_g = static_generation;
+      }
+    } else {
+      __to_g = compute_target_generation(si->generation ACTUAL_CTGS);
+    }
+    if (__to_g < from_g) record_new_dirty_card(pp, __to_g);
+  }
+}
+#endif
 
 static void sweep_generation(ptr tc FORMAL_CTGS) {
   IGEN from_g; ptr *slp, *nlp; ptr *pp, p, *nl;
