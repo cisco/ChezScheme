@@ -3233,7 +3233,7 @@ the parameter \scheme{generate-profile-forms} can be set to \scheme{#f}
 to inhibit the expander's implicit generation of \scheme{profile} forms
 for all annotated source expressions.
 It is also possible to obtain finer control over implicit generation of
-\scheme{profile} forms by marking which annotations that should and
+\scheme{profile} forms by marking which annotations should and
 should not be used for profiling (Section~\ref{SECTSYNTAXANNOTATIONS}).
 
 With block profiling enabled, the compiler similarly instruments the

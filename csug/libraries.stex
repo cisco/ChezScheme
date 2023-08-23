@@ -1024,7 +1024,7 @@ automatically calls the value of the \scheme{compile-library-handler} parameter 
 to a procedure that simply calls \scheme{compile-library}) on any imported library if
 the object file is missing, older than the corresponding source file,
 older than any source files included (via \index{\scheme{include}}\scheme{include}) when the
-object file was created, or itself requires a library that has or must
+object file was created, or itself requires a library that has been or must
 be recompiled, as described in Section~\ref{SECTUSELIBRARIES}.
 The \scheme{library-timestamp-mode} parameter controls the meaning of ``older.''
 The default initial value of this parameter is \scheme{#f}.

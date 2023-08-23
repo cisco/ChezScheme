@@ -751,14 +751,14 @@ creating a syntactic binding for one of the built-in types, such as
 As of 9.5.8, syntactic bindings that do not bind an ftype descriptor are no
 longer considered when defining ftypes.
 
-This change also allows a base ftype to be bound using `define-ftype`, though
+This change also allows a base ftype to be bound using \scheme{define-ftype}, though
 this fixes the endianness of the type.  For instance:
 
 \schemedisplay
 (define-ftype integer-32 integer-32)
 \endschemedisplay
 
-This binds the ftype `integer-32` to the native-endian `integer-32`.  It is possible to bind both endiannesses by using explicit names:
+This binds the ftype \scheme{integer-32} to the native-endian \scheme{integer-32}.  It is possible to bind both endiannesses by using explicit names:
 
 \schemedisplay
 (define-ftype integer-32-be (endian big integer-32))

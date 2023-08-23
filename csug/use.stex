@@ -1225,7 +1225,8 @@ control parameters are described in Section~\ref{SECTSMGMTGC}.
 \index{profiling}%
 Finally, it is often useful to ``profile'' your code to determine that
 parts of the code that are executed most frequently.
-While this will not help the system optimize your code, it can help
+While this may help the system optimize your code, the primary
+benefit is to help
 you identify ``hot spots'' where you need to concentrate your own
 hand-optimization efforts.
 In these hot spots, consider using more efficient operators, like
@@ -1237,7 +1238,7 @@ These operators can make code more readable when used judiciously,
 but they can slow down time-critical code.
 
 Section~\ref{SECTMISCPROFILE} describes how to use the compiler's support
-for automatic profiling.
+for automatic profiling and profile-directed optimization.
 Be sure that profiling is not enabled when you compile your production
 code, since the code introduced into the generated code to perform the
 profiling adds significant run-time overhead.
