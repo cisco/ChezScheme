@@ -2646,6 +2646,16 @@ The size of these string and bytevector buffers was previously hardcoded at 1024
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Garbage collector incorrectly handles emphemerons (9.6.0)}
+
+A bug where the garbage collector sometimes incorrectly handles epehemeron pairs has
+been fixed.
+
+\subsection{Garbage collector incorrectly handles mutated weak pairs (9.6.0)}
+
+A bug where the garbage collector sometimes incorrectly handles mutated weak pairs has
+been fixed.
+
 \subsection{Division by an infinite complex number sometimes incorrectly returns +nan.0 (9.6.0)}
 
 A bug that caused \scheme{/}, \scheme{cfl/}, \scheme{atan}, and \scheme{atanh} to return
