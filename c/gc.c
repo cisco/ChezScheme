@@ -524,6 +524,7 @@ static IGEN copy(ptr pp, seginfo *si, ptr *ppp FORMAL_CTGS) {
         find_room(space_ephemeron, newg, type_pair, size_ephemeron, p);
         INITCAR(p) = Scar(pp);
         INITCDR(p) = Scdr(pp);
+        EPHEMERONNEXT(p) = Sfalse; /* #f => not yet swept */
       } else {
         ptr qq = Scdr(pp); ptr q;
         if (qq != pp && TYPEBITS(qq) == type_pair && ptr_get_segment(qq) == ptr_get_segment(pp) && FWDMARKER(qq) != forward_marker && !locked(qq)) {
@@ -2212,9 +2213,18 @@ static void add_ephemeron_to_pending(ptr pe) {
      through `pending_ephemerons` can dramatically decrease the number
      of times that we have to trigger re-checking, especially since
      check_pending_pehemerons() is run only after all other sweep
-     opportunities are exhausted. */
-  EPHEMERONNEXT(pe) = pending_ephemerons;
-  pending_ephemerons = pe;
+     opportunities are exhausted.
+     Guard against adding an empheron to the pending list a second
+     time. For example, an emphemeron can get swept twice if it's in
+     generation 2 and points to an inaccessible generation 0 object;
+     sweeping 2->0 will conservatively assume that the target will
+     end up in generation 1, which causes sweeping 2->1 to see the
+     same ephemeron again. (That might be the only way to sweep
+     an ephemeron twice, but I'm not sure.) */
+  if (EPHEMERONNEXT(pe) == Sfalse) {
+    EPHEMERONNEXT(pe) = pending_ephemerons;
+    pending_ephemerons = pe;
+  }
 }
 
 static void add_trigger_ephemerons_to_repending(ptr pe) {
@@ -2264,6 +2274,7 @@ static void check_pending_ephemerons(ONLY_FORMAL_CTGS) {
   pending_ephemerons = NULL;
   while (pe != NULL) {
     next_pe = EPHEMERONNEXT(pe);
+    EPHEMERONNEXT(pe) = Sfalse;
     check_ephemeron(pe, 1 ACTUAL_CTGS);
     pe = next_pe;
   }
@@ -2320,7 +2331,7 @@ static IGEN check_dirty_ephemeron(ptr pe, IGEN youngest FORMAL_CTGS) {
 }
 
 static void clear_trigger_ephemerons(void) {
-  ptr pe;
+  ptr pe, next_pe;
 
   if (pending_ephemerons != NULL)
     S_error_abort("clear_trigger_ephemerons(gc): non-empty pending list");
@@ -2333,6 +2344,7 @@ static void clear_trigger_ephemerons(void) {
     } else {
       seginfo *si;
       ptr p = Scar(pe);
+
       /* Key never became reachable, so clear key and value */
       INITCAR(pe) = Sbwp_object;
       INITCDR(pe) = Sbwp_object;
@@ -2341,6 +2353,8 @@ static void clear_trigger_ephemerons(void) {
       si = SegInfo(ptr_get_segment(p));
       si->trigger_ephemerons = NULL;
     }
-    pe = EPHEMERONNEXT(pe);
+    next_pe = EPHEMERONNEXT(pe);
+    EPHEMERONNEXT(pe) = Sfalse;
+    pe = next_pe;
   }
 }
