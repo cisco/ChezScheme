@@ -3965,6 +3965,19 @@
                    (eq? (car e) key2))))))))
 
    ;; ----------------------------------------
+   ;; Check mutation two generations back and interaction with collection
+   (or (equal? (current-eval) interpret)
+       (equal? (with-interrupts-disabled
+                (let ([pr (ephemeron-cons 1 2)])
+                  (collect 0)
+                  (collect 1) ; puts `pr` in gen 2
+                  (let ([tl (list 1 2 3)])
+                    (set-car! pr tl) ; gen 2 reference to gen 0
+                    (collect 1 1 2)
+                    pr)))
+               '(#!bwp . #!bwp)))
+
+   ;; ----------------------------------------
    ;; Check fasl:
    (let ([s (gensym)])
      (define-values (o get) (open-bytevector-output-port))
