@@ -2212,10 +2212,10 @@ static void add_ephemeron_to_pending(ptr pe) {
   /* We could call check_ephemeron directly here, but the indirection
      through `pending_ephemerons` can dramatically decrease the number
      of times that we have to trigger re-checking, especially since
-     check_pending_pehemerons() is run only after all other sweep
+     check_pending_ephemerons() is run only after all other sweep
      opportunities are exhausted.
-     Guard against adding an empheron to the pending list a second
-     time. For example, an emphemeron can get swept twice if it's in
+     Guard against adding an ephemeron to the pending list a second
+     time. For example, an ephemeron can get swept twice if it's in
      generation 2 and points to an inaccessible generation 0 object;
      sweeping 2->0 will conservatively assume that the target will
      end up in generation 1, which causes sweeping 2->1 to see the
