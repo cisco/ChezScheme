@@ -1,5 +1,5 @@
-Building Chez Scheme Version 9.5.9
-Copyright 1984-2022 Cisco Systems, Inc.
+Building Chez Scheme Version 9.6.0
+Copyright 1984-2023 Cisco Systems, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -276,7 +276,7 @@ Prerequisites:
 
 * Bash/WSL, MinGW/MSYS, or Cygwin with bash, git, grep, make, sed, etc.
 * Microsoft Visual Studio 2022, 2019, 2017, or 2015
-* WiX Toolset (for making an install)
+* WiX v3.11 Toolset (for making an install)
 
 Be sure that git config core.autocrlf is set to false.
 
