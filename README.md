@@ -1,5 +1,28 @@
 [![test](https://github.com/cisco/ChezScheme/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/cisco/ChezScheme/actions/workflows/test.yml)
 
+# Before You Clone
+
+Using a [partial clone](https://github.blog/2020-12-21-get-up-to-speed-with-partial-clone-and-shallow-clone/)
+is strongly recommended.  For example:
+
+```
+git clone --filter=blob:none https://github.com/cisco/ChezScheme
+```
+
+Chez Scheme is a self-hosting compiler.  In order to build Chez Scheme,
+you need a working copy of Chez Scheme.  The source repository includes
+the binary files necessary to run Chez Scheme on several different
+architectures in the `boot` directory.  While these binaries take only a
+few MB for each machine type, the repository currently contains boot files
+for 13 different machine types, _with their version history_.  That makes
+the total size of the repository quite large.
+
+By using a _partial clone_ as described above, you can keep your initial
+repository size low.  Objects not part of the initial clone will be
+fetched on demand as they are needed by the git tools.
+
+# Chez Scheme
+
 Chez Scheme is both a programming language and an implementation
 of that language, with supporting tools and documentation.
 
