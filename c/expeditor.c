@@ -663,6 +663,9 @@ static void s_ee_set_color(int color_id, IBOOL background) {
 #elif defined(NETBSD)
 # include <ncurses.h>
 # include <ncurses/term.h>
+#elif defined(__DragonFly__)
+# include <ncurses/curses.h>
+# include <ncurses/term.h>
 #else
 # include <curses.h>
 # include <term.h>

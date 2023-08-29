@@ -118,7 +118,7 @@ case "${CONFIG_UNAME}" in
     installprefix=/usr/local
     installmansuffix=man
     ;;
-  FreeBSD)
+  FreeBSD|DragonFly)
     unixsuffix=fb
     installprefix=/usr/local
     installmansuffix=man

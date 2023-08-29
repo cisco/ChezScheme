@@ -120,7 +120,7 @@ typedef int tputsputcchar;
 #endif
 #endif
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
 #define NOBLOCK O_NONBLOCK
 #define LOAD_SHARED_OBJECT
 #define USE_MMAP
