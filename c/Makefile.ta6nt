@@ -17,11 +17,11 @@ m = ta6nt
 
 # following have to use \ for directory separator
 SchemeInclude = ..\boot\$m
-KernelDll = ..\bin\$m\csv960.dll
-KernelLib = ..\bin\$m\csv960.lib
-MTKernelLib = ..\boot\$m\csv960mt.lib
-MDKernelLib = ..\boot\$m\csv960md.lib
-KernelExp = ..\bin\$m\csv960.exp
+KernelDll = ..\bin\$m\csv962.dll
+KernelLib = ..\bin\$m\csv962.lib
+MTKernelLib = ..\boot\$m\csv962mt.lib
+MDKernelLib = ..\boot\$m\csv962md.lib
+KernelExp = ..\bin\$m\csv962.exp
 Exec = ..\bin\$m\scheme.exe
 MTMain = ..\boot\$m\mainmt.obj
 MDMain = ..\boot\$m\mainmd.obj

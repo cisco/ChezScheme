@@ -3,7 +3,7 @@
 .if t .ds c caf\o'\'e'
 .if n .ds c cafe
 .ds ]W 
-.TH SCHEME 1 "Chez Scheme Version 9.6.0 August 2023"
+.TH SCHEME 1 "Chez Scheme Version 9.6.2 August 2023"
 .SH NAME
 \fIChez Scheme\fP
 .br
