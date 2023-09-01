@@ -193,7 +193,7 @@ if [ "$unixsuffix" != "" ] ; then
         else
             pbendian=b
         fi
-    elif uname -m | egrep 'armv|aarch64' > /dev/null 2>&1 ; then
+    elif uname -m | egrep 'armv|aarch64|evbarm' > /dev/null 2>&1 ; then
         m32=arm32${unixsuffix}
         m64=arm64${unixsuffix}
         tm32=tarm32${unixsuffix}
@@ -431,6 +431,9 @@ esac
 
 if [ "$bits" = "" ] ; then
   if uname -m | egrep 'amd64|x86_64|aarch64|arm64|ppc64|powerpc64|riscv64' > /dev/null 2>&1 ; then
+    bits=64
+  # NetBSD `uname -m` produces "evbarm" for AArch64
+  elif uname -p | egrep 'aarch64' > /dev/null 2>&1 ; then
     bits=64
   else
     bits=32
