@@ -111,7 +111,7 @@ case "${CONFIG_UNAME}" in
     installmansuffix=share/man
     ;;
   QNX)
-    if uname -a | egrep 'x86' > /dev/null 2>&1 ; then
+    if uname -m | egrep 'x86' > /dev/null 2>&1 ; then
       m32=i3qnx
       tm32=ti3qnx
     fi
@@ -135,15 +135,15 @@ case "${CONFIG_UNAME}" in
     gzipmanpages=no
     ;;
   Darwin)
-    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+    if uname -m | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
       m32=i3osx
       m64=a6osx
       tm32=ti3osx
       tm64=ta6osx
-    elif uname -a | egrep 'arm|aarch' > /dev/null 2>&1 ; then
+    elif uname -m | egrep 'arm|aarch' > /dev/null 2>&1 ; then
       m64=arm64osx
       tm64=tarm64osx
-    elif uname -a | egrep 'Power' > /dev/null 2>&1 ; then
+    elif uname -m | egrep 'Power' > /dev/null 2>&1 ; then
       m64=ppc32osx
       tm64=tppc32osx
       pbendian=b
@@ -153,7 +153,7 @@ case "${CONFIG_UNAME}" in
     installmansuffix=share/man
     ;;
   SunOS)
-    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+    if uname -m | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
       m32=i3s2
       m64=a6s2
       tm32=ti3s2
@@ -164,7 +164,7 @@ case "${CONFIG_UNAME}" in
     fi
     ;;
   CYGWIN_NT-*)
-    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+    if uname -m | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
       m32=i3nt
       m64=a6nt
       tm32=ti3nt
@@ -178,27 +178,27 @@ esac
 unknownm=no
 
 if [ "$unixsuffix" != "" ] ; then
-    if uname -a | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
+    if uname -m | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
         m32=i3${unixsuffix}
         m64=a6${unixsuffix}
         tm32=ti3${unixsuffix}
         tm64=ta6${unixsuffix}
-    elif uname -a | egrep 'power|ppc' > /dev/null 2>&1 ; then
+    elif uname -m | egrep 'power|ppc' > /dev/null 2>&1 ; then
         m32=ppc32${unixsuffix}
         tm32=tppc32${unixsuffix}
         m64=ppc64${unixsuffix}
         tm64=tppc64${unixsuffix}
-        if uname -a | egrep 'ppc64le' > /dev/null 2>&1 ; then
+        if uname -m | egrep 'ppc64le' > /dev/null 2>&1 ; then
             pbendian=l
         else
             pbendian=b
         fi
-    elif uname -a | egrep 'armv|aarch64' > /dev/null 2>&1 ; then
+    elif uname -m | egrep 'armv|aarch64' > /dev/null 2>&1 ; then
         m32=arm32${unixsuffix}
         m64=arm64${unixsuffix}
         tm32=tarm32${unixsuffix}
         tm64=tarm64${unixsuffix}
-    elif uname -a | grep 'riscv64' > /dev/null 2>&1 ; then
+    elif uname -m | grep 'riscv64' > /dev/null 2>&1 ; then
         m32=""
         m64=rv64${unixsuffix}
         tm32=""
@@ -430,7 +430,7 @@ case "$m" in
 esac
 
 if [ "$bits" = "" ] ; then
-  if uname -a | egrep 'amd64|x86_64|aarch64|arm64|ppc64|powerpc64|riscv64' > /dev/null 2>&1 ; then
+  if uname -m | egrep 'amd64|x86_64|aarch64|arm64|ppc64|powerpc64|riscv64' > /dev/null 2>&1 ; then
     bits=64
   else
     bits=32
