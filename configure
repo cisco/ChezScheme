@@ -770,10 +770,7 @@ if [ "$addflags" = "yes" ] ; then
         LIBS="${LIBS} ${iconvLib} -lm ${ncursesLib}"
         ;;
     *nb)
-        if [ "$disableiconv" = "no" ]; then
-            iconvLib="/usr/lib/i18n/libiconv_std.a"
-        fi
-        LIBS="${LIBS} ${iconvLib} -lm /usr/pkg/lib/libncurses.a"
+        LIBS="${LIBS} -lm ${cursesLib} -lterminfo"
         ;;
     *s2)
         LIBS="${LIBS} -lnsl -ldl -lm ${cursesLib} -lrt"
@@ -858,7 +855,6 @@ case "${flagsmuni}" in
         ;;
     *nb)
         mdcflags="-fPIC -shared"
-        mdinclude="-I/usr/X11R7/include -I/usr/pkg/include -I/usr/pkg/include/ncurses -I/usr/X11R6/include"
         ;;
     *nt)
         mdcflags="-shared"
