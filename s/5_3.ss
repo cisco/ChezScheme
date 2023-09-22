@@ -899,10 +899,15 @@
          [(ratnum?)
           (/ (exact-sqrt (numerator x)) (exact-sqrt (denominator x)))]
          [else
-          (let ([rp (exact-sqrt (/ (+ (exact-sqrt (magnitude-squared x))
-                                      (real-part x))
-                                   2))])
-             (make-rectangular rp (/ (imag-part x) (* 2 rp))))])))
+          (let ([ssq (exact-sqrt (magnitude-squared x))])
+            (let* ([ip (exact-sqrt (/ (- ssq (real-part x))
+                                      2))]
+                   [rp (exact-sqrt (/ (+ ssq (real-part x))
+                                       2))]
+                   [ip (if (< (imag-part x) 0)
+                           (- ip)
+                           ip)])
+              (make-rectangular rp ip)))])))
 
 (define (exact-ratnum* y x)
   ;; Simplied from ratnum case below:
