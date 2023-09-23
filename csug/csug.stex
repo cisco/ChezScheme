@@ -27,7 +27,7 @@
 ;; is the same as the documented version. If it's a release version,
 ;; then the date is fixed to the release date. Otherwise, use
 ;; the date when the document is built.
-(define latest-release-date "April 2022")
+(define latest-release-date "September 2023")
 (printf "\\def\\CSVersion{~a}\n" (scheme-version #t))
 (cond
   [(not (scheme-pre-release))
@@ -78,7 +78,7 @@
 \def\copyrightnotice{\raw{<hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 9 User's Guide</a><br>
-Copyright &copy; 2022 Cisco Systems, Inc.<br>
+Copyright &copy; 2023 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
 Revised} \revisiondate\raw{ for }\CSVersion\raw{<br>

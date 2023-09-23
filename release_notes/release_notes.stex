@@ -1,9 +1,9 @@
 \documentclass{releasenotes}
 
-\thisversion{Version 9.5.9}
+\thisversion{Version 9.9.9}
 \thatversion{Version 8.4}
-\pubmonth{April}
-\pubyear{2022}
+\pubmonth{September}
+\pubyear{2023}
 
 \begin{document}
 
@@ -737,6 +737,17 @@ original source file's path.
 
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
+
+\subsection{New transcoded port buffer-size parameters (9.6.0)}
+
+The new parameter \scheme{transcoded-port-buffer-size} specifies the size
+of the string buffer that is allocated when creating a new transcoded port.
+If the underlying binary port implements \scheme{port-position},
+a transcoded input port allocates an internal fxvector the same size
+as its string buffer for use by \scheme{port-position}.
+The new parameter \scheme{make-codec-buffer} can be used to supply an appropriately
+sized internal bytevector buffer for the codec used by a new transcoded port.
+The size of these string and bytevector buffers was previously hardcoded at 1024.
 
 \subsection{Unicode 15.0 Support (9.6.0)}
 
@@ -2632,17 +2643,6 @@ by macros) into code to be compiled via \scheme{compile-file},
 Ftype-pointer fields are not supported, since storing addresses
 in fasl files does not generally make sense.
 
-\subsection{New transcoded port buffer-size parameters}
-
-The new parameter \scheme{transcoded-port-buffer-size} specifies the size
-of the string buffer that is allocated when creating a new transcoded port.
-If the underlying binary port implements \scheme{port-position},
-a transcoded input port allocates an internal fxvector the same size
-as its string buffer for use by \scheme{port-position}.
-The new parameter \scheme{make-codec-buffer} can be used to supply an appropriately
-sized internal bytevector buffer for the codec used by a new transcoded port.
-The size of these string and bytevector buffers was previously hardcoded at 1024.
-
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
@@ -2672,7 +2672,7 @@ store raw data on the stack and whose operands contain calls.
   \protect\scheme{member} and \protect\scheme{assoc} (9.6.0)}
 
 When \scheme{remove}, \scheme{member} or \scheme{assoc} were used in
-\scheme{optimize-level} 3 in a position where the result was discarded,
+optimize-level 3 in a position where the result was discarded,
 a bug in the source code optimizer could drop the call even though the first
 argument may be a record with a custom equality predicate that has side effects.
 
@@ -3194,6 +3194,22 @@ x86\_64 has been fixed.
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
 
+\subsection{Reduced allocation and copying (9.6.0)}
+
+When given a bytevector whose length is less than \scheme{file-buffer-size},
+\scheme{bytevector->string} now allocates the minimum size string buffer,
+internal ioffsets fxvector, and internal codec buffer.
+The size of each was formerly hardcoded at 1024.
+The
+\scheme{bytevector->string},
+\scheme{get-bytevector-all},
+\scheme{get-bytevector-n},
+\scheme{get-string-all}, and
+\scheme{get-string-n} procedures
+may avoid extra allocation and copying when the result is not more than
+\scheme{file-buffer-size} and no intermediate reads need to be stitched
+together to form the result.
+
 \subsection{Special-cased basic arithmetic operations (9.5.4)}
 
 The basic arithmetic operations (addition, subtraction, multiplication,
@@ -3620,21 +3636,5 @@ predicates, accessors, mutators, and (depending on protocols)
 constructors created by a record definition in one library and exported
 by another are inlined in the importing library, just as if the record
 type were defined in the importing library.
-
-\subsection{Reduced allocation and copying}
-
-When given a bytevector whose length is less than \scheme{file-buffer-size},
-\scheme{bytevector->string} now allocates the minimum size string buffer,
-internal ioffsets fxvector, and internal codec buffer.
-The size of each was formerly hardcoded at 1024.
-The
-\scheme{bytevector->string},
-\scheme{get-bytevector-all},
-\scheme{get-bytevector-n},
-\scheme{get-string-all}, and
-\scheme{get-string-n} procedures
-may avoid extra allocation and copying when the result is not more than
-\scheme{file-buffer-size} and no intermediate reads need to be stitched
-together to form the result.
 
 \end{document}

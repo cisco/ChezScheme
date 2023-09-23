@@ -2404,3 +2404,28 @@
 - repair collector handling of ephemeron pairs that refer to objects in
   younger generations
     c/gc.c mats/4.ms
+
+9.6.0 changes:
+- updated version to 9.6.0
+    BUILDING NOTICE makefiles/Mf-install.in makefiles/Makefile-csug.in
+    scheme.1.in c/Makefile.a6nt c/Makefile.i3nt c/Makefile.ta6nt
+    c/Makefile.ti3nt mats/Mf-a6nt mats/Mf-i3nt mats/Mf-ta6nt
+    mats/Mf-ti3nt workarea c/scheme.rc s/7.ss s/cmacros.ss
+    release_notes/release_notes.stex csug/copyright.stex csug/csug.stex
+    bintar/Makefile rpm/Makefile pkg/Makefile wininstall/Makefile
+    wininstall/a6nt.wxs wininstall/i3nt.wxs wininstall/ta6nt.wxs
+    wininstall/ti3nt.wxs
+- removed Microsoft C Runtime library merge module redistribution as
+  recommended by Microsoft
+- specify version of WiX required to build the Windows installer
+
+9.6.2 changes:
+- The make install target of 9.6.0 was broken by the version string being 9.6.
+- updated version to 9.6.2
+    BUILDING NOTICE makefiles/Mf-install.in scheme.1.in c/Makefile.a6nt
+    c/Makefile.i3nt c/Makefile.ta6nt c/Makefile.ti3nt mats/Mf-a6nt
+    mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt workarea c/scheme.rc
+    s/cmacros.ss release_notes/release_notes.stex csug/copyright.stex
+    csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
+    wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
+    wininstall/ta6nt.wxs wininstall/ti3nt.wxs
