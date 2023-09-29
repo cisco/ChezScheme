@@ -738,6 +738,13 @@ original source file's path.
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{New types for code that uses C exports}
+
+The header file scheme.h distributed with Chez Scheme now defines
+\scheme{Sint32_t}, \scheme{Suint32_t}, \scheme{Sint64_t}, and \scheme{Suint64_t}
+types for 32-bit and 64-bit signed and unsigned integers that are compatible
+with the types for exports such as \scheme{Sinteger64}.
+
 \subsection{New transcoded port buffer-size parameters (9.6.0)}
 
 The new parameter \scheme{transcoded-port-buffer-size} specifies the size

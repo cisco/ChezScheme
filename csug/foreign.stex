@@ -3256,10 +3256,10 @@ or 64-bit range and return integers of the appropriate
 type for the machine type.
 
 \begin{flushleft}
-\cfunction{<32-bit int type>}{Sinteger32_value}{ptr \var{integer}}
-\cmacro{<32-bit unsigned type>}{Sunsigned32_value}{ptr \var{integer}}
-\cfunction{<64-bit int type>}{Sinteger64_value}{ptr \var{integer}}
-\cmacro{<64-bit unsigned type>}{Sunsigned64_value}{ptr \var{integer}}
+\cfunction{Sint32_t}{Sinteger32_value}{ptr \var{integer}}
+\cmacro{Suint32_t}{Sunsigned32_value}{ptr \var{integer}}
+\cfunction{Sint64_t}{Sinteger64_value}{ptr \var{integer}}
+\cmacro{Suint64_t}{Sunsigned64_value}{ptr \var{integer}}
 \end{flushleft}
 
 \noindent
@@ -3466,10 +3466,10 @@ and \scheme{Sunsigned64} are like the generic equivalents but
 restrict their arguments to the 32- or 64-bit range.
 
 \begin{flushleft}
-\cfunction{ptr}{Sinteger32}{<32-bit int type> \var{n}}
-\cfunction{ptr}{Sunsigned32}{<32-bit unsigned type> \var{n}}
-\cfunction{ptr}{Sinteger64}{<64-bit int type> \var{n}}
-\cfunction{ptr}{Sunsigned64}{<64-bit unsigned type> \var{n}}
+\cfunction{ptr}{Sinteger32}{Sint32_t \var{n}}
+\cfunction{ptr}{Sunsigned32}{Suint32_t \var{n}}
+\cfunction{ptr}{Sinteger64}{Sint64_t \var{n}}
+\cfunction{ptr}{Sunsigned64}{Suint64_t \var{n}}
 \end{flushleft}
 
 \noindent

@@ -2431,3 +2431,7 @@
     wininstall/ta6nt.wxs wininstall/ti3nt.wxs
 - fix (library <library reference>) import syntax
     mats/8.ms release_notes/release_notes.stex s/syntax.ss
+- add Sint32_t, Suint32_t, Sint64_t, Suint64_t types for cross-platform
+  code that uses scheme.h exports
+    boot/*/scheme.h c/number.c csug/foreign.stex
+    release_notes/release_notes.stex s/mkheader.ss

@@ -231,6 +231,13 @@
         (pr "#define MACHINE_TYPE \"~a\"~%" target-machine)
 
         (nl)
+        (comment "Integer typedefs") ;; only for types used by exports
+        (pr "typedef ~a Sint32_t;~%" (constant typedef-i32))
+        (pr "typedef ~a Suint32_t;~%" (constant typedef-u32))
+        (pr "typedef ~a Sint64_t;~%" (constant typedef-i64))
+        (pr "typedef ~a Suint64_t;~%" (constant typedef-u64))
+
+        (nl)
         (comment "All Scheme objects are of type ptr.  Type iptr and")
         (comment "uptr are signed and unsigned ints of the same size")
         (comment "as a ptr")
@@ -345,10 +352,10 @@
         
         (export "iptr" "Sinteger_value" "(ptr)")
         (def "Sunsigned_value(x)" "(uptr)Sinteger_value(x)")
-        (export (constant typedef-i32) "Sinteger32_value" "(ptr)")
-        (def "Sunsigned32_value(x)" (format "(~a)Sinteger32_value(x)" (constant typedef-u32)))
-        (export (constant typedef-i64) "Sinteger64_value" "(ptr)")
-        (def "Sunsigned64_value(x)" (format "(~a)Sinteger64_value(x)" (constant typedef-u64)))
+        (export "Sint32_t" "Sinteger32_value" "(ptr)")
+        (def "Sunsigned32_value(x)" "(Suint32_t)Sinteger32_value(x)")
+        (export "Sint64_t" "Sinteger64_value" "(ptr)")
+        (def "Sunsigned64_value(x)" "(Suint64_t)Sinteger64_value(x)")
   
         (nl) (comment "Mutators")
         (export "void" "Sset_box" "(ptr, ptr)")
@@ -392,10 +399,10 @@
         (export "ptr" "Sbox" "(ptr)")
         (export "ptr" "Sinteger" "(iptr)")
         (export "ptr" "Sunsigned" "(uptr)")
-        (export "ptr" "Sinteger32" (format "(~a)" (constant typedef-i32)))
-        (export "ptr" "Sunsigned32" (format "(~a)" (constant typedef-u32)))
-        (export "ptr" "Sinteger64" (format "(~a)" (constant typedef-i64)))
-        (export "ptr" "Sunsigned64" (format "(~a)" (constant typedef-u64)))
+        (export "ptr" "Sinteger32" "(Sint32_t)")
+        (export "ptr" "Sunsigned32" "(Suint32_t)")
+        (export "ptr" "Sinteger64" "(Sint64_t)")
+        (export "ptr" "Sunsigned64" "(Suint64_t)")
 
         (nl) (comment "Records")
         (defref Srecord_uniform_ref record data)
