@@ -2435,3 +2435,5 @@
   code that uses scheme.h exports
     boot/*/scheme.h c/number.c csug/foreign.stex
     release_notes/release_notes.stex s/mkheader.ss
+- fix handling of most-negative-fixnum in Sinteger32 and Sinteger64
+    c/number.c mats/foreign1.c mats/foreign.ms

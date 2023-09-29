@@ -2653,6 +2653,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{\scheme{Sinteger32} and \scheme{Sinteger64} return unexpected bignum}
+
+When called on a C value equal to \scheme{most-negative-fixnum}, \scheme{Sinteger32}
+and \scheme{Sinteger64} could return a bignum where a fixnum is expected.
+The values have the same printed representation, yet comparing the resulting bignum with
+\scheme{most-negative-fixnum} via Scheme's \scheme{=} returned false.
+
 \subsection{Library-reference import syntax}
 
 A bug where \scheme{import} did not recognize a \var{library-spec}
