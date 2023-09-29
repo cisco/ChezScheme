@@ -51,6 +51,36 @@ EXPORT double float_id(double x) {
    return x;
 }
 
+#define XMKID(prefix,bits,suffix) prefix##bits##suffix
+/* build list of results matching description in foreign.stex */
+#define XIRT(name, bits, itype, utype) \
+  EXPORT ptr name(itype x) { \
+    ptr ls = Snil; \
+    ls = Scons(Sinteger64((itype)XMKID(Sunsigned,bits,_value)(XMKID(Sunsigned,bits,)((utype)x))), ls); \
+    ls = Scons(Sinteger64(XMKID(Sinteger,bits,_value)(XMKID(Sunsigned,bits,)((utype)x))), ls); \
+    ls = Scons(Sinteger64((itype)XMKID(Sunsigned,bits,_value)(XMKID(Sinteger,bits,)(x))), ls); \
+    ls = Scons(Sinteger64(XMKID(Sinteger,bits,_value)(XMKID(Sinteger,bits,)(x))), ls); \
+    return ls; \
+  }
+/* build list of results matching description in foreign.stex */
+#define XURT(name, bits, itype, utype) \
+  EXPORT ptr name(itype x) { \
+    ptr ls = Snil; \
+    ls = Scons(Sunsigned64(XMKID(Sunsigned,bits,_value)(XMKID(Sunsigned,bits,)(x))), ls); \
+    ls = Scons(Sunsigned64((utype)XMKID(Sinteger,bits,_value)(XMKID(Sunsigned,bits,)(x))), ls); \
+    ls = Scons(Sunsigned64(XMKID(Sunsigned,bits,_value)(XMKID(Sinteger,bits,)((itype)x))), ls); \
+    ls = Scons(Sunsigned64((utype)XMKID(Sinteger,bits,_value)(XMKID(Sinteger,bits,)((itype)x))), ls); \
+    return ls; \
+  }
+
+XIRT(rt_int,,iptr,uptr)
+XIRT(rt_int32,32,Sint32_t,Suint32_t)
+XIRT(rt_int64,64,Sint64_t,Suint64_t)
+
+XURT(rt_uint,,iptr,uptr)
+XURT(rt_uint32,32,Sint32_t,Suint32_t)
+XURT(rt_uint64,64,Sint64_t,Suint64_t)
+ 
 #ifdef _WIN32
 #include <stdlib.h>
 #include <string.h>
