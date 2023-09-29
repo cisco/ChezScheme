@@ -45,6 +45,12 @@ typedef void * ptr;
 typedef long int iptr;
 typedef unsigned long int uptr;
 
+/* Integer typedefs */
+typedef int Sint32_t;
+typedef unsigned int Suint32_t;
+typedef long Sint64_t;
+typedef unsigned long Suint64_t;
+
 /* String elements are 32-bit tagged char objects */
 typedef unsigned int string_char;
 
@@ -107,10 +113,10 @@ typedef unsigned char octet;
 #define Sunbox(x) (*((ptr *)((uptr)(x)+9)))
 EXPORT iptr Sinteger_value(ptr);
 #define Sunsigned_value(x) (uptr)Sinteger_value(x)
-EXPORT int Sinteger32_value(ptr);
-#define Sunsigned32_value(x) (unsigned int)Sinteger32_value(x)
-EXPORT long Sinteger64_value(ptr);
-#define Sunsigned64_value(x) (unsigned long)Sinteger64_value(x)
+EXPORT Sint32_t Sinteger32_value(ptr);
+#define Sunsigned32_value(x) (Suint32_t)Sinteger32_value(x)
+EXPORT Sint64_t Sinteger64_value(ptr);
+#define Sunsigned64_value(x) (Suint64_t)Sinteger64_value(x)
 
 /* Mutators */
 EXPORT void Sset_box(ptr, ptr);
@@ -146,10 +152,10 @@ EXPORT ptr Sstring_utf8(const char*, iptr);
 EXPORT ptr Sbox(ptr);
 EXPORT ptr Sinteger(iptr);
 EXPORT ptr Sunsigned(uptr);
-EXPORT ptr Sinteger32(int);
-EXPORT ptr Sunsigned32(unsigned int);
-EXPORT ptr Sinteger64(long);
-EXPORT ptr Sunsigned64(unsigned long);
+EXPORT ptr Sinteger32(Sint32_t);
+EXPORT ptr Sunsigned32(Suint32_t);
+EXPORT ptr Sinteger64(Sint64_t);
+EXPORT ptr Sunsigned64(Suint64_t);
 
 /* Miscellaneous */
 EXPORT ptr Stop_level_value(ptr);

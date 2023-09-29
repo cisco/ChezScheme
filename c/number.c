@@ -329,7 +329,7 @@ I64 S_int64_value(char *who, ptr x) {
   return 0 /* not reached */;
 }
 
-I64 Sinteger64_value(ptr x) {
+Sint64_t Sinteger64_value(ptr x) {
   return S_int64_value("Sinteger64_value", x);
 }
 
@@ -355,7 +355,7 @@ ptr Sinteger(iptr i) { /* convert arg to Scheme integer */
   }
 }
 
-ptr Sunsigned32(U32 u) { /* convert arg to Scheme integer */
+ptr Sunsigned32(Suint32_t u) { /* convert arg to Scheme integer */
 #if (fixnum_bits > 32)
   return FIX((uptr)u);
 #else
@@ -370,7 +370,7 @@ ptr Sunsigned32(U32 u) { /* convert arg to Scheme integer */
 #endif
 }
 
-ptr Sinteger32(I32 i) { /* convert arg to Scheme integer */
+ptr Sinteger32(Sint32_t i) { /* convert arg to Scheme integer */
 #if (fixnum_bits > 32)
   return FIX((iptr)i);
 #else
@@ -385,7 +385,7 @@ ptr Sinteger32(I32 i) { /* convert arg to Scheme integer */
 #endif
 }
 
-ptr Sunsigned64(U64 u) { /* convert arg to Scheme integer */
+ptr Sunsigned64(Suint64_t u) { /* convert arg to Scheme integer */
   if (u <= most_positive_fixnum)
     return FIX((uptr)u);
   else {
@@ -396,7 +396,7 @@ ptr Sunsigned64(U64 u) { /* convert arg to Scheme integer */
   }
 }
 
-ptr Sinteger64(I64 i) { /* convert arg to Scheme integer */
+ptr Sinteger64(Sint64_t i) { /* convert arg to Scheme integer */
   if (i > most_negative_fixnum && i <= most_positive_fixnum)
     return FIX((iptr)i);
   else {
