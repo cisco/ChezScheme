@@ -374,7 +374,7 @@ ptr Sinteger32(Sint32_t i) { /* convert arg to Scheme integer */
 #if (fixnum_bits > 32)
   return FIX((iptr)i);
 #else
-  if (i > most_negative_fixnum && i <= most_positive_fixnum)
+  if (i >= most_negative_fixnum && i <= most_positive_fixnum)
     return FIX((iptr)i);
   else {
     ptr x = FIX(0); iptr xl; IBOOL xs;
@@ -397,7 +397,7 @@ ptr Sunsigned64(Suint64_t u) { /* convert arg to Scheme integer */
 }
 
 ptr Sinteger64(Sint64_t i) { /* convert arg to Scheme integer */
-  if (i > most_negative_fixnum && i <= most_positive_fixnum)
+  if (i >= most_negative_fixnum && i <= most_positive_fixnum)
     return FIX((iptr)i);
   else {
     ptr x = FIX(0); iptr xl; IBOOL xs;
