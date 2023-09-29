@@ -3431,7 +3431,7 @@ appear negative if cast to integers.
 whereas \scheme{Sunsigned} converts such values into the appropriate
 positive Scheme values.
 For example, assuming a 32-bit, two's complement representation for
-\scheme{iptrs}, \scheme{Sinteger(-1)} and \scheme{Sunsigned((iptr)0xffffffff)}
+\scheme{iptrs}, \scheme{Sinteger(-1)} and \scheme{Sinteger((iptr)0xffffffff)}
 both evaluate to the Scheme integer \scheme{-1}, whereas
 \scheme{Sunsigned(0xffffffff)} and \scheme{Sunsigned((uptr)-1)}
 both evaluate to the Scheme integer
