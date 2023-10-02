@@ -2436,4 +2436,6 @@
     boot/*/scheme.h c/number.c csug/foreign.stex
     release_notes/release_notes.stex s/mkheader.ss
 - fix handling of most-negative-fixnum in Sinteger32 and Sinteger64
-    c/number.c mats/foreign1.c mats/foreign.ms
+    c/number.c mats/foreign1.c mats/foreign.ms release_notes/release_notes.stex
+- fix 32-bit C integer/unsigned to bignum conversion
+    c/number.c release_notes/release_notes.stex

@@ -2653,6 +2653,11 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Incorrect result from \scheme{Sinteger64} on 32-bit platforms}
+
+On 32-bit platforms, calling \scheme{Sinteger64} or \scheme{Sunsigned64}
+with \scheme{0x8000000000000000} could return the wrong value.
+
 \subsection{\scheme{Sinteger32} and \scheme{Sinteger64} return unexpected bignum}
 
 When called on a C value equal to \scheme{most-negative-fixnum}, \scheme{Sinteger32}
