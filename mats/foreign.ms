@@ -719,6 +719,77 @@
     (check n (rt-uint64 n)))
 )
 
+(mat convert
+  (begin
+    (define to-int (foreign-procedure "to_int" (ptr) iptr))
+    (define to-int32 (foreign-procedure "to_int32" (ptr) integer-32))
+    (define to-int64 (foreign-procedure "to_int64" (ptr) integer-64))
+    (define to-uint (foreign-procedure "to_uint" (ptr) uptr))
+    (define to-uint32 (foreign-procedure "to_uint32" (ptr) unsigned-32))
+    (define to-uint64 (foreign-procedure "to_uint64" (ptr) unsigned-64))
+    (define (check-error reason who f arg)
+      (define fp-names
+        (case who
+          [(to-int) '("Sinteger_value")]
+          [(to-int32) '("Sinteger32_value")]
+          [(to-int64) '("Sinteger64_value")]
+          ;; These currently call their integer counterparts and cast the
+          ;; result, so the condition-who will report the integer entry point.
+          [(to-uint) '("Sunsigned_value" "Sinteger_value")]
+          [(to-uint32) '("Sunsigned32_value" "Sinteger32_value")]
+          [(to-uint64) '("Sunsigned64_value" "Sinteger64_value")]
+          [else '("unexpected")]))
+      (guard (c [else
+                 ;; Check error message explicitly rather than relying on the
+                 ;; diff-based expected-error machinery since the offending
+                 ;; values may differ on 32- vs. 64-bit platforms.
+                 (assert (member arg (condition-irritants c)))
+                 (assert (equal? (condition-message c) reason))
+                 (assert (member (condition-who c) fp-names))
+                 #t])
+        (f arg)
+        #f))
+    (define out-of-range "~s is out of range")
+    (define not-integer "~s is not an integer")
+    (define-syntax must-fail
+      (syntax-rules ()
+        [(_ reason f n) (check-error reason 'f f n)]))
+    #t)
+
+  (equal? 0 (to-int 0))
+  (equal? 0 (to-int32 0))
+  (equal? 0 (to-int64 0))
+  (equal? 0 (to-uint 0))
+  (equal? 0 (to-uint32 0))
+  (equal? 0 (to-uint64 0))
+  (equal? -1 (to-int -1))
+  (equal? -1 (to-int32 -1))
+  (equal? -1 (to-int64 -1))
+  (equal? (- (ash 1 (* 8 (foreign-sizeof 'uptr))) 1) (to-uint -1))
+  (equal? (- (ash 1 32) 1) (to-uint32 -1))
+  (equal? (- (ash 1 64) 1) (to-uint64 -1))
+
+  (must-fail not-integer to-int "one")
+  (must-fail not-integer to-int32 'two)
+  (must-fail not-integer to-int64 '(3))
+  (must-fail not-integer to-uint "four")
+  (must-fail not-integer to-uint32 'five)
+  (must-fail not-integer to-uint64 '(6))
+
+  (must-fail out-of-range to-int (ash 1 65))
+  (must-fail out-of-range to-int (- (- (ash 1 (- (* 8 (foreign-sizeof 'iptr)) 1))) 1))
+  (must-fail out-of-range to-int32 (ash 1 33))
+  (must-fail out-of-range to-int32 (- (- (ash 1 31)) 1))
+  (must-fail out-of-range to-int64 (ash 1 65))
+  (must-fail out-of-range to-int64 (- (- (ash 1 63)) 1))
+  (must-fail out-of-range to-uint (ash 1 65))
+  (must-fail out-of-range to-uint (- (- (ash 1 (- (* 8 (foreign-sizeof 'uptr)) 1))) 1))
+  (must-fail out-of-range to-uint32 (ash 1 33))
+  (must-fail out-of-range to-uint32 (- (- (ash 1 31)) 1))
+  (must-fail out-of-range to-uint64 (ash 1 65))
+  (must-fail out-of-range to-uint64 (- (- (ash 1 63)) 1))
+)
+
 (mat foreign-sizeof
   (equal?
     (list

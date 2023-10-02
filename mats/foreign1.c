@@ -81,6 +81,17 @@ XURT(rt_uint,,iptr,uptr)
 XURT(rt_uint32,32,Sint32_t,Suint32_t)
 XURT(rt_uint64,64,Sint64_t,Suint64_t)
  
+#define XTOI(name, bits, type) EXPORT type name(ptr x) { return XMKID(Sinteger,bits,_value)(x); }
+#define XTOU(name, bits, type) EXPORT type name(ptr x) { return XMKID(Sunsigned,bits,_value)(x); }
+
+XTOI(to_int,,iptr)
+XTOI(to_int32,32,Sint32_t)
+XTOI(to_int64,64,Sint64_t)
+
+XTOU(to_uint,,uptr)
+XTOU(to_uint32,32,Suint32_t)
+XTOU(to_uint64,64,Suint64_t)
+
 #ifdef _WIN32
 #include <stdlib.h>
 #include <string.h>
