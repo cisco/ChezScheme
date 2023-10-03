@@ -355,7 +355,13 @@
         (export "Sint32_t" "Sinteger32_value" "(ptr)")
         (def "Sunsigned32_value(x)" "(Suint32_t)Sinteger32_value(x)")
         (export "Sint64_t" "Sinteger64_value" "(ptr)")
+        (export "int" "Stry_integer_value" "(ptr, iptr*, const char**)")
+        (export "int" "Stry_integer32_value" "(ptr, Sint32_t*, const char**)")
+        (export "int" "Stry_integer64_value" "(ptr, Sint64_t*, const char**)")
         (def "Sunsigned64_value(x)" "(Suint64_t)Sinteger64_value(x)")
+        (export "int" "Stry_unsigned_value" "(ptr, uptr*, const char**)")
+        (export "int" "Stry_unsigned32_value" "(ptr, Suint32_t*, const char**)")
+        (export "int" "Stry_unsigned64_value" "(ptr, Suint64_t*, const char**)")
   
         (nl) (comment "Mutators")
         (export "void" "Sset_box" "(ptr, ptr)")

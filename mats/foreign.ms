@@ -790,6 +790,98 @@
   (must-fail out-of-range to-uint64 (- (- (ash 1 63)) 1))
 )
 
+(mat try-convert
+  (begin
+    (define m-p-f (most-positive-fixnum))
+    (define m-n-f (most-negative-fixnum))
+    (define ptr-bits (* 8 (foreign-sizeof 'ptr)))
+    (define (test signed? bits prefix in-range* out-of-range*)
+      (define sign-bit (and signed? (- bits 1)))
+      (define fp-v2 (foreign-procedure (format "~a2" prefix) (ptr) ptr))
+      (define fp-v3 (foreign-procedure (format "~a3" prefix) (ptr) ptr))
+      (define (fp-name fp)
+        (format "~a~a" prefix (assert (cond [(eq? fp fp-v2) 2] [(eq? fp fp-v3) 3] [else #f]))))
+      (define (expect expected fp arg)
+        (let ([actual (fp arg)])
+          (unless (equal? expected actual)
+            (errorf #f "expected ~s but got ~s from ~a on ~s\n" expected actual (fp-name fp) arg))))
+      (define in-range-for-all*
+        (let ([ls (list 1 7654321 #xffffff #xffffff0)])
+          (cons 0
+            (if (not sign-bit)
+                ls
+                (append ls (map - ls)
+                  (let ([hi (ash 1 sign-bit)])
+                    (list hi (- hi) (+ (- hi) 1) (+ hi 1))))))))
+      (define out-of-range-for-all*
+        (let ([ls (list #e1e30 #e-1e30 (ash 1 64) (- (ash 1 64)))])
+          (if (not sign-bit)
+              ls
+              (let ([hi (ash 1 (+ sign-bit 1))])
+                (list* hi (- hi) (- (- hi) 123) (+ hi 27) (- (- (ash hi -1)) 1) ls)))))
+      (assert (string=? (substring prefix 4 7) (if sign-bit "int" "uns")))
+      ;; try some non-integer cases
+      (for-each
+       (lambda (bogus)
+         (expect '(0 0) fp-v2 bogus)
+         (expect '(0 0 "~s is not an integer") fp-v3 bogus))
+       '(#f 0.0 #t 3.2 "wrong" bad))
+      ;; try in-range cases
+      (for-each
+       (lambda (good)
+         (define expected
+           (if (not sign-bit)
+               (if (< good 0)
+                   (bitwise-bit-field (bitwise-not (- -1 good)) 0 bits)
+                   good)
+               (if (or (< good 0) (not (logbit? sign-bit good)))
+                   good
+                   (- (bitwise-bit-field (+ (bitwise-not good) 1) 0 (+ sign-bit 1))))))
+         (expect `(1 ,expected) fp-v2 good)
+         (expect `(1 ,expected "untouched") fp-v3 good))
+       (append in-range-for-all* in-range*))
+      ;; try out-of-range cases
+      (for-each
+       (lambda (bad)
+         (expect '(0 0) fp-v2 bad)
+         (expect `(0 0 "~s is out of range") fp-v3 bad))
+       (append out-of-range-for-all* out-of-range*))
+      #t)
+    #t)
+  (test #t ptr-bits "try_integer_value"
+    (list ;; extra in-range checks
+     m-n-f
+     m-p-f
+     ;; hit third return in bignum case
+     (- m-n-f 1)
+     (+ m-p-f 1))
+    '())
+  (test #t 32 "try_integer32_value" '() '())
+  (test #t 64 "try_integer64_value"
+    (list m-p-f m-n-f
+      (ash 1 60)
+      (ash 1 61)
+      (ash 1 62)
+      (- -1 (ash 1 60))
+      (- -1 (ash 1 61))
+      (- -1 (ash 1 62)))
+    '())
+  (test #f ptr-bits "try_unsigned_value"
+    (list m-p-f (+ m-p-f 1) m-n-f
+      (- (ash 1 (- ptr-bits 1)))
+      (- (- (ash 1 (- ptr-bits 1)) 1)))
+    (list (- (+ (ash 1 (- ptr-bits 1)) 1))))
+  (test #f 32 "try_unsigned32_value"
+    (list
+     (+ (ash 1 30) 1)
+     (- (+ (ash 1 30) 1))
+     (- (ash 1 31)))
+    (list (ash 1 32) (- (ash 1 32)) (- -1 (ash 1 31))))
+  (test #f 64 "try_unsigned64_value"
+    (list m-p-f (+ m-p-f 1) m-n-f (- 1 (ash 1 63)) #x-8000000000000000)
+    (list (- -1 (ash 1 63))))
+)
+
 (mat foreign-sizeof
   (equal?
     (list

@@ -92,6 +92,29 @@ XTOU(to_uint,,uptr)
 XTOU(to_uint32,32,Suint32_t)
 XTOU(to_uint64,64,Suint64_t)
 
+#define XID(name,num) name##num
+#define XSID(name) S##name
+
+#define XTRY(name, type, rproc)                                         \
+  EXPORT ptr XID(name, 2)(ptr p) {                                      \
+    type i = 0;                                                         \
+    int success = XSID(name)(p, &i, 0);                                 \
+    return Scons(Sinteger(success), Scons(rproc(i), Snil));             \
+  }                                                                     \
+  EXPORT ptr XID(name, 3)(ptr p) {                                      \
+    type i = 0;                                                         \
+    const char *reason = "untouched";                                   \
+    int success = XSID(name)(p, &i, &reason);                           \
+    return Scons(Sinteger(success), Scons(rproc(i), Scons(Sstring(reason), Snil))); \
+  }
+
+XTRY(try_integer_value, iptr, Sinteger)
+XTRY(try_integer32_value, Sint32_t, Sinteger32)
+XTRY(try_integer64_value, Sint64_t, Sinteger64)
+XTRY(try_unsigned_value, uptr, Sunsigned)
+XTRY(try_unsigned32_value, Suint32_t, Sunsigned32)
+XTRY(try_unsigned64_value, Suint64_t, Sunsigned64)
+
 #ifdef _WIN32
 #include <stdlib.h>
 #include <string.h>

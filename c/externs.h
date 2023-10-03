@@ -298,7 +298,6 @@ extern void S_generic_invoke(ptr tc, ptr code);
 /* number.c */
 extern void S_number_init(void);
 extern ptr S_normalize_bignum(ptr x);
-extern IBOOL S_integer_valuep(ptr x);
 extern iptr S_integer_value(const char *who, ptr x);
 extern I64 S_int64_value(char *who, ptr x);
 extern IBOOL S_big_eq(ptr x, ptr y);

@@ -3262,6 +3262,35 @@ type for the machine type.
 \cmacro{Suint64_t}{Sunsigned64_value}{ptr \var{integer}}
 \end{flushleft}
 
+The functions
+\scheme{Stry_integer_value},
+\scheme{Stry_integer32_value}, and
+\scheme{Stry_integer64_value}
+also convert Scheme values to C integers.
+Unlike the corresponding \scheme{Sinteger_value} functions, these functions do not raise exceptions.
+Instead, they take additional \var{result} and \var{reason} arguments
+and return 1 or 0 to indicate success or failure.
+If \var{integer} can be converted to the requested type, these functions store
+the value in \var{result} and return 1.
+Otherwise, they return 0 without modifying \var{result}.
+If \var{integer} cannot be converted to the requested type and
+\var{reason} is not NULL, these functions store a
+Scheme-style
+format string in \var{reason} explaining why the conversion failed.
+The corresponding functions for unsigned values are
+\scheme{Stry_unsigned_value},
+\scheme{Stry_unsigned32_value}, and
+\scheme{Stry_unsigned64_value}.
+
+\begin{flushleft}
+\cfunction{int}{Stry_integer_value}{ptr \var{integer}, iptr* \var{result}, const char** \var{reason}}
+\cfunction{int}{Stry_integer32_value}{ptr \var{integer}, Sint32_t* \var{result}, const char** \var{reason}}
+\cfunction{int}{Stry_integer64_value}{ptr \var{integer}, Sint64_t* \var{result}, const char** \var{reason}}
+\cfunction{int}{Stry_unsigned_value}{ptr \var{integer}, uptr* \var{result}, const char** \var{reason}}
+\cfunction{int}{Stry_unsigned32_value}{ptr \var{integer}, Suint32_t* \var{result}, const char** \var{reason}}
+\cfunction{int}{Stry_unsigned64_value}{ptr \var{integer}, Suint64_t* \var{result}, const char** \var{reason}}
+\end{flushleft}
+
 \noindent
 \scheme{Scar}, \scheme{Scdr}, \scheme{Ssymbol_to_string} (corresponding
 to \scheme{symbol->string}), and \scheme{Sunbox} are identical to their

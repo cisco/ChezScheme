@@ -2439,3 +2439,9 @@
     c/number.c mats/foreign1.c mats/foreign.ms release_notes/release_notes.stex
 - fix 32-bit C integer/unsigned to bignum conversion
     c/number.c release_notes/release_notes.stex
+- add functions that try to convert from Scheme to C signed and unsigned
+  integers without throwing exceptions; use the new functions in Sscheme_start
+  and run_script
+    boot/*/scheme.h c/externs.h c/number.c c/scheme.c csug/foreign.stex
+    mats/foreign1.c mats/foreign.ms release_notes/release_notes.stex
+    s/mkheader.ss

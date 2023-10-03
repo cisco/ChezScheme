@@ -738,6 +738,23 @@ original source file's path.
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{New conversions from Scheme to C signed and unsigned integers}
+
+The following new functions
+allow foreign code to try converting Scheme
+values to signed or unsigned integer values
+without triggering a \scheme{longjmp} in the Scheme runtime
+as can happen when calling the corresponding functions
+\scheme{Sinteger_value}, etc:
+\schemedisplay
+Stry_integer_value
+Stry_integer32_value
+Stry_integer64_value
+Stry_unsigned_value
+Stry_unsigned32_value
+Stry_unsigned64_value
+\endschemedisplay
+
 \subsection{New types for code that uses C exports}
 
 The header file scheme.h distributed with Chez Scheme now defines

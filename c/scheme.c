@@ -1271,7 +1271,8 @@ extern INT Sscheme_start(INT argc, const char *argv[]) {
   S_put_arg(tc, 1, arglist);
   p = boot_call(tc, p, 1);
 
-  if (S_integer_valuep(p)) return (INT)Sinteger_value(p);
+  iptr result;
+  if (Stry_integer_value(p, &result, NULL)) return (INT)result;
   return p == Svoid ? 0 : 1;
 }
 
@@ -1309,7 +1310,8 @@ static INT run_script(const char *who, const char *scriptfile, INT argc, const c
   S_put_arg(tc, 3, arglist);
   p = boot_call(tc, p, 3);
 
-  if (S_integer_valuep(p)) return (INT)Sinteger_value(p);
+  iptr result;
+  if (Stry_integer_value(p, &result, NULL)) return (INT)result;
   return p == Svoid ? 0 : 1;
 }
 
