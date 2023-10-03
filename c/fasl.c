@@ -268,6 +268,10 @@ static uptr la64_get_abs(void *address);
 static void la64_set_jump(void *address, uptr item);
 static uptr la64_get_jump(void *address);
 #endif /* LA64 */
+#ifdef AARCH64
+static void aarch64_set_abs(void *address, uptr item);
+static uptr aarch64_get_abs(void *address);
+#endif /* AARCH64 */
 
 static double s_nan;
 
@@ -1228,6 +1232,13 @@ void S_set_code_obj(char *who, IFASLCODE typ, ptr p, iptr n, ptr x, iptr o) {
             arm32_set_jump(address, item, 1);
             break;
 #endif /* ARMV6 */
+#ifdef AARCH64
+    case reloc_aarch64_abs:
+    case reloc_aarch64_jump:
+    case reloc_aarch64_call:
+        aarch64_set_abs(address, item);
+        break;
+#endif /* AARCH64 */
 #ifdef PPC32
         case reloc_ppc32_abs:
             ppc32_set_abs(address, item);
@@ -1325,6 +1336,13 @@ ptr S_get_code_obj(IFASLCODE typ, ptr p, iptr n, iptr o) {
             item = arm32_get_jump(address);
             break;
 #endif /* ARMV6 */
+#ifdef AARCH64
+    case reloc_aarch64_abs:
+    case reloc_aarch64_jump:
+    case reloc_aarch64_call:
+        item = aarch64_get_abs(address);
+        break;
+#endif /* AARCH64 */
 #ifdef PPC32
         case reloc_ppc32_abs:
             item = ppc32_get_abs(address);
@@ -1781,3 +1799,36 @@ static void la64_set_jump(void* address, uptr item)
    (*((I64 *)((I32 *)address + 3))) = item;
 }
 #endif /* LA64 */
+
+#ifdef AARCH64
+
+/* Address pieces in a movz,movk,movk,movk sequence are at its 5-20 */
+#define ADDRESS_BITS_SHIFT 5
+#define ADDRESS_BITS_MASK  ((U32)0x1fffe0)
+
+/* Dest register in either movz or movk: */
+#define DEST_REG_MASK 0x1F
+
+#define MOVZ_OPCODE    0xD2800000
+#define MOVK_OPCODE    0xF2800000
+#define SHIFT16_OPCODE 0x00200000
+#define SHIFT32_OPCODE 0x00400000
+#define SHIFT48_OPCODE 0x00600000
+
+static void aarch64_set_abs(void *address, uptr item) {
+  int dest_reg = ((U32 *)address)[3] & DEST_REG_MASK;
+
+  ((U32 *)address)[0] = (MOVZ_OPCODE | dest_reg | ((item & 0xFFFF) << ADDRESS_BITS_SHIFT));
+  ((U32 *)address)[1] = (MOVK_OPCODE | SHIFT16_OPCODE | dest_reg | (((item >> 16) & 0xFFFF) << ADDRESS_BITS_SHIFT));
+  ((U32 *)address)[2] = (MOVK_OPCODE | SHIFT32_OPCODE | dest_reg | (((item >> 32) & 0xFFFF) << ADDRESS_BITS_SHIFT));
+  ((U32 *)address)[3] = (MOVK_OPCODE | SHIFT48_OPCODE | dest_reg | (((item >> 48) & 0xFFFF) << ADDRESS_BITS_SHIFT));
+}
+
+static uptr aarch64_get_abs(void *address) {
+  return ((uptr)((((U32 *)address)[0] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT)
+          | ((uptr)((((U32 *)address)[1] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 16)
+          | ((uptr)((((U32 *)address)[2] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 32)
+          | ((uptr)((((U32 *)address)[3] & ADDRESS_BITS_MASK) >> ADDRESS_BITS_SHIFT) << 48));
+}
+
+#endif /* AARCH64 */

@@ -1,0 +1,6 @@
+# Mf-aarch64le
+
+m = aarch64le
+archincludes = aarch64.ss
+
+include Mf-base

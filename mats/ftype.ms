@@ -563,7 +563,7 @@
                        [(i3nt ti3nt)
                         (system (format "set cl= && ~a\\..\\c\\vs.bat x86 && cl /DWIN32 /Fe~a /LD /MD /nologo ~a"
                                   (patch-exec-path *mats-dir*) testfile.so testfile.c))]
-                       [(arm32le tarm32le rv64le trv64le la64le tla64le)
+                       [(arm32le tarm32le aarch64le taarch64le rv64le trv64le la64le tla64le)
                         (system (format "cc -fPIC -shared -o ~a ~a" testfile.so testfile.c))]
                        [else ; this should work for most intel-based systems that use gcc...
                         (if (> (fixnum-width) 32)

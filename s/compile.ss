@@ -233,6 +233,24 @@
                                   (let ([r ($reloc (constant reloc-la64-call) n (fx- a1 ra))])
                                     (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
                              [else (c-assembler-output-error c)])]
+                          [(aarch64)
+                           (record-case c
+                             [(aarch64-abs) (n x)
+                              (let ([a1 (fx- a 16)]) ; movz, movk, movk, movk
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-aarch64-abs) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [(aarch64-call) (n x)
+                              (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, bl
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-aarch64-call) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [(aarch64-jump) (n x)
+                              (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, b
+                                (let ([x* (cons (mkcode x) x*)])
+                                  (let ([r ($reloc (constant reloc-aarch64-jump) n (fx- a1 ra))])
+                                    (mkc0 (cdr c*) a (cons r r*) a1 x*))))]
+                             [else (c-assembler-output-error c)])]
                           [else (c-assembler-output-error c)])]))))
              p))]
       [else (c-assembler-output-error x)]))
@@ -303,6 +321,10 @@
                          [(la64)
                           (record-case x
                             [(la64-abs la64-call la64-jump) (n x) (build x)]
+                            [else (void)])]
+                         [(aarch64)
+                          (record-case x
+                            [(aarch64-abs aarch64-call aarch64-jump) (n x) (build x)]
                             [else (void)])])]))
                   code-list)])))]))))
 
@@ -481,6 +503,21 @@
                             [(la64-call) (n x)
                              (let ([a1 (fx- a 24)])
                                (let ([r ($reloc (constant reloc-la64-call) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [else (c-assembler-output-error c)])]
+                         [(aarch64)
+                          (record-case c
+                            [(aarch64-abs) (n x)
+                             (let ([a1 (fx- a 16)]) ; movz, movk, movk, movk
+                               (let ([r ($reloc (constant reloc-aarch64-abs) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [(aarch64-call) (n x)
+                             (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, bl
+                               (let ([r ($reloc (constant reloc-aarch64-call) n (fx- a1 ra))])
+                                 (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
+                            [(aarch64-jump) (n x)
+                             (let ([a1 (fx- a 20)]) ; movz, movk, movk, movk, b
+                               (let ([r ($reloc (constant reloc-aarch64-jump) n (fx- a1 ra))])
                                  (prf0 (cdr c*) a (cons r r*) a1 (cons x x*))))]
                             [else (c-assembler-output-error c)])]
                          [else (c-assembler-output-error c)])]))))))]

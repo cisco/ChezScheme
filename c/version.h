@@ -16,8 +16,8 @@
 
 #include "config.h"
 
-#if (machine_type == machine_type_arm32le || machine_type == machine_type_tarm32le || machine_type == machine_type_arm64le || machine_type == machine_type_tarm64le)
-#if (machine_type == machine_type_tarm32le || machine_type == machine_type_tarm64le)
+#if (machine_type == machine_type_arm32le || machine_type == machine_type_tarm32le || machine_type == machine_type_aarch64le || machine_type == machine_type_taarch64le)
+#if (machine_type == machine_type_tarm32le || machine_type == machine_type_taarch64le)
 #define PTHREADS
 #endif
 #define NOBLOCK O_NONBLOCK
@@ -49,6 +49,7 @@ typedef int tputsputcchar;
 #define NSECCTIME(sb) (sb).st_ctim.tv_nsec
 #define NSECMTIME(sb) (sb).st_mtim.tv_nsec
 #define ICONV_INBUF_TYPE char **
+#define NOFILE 256
 #define UNUSED __attribute__((__unused__))
 #endif
 

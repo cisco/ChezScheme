@@ -513,8 +513,8 @@
   (declare-primitive locked-incr! effect #f)
   (declare-primitive pause effect #f)
   (declare-primitive push effect #f)
-  (declare-primitive pop-multiple effect #f) ; arm
-  (declare-primitive push-multiple effect #f) ; arm
+  (declare-primitive pop-multiple effect #f) ; arm, aarch64
+  (declare-primitive push-multiple effect #f) ; arm, aarch64
   (declare-primitive remember effect #f)
   (declare-primitive restore-flrv effect #f)
   (declare-primitive restore-lr effect #f) ; ppc

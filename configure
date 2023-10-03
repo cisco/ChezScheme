@@ -94,6 +94,11 @@ case "${CONFIG_UNAME}" in
         m64=la64le
         tm32=""
         tm64=tla64le
+    elif uname -a | grep 'aarch64' > /dev/null 2>&1 ; then
+        m32=""
+        m64=aarch64le
+        tm32=""
+        tm64=taarch64le
     fi
     installprefix=/usr
     installmansuffix=share/man

@@ -186,7 +186,7 @@
       (error? (load-shared-object 3))
     )
    ]
-  [(i3le ti3le a6le ta6le arm32le tarm32le ppc32le tppc32le rv64le trv64le la64le tla64le)
+  [(i3le ti3le a6le ta6le arm32le tarm32le aarch64le taarch64le ppc32le tppc32le rv64le trv64le la64le tla64le)
    (mat load-shared-object
       (file-exists? foreign1.so)
       (begin (load-shared-object foreign1.so) #t)
@@ -2688,15 +2688,15 @@
               (eqv? pid^ pid)))))))
 )
 
-;; varargs ABI not supported for arm32le, [t]rv64le, [t]la64le (yet)
-(unless (memq (machine-type) '(arm32le tarm32le rv64le trv64le la64le tla64le))
+;; varargs ABI not supported for arm32le, [t]aarch64le, [t]rv64le, [t]la64le (yet)
+(unless (memq (machine-type) '(arm32le tarm32le aarch64le taarch64le rv64le trv64le la64le tla64le))
   (mat varargs
     (begin
       (define load-libc
         (machine-case
           [(i3ob ti3ob a6ob ta6ob a6s2 ta6s2 i3s2 ti3s2 i3qnx ti3qnx i3nb ti3nb a6nb ta6nb)
            '(load-shared-object "libc.so")]
-          [(i3le ti3le a6le ta6le arm32le tarm32le ppc32le tppc32le rv64le trv64le la64le tla64le)
+          [(i3le ti3le a6le ta6le arm32le tarm32le aarch64le taarch64le ppc32le tppc32le rv64le trv64le la64le tla64le)
            '(load-shared-object "libc.so.6")]
           [(i3fb ti3fb a6fb ta6fb)
            '(load-shared-object "libc.so.7")]

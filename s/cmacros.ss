@@ -365,6 +365,7 @@
   ppc32le   tppc32le
   rv64le    trv64le
   la64le    tla64le
+  aarch64le taarch64le
 )
 
 (include "machine.def")
@@ -505,7 +506,8 @@
   (arm32 reloc-arm32-abs reloc-arm32-call reloc-arm32-jump)
   (ppc32 reloc-ppc32-abs reloc-ppc32-call reloc-ppc32-jump)
   (riscv64 reloc-riscv64-abs reloc-riscv64-call reloc-riscv64-jump)
-  (la64 reloc-la64-abs reloc-la64-call reloc-la64-jump))
+  (la64 reloc-la64-abs reloc-la64-call reloc-la64-jump)
+  (aarch64 reloc-aarch64-abs reloc-aarch64-call reloc-aarch64-jump))
 
 (constant-case ptr-bits
   [(64)

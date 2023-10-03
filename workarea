@@ -50,6 +50,7 @@ case "$M" in
   ppc32le) ;;
   rv64le) ;;
   la64le) ;;
+  aarch64le) ;;
   ta6fb) ;;
   ta6le) ;;
   ta6nb) ;;
@@ -60,6 +61,7 @@ case "$M" in
   tarm32le) ;;
   trv64le) ;;
   tla64le) ;;
+  taarch64le) ;;
   ti3fb) ;;
   ti3le) ;;
   ti3nb) ;;
