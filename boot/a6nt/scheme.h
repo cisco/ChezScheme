@@ -116,7 +116,13 @@ EXPORT iptr Sinteger_value(ptr);
 EXPORT Sint32_t Sinteger32_value(ptr);
 #define Sunsigned32_value(x) (Suint32_t)Sinteger32_value(x)
 EXPORT Sint64_t Sinteger64_value(ptr);
+EXPORT int Stry_integer_value(ptr, iptr*, const char**);
+EXPORT int Stry_integer32_value(ptr, Sint32_t*, const char**);
+EXPORT int Stry_integer64_value(ptr, Sint64_t*, const char**);
 #define Sunsigned64_value(x) (Suint64_t)Sinteger64_value(x)
+EXPORT int Stry_unsigned_value(ptr, uptr*, const char**);
+EXPORT int Stry_unsigned32_value(ptr, Suint32_t*, const char**);
+EXPORT int Stry_unsigned64_value(ptr, Suint64_t*, const char**);
 
 /* Mutators */
 EXPORT void Sset_box(ptr, ptr);

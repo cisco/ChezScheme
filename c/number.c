@@ -202,14 +202,17 @@ static ptr copy_normalize(ptr tc, const bigit *p, iptr len, IBOOL sign) {
   return b;
 }
 
+#define RETURN_STRY_OK(expr) { *val = expr; return 1; }
+#define RETURN_STRY_ERROR(why) { if (reason) *reason = why; return 0; }
+
 /* -2^(b-1) <= x <= 2^b-1, where b = number of bits in a uptr */
-iptr S_integer_value(const char *who, ptr x) {
-  if (Sfixnump(x)) return UNFIX(x);
+IBOOL Stry_integer_value(ptr x, iptr *val, const char** reason) {
+  if (Sfixnump(x)) RETURN_STRY_OK(UNFIX(x))
 
   if (Sbignump(x)) {
     iptr xl; uptr u;
 
-    if ((xl = BIGLEN(x)) > ptr_bigits) S_error1(who, "~s is out of range", x);
+    if ((xl = BIGLEN(x)) > ptr_bigits) RETURN_STRY_ERROR("~s is out of range")
 
     u = BIGIT(x,0);
 
@@ -217,69 +220,48 @@ iptr S_integer_value(const char *who, ptr x) {
     if (xl == 2) u = (u << bigit_bits) | BIGIT(x,1);
 #endif
 
-    if (!BIGSIGN(x)) return (iptr)u;
-    if (u < ((uptr)1 << (ptr_bits - 1))) return -(iptr)u;
-    if (u > ((uptr)1 << (ptr_bits - 1))) S_error1(who, "~s is out of range", x);
+    if (!BIGSIGN(x)) RETURN_STRY_OK((iptr)u)
+    if (u < ((uptr)1 << (ptr_bits - 1))) RETURN_STRY_OK(-(iptr)u)
+    if (u > ((uptr)1 << (ptr_bits - 1))) RETURN_STRY_ERROR("~s is out of range")
 #if (fixnum_bits > 32)
-    return (iptr)0x8000000000000000;
+    RETURN_STRY_OK((iptr)0x8000000000000000)
 #else
-    return (iptr)0x80000000;
+    RETURN_STRY_OK((iptr)0x80000000)
 #endif
   }
 
-  S_error1(who, "~s is not an integer", x);
-
-  return 0 /* not reached */;
-}
-
-/* -2^(b-1) <= x <= 2^b-1, where b = number of bits in a uptr */
-IBOOL S_integer_valuep(ptr x) {
-  if (Sfixnump(x)) return 1;
-
-  if (Sbignump(x)) {
-    iptr xl; uptr u;
-
-    if ((xl = BIGLEN(x)) > ptr_bigits) return 0;
-
-    u = BIGIT(x,0);
-
-#if (ptr_bigits == 2)
-    if (xl == 2) u = (u << bigit_bits) | BIGIT(x,1);
-#endif
-
-    if (!BIGSIGN(x)) return 1;
-    return u <= ((uptr)1 << (ptr_bits - 1));
-  }
-
-  return 0;
+  RETURN_STRY_ERROR("~s is not an integer")
 }
 
 iptr Sinteger_value(ptr x) {
-  return S_integer_value("Sinteger_value", x);
+  iptr result;
+  const char* reason;
+  if (Stry_integer_value(x, &result, &reason)) return result;
+  S_error1("Sinteger_value", reason, x);
 }
 
 /* -2^31 <= x <= 2^32-1 */
-I32 S_int32_value(char *who, ptr x) {
+IBOOL Stry_integer32_value(ptr x, Sint32_t* val, const char** reason) {
 #if (fixnum_bits > 32)
   if (Sfixnump(x)) {
     iptr n = UNFIX(x);
     if (n < 0) {
-      I32 m = (I32)n;
-      if ((iptr)m == UNFIX(x)) return m;
+      Sint32_t m = (Sint32_t)n;
+      if ((iptr)m == UNFIX(x)) RETURN_STRY_OK(m)
     } else {
-      U32 m = (U32)n;
-      if ((uptr)m == (uptr)UNFIX(x)) return (I32)m;
+      Suint32_t m = (Suint32_t)n;
+      if ((uptr)m == (uptr)UNFIX(x)) RETURN_STRY_OK((Sint32_t)m)
     }
-    S_error1(who, "~s is out of range", x);
+    RETURN_STRY_ERROR("~s is out of range")
   }
-  if (Sbignump(x)) S_error1(who, "~s is out of range", x);
+  if (Sbignump(x)) RETURN_STRY_ERROR("~s is out of range")
 #else /* (fixnum_bits > 32) */
-  if (Sfixnump(x)) return UNFIX(x);
+  if (Sfixnump(x)) RETURN_STRY_OK(UNFIX(x))
 
   if (Sbignump(x)) {
-    iptr xl; U32 u;
+    iptr xl; Suint32_t u;
 
-    if ((xl = BIGLEN(x)) > U32_bigits) S_error1(who, "~s is out of range", x);
+    if ((xl = BIGLEN(x)) > U32_bigits) RETURN_STRY_ERROR("~s is out of range")
 
     u = BIGIT(x,0);
 
@@ -287,30 +269,31 @@ I32 S_int32_value(char *who, ptr x) {
     if (xl == 2) u = (u << bigit_bits) | BIGIT(x,1);
 #endif
 
-    if (!BIGSIGN(x)) return (I32)u;
-    if (u < ((U32)1 << 31)) return -(I32)u;
-    if (u > ((U32)1 << 31)) S_error1(who, "~s is out of range", x);
-    return (I32)0x80000000;
+    if (!BIGSIGN(x)) RETURN_STRY_OK((Sint32_t)u)
+    if (u < ((Suint32_t)1 << 31)) RETURN_STRY_OK(-(Sint32_t)u)
+    if (u > ((Suint32_t)1 << 31)) RETURN_STRY_ERROR("~s is out of range")
+    RETURN_STRY_OK((Sint32_t)0x80000000)
   }
 #endif /* (fixnum_bits > 32) */
 
-  S_error1(who, "~s is not an integer", x);
-
-  return 0 /* not reached */;
+  RETURN_STRY_ERROR("~s is not an integer")
 }
 
-I32 Sinteger32_value(ptr x) {
-  return S_int32_value("Sinteger32_value", x);
+Sint32_t Sinteger32_value(ptr x) {
+  Sint32_t result;
+  const char* reason;
+  if (Stry_integer32_value(x, &result, &reason)) return result;
+  S_error1("Sinteger32_value", reason, x);
 }
 
 /* -2^63 <= x <= 2^64-1 */
-I64 S_int64_value(char *who, ptr x) {
-  if (Sfixnump(x)) return UNFIX(x);
+IBOOL Stry_integer64_value(ptr x, Sint64_t *val, const char** reason) {
+  if (Sfixnump(x)) RETURN_STRY_OK(UNFIX(x))
 
   if (Sbignump(x)) {
-    iptr xl; U64 u;
+    iptr xl; Suint64_t u;
 
-    if ((xl = BIGLEN(x)) > U64_bigits) S_error1(who, "~s is out of range", x);
+    if ((xl = BIGLEN(x)) > U64_bigits) RETURN_STRY_ERROR("~s is out of range")
 
     u = BIGIT(x,0);
 
@@ -318,19 +301,51 @@ I64 S_int64_value(char *who, ptr x) {
     if (xl == 2) u = (u << bigit_bits) | BIGIT(x,1);
 #endif
 
-    if (!BIGSIGN(x)) return (I64)u;
-    if (u < ((U64)1 << 63)) return -(I64)u;
-    if (u > ((U64)1 << 63)) S_error1(who, "~s is out of range", x);
-    return (I64)0x8000000000000000;
+    if (!BIGSIGN(x)) RETURN_STRY_OK((Sint64_t)u)
+    if (u < ((Suint64_t)1 << 63)) RETURN_STRY_OK(-(Sint64_t)u)
+    if (u > ((Suint64_t)1 << 63)) RETURN_STRY_ERROR("~s is out of range")
+    RETURN_STRY_OK((Sint64_t)0x8000000000000000)
   }
 
-  S_error1(who, "~s is not an integer", x);
+  RETURN_STRY_ERROR("~s is not an integer")
+}
 
-  return 0 /* not reached */;
+I64 S_int64_value(char *who, ptr x) {
+  Sint64_t result;
+  const char* reason;
+  if (Stry_integer64_value(x, &result, &reason)) return result;
+  S_error1(who, reason, x);
 }
 
 Sint64_t Sinteger64_value(ptr x) {
   return S_int64_value("Sinteger64_value", x);
+}
+
+IBOOL Stry_unsigned_value(ptr x, uptr* val, const char** reason) {
+  iptr tmp;
+  if (Stry_integer_value(x, &tmp, reason)) {
+    *val = (uptr)tmp;
+    return 1;
+  }
+  return 0;
+}
+
+IBOOL Stry_unsigned32_value(ptr x, Suint32_t* val, const char** reason) {
+  Sint32_t tmp;
+  if (Stry_integer32_value(x, &tmp, reason)) {
+    *val = (Suint32_t)tmp;
+    return 1;
+  }
+  return 0;
+}
+
+IBOOL Stry_unsigned64_value(ptr x, Suint64_t* val, const char** reason) {
+  Sint64_t tmp;
+  if (Stry_integer64_value(x, &tmp, reason)) {
+    *val = (Suint64_t)tmp;
+    return 1;
+  }
+  return 0;
 }
 
 ptr Sunsigned(uptr u) { /* convert arg to Scheme integer */
