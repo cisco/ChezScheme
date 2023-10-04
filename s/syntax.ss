@@ -4250,7 +4250,7 @@
            (and (not std?) (id? #'mid))
            (determine-module-imports "module" #'mid #'mid #'mid)]
           [(?library-reference lr)
-           (sym-kwd? ?library-reference library-reference)
+           (sym-kwd? ?library-reference library)
            (let-values ([(mid tid) (lookup-library #'lr)])
              (determine-module-imports "library" #'lr mid tid))]
           [lr (let-values ([(mid tid) (lookup-library #'lr)])
