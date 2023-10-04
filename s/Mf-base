@@ -19,7 +19,7 @@ MAKEFLAGS += --no-print-directory
 # separately control the options used while compiling a cross compiler.
 
 # o determines the optimize level
-o = 2
+o = 3
 
 # d is the debug level at which the system should be built
 d = 0
@@ -28,10 +28,10 @@ d = 0
 cl = (commonization-level)
 
 # i determines whether inspector-information is generated: f for false, t for true
-i = t
+i = f
 
 # cp0 determines the number of cp0 (source optimizer) iterations run
-cp0 = 1
+cp0 = 2
 
 # fc determines whether fasl objects are compressed
 fc = t
