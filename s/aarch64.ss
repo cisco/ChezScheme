@@ -2177,7 +2177,12 @@
       (lambda (l1 l2 offset x y)
         (Trivit (x y)
                 (values
-                 (emit fcmp x y '())
+                 (let ([disp (constant flonum-data-disp)]
+                       [flreg1 `(reg . ,%flreg1)]
+                       [flreg2 `(reg . ,%flreg2)])
+                   (emit ldurfi flreg1 x disp
+                         (emit ldurfi flreg2 y disp
+                               (emit fcmp flreg1 flreg2 '()))))
                  (asm-conditional-jump info l1 l2 offset))))))
 
   (define-who asm-relop
@@ -3438,11 +3443,11 @@
                                                  [(fp-double-float)
                                                   (lambda (rhs)
                                                     `(inline ,(make-info-loadfl %Cfpretval)
-                                                             ,%load-double ,rhs ,%zero ,(constant flonum-data-disp)))]
+                                                             ,%load-double ,rhs ,%zero ,(%constant flonum-data-disp)))]
                                                  [(fp-single-float)
                                                   (lambda (rhs)
                                                     `(inline ,(make-info-loadfl %Cfpretval)
-                                                             ,%load-double->single ,rhs ,%zero ,(constant flonum-data-disp)))]
+                                                             ,%load-double->single ,rhs ,%zero ,(%constant flonum-data-disp)))]
                                                  [(fp-void)
                                                   (lambda () `(nop))]
                                                  [(fp-ftd& ,ftd)
