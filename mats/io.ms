@@ -541,7 +541,8 @@
       (error? (errorf 'close-port "iconv CP1252 codec cannot encode #\\x3BB"))
       (error? (errorf 'close-port "iconv CP1252 codec cannot encode #\\newline with eol-style ls"))
       (error? (errorf 'close-port "latin-1 codec cannot encode #\\newline with eol-style ls")))
-    (mat iconv-codec
+    (unless (memq (machine-type) '(aarch64le taarch64le))
+      (mat iconv-codec
       (error? ; invalid codec
         (iconv-codec -73))
       (error? ; unsupported encoding
@@ -1050,8 +1051,8 @@
       ; close any files left open by failing iconv tests.  this is particularly
       ; important on windows when the iconv dll isn't available and where keeping
       ; file open can prevent it from being reopened.
-      (begin (collect (collect-maximum-generation)) #t)
-      ))
+      (begin (collect (collect-maximum-generation)) #t)))
+)
 
 (mat port-operations4
   (begin

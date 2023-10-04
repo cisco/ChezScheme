@@ -4424,8 +4424,8 @@
              (#2%display 1))))
 )
 
-;; #%$read-time-stamp-counter requires a kernel module on arm32le
-(unless (memq (machine-type) '(arm32le tarm32le))
+;; #%$read-time-stamp-counter requires a kernel module on arm32le and [t]aarch64le
+(unless (memq (machine-type) '(arm32le tarm32le aarch64le taarch64le))
   (mat $read-time-stamp-counter
 
     (let ([t (#%$read-time-stamp-counter)])
