@@ -2429,3 +2429,5 @@
     csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
     wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
     wininstall/ta6nt.wxs wininstall/ti3nt.wxs
+- fix (library <library reference>) import syntax
+    mats/8.ms release_notes/release_notes.stex s/syntax.ss

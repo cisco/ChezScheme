@@ -3417,6 +3417,30 @@
         (import-only A B)
         x))
     'b)
+  (begin
+    (library (for mat) (export x) (import (scheme)) (define x 123))
+    (library (a b c) (export d) (import (scheme)) (define d 27))
+    (library (xd)
+      (export ls)
+      (import (scheme) (library (for mat)) (library (a b c)))
+      (define ls (list x d)))
+    #t)
+  (equal? 123
+    (let ([x 'port])
+      (import (library (for mat)))
+      x))
+  (equal? 27
+    (let ([d 'nile])
+      (import (library (a b c)))
+      d))
+  (equal? 27
+    (let ([d 'nile])
+      (import (a b c))
+      d))
+  (equal? '(123 27)
+    (let ([x 'treme] [d 'nile])
+      (import (xd))
+      ls))
 )
 
 (mat export ; test stand-alone export form
