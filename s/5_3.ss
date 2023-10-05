@@ -560,16 +560,15 @@
                (let ([rho (fl/ theta)] [-pi/2 (fl- pi/2)])
                   (lambda (x y)
                      ; x is positive
-                     (let ([ay (abs y)])
+                     (let ([ay (flabs y)])
                         (cond
                            [(or (fl> x theta) (fl> ay theta))
                             ; RP(1/z) +/- (pi/2)i
                             (fl-make-rectangular
-                               (cond
-                                  [(fl> x ay) (fl/ (fl+ x (fl* (fl/ y x) y)))]
-                                  [(fl< x ay) (let ([r (fl/ y x)])
-                                                 (fl/ r (fl+ (fl* x r) y)))]
-                                  [else (fl/ (fl+ x ay))])
+                               (if (fl>= x ay)
+                                   (fl/ (fl+ x (fl* (fl/ y x) y)))
+                                   (let ([r (fl/ x y)])
+                                     (fl/ r (fl+ y (fl* r x)))))
                                (if (negated-flonum? y) pi/2 -pi/2))]
                            [(fl= x 1.0)
                             (let ([k (fl+ ay rho)])
@@ -2324,19 +2323,26 @@
            (make-rectangular (/ (real-part x) y) (/ (imag-part x) y))]
           [else (nonnumber-error who x)])]
        [($exactnum? $inexactnum?)
+        ;; See "Algorithm 116: Complex Division" by Robert L. Smith,
+        ;; Communications of the ACM, Volume 5, Issue 8, Aug. 1962
+        ;; a+bi / c+di => (a+b(d/c))/(c+d(d/c)) + ((b-a(d/c))/(c+d(d/c)))i if |c| >= |d|
+        ;; a+bi / c+di => (b+a(c/d))/(d+c(c/d)) + ((a-b(c/d))/(d+c(c/d)))i if |c| < |d|
         (type-case x
           [(fixnum? bignum? ratnum? flonum?)
-           ;; a / c+di => c(a/(cc+dd)) + (-d(a/cc+dd))i
            (let ([c (real-part y)] [d (imag-part y)])
-             (let ([t (/ x (+ (* c c) (* d d)))])
-               (make-rectangular (* c t) (- (* d t)))))]
+             (if (>= (abs c) (abs d))
+                 (let* ([r (/ d c)] [den (+ c (* r d))])
+                   (make-rectangular (/ x den) (/ (- (* x r)) den)))
+                 (let* ([r (/ c d)] [den (+ d (* r c))])
+                   (make-rectangular (/ (* x r) den) (/ (- x) den)))))]
           [($exactnum? $inexactnum?)
-           ;; a+bi / c+di => (ac+bd)/(cc+dd) + ((bc-ad)/(cc+dd))i
            (let ([a (real-part x)] [b (imag-part x)]
-                                   [c (real-part y)] [d (imag-part y)])
-             (let ([t (+ (* c c) (* d d))])
-               (make-rectangular (/ (+ (* a c) (* b d)) t)
-                 (/ (- (* b c) (* a d)) t))))]
+                 [c (real-part y)] [d (imag-part y)])
+             (if (>= (abs c) (abs d))
+                 (let* ([r (/ d c)] [den (+ c (* r d))])
+                   (make-rectangular (/ (+ a (* b r)) den) (/ (- b (* a r)) den)))
+                 (let* ([r (/ c d)] [den (+ d (* r c))])
+                   (make-rectangular (/ (+ (* a r) b) den) (/ (- (* b r) a) den)))))]
           [else (nonnumber-error who x)])]
        [else (nonnumber-error who y)])))
 

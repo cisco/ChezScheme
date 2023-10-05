@@ -2373,6 +2373,74 @@
 - fix repair to invalid live-pointer mask, where a pass did not handle the
   new raw-data form correctly
     mats/fx.ms s/cpnanopass.ss
+- use Robert L. Smith's 1962 complex number division algorithm to avoid nans in
+  situations involving infinite denominators
+    s/library.ss s/5_3.ss mats/5_3.ms
+- avoid implicit fallthrough warnings
+    c/scheme.c c/schsig.c c/Mf-a6le c/Mf-a6osx c/Mf-arm32le c/Mf-i3le c/Mf-i3osx
+    c/Mf-ppc32le c/Mf-ta6le c/Mf-ta6osx c/Mf-ti3le c/Mf-ti3osx c/Mf-tppc32le
+- use simpler get-string-all in fresh-line mats where the expected result
+  from block-read relied on the input-port's buffer size
+    mats/6.ms mats/patch-interpret-0-f-f-f mats/patch-interpret-0-f-t-f
+    mats/patch-interpret-3-f-f-f mats/patch-interpret-3-f-t-f
+- add transcoded-port-buffer-size parameter to permit control over the size of
+  the string buffer and ioffsets fxvector, if any, for a transcoded port.
+  add make-codec-buffer to allow control over the internal codec bytevector
+  buffer for a transcoded port. extend mats to cover different buffer sizes.
+    csug/io.stex mats/io.ms mats/patch-compile-0-t-f-f
+    mats/patch-interpret-0-f-f-f mats/patch-interpret-0-f-t-f
+    mats/root-experr-compile-0-f-f-f mats/root-experr-compile-2-f-f-f
+    release_notes/release_notes.stex s/io.ss s/primdata.ss
+- avoid extra allocation and copying when we have a single block in the
+  append-blocks procedures used by get-bytevector-all, get-bytevector-n,
+  $get-string-all, and get-string-n
+    mats/io.ms release_notes/release_notes.stex s/io.ss
+- reduce allocation and copying for certain cases in bytevector->string
+    mats/io.ms release_notes/release_notes.stex s/io.ss
+- update zlib to version 1.3
+- repair collector handling of weak pairs when the max target generation
+  is greater than the minimum target generation
+    c/gc.c mats/4.ms
+- repair collector handling of ephemeron pairs that refer to objects in
+  younger generations
+    c/gc.c mats/4.ms
+
+9.6.0 changes:
+- updated version to 9.6.0
+    BUILDING NOTICE makefiles/Mf-install.in makefiles/Makefile-csug.in
+    scheme.1.in c/Makefile.a6nt c/Makefile.i3nt c/Makefile.ta6nt
+    c/Makefile.ti3nt mats/Mf-a6nt mats/Mf-i3nt mats/Mf-ta6nt
+    mats/Mf-ti3nt workarea c/scheme.rc s/7.ss s/cmacros.ss
+    release_notes/release_notes.stex csug/copyright.stex csug/csug.stex
+    bintar/Makefile rpm/Makefile pkg/Makefile wininstall/Makefile
+    wininstall/a6nt.wxs wininstall/i3nt.wxs wininstall/ta6nt.wxs
+    wininstall/ti3nt.wxs
+- removed Microsoft C Runtime library merge module redistribution as
+  recommended by Microsoft
+- specify version of WiX required to build the Windows installer
+
+9.6.2 changes:
+- The make install target of 9.6.0 was broken by the version string being 9.6.
+- updated version to 9.6.2
+    BUILDING NOTICE makefiles/Mf-install.in scheme.1.in c/Makefile.a6nt
+    c/Makefile.i3nt c/Makefile.ta6nt c/Makefile.ti3nt mats/Mf-a6nt
+    mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt workarea c/scheme.rc
+    s/cmacros.ss release_notes/release_notes.stex csug/copyright.stex
+    csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
+    wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
+    wininstall/ta6nt.wxs wininstall/ti3nt.wxs
+
+9.6.3 changes:
+- updated version to 9.6.3
+    BUILDING NOTICE makefiles/Mf-install.in scheme.1.in c/Makefile.a6nt
+    c/Makefile.i3nt c/Makefile.ta6nt c/Makefile.ti3nt mats/Mf-a6nt
+    mats/Mf-i3nt mats/Mf-ta6nt mats/Mf-ti3nt workarea c/scheme.rc
+    s/cmacros.ss release_notes/release_notes.stex csug/copyright.stex
+    csug/csug.stex bintar/Makefile rpm/Makefile pkg/Makefile
+    wininstall/Makefile wininstall/a6nt.wxs wininstall/i3nt.wxs
+    wininstall/ta6nt.wxs wininstall/ti3nt.wxs
+- fix (library <library reference>) import syntax
+    mats/8.ms release_notes/release_notes.stex s/syntax.ss
 - add support for 64-bit RISC-V ([t]rv64le) and 64-bit LoongArch ([t]la64le)
     boot/la64le/* boot/tla64le/* boot/rv64le/* boot/trv64le/*
     c/Mf-la64le c/Mf-tla64le c/Mf-rv64le c/Mf-trv64le
@@ -2383,3 +2451,4 @@
     s/cmacros.ss s/compile.ss s/cpnanopass.ss s/ftype.ss s/np-languages.ss
     s/primdata.ss s/mkheader.ss s/la64.ss s/riscv64.ss
     s/rv64le.def s/tla64le.def s/trv64le.def s/la64le.def
+    

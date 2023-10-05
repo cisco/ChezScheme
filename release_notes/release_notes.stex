@@ -1,9 +1,9 @@
 \documentclass{releasenotes}
 
-\thisversion{Version 9.5.9}
+\thisversion{Version 9.6.3}
 \thatversion{Version 8.4}
-\pubmonth{April}
-\pubyear{2022}
+\pubmonth{October}
+\pubyear{2023}
 
 \begin{document}
 
@@ -58,6 +58,17 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{New transcoded port buffer-size parameters (9.6.0)}
+
+The new parameter \scheme{transcoded-port-buffer-size} specifies the size
+of the string buffer that is allocated when creating a new transcoded port.
+If the underlying binary port implements \scheme{port-position},
+a transcoded input port allocates an internal fxvector the same size
+as its string buffer for use by \scheme{port-position}.
+The new parameter \scheme{make-codec-buffer} can be used to supply an appropriately
+sized internal bytevector buffer for the codec used by a new transcoded port.
+The size of these string and bytevector buffers was previously hardcoded at 1024.
+
 \subsection{Unicode 15.0 Support (9.6.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,
@@ -71,14 +82,14 @@ creating a syntactic binding for one of the built-in types, such as
 As of 9.5.8, syntactic bindings that do not bind an ftype descriptor are no
 longer considered when defining ftypes.
 
-This change also allows a base ftype to be bound using `define-ftype`, though
+This change also allows a base ftype to be bound using \scheme{define-ftype}, though
 this fixes the endianness of the type.  For instance:
 
 \schemedisplay
 (define-ftype integer-32 integer-32)
 \endschemedisplay
 
-This binds the ftype `integer-32` to the native-endian `integer-32`.  It is possible to bind both endiannesses by using explicit names:
+This binds the ftype \scheme{integer-32} to the native-endian \scheme{integer-32}.  It is possible to bind both endiannesses by using explicit names:
 
 \schemedisplay
 (define-ftype integer-32-be (endian big integer-32))
@@ -1955,6 +1966,27 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Library-reference import syntax}
+
+A bug where \scheme{import} did not recognize a \var{library-spec}
+of the form \scheme{(library \var{library-reference})} has been fixed.
+
+\subsection{Garbage collector incorrectly handles emphemerons (9.6.0)}
+
+A bug where the garbage collector sometimes incorrectly handles epehemeron pairs has
+been fixed.
+
+\subsection{Garbage collector incorrectly handles mutated weak pairs (9.6.0)}
+
+A bug where the garbage collector sometimes incorrectly handles mutated weak pairs has
+been fixed.
+
+\subsection{Division by an infinite complex number sometimes incorrectly returns +nan.0 (9.6.0)}
+
+A bug that caused \scheme{/}, \scheme{cfl/}, \scheme{atan}, and \scheme{atanh} to return
+an incorrect real or imaginary +nan.0 component has been fixed. The inexact complex number
+division routine now uses Robert L. Smith's 1962 algorithm.
+
 \subsection{Invalid live-pointer mask for some inline primitive calls (9.6.0)}
 
 Fixed a crash at optimize-level 2 and higher caused by the compiler generating
@@ -1965,7 +1997,7 @@ store raw data on the stack and whose operands contain calls.
   \protect\scheme{member} and \protect\scheme{assoc} (9.6.0)}
 
 When \scheme{remove}, \scheme{member} or \scheme{assoc} were used in
-\scheme{optimize-level} 3 in a position where the result was discarded,
+optimize-level 3 in a position where the result was discarded,
 a bug in the source code optimizer could drop the call even though the first
 argument may be a record with a custom equality predicate that has side effects.
 
@@ -2486,6 +2518,22 @@ x86\_64 has been fixed.
 
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
+
+\subsection{Reduced allocation and copying (9.6.0)}
+
+When given a bytevector whose length is less than \scheme{file-buffer-size},
+\scheme{bytevector->string} now allocates the minimum size string buffer,
+internal ioffsets fxvector, and internal codec buffer.
+The size of each was formerly hardcoded at 1024.
+The
+\scheme{bytevector->string},
+\scheme{get-bytevector-all},
+\scheme{get-bytevector-n},
+\scheme{get-string-all}, and
+\scheme{get-string-n} procedures
+may avoid extra allocation and copying when the result is not more than
+\scheme{file-buffer-size} and no intermediate reads need to be stitched
+together to form the result.
 
 \subsection{Special-cased basic arithmetic operations (9.5.4)}
 

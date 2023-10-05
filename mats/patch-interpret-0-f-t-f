@@ -1,14 +1,14 @@
-*** patches-work-dir/errors-compile-0-f-t-f	2022-05-08 20:43:10.000000000 -0700
---- patches-work-dir/errors-interpret-0-f-t-f	2022-05-08 20:43:10.000000000 -0700
+*** patches-work-dir/errors-compile-0-f-t-f	2023-08-01 21:37:48.850355578 -0400
+--- patches-work-dir/errors-interpret-0-f-t-f	2023-08-01 21:37:48.855355586 -0400
 ***************
 *** 1,3 ****
 --- 1,9 ----
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1032, char 4 of ../6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1034, char 4 of ../6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1041, char 4 of ../6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1043, char 4 of ../6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1050, char 4 of ../6.ms
-+ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1052, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 1 at line 1024, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 2 at line 1026, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 5 at line 1033, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 6 at line 1035, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 9 at line 1042, char 4 of ../6.ms
++ 6.mo:Bug in mat cp1in-verify-format-warnings clause 10 at line 1044, char 4 of ../6.ms
   primvars.mo:Expected error testing (environment (quote 0)): Exception in environment: invalid library reference 0
   primvars.mo:Expected error testing (environment (quote (a . b))): Exception in environment: invalid library reference (a . b)
   primvars.mo:Expected error testing (environment (quote #f)): Exception in environment: invalid library reference #f
@@ -213,7 +213,28 @@
   6.mo:Expected error in mat print-parameters: "write: cycle detected; proceeding with (print-graph #t)".
 --- 4284,4293 ----
 ***************
-*** 7379,7385 ****
+*** 7082,7090 ****
+  io.mo:Expected error in mat transcoded-port-buffer-size: "transcoded-port-buffer-size: 1024.0 is not a positive fixnum".
+  io.mo:Expected error in mat make-codec-buffer: "incorrect argument count in call (make-codec-buffer (lambda (bp) (make-bytevector 4)) "extra arg")".
+  io.mo:Expected error in mat make-codec-buffer: "make-codec-buffer: shoe is not a procedure".
+! io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure bad1> did not return a mutable bytevector of length at least four".
+! io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure bad2> did not return a mutable bytevector of length at least four".
+! io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure bad3> did not return a mutable bytevector of length at least four".
+  io.mo:Expected error in mat compress-parameters: "compress-format: foo is not a supported format".
+  io.mo:Expected error in mat compress-parameters: "compress-format: "gzip" is not a supported format".
+  io.mo:Expected error in mat compress-parameters: "compress-level: foo is not a supported level".
+--- 7082,7090 ----
+  io.mo:Expected error in mat transcoded-port-buffer-size: "transcoded-port-buffer-size: 1024.0 is not a positive fixnum".
+  io.mo:Expected error in mat make-codec-buffer: "incorrect argument count in call (make-codec-buffer (lambda (bp) (make-bytevector 4)) "extra arg")".
+  io.mo:Expected error in mat make-codec-buffer: "make-codec-buffer: shoe is not a procedure".
+! io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure> did not return a mutable bytevector of length at least four".
+! io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure> did not return a mutable bytevector of length at least four".
+! io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure> did not return a mutable bytevector of length at least four".
+  io.mo:Expected error in mat compress-parameters: "compress-format: foo is not a supported format".
+  io.mo:Expected error in mat compress-parameters: "compress-format: "gzip" is not a supported format".
+  io.mo:Expected error in mat compress-parameters: "compress-level: foo is not a supported level".
+***************
+*** 7354,7360 ****
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
@@ -221,7 +242,7 @@
   7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
---- 7379,7385 ----
+--- 7354,7360 ----
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
@@ -230,7 +251,7 @@
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
 ***************
-*** 7579,7586 ****
+*** 7554,7561 ****
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -239,7 +260,7 @@
   record.mo:Expected error in mat record2: "invalid value 3 for foreign type double-float".
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
---- 7579,7586 ----
+--- 7554,7561 ----
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -249,7 +270,7 @@
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
 ***************
-*** 7588,7602 ****
+*** 7563,7577 ****
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -265,7 +286,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid input #f".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
---- 7588,7602 ----
+--- 7563,7577 ----
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -282,7 +303,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
 ***************
-*** 7609,7634 ****
+*** 7584,7609 ****
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -309,7 +330,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: 0 is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
---- 7609,7634 ----
+--- 7584,7609 ----
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -337,7 +358,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
 ***************
-*** 7763,7801 ****
+*** 7738,7776 ****
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -377,7 +398,7 @@
   record.mo:Expected error in mat record?: "record?: 4 is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
---- 7763,7801 ----
+--- 7738,7776 ----
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo>".
@@ -418,7 +439,7 @@
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
 ***************
-*** 7810,7866 ****
+*** 7785,7841 ****
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
@@ -476,7 +497,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
---- 7810,7866 ----
+--- 7785,7841 ----
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
@@ -535,7 +556,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
 ***************
-*** 9039,9051 ****
+*** 9014,9026 ****
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -549,7 +570,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
---- 9039,9051 ----
+--- 9014,9026 ----
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx-: "fx-: #f is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -564,7 +585,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
 ***************
-*** 10535,10544 ****
+*** 10510,10519 ****
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
@@ -575,7 +596,7 @@
   oop.mo:Expected error in mat oop: "m1: not applicable to 17".
   oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
   oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
---- 10535,10544 ----
+--- 10510,10519 ----
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".

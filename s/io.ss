@@ -79,22 +79,45 @@ implementation notes:
     so we instead use an input-mode flag in the port header.
 |#
 
-(begin
+(let-syntax ([make-positive-fixnum-thread-parameter
+              ;; duplicate code so we get the right procedure-name
+              (syntax-rules ()
+                [(_ who default)
+                 ($make-thread-parameter default
+                   (lambda (x)
+                     (unless (and (fixnum? x) (fx> x 0))
+                       ($oops who "~s is not a positive fixnum" x))
+                     x))])])
 (set-who! file-buffer-size
-  ($make-thread-parameter $c-bufsiz
-    (lambda (x)
-      (unless (and (fixnum? x) (fx> x 0))
-        ($oops who "~s is not a positive fixnum" x))
-      x)))
+  (make-positive-fixnum-thread-parameter who $c-bufsiz))
 
 (set-who! custom-port-buffer-size
-  ($make-thread-parameter 128
+  (make-positive-fixnum-thread-parameter who 128))
+
+(set-who! transcoded-port-buffer-size
+  (make-positive-fixnum-thread-parameter who 1024))
+
+(set-who! make-codec-buffer
+  ($make-thread-parameter (lambda (bp) (make-bytevector 1024)) ;; original hardcoded value
     (lambda (x)
-      (unless (and (fixnum? x) (fx> x 0))
-        ($oops who "~s is not a positive fixnum" x))
+      (unless (procedure? x)
+        ($oops who "~s is not a procedure" x))
       x)))
 
 (let ()
+  (define min-codec-buffer-size
+    ;; From the Unicode Standard, Version 15.0 - Core Specification, Section 2.5:
+    ;;  "The Unicode Standard provides three distinct encoding forms for Unicode
+    ;;   characters, using 8-bit, 16-bit, and 32-bit units. These are named UTF-8,
+    ;;   UTF-16, and UTF-32, respectively."
+    ;;
+    ;; | encoding | code-point representation |
+    ;; |----------+---------------------------|
+    ;; | UTF-8    | one to four bytes         |
+    ;; | UTF-16   | one or two 16-bit values  |
+    ;; | UTF-32   | a single 32-bit value     |
+    4)
+
  ; choose whether to issue warnings when custom-port implementation
  ; cannot determine position for port-position or write operation
   #;(define position-warning warning)
@@ -112,7 +135,7 @@ implementation notes:
 
   (define-port-handler (codec make-codec codec?) #f
     (name -> string)
-    (make-info who tx bp bv -> codec-info))
+    (make-info who tx bp tp-buf-len bv -> codec-info))
 
  ; ioffsets is an fxvector mapping character positions in a port's input buffer
  ; to byte offsets from the starting byte position for the buffer.  ibytes
@@ -243,9 +266,7 @@ implementation notes:
   (define minimum-file-buffer-length 1)
   (define bytevector-buffer-length 128)
   (define string-buffer-length 16)
-  (define buffered-transcoded-port-buffer-length 1024)
   (define unbuffered-transcoded-port-buffer-length 1)
-  (define codec-buffer-length 1024)
 
   (define check-option ; for Chez Scheme list-based file open options
     (lambda (who x y)
@@ -1432,7 +1453,7 @@ implementation notes:
          ; port-handler-ready? may raise an exception, but that's okay because ifready?
          ; is true only if this is called from transcoded-port's port-handler-ready?.
           (if (or (not ifready?) ((port-handler-ready? h) who bp))
-              ((port-handler-get-some h) who bp bv start (fx- codec-buffer-length start))
+              ((port-handler-get-some h) who bp bv start (fx- (bytevector-length bv) start))
               0))))
 
     (let ()
@@ -1511,6 +1532,7 @@ implementation notes:
               (let ([bp (codec-info-bp info)]
                     [bv (codec-info-bv info)]
                     [jend (fx+ start count)])
+                (define codec-buffer-length (bytevector-length bv))
                 (let loop ([j start] [o (codec-info-next info)])
                   (cond
                     [(fx= j jend) (return count o info)]
@@ -1574,9 +1596,11 @@ implementation notes:
             (make-codec
               [name "latin-1"]
               [make-info
-               (lambda (who tx bp bv)
+               (lambda (who tx bp tp-buf-len bv)
                  (make-codec-info tx bp bv 0 0
-                   (and (input-port? bp) (make-fxvector (bytevector-length bv)))
+                   (and (input-port? bp)
+                        (port-has-port-position? bp)
+                        (make-fxvector tp-buf-len))
                    0 #f #f #f #f
                    latin-1-decode latin-1-encode (lambda (info) #f)))]))
           (lambda () codec))))
@@ -1852,6 +1876,7 @@ implementation notes:
               (let ([bp (codec-info-bp info)]
                     [bv (codec-info-bv info)]
                     [jend (fx+ start count)])
+                (define codec-buffer-length (bytevector-length bv))
                 (let loop ([j start] [o (codec-info-next info)])
                   (cond
                     [(fx= j jend) (return count o info)]
@@ -1944,9 +1969,11 @@ implementation notes:
             (make-codec
               [name "utf-8"]
               [make-info
-               (lambda (who tx bp bv)
+               (lambda (who tx bp tp-buf-len bv)
                  (make-codec-info tx bp bv 0 0
-                   (and (input-port? bp) (make-fxvector (bytevector-length bv)))
+                   (and (input-port? bp)
+                        (port-has-port-position? bp)
+                        (make-fxvector tp-buf-len))
                    0 #f #t #f #f
                    utf-8-decode utf-8-encode (lambda (info) #f)))]))
           (lambda () codec))))
@@ -2136,6 +2163,7 @@ implementation notes:
               (let ([bp (codec-info-bp info)]
                     [bv (codec-info-bv info)]
                     [jend (fx+ start count)])
+                (define codec-buffer-length (bytevector-length bv))
                 (when (codec-info-bom info)
                   (codec-info-bom-set! info #f)
                   (when (and (port-has-port-position? bp)
@@ -2253,9 +2281,11 @@ implementation notes:
           (make-codec
             [name "utf-16"]
             [make-info
-             (lambda (who tx bp bv)
+             (lambda (who tx bp tp-buf-len bv)
                (make-codec-info tx bp bv 0 0
-                 (and (input-port? bp) (make-fxvector (bytevector-length bv)))
+                 (and (input-port? bp)
+                      (port-has-port-position? bp)
+                      (make-fxvector tp-buf-len))
                  0 #f bom #f big
                  utf-16-decode utf-16-encode (lambda (info) #f)))])))
 
@@ -2397,7 +2427,7 @@ implementation notes:
             (define (return ans o info)
               (codec-info-next-set! info o)
               ans)
-            (define (do-iconv who info str j jend bv o)
+            (define (do-iconv who info str j jend bv o codec-buffer-length)
               (let ([eol-style ($transcoder-eol-style (codec-info-tx info))]
                     [desc (iconv-info-encode-desc info)])
                 (cond
@@ -2428,6 +2458,7 @@ implementation notes:
                 (let ([bp (codec-info-bp info)]
                       [bv (codec-info-bv info)]
                       [jend (fx+ start count)])
+                  (define codec-buffer-length (bytevector-length bv))
                   (let loop ([j start] [o (codec-info-next info)])
                     (cond
                       [(fx= j jend) (return count o info)]
@@ -2437,7 +2468,7 @@ implementation notes:
                              (return (fx- j start) o info)
                              (loop j o)))]
                       [else
-                       (let ([newj.newo (do-iconv who info str j jend bv o)])
+                       (let ([newj.newo (do-iconv who info str j jend bv o codec-buffer-length)])
                          (cond
                            [(pair? newj.newo) (loop (car newj.newo) (cdr newj.newo))]
                           ; one of the following presumably happened:
@@ -2474,7 +2505,7 @@ implementation notes:
             (make-codec
               [name (format "iconv ~a" code)]
               [make-info
-               (lambda (who tx bp bv)
+               (lambda (who tx bp tp-buf-len bv)
                  (define UTF-32B/LE
                    (constant-case native-endianness
                      [(little) "UTF-32LE"]
@@ -2982,14 +3013,24 @@ implementation notes:
             bpc))
         (unless (and (port? bp) (binary-port? bp)) ($oops who "~s is not a binary port" bp))
         (unless ($transcoder? tx) ($oops who "~s is not a transcoder" tx))
-        (let* ([bpc (clone-port bp)]
+        (let* ([buffered? (or ($port-flags-set? bp (constant port-flag-block-buffered))
+                              ($port-flags-set? bp (constant port-flag-line-buffered)))]
+               [codec-bv
+                (if (not buffered?)
+                    (make-bytevector min-codec-buffer-size)
+                    (let* ([make-buffer (make-codec-buffer)]
+                           [bv (make-buffer bp)])
+                      (unless (and (mutable-bytevector? bv) (fx>= (bytevector-length bv) min-codec-buffer-size))
+                        ($oops who "make-codec-buffer ~s did not return a mutable bytevector of length at least ~r"
+                          make-buffer min-codec-buffer-size))
+                      bv))]
+               [bpc (clone-port bp)]
                [name (port-name bpc)]
-               [buffer-length (if (or ($port-flags-set? bp (constant port-flag-block-buffered))
-                                      ($port-flags-set? bp (constant port-flag-line-buffered)))
-                                  buffered-transcoded-port-buffer-length
+               [buffer-length (if buffered?
+                                  (transcoded-port-buffer-size)
                                   unbuffered-transcoded-port-buffer-length)]
                [codec ($transcoder-codec tx)]
-               [info ((codec-make-info codec) who tx bpc (make-bytevector codec-buffer-length))]
+               [info ((codec-make-info codec) who tx bpc buffer-length codec-bv)]
                [handler (make-transcoded-port-handler bpc)]
                [tp (if (input-port? bpc)
                        (if (output-port? bpc)
@@ -3413,8 +3454,9 @@ implementation notes:
                  (eof-object)
                  (let ([index (binary-port-input-index p)]
                        [count (fxmin count port-count)])
-                   (bytevector-copy! (binary-port-input-buffer p) index
-                                     bv start count)
+                   (unless (and (fx= index start) (eq? bv (binary-port-input-buffer p)))
+                     (bytevector-copy! (binary-port-input-buffer p) index
+                       bv start count))
                    (set-binary-port-input-index! p (fx+ index count))
                    count))))]
         [clear-input
@@ -3758,13 +3800,15 @@ implementation notes:
                           (loop next min (fx- max n))))))))))
 
     (define (append-blocks size block-size block blocks)
-      (let ([buffer (#2%make-bytevector size)])
-        (let loop ([block-size block-size] [block block] [blocks blocks] [end size])
-          (let ([end (fx- end block-size)])
-            (bytevector-copy! block 0 buffer end block-size)
-            (if (null? blocks)
-                buffer
-                (loop (caar blocks) (cdar blocks) (cdr blocks) end))))))
+      (if (null? blocks)
+          (bytevector-truncate! block size)
+          (let ([buffer (#2%make-bytevector size)])
+            (let loop ([block-size block-size] [block block] [blocks blocks] [end size])
+              (let ([end (fx- end block-size)])
+                (bytevector-copy! block 0 buffer end block-size)
+                (if (null? blocks)
+                    buffer
+                    (loop (caar blocks) (cdar blocks) (cdr blocks) end)))))))
 
     (set-who! get-bytevector-n
       (lambda (binary-input-port count)
@@ -3900,36 +3944,37 @@ implementation notes:
                           (loop next min (fx- max n))))))))))
 
     (define (append-blocks size block-size block blocks)
-      (let ([buffer (#2%make-string size)])
-        (let loop ([block-size block-size] [block block] [blocks blocks] [end size])
-          (let ([end (fx- end block-size)])
-            (string-copy! block 0 buffer end block-size)
-            (if (null? blocks)
-                buffer
-                (loop (caar blocks) (cdar blocks) (cdr blocks) end))))))
+      (if (null? blocks)
+          (string-truncate! block size)
+          (let ([buffer (#2%make-string size)])
+            (let loop ([block-size block-size] [block block] [blocks blocks] [end size])
+              (let ([end (fx- end block-size)])
+                (string-copy! block 0 buffer end block-size)
+                (if (null? blocks)
+                    buffer
+                    (loop (caar blocks) (cdar blocks) (cdr blocks) end)))))))
 
     (define $get-string-all
-      (lambda (who textual-input-port)
-        (let ([buffer-size (file-buffer-size)])
-          (let ([get-some (port-handler-get-some ($port-handler textual-input-port))])
-            (let loop ([size 0]
-                       [next-block-index 0]
-                       [next-block (make-string buffer-size)]
-                       [blocks '()])
-              (let ([next-size (get-some who textual-input-port
-                                 next-block next-block-index
-                                 (fx- buffer-size next-block-index))])
-                (if (eof-object? next-size)
-                    (if (eq? size 0)
-                        (eof-object)
-                        (append-blocks size next-block-index next-block blocks))
-                    (let ([size (fx+ size next-size)]
-                          [next-block-index (fx+ next-block-index next-size)])
-                      (if (fx>= next-block-index (fxquotient buffer-size 2))
-                          (loop size 0
-                            (make-string buffer-size)
-                            (cons (cons next-block-index next-block) blocks))
-                          (loop size next-block-index next-block blocks))))))))))
+      (lambda (who textual-input-port buffer-size one-block?)
+        (let ([get-some (port-handler-get-some ($port-handler textual-input-port))])
+          (let loop ([size 0]
+                     [next-block-index 0]
+                     [next-block (make-string buffer-size)]
+                     [blocks '()])
+            (let ([next-size (get-some who textual-input-port
+                               next-block next-block-index
+                               (fx- buffer-size next-block-index))])
+              (if (eof-object? next-size)
+                  (if (eq? size 0)
+                      (eof-object)
+                      (append-blocks size next-block-index next-block blocks))
+                  (let ([size (fx+ size next-size)]
+                        [next-block-index (fx+ next-block-index next-size)])
+                    (if (and (not one-block?) (fx>= next-block-index (fxquotient buffer-size 2)))
+                        (loop size 0
+                          (make-string buffer-size)
+                          (cons (cons next-block-index next-block) blocks))
+                        (loop size next-block-index next-block blocks)))))))))
 
     (set-who! get-string-n
       (lambda (textual-input-port count)
@@ -4010,7 +4055,7 @@ implementation notes:
       (lambda (textual-input-port)
         (unless (and (input-port? textual-input-port) (textual-port? textual-input-port))
           ($oops who "~s is not a textual input port" textual-input-port))
-        ($get-string-all who textual-input-port)))
+        ($get-string-all who textual-input-port (file-buffer-size) #f)))
 
     (set-who! bytevector->string
       (lambda (bv tx)
@@ -4018,7 +4063,19 @@ implementation notes:
           ($oops who "~s is not a bytevector" bv))
         (unless ($transcoder? tx)
           ($oops who "~s is not a transcoder" tx))
-        (let ([str ($get-string-all who (open-bytevector-input-port bv tx))])
+        (let* ([bv-len (bytevector-length bv)]
+               [default (file-buffer-size)]
+               ;; We only call transcoded-port's get-some handler and always
+               ;; with our own buffer, so minimize the port's unused string
+               ;; buffer and associated ioffsets fxvector.
+               [bp (parameterize ([transcoded-port-buffer-size 1])
+                     (open-bytevector-input-port bv tx))]
+               ;; With current codecs, bv-len is an upper bound on the length of str.
+               ;; We leave room for one exta char so that $get-string-all can loop to
+               ;; realize it's at eof.
+               [str (if (and (fx<= bv-len default) (fx< bv-len (most-positive-fixnum)))
+                        ($get-string-all who bp (fx+ bv-len 1) #t)
+                        ($get-string-all who bp default #f))])
           (if (eof-object? str) "" str))))
     )
 

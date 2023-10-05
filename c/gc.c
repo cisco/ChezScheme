@@ -64,7 +64,7 @@ static void sweep_locked_ptrs(ptr *p, iptr n FORMAL_CTGS);
 static void sweep_locked(ptr tc, ptr p, IBOOL sweep_pure FORMAL_CTGS);
 static ptr copy_stack(ptr old, iptr *length, iptr clength FORMAL_CTGS);
 static void resweep_weak_pairs(ONLY_FORMAL_CTGS);
-static void forward_or_bwp(ptr *pp, ptr p);
+static void forward_or_bwp(IGEN from_g, ptr *pp, ptr p FORMAL_CTGS);
 static void sweep_generation(ptr tc FORMAL_CTGS);
 #ifndef NO_LOCKED_OLDSPACE_OBJECTS
 static iptr size_object(ptr p);
@@ -524,6 +524,7 @@ static IGEN copy(ptr pp, seginfo *si, ptr *ppp FORMAL_CTGS) {
         find_room(space_ephemeron, newg, type_pair, size_ephemeron, p);
         INITCAR(p) = Scar(pp);
         INITCDR(p) = Scdr(pp);
+        EPHEMERONNEXT(p) = Sfalse; /* #f => not yet swept */
       } else {
         ptr qq = Scdr(pp); ptr q;
         if (qq != pp && TYPEBITS(qq) == type_pair && ptr_get_segment(qq) == ptr_get_segment(pp) && FWDMARKER(qq) != forward_marker && !locked(qq)) {
@@ -1110,12 +1111,12 @@ void GCENTRY GCENTRY_PROTO(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg) {
       for (ls = S_G.locked_objects[g]; ls != Snil; ls = Scdr(ls)) {
         ptr x = Scar(ls);
         if (Spairp(x) && (SPACE(x) & ~(space_old|space_locked)) == space_weakpair)
-          forward_or_bwp(&INITCAR(x), Scar(x));
+          forward_or_bwp(g, &INITCAR(x), Scar(x) ACTUAL_CTGS);
       }
       for (ls = S_G.unlocked_objects[g]; ls != Snil; ls = Scdr(ls)) {
         ptr x = Scar(ls);
         if (Spairp(x) && (SPACE(x) & ~(space_old|space_locked)) == space_weakpair)
-          forward_or_bwp(&INITCAR(x), Scar(x));
+          forward_or_bwp(g, &INITCAR(x), Scar(x) ACTUAL_CTGS);
       }
     }
 
@@ -1128,7 +1129,7 @@ void GCENTRY GCENTRY_PROTO(ptr tc, IGEN max_cg, IGEN min_tg, IGEN max_tg) {
       x = *(vp = &INITVECTIT(v, 0));
       do {
         if (Spairp(x) && (SPACE(x) & ~(space_old|space_locked)) == space_weakpair) {
-          forward_or_bwp(&INITCAR(x), Scar(x));
+          forward_or_bwp(GENERATION(x), &INITCAR(x), Scar(x) ACTUAL_CTGS);
         }
       } while (--i != 0 && (x = *++vp) != MAXPTR);
     }
@@ -1392,13 +1393,14 @@ static void resweep_weak_pairs(ONLY_FORMAL_CTGS) {
     for (from_g = MIN_TG; from_g <= MAX_TG; from_g += 1) {
       sweep_loc[from_g][space_weakpair] = orig_next_loc[from_g][space_weakpair];
       sweep_space(space_weakpair, from_g, {
-          forward_or_bwp(pp, p);
+          forward_or_bwp(from_g, pp, p ACTUAL_CTGS);
           pp += 2;
       })
     }
 }
 
-static void forward_or_bwp(ptr *pp, ptr p) {
+#ifdef NO_DIRTY_NEWSPACE_POINTERS
+static void forward_or_bwp(UNUSED IGEN from_g, ptr *pp, ptr p) {
   seginfo *si;
  /* adapted from relocate */
   if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL && si->space & space_old && !locked(p)) {
@@ -1409,6 +1411,27 @@ static void forward_or_bwp(ptr *pp, ptr p) {
     }
   }
 }
+#else
+static void forward_or_bwp(IGEN from_g, ptr *pp, ptr p FORMAL_CTGS) {
+  seginfo *si;
+ /* adapted from relocate_impure */
+  if (!IMMEDIATE(p) && (si = MaybeSegInfo(ptr_get_segment(p))) != NULL) {
+    IGEN __to_g;
+    if (si->space & space_old && !locked(p)) {
+      if (FWDMARKER(p) == forward_marker && TYPEBITS(p) != type_flonum) {
+        *pp = FWDADDRESS(p);
+        __to_g = compute_target_generation(si->generation ACTUAL_CTGS);
+      } else {
+        *pp = Sbwp_object;
+        __to_g = static_generation;
+      }
+    } else {
+      __to_g = compute_target_generation(si->generation ACTUAL_CTGS);
+    }
+    if (__to_g < from_g) record_new_dirty_card(pp, __to_g);
+  }
+}
+#endif
 
 static void sweep_generation(ptr tc FORMAL_CTGS) {
   IGEN from_g; ptr *slp, *nlp; ptr *pp, p, *nl;
@@ -2189,10 +2212,19 @@ static void add_ephemeron_to_pending(ptr pe) {
   /* We could call check_ephemeron directly here, but the indirection
      through `pending_ephemerons` can dramatically decrease the number
      of times that we have to trigger re-checking, especially since
-     check_pending_pehemerons() is run only after all other sweep
-     opportunities are exhausted. */
-  EPHEMERONNEXT(pe) = pending_ephemerons;
-  pending_ephemerons = pe;
+     check_pending_ephemerons() is run only after all other sweep
+     opportunities are exhausted.
+     Guard against adding an ephemeron to the pending list a second
+     time. For example, an ephemeron can get swept twice if it's in
+     generation 2 and points to an inaccessible generation 0 object;
+     sweeping 2->0 will conservatively assume that the target will
+     end up in generation 1, which causes sweeping 2->1 to see the
+     same ephemeron again. (That might be the only way to sweep
+     an ephemeron twice, but I'm not sure.) */
+  if (EPHEMERONNEXT(pe) == Sfalse) {
+    EPHEMERONNEXT(pe) = pending_ephemerons;
+    pending_ephemerons = pe;
+  }
 }
 
 static void add_trigger_ephemerons_to_repending(ptr pe) {
@@ -2242,6 +2274,7 @@ static void check_pending_ephemerons(ONLY_FORMAL_CTGS) {
   pending_ephemerons = NULL;
   while (pe != NULL) {
     next_pe = EPHEMERONNEXT(pe);
+    EPHEMERONNEXT(pe) = Sfalse;
     check_ephemeron(pe, 1 ACTUAL_CTGS);
     pe = next_pe;
   }
@@ -2298,7 +2331,7 @@ static IGEN check_dirty_ephemeron(ptr pe, IGEN youngest FORMAL_CTGS) {
 }
 
 static void clear_trigger_ephemerons(void) {
-  ptr pe;
+  ptr pe, next_pe;
 
   if (pending_ephemerons != NULL)
     S_error_abort("clear_trigger_ephemerons(gc): non-empty pending list");
@@ -2311,6 +2344,7 @@ static void clear_trigger_ephemerons(void) {
     } else {
       seginfo *si;
       ptr p = Scar(pe);
+
       /* Key never became reachable, so clear key and value */
       INITCAR(pe) = Sbwp_object;
       INITCDR(pe) = Sbwp_object;
@@ -2319,6 +2353,8 @@ static void clear_trigger_ephemerons(void) {
       si = SegInfo(ptr_get_segment(p));
       si->trigger_ephemerons = NULL;
     }
-    pe = EPHEMERONNEXT(pe);
+    next_pe = EPHEMERONNEXT(pe);
+    EPHEMERONNEXT(pe) = Sfalse;
+    pe = next_pe;
   }
 }
