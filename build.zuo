@@ -105,7 +105,7 @@
   ;; or `--host-workarea <dir>", and recognizes `SCHEME=...` if neither
   ;; flag is provided; also recognizes "--xpatch" before anything else
   ;; to request that "xpatch" is left in an "xc-" directory
-  (define (parse-boot-args orig-args k)
+  (define (parse-boot-args orig-args default-m-key k)
     (define xpatch?
       (and (pair? orig-args)
            (equal? "--xpatch" (car orig-args))))
@@ -132,7 +132,7 @@
                           args))
     (unless (<= (length rest-args) 1) (error "expected optional <machine>" args))
     (define xm (if (null? rest-args)
-                   (hash-ref config 'defaultm m)
+                   (hash-ref config default-m-key m)
                    (car rest-args)))
     (define host-m (if host-scheme
                        (ask-scheme-machine host-scheme)
@@ -145,6 +145,7 @@
   (define (cross-build-boot token args ccopts make-targets record-dep?)
     (parse-boot-args
      args
+     'defaultm
      (lambda (xm m host-scheme host-workarea xpatch?)
        (unless (or host-scheme host-workarea)
          (check-not-kernel-only))
@@ -162,10 +163,13 @@
   (define (cross-reboot token args)
     (parse-boot-args
      args
+     'm
      (lambda (xm m host-scheme host-workarea xpatch?)
        (when xpatch? (error "cannot generate xpatch in reboot mode"))
        (define scheme (or host-scheme
-                          (build-path host-workarea m "bin" m (.exe "scheme"))))
+                          (if host-workarea
+                              (build-path host-workarea m "bin" m (.exe "scheme"))
+                              (.exe "scheme"))))
        (define options (if host-workarea
                            (hash 'env
                                  (cons "SCHEMEHEAPDIRS"
@@ -321,6 +325,7 @@
                    (check-not-kernel-only)
                    (parse-boot-args
                     args
+                    'defaultm
                     (lambda (xm m host-scheme host-workarea xpatch?)
                       (unless (or host-scheme host-workarea)
                         (build/dep (find-target "kernel" the-targets) token))

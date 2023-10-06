@@ -27,9 +27,7 @@
     ;; GC traversal functions
     "gc-ocd.inc" "gc-oce.inc" "gc-par.inc" "heapcheck.inc"))
 
-;; Cross-builds for a machine type that is specified as an argument;
-;; the machine type defaults to the `defaultm` configuration entry, and
-;; that default is normally useful if the current machine type is "pb"
+;; Cross-builds for a given machine type
 (define (cross-build-boot token ccopts make-targets xpatch?
                           xm host-scheme host-workarea
                           at-dir config vars m)
