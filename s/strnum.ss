@@ -363,8 +363,8 @@ an exception.
   [#\0 (nan4 r ex ms s)])
 
 (mknum-state nan4 (r ex ms s)            ; saw "nan.0" after sign
-  (finish-number ms ex x1 (if (eq? ex 'e) 'norep +nan.0))
-  [else (complex0 r ex ms +nan.0)])
+  (finish-number ms ex x1 (if (eq? ex 'e) 'norep (fl/ 0.0 0.0)))
+  [else (complex0 r ex ms (fl/ 0.0 0.0))])
 
 (mknum-state numhash (r ex ms s n)       ; saw # after integer
   (finish-number ms ex x1 (make-part (not (eq? ex 'e)) s n))
