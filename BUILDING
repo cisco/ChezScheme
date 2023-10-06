@@ -95,9 +95,7 @@ WAYS TO GET BOOT FILES
 
    The `--force` flag disables the requirement to have either existing
    boot files for the target machine or pb boot files for creating
-   them. If you have pb boot files, you can omit `--force`; the build
-   system will record the assumption that the created boot files are
-   newer, so pb should not be used to rebuild them.
+   them.
 
 3. A combination of the previous two ways: If you plan to build on
    many different machines and you don't have pb boot files, then it
