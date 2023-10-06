@@ -84,3 +84,81 @@ jobs:
         run: |
           cat $TARGET_MACHINE/mats/summary
           diff -q .github/workflows/summary $TARGET_MACHINE/mats/summary
+
+  test_cross:
+    strategy:
+      matrix:
+        config:
+          - arch: aarch64
+            distro: ubuntu22.04
+            machine: aarch64le
+          - arch: aarch64
+            distro: ubuntu22.04
+            machine: taarch64le
+          - arch: riscv64
+            distro: ubuntu22.04
+            machine: rv64le
+          - arch: riscv64
+            distro: ubuntu22.04
+            machine: trv64le
+    runs-on: ubuntu-22.04
+    env:
+      TARGET_MACHINE: ${{ matrix.config.machine }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ github.workspace }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build Chez Scheme in Container
+        uses: uraimo/run-on-arch-action@v2
+        id: build
+        # qemu is slow, so give it max
+        timeout-minutes: 360
+
+        with:
+          arch: ${{ matrix.config.arch }}
+          distro: ${{ matrix.config.distro }}
+
+          githubToken: ${{ github.token }}
+
+          # this is run on host VM
+          setup: |
+            mkdir -p "${HOME}/build"
+            cp -r . "${HOME}/build"
+          dockerRunArgs: |
+            --volume "${HOME}/build:/build"
+            --workdir "/build"
+            -e CC=gcc-12
+            -e TARGET_MACHINE=${{ matrix.config.machine }}
+          install: |
+            apt-get update  -qy
+            apt-get upgrade -qy
+            apt-get install -qy curl git gcc-12
+            apt-get install -qy make uuid-dev libncurses-dev
+          shell: /bin/sh
+          #env: | # YAML, but pipe character is necessary
+          #  TARGET_MACHINE: ${{ matrix.config.machine }}
+          #  CC: gcc-12
+          # run commands inside container
+          run: |
+            git config --global --add safe.directory /build
+            echo Building Chez Scheme
+            .github/workflows/build.sh
+            echo Running test
+            .github/workflows/test.sh
+            echo Archiving workspace
+            tar -c -h -z -f $TARGET_MACHINE.tgz $TARGET_MACHINE
+
+      - name: Retrieving archive from container
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.config.machine }}
+          path: ${HOME}/build/${{ matrix.config.machine }}.tgz
+      - name: Check test results
+        if: success()
+        run: |
+          cat $TARGET_MACHINE/mats/summary
+          diff -q .github/workflows/summary $TARGET_MACHINE/mats/summary

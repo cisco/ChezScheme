@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e -o pipefail
-./configure -m="$TARGET_MACHINE"
+
+FLAGS=
+if [[ $TARGET_MACHINE == *"aarch64le" ]]; then
+    FLAGS="--disable-x11"
+fi
+
+./configure -m="$TARGET_MACHINE" $FLAGS
 make -j $(getconf _NPROCESSORS_ONLN)
 case "$TARGET_MACHINE" in
   *a6nt)
