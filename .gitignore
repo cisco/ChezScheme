@@ -1,6 +1,7 @@
 *~
 .*.sw?
 .sw?
+.DS_Store
 /Makefile
 /main.zuo
 /TAGS

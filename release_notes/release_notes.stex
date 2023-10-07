@@ -5,6 +5,17 @@
 \pubmonth{September}
 \pubyear{2023}
 
+\iflatex
+\usepackage{enumitem}
+\setitemize{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt}
+\newenvironment{itemizeC}%
+  {\begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]}%
+  {\end{itemize}}
+\fi
+\ifhtml
+  \newenvironment{itemizeC}{\begin{itemize}}{\end{itemize}}
+\fi
+
 \begin{document}
 
 \maketitle
@@ -21,45 +32,71 @@ The Chez Scheme machine type (returned by the \scheme{machine-type}
 procedure) is given in parentheses.
 
 \begin{itemize}
-\item Linux x86, nonthreaded (i3le) and threaded (ti3le)
-\item Linux x86\_64, nonthreaded (a6le) and threaded (ta6le)
-\item Linux AArch64 including Android, nonthreaded (arm64le) and threaded (tarm64le)
-\item Linux ARMv6 (32-bit) including Android, nonthreaded (arm32le) and threaded (tarm32le)
-\item Linux RV64G (64-bit RISC-V), nonthreaded (rv64le) and threaded (trv64le)
-\item Linux PowerPC (32-bit), nonthreaded (ppc32le) and threaded (tppc32le)
-\item Mac OS x86, nonthreaded (i3osx) and threaded (ti3osx)
-\item Mac OS x86\_64, nonthreaded (a6osx) and threaded (ta6osx)
-\item Mac OS AArch64 and iOS, nonthreaded (arm64osx) and threaded (tarm64osx)
-\item Mac OS PowerPC (32-bit) (ppc2osx) and threaded (tppc32osx)
-\item Windows x86, nonthreaded (i3nt) and threaded (ti3nt)
-\item Windows x86\_64, nonthreaded (a6nt) and threaded (ta6nt)
-\item Windows AArch64, nonthreaded (arm64nt) and threaded (tarm64nt)
-\item OpenBSD x86, nonthreaded (i3ob) and threaded (ti3ob)
-\item OpenBSD x86\_64, nonthreaded (a6ob) and threaded (ta6ob)
-\item OpenBSD AArch64, nonthreaded (arm64ob) and threaded (tarm64ob)
-\item OpenBSD ARMv6 (32-bit), nonthreaded (arm32ob) and threaded (tarm32ob)
-\item OpenBSD PowerPC (32-bit), nonthreaded (ppc32ob) and threaded (tppc32ob)
-\item FreeBSD x86, nonthreaded (i3fb) and threaded (ti3fb)
-\item FreeBSD x86\_64, nonthreaded (a6fb) and threaded (ta6fb)
-\item FreeBSD AArch64, nonthreaded (arm64fb) and threaded (tarm64fb)
-\item FreeBSD ARMv6 (32-bit), nonthreaded (arm32fb) and threaded (tarm32fb)
-\item FreeBSD PowerPC (32-bit), nonthreaded (ppc32fb) and threaded (tppc32fb)
-\item NetBSD x86, nonthreaded (i3nb) and threaded (ti3nb)
-\item NetBSD x86\_64, nonthreaded (a6nb) and threaded (ta6nb)
-\item NetBSD AArch64, nonthreaded (arm64nb) and threaded (tarm64nb)
-\item NetBSD ARMv6 (32-bit), nonthreaded (arm32nb) and threaded (tarm32nb)
-\item NetBSD PowerPC (32-bit), nonthreaded (ppc32nb) and threaded (tppc32nb)
-\item GNU Hurd x86, nonthreaded (i3gnu) and threaded (ti3gnu)
-\item OpenSolaris x86, nonthreaded (i3s2) and threaded (ti3s2)
-\item OpenSolaris x86\_64, nonthreaded (a6s2) and threaded (ta6s2)
-\item Other platforms via bytecode interpretation (pb, tpb, pb32l, tpb32l, pb32b, tpb32b, pb64l, tpb64l, pb64b, tpb64b)
+\item Linux
+     \begin{itemizeC}
+     \item x86, nonthreaded (i3le) and threaded (ti3le)
+     \item x86\_64, nonthreaded (a6le) and threaded (ta6le)
+     \item AArch64 including Android, nonthreaded (arm64le) and threaded (tarm64le)
+     \item ARMv6 (32-bit) including Android, nonthreaded (arm32le) and threaded (tarm32le)
+     \item RV64G (64-bit RISC-V), nonthreaded (rv64le) and threaded (trv64le)
+     \item PowerPC (32-bit), nonthreaded (ppc32le) and threaded (tppc32le)
+     \end{itemizeC}
+\item Mac OS
+     \begin{itemizeC}
+     \item x86, nonthreaded (i3osx) and threaded (ti3osx)
+     \item x86\_64, nonthreaded (a6osx) and threaded (ta6osx)
+     \item AArch64 and iOS, nonthreaded (arm64osx) and threaded (tarm64osx)
+     \item PowerPC (32-bit) (ppc2osx) and threaded (tppc32osx)
+     \end{itemizeC}
+\item Windows
+     \begin{itemizeC}
+     \item x86, nonthreaded (i3nt) and threaded (ti3nt)
+     \item Windows x86\_64, nonthreaded (a6nt) and threaded (ta6nt)
+     \item AArch64, nonthreaded (arm64nt) and threaded (tarm64nt)
+     \end{itemizeC}
+\item OpenBSD
+     \begin{itemizeC}
+     \item x86, nonthreaded (i3ob) and threaded (ti3ob)
+     \item x86\_64, nonthreaded (a6ob) and threaded (ta6ob)
+     \item AArch64, nonthreaded (arm64ob) and threaded (tarm64ob)
+     \item ARMv6 (32-bit), nonthreaded (arm32ob) and threaded (tarm32ob)
+     \item PowerPC (32-bit), nonthreaded (ppc32ob) and threaded (tppc32ob)
+     \end{itemizeC}
+\item FreeBSD
+     \begin{itemizeC}
+     \item x86, nonthreaded (i3fb) and threaded (ti3fb)
+     \item x86\_64, nonthreaded (a6fb) and threaded (ta6fb)
+     \item AArch64, nonthreaded (arm64fb) and threaded (tarm64fb)
+     \item ARMv6 (32-bit), nonthreaded (arm32fb) and threaded (tarm32fb)
+     \item PowerPC (32-bit), nonthreaded (ppc32fb) and threaded (tppc32fb)
+     \end{itemizeC}
+\item NetBSD
+     \begin{itemizeC}
+     \item x86, nonthreaded (i3nb) and threaded (ti3nb)
+     \item x86\_64, nonthreaded (a6nb) and threaded (ta6nb)
+     \item AArch64, nonthreaded (arm64nb) and threaded (tarm64nb)
+     \item ARMv6 (32-bit), nonthreaded (arm32nb) and threaded (tarm32nb)
+     \item PowerPC (32-bit), nonthreaded (ppc32nb) and threaded (tppc32nb)
+     \end{itemizeC}
+\item GNU Hurd
+     \begin{itemizeC}
+     \item x86, nonthreaded (i3gnu) and threaded (ti3gnu)
+     \end{itemizeC}
+\item OpenSolaris
+     \begin{itemizeC}
+     \item x86, nonthreaded (i3s2) and threaded (ti3s2)
+     \item x86\_64, nonthreaded (a6s2) and threaded (ta6s2)
+     \end{itemizeC}
+\item Other platforms
+     \begin{itemizeC}
+     \item bytecode interpretation (pb, tpb, pb32l, tpb32l, pb32b, tpb32b, pb64l, tpb64l, pb64b, tpb64b)
+     \end{itemizeC}
 \end{itemize}
 
 This document contains three sections describing significant
-(1) \href[static]{section:racket}{changes specific to the Racket variant},
-(2) \href[static]{section:functionality}{functionality changes},
-(3) \href[static]{section:bugfixes}{bugs fixed}, and
-(4) \href[static]{section:performance}{performance enhancements}.
+(1) \href[static]{section:functionality}{functionality changes},
+(2) \href[static]{section:bugfixes}{bugs fixed}, and
+(3) \href[static]{section:performance}{performance enhancements}.
 A version number listed in parentheses in the header for a change
 indicates the first minor release or internal prerelease to support
 the change.
@@ -73,14 +110,9 @@ Online versions of both books can be found at
 \hyperlink{http://www.scheme.com/}{http://www.scheme.com}.
 
 %-----------------------------------------------------------------------------
-\section{Racket Changes}\label{section:racket}
+\section{Functionality Changes}\label{section:functionality}
 
-In addition to changes listed in the remaining sections, the Racket
-version of Chez Scheme adds further functionality changes and
-performance improvements.
-
-
-\subsection{Supported Platforms and Portable Bytecode}
+\subsection{New supported platforms and portable bytecode (9.9.9)}
 
 AArch64 (64-bit Arm) and RV64G (64-bit RISC-V) architectures are
 supported. Threads are supported on architectures with weak memory
@@ -107,7 +139,7 @@ written in Chez Scheme, a pbchunk conversion of its boot files
 improves performance of primitives and compilation.
 
 
-\subsection{Threaded Default and Build System Changes}
+\subsection{Threaded default and build system changes (9.9.9)}
 
 Running \scheme{configure} assumes a threaded target machine type,
 unless \scheme{--nothreads} or a non-threaded machine type is
@@ -135,7 +167,7 @@ during development. The \scheme{scheme-build-number} procedure always
 returns zero for a released version of Chez Scheme.
 
 
-\subsection{Compiler Improvements}\label{sec:unbox-floats}
+\subsection{Compiler improvements (9.9.9)}\label{sec:unbox-floats}
 
 The compiler generates code that locally unboxes floating-point
 operations, so that compositions of floating-point operations can be
@@ -196,7 +228,7 @@ record-type predicate is a constant-time operation, instead of
 proportional to the subtype depth.
 
 
-\subsection{Garbage-Collector Improvements}
+\subsection{Garbage-collector improvements (9.9.9)}
 
 Garbage collection takes advantage of machine parallelism. Parallel
 collection is automatically enabled when a program has multiple Scheme
@@ -226,7 +258,7 @@ See also Sections~\ref{sec:gc-reflect} and \ref{sec:ffi-storage} for
 related new functionality.
 
 
-\subsection{Continuation Marks}\label{sec:cont-marks}
+\subsection{Continuation marks (9.9.9)}\label{sec:cont-marks}
 
 \emph{Continuation marks} add key--value information to continuations.
 The \scheme{with-continuation-mark} form associates a key--value pair
@@ -251,7 +283,7 @@ to deliver to the continuation, it takes a procedure of no arguments
 to call within the continuation.
 
 
-\subsection{Fixnums}
+\subsection{New fixnum operations (9.9.9)}
 
 New operations support common bit-related operations on fixnums:
 
@@ -275,7 +307,7 @@ immutable-fxvector?             ; removed
 \endschemedisplay
 
 
-\subsection{Flonums}
+\subsection{New flonum operations (9.9.9)}
 
 The \scheme{eq?} operator works on flonums in the sense that two
 flonums values that are \scheme{eq?} at some point (such as creation
@@ -318,7 +350,7 @@ that's \scheme{+nan.0}, which makes them consistent with \scheme{=},
 \scheme{<}, \scheme{>}, \scheme{<=}, and \scheme{>=}.
 
 
-\subsection{Bignums}
+\subsection{Improved bignum arithmetic (9.9.9)}
 
 Multiplication of very large numbers uses Karatsuba, Toom-3, or
 Toom-4, while division (including GCD) uses Burnikel-Ziegler. These
@@ -327,7 +359,7 @@ large values, and they avoid unbounded delays between interrupt
 polling.
 
 
-\subsection{Exact Zeros, Transcendentals, and Exponentials}
+\subsection{Exact zeros, transcendentals, and exponentials (9.9.9)}
 
 Division of an inexact number by an exact \scheme{0} now raises
 exception instead of producing \scheme{+inf.0} or \scheme{-inf.0}.
@@ -349,7 +381,7 @@ second argument, and in that case it behaves like \scheme{sqrt}, which
 may produce an exact result.
 
 
-\subsection{Characters, Strings, and Unicode}
+\subsection{New character, string, and Unicode functions (9.9.9)}
 
 New functions support decoding grapheme clusters within strings or
 character streams and expose the underlying new character classifiers:
@@ -370,7 +402,7 @@ The \scheme{path-build} procedure combines two path strings to form a
 path, adding a directory separator between them if necessary.
 
 
-\subsection{Hash Tables}
+\subsection{Hashtable changes (9.9.9)}
 
 
 Operations returning hashtable cells (\scheme{hashtable-cell},
@@ -407,7 +439,7 @@ and ephemeron hash tables with arbitrary equality and hashing
 functions.
 
 
-\subsection{Stencil Vectors}
+\subsection{Stencil vectors (9.9.9)}
 
 Stencil vectors provide support in the compiler and runtime for
 implementing data structures such as persistent maps:
@@ -425,7 +457,7 @@ stencil-vector-mask-width
 \endschemedisplay
 
 
-\subsection{Symbols}
+\subsection{New symbol functions (9.9.9)}
 
 While gensyms support most symbol-generation needs, uninterned symbols
 are useful for purposes where properties must not prevent a symbol
@@ -439,7 +471,7 @@ uninterned-symbol?
 The string returned by \scheme{symbol->string} is always immutable.
 
 
-\subsection{Records}
+\subsection{Record anonymous fields (9.9.9)}
 
 Records can have anonymous fields, which can save memory in the
 representation when many record types need to be created (as opposed
@@ -459,7 +491,7 @@ An unsafe \scheme{record-instance?} test can be faster than an unsafe
 \scheme{record?} test.
 
 
-\subsection{Lists}
+\subsection{Lists assuming immutability (9.9.9)}
 
 In a context where pairs are not mutated, the new
 \scheme{list-assuming-immutable?} predicate is useful as a variant of
@@ -469,7 +501,7 @@ represents a list, but its behavior is unspecified if the
 \scheme{cdr} or any pair relevant to the result is mutated.
 
 
-\subsection{Random Number Generation}
+\subsection{New random number generation (9.9.9)}
 
 A new random-number API implements the MRG32K3A algorithm:
 
@@ -483,7 +515,7 @@ vector->pseudo-random-generator
 \endschemedisplay
 
 
-\subsection{Wrapper Procedures}
+\subsection{Wrapper procedures (9.9.9)}
 
 A \emph{wrapper procedure} provides an inexpensive way to an adjust a
 procedure's name, constrain its arity, or associate extra data to the
@@ -502,7 +534,7 @@ set-wrapper-procedure!
 \endschemedisplay
 
 
-\subsection{Threads}\label{sec:threads}
+\subsection{New thread functions (9.9.9)}\label{sec:threads}
 
 The new \scheme{thread-join} operator can be used to wait for a thread
 to terminate. Waiting for termination in this sense can be useful to
@@ -525,7 +557,7 @@ implement fencing operators suitable for abstractions that acquire
 store-load fence) shared resources.
 
 
-\subsection{Garbage Collection Introspection}\label{sec:gc-reflect}
+\subsection{Garbage collection introspection (9.9.9)}\label{sec:gc-reflect}
 
 Similar to \scheme{enable-object-counts}, the
 \scheme{enable-object-backreferences} parameter enables recording of
@@ -567,7 +599,7 @@ an optional last argument to fuse a garbage collection with size
 accounting.
 
 
-\subsection{Storage Management and Foreign Interfaces}\label{sec:ffi-storage}
+\subsection{Storage management and foreign interfaces (9.9.9)}\label{sec:ffi-storage}
 
 The \scheme{make-guardian} function accepts an option to create an
 \emph{ordered guardian}. An ordered guardian treats each of its
@@ -624,7 +656,7 @@ makes the size of a thread's representation proportional to the
 maximum number of generations.
 
 
-\subsection{Foreign Interface}
+\subsection{Foreign interface extensions (9.9.9)}
 
 Some ABIs treat functions with varargs (i.e., specified with
 \scheme{...} in the C prototype) differently than functions without
@@ -661,7 +693,7 @@ useful for loading boot files that are embedded with an executable
 segment.
 
 
-\subsection{Fasl and Vfasl}
+\subsection{Fasl and vfasl (9.9.9)}
 
 Reading fasl data has been made safe no matter how deeply nested the
 structure of the data.
@@ -685,7 +717,7 @@ startup much faster; otherwise, the time--space tradeoff rarely pays
 off. Convert from fasl to vfasl using \scheme{vfasl-convert-file}.
 
 
-\subsection{Compiler Options}
+\subsection{New compiler options (9.9.9)}
 
 Two new parameters skip safety checks in specific situations:
 \scheme{enable-unsafe-application} assumes that the target of a
@@ -735,10 +767,8 @@ The \scheme{enable-error-source-expression} parameter determines
 whether error messages that become embedded in code can refer to the
 original source file's path.
 
-%-----------------------------------------------------------------------------
-\section{Functionality Changes}\label{section:functionality}
 
-\subsection{New conversions from Scheme to C signed and unsigned integers}
+\subsection{New conversions from Scheme to C signed and unsigned integers (9.9.9)}
 
 The following new functions
 allow foreign code to try converting Scheme
@@ -755,7 +785,7 @@ Stry_unsigned32_value
 Stry_unsigned64_value
 \endschemedisplay
 
-\subsection{New types for code that uses C exports}
+\subsection{New types for code that uses C exports (9.9.9)}
 
 The header file scheme.h distributed with Chez Scheme now defines
 \scheme{Sint32_t}, \scheme{Suint32_t}, \scheme{Sint64_t}, and \scheme{Suint64_t}
@@ -773,7 +803,7 @@ The new parameter \scheme{make-codec-buffer} can be used to supply an appropriat
 sized internal bytevector buffer for the codec used by a new transcoded port.
 The size of these string and bytevector buffers was previously hardcoded at 1024.
 
-\subsection{Unicode 15.0 Support (9.6.0)}
+\subsection{Unicode 15.0 support (9.6.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,
 and Unicode-related bytevector operations have now been updated to Unicode 15.0.
