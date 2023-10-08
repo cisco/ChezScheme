@@ -5246,17 +5246,22 @@
             (assert (equal? expected actual))
             bytes))))
     (define (check open-port use-port make-buffer ->len expected)
-      (let* ([len (->len expected)]
-             ;; just at the threshold where we read into the same block
-             [one-block-buffer-len (* 2 (+ len 1))]
-             [one-block (test-alloc open-port use-port one-block-buffer-len expected)]
-             ;; just at the threshold where we allocate another file-buffer-size chunk
-             [two-block-buffer-len (* 2 len)]
-             [two-blocks (test-alloc open-port use-port two-block-buffer-len expected)])
-        (and (< one-block two-blocks) ;; despite larger file-buffer-size, since one buffer not two
-             (< one-block
-                (predicted-one-block two-blocks make-buffer
-                  two-block-buffer-len one-block-buffer-len)))))
+      (let loop ([tries 0])
+        (let* ([len (->len expected)]
+               ;; just at the threshold where we read into the same block
+               [one-block-buffer-len (* 2 (+ len 1))]
+               [one-block (test-alloc open-port use-port one-block-buffer-len expected)]
+               ;; just at the threshold where we allocate another file-buffer-size chunk
+               [two-block-buffer-len (* 2 len)]
+               [two-blocks (test-alloc open-port use-port two-block-buffer-len expected)])
+          (or (and (< one-block two-blocks) ;; despite larger file-buffer-size, since one buffer not two
+                   (< one-block
+                      (predicted-one-block two-blocks make-buffer
+                                           two-block-buffer-len one-block-buffer-len)))
+              ;; some extra allocation is possible, such as allocating a new
+              ;; stack --- but not 3 times in a row
+              (and (< tries 3)
+                   (loop (+ tries 1)))))))
     (parameterize ([current-transcoder (native-transcoder)])
       (call-with-output-file "testfile.ss"
         (lambda (op) (display-string test-str op))
