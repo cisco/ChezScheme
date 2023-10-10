@@ -1448,6 +1448,4 @@ To change the version number, edit the `version` definition in
 
 To update the "boot/pb" files that are normally used to build Chez
 Scheme without an existing Chez Scheme, use `./configure --pb` before
-running `make re.boot`. If you are updating the Git submodule, create
-a fresh branch for the submodule and squash all changes into a single
-commit within that branch.
+running `make re.boot`.
