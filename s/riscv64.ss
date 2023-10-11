@@ -1008,20 +1008,18 @@
       (Trivit (dest src0 src1)
               (emit mul dest src0 src1 code*))))
 
+  ;; overflow if hi64(src0*src1) != (lo64(src0*src1) >> 63)
   (define asm-mul/ovfl
     (lambda (code* dest src0 src1)
       (Trivit (dest src0 src1)
-        (emit xor %scratch1 src0 src1 ; 1 high bit => expect negative
-              (emit mulh %scratch0 src0 src1
+              (emit mulh %scratch1 src0 src1
                     (emit mul dest src0 src1
-                          ;; overflow if %scratch0 doesn't hold 0 for an expected
-                          ;; positive result or -1 for an expected negative result;
-                          ;; also overflow if dest doesn't match expected sign
-                          (emit srai %scratch1 %scratch1 63 ; -1 => expected negative; 0 => expected positive
-                                (emit srli %cond dest 63 ; 1 => negative in `dest`
-                                      (emit or %scratch0 %scratch0 %cond ; combine negativity of results
-                                            (emit xor %cond %scratch0 %scratch1 ; 0 => expectation matches => no overflow
-                                                  code*))))))))))
+                          (emit srai %cond dest 63
+                                (emit bne %scratch1 %cond 12
+                                      (emit addi %cond %real-zero 0
+                                            (emit jal %real-zero 8
+                                                  (emit addi %cond %real-zero 1
+                                                        code*))))))))))
 
   (define asm-div
     (lambda (code* dest src0 src1)
