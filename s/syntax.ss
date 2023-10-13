@@ -6423,12 +6423,16 @@
            (let ([y (gen-var 'tmp)])
              (build-let no-source
                (list y)
-               (list (if (eq? p 'any)
-                         (build-primcall no-source 3 'list
-                           (build-lexical-reference no-source x))
-                         (build-primcall no-source 3 '$syntax-dispatch
-                           (build-lexical-reference no-source x)
-                           (build-data no-source p))))
+               (list (cond
+                       [(eq? p 'any)
+                        (build-primcall no-source 3 'list
+                                        (build-lexical-reference no-source x))]
+                       [(eq? p '_)
+                        (build-data no-source '())]
+                       [else
+                        (build-primcall no-source 3 '$syntax-dispatch
+                                        (build-lexical-reference no-source x)
+                                        (build-data no-source p))]))
                (let-syntax ([y (identifier-syntax
                                  (build-lexical-reference no-source y))])
                  (build-conditional no-source
