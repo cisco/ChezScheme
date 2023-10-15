@@ -10,7 +10,7 @@ else
     else
         ./configure -m="$TARGET_MACHINE"
     fi
-    make
+    make $MAKE_ARGS
 fi
 case "$TARGET_MACHINE" in
   *a6nt)

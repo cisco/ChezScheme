@@ -23,6 +23,12 @@ jobs:
             os: ubuntu-22.04
           - machine: ta6le
             os: ubuntu-22.04
+          - machine: ta6le
+            os: ubuntu-22.04
+            variant: reboot
+            configure: -m=ta6le --force
+            make: re.boot SCHEME="chezscheme"
+            test: test-some-fast
           - machine: i3nt
             os: windows-2022
             toolchain: vs
@@ -42,7 +48,9 @@ jobs:
     env:
       TARGET_MACHINE: ${{ matrix.config.machine }}
       TOOLCHAIN: ${{ matrix.config.toolchain }}
+      VARIANT: ${{ matrix.config.variant }}
       CONFIGURE_ARGS: ${{ matrix.config.configure }}
+      MAKE_ARGS: ${{ matrix.config.make }}
       TEST_TARGET: ${{ matrix.config.test }}
     defaults:
       run:
@@ -62,6 +70,11 @@ jobs:
           sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install gcc-multilib lib32ncurses5-dev
+      - name: Setup existing Chez Scheme for reboot
+        if: ${{ startsWith(matrix.config.make, 're.boot') }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install chezscheme
       - name: Build Chez Scheme with Visual Studio
         if: ${{ matrix.config.toolchain == 'vs' }}
         shell: cmd
@@ -79,13 +92,13 @@ jobs:
         run: build.bat ${{ matrix.config.machine }} /test-some
       - name: Archive workspace
         if: always()
-        run: tar -c -h -z -f $TARGET_MACHINE$TOOLCHAIN.tgz $TARGET_MACHINE
+        run: tar -c -h -z -f $TARGET_MACHINE$TOOLCHAIN$VARIANT.tgz $TARGET_MACHINE
       - name: Upload archive
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}
-          path: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}.tgz
+          name: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}${{ matrix.config.variant }}
+          path: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}${{ matrix.config.variant }}.tgz
       - name: Check test results
         run: |
           cat $TARGET_MACHINE/mats/summary
