@@ -768,7 +768,7 @@ whether error messages that become embedded in code can refer to the
 original source file's path.
 
 
-\subsection{New conversions from Scheme to C signed and unsigned integers (9.9.9)}
+\subsection{New conversions from Scheme to C signed and unsigned integers (9.6.4)}
 
 The following new functions
 allow foreign code to try converting Scheme
@@ -785,7 +785,7 @@ Stry_unsigned32_value
 Stry_unsigned64_value
 \endschemedisplay
 
-\subsection{New types for code that uses C exports (9.9.9)}
+\subsection{New types for code that uses C exports (9.6.4)}
 
 The header file scheme.h distributed with Chez Scheme now defines
 \scheme{Sint32_t}, \scheme{Suint32_t}, \scheme{Sint64_t}, and \scheme{Suint64_t}
@@ -2700,19 +2700,19 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{Incorrect result from \scheme{Sinteger64} on 32-bit platforms}
+\subsection{Incorrect result from \scheme{Sinteger64} on 32-bit platforms (9.6.4)}
 
 On 32-bit platforms, calling \scheme{Sinteger64} or \scheme{Sunsigned64}
 with \scheme{0x8000000000000000} could return the wrong value.
 
-\subsection{\scheme{Sinteger32} and \scheme{Sinteger64} return unexpected bignum}
+\subsection{\scheme{Sinteger32} and \scheme{Sinteger64} return unexpected bignum (9.6.4)}
 
 When called on a C value equal to \scheme{most-negative-fixnum}, \scheme{Sinteger32}
 and \scheme{Sinteger64} could return a bignum where a fixnum is expected.
 The values have the same printed representation, yet comparing the resulting bignum with
 \scheme{most-negative-fixnum} via Scheme's \scheme{=} returned false.
 
-\subsection{Library-reference import syntax}
+\subsection{Library-reference import syntax (9.6.4)}
 
 A bug where \scheme{import} did not recognize a \var{library-spec}
 of the form \scheme{(library \var{library-reference})} has been fixed.
