@@ -10,6 +10,7 @@
 
   (define version (let ([l (get-version)])
                     (~a (list-ref l 0) "." (list-ref l 1) "." (list-ref l 2))))
+  (define vers (get-dll-version))
 
   (mkdir-p (at-dir "bintar"))
   (define R (at-dir "bintar" (~a "csv" version)))
@@ -42,8 +43,8 @@
   (boot-link "revision")
   (cond
     [(glob-match? "*nt" m)
-     (boot-link "csv957md.lib")
-     (boot-link "csv957mt.lib")
+     (boot-link (~a "csv" vers "md.lib"))
+     (boot-link (~a "csv" vers "mt.lib"))
      (boot-link "mainmd.obj")
      (boot-link "mainmt.obj")
      (boot-link "scheme.res")]
@@ -68,8 +69,8 @@
   (cond
     [(glob-match? "*nt" m)
      (bin-link "scheme.exe")
-     (bin-link "csv957.dll")
-     (bin-link "csv957.lib")
+     (bin-link (~a "csv" vers ".dll"))
+     (bin-link (~a "csv" vers ".lib"))
      (bin-link "vcruntime140.lib")]
     [else
      (bin-link "scheme")])

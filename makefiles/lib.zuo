@@ -31,7 +31,7 @@
   
 (define (cp/ln src dest)
   (if (eq? 'windows (system-type))
-      (cp src dest)
+      (cp* src dest)
       (begin
         (when (file-exists? dest) (rm dest))
         (symlink (find-relative-path (path-only dest) src) dest))))
