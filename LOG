@@ -2445,3 +2445,5 @@
     boot/*/scheme.h c/externs.h c/number.c c/scheme.c csug/foreign.stex
     mats/foreign1.c mats/foreign.ms release_notes/release_notes.stex
     s/mkheader.ss
+- optimize simple _ patterns in syntax-case
+    s/syntax.ss
