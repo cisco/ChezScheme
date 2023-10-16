@@ -178,7 +178,7 @@ by an expression, and it uses that information to eliminate run-time
 checks or conditionals. For example, within
 \scheme{(if (flonum? x) \var{E1} \var{E2})},
 assuming that the variable \scheme{x} is never
-mutated, then it holds a flonum value within \var{E2}, so
+mutated, then it holds a flonum value within \var{E1}, so
 arithmetic can be specialized to flonum operations. Type inference
 requires an additional pass for compilation, but when compiling in
 safe mode, the pass tends to more than pay for itself; reduced checks
@@ -223,7 +223,7 @@ The compiler reduces code size by using a more compact representation
 for most call-return sites and by using a more compact dispatch to
 interrupt checking in most cases.
 
-The internal representation of record types has changed to that a
+The internal representation of record types has changed so that a
 record-type predicate is a constant-time operation, instead of
 proportional to the subtype depth.
 
