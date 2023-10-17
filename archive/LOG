@@ -1,3 +1,8 @@
+See "../release-notes" for a history of changes. This file records
+fine-grained changes made from 9.4 through 9.6.4, but see
+version-control logs for subsequent changes.
+
+
 9.4 changes:
 - updated version to 9.4
     bintar README NOTICE makefiles/Mf-install.in scheme.1.in
