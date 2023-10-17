@@ -15,30 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if ($#argv != 2) then
-    echo "Usage: newrelease <release-number> <workarea name>"
+if ($#argv != 1) then
+    echo "Usage: newrelease <release-number>"
     exit 1
 endif
 
 # set R to release number
 set R = $1
 
-if ({(echo -n "$1" | grep '^[0-9][0-9]*\.[0-9][0-9]*$' >& /dev/null)}) then
-  # set MR to major release number
-  set MR = $R:r
-
-  # set mR to minor release number
-  set mR = $R:e
-
-  # set bR to patch number
-  set bR = 0
-
-  # set ZR to release number w/o "."
-  set ZR = $MR$mR
-
-  # set underscoreR to release number w/ "_" in place of "."
-  set underscoreR = $MR"_"$mR
-else if ({(echo -n "$1" | grep '^[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >& /dev/null)}) then
+if ({(echo -n "$1" | grep '^[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >& /dev/null)}) then
   # set MR to major release number
   set tmp = $R:r
   set MR = $tmp:r
@@ -59,107 +44,62 @@ else
   exit 1
 endif
 
-# clear running list of updated files
-set maybeupdatedfiles = ()
-
-set W = $2
-mkdir $W
-mkdir $W/s
-mkdir $W/c
-mkdir $W/rpm
-mkdir $W/pkg
-cd $W
-
-rm -f BUILDING
 sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
     -e "s/Copyright 1984-.... /Copyright 1984-`date +%Y` /" \
-    ../BUILDING > BUILDING
-set maybeupdatedfiles = ($maybeupdatedfiles BUILDING)
+    -I "" BUILDING
 
-rm -f NOTICE
 sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
     -e "s/Copyright 1984-.... /Copyright 1984-`date +%Y` /" \
-    ../NOTICE > NOTICE
-set maybeupdatedfiles = ($maybeupdatedfiles NOTICE)
+    -I "" NOTICE
 
-mkdir makefiles
-sed -e "s/csug[0-9][0-9]*\.[0-9][0-9]*/csug$MR.$mR/" -e "s/csug[0-9][0-9]*_[0-9][0-9]*/csug$MR""_$mR/" \
-  ../makefiles/Makefile-csug.in > makefiles/Makefile-csug.in
-set maybeupdatedfiles = ($maybeupdatedfiles makefiles/Makefile-csug.in)
+sed -e "s/csug[0-9][0-9]*\.[0-9][0-9]*/csug$MR.$mR/" \
+    -e "s/csug[0-9][0-9]*_[0-9][0-9]*/csug$MR""_$mR/" \
+    -I "" makefiles/Makefile-csug.in
 
-rm -f scheme.1.in
 sed -e "s/Chez Scheme Version [0-9][0-9]*\.[0-9][0-9]*\(\.[0-9][0-9]*\)* .* [0-9][0-9]*/Chez Scheme Version $R `date +'%B %Y'`/" \
     -e "s/Copyright .* Cisco Systems, Inc./Copyright `date +%Y` Cisco Systems, Inc./" \
-  ../scheme.1.in > scheme.1.in
-set maybeupdatedfiles = ($maybeupdatedfiles scheme.1.in)
+    -I "" scheme.1.in
 
 set RCVERSION = "$MR,$mR,$bR,0"
-sed -e "s/FILEVERSION .*/FILEVERSION $RCVERSION/"\
-    -e "s/PRODUCTVERSION .*/PRODUCTVERSION $RCVERSION/"\
-    -e 's/"FileDescription", .*/"FileDescription", "Chez Scheme Version '$R'"/'\
-    -e 's/"FileVersion", .*/"FileVersion", "'$R'"/'\
-    -e 's/"ProductVersion", .*/"ProductVersion", "'$R'"/'\
-    -e "s/Copyright 1984-..../Copyright 1984-`date +%Y`/g" ../c/scheme.rc > c/scheme.rc
-set maybeupdatedfiles = ($maybeupdatedfiles c/scheme.rc)
+sed -e "s/FILEVERSION .*/FILEVERSION $RCVERSION/" \
+    -e "s/PRODUCTVERSION .*/PRODUCTVERSION $RCVERSION/" \
+    -e 's/"FileDescription", .*/"FileDescription", "Chez Scheme Version '$R'"/' \
+    -e 's/"FileVersion", .*/"FileVersion", "'$R'"/' \
+    -e 's/"ProductVersion", .*/"ProductVersion", "'$R'"/' \
+    -e "s/Copyright 1984-..../Copyright 1984-`date +%Y`/g" \
+    -I "" c/scheme.rc
 
-rm -f s/7.ss
-sed -e "s/nCopyright 1984-..../nCopyright 1984-`date +%Y`/g" ../s/7.ss > s/7.ss
-set maybeupdatedfiles = ($maybeupdatedfiles s/7.ss)
+sed -e "s/nCopyright 1984-..../nCopyright 1984-`date +%Y`/g" \
+    -I "" s/7.ss
 
-rm -f s/cmacros.ss
 set VNUM = `printf "%02x%02x%02x00" $MR $mR $bR`
-sed -e "s/scheme-version #x......../scheme-version #x$VNUM/" ../s/cmacros.ss > s/cmacros.ss
-set maybeupdatedfiles = ($maybeupdatedfiles s/cmacros.ss)
+sed -e "s/scheme-version #x......../scheme-version #x$VNUM/" \
+    -I "" s/cmacros.ss
 
-mkdir release_notes
 sed -e "s/thisversion{Version [^ ]*}/thisversion{Version $R}/" \
     -e "s/pubmonth{.*}/pubmonth{`date +%B`}/" \
     -e "s/pubyear{.*}/pubyear{`date +%Y`}/" \
-  ../release_notes/release_notes.stex > release_notes/release_notes.stex
-set maybeupdatedfiles = ($maybeupdatedfiles release_notes/release_notes.stex)
+    -I "" release_notes/release_notes.stex
 
-mkdir csug
 sed -e "s/Revised\(.*\)for Chez Scheme Version [^ ]*\./Revised\1for Chez Scheme Version $R./" \
     -e "s/\\copyright~.* Cisco Systems, Inc./\\copyright~`date +%Y` Cisco Systems, Inc./" \
-  ../csug/copyright.stex > csug/copyright.stex
+    -I "" csug/copyright.stex
 sed -e "s/Copyright &copy; .* Cisco Systems, Inc./Copyright \&copy; `date +%Y` Cisco Systems, Inc./" \
     -e "s/(define latest-release-date "'"'".*"'"'")/(define latest-release-date "'"'"`date +'%B %Y'`"'"'")/" \
-  ../csug/csug.stex > csug/csug.stex
-set maybeupdatedfiles = ($maybeupdatedfiles csug/copyright.stex csug/csug.stex)
+    -I "" csug/csug.stex
 
-rm -f rpm/Makefile
-sed -e "s/^version = .*/version = $R/" ../rpm/Makefile > rpm/Makefile
-set maybeupdatedfiles = ($maybeupdatedfiles rpm/Makefile)
+sed -e "s/^version = .*/version = $R/" \
+    -I "" rpm/Makefile
 
-rm -f pkg/Makefile
 sed -e "s/^version = .*/version = $R/" \
     -e "s/&copy; .* Cisco Systems/\&copy; `date +%Y` Cisco Systems/" \
-     ../pkg/Makefile > pkg/Makefile
-set maybeupdatedfiles = ($maybeupdatedfiles pkg/Makefile)
+     -I "" pkg/Makefile
 
-mkdir wininstall
-sed -e "s/VERSION := .*/VERSION := $R/" ../wininstall/Makefile > wininstall/Makefile
-set maybeupdatedfiles = ($maybeupdatedfiles wininstall/Makefile)
+sed -e "s/VERSION := .*/VERSION := $R/" \
+    -I "" wininstall/Makefile
 foreach fn (wininstall/{,t}{a6,i3}nt.wxs)
-  set maybeupdatedfiles = ($maybeupdatedfiles $fn)
-  sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/" ../$fn > $fn
+  sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/" \
+      -I "" $fn
 end
-
-set updatedfiles = ()
-foreach x ($maybeupdatedfiles)
-  cmp -s ../$x $x || set updatedfiles = ($updatedfiles $x)
-end
-
-rm -f LOG
-cat ../LOG > LOG
-echo "" >> LOG
-echo "$R changes:" >> LOG
-echo "- updated version to $R" >> LOG
-echo $updatedfiles | sed -e 's/^/    /' | fmt >> LOG
-
-foreach x ($updatedfiles)
-  cp $x ../$x
-end
-cp LOG ../LOG
 
 exit 0

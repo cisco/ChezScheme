@@ -77,9 +77,7 @@ Please keep in mind the following guidance when preparing contributions:
   equals more value, code quality is in fact inversely proportional
   to code size.
 
-* All changes must be described in LOG as well as via git commit
-  messages and/or github pull request logs.  The revision-control
-  system might change over time, but the LOG should always be present.
+* Don't forget to update the release notes.
 
 * Some contributions may be more appropriately published as projects
   of their own.  If you are contributing a significant extension built
