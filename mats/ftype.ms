@@ -2797,11 +2797,11 @@
     (ftype-init-lock! A (g *) x)
     #t)
 
-  (ftype-lock! A (c) x)
-  (ftype-lock! A (f f1) x)
-  (ftype-lock! A (f f2 1 f3b) x)
-  (ftype-lock! A (f f2 $idx f3b) x)
-  (ftype-lock! A (g *) x)
+  (retry-for-spurious (ftype-lock! A (c) x))
+  (retry-for-spurious (ftype-lock! A (f f1) x))
+  (retry-for-spurious (ftype-lock! A (f f2 1 f3b) x))
+  (retry-for-spurious (ftype-lock! A (f f2 $idx f3b) x))
+  (retry-for-spurious (ftype-lock! A (g *) x))
 
   (not (ftype-lock! A (c) x))
   (not (ftype-lock! A (f f1) x))
@@ -2831,6 +2831,17 @@
     (fptr-free x)
     (fptr-free g)
     #t)
+
+  ;; This is intended mainly as a test of `retry-for-spurious`:
+  (let ([m (make-ftype-pointer iptr (foreign-alloc (ftype-sizeof iptr)))])
+    (ftype-init-lock! iptr () m)
+    (let loop ([i 10000000])
+      (or (fx= i 0)
+          (and (retry-for-spurious (ftype-lock! iptr () m))
+               (begin
+                 (ftype-unlock! iptr () m)
+                 (loop (fx- i 1)))))))
+
 )
 
 (mat ftype-compile-file

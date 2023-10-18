@@ -38,11 +38,11 @@
     (eq? 1 (unbox bx1)))
   (not (box-cas! bx1 0 1))
   (eq? 1 (unbox bx1))
-  (box-cas! bx1 1 2)
+  (retry-for-spurious (box-cas! bx1 1 2))
   (eq? 2 (unbox bx1))
 
   (not (box-cas! bx2 #f 'banana))
-  (box-cas! bx2 'apple 'banana)
+  (retry-for-spurious (box-cas! bx2 'apple 'banana))
   (not (box-cas! bx2 'apple 'banana))
   (eq? 'banana (unbox bx2))
 
@@ -59,9 +59,7 @@
   (begin
     (collect 0)
     (let ([g1 (gensym)])
-      (and (let loop ()
-             (or (box-cas! bx2 'banana g1)
-                 (loop)))
+      (and (retry-for-spurious (box-cas! bx2 'banana g1))
            (begin
              (collect 0)
              (eq? g1 (unbox bx2))))))

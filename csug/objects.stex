@@ -820,9 +820,16 @@ If the \var{n}th element of \var{vector} that would be replaced
 is not \scheme{eq?} to \var{old-obj}, then
 \var{vector} is unchanged.
 
+On an architecture with a weak memory model, \scheme{vector-cas!} can
+spuriously fail, leaving \var{vector} unchanged and returning
+\scheme{#f} even if the current value of element \var{n} is
+\var{old-obj}. On success, no memory ordering is implied, which means
+that \scheme{memory-order-acquire} and/or \scheme{memory-order-release}
+may be needed to complete an intended synchronization.
+
 \schemedisplay
 (define v (vector 'old0 'old1 'old2))
-(vector-cas! v 1 'old1 'new1) ;=> #t
+(vector-cas! v 1 'old1 'new1) ;=> #t, assuming no spurious failure
 (vector-ref v 1) ;=> 'new1
 (vector-cas! v 2 'old1 'new2) ;=> #f
 (vector-ref v 2) ;=> 'old2
@@ -1852,9 +1859,16 @@ if the replaced content is \scheme{eq?} to \var{old-obj}.
 If the content of \var{box} that would be replaced is not \scheme{eq?} to \var{old-obj}, then
 \var{box} is unchanged.
 
+On an architecture with a weak memory model, \scheme{box-cas!} can
+spuriously fail, leaving \var{box} unchanged and returning
+\scheme{#f} even if the current value in \var{box} is \var{old-obj}.
+On success, no memory ordering is implied, which means that
+\scheme{memory-order-acquire} and/or \scheme{memory-order-release} may be
+needed to complete an intended synchronization.
+
 \schemedisplay
 (define b (box 'old))
-(box-cas! b 'old 'new) ;=> #t
+(box-cas! b 'old 'new) ;=> #t, assuming no spurious failure
 (unbox b) ;=> 'new
 (box-cas! b 'other 'wrong) ;=> #f
 (unbox b) ;=> 'new
