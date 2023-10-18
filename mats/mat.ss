@@ -615,3 +615,20 @@
                                 (set! counter n)
                                 (fx= n 0))))])
         (collect)))))
+
+(define-syntax retry-for-spurious
+  (let ([mt (symbol->string (machine-type))])
+    (if (or (memq (substring mt 0 2) '("a6" "i3"))
+            (memq (substring mt 0 3) '("ta6" "ti3")))
+        ;; no retry loop needed on x86
+        (lambda (stx)
+          (syntax-case stx ()
+            [(_ e) #'e]))
+        ;; add retry loop
+        (lambda (stx)
+          (syntax-case stx ()
+            [(_ e) #'(let loop ([n 10])
+                       ;; 10 spurious failures in a row is vanishingly unlikely?
+                       (or e
+                           (and (> n 0)
+                                (loop (- n 1)))))])))))

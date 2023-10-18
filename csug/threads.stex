@@ -364,7 +364,10 @@ not just by the process or thread that most recently locked the lock.
 
 The lock mechanism provides little structure, and mistakes
 in allocation and use can lead to memory faults, deadlocks,
-and other problems.
+and other problems. Furthermore, no memory ordering is implied by a lock
+operation, which means that \scheme{memory-order-acquire} and
+\scheme{memory-order-release} may be needed to complete the intended
+synchronization of a lock.
 Thus, it is usually advisable to use locks only as part of a
 higher-level abstraction that ensures locks are used in a
 disciplined manner.
@@ -375,7 +378,7 @@ disciplined manner.
     (foreign-alloc (ftype-sizeof uptr))))
 
 (ftype-init-lock! uptr () lock)
-(ftype-lock! uptr () lock) ;=> #t
+(ftype-lock! uptr () lock) ;=> #t, assuming no spurious failure
 (ftype-lock! uptr () lock) ;=> #f
 (ftype-unlock! uptr () lock)
 (ftype-spin-lock! uptr () lock)
@@ -414,9 +417,13 @@ to the use of any of the other operators; if this is not done, the
 behavior of the other operators is undefined.
 
 \scheme{ftype-lock!} can be used to lock the lock.
-If it finds the lock unlocked at the time of the operation, it locks
+If it finds the lock unlocked at the time of the operation, it (normally) locks
 the lock and returns \scheme{#t}; if it finds the lock already locked,
-it returns \scheme{#f} without changing the lock.
+it returns \scheme{#f} without changing the lock. On an architecture with a weak memory model,
+\scheme{ftype-lock!} can spuriously fail, leaving a lock unchanged and returning
+\scheme{#f} even if the lock is currently unlocked. On success, no memory ordering is implied,
+which means that \scheme{memory-order-acquire} may be
+needed to complete an intended synchronization.
 
 \scheme{ftype-spin-lock!} can also be used to lock the lock.
 If it finds the lock unlocked at the time of the operation, it locks the
@@ -432,6 +439,9 @@ the lock.
 \scheme{ftype-unlock!} is used to unlock a lock.
 If it finds the lock locked, it unlocks the lock and returns.
 Otherwise, it returns without changing the lock.
+On an architecture with a weak memory model,
+no memory ordering is implied, and \scheme{memory-order-release} may be
+needed to complete an intended synchronization.
 
 \section{Locked increment and decrement\label{SECTTHREADLOCKEDINCRDECR}}
 

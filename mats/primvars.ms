@@ -28,7 +28,7 @@
            heap-check-interval
            preexisting-profile-dump-entry?
            coverage-table record-run-coverage load-coverage-files combine-coverage-files coverage-percent
-           parameters)))
+           parameters retry-for-spurious)))
     (define (canonical-label x)
       (let ([s (symbol->string x)])
         (#%$intern3 (format "~a*top*:~a" s s) (string-length s) (+ 6 (* 2 (string-length s))))))

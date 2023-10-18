@@ -1378,22 +1378,22 @@
     (eq? 1 (vector-ref vec1 0)))
   (not (vector-cas! vec1 0 0 1))
   (eq? 1 (vector-ref vec1 0))
-  (vector-cas! vec1 0 1 4)
+  (retry-for-spurious (vector-cas! vec1 0 1 4))
   (eq? 4 (vector-ref vec1 0))
   (not (vector-cas! vec1 0 1 5))
 
   (not (vector-cas! vec1 1 0 1))
   (eq? 2 (vector-ref vec1 1))
-  (vector-cas! vec1 1 2 5)
+  (retry-for-spurious (vector-cas! vec1 1 2 5))
   (eq? 5 (vector-ref vec1 1))
 
   (not (vector-cas! vec2 0 'banana 'donut))
-  (vector-cas! vec2 0 'apple 'donut)
+  (retry-for-spurious (vector-cas! vec2 0 'apple 'donut))
   (not (vector-cas! vec2 0 'apple 'eclair))
   (eq? 'donut (vector-ref vec2 0))
 
   (not (vector-cas! vec2 1 'apple 'fig))
-  (vector-cas! vec2 1 'banana 'fig)
+  (retry-for-spurious (vector-cas! vec2 1 'banana 'fig))
   (not (vector-cas! vec2 1 'banana 'grape))
   (eq? 'fig (vector-ref vec2 1))
 
@@ -1414,7 +1414,7 @@
   (begin
     (collect 0)
     (let ([g1 (gensym)])
-      (and (vector-cas! vec2 2 'coconut g1)
+      (and (retry-for-spurious (vector-cas! vec2 2 'coconut g1))
            (begin
              (collect 0)
              (eq? g1 (vector-ref vec2 2))))))
