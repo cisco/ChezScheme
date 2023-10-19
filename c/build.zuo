@@ -226,7 +226,8 @@
 
   (make-targets
    `([:target build (,exe ,petite-exe revision)
-              ,void]
+              ,void
+              :recur]
 
      [:target ,exe (,kernel-dep ,@main-objs ,@res-deps ,@preload-files)
               ,(lambda (path token)

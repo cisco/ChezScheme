@@ -7,15 +7,15 @@ ZUO=bin/zuo
 
 .PHONY: build
 build: $(ZUO)
-	$(ZUO) $(workarea) MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) MAKE="$(MAKE)"
 
 .PHONY: run
 run: $(ZUO)
-	$(ZUO) $(workarea) run
+	+ $(ZUO) $(workarea) run
 
 .PHONY: kernel
 kernel: $(ZUO)
-	$(ZUO) $(workarea) kernel MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) kernel MAKE="$(MAKE)"
 
 .PHONY: install
 install: $(ZUO)
@@ -23,129 +23,130 @@ install: $(ZUO)
 
 .PHONY: uninstall
 uninstall: $(ZUO)
-	$(ZUO) $(workarea) uninstall MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) uninstall MAKE="$(MAKE)"
 
 .PHONY: test-one
 test-one: $(ZUO)
-	$(ZUO) $(workarea) test-one MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) test-one MAKE="$(MAKE)"
 
 .PHONY: test-some-fast
 test-some-fast: $(ZUO)
-	$(ZUO) $(workarea) test-some-fast MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) test-some-fast MAKE="$(MAKE)"
 
 .PHONY: test-some
 test-some: $(ZUO)
-	$(ZUO) $(workarea) test-some MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) test-some MAKE="$(MAKE)"
 
 .PHONY: test
 test: $(ZUO)
-	$(ZUO) $(workarea) test MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) test MAKE="$(MAKE)"
 
 .PHONY: test-more
 test-more: $(ZUO)
-	$(ZUO) $(workarea) test-more MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) test-more MAKE="$(MAKE)"
 
 .PHONY: coverage
 coverage: $(ZUO)
-	$(ZUO) $(workarea) coverage MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) coverage MAKE="$(MAKE)"
 
 .PHONY: bootfiles
 bootfiles: $(ZUO)
-	$(ZUO) $(workarea) bootfiles MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) bootfiles MAKE="$(MAKE)"
 
 .PHONY: reset
 reset: $(ZUO)
-	$(ZUO) $(workarea) reset MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) reset MAKE="$(MAKE)"
 
 # Supply XM=<machine> to build boot files for <machine>
 .PHONY: boot
 boot:
-	$(ZUO) $(workarea) boot "$(XM)" MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) boot "$(XM)" MAKE="$(MAKE)"
 
 # `<machine>.boot` as alias for `boot XM=<machine>`
 %.boot: $(ZUO)
-	$(ZUO) $(workarea) boot $* MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) boot $* MAKE="$(MAKE)"
 
 .PHONY: auto.boot
 auto.boot: $(ZUO)
-	$(ZUO) $(workarea) boot MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) boot MAKE="$(MAKE)"
 
 SCHEME=scheme
 
 .PHONY: cross.boot
 cross.boot: $(ZUO)
-	$(ZUO) $(workarea) boot SCHEME="$(SCHEME)" MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) boot SCHEME="$(SCHEME)" MAKE="$(MAKE)"
 
 .PHONY: re.boot
 re.boot: $(ZUO)
-	$(ZUO) $(workarea) reboot SCHEME="$(SCHEME)"
+	+ $(ZUO) $(workarea) reboot SCHEME="$(SCHEME)"
 
 # Supply XM=<machine> to build boot files for <machine>
 # with o=3 d=0 for the cross compiler, and only after
 # building the kernel for the configured machine
 .PHONY: bootquick
 bootquick: $(ZUO)
-	$(ZUO) $(workarea) bootquick "$(XM)" MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) bootquick "$(XM)" MAKE="$(MAKE)"
 
 # `<machine>.bootquick` as alias for `boot XM=<machine>`
 %.bootquick: $(ZUO)
-	$(ZUO) $(workarea) bootquick $* MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) bootquick $* MAKE="$(MAKE)"
 
 auto.bootquick: $(ZUO)
-	$(ZUO) $(workarea) bootquick MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) bootquick MAKE="$(MAKE)"
 
 # Supply XM=<machine>-<tag>.bootpbchunk to repackage boot files for
 # <machine> with pbchunk sources, including additional
 # boot files
 .PHONY: bootpbchunk
 bootpbchunk: $(ZUO)
-	$(ZUO) $(workarea) bootpbchunk "$(XM)" $(ARGS) MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) bootpbchunk "$(XM)" $(ARGS) MAKE="$(MAKE)"
 
 # `<machine>.bootpbchunk` as alias for `pbchunk XM=<machine>`
 %.bootpbchunk: $(ZUO)
-	$(ZUO) $(workarea) bootpbchunk $* $(ARGS) MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) bootpbchunk $* $(ARGS) MAKE="$(MAKE)"
 
 .PHONY: docs
 docs: build $(ZUO)
-	$(ZUO) $(workarea) docs MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) docs MAKE="$(MAKE)"
 
 .PHONY: csug
 csug: build $(ZUO)
-	$(ZUO) $(workarea) csug MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) csug MAKE="$(MAKE)"
 
 .PHONY: release_notes
 release_notes: build $(ZUO)
-	$(ZUO) $(workarea) release_notes MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) release_notes MAKE="$(MAKE)"
 
 .PHONY: install-docs
 install-docs: build $(ZUO)
-	$(ZUO) $(workarea) install-docs MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) install-docs MAKE="$(MAKE)"
 
 .PHONY: install-csug
 install-csug: build $(ZUO)
-	$(ZUO) $(workarea) install-csug MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) install-csug MAKE="$(MAKE)"
 
 .PHONY: install-release_notes
 install-release_notes: build $(ZUO)
-	$(ZUO) $(workarea) install-release_notes MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) install-release_notes MAKE="$(MAKE)"
 
 .PHONY: bintar
 bintar: $(ZUO)
-	$(ZUO) $(workarea) bintar MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) bintar MAKE="$(MAKE)"
 
 .PHONY: rpm
 rpm: $(ZUO)
-	$(ZUO) $(workarea) rpm MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) rpm MAKE="$(MAKE)"
 
 .PHONY: pkg
 pkg: $(ZUO)
-	$(ZUO) $(workarea) pkg MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) pkg MAKE="$(MAKE)"
 
 .PHONY: clean
 clean: $(ZUO)
-	$(ZUO) $(workarea) clean MAKE="$(MAKE)"
+	+ $(ZUO) $(workarea) clean MAKE="$(MAKE)"
 	rm -f bin/zuo
 
+# Using `+` here means that $(ZUO) gets built even if `-n`/`--dry-run` is provided to `make`
 $(ZUO): $(srcdir)/zuo/zuo.c
-	mkdir -p bin
-	$(CC_FOR_BUILD) -DZUO_LIB_PATH='"'"../zuo/lib"'"' -o $(ZUO) $(srcdir)/zuo/zuo.c
+	+ mkdir -p bin
+	+ $(CC_FOR_BUILD) -DZUO_LIB_PATH='"'"../zuo/lib"'"' -o $(ZUO) $(srcdir)/zuo/zuo.c
