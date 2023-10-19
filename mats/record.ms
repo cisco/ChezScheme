@@ -4099,6 +4099,9 @@
            (define rtd2 (make-record-type-descriptor 'subtype rtd (get-subtype-uid) #f #f (cons 1 1)))
            (define val ',(read (open-string-input-port "#[#{subtype a3utgl1aoz8jzrg100-1} 0 1]")))
            (record? val rtd)))
+ (let ([ip (open-input-string "#f")])
+   ;; check that expand-primitives respects applicative order for record?
+   (eq? 'bailed (call/cc (lambda (k) (#3%record? (read ip) (k 'bailed))))))
 )
 
 (mat record-type-mismatch

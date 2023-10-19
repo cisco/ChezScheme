@@ -7831,7 +7831,7 @@
                                                 (vector-length (rtd-ancestry d)))]
                                [else #f])])
             ;; `t` is rtd of `e`, and it's used once
-            (define (compare-at-depth t known-depth)
+            (define (compare-at-depth e-rtd t known-depth)
               (cond
                 [(eqv? known-depth (constant minimum-ancestry-vector-length))
                  ;; no need to check ancestry array length
@@ -7865,16 +7865,16 @@
                                 ,(%constant sfalse)))))))]))
             (cond
               [assume-record?
-               (compare-at-depth (%mref ,e ,(constant typed-object-type-disp)) known-depth)]
+               (compare-at-depth e-rtd (%mref ,e ,(constant typed-object-type-disp)) known-depth)]
               [else
                (let ([t (make-tmp 't)])
-                 (bind #t (e)
+                 (bind #t (e e-rtd) ;; also bind e-rtd to maintain applicative order in case `and` short-circuits
                    (build-and
                     (%type-check mask-typed-object type-typed-object ,e)
                     `(let ([,t ,(%mref ,e ,(constant typed-object-type-disp))])
                        ,(build-and
                          (%type-check mask-record type-record ,t)
-                         (compare-at-depth t known-depth))))))]))))
+                         (compare-at-depth e-rtd t known-depth))))))]))))
       (define-inline 3 record?
         [(e) (build-record? e)]
         [(e e-rtd)

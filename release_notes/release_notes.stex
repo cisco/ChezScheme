@@ -2700,6 +2700,11 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Incorrect code for \scheme{record?} at optimize-level 3 (9.9.9)}
+
+At optimize-level 3, the \scheme{record?} predicate could short circuit without
+evaluating the \var{rtd} expression.
+
 \subsection{Incorrect result from \scheme{Sinteger64} on 32-bit platforms (9.6.4)}
 
 On 32-bit platforms, calling \scheme{Sinteger64} or \scheme{Sunsigned64}
