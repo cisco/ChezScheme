@@ -9,7 +9,7 @@
          [end (- (string-length str) (string-length def))])
     (let loop ([i 0])
       (cond
-        [(> i end) (error "did not find version in cmacro.ss")]
+        [(> i end) (error "did not find version in cmacros.ss")]
         [(and (= (string-ref str i) (string-ref def 0))
               (string=? (substring str i (+ i (string-length def))) def))
          (let ([hex (substring str

@@ -30,7 +30,7 @@
    object's shape are mostly implemented in "mkgc.ss". That script
    generates "gc-ocd.inc" (for modes where object counting and
    backpointers are disabled), "gc-oce.inc", and "gc-par.inc". The
-   rest of the implementation here can still depend on representatoin
+   rest of the implementation here can still depend on representation
    details, though, especially for pairs, weak pairs, and ephemerons.
 
    GC Copying versus Marking
@@ -53,7 +53,7 @@
    Objects might be marked [and swept] instead of copied [and swept]
    as triggered by two possibilities: one or more objects on the
    source segment are immobile (subsumes locked) or MAX_CG == MAX_TG
-   and the object is on a MAX_CG segment that hasn't been disovered as
+   and the object is on a MAX_CG segment that hasn't been discovered as
    sparse by a previous marking (non-copying) pass. Segments with
    marked objects are promoted to the target generation.
 
@@ -64,7 +64,7 @@
    objects.
 
    During a collection, the `old_space` flag is set on a segment if
-   objects aree being copied out of it or marked on it; that is,
+   objects are being copied out of it or marked on it; that is,
    `old_space` is set if the segment starts out in one of the
    generations 0 through mgc. If a segment is being marked instead of
    copied, the `use_marks` bit is also set; note that the bit will not
@@ -112,10 +112,10 @@
    --------------------------------
 
    Ephemerons and guardians act as a kind of "and": an object stays
-   reachable only if some other object (besdies the the
+   reachable only if some other object (besides the the
    ephemeron/guardian itself) is reachable or not. Instead of
    rechecking all guardians and ephemerons constantly, the collector
-   queues pending guardians and ephemerons on the ssegment where the
+   queues pending guardians and ephemerons on the segment where the
    relevant object lives. If any object on that segment is discovered
    to be reachable (i.e., copied or marked), the guardian/ephemeron is
    put into a list of things to check again.
@@ -140,7 +140,7 @@
       segment. A sweeper during sweeping may encounter a "remote"
       reference to a segment that it doesn't own; in that case, it
       registers the object containing the remote reference to be
-      re-swept by the sweeeer that owns the target of the reference.
+      re-swept by the sweeper that owns the target of the reference.
 
       A segment is owned by the thread that originally allocated it.
       When a GC starts, for old-space segments that are owned by
@@ -178,8 +178,8 @@
       a record type's pointer mask or a stack frame's live-pointer
       mask can be a bignum, and the bignum might be remote. In those
       cases, the object might have to be sent back to the original
-      sweeper, and so on. In the owrst case, the object can be swept
-      more tha N times ---- but, again, this case rarely happens at
+      sweeper, and so on. In the worst case, the object can be swept
+      more than N times ---- but, again, this case rarely happens at
       all, and sweeping more than N times is very unlikely.
 
     * In counting/backtrace/measure mode, "parallel" collection can be

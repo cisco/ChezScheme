@@ -9,7 +9,7 @@ found in the "c" directory.
 
 Some key files in "s":
 
- * "cmacro.ss": object layouts and other global constants, including
+ * "cmacros.ss": object layouts and other global constants, including
    constants that are needed by both the compiler and the kernel
 
  * "syntax.ss": the macro expander
@@ -25,7 +25,7 @@ Some key files in "s":
 
  * "ppc32osx.def", "tppc32osx.def", etc., with common combinations
    produced from the "unix.def" and "tunix.def" templates: provides
-   platform-specific constants that feed into "cmacro.ss" and selects
+   platform-specific constants that feed into "cmacros.ss" and selects
    the backend used by "cpnanopass.ss" and "cpprim.ss"
 
 Chez Scheme is a bootstrapped compiler, meaning you need a Chez Scheme
@@ -90,7 +90,7 @@ created by "configure" is the "workarea directory".
 
 Although "configure" generates "Makefile" in the build directory, that
 makefile just ensures that a local copy of `zuo` is built, and then it
-runs `zuo`. The "configure" scrit creates "main.zuo" alongside
+runs `zuo`. The "configure" script creates "main.zuo" alongside
 "Makefile", and that's what `zuo` uses by default. You can run `zuo`
 directly instead of `make`, especially if you have `zuo` installed
 already. When you run "configure", it stores configuration choices in
@@ -139,7 +139,7 @@ Most of the work of porting to a new architecture is producing a new
 "*ISA*.ss" compiler backend, and there will be a "*arch*.def" file to
 go with it. For all ports, including a new operating system on an
 already-supported architecture, you'll need to update "configure",
-"cmacro.ss", and possibly "version.h". If the generic "unix.def"
+"cmacros.ss", and possibly "version.h". If the generic "unix.def"
 and/or "tunix.def" templates do not work for the OS--architecture
 combination, you'll need to create a new "*machine-type*.def" file or
 update the way that "s/machine.zuo" synthesizes a ".def" file from
@@ -195,7 +195,7 @@ below.
 
 ### Running One Set of Tests (no expected-error checking)
 
-Runs tests in a ".ms" file by going to your build's
+Run tests in a ".ms" file by going to your build's
 "*machine-type*/mats" directory, then `zuo .` with a ".mo" target. For
 example, use `zuo . 7.mo` to build and run `7.ms`. Unless there are
 failures, delete `7.mo` to run `7.ms` again.  Argument variables like
@@ -213,7 +213,7 @@ expected error message.
 You can make all ".mo" files with just `zuo` or `zuo . each` within
 your build's "*machine-type*/mats". You can provide configuration
 arguments, too, such as `zuo . o=3` to make all ".mo" files in unsafe
-mode. A ".mo" file is rebuild if configuration arguments are different
+mode. A ".mo" file is rebuilt if configuration arguments are different
 that from the previous run.
 
 ### Running Tests in One Configuration (with expected-error checking)
@@ -273,9 +273,9 @@ available for convenient testing, in order of increasing length:
  * `zuo . test-experr`
 
 As its name suggests, the `test` group is a good default set of
-configrations. The `test-some` target is mostly a subset of `test`,
+configurations. The `test-some` target is mostly a subset of `test`,
 and `test-some-fast` further omits interpreter mode. The `test-more`
-target includes combinations with slower and more agressive checking.
+target includes combinations with slower and more aggressive checking.
 The `test-experr` set includes one configuration for every combination
 of options that might have different expected errors.
 
@@ -315,7 +315,7 @@ See also:
 > Indiana University TR #400, 1994.
 > [PDF](http://www.cs.indiana.edu/ftp/techreports/TR400.pdf)
 
-For example, if "cmacro.ss" says
+For example, if "cmacros.ss" says
 
 ```scheme
   (define-constant type-pair         #b001)
@@ -339,13 +339,13 @@ of a Scheme record, that first word will be a record-type descriptor
 --- that is, a pointer to a record type, which is itself represented
 as a record. The based record type, `#!base-rtd` has itself as its
 record type. Since the type bits are all ones, on a 64-bit machine,
-every object tagged with an additional type workd will end in "F" in
+every object tagged with an additional type word will end in "F" in
 hexadecimal, and adding 1 to the pointer produces the address
 containing the record content (which starts with the record type, so
 add 9 instead to get to the first field in the record).
 
 As another example, a vector is represented as `type-typed-object`
-pointer where the first word is a fixnum. That is, a fixnum used a
+pointer where the first word is a fixnum. That is, a fixnum used as a
 type word indicates a vector. The fixnum value is the vector's length
 in words/objects, but shifted up by 1 bit, and then the low bit is set
 to 1 for an immutable vector.
@@ -353,7 +353,7 @@ to 1 for an immutable vector.
 Most kinds of Scheme values are represented records, so the layout is
 defined by `define-record-type` and similar. For the primitive object
 types that are not records (and even a few that are), the layouts are
-defined in "camcros.ss". For example, an `exactnum` (i.e., a complex
+defined in "cmacros.ss". For example, an `exactnum` (i.e., a complex
 number with exact real and imaginary components) is defined as
 
 ```scheme
@@ -383,13 +383,13 @@ the vfasl writer (in "vfasl.ss"), and the inspector (in "inspect.ss").
 Scheme code does not use the C stack, except to the degree that it
 interacts with C functions. Instead, the Scheme continuation is a
 separate, heap-allocated, linked list of stack segments. Locally, you
-can just view the continuatiton as a stack and assume that overflow
+can just view the continuation as a stack and assume that overflow
 and continuation operations are handled as needed at the boundaries.
 
 See also:
  
 > *Representing Control in the Presence of First-Class Continuations*
-> bby Robert Hieb, R. Kent Dybvig, and Carl Bruggeman,
+> by Robert Hieb, R. Kent Dybvig, and Carl Bruggeman,
 > Programming Language Design and Implementation, 1990.
 > [PDF](https://legacy.cs.indiana.edu/~dyb/pubs/stack.pdf)
 
@@ -403,7 +403,7 @@ is in the thread context (so, it's thread-local), which we'll
 abbreviate as "TC". Some machine register is designated as the `%tc`
 register, and it's initialized on entry to Scheme code. For the
 definition of TC, see `(define-primitive-structure-disps tc ...)` in
-"cmacro.ss".
+"cmacros.ss".
 
 The first several fields of TC are virtual registers that may be
 assigned to machine registers, in which case the TC and registers are
@@ -449,15 +449,15 @@ function, installs the return address as a pointer within the current
 function, and then jumps to the called function. Function calls and
 returns do not use machine "call" and "return" instructions;
 everything is just a "jump". ("Call" and "return" instructions are
-used for C interactions.) It's the caller's responsibity to reset
+used for C interactions.) It's the caller's responsibility to reset
 SFP back on return, since the caller knows how much it moved SFP
 before calling.
 
 The compiler can use a register for the return address instead of
 immediately installing it in SFP[0] on a call. That mode is triggered
-by giving one of the regisers the name `%ret` (as described in
+by giving one of the registers the name `%ret` (as described in
 "Machine Registers" below). Currently, however, the called Scheme
-function will immediatelly copy the register into SFP[0], and it will
+function will immediately copy the register into SFP[0], and it will
 always return by jumping to SFP[0]. So, until the compiler improves to
 deal with leaf functions differently, using a return register can help
 only with hand-coded leaf functions that don't immediately move the
@@ -487,7 +487,7 @@ little later, and there's some data just before that return address
 that describes the calling function's stack frame. The GC needs that
 information, for example, to know which part of the current Scheme
 stack is populated by live variables. The data is represented by
-either the `rp-header` or `rp-compact-header` (see "cmacro.ss") shape.
+either the `rp-header` or `rp-compact-header` (see "cmacros.ss") shape.
 So, when you disassemble code generated by the Chez Scheme compiler,
 you may see garbage instructions mingled with the well-formed
 instructions, but the garbage will always be jumped over.
@@ -507,7 +507,7 @@ For example, the definition of `set-car!` is in "prims.ss" is
 ```
 
 This turns out not to be a circular definition, because the compiler
-recogizes an immediate application of the `set-car!` primitive and
+recognizes an immediate application of the `set-car!` primitive and
 inlines its implementation. The `#2%` prefix instructs the compiler to
 inline the safe implementation of `set-car!`, which checks whether its
 first argument is a pair. Look for `define-inline 2 set-car!` in
@@ -540,7 +540,7 @@ Every library function has to be declared in "cmacros.ss" in the
 (as inserted into machine code via `build-libcall`) with the run-time
 address of the library function. The vector is filled in by loading
 "library.ss". Since some library functions can refer to others, the
-order is important; the linker encouters the forms of "library.ss" one
+order is important; the linker encounters the forms of "library.ss" one
 at a time, and a library entry must be registered before it is
 referenced.
 
@@ -581,28 +581,28 @@ If you're looking for math primitives, see "mathprims.ss" instead of
 
 Before generated code can be run, it must be linked with primitives,
 library entries, and C entries as they exist in memory within the
-current OS procss. Even when code is compiled and then run in the same
+current OS process. Even when code is compiled and then run in the same
 OS process, linking is a separate, post-install step (by `c-mkcode` in
 "compile.ss"). More typically, compiled code is written to a ".so" or
 ".boot" fasl file and loaded later. The fasl format is mostly a
 generic serialization and deserialization format for Scheme objects,
 but writing (via `c-build-fasl` in "compile.ss" plus "fasl.ss") and
-fasl reading (via "fasl.c") are assymetric for code: fasl writing
+fasl reading (via "fasl.c") are asymmetric for code: fasl writing
 works only on unlinked code objects, while reading a fasl file produces
 linked code objects by linking as it loads. (Utilities in "strip.ss"
-can read and re-write file content without linking. Those tools are
-use a completely separate reader and writer ythan "fasl.ss" and
+can read and re-write file content without linking. Those tools
+use a reader and writer that are completely separate from "fasl.ss" and
 "fasl.c".) There's currently no support for writing linked code, as
 represented by a procedure value, to a fasl stream.
 
 Chez Scheme has its own custom linker and does not use the OS linker.
 To support linking, each code object is paired with a relocation
 table. Each table entry specifies an offset in the code object, the
-value that should be linkaed at that offset, and the encoding that is
+value that should be linked at that offset, and the encoding that is
 used at the offset. The value to link can be a Scheme object, such as
 a bignum, symbol, or list, or an index of a library entry or C entry.
 The encoding is machine-specific, and might indicate a literal word in
-the code that is loaded by PC-relative addresing or a sequence of
+the code that is loaded by PC-relative addressing or a sequence of
 instructions that load a value through moves and shifts. Except for
 code that is moved to the "static" GC generation, the relocation table
 is preserved with a code object in memory, because it is needed by the
@@ -638,7 +638,7 @@ Compilation
 It's worth noting that Chez Scheme produces machine code directly,
 instead of relying on a system-provided assembler. Chez Scheme also
 implements its own linker to connect compiled code to runtime kernel
-facilaties and shared symbols.
+facilities and shared symbols.
  
 See also:
 
@@ -658,7 +658,7 @@ represented as calls to functions. In later passes in "cpnanopass.ss",
 some primitive operations get inlined into a combination of core
 forms, some of which are `inline` forms. The `inline` forms eventually
 get delivered to a backend for instruction selection. For example, a
-use of safe `fx+` is inlines as argument checks that guard an
+use of safe `fx+` is inlined as argument checks that guard an
 `(inline + ...)`, and the `(inline + ...)` eventually becomes a
 machine-level addition instruction.
 
@@ -734,7 +734,7 @@ real machine registers:
  * `%trap` - counter for when to check signals, including GC signal
 
 
- * `%eap` - end of bump-allocatable region
+ * `%eap` - end of bump-allocation region
 
  * `%esp` - end of current stack segment
 
@@ -759,7 +759,7 @@ is not mapped to a register, it exists only as a TC slot.
 A few more names are recognized to direct the compiler in different
 ways:
 
- * `%ret` - use a return register insteda of just SFP[0]
+ * `%ret` - use a return register instead of just SFP[0]
 
  * `%reify1`, `%reify2` - a kind of manual allocation of registers for
                           certain hand-coded routines, which otherwise could
@@ -778,10 +778,10 @@ same frame location.
 An early pass in the compiler converts mutable variables to
 pair-valued immutable variables, but assignment to variables is still
 allowed within the compiler's representation. (The early conversion of
-mutables variables ensures that mutation is properly shared for, say,
+mutable variables ensures that mutation is properly shared for, say,
 variables in captured continuations.) That is, even though variables
 and temporaries are typically assigned only once, the compiler's
-intermediate representation is not a single-asssignment form like
+intermediate representation is not a single-assignment form like
 SSA.
 
 Each variable or temporary will be allocated to one spot for it's
@@ -818,7 +818,7 @@ Overall, the allocator see several kinds of "variables":
    which is eventually allocated to a real register or to a frame
    location;
 
- * unspillable varriables, each of which must be allocated to a real
+ * unspillable variables, each of which must be allocated to a real
    register; these are introduced by a backend during the
    instruction-selection pass, where an instruction may require a
    register argument; and
@@ -853,7 +853,7 @@ results of register-use mistakes.]
 At the point where the register allocator runs, a Scheme program has
 been simplified to a sequence of assignment forms and expression
 forms, where the latter are either value-producing and sit on the
-right-hand side of an assignment or they are effectful and sit by
+right-hand side of an assignment or they have effects and sit by
 themselves. The register allocator sees the first assignment to a
 variable/register as the beginning of its live range and the last
 reference as the end of its live range. In some cases, an instruction
@@ -899,14 +899,14 @@ creates a `uvar` (that may eventually be spilled to a stack-frame
 slot). A `make-tmp` in the instruction-selection pass, however, makes
 an unspillable. In earliest passes of the compiler, new temporaries
 must be bound with a `let` form (i.e., a `let` in the intermediate
-repressentation) before they can be used; in later passes, a `set!`
+representation) before they can be used; in later passes, a `set!`
 initializes a temporary.
 
 In all but the very earliest passes, an `mref` form represents a
 memory reference. Typically, a memory reference consists of a
 variable and an offset. The general form is two variables and an
 offset, all of which are added to obtain an address, because many
-machine support indexed memory references of that form. The `%zero`
+machines support indexed memory references of that form. The `%zero`
 pseudo-register is used as the second variable in an general `mref`
 when only one variable is needed. A variable or memory reference also
 has a type, 'uptr or 'fp, in the same way as a register. So, a
@@ -914,12 +914,12 @@ variable of a given type may be allocated to a register of that type,
 or it may be spilled to a frame location and then referenced through
 an `%sfp`-based `mref` using that type. In early passes of the
 compiler, `mref`s can be nested and have computed pieces (such as
-calulating the offset), but a later pass will introduce temporaries to
+calculating the offset), but a later pass will introduce temporaries to
 flatten `mref`s into just variable/register and immediate-integer
 components.
 
 A backend may introduce an unspillable to hold an `mref` value for
-various reasons: because the relevant instruction suports only one
+various reasons: because the relevant instruction supports only one
 register plus an offset instead of two registers, because the offset
 is too big, because the offset does not have a required alignment, and
 so on.
@@ -1037,7 +1037,7 @@ all of the current backends use a particular internal structure:
    machine-level operations, where the functions for machine-level
    operations typically have names ending in `-op`.
 
-Consider the "arm64.ss" definition fo `%logand`, which should accept a
+Consider the "arm64.ss" definition of `%logand`, which should accept a
 destination (here called "z") and two arguments:
 
 ```scheme
@@ -1100,7 +1100,7 @@ on memory references to load an integer/pointer (e.g., on "arm32.ss").
 Note that `%logand` generates a use of the same `(asm-logand #f)`
 instruction for the register--register and the register--immediate
 cases. A more explicit distinction could be made in the output of
-instruction selection, but delaying the choice is anologous to how
+instruction selection, but delaying the choice is analogous to how
 assembly languages often use the same mnemonic for related
 instructions. The `asm-move` and `asm-fpmove` must accommodate
 register--memory, memory--register, and register--register cases,
@@ -1118,8 +1118,8 @@ The `asm-logand` instruction for "arm64.ss" is implemented as
             [else (emit and set-cc? and src0 src1 code*)]))))
 ```
 
-The `set-cc?` argument coresponds to the `#f` in `(asm-logand #f)`.
-The inner lambda reprsents the instruction --- that is, it's the
+The `set-cc?` argument corresponds to the `#f` in `(asm-logand #f)`.
+The inner lambda represents the instruction --- that is, it's the
 function in an `asm` form. The function takes `code*` first, which is
 a list of machine codes for all instructions after the `asm-logand`.
 The `dest` argument corresponds to the result register, and `src0` and
@@ -1143,7 +1143,7 @@ binds `andi-op`, and `(emit andi arg2 ...)` turns into `(logical-op
 list to be extended with new code at its beginning (because the
 machine-code list is built end to start). The bounce from `andi-op` to
 `logicial-op` is because many instructions follow a similar encoding,
-such as different bitwise-logicial operations like `and` and `or`.
+such as different bitwise-logical operations like `and` and `or`.
 Meanwhile, `logical-op` uses an `emit-code` form, which is also in
 "arm64.ss" and other backends, that calls `aop-cons` with a suitable
 human-readable addition.
@@ -1154,13 +1154,13 @@ help with boilerplate and arrange some helpful compile-time checking.
 # Directives for Linking
 
 Besides actual machine code in the output of the assembly step,
-machine-specific linking dierctives can appear. In the case of
+machine-specific linking directives can appear. In the case of
 "arm32.ss", the linking options are `arm32-abs` (load an absolute
-address), `arm32-call` (call an asolute address while setting the link
-register), and a`arm32-jump` (jump to an asolute address). These are
+address), `arm32-call` (call an absolute address while setting the link
+register), and a`arm32-jump` (jump to an absolute address). These are
 turned into relocation entries associated with compiled code by steps
 in "compile.ss". Relocation entries are used when loading and GCing
-with update routines implemented in "fasl.c" as desctibed above in
+with update routines implemented in "fasl.c" as described above in
 "Linking".
 
 Typically, a linking directive is written just after some code that is
@@ -1193,12 +1193,12 @@ an extra pointer type at the start of the argument list, but the "&"
 type is also left for the result type as an indication about that
 first argument. In other words, the result type is effectively
 duplicated in the result (matching the C view) and an argument
-(mathing the Scheme view) --- so, overall, the given type matches
+(matching the Scheme view) --- so, overall, the given type matches
 neither the C nor Scheme view, but either view can be reconstructed.
 
 The compiler creates wrappers to take care of further conversion
 to/from these primitive shapes. You can safely ignore the
-foreign-callable support, at first, when porting to a new platforrm,
+foreign-callable support, at first, when porting to a new platform,
 but foreign-callable support is needed for generated code to access
 runtime kernel functionality.
 
@@ -1216,7 +1216,7 @@ The `asm-foreign-call` function returns 5 values:
 
    If the result type is "&", then `c-arg`s must include a function to
    accept the pointer that receives the function result (i.e., the
-   length of `c-args` should match the length of the agument-type list
+   length of `c-args` should match the length of the argument-type list
    in the given `info-foreign`). The pointer may need to be stashed
    somewhere by the generated code for use after the function returns.
 
@@ -1230,7 +1230,7 @@ The `asm-foreign-call` function returns 5 values:
 
    Generate code to call the C function whose address is in the given
    register. The boolean if #t if the call can assume that the C
-   function is not a varargs function on platformss where varargs
+   function is not a varargs function on platforms where varargs
    support is the default.
 
  * `c-result : uvar/reg -> L13.Effect`
@@ -1312,12 +1312,12 @@ you need the target machine's value, then it must be accessed using
 # Portable Bytecode
 
 The "portable bytecode" virtual machine uses a 32-bit instruction set
-that is intepreted by a loop defined in "c/pb.c", where many of the
+that is interpreted by a loop defined in "c/pb.c", where many of the
 instruction implementations are in "c/pb.h". The instruction set is
 custom, but inspired by Arm64. Of course, since the instructions are
 interpreted, it does not run nearly as fast a native code that Chez
 Scheme normally generates, but it runs fast enough to be useful for
-bootstraping a Chez Scheme build from one portable set of boot files.
+bootstrapping a Chez Scheme build from one portable set of boot files.
 The pb machine type is also potentially useful in a setting that
 disallows code generation or where there's not yet a machine-code
 backend for Chez Scheme.
@@ -1444,7 +1444,7 @@ chunk mode are implemented in the same way.
 # Changing the Version Number
 
 To change the version number, edit the `version` definition in
-"cmacro.ss", and re-bootstrap from scratch using `make re.boot`.
+"cmacros.ss", and re-bootstrap from scratch using `make re.boot`.
 
 To update the "boot/pb" files that are normally used to build Chez
 Scheme without an existing Chez Scheme, use `./configure --pb` before

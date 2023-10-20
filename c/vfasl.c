@@ -595,7 +595,7 @@ static ptr find_pointer_from_offset(uptr p_off, ptr *vspaces, uptr *vspace_offse
 /*************************************************************/
 /* Singletons, such as ""                                    */
 
-/* This array needs to be in the same order as the enumeration in "cmacro.ss" */
+/* This array needs to be in the same order as the enumeration in "cmacros.ss" */
 static ptr *singleton_refs[] = { &S_G.null_string,
                                  &S_G.null_vector,
                                  &S_G.null_fxvector,
