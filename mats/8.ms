@@ -11287,6 +11287,56 @@
       (load-library "testfile-li3.so")
       (library-object-filename '(testfile-li3)))
     "testfile-li3.so")
+  (begin
+    (define (test-library-info do-load file)
+      (separate-eval
+       `(,do-load ,file)
+       ;; no import here
+       '(begin
+          (define (show f)
+            (printf "~s: " f)
+            (guard (e [else (display-condition e) (newline)])
+              (printf "~s\n" ((eval f) '(testfile-li3)))))
+          (show 'library-object-filename)
+          (show 'library-requirements)
+          (show 'library-version)
+          (show 'library-exports))
+       ;; now import
+       '(import (testfile-li3))
+       '(show 'library-exports)))
+    #t)
+  (equal?
+   (test-library-info 'load-library "testfile-li3.ss")
+   (string-append
+    "library-object-filename: #f\n"
+    "library-requirements: ((rnrs (6)))\n"
+    "library-version: ()\n"
+    "library-exports: (x)\n"
+    "library-exports: (x)\n"))
+  (equal?
+   (test-library-info 'load-library "testfile-li3.so")
+   (string-append
+    "library-object-filename: \"testfile-li3.so\"\n"
+    "library-requirements: ((rnrs (6)))\n"
+    "library-version: ()\n"
+    "library-exports: (x)\n"
+    "library-exports: (x)\n"))
+  (equal?
+   (test-library-info 'visit "testfile-li3.so")
+   (string-append
+    "library-object-filename: \"testfile-li3.so\"\n"
+    "library-requirements: Exception: run-time information for library (testfile-li3) has not been loaded\n"
+    "library-version: ()\n"
+    "library-exports: (x)\n"
+    "library-exports: (x)\n"))
+  (equal?
+   (test-library-info 'revisit "testfile-li3.so")
+   (string-append
+    "library-object-filename: \"testfile-li3.so\"\n"
+    "library-requirements: Exception: compile-time information for library (testfile-li3) has not been loaded\n"
+    "library-version: ()\n"
+    "library-exports: Exception: compile-time information for library (testfile-li3) has not been loaded\n"
+    "library-exports: (x)\n"))
 )
 
 (mat rnrs-eval

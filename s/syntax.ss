@@ -828,12 +828,14 @@
          ,(build-sequence no-source init*)))))
 
 (define build-top-library/ct
-  (lambda (uid export-id* import-code* visit-code*)
+  (lambda (uid export-id* interface import-code* visit-code*)
     (with-output-language (Lexpand ctLibrary)
       `(library/ct ,uid
          (,export-id* ...)
-         ,(build-lambda no-source '()
-            (build-sequence no-source import-code*))
+         ,(build-case-lambda no-source ;; case-lambda to simplify bootstrapping
+            (list
+             (list '() (build-sequence no-source import-code*))
+             (list (list (gen-var 'ignored)) (build-data no-source interface))))
          ,(if (null? visit-code*)
                 (build-primref 3 'void)
                 (build-lambda no-source '()
@@ -2727,6 +2729,8 @@
                                                       (cons label ls)
                                                       ls)))
                                      '() env*)
+                                   ; interface
+                                   (binding-value interface-binding)
                                    ; import code
                                    `(,(build-cte-install bound-id (build-data no-source interface-binding) '*system*)
                                      ,@(let ([clo* (fold-left (lambda (clo* dl db)
@@ -5364,8 +5368,20 @@
     (set-who! library-exports
       (lambda (libref)
         (let* ([binding (lookup-global (get-lib who libref))]
-               [iface (get-indirect-interface (binding-value binding))])
-          (unless (and (eq? (binding-type binding) '$module) (interface? iface))
+               [iface
+                (case (binding-type binding)
+                 [($module) (get-indirect-interface (binding-value binding))]
+                 [(global)
+                  (let ([desc (get-library-descriptor (binding-value binding))])
+                    (and desc (libdesc-visible? desc)
+                         (cond
+                          [(libdesc-import-code desc) =>
+                           (lambda (import-code)
+                             (guard (c [else #f])
+                               (import-code 'get-iface)))]
+                          [else #f])))]
+                 [else #f])])
+          (unless (interface? iface)
             ($oops who "unexpected binding ~s" binding))
           (let* ([exports (interface-exports iface)]
                  [n (vector-length exports)])

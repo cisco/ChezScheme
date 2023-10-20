@@ -2701,6 +2701,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{\scheme{library-exports} for library that is not yet imported (9.9.9)}
+
+When visiting or loading a separately compiled library,
+\scheme{library-exports} raised an exception if the library was not
+yet imported.
+
 \subsection{Incorrect code for \scheme{record?} at optimize-level 3 (9.9.9)}
 
 At optimize-level 3, the \scheme{record?} predicate could short circuit without
