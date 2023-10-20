@@ -4821,7 +4821,8 @@
                      (bwp-object? (car x))))))
    ;; check interaction of weak pairs, generations, and specific target generations for collection
    (with-interrupts-disabled
-    (parameterize ([#%$enable-check-heap #t])
+    (parameterize ([#%$enable-check-heap #t]
+                   [collect-maximum-generation (max (collect-maximum-generation) 2)])
       (let ([key "key"])
         (let ([e (weak-cons key #f)])
           (collect 0 1 1)
@@ -5010,7 +5011,8 @@
    ;; Check interaction of mutation and incremental generation promotion
 
    (with-interrupts-disabled
-    (parameterize ([#%$enable-check-heap #t])
+    (parameterize ([#%$enable-check-heap #t]
+                   [collect-maximum-generation (max (collect-maximum-generation) 2)])
       (let ([key "key"])
         (let ([e (ephemeron-cons key #f)])
           (collect 0 1 1)
