@@ -185,7 +185,7 @@ safe mode, the pass tends to more than pay for itself; reduced checks
 and error handling create less work for later compilation passes.
 Even when many checks are removed, run-time performance may improve
 only modestly on modern hardware, since the removed branches are
-perfectly predicatble. Inference can be disabled by setting
+perfectly predictable. Inference can be disabled by setting
 \scheme{enable-type-recovery} to \scheme{#f}.
 
 The compiler can infer more than previously about procedures that
@@ -371,7 +371,7 @@ Small changes to transcendental functions help improve consistency for
 derived compositions. The \scheme{expt} function with two
 \scheme{+inf.0} or \scheme{-inf.0} arguments now produces
 \scheme{+nan.0+nan.0i} instead of a complex number with infinite
-components. The \scheme{sqrt} and \scheme{log} functions changes to
+components. The \scheme{sqrt} and \scheme{log} functions change so
 that \scheme{(sqrt -0.0)} and \scheme{(log -0.0)} produce real
 numbers, instead of complex numbers, on the grounds that
 \scheme{(negative? -0.0)} produces \scheme{#f}.
@@ -429,7 +429,7 @@ symbol-hashtable-ref-cell
 The \scheme{eq-hashtable-try-atomic-cell} procedure supports lock-free
 use of an \scheme{eq?}-based hash table, but with constraints on
 concurrent operations and resizing. Clean-up resizing can be performed
-within a collect-request handler, since only on thread can run at that
+within a collect-request handler, since only one thread can run at that
 time.
 
 A weak or ephemeron \scheme{eqv?} hash table now retains non-fixnum
@@ -563,7 +563,7 @@ Similar to \scheme{enable-object-counts}, the
 \scheme{enable-object-backreferences} parameter enables recording of
 information about reachability. After a collection with backreferences
 enabled, \scheme{object-backreferences} reports an association for
-each objects to the a referencing object---one that caused the storage
+each object to the a referencing object---one that caused the storage
 manager to consider the former object reachable.
 
 A new \scheme{bytes-finalized} procedure reports the number of bytes
@@ -592,7 +592,7 @@ later in the list, while objects later the list are not considered
 reachable by objects earlier in the list. For example, given a list of
 threads, \scheme{compute-size-increments} effectively treats each
 thread as an accounting domain, where memory is charged to an earlier
-threads rather than a later thread when objects are reachable from
+thread rather than a later thread when objects are reachable from
 both. Since this computation involves the same sort of traversal as a
 garbage collection, the \scheme{collect} function takes a list as
 an optional last argument to fuse a garbage collection with size
@@ -609,9 +609,9 @@ considered accessible. Ordered finalization is error-prone and cannot
 handle reference cycles, but it can be necessary to implement certain
 storage-management interfaces and abstractions.
 
-\emph{Immobile objects} are ones that the storage manager will not
-relocated as a long as it is referenced, in the same way that locked
-objects are never relocated. Unlike a locked object, an immobile
+An \emph{immobile object} is one that the storage manager will not
+relocate as a long as it is referenced, in the same way that a locked
+object is never relocated. Unlike a locked object, an immobile
 object can be reclaimed by the storage manager.
 
 \schemedisplay
@@ -630,8 +630,9 @@ be updated by the garbage collector if the referenced object is
 relocated. Using the reference-bytevector interface requires care, but
 it can greatly simplify certain foreign-library interactions. An
 object reference in a bytevector takes the form of a \emph{reference
-address} for a Scheme object, which matches the address of the first
-byte within a bytevector (including a reference bytevector).
+address} for a Scheme object.  The reference address of a bytevector
+(including a reference bytevector) or flvector is the address of the
+first byte of its content.
 
 \schemedisplay
 make-reference-bytevector
@@ -700,7 +701,7 @@ structure of the data.
 
 For reading and writing fasl data, the \scheme{fasl-write} procedure
 accepts a predicate to detect ``external'' values for which only a
-placeholder is saved, and \scheme{fasl-real} accepts a table of
+placeholder is saved, and \scheme{fasl-read} accepts a table of
 external values to substitute for placeholders. These ``external''
 values can then have their own serialization and deserialization. The
 \scheme{fasl-write} function also accepts an option to save a record
