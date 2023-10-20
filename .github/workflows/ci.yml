@@ -75,21 +75,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install chezscheme
-      - name: Build Chez Scheme with Visual Studio
-        if: ${{ matrix.config.toolchain == 'vs' }}
-        shell: cmd
-        run: build.bat ${{ matrix.config.machine }}
       - name: Build Chez Scheme
         run: .github/workflows/build.sh
       - name: Run tests
-        if: ${{ matrix.config.toolchain != 'vs' }}
         timeout-minutes: 60
         run: .github/workflows/test.sh
-      - name: Run tests with Visual Studio
-        if: ${{ matrix.config.toolchain == 'vs' }}
-        timeout-minutes: 60
-        shell: cmd
-        run: build.bat ${{ matrix.config.machine }} /test-some
       - name: Archive workspace
         if: always()
         run: tar -c -h -z -f $TARGET_MACHINE$TOOLCHAIN$VARIANT.tgz $TARGET_MACHINE
