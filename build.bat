@@ -8,6 +8,7 @@ set RUNTIMEAS=dll
 set SRCDIR=%~dp0
 set MAKETARGET=all-dlls
 set SKIPVS=no
+set SKIPSUBMODULE=no
 
 if "%WORKAREA%"=="" goto needargument
 
@@ -29,6 +30,7 @@ if defined ARG (
   if "%ARG%"=="/test" set MAKETARGET=test && goto argloop
   if "%ARG%"=="/test-more" set MAKETARGET=test-more && goto argloop
   if "%ARG%"=="/keepvs" set SKIPVS=yes && goto argloop
+  if "%ARG%"=="/as-is" set SKIPSUBMODULE=yes && goto argloop
   echo Unrecognized argument %ARG%
   exit /B 1
 )
@@ -44,6 +46,13 @@ if "%VSCONFIG%"=="" (
   echo Unrecognized machine type %M%
   exit /B 1
 )
+
+if %SKIPSUBMODULE%==yes goto postsubmodule
+if not exist .git goto postsubmodule
+where git > NUL 2>&1
+if %ERRORLEVEL% neq 0 goto postsubmodule
+git submodule update --init --depth 1
+:postsubmodule
 
 if not exist %WORKAREA% mkdir %WORKAREA%
 
