@@ -209,7 +209,8 @@
     (append (map at-source
                  (list "debug.ss" "primdata.ss" "layout.ss"))
             (append type-srcs
-                    cpnanopass-srcs)))
+                    cpnanopass-srcs
+                    unicode-srcs)))
 
   (define other-srcs
     ;; files that are used to initialize the compiler
@@ -447,8 +448,7 @@
        ;; independent of whether dependencies changed:
        [:target all (bootall ,@output-headers)
                 ,void]
-       [:target bootall (,@all-srcs ,@(add-patchfile macro-objs) ,nanopass.so ,@type-srcs
-                                    ,@cpnanopass-srcs ,@unicode-srcs)
+       [:target bootall (,@all-srcs ,@(add-patchfile macro-objs) ,nanopass.so)
                 ,(lambda (token)
                    (mkdir-p (at-boot "."))
                    (run-scheme "all at once"
