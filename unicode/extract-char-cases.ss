@@ -108,7 +108,7 @@
               [offset (codes->off (caddr fields) n)])
           (chardata-fcchar-set! cdrec offset)
           (chardata-fcstr-set! cdrec offset))))
-    (filter (lambda (fields) (equal? (cadr fields) "C")) data))
+    (filter (lambda (fields) (member (cadr fields) '("C" "S"))) data))
   (for-each 
     (lambda (fields)
       (let ([n (hex->num (car fields))])
