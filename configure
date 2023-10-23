@@ -144,8 +144,8 @@ case "${CONFIG_UNAME}" in
       m64=arm64osx
       tm64=tarm64osx
     elif uname -m | egrep 'Power' > /dev/null 2>&1 ; then
-      m64=ppc32osx
-      tm64=tppc32osx
+      m32=ppc32osx
+      tm32=tppc32osx
       pbendian=b
       default_warning_flags=""
     fi
