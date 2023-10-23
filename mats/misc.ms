@@ -1173,7 +1173,7 @@
               (or (eq? (current-eval) interpret) ; interpreter continuation is not precise enough
                   (and (> (cadr pre-sizes) N)
                        (< (cadr post-sizes) N))
-                  (error 'compute-size-increments "failed ~s ~s ~s" pre-sizes N post-sizes)))))))
+                  (errorf 'compute-size-increments "failed ~s ~s ~s" pre-sizes N post-sizes)))))))
   )
 
 (mat collect+compute-size-increments
@@ -2645,7 +2645,7 @@
              (define peano->n length)
              (define (peano-sub1 n)
                (if (null? n)
-                   (error 'peano-sub "cannot subtract 1 from 0")
+                   (errorf 'peano-sub "cannot subtract 1 from 0")
                    (cdr n)))
              (define peano-zero '())
              (define (peano-add1 n) (#%cons 'succ n))
@@ -5415,21 +5415,21 @@
                        (unless (null? objs)
                          (let ([v (car objs)])
                            (unless (= (#%$fxaddress v) (car addrs))
-                             (error 'immobile "address changed: ~s" v))
+                             (errorf 'immobile "address changed: ~s" v))
                            (cond
                              [(box? v)
                               (unless (eq? (unbox v) (cdr objs))
-                                (error 'immobile "bad box content"))]
+                                (errorf 'immobile "bad box content"))]
                              [(vector? v)
                               (let loop ([j 0])
                                 (unless (= j (vector-length v))
                                   (unless (eq? (cdr objs) (vector-ref v j))
-                                    (error 'immobile "bad vector content"))
+                                    (errorf 'immobile "bad vector content"))
                                   (loop (add1 j))))]
                              [(bytevector? v)
                               (void)]
                              [else
-                              (error 'immobile "bad object: ~s" v)]))
+                              (errorf 'immobile "bad object: ~s" v)]))
                          (check (cdr objs) (cdr addrs))))
                      (loop (sub1 i) objs addrs)))]))))
          (thread-loop (sub1 t))))
