@@ -1,9 +1,9 @@
 ;; This file defines the traversal of objects for the GC and similar
-;; purposes. The description supports the generatation of multiple C
+;; purposes. The description supports the generation of multiple C
 ;; functions, each specialized to a particular traversal mode, while
 ;; sharing the overall traversal implementation.
 
-;; Roughy the first half of this file is the semi-declarative
+;; Roughly the first half of this file is the semi-declarative
 ;; specification in Parenthe-C, and the second half is the Parenthe-C
 ;; compiler that generates C code. The lines between the
 ;; specification, compiler, and supporting C code in "gc.c" are
@@ -33,7 +33,7 @@
 ;; Otherwise, the "declaration" nature of the specification is based
 ;; on selecting code fragments statically via `case-mode` and
 ;; `case-flag`. Macros that expand to those forms (e.g., `trace-tlc`)
-;; provide a further declarative vaneer.
+;; provide a further declarative veneer.
 
 ;; Internals:
 (disable-unbound-warning
@@ -74,7 +74,7 @@
 ;;      possible <flags>:
 ;;       * one-bit : record as one bit per segment; inferred when size matches
 ;;                   alignment or for `space-data`
-;;       * within-segment : alloacted within on segment; can be inferred from size
+;;       * within-segment : allocated within on segment; can be inferred from size
 ;;       * no-sweep : no need to sweep content (perhaps covered by `trace-now`);
 ;;                    inferred for `space-data`
 ;;       * counting-root : check a counting root before pushing to sweep stack
@@ -85,18 +85,18 @@
 ;;  - (trace-early-rtd <field>) : for record types, avoids recur on #!base-rtd; implies pure
 ;;  - (trace-pure-code <field>) : like `trace-pure`, but special handling in parallel mode
 ;;  - (trace-reference <field>) : like `trace`, but for a reference bytevector element
-;;  - (trace-ptrs <field> <count>) : trace an array of pointerrs
+;;  - (trace-ptrs <field> <count>) : trace an array of pointers
 ;;  - (trace-pure-ptrs <field> <count>) : pure analog of `trace-ptrs`
 ;;  - (trace-reference-ptrs <field> <count>) : like `trace-ptrs`, but for a reference bytevector
 ;;  - (copy <field>) : copy for copy, ignore otherwise
 ;;  - (copy-bytes <field> <count>) : copy an array of bytes
 ;;  - (copy-flonum <field>) : copy flonum and forward
-;;  - (copy-flonum* <field>) : copy potentially forwaded flonum
+;;  - (copy-flonum* <field>) : copy potentially forwarded flonum
 ;;  - (copy-type <field>) : copy type from `_` to `_copy_`
 ;;  - (count <counter> [<size> [<scale> [<modes>]]]) :
 ;;       uses preceding `size` declaration unless <size>;
 ;;       normally counts in copy mode, but <modes> can override
-;;  - (as-mark-end <statment> ...) : declares that <statement>s implement counting,
+;;  - (as-mark-end <statement> ...) : declares that <statement>s implement counting,
 ;;       which means that it's included for mark mode
 ;;  - (skip-forwarding) : disable forward-pointer installation in copy mode
 ;;  - (assert <expr>) : assertion
@@ -104,14 +104,14 @@
 ;; In the above declarations, nonterminals like <space> can be
 ;; an identifier or a Parenthe-C expression. The meaning of a plain
 ;; identifier depends on the nonterminal:
-;;  - <space>  : should be a `space-...` from cmacro
-;;  - <size>   : should be a constant from cmacro
-;;  - <field>  : accessor from cmacro, implicitly applied to `_` and `_copy_`
+;;  - <space>  : should be a `space-...` from cmacros
+;;  - <size>   : should be a constant from cmacros
+;;  - <field>  : accessor from cmacros, implicitly applied to `_` and `_copy_`
 
 ;; Parenthe-C is just what it sounds like: C code written in S-expression
 ;; form. Use `(<op> <arg> ...)` as usual, and the generated code transforms
-;; to infix as appropriate for regonized operators. The statement versus
-;; expression distnction is important; primitive declarations must be in
+;; to infix as appropriate for reorganized operators. The statement versus
+;; expression distinction is important; primitive declarations must be in
 ;; statement positions.
 ;;
 ;; Statements:
@@ -696,7 +696,7 @@
 (define-trace-macro (trace-code-early code)
   (unless-code-relocated
    ;; In parallel mode, the `code` pointer may or may not have been
-   ;; forwarded. In that case, we may misinterpret the forward mmarker
+   ;; forwarded. In that case, we may misinterpret the forward marker
    ;; as a code type with flags, but it's ok, because the flags will
    ;; only be set for static-generation objects
    (case-flag parallel?
@@ -1319,7 +1319,7 @@
             (cadr a)
             (error 'lookup "not found: ~s" key)))]))
 
-  ;; A sqeuence wraps a list of string and other sequences with
+  ;; A sequence wraps a list of string and other sequences with
   ;; formatting information
   (define-record-type seq
     (fields l))
@@ -1914,7 +1914,7 @@
             (code (format "~a;" (expression a config #f #t))
                   (statements (cdr l) config))]))]))
 
-  ;; S-expresison -> string
+  ;; S-expression -> string
   (define expression
     (case-lambda
      [(a config) (expression a config #f #f)]
@@ -2022,7 +2022,7 @@
             (protect (format "~a(~a, ~a)" op (expression a config) (expression b config)))])]
         [`(,rator . ,rands)
          (unless (symbol? rator)
-           (error 'expression "expected a symbol for funciton name: ~s" rator))
+           (error 'expression "expected a symbol for function name: ~s" rator))
          (format "~a(~a)"
                  rator
                  (comma-ize (map (lambda (r) (expression r config)) rands)))]

@@ -339,7 +339,7 @@ efficient.
 Flonum printing can be controlled by new parameters:
 
 \schemedisplay
-print-submornal-precision
+print-subnormal-precision
 print-positive-exponent-sign
 print-select-flonum-exponential-format
 \endschemedisplay
@@ -434,7 +434,7 @@ time.
 
 A weak or ephemeron \scheme{eqv?} hash table now retains non-fixnum
 numbers only weakly, instead of strongly. This change is related to
-changes to \scheme{eq?} for flonum values and the availablity of weak
+changes to \scheme{eq?} for flonum values and the availability of weak
 and ephemeron hash tables with arbitrary equality and hashing
 functions.
 
