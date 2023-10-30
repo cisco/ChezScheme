@@ -34,7 +34,7 @@ This directory contains the sources for Chez Scheme. It may also
 contain boot and header files in "boot/pb" for the "portable bytecode"
 Chez Scheme machine type, which can be used to build for native
 machine types, or you may have to create initial boot files using
-an exsisting Chez Scheme build.
+an existing Chez Scheme build.
 
 In you're on Windows, see the WINDOWS VIA COMMAND PROMPT section later
 in this file. Otherwise, carry on to CONFIGURING AND BUILDING.
