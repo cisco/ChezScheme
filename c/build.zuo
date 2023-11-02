@@ -446,20 +446,23 @@
 
      [:target revision ()
               ,(lambda (token)
-                 (let loop ([r (path->complete-path (at-source "."))])
+	         (let loop ([r (path->complete-path (at-source "."))])
                    (cond
-                     [(directory-exists? (build-path r ".git"))
-                      ;; This step takes a while compared to other things in a no-change build
-                      (define p (shell "git describe --always --match=\"\" --abbrev=40 --dirty"
-                                       (hash 'stdout 'pipe)))
-                      (define rev (fd-read (hash-ref p 'stdout) eof))
-                      (process-wait (hash-ref p 'process))
-                      (fd-close (hash-ref p 'stdout))
-                      (display-to-file rev (at-mach "revision") :truncate)]
-                     [else
-                      (define l (split-path r))
-                      (when (car l)
-                        (loop (car l)))])))]
+                    [(stat (build-path r ".git") #t #t)
+                     ;; This step takes a while compared to other things in a no-change build
+                     (define p (shell "git describe --always --match=\"\" --abbrev=40 --dirty"
+                                 (hash 'stdout 'pipe)))
+                     (define rev (~a (fd-read (hash-ref p 'stdout) eof) "git\n"))
+                     (process-wait (hash-ref p 'process))
+                     (fd-close (hash-ref p 'stdout))
+                     (display-to-file rev (at-mach "revision") :truncate)]
+                    [else
+                     (define l (split-path r))
+                     (if (car l)
+                         (loop (car l))
+                         ;; The $Format$ string is expanded by `git archive` because of the
+                         ;; entry in ;; .gitattributes for build.zuo.
+                         (display-to-file "$Format:%H$\ngit\n" (at-mach "revision") :truncate))])))]
 
      ;; keep "_zuo.db" and "_zuo_tc.db" here instead of in "boot" and "bin" directories
      [:db-dir ,(at-dir ".")]
