@@ -30,10 +30,10 @@ On Windows:
 
 GETTING STARTED
 
-This directory contains the sources for Chez Scheme. It may also
-contain boot and header files in "boot/pb" for the "portable bytecode"
-Chez Scheme machine type, which can be used to build for native
-machine types, or you may have to create initial boot files using
+This repository contains the source code for Chez Scheme. It includes
+the boot and header files in "boot/pb" for the portable bytecode
+Chez Scheme machine type, which can be used to build native
+machine types. You can also create initial boot files using
 an existing Chez Scheme build.
 
 In you're on Windows, see the WINDOWS VIA COMMAND PROMPT section later
@@ -64,8 +64,7 @@ Uninstalling on Unix-like systems is as simple as running:
 
 WAYS TO GET BOOT FILES
 
-1. If "boot/pb" is present, then it will normally be used
-   automatically. You can use pb to build boot files manually with
+1. The portable boot files are used by default. You can use
 
      ./configure --pb
      make bootquick XM=<machine type>
@@ -74,22 +73,21 @@ WAYS TO GET BOOT FILES
    in place of <machine type> to build for an inferred machine
    type.
 
-2. If you have an older version of Chez Scheme installed as `scheme`,
-   then
+2. If you have some version of Chez Scheme installed as `scheme`, then
 
      ./configure --force
      make re.boot
 
    creates boot files for an inferred <machine type>, or
 
-     ./configure --force <machine type>
+     ./configure --force -m=<machine type>
      make re.boot
 
    creates boot files for <machine type>. You can supply
    `SCHEME=<scheme>` to run <scheme> instead of `scheme`. A `make`
    afterward builds for <machine type>.
 
-   If your existing Chez Scheme installation is only slightly old, you
+   If your existing Chez Scheme installation is recent enough, you
    may be able to create boot files more quickly using `cross.boot`
    instead of `re.boot`.
 
@@ -97,17 +95,8 @@ WAYS TO GET BOOT FILES
    boot files for the target machine or pb boot files for creating
    them.
 
-3. A combination of the previous two ways: If you plan to build on
-   many different machines and you don't have pb boot files, then it
-   may be a good idea to generate pb boot files once and then use them
-   on different machines:
-
-     ./configure --force --pb
-     make re.boot
-
-4. Along similar lines as the previous way, building for multiple
-   specific <machine type>s: After you have a new Chez Scheme build
-   for some machine, within that build you can use use
+3. If you plan to build on many different machines and you have a new
+   Chez Scheme build for some machine, within that build you can use
 
      make boot XM=<machine type>
 
@@ -116,7 +105,7 @@ WAYS TO GET BOOT FILES
 
 DETAILS
 
-The sources for Chez Scheme come in two parts:
+The source code for Chez Scheme comes in three parts:
 
  * A set of Scheme source files found in the subdirectory "s".
    Compiling these produces the boot files "petite.boot" and
@@ -126,18 +115,15 @@ The sources for Chez Scheme come in two parts:
  * A set of C source files found in the subdirectory "c". Compiling
    and linking these files produces the executable "scheme" (or
    "scheme.exe" on Windows). Compiling the C sources requires the two
-   header files produced by compiling the Scheme sources.
+   header files produced by compiling the Scheme source code.
 
-The Scheme sources can be compiled only by a working version of Chez
-Scheme; it's not possible to build Chez Scheme from source using only
-standard Unix tools, such as a C compiler, unless the "pb" boot files
-are packaged with the source (which is a way of including a working
-version of Chez Scheme).
+ * A set of portable boot files found in the subdirectory "boot/pb"
+   used to bootstrap the compiler.
 
 The "configure" script attempts to determine what type of machine it's
 on and looks for boot files for the machine in a "boot" subdirectory
 (either in the same directory as the "configure" script or the current
-directory is "configure" is run from elsewhere). If it find suitable
+directory if "configure" is run from elsewhere). If it finds suitable
 boot files, "configure" creates several files and directories in the
 current directory (which does not have to be the same as the source
 directory):
@@ -268,7 +254,7 @@ The makefile supports several targets:
 
    The difference between `boot` and `bootquick` is that the latter
    assumes that up-to-date boot files are in place for the current
-   machine type, and it compile the cross compiler in unsafe mode. So,
+   machine type, and it compiles the cross compiler in unsafe mode. So,
    `bootquick` is faster, but `boot` is more helpful during
    development.
 
