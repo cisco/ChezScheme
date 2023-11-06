@@ -130,13 +130,18 @@
         "np-register.ss" "np-info.ss" "np-help.ss"
         "ffi-help.ss"))
 
+(define unicode-src-names
+  '("../unicode/unicode-char-cases.ss"
+    "../unicode/unicode-charinfo.ss"))
+
 ;; used externally as dependencies
 (define all-src-names
   (append base-src-names
           macro-src-names
           other-src-names
           type-src-names
-          cpnanopass-src-names))
+          cpnanopass-src-names
+          unicode-src-names))
 
 ;; The `compiler-compiler-options` argument overrides certain `var` and config-file
 ;; options for building preamble files, which is useful for compiling a cross-compiler
@@ -198,9 +203,6 @@
   (define cpnanopass-srcs
     (map at-source cpnanopass-src-names))
 
-  (define unicode-src-names
-    '("../unicode/unicode-char-cases.ss"
-      "../unicode/unicode-charinfo.ss"))
   (define unicode-srcs
     (map at-source unicode-src-names))
 
