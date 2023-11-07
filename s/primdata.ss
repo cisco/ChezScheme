@@ -2196,6 +2196,7 @@
   ($get-timer [flags single-valued])
   ($guard [flags])
   ($hand-coded [flags single-valued])
+  ($hashtable-cells [sig [(hashtable) -> (vector)] [(hashtable uint) -> (vector)]] [flags alloc])
   ($hashtable-report [flags true])
   ($hashtable-size->minlen [flags single-valued])
   ($hashtable-veclen [flags discard])

@@ -307,6 +307,7 @@
      (same-entries? (hashtable-entries ht) keys vals)
      (or (not (hashtable-mutable? ht))
          (same-elements? (hashtable-cells ht) (vector-map cons keys vals)))
+     (same-elements? (#%$hashtable-cells ht) (vector-map cons keys vals))
 
      (same-elements? (r6rs:hashtable-keys ht) keys)
      (same-entries? (r6rs:hashtable-entries ht) keys vals)
@@ -328,6 +329,7 @@
      (same-entries? (hashtable-entries ht 0) '#() '#())
      (or (not (hashtable-mutable? ht))
          (same-elements? (hashtable-cells ht 0) '#()))
+     (same-elements? (#%$hashtable-cells ht 0) '#())
 
      (or
       (< (hashtable-size ht) 2)
@@ -365,7 +367,11 @@
                (let ([got-cells (hashtable-cells ht 2)])
                  (ormap (lambda (keys vals)
                           (same-elements? got-cells (vector-map cons keys vals)))
-                        keyss valss))))))))))
+                        keyss valss)))
+           (let ([got-cells (#%$hashtable-cells ht 2)])
+             (ormap (lambda (keys vals)
+                      (same-elements? got-cells (vector-map cons keys vals)))
+                    keyss valss)))))))))
 
 (mat hashtable-arguments
  ; make-eq-hashtable

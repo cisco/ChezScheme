@@ -26,7 +26,7 @@ Documentation notes:
   pairs, and then uses a weak or ephemeron eq hashtable to map the key
   to its value; use the size of the eq hashtable as the generic hashtable's
   size
-- an eqv hashtabble pairs an eq hashtable and an generic hashtable
+- an eqv hashtable pairs an eq hashtable and an generic hashtable
 |#
 
 #|
@@ -94,7 +94,7 @@ Documentation notes:
 ;;; eqv-hashtable operators
 (define make-weak-eqv-hashtable)         ; [k], k >= 0
   
-;;; unsafe eq-hashtable operators
+;;; unsafe hashtable operators
 (define $make-eq-hashtable)              ; fxminlen subtype, fxminlen = 2^n, n >= 0
 (define $eq-hashtable-keys)              ; eq-hashtable
 (define $eq-hashtable-values)            ; eq-hashtable
@@ -102,6 +102,7 @@ Documentation notes:
 (define $eq-hashtable-cells)             ; eq-hashtable
 (define $eq-hashtable-copy)              ; eq-hashtable [mutableflag]
 (define $eq-hashtable-clear!)            ; eq-hashtable [fxminlen]
+(define $hashtable-cells)                ; hashtable [fxminlen]
 
 ;;; inspection
 (define $hashtable-veclen)
@@ -1062,7 +1063,7 @@ Documentation notes:
           [(generic) ($gen-hashtable-entries h (most-positive-fixnum))]
           [else ($ht-hashtable-entries h (most-positive-fixnum))])))
 
-    (set-who! hashtable-cells
+    (set-who! $hashtable-cells
       (hashtable-content-dispatch who
                                   $eq-hashtable-cells
                                   $eqv-hashtable-cells
