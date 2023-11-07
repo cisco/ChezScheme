@@ -713,6 +713,15 @@
   (call-with-input-file "testfile.ss"
     (lambda (p)
       (string=? (get-string-all p) "a\n\nbc\n")))
+  (let ([op (open-output-string)])
+    ;; disguise boolean? check just enough to prevent cp0 from folding
+    ;; based on the declared return type; we need to actually check it
+    (define (check) (assert (memq (port-bol? op) '(#t #f))) #t)
+    (check)
+    (fprintf op "okay\n")
+    (check)
+    (write-char #\x op)
+    (check))
  )
 
 (mat char-ready?
