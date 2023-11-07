@@ -214,7 +214,7 @@ implementation notes:
 
   (define eol-char?
     (lambda (c)
-      (memv c '(#\newline #\return #\nel #\ls))))
+      (and (memv c '(#\newline #\return #\nel #\ls)) #t)))
 
   (define-syntax port-gz-mode
     (syntax-rules ()
