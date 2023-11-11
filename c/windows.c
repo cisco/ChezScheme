@@ -18,6 +18,7 @@
 
 #include "system.h"
 #include <objbase.h>
+#include <psapi.h>
 #include <io.h>
 #include <sys/stat.h>
 
@@ -47,6 +48,17 @@ void *S_ntdlopen(const char *path) {
   void *r = (void *)LoadLibraryW(pathw);
   free(pathw);
   return r;
+}
+
+HMODULE *S_enum_process_modules(void) {
+
+    enum { MAX_MODULES = 256 };
+
+    static HMODULE modules[MAX_MODULES + 1] = { NULL };
+    DWORD req_num_bytes;
+    EnumProcessModules(GetCurrentProcess(), modules, MAX_MODULES*sizeof(HMODULE), &req_num_bytes);
+
+    return modules;
 }
 
 void *S_ntdlsym(void *h, const char *s) {

@@ -445,6 +445,7 @@ extern ptr *S_get_call_arena(ptr tc);
 /* windows.c */
 extern INT S_getpagesize(void);
 extern ptr S_LastErrorString(void);
+extern HMODULE *S_enum_process_modules(void);
 extern void *S_ntdlopen(const char *path);
 extern void *S_ntdlsym(void *h, const char *s);
 extern ptr S_ntdlerror(void);
