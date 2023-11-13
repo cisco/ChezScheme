@@ -1841,10 +1841,9 @@ installation directories, but this may be overridden by setting
 the environment variable \index{\scheme{SCHEMEHEAPDIRS}}\scheme{SCHEMEHEAPDIRS}.
 \scheme{SCHEMEHEAPDIRS} should be a colon-separated list of directories, listed in
 the order in which they should be searched.
-Within each directory, the two-character escape sequence ``\scheme{%v}''
-is replaced by the current version, and the two-character escape sequence
-``\scheme{%m}'' is replaced by the machine type.
-On supported platforms, the two-character escape sequence ``\scheme{%x}''
+Within each directory, the two-character escape sequence ``\scheme{%v}'' is
+replaced by the current version, the two-character escape sequence ``\scheme{%m}''
+is replaced by the machine type, and the two-character escape sequence ``\scheme{%x}''
 is replaced by the directory in which the executable file resides.
 A percent followed by any other character is replaced by the second
 character; in particular, ``\scheme{%%}'' is replaced by ``\scheme{%}'', and
@@ -1868,4 +1867,3 @@ a boot header and the compiled code for one or more
 source files.
 See Section~\ref{SECTUSEAPPLICATIONS} for instructions on how to create
 boot files.
-
