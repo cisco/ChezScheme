@@ -2670,8 +2670,9 @@ via one of the other methods described in this section.
 \endentryheader
 
 \noindent
-\var{path} must be a string.
-\scheme{load-shared-object} loads the shared object named by \var{path}.
+\var{path} must be a string or \scheme{#f}.
+If \var{path} is a string, \scheme{load-shared-object} loads the shared object
+named by \var{path}.
 Shared objects may be system libraries or files created from ordinary
 C programs.
 All external symbols in the shared object, along with external symbols
@@ -2685,6 +2686,22 @@ If \var{path} does not begin with a ``.'' or ``/'', the shared
 object is searched for in a default set of directories determined
 by the system.
 
+If \var{path} is \scheme{#f}, external symbols in the executable itself (if
+any), as well as those found in dependent shared objects, are also made
+available as foreign entries.
+Usually, executables do not export symbols, but can be instructed to do so with
+proper compilation flags.
+One may thus create an executable based on {\ChezScheme}, and have Scheme code
+access exported symbols from it and also from any shared object dynamically
+linked to it.
+
+Because {\ChezScheme} is dynamically linked to the operating system's
+C library, all C functions are also accessible after evaluation of
+\scheme{(load-shared-object #f)}.
+This provides a simple way to gain access to standard C functions (such as
+\var{memcpy} or \var{getenv}), which may be very convenient for Scheme programs
+intended to be portable across different systems.
+
 On most Unix systems, \scheme{load-shared-object} is based on the
 system routine \scheme{dlopen}.
 %Under AIX, \scheme{load-shared-object} is based on the system routine
@@ -2697,10 +2714,13 @@ and loader for precise rules for locating and building shared objects.
 
 \scheme{load-shared-object} can be used to access built-in C library
 functions, such as \scheme{getenv}.
-The name of the shared object varies from one system to another.
+As stated above, it is easier to simply evaluate
+\scheme{(load-shared-object #f)}, because the name of the shared object varies
+from one system to another.
 % On Sun Sparc systems running Solaris 2.X or higher
 % running Digital Unix 2.X or higher, and SGI systems running IRIX 5.X
 % or higher
+
 On Linux systems:
 
 \schemedisplay
