@@ -282,6 +282,12 @@ static uptr riscv64_get_abs(void *address);
 static void riscv64_set_jump(void *address, uptr item);
 static uptr riscv64_get_jump(void *address);
 #endif /* RISCV64 */
+#ifdef LOONGARCH64
+static void loongarch64_set_abs(void *address, uptr item);
+static uptr loongarch64_get_abs(void *address);
+static void loongarch64_set_jump(void *address, uptr item);
+static uptr loongarch64_get_jump(void *address);
+#endif /* LOONGARCH64 */
 #ifdef PORTABLE_BYTECODE_SWAPENDIAN
 static void swap_code_endian(octet *code, uptr len);
 #endif
@@ -1486,6 +1492,17 @@ void S_set_code_obj(char *who, IFASLCODE typ, ptr p, iptr n, ptr x, iptr o) {
           riscv64_set_jump(address, item);
           break;
 #endif /* RISCV64 */
+#ifdef LOONGARCH64
+    case reloc_loongarch64_abs:
+            loongarch64_set_abs(address, item);
+            break;
+    case reloc_loongarch64_jump:
+            loongarch64_set_jump(address, item);
+            break;
+    case reloc_loongarch64_call:
+            loongarch64_set_jump(address, item);
+            break;
+#endif /* LOONGARCH64 */
         default:
             S_error1(who, "invalid relocation type ~s", FIX(typ));
     }
@@ -1575,6 +1592,15 @@ ptr S_get_code_obj(IFASLCODE typ, ptr p, iptr n, iptr o) {
           item = riscv64_get_jump(address);
           break;
 #endif /* RISCV64 */
+#ifdef LOONGARCH64
+    case reloc_loongarch64_abs:
+            item = loongarch64_get_abs(address);
+            break;
+    case reloc_loongarch64_jump:
+    case reloc_loongarch64_call:
+            item = loongarch64_get_jump(address);
+            break;
+#endif /* LOONGARCH64 */
         default:
             S_error1("", "invalid relocation type ~s", FIX(typ));
             return (ptr)0 /* not reached */;
@@ -2041,6 +2067,52 @@ static void riscv64_set_jump(void* address, uptr item)
   (*((I64 *)((I32 *)address + 3))) = item;
 }
 #endif /* RISCV64 */
+
+#ifdef LOONGARCH64
+#define PCADDI_INSTR(dest, offset)   ((0b1100 << 25) | ((offset) << 5) | (dest))
+#define EXTRACT_LD_INSTR_DEST(instr) (instr & 0b11111)
+#define JUMP_REG 12
+
+static uptr loongarch64_get_abs(void* address)
+{
+  return *((I64 *)((I32 *)address + 3));
+}
+
+static uptr loongarch64_get_jump(void* address)
+{
+  return *((I64 *)((I32 *)address + 3));
+}
+
+static void loongarch64_set_abs(void* address, uptr item)
+{
+  /*
+    [0] pcaddi dest 0
+    [1] ld.d dest dest 12
+    [2] b 12
+    [3-4] 8-bytes of addr
+  */
+
+  // same as riscv64
+  int dest = EXTRACT_LD_INSTR_DEST(((I32 *)address)[1]);
+  ((I32 *)address)[0] = PCADDI_INSTR(dest, 0);
+  (*((I64 *)((I32 *)address + 3))) = item;
+}
+
+static void loongarch64_set_jump(void* address, uptr item)
+{
+  /*
+    [0] pcaddi dest 0
+    [1] ld.d dest dest 12
+    [2] b 12
+    [3-4] 8-bytes of addr
+    [5] jirl %real-zero dest 0
+  */
+
+  int dest = EXTRACT_LD_INSTR_DEST(((I32 *)address)[1]);
+  ((I32 *)address)[0] = PCADDI_INSTR(dest, 0);
+  (*((I64 *)((I32 *)address + 3))) = item;
+}
+#endif /* LOONGARCH64 */
 
 #ifdef PORTABLE_BYTECODE_SWAPENDIAN
 typedef struct {

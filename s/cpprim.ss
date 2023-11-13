@@ -630,10 +630,10 @@
           ,(%constant type-char))))
     (define need-store-fence?
       (if-feature pthreads
-	(constant-case architecture
-          [(arm32 arm64 riscv64 pb) #t]
-          [else #f])
-        #f))
+	              (constant-case architecture
+                                 [(arm32 arm64 riscv64 loongarch64 pb) #t]
+                                 [else #f])
+                  #f))
     (define add-store-fence
       ;; A store--store fence should be good enough for safety on a platform that
       ;; orders load dependencies (which is anything except Alpha)
@@ -3166,13 +3166,13 @@
     (define-inline 2 memory-order-acquire
       [() (if-feature pthreads
             (constant-case architecture
-	          [(arm32 arm64 riscv64 pb) (%seq ,(%inline acquire-fence) (quote ,(void)))]
+	          [(arm32 arm64 riscv64 loongarch64 pb) (%seq ,(%inline acquire-fence) (quote ,(void)))]
               [else `(quote ,(void))])
             `(quote ,(void)))])
     (define-inline 2 memory-order-release
       [() (if-feature pthreads
             (constant-case architecture
-	          [(arm32 arm64 riscv64 pb) (%seq ,(%inline release-fence) (quote ,(void)))]
+	          [(arm32 arm64 riscv64 loongarch64 pb) (%seq ,(%inline release-fence) (quote ,(void)))]
               [else `(quote ,(void))])
             `(quote ,(void)))])
     (let ()
@@ -4771,7 +4771,7 @@
       (define-inline 3 flsqrt
         [(e)
          (constant-case architecture
-           [(x86 x86_64 arm32 arm64 riscv64 pb) (build-fp-op-1 %fpsqrt e)]
+           [(x86 x86_64 arm32 arm64 riscv64 loongarch64 pb) (build-fp-op-1 %fpsqrt e)]
            [(ppc32) (build-fl-call (lookup-c-entry flsqrt) e)])])
 
       (define-inline 3 flsingle
@@ -5136,7 +5136,7 @@
          (build-checked-fp-op e
            (lambda (e)
              (constant-case architecture
-               [(x86 x86_64 arm32 arm64 riscv64 pb) (build-fp-op-1 %fpsqrt e)]
+               [(x86 x86_64 arm32 arm64 riscv64 loongarch64 pb) (build-fp-op-1 %fpsqrt e)]
                [(ppc32) (build-fl-call (lookup-c-entry flsqrt) e)]))
            (lambda (e)
              (build-libcall #t src sexpr flsqrt e)))])
@@ -8087,7 +8087,7 @@
                (%inline logor ,(%inline sll ,%rdx (immediate 32)) ,%rax)
                64))]
          [(arm32 pb) (unsigned->ptr (%inline read-time-stamp-counter) 32)]
-         [(arm64 riscv64) (unsigned->ptr (%inline read-time-stamp-counter) 64)]
+         [(arm64 riscv64 loongarch64) (unsigned->ptr (%inline read-time-stamp-counter) 64)]
          [(ppc32)
           (let ([t-hi (make-tmp 't-hi)])
             `(let ([,t-hi (inline ,(make-info-kill* (reg-list %real-zero))
@@ -8108,7 +8108,7 @@
                (%inline logor ,(%inline sll ,%rdx (immediate 32)) ,%rax)
                64))]
          [(arm32 ppc32 pb) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 32)]
-         [(arm64 riscv64) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 64)])])
+         [(arm64 riscv64 loongarch64) (unsigned->ptr (%inline read-performance-monitoring-counter ,(build-unfix e)) 64)])])
 
     (define-inline 3 assert-unreachable
       [() (%constant svoid)])

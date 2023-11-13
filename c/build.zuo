@@ -59,6 +59,9 @@
       [(string=? arch "rv64")
        (cons "RISCV64"
              "clearcache.c")]
+      [(string=? arch "la64")
+       (cons "LOONGARCH64"
+             "clearcache.c")]
       [(glob-match? "pb*" arch)
        (cons "PORTABLE_BYTECODE"
              "pb.c")]

@@ -9,6 +9,7 @@
     [(string=? arch "a6") "x86_64"]
     [(string=? arch "i3") "x86"]
     [(string=? arch "rv64") "riscv64"]
+    [(string=? arch "la64") "loongarch64"]
     [else arch]))
 
 (define (arch+os->time_t-bits arch os)

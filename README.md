@@ -10,7 +10,7 @@ Supported platforms (bytecode interpreter may work for others):
 
  * Windows: x86, x86_64, AArch64
  * Mac OS: x86, x86_64, AArch64, PowerPC32
- * Linux: x86, x86_64, ARMv6, AArch64, RV64G, PowerPC32
+ * Linux: x86, x86_64, ARMv6, AArch64, RV64G, LoongArch64, PowerPC32
  * FreeBSD: x86, x86_64, ARMv6, AArch64, PowerPC32
  * OpenBSD: x86, x86_64, ARMv6, AArch64, PowerPC32
  * NetBSD: x86, x86_64, ARMv6, AArch64, PowerPC32

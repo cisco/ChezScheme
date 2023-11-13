@@ -39,6 +39,7 @@ procedure) is given in parentheses.
      \item AArch64 including Android, nonthreaded (arm64le) and threaded (tarm64le)
      \item ARMv6 (32-bit) including Android, nonthreaded (arm32le) and threaded (tarm32le)
      \item RV64G (64-bit RISC-V), nonthreaded (rv64le) and threaded (trv64le)
+     \item LoongArch64 (64-bit LoongArch), nonthreaded (la64le) and threaded (tla64le)
      \item PowerPC (32-bit), nonthreaded (ppc32le) and threaded (tppc32le)
      \end{itemizeC}
 \item Mac OS
@@ -114,7 +115,7 @@ Online versions of both books can be found at
 
 \subsection{New supported platforms and portable bytecode (9.9.9)}
 
-AArch64 (64-bit Arm) and RV64G (64-bit RISC-V) architectures are
+AArch64 (64-bit Arm), RV64G (64-bit RISC-V), and LoongArch64 architectures are
 supported. Threads are supported on architectures with weak memory
 models while preserving the safety guarantee described in the
 documentation for variables and primitive datatypes.

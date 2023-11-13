@@ -45,7 +45,7 @@
                  (and (>= (string-length uni) (string-length arch))
                       (string=? (substring uni 0 (string-length arch)) arch)
                       arch))
-               '("a6" "i3" "arm64" "arm32" "ppc32" "rv64" "pb"))
+               '("a6" "i3" "arm64" "arm32" "ppc32" "rv64" "la64" "pb"))
         (error "could not extract architecture from machine name" m))))
 
 (define (hash-set* ht . keys+vals)
