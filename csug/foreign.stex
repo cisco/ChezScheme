@@ -3093,8 +3093,10 @@ program.
 \cfunction{void}{Sscheme_init}{void (*\var{abnormal}_\var{exit})(void)}
 \cfunction{void}{Sset_verbose}{int \var{v}}
 \cfunction{void}{Sregister_boot_file}{const char *\var{name}}
+\cfunctTwo{void}{Sregister_boot_executable_relative_file}{const char *\var{execpath},}{const char *\var{name}}
+\cfunction{void}{Sregister_boot_relative_file}{const char *\var{name}}
 \cfunction{void}{Sregister_boot_file_fd}{const char *\var{name}, int \var{fd}}
-\cfunctTwo{void}{Sregister_boot_file_fd_segment}{const char *\var{name}, int \var{fd},}{iptr \var{offset}, iptr \var{len}, int \var{close}_\var{after}}
+\cfunctTwo{void}{Sregister_boot_file_fd_region}{const char *\var{name}, int \var{fd},}{iptr \var{offset}, iptr \var{len}, int \var{close}_\var{after}}
 \cfunction{void}{Sbuild_heap}{const char *\var{exec}, void (*\var{custom}_\var{init})(void)}
 \cfunction{void}{Senable_expeditor}{const char *\var{history}_\var{file}}
 \cfunction{void}{Sretain_static_relocation}{void}
@@ -3125,13 +3127,24 @@ values of \var{v} and off when \var{v} is zero.
 In verbose mode, the system displays a trace of the search process
 for subsequently registered boot files.
 
-\scheme{Sregister_boot_file} searches for
-the named boot file and
-register it for loading, while \scheme{Sregister_boot_file_fd}
-provides a specific boot file as a file descriptor.
-When only a boot file name is provided, the file is opened but not loaded until the heap is built via
-\scheme{Sbuild_heap}. When a file descriptor is provided, the given file name
-is used only for error reporting.
+\scheme{Sregister_boot_file} searches for a boot file and registers it
+for loading. If the given boot file path is absolute or starts with
+a \scheme{.} or \scheme{..} path element, then the path is
+used relative to the current directory; otherwise, the boot file is
+found through a search as described in
+Section~\ref{SECTUSECOMMANDLINE}, and \scheme{"scheme"} is assumed as
+the executable name for resolving a \scheme{"%x"} escape when the
+executable path is not otherwise available from the operating system.
+\scheme{Sregister_boot_executable_relative_file} is similar, but
+accepts a path to the executable instead of assuming
+\scheme{"scheme"}, so it should be preferred when using a boot file
+path that may be resolved relative to the executable.
+\scheme{Sregister_boot_relative_file} always treats a relative path
+as relative to the current directory, so the executable path is not needed.
+In all of those cases, the boot file is opened but not loaded until the heap is built via
+\scheme{Sbuild_heap}. \scheme{Sregister_boot_file_fd} provides a specific boot file as a file descriptor,
+the given file name is used only for error reporting, and the file descriptor
+is not read until until the heap is built via \scheme{Sbuild_heap}.
 For the first boot file registered only, the system also
 searches for the boot files upon which the named file
 depends, either directly or indirectly.
@@ -3153,7 +3166,8 @@ called.
 files.
 \var{exec} is assumed to be the name of or path to the executable
 image and is used when no boot files have been registered as
-the base name for the boot-file search process.
+both the base name for the boot-file search process and the executable
+name for finding boot files relative to the executable.
 \var{exec} may be null only if one or more boot files have
 been registered.
 \scheme{\var{custom}_\var{init}} must be a (possibly null) pointer to

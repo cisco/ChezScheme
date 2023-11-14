@@ -69,7 +69,8 @@
   (define c-config-file
     (at-dir "config.h"))
   (define c-config-keys
-    '(disablecurses disablex11 enablelibffi alwaysUseBootFile preloadBootFiles))
+    '(disablecurses disablex11 enablelibffi alwaysUseBootFile preloadBootFiles relativeBootFiles
+                    InstallBin InstallLib))
 
   ;; sources for "kernel.o":
   (define kernel-src-files
@@ -420,9 +421,20 @@
                        (line (and (equal? (hash-ref config 'enablelibffi #f) "yes")
                                   "#define ENABLE_LIBFFI"))
                        (line (and (not (for-windows? config))
-                                  (let ([s (hash-ref config 'InstallLib #f)])
-                                    (and s
-                                         (~a "#define DEFAULT_HEAP_PATH \"" s "/csv%v/%m\"")))))
+                                  (or (and (equal? (hash-ref config 'relativeBootFiles #f) "yes")
+                                           (let* ([bin (hash-ref config 'InstallBin #f)]
+                                                  [lib (hash-ref config 'InstallLib #f)]
+                                                  [rel (or (and bin lib (find-relative-path bin lib))
+                                                           ".")]
+                                                  [x-rel (if (relative-path? rel)
+                                                             (build-raw-path "%x" rel)
+                                                             rel)])
+                                             (~a "#define DEFAULT_HEAP_PATH \"%x:"
+                                                 (build-raw-path x-rel "csv%v/%m")
+                                                 ":%x/../../boot/%m\"")))
+                                      (let ([s (hash-ref config 'InstallLib #f)])
+                                        (and s
+                                             (~a "#define DEFAULT_HEAP_PATH \"" s "/csv%v/%m\""))))))
                        (line (let ([alwaysUseBootFile
                                     (or (and (not (equal? (hash-ref config 'alwaysUseBootFile "") "")))
                                         (infer-always-use-boot-file preload-files))])
