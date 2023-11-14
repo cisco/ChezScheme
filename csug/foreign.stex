@@ -2695,12 +2695,16 @@ One may thus create an executable based on {\ChezScheme}, and have Scheme code
 access exported symbols from it and also from any shared object dynamically
 linked to it.
 
-Because {\ChezScheme} is dynamically linked to the operating system's
-C library, all C functions are also accessible after evaluation of
-\scheme{(load-shared-object #f)}.
+Because {\ChezScheme} is usually dynamically linked to the operating system's C
+library, all built-in C library functions are also accessible after evaluation
+of \scheme{(load-shared-object #f)}.
 This provides a simple way to gain access to standard C functions (such as
 \var{memcpy} or \var{getenv}), which may be very convenient for Scheme programs
 intended to be portable across different systems.
+If {\ChezScheme} is statically linked however, the standard C functions may only
+be accessible in this manner if they are present in the executable and
+exported, otherwise the shared object containing the C library must be
+explicitly named; see below for examples for some platforms.
 
 On most Unix systems, \scheme{load-shared-object} is based on the
 system routine \scheme{dlopen}.
@@ -2714,9 +2718,7 @@ and loader for precise rules for locating and building shared objects.
 
 \scheme{load-shared-object} can be used to access built-in C library
 functions, such as \scheme{getenv}.
-As stated above, it is easier to simply evaluate
-\scheme{(load-shared-object #f)}, because the name of the shared object varies
-from one system to another.
+The name of the shared object varies from one system to another.
 % On Sun Sparc systems running Solaris 2.X or higher
 % running Digital Unix 2.X or higher, and SGI systems running IRIX 5.X
 % or higher
