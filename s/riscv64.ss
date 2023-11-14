@@ -1659,7 +1659,7 @@
                 [(index) (n ireg breg)
                  (safe-assert (eqv? n 0))
                  (emit add %scratch1 ireg breg
-                       (emit ld %jump %cond 0
+                       (emit ld %jump %scratch1 0
                              (emit jalr %real-zero %jump 0 '())))]
                 [else (sorry! who "unexpected src ~s" src)]))))
 
