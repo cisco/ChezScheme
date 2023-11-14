@@ -2,16 +2,25 @@
   This file is meant to be standalone and suitable for use in
   programs other than Chez Scheme.
 
-  Defines `char *get_process_executable_path(const char *exec_file)`
-  which takes argv[0] as supplied to `main` and returns an improved
-  representation of the containing executable. Not all platforms use
-  the `exec_file` argument; in particular, it is not used on Windows
-  or macOS. At worst, on Unix, uses `PATH` to convert `exec_file`
-  into a path. The result is `malloc`ed, so it can be `free`d.
+  SYNOPSIS
+    `char *S_get_process_executable_path(const char *exec_file)`
 
-  If `SELF_EXE_MAIN` is defined, then `main` is defined to call
-  and print the result from `get_process_executable_path`, which
-  is useful for testing.
+  DESCRIPTION
+    `S_get_process_executable_path()` takes `exec_file` (usually
+    `argv[0]` supplied to `main()`) and returns the resolved path of
+    the containing executable. Searching `exec_file` via `PATH` is
+    used as fallback when no platform dependent method is available.
+    Memory for the result is obtained with `malloc()`, and can be
+    freed with `free()`.
+
+  RETURN VALUE
+    On success, `S_get_process_executable_path()` returns a pointer
+    to the resolved path string. Otherwise, it returns `NULL`.
+
+  NOTES
+    If `SELF_EXE_MAIN` is defined, a `main()` is defined to call and
+    print the result from `S_get_process_executable_path`, which is
+    useful for testing.
 
   Parts of the implementaiton here are from the LLVM Project under
   the Apache License v2.0 with LLVM Exceptions.
@@ -87,6 +96,7 @@ static char *get_self_path_platform() {
 
 #if defined(__FreeBSD__)
 #define HAVE_GET_SELF_PATH_PLATFORM
+#include <errno.h>
 #include <osreldate.h>
 #if __FreeBSD_version >= 1300057
 #include <sys/auxv.h>
@@ -131,7 +141,7 @@ static char *get_self_path_platform() {
 #if defined(__sun__) && defined(__svr4__)
 #define HAVE_GET_SELF_PATH_PLATFORM
 static char *get_self_path_platform() {
-  char *r = getexecname();
+  const char *r = getexecname();
   if (r != NULL && strchr(r, '/') != NULL) {
     return strdup(r);
   }
@@ -198,7 +208,10 @@ static char *get_process_executable_path(const char *exec_file) {
   if (r == NULL) {
     r = get_self_path_generic(exec_file);
   }
-  char *rr = realpath(r, NULL);
+  char *rr = NULL;
+  if (r != NULL) {
+    rr = realpath(r, NULL);
+  }
   free(r);
   return rr;
 }
@@ -212,6 +225,10 @@ char *S_get_process_executable_path(const char *exec_file) {
 #ifdef SELF_EXE_MAIN
 #include <stdio.h>
 int main(int argc, char **argv) {
-  printf("%s\n", get_process_executable_path(argv[0]));
+  char *r = S_get_process_executable_path(argv[0]);
+  if (r == NULL) {
+    r = "Failed to get executable path of current process";
+  }
+  printf("%s\n", r);
 }
 #endif
