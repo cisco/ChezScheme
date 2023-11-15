@@ -2670,8 +2670,9 @@ via one of the other methods described in this section.
 \endentryheader
 
 \noindent
-\var{path} must be a string.
-\scheme{load-shared-object} loads the shared object named by \var{path}.
+\var{path} must be a string or \scheme{#f}.
+If \var{path} is a string, \scheme{load-shared-object} loads the shared object
+named by \var{path}.
 Shared objects may be system libraries or files created from ordinary
 C programs.
 All external symbols in the shared object, along with external symbols
@@ -2684,6 +2685,26 @@ runs.
 If \var{path} does not begin with a ``.'' or ``/'', the shared
 object is searched for in a default set of directories determined
 by the system.
+
+If \var{path} is \scheme{#f}, external symbols in the executable itself (if
+any), as well as those found in dependent shared objects, are also made
+available as foreign entries.
+Usually, executables do not export symbols, but can be instructed to do so with
+proper compilation flags.
+One may thus create an executable based on {\ChezScheme}, and have Scheme code
+access exported symbols from it and also from any shared object dynamically
+linked to it.
+
+Because {\ChezScheme} is usually dynamically linked to the operating system's C
+library, all built-in C library functions are also accessible after evaluation
+of \scheme{(load-shared-object #f)}.
+This provides a simple way to gain access to standard C functions (such as
+\var{memcpy} or \var{getenv}), which may be very convenient for Scheme programs
+intended to be portable across different systems.
+If {\ChezScheme} is statically linked however, the standard C functions may only
+be accessible in this manner if they are present in the executable and
+exported, otherwise the shared object containing the C library must be
+explicitly named; see below for examples for some platforms.
 
 On most Unix systems, \scheme{load-shared-object} is based on the
 system routine \scheme{dlopen}.
@@ -2701,6 +2722,7 @@ The name of the shared object varies from one system to another.
 % On Sun Sparc systems running Solaris 2.X or higher
 % running Digital Unix 2.X or higher, and SGI systems running IRIX 5.X
 % or higher
+
 On Linux systems:
 
 \schemedisplay

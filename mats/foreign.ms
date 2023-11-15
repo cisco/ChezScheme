@@ -294,6 +294,18 @@
     )
    ])
 
+(mat load-shared-object-f
+  (equal?
+    (with-input-from-string
+      (separate-eval
+        '(begin
+           (printf "(~S " (foreign-entry? "memcpy"))
+           (load-shared-object #f)
+           (printf "~S)~%" (foreign-entry? "memcpy"))
+           (void)))
+      read)
+    '(#f #t)))
+
 (mat foreign-entry?
    (foreign-entry? "id")
    (foreign-entry? "idid")

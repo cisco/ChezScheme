@@ -112,17 +112,42 @@ static ptr lookup_dynamic(const char *s, ptr tbl) {
     ptr p;
 
     for (p = tbl; p != Snil; p = Scdr(p)) {
+
 #ifdef HPUX
-        (void *)value = (void *)0; /* assignment to prevent compiler warning */
+        void *value = NULL;
         shl_t handle = (shl_t)ptr_to_addr(Scar(p));
 
-        if (shl_findsym(&handle, s, TYPE_PROCEDURE, (void *)&value) == 0)
+        /*
+         * With NULL path, use RTLD_SELF to act like dlopen(NULL, ...)
+         * See: https://docstore.mik.ua/manuals/hp-ux/en/B2355-60130/dlsym.3C.html
+         */
+        if (!handle)
+            handle = (void*)RTLD_SELF;
+
+        if (shl_findsym(&handle, s, TYPE_PROCEDURE, &value) == 0)
            return addr_to_ptr(proc2entry(value, NULL));
 #else /* HPUX */
         void *value;
+        void *handle = ptr_to_addr(Scar(p));
 
-        value = dlsym(ptr_to_addr(Scar(p)), s);
-        if (value != (void *)0) return addr_to_ptr(value);
+#ifdef WIN32
+        if (!handle) {
+            HMODULE *modules = S_enum_process_modules();
+            if (modules) {
+                for (HMODULE *m = modules; *m; ++m) {
+                    value = dlsym(*m, s);
+                    if (value != NULL) break;
+                }
+                free(modules);
+                if (value != NULL)
+                    return addr_to_ptr(value);
+            }
+        } else
+#endif /* WIN32 */
+        {
+            value = dlsym(handle, s);
+            if (value != NULL) return addr_to_ptr(value);
+        }
 #endif /* HPUX */
     }
 
@@ -229,9 +254,17 @@ static void load_shared_object(const char *path) {
 
     tc_mutex_acquire();
 
-    handle = dlopen(path, RTLD_NOW);
-    if (handle == (void *)NULL)
-        S_error2("", "(while loading ~a) ~a", Sstring_utf8(path, -1), s_dlerror());
+#if defined(WIN32) || defined(HPUX)
+    if (!path) {
+        handle = NULL;
+    } else
+#endif /* machine types */
+    {
+        handle = dlopen(path, RTLD_NOW);
+        if (handle == (void *)NULL)
+            S_error2("", "(while loading ~a) ~a", Sstring_utf8(path, -1), s_dlerror());
+    }
+
     S_foreign_dynamic = Scons(addr_to_ptr(handle), S_foreign_dynamic);
 
     tc_mutex_release();
