@@ -478,5 +478,8 @@ extern void S_ffi_call(ptr types, ptr proc, ptr *stack);
 extern ptr S_ffi_closure(ptr types, ptr proc);
 #endif
 
+/* self-exe.c */
+extern char *S_get_process_executable_path(const char *execpath);
+
 /* statics.c */
 extern void scheme_statics(void);

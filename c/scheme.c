@@ -460,7 +460,8 @@ void S_generic_invoke(ptr tc, ptr code) {
 /* MISCELLANEOUS HELPERS */
 
 /* locally defined functions */
-static IBOOL next_path(char *path, const char *name, const char *ext, const char **sp, const char **dsp);
+static IBOOL next_path(const char *execpath, char *path, const char *name,
+                       const char *ext, const char **sp, const char **dsp);
 static const char *path_last(const char *path);
 static char *get_defaultheapdirs(void);
 
@@ -526,7 +527,8 @@ static char *get_defaultheapdirs() {
  * the search path.  path should be a pointer to an unoccupied buffer
  * BOOT_PATH_MAX characters long.  either or both of sp/dsp may be empty,
  * but neither may be null, i.e., (char *)0. */
-static IBOOL next_path(char *path, const char *name, const char *ext,
+static IBOOL next_path(const char *execpath, char *path,
+                       const char *name, const char *ext,
                        const char **sp, const char **dsp) {
   char *p;
   const char *s, *t;
@@ -542,26 +544,23 @@ static IBOOL next_path(char *path, const char *name, const char *ext,
         case '%':
           s += 1;
           switch (*s) {
-#ifdef WIN32
             case 'x': {
-              wchar_t exepath[BOOT_PATH_MAX]; DWORD n;
               s += 1;
-              n = GetModuleFileNameW(NULL, exepath, BOOT_PATH_MAX);
-              if (n == 0 || (n == BOOT_PATH_MAX && GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-                fprintf(stderr, "warning: executable path is too long; ignoring %%x\n");
-              } else {
-                char *tstart;
-                const char *tend;
-                tstart = Swide_to_utf8(exepath);
-                t = tstart;
-                tend = path_last(t);
-                if (tend != t) tend -= 1; /* back up to directory separator */
-                while (t != tend) setp(*t++);
-                free(tstart);
+              char *tstart = S_get_process_executable_path(execpath);
+              if (tstart == NULL) {
+#ifdef WIN32
+                fprintf(stderr, "warning: failed to get executable path (%s); ignoring %%x\n", "Path is too long");
+#else
+                fprintf(stderr, "warning: failed to get executable path (%s); ignoring %%x\n", strerror(errno));
+#endif
               }
+              const char *tend = path_last(tstart);
+              t = tstart;
+              if (tend != t) tend -= 1; /* back up to directory separator */
+              while (t != tend) setp(*t++);
+              free(tstart);
               break;
             }
-#endif
             case 'm':
               s += 1;
               t = MACHINE_TYPE;
@@ -704,7 +703,7 @@ static void finish_dependencies_header(int fd, const char *path, int c) {
   }
 }
 
-static IBOOL find_boot(const char *name, const char *ext, IBOOL direct_pathp,
+static IBOOL find_boot(const char *execpath, const char *name, const char *ext, IBOOL direct_pathp,
                        int fd,
                        IBOOL errorp) {
   char pathbuf[BOOT_PATH_MAX], buf[BOOT_PATH_MAX];
@@ -746,7 +745,7 @@ static IBOOL find_boot(const char *name, const char *ext, IBOOL direct_pathp,
 
     path = pathbuf;
     while (1) {
-      if (!next_path(pathbuf, name, ext, &sp, &dsp)) {
+      if (!next_path(execpath, pathbuf, name, ext, &sp, &dsp)) {
         if (errorp) {
           fprintf(stderr, "cannot find compatible boot file %s%s in search path:\n  \"%s%s\"\n",
                   name, ext,
@@ -793,7 +792,7 @@ static IBOOL find_boot(const char *name, const char *ext, IBOOL direct_pathp,
           CLOSE(fd);
           S_abnormal_exit();
         }
-        if (find_boot(buf, ".boot", 0, -1, 0)) break;
+        if (find_boot(execpath, buf, ".boot", 0, -1, 0)) break;
         if (c == ')') {
           char *sep; char *wastebuf[8];
           fprintf(stderr, "cannot find subordinate boot file");
@@ -1014,7 +1013,7 @@ extern void Sscheme_init(void (*abnormal_exit)(void)) {
   S_pagesize = GETPAGESIZE();
 
   idiot_checks();
-  
+
   switch (current_state) {
     case RUNNING:
       fprintf(stderr, "error (Sscheme_init): call Sscheme_deinit first to terminate\n");
@@ -1084,17 +1083,17 @@ static void check_boot_file_state(const char *who) {
 
 extern void Sregister_boot_file(const char *name) {
   check_boot_file_state("Sregister_boot_file");
-  find_boot(name, "", 0, -1, 1);
+  find_boot("", name, "", 0, -1, 1);
 }
 
 extern void Sregister_boot_direct_file(const char *name) {
   check_boot_file_state("Sregister_boot_direct_file");
-  find_boot(name, "", 1, -1, 1);
+  find_boot("", name, "", 1, -1, 1);
 }
 
 extern void Sregister_boot_file_fd(const char *name, int fd) {
   check_boot_file_state("Sregister_boot_file_fd");
-  find_boot(name, "", 1, fd, 1);
+  find_boot("", name, "", 1, fd, 1);
 }
 
 extern void Sregister_boot_file_fd_region(const char *name,
@@ -1123,13 +1122,9 @@ extern void Sregister_heap_file(UNUSED const char *path) {
   S_abnormal_exit();
 }
 
-extern void Sbuild_heap(const char *kernel, void (*custom_init)(void)) {
+extern void Sbuild_heap(const char *execpath, void (*custom_init)(void)) {
   ptr tc = Svoid; /* initialize to make gcc happy */
   ptr p;
-
-#if defined(ALWAYS_USE_BOOT_FILE)
-  kernel = ALWAYS_USE_BOOT_FILE;
-#endif
 
   switch (current_state) {
     case UNINITIALIZED:
@@ -1149,14 +1144,14 @@ extern void Sbuild_heap(const char *kernel, void (*custom_init)(void)) {
   S_boot_time = 1;
 
   if (boot_count == 0) {
-    const char *name;
-
-    if (!kernel) {
+    const char *name = path_last(execpath);
+#if defined(ALWAYS_USE_BOOT_FILE)
+    name = ALWAYS_USE_BOOT_FILE;
+#endif
+    if (!name) {
       fprintf(stderr, "no boot file or executable name specified\n");
       S_abnormal_exit();
     }
-
-    name = path_last(kernel);
     if (strlen(name) >= BOOT_PATH_MAX) {
       fprintf(stderr, "executable name too long: %s\n", name);
       S_abnormal_exit();
@@ -1176,7 +1171,7 @@ extern void Sbuild_heap(const char *kernel, void (*custom_init)(void)) {
     }
 #endif
 
-    if (!find_boot(name, ".boot", 0, -1, 0)) {
+    if (!find_boot(execpath, name, ".boot", 0, -1, 0)) {
       fprintf(stderr, "cannot find compatible %s.boot in search path\n  \"%s%s\"\n",
               name,
               Sschemeheapdirs, Sdefaultheapdirs);

@@ -1841,9 +1841,10 @@ installation directories, but this may be overridden by setting
 the environment variable \index{\scheme{SCHEMEHEAPDIRS}}\scheme{SCHEMEHEAPDIRS}.
 \scheme{SCHEMEHEAPDIRS} should be a colon-separated list of directories, listed in
 the order in which they should be searched.
-Within each directory, the two-character escape sequence ``\scheme{%v}''
-is replaced by the current version, and the two-character escape sequence
-``\scheme{%m}'' is replaced by the machine type.
+Within each directory, the two-character escape sequence ``\scheme{%v}'' is
+replaced by the current version, the two-character escape sequence ``\scheme{%m}''
+is replaced by the machine type, and the two-character escape sequence ``\scheme{%x}''
+is replaced by the directory in which the executable file resides.
 A percent followed by any other character is replaced by the second
 character; in particular, ``\scheme{%%}'' is replaced by ``\scheme{%}'', and
 ``\scheme{%:}'' is replaced by ``\scheme{:}''.
@@ -1851,9 +1852,7 @@ If \scheme{SCHEMEHEAPDIRS} ends in a non-escaped colon, the default directories 
 searched after those in \scheme{SCHEMEHEAPDIRS}; otherwise, only those listed in
 \scheme{SCHEMEHEAPDIRS} are searched.
 
-Under Windows, semi-colons are used in place of colons, and one additional
-escape is recognized: ``\scheme{%x},'' which is replaced by the directory in
-which the executable file resides.
+Under Windows, semi-colons are used in place of colons.
 The default search path under Windows consists of ``\scheme{%x}''
 and ``\scheme{%x\..\..\boot\%m}.''
 The registry key \scheme{HeapSearchPath} in
@@ -1868,4 +1867,3 @@ a boot header and the compiled code for one or more
 source files.
 See Section~\ref{SECTUSEAPPLICATIONS} for instructions on how to create
 boot files.
-
