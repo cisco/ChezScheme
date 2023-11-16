@@ -9,6 +9,7 @@ set SRCDIR=%~dp0
 set MAKETARGET=all-dlls
 set SKIPVS=no
 set SKIPSUBMODULE=no
+set USEPB=yes
 
 if "%WORKAREA%"=="" goto needargument
 
@@ -24,6 +25,7 @@ if defined ARG (
   if "%ARG%"=="/kernel" set MAKETARGET=kernel && goto argloop
   if "%ARG%"=="/none" set MAKETARGET=none && goto argloop
   if "%ARG%"=="/config" set MAKETARGET=none && goto argloop
+  if "%ARG%"=="/force" set USEPB=no && goto argloop
   if "%ARG%"=="/test-one" set MAKETARGET=test-one && goto argloop
   if "%ARG%"=="/test-some-fast" set MAKETARGET=test-some-fast && goto argloop
   if "%ARG%"=="/test-some" set MAKETARGET=test-some && goto argloop
@@ -60,7 +62,7 @@ echo srcdir=%SRCDIR% > %WORKAREA%\Mf-config
 echo m=%M% >> %WORKAREA%\Mf-config
 echo linkAs=%LINKAS% >> %WORKAREA%\Mf-config
 echo runtimeAs=%RUNTIMEAS% >> %WORKAREA%\Mf-config
-echo enableFrompb=yes >> %WORKAREA%\Mf-config
+echo enableFrompb=%USEPB% >> %WORKAREA%\Mf-config
 
 echo workarea=%WORKAREA% > Makefile
 echo !include %WORKAREA%\Mf-config >> Makefile
