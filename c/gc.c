@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "system.h"
 #include "sort.h"
 #ifndef WIN32
 #include <sys/wait.h>

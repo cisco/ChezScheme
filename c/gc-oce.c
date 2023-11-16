@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "system.h"
+
 #define GCENTRY S_gc_oce_entry
 #define ENABLE_OBJECT_COUNTS
 #define ENABLE_BACKREFERENCE

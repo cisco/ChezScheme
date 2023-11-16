@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "system.h"
+
 #define GCENTRY S_gc_ocd_entry
 #include "gc.c"
 

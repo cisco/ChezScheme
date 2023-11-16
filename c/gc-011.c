@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "system.h"
+
 #define GCENTRY S_gc_011_entry
 #define MAX_CG 0
 #define MIN_TG 1
