@@ -768,10 +768,12 @@ The \scheme{enable-error-source-expression} parameter determines
 whether error messages that become embedded in code can refer to the
 original source file's path.
 
-\subsection{Portable boot files (9.9.9)}
+\subsection{Executable-relative boot files (9.9.9)}
 
 When searching for boot files, the two-character escape sequence
-``\scheme{%x}'' is now supported on more platforms.
+``\scheme{%x}'' is now supported on more platforms. By default, Chez
+Scheme is configured to use this facility to find boot files relative
+to the executable, even when installed.
 
 \subsection{New conversions from Scheme to C signed and unsigned integers (9.6.4)}
 

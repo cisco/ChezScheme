@@ -60,6 +60,7 @@ installreleasenotes=""
 installschemename="scheme"
 installpetitename="petite"
 installscriptname="scheme-script"
+relativeBootFiles=yes
 cflagsset=no
 disablex11=no
 disablecurses=no
@@ -263,6 +264,9 @@ while [ $# != 0 ] ; do
     --installprefix=*)
       installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
       ;;
+    --prefix=*)
+      installprefix=`echo $1 | sed -e 's/^--prefix=//'`
+      ;;
     --installlib=*)
       installlib=`echo $1 | sed -e 's/^--installlib=//'`
       ;;
@@ -295,6 +299,9 @@ while [ $# != 0 ] ; do
       ;;
     --installscriptname=*)
       installscriptname=`echo $1 | sed -e 's/^--installscriptname=//'`
+      ;;
+    --installabsolute)
+      relativeBootFiles=no
       ;;
     --toolprefix=*)
       toolprefix=`echo $1 | sed -e 's/^--toolprefix=//'`
@@ -562,6 +569,7 @@ if [ "$help" = "yes" ]; then
   echo "  --libkernel                       build libkernel.a (the default)"
   echo "  --kernelobj                       build kernel.o instead of libkernel.a"
   echo "  --installprefix=<pathname>        final installation root ($installprefix)"
+  echo "  --prefix=<pathname>               alias for --installprefix"
   echo "  --installbin=<pathname>           bin directory ($installbin)"
   echo "  --installlib=<pathname>           lib directory ($installlib)"
   echo "  --installman=<pathname>           manpage directory ($installman)"
@@ -575,6 +583,7 @@ if [ "$help" = "yes" ]; then
   echo "  --installschemename=<schemename>  install scheme as ($installschemename)"
   echo "  --installpetitename=<petitename>  install petite as ($installpetitename)"
   echo "  --installscriptname=<scriptname>  install scheme-script as ($installscriptname)"
+  echo "  --installabsolute                 disable relative boot-file search"
   echo "  --toolprefix=<prefix>             prefix tool (compiler, linker, ...) names"
   echo "  --boot=<machine type>-<tag>       build from prepared variant (e.g., pbchunk)"
   echo "  --emboot=\"<file> ...\"             additional boot <file>s with emscripten"
@@ -1047,6 +1056,7 @@ disablex11=$disablex11
 enablelibffi=$libffi
 preloadBootFiles=$preloadBootFiles
 alwaysUseBootFile=$alwaysUseBootFile
+relativeBootFiles=$relativeBootFiles
 
 InstallBin=$installbin
 InstallLib=$installlib

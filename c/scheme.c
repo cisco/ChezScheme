@@ -508,6 +508,7 @@ static char *get_defaultheapdirs() {
 #else /* not WIN32: */
 #define SEARCHPATHSEP ':'
 #define PATHSEP '/'
+/* `DEFAULT_HEAP_PATH` is normally defined in the generated "config.h" */
 #ifndef DEFAULT_HEAP_PATH
 #define DEFAULT_HEAP_PATH "/usr/lib/csv%v/%m:/usr/local/lib/csv%v/%m"
 #endif
@@ -1083,17 +1084,22 @@ static void check_boot_file_state(const char *who) {
 
 extern void Sregister_boot_file(const char *name) {
   check_boot_file_state("Sregister_boot_file");
-  find_boot("", name, "", 0, -1, 1);
+  find_boot("scheme", name, "", 0, -1, 1);
 }
 
-extern void Sregister_boot_direct_file(const char *name) {
-  check_boot_file_state("Sregister_boot_direct_file");
-  find_boot("", name, "", 1, -1, 1);
+extern void Sregister_boot_executable_relative_file(const char* execpath, const char *name) {
+  check_boot_file_state("Sregister_executable_relative_boot_file");
+  find_boot(execpath, name, "", 0, -1, 1);
+}
+
+extern void Sregister_boot_relative_file(const char *name) {
+  check_boot_file_state("Sregister_boot_relative_file");
+  find_boot(NULL, name, "", 1, -1, 1);
 }
 
 extern void Sregister_boot_file_fd(const char *name, int fd) {
   check_boot_file_state("Sregister_boot_file_fd");
-  find_boot("", name, "", 1, fd, 1);
+  find_boot(NULL, name, "", 1, fd, 1);
 }
 
 extern void Sregister_boot_file_fd_region(const char *name,
@@ -1101,7 +1107,7 @@ extern void Sregister_boot_file_fd_region(const char *name,
                                           iptr offset,
                                           iptr len,
                                           int close_after) {
-  check_boot_file_state("Sregister_boot_file_fd");
+  check_boot_file_state("Sregister_boot_file_fd_region");
 
   if (strlen(name) >= BOOT_PATH_MAX) {
     fprintf(stderr, "boot-file path is too long %s\n", name);

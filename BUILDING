@@ -182,14 +182,17 @@ The makefile supports several targets:
 
    Runs the build Chez Scheme without installing.
 
-   Alternatively, you can run the executable directly and tell it
-   where to find boot files, either by setting `SCHEMEHEAPDIRS` as
+   Alternatively, you can run the executable directly as
+
+     <workarea>/bin/<machine type>/scheme
+
+   If you have configured with `--installabsolute`, running without
+   installing requires either `SCHEMEHEAPDIRS` as
 
      env SCHEMEHEAPDIRS=<workarea>/boot/<machine type> \
          <workarea>/bin/<machine type>/scheme
 
-   or through the `-B` command-line flag, which requires absolute
-   paths:
+   or using the `-B` command-line flag:
 
      <workarea>/bin/<machine type>/scheme \
        -B <workarea>/boot/<machine type>/petite.boot \

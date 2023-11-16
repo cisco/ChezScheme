@@ -1837,7 +1837,7 @@ arguments for which search tracing is desired.
 
 Ordinarily, the search for
 boot files is limited to a set of
-installation directories, but this may be overridden by setting
+installation directories relative to the executable, but this may be overridden by setting
 the environment variable \index{\scheme{SCHEMEHEAPDIRS}}\scheme{SCHEMEHEAPDIRS}.
 \scheme{SCHEMEHEAPDIRS} should be a colon-separated list of directories, listed in
 the order in which they should be searched.
