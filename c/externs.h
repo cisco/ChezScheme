@@ -279,7 +279,7 @@ extern void S_thread_init(void);
 extern ptr S_create_thread_object(const char *who, ptr p_tc);
 #ifdef PTHREADS
 extern ptr S_fork_thread(ptr thunk);
-extern scheme_mutex_t *S_make_mutex(void);
+extern ptr S_make_mutex(void);
 extern void S_mutex_free(scheme_mutex_t *m);
 extern void S_mutex_acquire(scheme_mutex_t *m);
 extern INT S_mutex_tryacquire(scheme_mutex_t *m);
