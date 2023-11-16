@@ -426,8 +426,13 @@ after <machine type>:
 
  * `/keepvs`
 
-   Specifies that command-lnie tools like "cl.exe" are available and
+   Specifies that command-line tools like "cl.exe" are available and
    configured already, so `c\vs.bat` should not be run.
+
+ * `/force`
+
+   Specifies that existing boot files should be used for the target
+   machine instead of creating via pb.
 
  * `/test`
    `/test-one`
