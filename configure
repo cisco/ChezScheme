@@ -15,8 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# source directory, as opposed to the build directory (= current directory)
 srcdir=`dirname "$0"`
 
+# gather available machine names from source directory
 machs=""; last=""; sep0=""; sep1=""; sep2=""; sep3=""; sep4=" and ";
 for fn in "$srcdir"/boot/*/scheme.boot ; do
     next=`echo $fn | sed -e 's/.*\/boot\/\(.*\)\/scheme.boot/\1/'`
@@ -26,6 +28,7 @@ for fn in "$srcdir"/boot/*/scheme.boot ; do
         sep0=$sep1; sep1=", "; sep2=$sep3; sep3=$sep4; sep4=", and "
     fi
 done
+# maybe gather additional available machine names from build directory
 if [ "$srcdir" != "." ]; then
     for fn in boot/*/scheme.boot ; do
         next=`echo $fn | sed -e 's/boot\/\(.*\)\/scheme.boot/\1/'`
@@ -100,6 +103,7 @@ else
     CONFIG_UNAME=`uname`
 fi
 
+# using `uname`, infer OS-based defaults
 case "${CONFIG_UNAME}" in
   Linux)
     unixsuffix=le
@@ -178,6 +182,7 @@ esac
 
 unknownm=no
 
+# using `uname`, infer architecture-based defaults to refine OS defaults
 if [ "$unixsuffix" != "" ] ; then
     if uname -m | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
         m32=i3${unixsuffix}
@@ -437,6 +442,7 @@ case "$m" in
 esac
 
 if [ "$bits" = "" ] ; then
+  # infer default bits; this will be irrelevant if a machine is specified
   if uname -m | egrep 'amd64|x86_64|aarch64|arm64|ppc64|powerpc64|riscv64' > /dev/null 2>&1 ; then
     bits=64
   # NetBSD `uname -m` produces "evbarm" for AArch64
@@ -447,24 +453,38 @@ if [ "$bits" = "" ] ; then
   fi
 fi
 
+# for pb (and not pbarch), most flags select options for the host
+# platform (i.e., for compiling kernel), but `--threads` doubles
+# as selection of both the platform and tpb; defaultthreads refers
+# to the host platform's threadedness, and we want that to default
+# the same way as when `--pb` is not used
 if [ "$threads" = "" ] ; then
     defaultthreads=yes
 else
     defaultthreads=$threads
 fi
 
-if [ "$threads" = "" ] ; then
-    if [ "$pb" = "yes" ] ; then
-        if [ "$pbarch" = "yes" ] ; then
-            threads=yes
-        else
-            threads=no
-        fi
-    else
-        threads=yes
-    fi
+# if both machine and threadedness are supplied, check consistency,
+# mostly so a selection of pb vs tpb is consistent with the host
+if [ "$m" != "" ] ; then
+   case "${m}" in
+       t*)
+           if [ "$threads" = "no" ] ; then
+               echo "Machine $m is incompatible with --nothreads"
+               exit 1
+           fi
+            ;;
+        *)
+           if [ "$threads" = "yes" ] ; then
+               echo "Machine $m is incompatible with --threads"
+               exit 1
+           fi
+           ;;
+    esac
 fi
 
+# infer host machine (in case not specified) from bits and OS/arch;
+# it's possible that defaultm will end up as empty
 if [ $bits = 64 ] ; then
   if [ $defaultthreads = yes ] ; then defaultm=$tm64 ; else defaultm=$m64 ; fi
 else
@@ -475,7 +495,7 @@ if [ "$m" = "" ] ; then
   machine_supplied=no
   if [ $pb = yes ] ; then
      m=pb
-     if [ $threads = yes ] ; then m=t$m ; fi
+     if [ "$threads" = yes ] ; then m=t$m ; fi
      if [ $bits = 64 ] ; then mpbhost=$m64 ; else mpbhost=$m32 ; fi
      flagsm=$mpbhost
      if [ "$mpbhost" = "" ] ; then
@@ -486,6 +506,8 @@ if [ "$m" = "" ] ; then
         m=$defaultm
     fi
     flagsm=$defaultm
+    # note that m (and flagsm) could still be "" at this point, in which
+    # case "No suitable machine type" will be reported further below
   fi
 elif [ $pb = yes ] ; then
   mpbhost=$m
@@ -498,7 +520,7 @@ fi
 
 if [ $pbarch = yes ] ; then
     m=pb$bits$pbendian
-    if [ $threads = yes ] ; then
+    if [ "$defaultthreads" = yes ] ; then
         m=t$m
     fi
 fi
@@ -632,7 +654,14 @@ fi
 optFlags=-O2
 
 if [ "$emscripten" = "yes" ]; then
-    flagsm=em
+    case "$m" in
+        t*)
+            flagsm=tem
+            ;;
+        *)
+            flagsm=em
+            ;;
+    esac
     buildKernelOnly=yes
     disableiconv=yes
     disablecurses=yes
@@ -646,15 +675,15 @@ fi
 
 # Infer flags needed for threads:
 case "${flagsm}" in
-  *le|*gnu|*fb|*ob|*nb)
+  t*le|t*gnu|t*fb|t*ob|t*nb)
       threadFlags="-D_REENTRANT -pthread"
       threadLibs="-lpthread"
       ;;
-  *s2)
+  t*s2)
       threadFlags="-pthread"
       threadLibs="-lpthread"
       ;;
-  em)
+  tem)
       threadFlags="-pthread"
       threadLibs=""
       ;;
@@ -727,10 +756,8 @@ fi
 
 # Add automatic thread compilation flags, unless suppressed by --disable-auto-flags
 if [ "$addflags" = "yes" ] ; then
-    if [ "$threads" = "yes" ] ; then
-        if [ "$threadFlags" != "" ] ; then
-            CFLAGS="${CFLAGS} ${threadFlags}"
-        fi
+    if [ "$threadFlags" != "" ] ; then
+        CFLAGS="${CFLAGS} ${threadFlags}"
     fi
 fi
 

@@ -360,7 +360,7 @@ static s_thread_rv_t start_thread(void *p) {
 }
 
 
-scheme_mutex_t *S_make_mutex() {
+ptr S_make_mutex(void) {
   scheme_mutex_t *m;
 
   m = (scheme_mutex_t *)malloc(sizeof(scheme_mutex_t));
@@ -371,7 +371,7 @@ scheme_mutex_t *S_make_mutex() {
   m->owner = s_thread_self();
   m->count = 0;
 
-  return m;
+  return TO_PTR(m);
 }
 
 void S_mutex_free(scheme_mutex_t *m) {
