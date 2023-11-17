@@ -1052,7 +1052,8 @@
 
 (mat fasl-depth
   (begin
-    (define fasl-deep-N 100000)
+    (define fasl-deep-N      100000) ; large to overflow even on a big C stack
+    (define fasl-code-deep-N  10000) ; smaller to avoid excessive memory use
     (define (check v)
       (let-values ([(o get) (open-bytevector-output-port)])
         (fasl-write v o)
@@ -1080,7 +1081,7 @@
     (compile-to-port
      (list
       `(lambda ()
-         ,(let loop ([n fasl-deep-N])
+         ,(let loop ([n fasl-code-deep-N])
             (if (zero? n)
                 ''end
                 `(if (stop?)

@@ -106,6 +106,16 @@
         (let ([t (time-difference stop start)])
           (<= (abs (- (+ (time-second t) (* (time-nanosecond t) 1e-9)) target))
               0.2))))
+    (define-syntax $retry-for-timing
+      ;; timing tests can go wrong, especially on a share machine like
+      ;; one for CI, so try a few times to reduce the chance of
+      ;; failure due to a real-time delay
+      (lambda (stx)
+        (syntax-case stx ()
+          [(_ e) #'(let loop ([n 5])
+                     (or e
+                         (and (> n 0)
+                              (loop (- n 1)))))])))
     (andmap procedure? (list $threads $fib $thread-check $time-in-range?)))
   ($thread-check)
   (not (= (let ([n #f])
@@ -157,46 +167,51 @@
     (or (equal? result '(196418 317811 514229 832040 1346269 2178309))
         (errorf #f "result=~s" result)))
   ($thread-check)
-  (let ([m (make-mutex)] [c (make-condition)])
-    (with-mutex m
-      (let* ([start (current-time)]
-             [r (condition-wait c m (make-time 'time-duration 250000000 1))]
-             [stop (current-time)])
-        (and (not r)
-             ($time-in-range? start stop 1.25)))))
-  (let ([m (make-mutex)] [c (make-condition)])
-    (with-mutex m
-      (let* ([start (current-time)]
-             [r (condition-wait c m
-                  (add-duration start (make-time 'time-duration 250000000 1)))]
-             [stop (current-time)])
-        (and (not r)
-             ($time-in-range? start stop 1.25)))))
-  (let ([m (make-mutex)] [c (make-condition)])
-    (with-mutex m
-      (let* ([start (current-time)]
-             [r (condition-wait c m (make-time 'time-duration 0 -1))]
-             [stop (current-time)])
-        (and (not r)
-             ($time-in-range? start stop 0.0)))))
-  (let ([m (make-mutex)] [c (make-condition)])
-    (with-mutex m
-      (let* ([start (current-time)]
-             [r (condition-wait c m
-                  (add-duration start (make-time 'time-duration 0 -1)))]
-             [stop (current-time)])
-        (and (not r)
-             ($time-in-range? start stop 0.0)))))
-  (let ([m (make-mutex)] [c (make-condition)])
-    (with-mutex m
-      (fork-thread
-       (lambda ()
-         (with-mutex m (sleep (make-time 'time-duration 250000000 0)))))
-      (let* ([start (current-time)]
-             [r (condition-wait c m (make-time 'time-duration 100000000 0))]
-             [stop (current-time)])
-        (and (not r)
-             ($time-in-range? start stop 0.25)))))
+  ($retry-for-timing
+   (let ([m (make-mutex)] [c (make-condition)])
+     (with-mutex m
+       (let* ([start (current-time)]
+              [r (condition-wait c m (make-time 'time-duration 250000000 1))]
+              [stop (current-time)])
+         (and (not r)
+              ($time-in-range? start stop 1.25))))))
+  ($retry-for-timing
+   (let ([m (make-mutex)] [c (make-condition)])
+     (with-mutex m
+       (let* ([start (current-time)]
+              [r (condition-wait c m
+                   (add-duration start (make-time 'time-duration 250000000 1)))]
+              [stop (current-time)])
+         (and (not r)
+              ($time-in-range? start stop 1.25))))))
+  ($retry-for-timing
+   (let ([m (make-mutex)] [c (make-condition)])
+     (with-mutex m
+       (let* ([start (current-time)]
+              [r (condition-wait c m (make-time 'time-duration 0 -1))]
+              [stop (current-time)])
+         (and (not r)
+              ($time-in-range? start stop 0.0))))))
+  ($retry-for-timing
+   (let ([m (make-mutex)] [c (make-condition)])
+     (with-mutex m
+       (let* ([start (current-time)]
+              [r (condition-wait c m
+                   (add-duration start (make-time 'time-duration 0 -1)))]
+              [stop (current-time)])
+         (and (not r)
+              ($time-in-range? start stop 0.0))))))
+  ($retry-for-timing
+   (let ([m (make-mutex)] [c (make-condition)])
+     (with-mutex m
+       (fork-thread
+        (lambda ()
+          (with-mutex m (sleep (make-time 'time-duration 250000000 0)))))
+       (let* ([start (current-time)]
+              [r (condition-wait c m (make-time 'time-duration 100000000 0))]
+              [stop (current-time)])
+         (and (not r)
+              ($time-in-range? start stop 0.25))))))
   (let ([count 300] [live 0] [live-m (make-mutex)])
     (parameterize ([collect-request-handler
                     (lambda ()

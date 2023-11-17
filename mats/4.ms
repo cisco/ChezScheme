@@ -4369,11 +4369,14 @@
        ;; report how long a collection takes averaged
        ;; over `iters` tries
        (define iters 10)
-       (let loop ([g #f] [accum 0] [j iters])
+       (let loop ([g #f] [accum 0] [j iters] [iters-mult 1])
          (if (zero? j)
              (if (zero? accum)
-                 g
-                 (/ accum iters))
+                 ;; more iterations to get non-0 CPU time:
+                 (loop g accum iters (add1 iters-mult))
+                 (begin
+                   (keep-live g)
+                   (/ accum (* iters iters-mult))))
              (let ([g (let loop ([i n])
                         (let ([g (make-guardian ordered?)])
                           (if (zero? i)
@@ -4381,14 +4384,15 @@
                               (let ([next-g (loop (sub1 i))])
                                 (g (get-key next-g) next-g)
                                 g))))])
-               (let ([start (current-time)])
+               (let ([start (current-time 'time-process)])
                  (collect (collect-maximum-generation))
-                 (let ([delta (time-difference (current-time) start)])
+                 (let ([delta (time-difference (current-time 'time-process) start)])
                    (loop g
                          (+ accum
                             (* (time-second delta) 1e9)
                             (time-nanosecond delta))
-                         (sub1 j))))))))
+                         (sub1 j)
+                         iters-mult)))))))
 
      ;; Make sure guardian chains imply GC times that
      ;; look linear, as opposed to quadratic
@@ -4948,11 +4952,11 @@
          (collect 2)
          (let*-values ([(key es) (mk n (gensym) '())]
                        [(root holds) (mk* n key es)])
-           (let ([start (current-time)])
+           (let ([start (current-time 'time-process)])
              (collect 0 1)
              (collect 1 2)
              (collect 2 2)
-             (let ([delta (time-difference (current-time) start)])
+             (let ([delta (time-difference (current-time 'time-process) start)])
                ;; Sanity check on ephemerons
                (for-each (lambda (e)
                            (when (eq? #!bwp (ephemeron-key e))
