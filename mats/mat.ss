@@ -258,7 +258,8 @@
                     (if universe-ct
                         (let-values ([(ct . ignore) (with-profile-tracker go)])
                           (store-coverage universe-ct ct (format "~a.covout" mat)))
-                        (go))))
+                        (go))
+                    (printf "\npeak memory use: ~s\n" (maximum-memory-bytes))))
                 (lambda () (close-output-port (mat-output))))))))))
 
 (set! record-run-coverage
