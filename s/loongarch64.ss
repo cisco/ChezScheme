@@ -540,12 +540,19 @@
         (with-output-language (L15d Effect)
                               (define add-offset
                                 (lambda (r)
-                                  (if (eqv? (nanopass-case (L15d Triv) w [(immediate ,imm) imm]) 0)
-                                      (k r)
-                                      (let ([u (make-tmp 'u)])
-                                        (seq
-                                         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-add ,r ,w))
-                                         (k u))))))
+                                  (nanopass-case (L15d Triv) w
+                                                 [(immediate ,imm)
+                                                  (if (eqv? imm 0)
+                                                      (k r)
+                                                      (let ([u (make-tmp 'u)])
+                                                        (seq
+                                                         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-add ,r ,w))
+                                                         (k u))))]
+                                                 [else
+                                                  (let ([u (make-tmp 'u)])
+                                                    (seq
+                                                     `(set! ,(make-live-info) ,u (asm ,null-info ,asm-add ,r ,w))
+                                                     (k u)))])))
                               (if (eq? y %zero)
                                   (add-offset x)
                                   (let ([u (make-tmp 'u)])
@@ -570,7 +577,7 @@
                    `(asm ,info ,(asm-lock+/- op) ,r)))])
 
     (define-instruction effect (cas)
-      [(op (x ur) (y ur) (w imm12) (old ur) (new ur))
+      [(op (x ur) (y ur) (w imm12 ur) (old ur) (new ur))
        (lea->reg x y w
                  (lambda (r)
                    `(asm ,info ,asm-cas ,r ,old ,new)))])
