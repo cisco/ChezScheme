@@ -61,6 +61,9 @@ static char *wide_to_utf8(const wchar_t *arg) {
     return NULL;
   }
   char *arg8 = (char *)malloc(len * sizeof(char));
+  if (arg8 == NULL) {
+    return NULL;
+  }
   if (0 == WideCharToMultiByte(CP_UTF8, 0, arg, -1, arg8, len, NULL, NULL)) {
     free(arg8);
     return NULL;
@@ -72,6 +75,9 @@ static char *get_process_executable_path(const char *exec_file) {
   wchar_t *path = NULL;
   for (DWORD n = 0, sz = 256;; sz *= 2) {
     path = (wchar_t *)malloc(sz * sizeof(wchar_t));
+    if (path == NULL) {
+      return NULL;
+    }
     n = GetModuleFileNameW(NULL, path, sz);
     if (0 == n) {
       free(path);
@@ -92,17 +98,33 @@ static char *get_process_executable_path(const char *exec_file) {
 
 #include <unistd.h>
 
+/* strdup() is in POSIX, but it's not in C99 */
+static char *copy_string(const char *s) {
+  size_t l = strlen(s) + 1;
+  char *r = (char *)malloc(l);
+  if (r == NULL) {
+    return NULL;
+  }
+  return (char *)memcpy(r, s, l);
+}
+
 #if defined(__APPLE__) && defined(__MACH__)
 #include <mach-o/dyld.h>
 #define HAVE_GET_SELF_PATH_PLATFORM
 static char *get_self_path_platform() {
   uint32_t bufsize = 256;
   char *buf = (char *)malloc(bufsize);
+  if (buf == NULL) {
+    return NULL;
+  }
   if (_NSGetExecutablePath(buf, &bufsize) == 0) {
     return buf;
   }
   free(buf);
   buf = (char *)malloc(bufsize);
+  if (buf == NULL) {
+    return NULL;
+  }
   if (_NSGetExecutablePath(buf, &bufsize) == 0) {
     return buf;
   }
@@ -128,6 +150,9 @@ static char *get_self_path_platform() {
 #if __FreeBSD_version >= 1300057
   for (size_t bufsize = 256;; bufsize *= 2) {
     char *buf = (char *)malloc(bufsize);
+    if (buf == NULL) {
+      return NULL;
+    }
     if (elf_aux_info(AT_EXECPATH, buf, bufsize) == 0) {
       return buf;
     }
@@ -146,7 +171,7 @@ static char *get_self_path_platform() {
   /* Iterate through auxiliary vectors for AT_EXECPATH. */
   for (Elf_Auxinfo *aux = (Elf_Auxinfo *)p; aux->a_type != AT_NULL; aux++) {
     if (aux->a_type == AT_EXECPATH) {
-      return strdup((char *)aux->a_un.a_ptr);
+      return copy_string((char *)aux->a_un.a_ptr);
     }
   }
 #endif
@@ -159,7 +184,7 @@ static char *get_self_path_platform() {
 static char *get_self_path_platform() {
   const char *r = getexecname();
   if (r != NULL && strchr(r, '/') != NULL) {
-    return strdup(r);
+    return copy_string(r);
   }
   return NULL;
 }
@@ -167,13 +192,13 @@ static char *get_self_path_platform() {
 
 #if defined(__linux__) || defined(__CYGWIN__) || defined(__gnu_hurd__)
 #define HAVE_GET_SELF_PATH_PLATFORM
-static char *get_self_path_platform() { return strdup("/proc/self/exe"); }
+static char *get_self_path_platform() { return copy_string("/proc/self/exe"); }
 #endif
 
 #if defined(__NetBSD__) || defined(__minix) || defined(__DragonFly__) ||       \
     defined(__FreeBSD_kernel__) || defined(_AIX)
 #define HAVE_GET_SELF_PATH_PLATFORM
-static char *get_self_path_platform() { return strdup("/proc/curproc/file"); }
+static char *get_self_path_platform() { return copy_string("/proc/curproc/file"); }
 #endif
 
 #ifndef HAVE_GET_SELF_PATH_PLATFORM
@@ -184,6 +209,9 @@ static char *path_append(const char *s1, const char *s2) {
   size_t l1 = strlen(s1);
   size_t l2 = strlen(s2);
   char *r = (char *)malloc(l1 + l2 + 2);
+  if (r == NULL) {
+    return NULL;
+  }
   memcpy(r, s1, l1);
   if (r[l1 - 1] != '/') {
     r[l1++] = '/';
@@ -195,20 +223,26 @@ static char *path_append(const char *s1, const char *s2) {
 
 static char *get_self_path_generic(const char *exec_file) {
   if (strchr(exec_file, '/')) {
-    return strdup(exec_file);
+    return copy_string(exec_file);
   }
   char *pv = getenv("PATH");
   if (pv == NULL) {
     return NULL;
   }
-  char *s = strdup(pv);
+  char *s = copy_string(pv);
   if (s == NULL) {
     return NULL;
   }
-  char *state = NULL;
-  for (char *t = strtok_r(s, ":", &state); t != NULL;
-       t = strtok_r(NULL, ":", &state)) {
+  for (char *p = s + strspn(s, ":"); *p != '\0'; p += strspn(p, ":")) {
+    char *t = p;
+    p += strcspn(p, ":");
+    if (*p != '\0') {
+      *p++ = '\0';
+    }
     char *r = path_append(t, exec_file);
+    if (r == NULL) {
+      return NULL;
+    }
     if (access(r, X_OK) == 0) {
       free(s);
       return r;
