@@ -15,6 +15,10 @@
 /ti3*/
 /arm*/
 /tarm*/
+/rv64*/
+/trv64*/
+/la64*/
+/tla64*/
 /ppc*/
 /tppc*/
 /xc-*/

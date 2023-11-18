@@ -415,6 +415,7 @@
   rv64fb    trv64fb
   rv64ob    trv64ob
   rv64nb    trv64nb
+  la64le    tla64le
 )
 
 (include "machine.def")
@@ -597,6 +598,7 @@
   (arm64 reloc-arm64-abs reloc-arm64-call reloc-arm64-jump)
   (ppc32 reloc-ppc32-abs reloc-ppc32-call reloc-ppc32-jump)
   (riscv64 reloc-riscv64-abs reloc-riscv64-call reloc-riscv64-jump)
+  (loongarch64 reloc-loongarch64-abs reloc-loongarch64-call reloc-loongarch64-jump)
   (pb reloc-pb-abs reloc-pb-proc))
 
 (constant-case ptr-bits

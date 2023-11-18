@@ -209,6 +209,11 @@ if [ "$unixsuffix" != "" ] ; then
         m64=rv64${unixsuffix}
         tm32=""
         tm64=trv64${unixsuffix}
+    elif uname -m | grep 'loongarch64' > /dev/null 2>&1 ; then
+        m32=""
+        m64=la64${unixsuffix}
+        tm32=""
+        tm64=tla64${unixsuffix}
     else
         # using "unknown" helps at least select OS-based flags
         m32=unknown32${unixsuffix}
@@ -443,7 +448,7 @@ esac
 
 if [ "$bits" = "" ] ; then
   # infer default bits; this will be irrelevant if a machine is specified
-  if uname -m | egrep 'amd64|x86_64|aarch64|arm64|ppc64|powerpc64|riscv64' > /dev/null 2>&1 ; then
+  if uname -m | egrep 'amd64|x86_64|aarch64|arm64|ppc64|powerpc64|riscv64|loongarch64' > /dev/null 2>&1 ; then
     bits=64
   # NetBSD `uname -m` produces "evbarm" for AArch64
   elif uname -p | egrep 'aarch64' > /dev/null 2>&1 ; then

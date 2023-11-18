@@ -1,0 +1,11 @@
+(define-constant architecture 'loongarch64)
+(define-constant ptr-bits 64)
+
+(define-constant asm-arg-reg-max 15)
+(define-constant asm-arg-reg-cnt 3)
+(define-constant asm-fpreg-max 6)
+
+(define-constant native-endianness 'little)
+(define-constant unaligned-floats #t)
+(define-constant unaligned-integers #t)
+(define-constant integer-divide-instruction #t)

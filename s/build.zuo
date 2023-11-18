@@ -125,7 +125,7 @@
 
 (define cpnanopass-src-names
   ;; files that are `include`d by "cpnanopass.ss" and "cpprim.ss"
-  (list "x86.ss" "x86_64.ss" "arm32.ss" "arm64.ss" "ppc32.ss" "riscv64.ss" "pb.ss"
+  (list "x86.ss" "x86_64.ss" "arm32.ss" "arm64.ss" "ppc32.ss" "riscv64.ss" "loongarch64.ss" "pb.ss"
         "np-languages.ss" "fxmap.ss" "cptypes-lattice.ss"
         "np-register.ss" "np-info.ss" "np-help.ss"
         "ffi-help.ss"))

@@ -527,12 +527,19 @@
         (with-output-language (L15d Effect)
                               (define add-offset
                                 (lambda (r)
-                                  (if (eqv? (nanopass-case (L15d Triv) w [(immediate ,imm) imm]) 0)
-                                      (k r)
-                                      (let ([u (make-tmp 'u)])
-                                        (seq
-                                         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-add ,r ,w))
-                                         (k u))))))
+                                  (nanopass-case (L15d Triv) w
+                                                 [(immediate ,imm)
+                                                  (if (eqv? imm 0)
+                                                      (k r)
+                                                      (let ([u (make-tmp 'u)])
+                                                        (seq
+                                                         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-add ,r ,w))
+                                                         (k u))))]
+                                                 [else
+                                                  (let ([u (make-tmp 'u)])
+                                                    (seq
+                                                     `(set! ,(make-live-info) ,u (asm ,null-info ,asm-add ,r ,w))
+                                                     (k u)))])))
                               (if (eq? y %zero)
                                   (add-offset x)
                                   (let ([u (make-tmp 'u)])
@@ -563,7 +570,7 @@
                       `(asm ,null-info ,(asm-lock+/- op) ,r ,u1 ,u2)))))])
 
     (define-instruction effect (cas)
-      [(op (x ur) (y ur) (w imm12) (old ur) (new ur))
+      [(op (x ur) (y ur) (w imm12 ur) (old ur) (new ur))
        (lea->reg x y w
                  (lambda (r)
                    (let ([u1 (make-tmp 'u1)] [u2 (make-tmp 'u2)])
@@ -1659,7 +1666,7 @@
                 [(index) (n ireg breg)
                  (safe-assert (eqv? n 0))
                  (emit add %scratch1 ireg breg
-                       (emit ld %jump %cond 0
+                       (emit ld %jump %scratch1 0
                              (emit jalr %real-zero %jump 0 '())))]
                 [else (sorry! who "unexpected src ~s" src)]))))
 
