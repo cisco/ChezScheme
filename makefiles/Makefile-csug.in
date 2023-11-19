@@ -1,5 +1,7 @@
 srcdir=oops-missing-srcdir
 installdir=oops-missing-installdir
+InstallReleaseNotes=oops-missing-InstallReleaseNotes
+relInstallReleaseNotes=oops-missing-relInstallReleaseNotes
 m=oops-missing-m
 STEXLIB=oops-missing-stexlib
 # Zuo overrides the above variables when running `make`
@@ -16,18 +18,6 @@ TSPLdir=$(srcdir)/$(TSPL)
 DIR=$(shell basename `pwd`)
 
 target: canned logcheck1 logcheck2 checklibs $(x).html $(x).pdf
-
-install: target
-	$(INSTALL) -m 2755 -d $(installdir)
-	$(INSTALL) -m 0644 --ifdiff *.html *.css $(installdir)
-	$(INSTALL) -m 0644 --ifdiff csug.pdf $(installdir)/csug10_0.pdf
-	$(INSTALL) -m 2755 -d $(installdir)/canned
-	$(INSTALL) -m 0644 --ifdiff canned/* $(installdir)/canned
-	$(INSTALL) -m 2755 -d $(installdir)/gifs
-	$(INSTALL) -m 0644 --ifdiff gifs/*.gif $(installdir)/gifs
-	$(INSTALL) -m 2755 -d $(installdir)/$(mathdir)
-	$(INSTALL) -m 0644 --ifdiff $(mathdir)/*.gif $(installdir)/$(mathdir)
-	(cd $(installdir); ln -s -f $(x).html index.html)
 
 # thrice is not enough when starting from scratch
 logcheck1: $(x).thirdrun
@@ -50,6 +40,35 @@ logcheck2: $(x).thirdrun
 
 include $(STEXLIB)/Mf-stex
 
+install: target
+	$(INSTALL) -m 2755 -d $(installdir)
+	$(INSTALL) -m 0644 --ifdiff *.html *.css $(installdir)
+	$(INSTALL) -m 0644 --ifdiff csug.pdf $(installdir)/csug10_0.pdf
+	$(INSTALL) -m 2755 -d $(installdir)/canned
+	$(INSTALL) -m 0644 --ifdiff canned/* $(installdir)/canned
+	$(INSTALL) -m 2755 -d $(installdir)/gifs
+	$(INSTALL) -m 0644 --ifdiff gifs/*.gif $(installdir)/gifs
+ifeq ($(strip $(KATEX)),)
+	$(INSTALL) -m 2755 -d $(installdir)/$(mathdir)
+	$(INSTALL) -m 0644 --ifdiff $(mathdir)/*.gif $(installdir)/$(mathdir)
+else ifneq ($(strip $(KATEX_CSS)),no)
+# if already installed release_notes, share katex.css and fonts
+	(if $(if $(findstring Windows,$(OS)),[ ! "windows" ],[ -e $(InstallReleaseNotes)/katex/katex.css ] && [ ! -L $(InstallReleaseNotes)/katex ]) ; \
+	 then \
+	   (cd $(installdir); ln -s -f $(relInstallReleaseNotes)/katex katex) ; \
+	 else \
+	   $(INSTALL) -m 2755 -d $(installdir)/katex/fonts ; \
+	   $(INSTALL) -m 0644 --ifdiff katex/katex.css $(installdir)/katex/katex.css ; \
+	   $(INSTALL) -m 0644 --ifdiff katex/fonts/* $(installdir)/katex/fonts ; \
+	 fi)
+endif
+ifeq ($(OS),Windows_NT)
+	cp $(installdir)/$(x).html $(installdir)/index.html
+else
+	(cd $(installdir); ln -s -f $(x).html index.html)
+endif
+
+
 stexsrc = csug.stex title.stex copyright.stex contents.stex\
  preface.stex intro.stex use.stex expeditor.stex debug.stex foreign.stex\
  binding.stex control.stex objects.stex numeric.stex io.stex\
@@ -57,7 +76,7 @@ stexsrc = csug.stex title.stex copyright.stex contents.stex\
  compat.stex bibliography.stex summary.stex
 texsrc = ${stexsrc:%.stex=%.tex}
 
-moresrc = tspl4-prep.stex priminfo.ss docond.ss csug8.cls csug8.hcls csug810.clo scheme.sty csug.bib \
+moresrc = tspl4-prep.stex priminfo.ss docond.ss csug8.cls csug8.hcls csug810.clo csug.bib \
  setup.ss summary.ss tspl.bst
 
 $(stexsrc) $(moresrc):
@@ -136,9 +155,14 @@ $(x).hprethirdrun: $(x).hsecondrun
 	cat tspl.haux >> $x.haux
 	touch $(x).hprethirdrun
 
+$(x).hfourthrun: $(x).hprefourthrun
+$(x).hprefourthrun: $(x).hthirdrun
+	cat tspl.haux >> $x.haux
+	touch $(x).hprefourthrun
+
 $(x).prefirstrun: $(texsrc) csug8.cls csug810.clo
 
-$(x).firstrun: scheme.sty
+$(x).firstrun:
 
 tspl.aux: ${TSPLdir}/tspl.aux
 	cat ${TSPLdir}/*.aux | grep '\\newlabel' | \

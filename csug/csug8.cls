@@ -376,7 +376,11 @@
 %%% index
 \newenvironment{theindex}
                {\if@openright\cleardoublepage\else\clearpage\fi
-                \begingroup\raggedright\schemeindexsize\footnotesize
+                \begingroup\raggedright\footnotesize
+                % tighten spacing for entries:
+                % may need to adjust this for future changes in stex
+                \def\scheme##1{\mbox{\fontsize{7}{8}\ttfamily\frenchspacing\spaceskip=0.5\fontdimen2\font plus \fontdimen3\font minus 0.5\fontdimen4\font##1}}
+                \def\var##1{{\footnotesize\textit{##1}}}
                 \columnseprule \z@
                 \columnsep 35\p@
                 \twocolumn[\plainchapterhead{\indexname}]%
@@ -457,6 +461,8 @@
 \def\categorymodule{module}
 \def\categoryftype{ftype}
 
+%%% summary of forms
+% see also summary.stex and summary.ss
 \newwrite\forms
 \openout\forms=\jobname.rfm
 % \formsummary{sort key}{type}{form}{label}
@@ -471,7 +477,11 @@
   \hbox to 5pc{#2\ \hfil}%
   \hfil #3}}
 \newenvironment{thesummary}
-  {\begingroup\schemesummarysize\small\bigskip
+  {\begingroup\small\bigskip%
+   % tighten spacing to fit entries on one line:
+   % may need to adjust this for future changes in stex
+   \def\scheme##1{\mbox{\fontsize{8}{9}\ttfamily\frenchspacing\spaceskip=0.5\fontdimen2\font plus \fontdimen3\font minus 0.5\fontdimen4\font##1}}%
+   \def\var##1{{\footnotesize\textit{##1}}}%
    \sfentry{{\slshape Form}}{{\slshape Category}}{{\slshape Page}}
    \kern3pt\hrule\kern3pt}
   {\endgroup}

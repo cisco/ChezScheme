@@ -245,14 +245,26 @@
     (define name-sym (string->symbol name))
     (define (run-make target)
       (check-not-kernel-only)
+      ;; Note: build.bat on Windows does not currently configure these
+      ;; settings, so only evaluate (hash-ref config ...) when trying to
+      ;; build a target, not while merely generating the list of targets.
+      (define install-dir
+        (hash-ref config install-dir-key))
+      (define other-install-dir-key
+        (car (remove install-dir-key doc-install-dir-keys)))
+      (define other-install-dir
+        (hash-ref config other-install-dir-key))
       (define (->rel-shell pth)
         (string->shell (find-relative-path doc-dir pth)))
       (shell/wait "make"
                   (~a "m=" m)
                   (~a "srcdir=" (->rel-shell (at-source name)))
-                  (~a "installdir="
-                      (->rel-shell (hash-ref config install-dir-key)))
+                  (~a "installdir=" (->rel-shell install-dir))
                   (~a "STEXLIB=" (->rel-shell stexlib))
+                  (~a other-install-dir-key "=" (->rel-shell other-install-dir))
+                  (~a "rel" other-install-dir-key "="
+                      (string->shell (find-relative-path install-dir
+                                                         other-install-dir)))
                   target
                   (hash 'dir doc-dir)))
     `([:target ,mf-out (,mf-in)

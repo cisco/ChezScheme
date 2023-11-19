@@ -55,3 +55,5 @@ table.indent {margin-left: 20px}
 .tag{ color: navy; font-weight: bold; }
 .entity{ color: purple; font-weight: bold; }
 .errflag{ color: red; font-weight: bold; }
+.schemedisplay { line-height: 1.0625; }
+.schemedisplay .katex { font-size: 1em; }
