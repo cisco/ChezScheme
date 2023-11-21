@@ -711,16 +711,30 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
 
 static ptr s_system(const char *s) {
   INT status;
+  char *s_arg;
 #ifdef PTHREADS
   ptr tc = get_thread_context();
 #endif
 
 #ifdef PTHREADS
-  if (DISABLECOUNT(tc) == FIX(0)) deactivate_thread(tc);
+  if (DISABLECOUNT(tc) == FIX(0)) {
+    /* copy `s` in case a GC happens */
+    uptr len = strlen(s) + 1;
+    s_arg = malloc(len);
+    if (s_arg == NULL)
+      S_error("system", "malloc failed");
+    memcpy(s_arg, s, len);
+    deactivate_thread(tc);
+  }
+#else
+  s_arg = (char *)s;
 #endif
-  status = SYSTEM(s);
+  status = SYSTEM(s_arg);
 #ifdef PTHREADS
-  if (DISABLECOUNT(tc) == FIX(0)) reactivate_thread(tc);
+  if (DISABLECOUNT(tc) == FIX(0)) {
+    reactivate_thread(tc);
+    free(s_arg);
+  }
 #endif
 
   if ((status == -1) && (errno != 0)) {

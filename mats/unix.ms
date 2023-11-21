@@ -704,3 +704,27 @@
             (close-port from-stderr))))
     )
 )
+
+(unless (or (windows?)
+            (not (threaded?)))
+  (mat thread-system
+    ;; check that when a thread is deactivated during `system`,
+    ;; the command that it's running isn't GCed
+    (let* ([count 50]
+           [ths
+            (let loop ([i count])
+              (cond
+                [(zero? i) '()]
+                [else
+                 (cons
+                  (fork-thread
+                   (lambda ()
+                     (let loop ([i 10])
+                       (unless (= i 0)
+                         (unless (zero?
+                                  (system (format "echo ~s > /dev/null"
+                                                  (make-string (random 4096) #\x))))
+                           (error 'system "FAILED"))
+                         (loop (sub1 i))))))
+                  (loop (sub1 i)))]))])
+      (= count (length (map thread-join ths))))))
