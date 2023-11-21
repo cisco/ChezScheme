@@ -4879,7 +4879,7 @@
           (lambda ()
             ; Since cp is not always a real register, and the mref form requires us to put a var of some sort
             ; in for its base, we need to move cp to to a real register.  Unfortunately, there do not seem to be
-            ; enough real registers available, since ac0 is in use through out, xp and td serve as temopraries, and
+            ; enough real registers available, since ac0 is in use through out, xp and td serve as temporaries, and
             ; we'd like to keep ts free to serve for memory to memory moves.
             ; Since this is the case, we need a temporary to put cp into when we are working with it and
             ; xp is the natural choice (or td or ts if we switched amongst their roles)

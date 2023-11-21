@@ -767,7 +767,7 @@ ways:
 
 # Variables and Register Allocation
 
-A variables in Scheme code can be allocated either to a register or to
+Variables in Scheme code can be allocated either to a register or to
 a location in the stack frame, and the same goes for temporaries that
 are needed to evaluate subexpressions. Naturally, variables and
 temporaries with non-overlapping extents can be mapped to the same
@@ -810,7 +810,7 @@ Intermediate code in later passes of the compiler can also refer to
 registers directly, and those uses are taken into account by the
 register allocator.
 
-Overall, the allocator see several kinds of "variables":
+Overall, the allocator sees several kinds of "variables":
 
  * real registers;
 
@@ -843,7 +843,7 @@ that
 ```scheme
         (set! %r1 v1)
         (set! %r1 v2)
-        ... use %r1, sometimes expecting v1 and sometimess v2 ...
+        ... use %r1, sometimes expecting v1 and sometimes v2 ...
 ```
 
 looks fine, and it may optimize away the first assignment. [Note:
@@ -1142,7 +1142,7 @@ binds `andi-op`, and `(emit andi arg2 ...)` turns into `(logical-op
 `emit`. The last argument is conventionally `code*`, which is the code
 list to be extended with new code at its beginning (because the
 machine-code list is built end to start). The bounce from `andi-op` to
-`logicial-op` is because many instructions follow a similar encoding,
+`logical-op` is because many instructions follow a similar encoding,
 such as different bitwise-logical operations like `and` and `or`.
 Meanwhile, `logical-op` uses an `emit-code` form, which is also in
 "arm64.ss" and other backends, that calls `aop-cons` with a suitable
