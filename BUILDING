@@ -274,7 +274,7 @@ The makefile supports several targets:
    existing `scheme` executable, which must be sufficiently compatible
    version of Chez Scheme. (It doesn't need to be the same version,
    but it needs to have some compatible internal structure.) Supply
-   `SCHEME=<scheme>` to select the Scheme implementaion.
+   `SCHEME=<scheme>` to select the Scheme implementation.
 
    To use this target for a machine type whose boot files are not
    present (which would be typical for this target), run "configure"
@@ -391,7 +391,7 @@ after <machine type>:
  * `/config` or `/none`
 
    Configures for a machine type, including creating the
-   `nmake`-compable "Makefile", but does not build.
+   `nmake`-compatible "Makefile", but does not build.
 
  * `/kernel`
 
