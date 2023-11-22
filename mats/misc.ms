@@ -1160,7 +1160,13 @@
             (pause-until (lambda () (eq? 'done (unbox ready))))
             (pause-until (lambda () (= 1 (#%$top-level-value '$active-threads))))
             ;; Get thread's size, which shouldn't include bstr
-            (let ([post-sizes (compute-size-increments (list th-code th))])
+            (let ([post-sizes (compute-size-increments (list th-code
+                                                             th
+                                                             ;; don't count parameters towards te thread's
+                                                             ;; size; in particluar, the `$tt-fat` parameter
+                                                             ;; from a "thread.ms" test can have random symbols,
+                                                             ;; some of which may be bound to large values
+                                                             (#%$tc-field 'parameters (#%$tc))))])
               (printf "SIZES ~s\n" (list pre-sizes N post-sizes))
               (mutex-release m)
               ;; Wait for thread to exit
@@ -2672,7 +2678,10 @@
 
   ((lambda (x)
      (and (time<? (make-time 'time-duration 0 0) x)
-          (or (time<? x (make-time 'time-duration 0 20))
+          ;; on a modern machine, we expect a time on the
+          ;; order of 1s, but allow a lof ot variation or
+          ;; a slow machine with up to 50s:
+          (or (time<? x (make-time 'time-duration 0 50))
               (#%$enable-check-heap))))
    (begin
      ($cc-fib 30)
