@@ -63,6 +63,7 @@ installreleasenotes=""
 installschemename="scheme"
 installpetitename="petite"
 installscriptname="scheme-script"
+unamebits=""
 relativeBootFiles=yes
 cflagsset=no
 disablex11=no
@@ -95,13 +96,7 @@ preloadBootFiles=
 alwaysUseBootFile=
 skipSubmoduleUpdate=
 
-# On WSL, set OS to "Windows_NT" (as already set in MSYS2) to create a
-# Windows build instead of a Linux (on Windows) build:
-if [ "$OS" = "Windows_NT" ] ; then
-    CONFIG_UNAME="CYGWIN_NT-"
-else
-    CONFIG_UNAME=`uname`
-fi
+CONFIG_UNAME=`uname`
 
 # using `uname`, infer OS-based defaults
 case "${CONFIG_UNAME}" in
@@ -168,15 +163,32 @@ case "${CONFIG_UNAME}" in
       gzipmanpages=no
     fi
     ;;
-  CYGWIN_NT-*)
-    if uname -m | egrep 'i386|i686|amd64|athlon|x86_64' > /dev/null 2>&1 ; then
-      m32=i3nt
-      m64=a6nt
-      tm32=ti3nt
-      tm64=ta6nt
-      installprefix=/usr/local
-      installmansuffix=share/man
-    fi
+  MINGW*)
+    # MSYS2 (but not $MSYSTEM as "MSYS", because Cygwin is not currently supported)
+    case "$MSYSTEM" in
+        *ARM64*)
+            m64=arm64nt
+            tm64=tarm64nt
+            ;;
+        *)
+            m32=i3nt
+            m64=a6nt
+            tm32=ti3nt
+            tm64=ta6nt
+            ;;
+    esac
+    # `uname -m` will report the way that `uname` is compiled, but we want
+    # to infer bits based on "$MSYSTEM", so override `uname -m` for bits
+    case "$MSYSTEM" in
+        *32)
+            unamebits=32
+            ;;
+        *)
+            unamebits=64
+            ;;
+    esac
+    installprefix=/usr/local
+    installmansuffix=share/man
     ;;
 esac
 
@@ -199,7 +211,7 @@ if [ "$unixsuffix" != "" ] ; then
         else
             pbendian=b
         fi
-    elif uname -m | egrep 'armv|aarch64|evbarm' > /dev/null 2>&1 ; then
+    elif uname -m | egrep 'armv|aarch64|arm64|evbarm' > /dev/null 2>&1 ; then
         m32=arm32${unixsuffix}
         m64=arm64${unixsuffix}
         tm32=tarm32${unixsuffix}
@@ -448,7 +460,9 @@ esac
 
 if [ "$bits" = "" ] ; then
   # infer default bits; this will be irrelevant if a machine is specified
-  if uname -m | egrep 'amd64|x86_64|aarch64|arm64|ppc64|powerpc64|riscv64|loongarch64' > /dev/null 2>&1 ; then
+  if [ "$unamebits" != "" ] ; then
+    bits="$unamebits"
+  elif uname -m | egrep 'amd64|x86_64|aarch64|arm64|ppc64|powerpc64|riscv64|loongarch64' > /dev/null 2>&1 ; then
     bits=64
   # NetBSD `uname -m` produces "evbarm" for AArch64
   elif uname -p | egrep 'aarch64' > /dev/null 2>&1 ; then
