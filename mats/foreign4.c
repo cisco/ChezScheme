@@ -17,17 +17,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(_REENTRANT) || defined(_WIN32)
+#ifdef _WIN32
+# include <Windows.h>
+# define SCHEME_IMPORT
+#endif
+
+#include "scheme.h"
+#undef EXPORT
+
+#ifdef FEATURE_PTHREADS
 # ifdef _WIN32
-#  include <Windows.h>
-#  define SCHEME_IMPORT
-#  include "scheme.h"
 #  include <process.h>
 # else
 #  include <pthread.h>
-#  include "scheme.h"
 # endif
-# undef EXPORT
 #endif
 
 typedef signed char i8;
@@ -102,7 +105,17 @@ EXPORT void free_at_boundary(void *p)
 
 #endif
 
-#if defined(_REENTRANT) || defined(_WIN32)
+#ifdef FEATURE_PTHREADS
+
+#if defined(_WIN32)
+# define os_thread_t unsigned
+# define os_thread_create(addr, proc, arg) (((*(addr)) = _beginthread((void(*)(void*))proc, 0, arg)) == -1)
+# define os_thread_join(t) WaitForSingleObject((HANDLE)(intptr_t)(t), INFINITE)
+#else
+# define os_thread_t pthread_t
+# define os_thread_create(addr, proc, arg) pthread_create(addr, NULL, proc, proc_and_arg)
+# define os_thread_join(t) pthread_join(t, NULL)
+#endif
 
 typedef struct in_thread_args_t {
   double (*proc)(double arg);
@@ -110,7 +123,7 @@ typedef struct in_thread_args_t {
   int n_times;
 } in_thread_args_t;
 
-void *in_thread(void *_proc_and_arg)
+static void *in_thread(void *_proc_and_arg)
 {
   in_thread_args_t *proc_and_arg = _proc_and_arg;
   int i;
@@ -122,18 +135,8 @@ void *in_thread(void *_proc_and_arg)
   return NULL;
 }
 
-#if defined(_WIN32)
-# define os_thread_t unsigned
-# define os_thread_create(addr, proc, arg) (((*(addr)) = _beginthread((void(*)(void*))proc, 0, arg)) == -1)
-# define os_thread_join(t) WaitForSingleObject((HANDLE)(intptr_t)(t), INFINITE)
-#else
-# define os_thread_t pthread_t
-# define os_thread_create(addr, proc, arg) pthread_create(addr, NULL, in_thread, proc_and_arg)
-# define os_thread_join(t) pthread_join(t, NULL)
-#endif
-
-#ifdef FEATURE_PTHREADS
-EXPORT double call_in_unknown_thread(double (*proc)(double arg), double arg, int n_times,
+EXPORT double call_in_unknown_thread(double (*proc)(double arg), double arg,
+                                     int n_times,
                                      int do_fork, int do_deactivate) {
   os_thread_t t;
   in_thread_args_t *proc_and_arg = malloc(sizeof(in_thread_args_t));
@@ -157,8 +160,46 @@ EXPORT double call_in_unknown_thread(double (*proc)(double arg), double arg, int
 
   return arg;
 }
+
+typedef struct in_one_thread_args_t {
+  int (*proc)(int);
+  int arg;
+} in_one_thread_args_t;
+
+static void *in_one_thread(void *_proc_and_arg)
+{
+  in_one_thread_args_t *proc_and_arg = _proc_and_arg;
+  int i;
+
+  Sactivate_thread();
+
+  proc_and_arg->arg = proc_and_arg->proc(proc_and_arg->arg);
+
+  Sdestroy_thread();
+
+  return NULL;
+}
+
+EXPORT int call_in_many_unknown_threads(int (*proc)(int), int arg,
+                                        int n_threads) {
+  os_thread_t t;
+  in_one_thread_args_t *proc_and_arg = malloc(sizeof(in_one_thread_args_t));
+
+  proc_and_arg->proc = proc;
+  proc_and_arg->arg = arg;
+
+  while (n_threads-- > 0) {
+    if (!os_thread_create(&t, in_one_thread, proc_and_arg)) {
+      os_thread_join(t);
+    }
+  }
+
+  arg = proc_and_arg->arg;
+  free(proc_and_arg);
+
+  return arg;
+}
 #endif /* FEATURE_PTHREADS */
-#endif
 
 EXPORT unsigned spin_a_while(int amt, unsigned a, unsigned b)
 {

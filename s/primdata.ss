@@ -1977,6 +1977,7 @@
   ($event [flags single-valued])
   ($event-and-resume [flags])
   ($event-and-resume* [flags])
+  ($event-trap-check [flags])
   ($exactnum? [sig [(ptr) -> (boolean)]] [pred $exactnum] [flags pure unrestricted mifoldable])
   ($exactnum-imag-part [flags single-valued])
   ($exactnum-real-part [flags single-valued])
