@@ -711,9 +711,9 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
 
 static ptr s_system(const char *s) {
   INT status;
-  char *s_arg;
 #ifdef PTHREADS
   ptr tc = get_thread_context();
+  char *s_arg = NULL;
 #endif
 
 #ifdef PTHREADS
@@ -725,11 +725,11 @@ static ptr s_system(const char *s) {
       S_error("system", "malloc failed");
     memcpy(s_arg, s, len);
     deactivate_thread(tc);
-  }
-#else
-  s_arg = (char *)s;
+    s = s_arg;
+  } else
+    s_arg = NULL;
 #endif
-  status = SYSTEM(s_arg);
+  status = SYSTEM(s);
 #ifdef PTHREADS
   if (DISABLECOUNT(tc) == FIX(0)) {
     reactivate_thread(tc);
