@@ -708,6 +708,11 @@
 (unless (or (windows?)
             (not (threaded?)))
   (mat thread-system
+
+    ;; make sure `system` works when interrupts are disabled
+    (with-interrupts-disabled
+      (eqv? 0 (system "echo hi")))
+
     ;; check that when a thread is deactivated during `system`,
     ;; the command that it's running isn't GCed
     (let* ([count 50]
