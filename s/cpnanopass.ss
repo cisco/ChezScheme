@@ -96,12 +96,13 @@
         (lambda (unparser)
           (lambda (val*)
             (safe-assert (not (null? val*)))
-            (pretty-print (flatten-seq (unparser (car val*)))))))
+            (pretty-print (flatten-seq (unparser (car val*)))
+                          (current-error-port)))))
       (define values-printer
         (lambda (val*)
           (if (null? val*)
-              (printf "no output\n")
-              (pretty-print (car val*)))))
+              (fprintf (current-error-port) "no output\n")
+              (pretty-print (car val*) (current-error-port)))))
       (define-syntax pass
         (syntax-rules ()
           [(_ (pass-name ?arg ...) ?unparser)
@@ -125,7 +126,7 @@
           (let-values ([val* (let ([th (lambda () (apply pass arg*))])
                                (if pass-time? ($pass-time pass-name th) (th)))])
             (when (memq pass-name (tracer))
-              (printf "output of ~s:\n" pass-name)
+              (fprintf (current-error-port) "output of ~s:\n" pass-name)
               (printer val*))
             (apply values val*))))
       (define-syntax xpass
@@ -7883,8 +7884,8 @@
                                depth))))))
                    lb*))
              (for-each (lambda (b) (block-seen! b #f)) block*)
-             #;(p-dot-graph block* (current-output-port))
-             #;(p-graph block* (info-lambda-name info) (current-output-port) unparse-L15a)))
+             #;(p-dot-graph block* (current-error-port))
+             #;(p-graph block* (info-lambda-name info) (current-error-port) unparse-L15a)))
          (for-each (lambda (b) (block-finished! b #f)) block*)
          ir]))
 
@@ -8273,8 +8274,8 @@
           (define LambdaBody
             (lambda (entry-block* block* func)
               #;(when (#%$assembly-output)
-                (p-dot-graph block* (current-output-port))
-                (p-graph block* 'whatever (current-output-port) unparse-L16))
+                (p-dot-graph block* (current-error-port))
+                (p-graph block* 'whatever (current-error-port) unparse-L16))
               (let ([block* (cons (car entry-block*) (remq (car entry-block*) block*))])
                 (for-each (lambda (block) (let ([l (block-label block)]) (when l (local-label-iteration-set! l 0) (local-label-func-set! l func)))) block*)
                 (fluid-let ([current-func func])
@@ -8352,8 +8353,8 @@
            #;(let ()
                (define block-printer
                  (lambda (unparser name block*)
-                   (p-dot-graph block* (current-output-port))
-                   (p-graph block* name (current-output-port) unparser)))
+                   (p-dot-graph block* (current-error-port))
+                   (p-graph block* name (current-error-port) unparser)))
                (block-printer unparse-L16 (info-lambda-name info) block*))
            (let-values ([(code* trace* code-size) (LambdaBody entry-block* block* func)])
              ($c-make-code
@@ -10499,8 +10500,8 @@
          (let ()
            (define block-printer
              (lambda (unparser name block*)
-               (p-dot-graph block* (current-output-port))
-               (p-graph block* name (current-output-port) unparser)))
+               (p-dot-graph block* (current-error-port))
+               (p-graph block* name (current-error-port) unparser)))
            (module (RApass)
              (define RAprinter
                (lambda (unparser)
