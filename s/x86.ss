@@ -2463,14 +2463,14 @@
                               [(4)
                                (cond
                                 [(and (if-feature windows (not ($ftd-compound? ftd)) #t)
-                      (equal? '((float 4 0)) ($ftd->members ftd)))
+                                      (equal? '((float 4 0)) ($ftd->members ftd)))
                                  `(set! ,(%mref ,%ecx ,%zero 0 fp) ,(%inline fstps))]
                                 [else
                                  `(set! ,(%mref ,%ecx 0) ,%eax)])]
                               [(8)
                                (cond
                                 [(and (if-feature windows (not ($ftd-compound? ftd)) #t)
-                      (equal? '((float 8 0)) ($ftd->members ftd)))
+                                      (equal? '((float 8 0)) ($ftd->members ftd)))
                                  `(set! ,(%mref ,%ecx ,%zero 0 fp) ,(%inline fstpl))]
                                 [else
                                  `(seq

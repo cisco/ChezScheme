@@ -647,11 +647,11 @@
       [(op (x ur) (y ur) (w imm-constant) (old ur) (new ur))
        (lea->reg x y w
          (lambda (r)
-       (let ([u1 (make-tmp 'u1)] [u2 (make-tmp 'u2)])
+           (let ([u1 (make-tmp 'u1)] [u2 (make-tmp 'u2)])
              (seq
                `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
                `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
-           `(asm ,info ,asm-cas ,r ,old ,new ,u1 ,u2)))))]))
+               `(asm ,info ,asm-cas ,r ,old ,new ,u1 ,u2)))))]))
 
   (define-instruction effect (store-store-fence)
     [(op)
@@ -2238,7 +2238,7 @@
                 (define build-bop-seq
                   (lambda (bop opnd1 opnd2 l2 body)
                     #`(let ([code* (emit #,bop #,opnd1 code*)])
-            (safe-assert (= (asm-size* code*) #,b-asm-size))
+                        (safe-assert (= (asm-size* code*) #,b-asm-size))
                         (let-values ([(ignore #,opnd2) (get-disp-opnd (fx+ next-addr #,b-asm-size) #,l2)])
                           #,body))))
                 (define ops->code
@@ -2268,8 +2268,8 @@
                                 (handle-reverse #'c1 #'opnd2 #'l2))]
                            [else
                             (let ([code* #,(build-bop-seq #'b #'opnd1 #'opnd2 #'l2
-                          #'(emit b opnd2 code*))])
-                  #,(handle-reverse #'c2 #``(imm #,b-asm-size) #'step))])]
+                                             #'(emit b opnd2 code*))])
+                              #,(handle-reverse #'c2 #``(imm #,b-asm-size) #'step))])]
                       [_ ($oops 'handle-inverse "expected an inverse in ~s" e)])))
                 (syntax-case x ()
                   [(_ [(pred ...) cl-body] ...)
@@ -2346,16 +2346,16 @@
              ;; When `n` fits in a fixnum, the compiler may generate
              ;; a bad shift that is under a guard, so force it to 63 bits
              (let ([n (fxand n 63)])
-           (cond
-        [(fx= n 0)
-         ;; shift by 0 is just a move
-         (emit mov dest src0 code*)]
-        [else
-         (case op
-           [(sll) (emit lsli dest src0 n code*)]
-           [(srl) (emit lsri dest src0 n code*)]
-           [(sra) (emit asri dest src0 n code*)]
-           [else (sorry! 'shiftop "unrecognized ~s" op)])]))]
+               (cond
+                 [(fx= n 0)
+                  ;; shift by 0 is just a move
+                  (emit mov dest src0 code*)]
+                 [else
+                  (case op
+                    [(sll) (emit lsli dest src0 n code*)]
+                    [(srl) (emit lsri dest src0 n code*)]
+                    [(sra) (emit asri dest src0 n code*)]
+                    [else (sorry! 'shiftop "unrecognized ~s" op)])]))]
             [else
              (case op
                [(sll) (emit lsl dest src0 src1 code*)]
@@ -2400,22 +2400,22 @@
   (module (asm-foreign-call asm-foreign-callable)
     (define align (lambda (b x) (let ([k (- b 1)]) (fxlogand (fx+ x k) (fxlognot k)))))
     (define (double-member? m) (and (eq? (car m) 'float)
-                    (fx= (cadr m) 8)))
+                                    (fx= (cadr m) 8)))
     (define (float-member? m) (and (eq? (car m) 'float)
-                   (fx= (cadr m) 4)))
+                                   (fx= (cadr m) 4)))
     (define (indirect-result-that-fits-in-registers? result-type)
       (nanopass-case (Ltype Type) result-type
         [(fp-ftd& ,ftd)
-     (let* ([members ($ftd->members ftd)]
-        [num-members (length members)])
-       (or (fx<= ($ftd-size ftd) 4)
-           (and (fx= num-members 1)
-            ;; a struct containing only int64 is not returned in a register
-            (or (not ($ftd-compound? ftd))))
-           (and (fx<= num-members 4)
-            (or (andmap double-member? members)
-            (andmap float-member? members)))))]
-    [else #f]))
+         (let* ([members ($ftd->members ftd)]
+                [num-members (length members)])
+           (or (fx<= ($ftd-size ftd) 4)
+               (and (fx= num-members 1)
+                    ;; a struct containing only int64 is not returned in a register
+                    (or (not ($ftd-compound? ftd))))
+               (and (fx<= num-members 4)
+                    (or (andmap double-member? members)
+                        (andmap float-member? members)))))]
+        [else #f]))
     (define int-argument-regs (list %Carg1 %Carg2 %Carg3 %Carg4
                                     %Carg5 %Carg6 %Carg7 %Carg8))
     (define fp-argument-regs (list %Cfparg1 %Cfparg2 %Cfparg3 %Cfparg4
@@ -3270,10 +3270,10 @@
                    `(set! ,%Cretval ,x))])))
           (lambda (info)
             (define callee-save-regs+lr (cons* %lr
-                           ;; reserved:
-                           %tc %sfp %ap %trap
-                           ;; allocable:
-                           (get-allocable-callee-save-regs 'uptr)))
+                                               ;; reserved:
+                                               %tc %sfp %ap %trap
+                                               ;; allocable:
+                                               (get-allocable-callee-save-regs 'uptr)))
             (define callee-save-fpregs  (get-allocable-callee-save-regs 'fp))
             (define isaved (length callee-save-regs+lr))
             (define fpsaved (length callee-save-fpregs))

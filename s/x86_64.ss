@@ -3212,14 +3212,14 @@ incoming           |   incoming return address | one quad
                            (nanopass-case (Ltype Type) (car types)
                              [(fp-double-float) (load-double-stack isp)]
                              [(fp-single-float) (load-single-stack isp)]
-                 [(fp-ftd& ,ftd)
-                  (cond
-                   [(memq ($ftd-size ftd) '(1 2 4 8))
-                ;; passed by value
-                (load-stack-address isp)]
-                   [else
-                ;; passed by reference
-                (load-int-stack (car types) isp)])]
+                             [(fp-ftd& ,ftd)
+                              (cond
+                               [(memq ($ftd-size ftd) '(1 2 4 8))
+                                ;; passed by value
+                                (load-stack-address isp)]
+                               [else
+                                ;; passed by reference
+                                (load-int-stack (car types) isp)])]
                              [else (load-int-stack (car types) isp)])
                            locs)
                          (fx+ isp 8))))

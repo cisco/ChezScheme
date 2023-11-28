@@ -795,11 +795,11 @@
       [(op (x ur) (y ur) (w imm-constant) (old ur) (new ur))
        (lea->reg x y w
          (lambda (r)
-       (let ([u1 (make-tmp 'u1)] [u2 (make-tmp 'u2)])
+           (let ([u1 (make-tmp 'u1)] [u2 (make-tmp 'u2)])
              (seq
                `(set! ,(make-live-info) ,u1 (asm ,null-info ,asm-kill))
                `(set! ,(make-live-info) ,u2 (asm ,null-info ,asm-kill))
-           `(asm ,info ,asm-cas ,r ,old ,new ,u1 ,u2)))))]))
+               `(asm ,info ,asm-cas ,r ,old ,new ,u1 ,u2)))))]))
 
   (define-instruction effect (store-store-fence)
     [(op)
@@ -2390,9 +2390,8 @@
 
   (module (asm-foreign-call asm-foreign-callable)
     (define align (lambda (b x) (let ([k (- b 1)]) (fxlogand (fx+ x k) (fxlognot k)))))
-    (define (double-member? m)
-      (and (eq? (car m) 'float)
-           (fx= (cadr m) 8)))
+    (define (double-member? m) (and (eq? (car m) 'float)
+                                    (fx= (cadr m) 8)))
     (define (float-member? m) (and (eq? (car m) 'float)
                                    (fx= (cadr m) 4)))
     (define (indirect-result-that-fits-in-registers? result-type)

@@ -696,10 +696,10 @@
       [(op (x ur) (y ur) (w imm-constant) (old ur) (new ur))
        (lea->reg x y w
          (lambda (base index)
-       (let ([u (make-tmp 'u)])
+           (let ([u (make-tmp 'u)])
              (seq
                `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
-           `(asm ,info ,asm-cas ,base ,index ,old ,new ,u)))))]))
+               `(asm ,info ,asm-cas ,base ,index ,old ,new ,u)))))]))
 
   (define-instruction effect (pause)
     [(op) `(asm ,info ,asm-isync)])
@@ -2158,7 +2158,7 @@
     (define (indirect-result-that-fits-in-registers? result-type)
       (nanopass-case (Ltype Type) result-type
         [(fp-ftd& ,ftd) (not ($ftd-compound? ftd))]
-    [else #f]))
+        [else #f]))
     (define (indirect-result-to-pointer result-type arg-type*)
       (constant-case machine-type-name
         [(ppc32osx tppc32osx)
@@ -2225,11 +2225,11 @@
         (define load-indirect-int-stack
           (lambda (offset size)
             (lambda (rhs) ; requires rhs
-          (let ([int-type (case size
-                [(1) 'integer-8]
-                [(2) 'integer-16]
-                [else 'integer-32])])
-              `(set! ,(%mref ,%sp ,offset) (inline ,(make-info-load int-type #f) ,%load ,rhs ,%zero (immediate ,0)))))))
+              (let ([int-type (case size
+                                [(1) 'integer-8]
+                                [(2) 'integer-16]
+                                [else 'integer-32])])
+                `(set! ,(%mref ,%sp ,offset) (inline ,(make-info-load int-type #f) ,%load ,rhs ,%zero (immediate ,0)))))))
         (define load-indirect-int64-stack
           (lambda (offset)
             (lambda (x) ; requires var
@@ -2748,12 +2748,12 @@
                                  ,(do-indirect-result-from-registers ftd fill-stash-offset)))))]
                    [else (values (reg-list) 0 (lambda (e) e))]))
                 (nanopass-case (Ltype Type) result-type
-                               [(fp-double-float) (handle-64-bit)]
-                               [(fp-single-float) (handle-32-bit)]
-                               [(fp-integer ,bits) (handle-integer-cases bits)]
-                               [(fp-integer ,bits) (handle-integer-cases bits)]
-                               [(fp-ftd& ,ftd) (handle-ftd&-case ftd)]
-                               [else (values (reg-list %Cretval) 0 (lambda (e) e))]))
+                  [(fp-double-float) (handle-64-bit)]
+                  [(fp-single-float) (handle-32-bit)]
+                  [(fp-integer ,bits) (handle-integer-cases bits)]
+                  [(fp-integer ,bits) (handle-integer-cases bits)]
+                  [(fp-ftd& ,ftd) (handle-ftd&-case ftd)]
+                  [else (values (reg-list %Cretval) 0 (lambda (e) e))]))
               (let ()
                 (define handle-integer-cases
                   (lambda (bits)
@@ -2777,12 +2777,12 @@
                           ,(do-indirect-result-from-registers ftd fill-stash-offset)))))]
                    [else (values (reg-list) 0 (lambda (e) e))]))
                 (nanopass-case (Ltype Type) result-type
-                               [(fp-double-float) (values (reg-list) 1 (lambda (e) e))]
-                               [(fp-single-float) (values (reg-list) 1 (lambda (e) e))]
-                               [(fp-integer ,bits) (handle-integer-cases bits)]
-                               [(fp-unsigned ,bits) (handle-integer-cases bits)]
-                               [(fp-ftd& ,ftd) (handle-ftd&-case ftd)]
-                               [else (values (reg-list %Cretval) 0 (lambda (e) e))]))))
+                  [(fp-double-float) (values (reg-list) 1 (lambda (e) e))]
+                  [(fp-single-float) (values (reg-list) 1 (lambda (e) e))]
+                  [(fp-integer ,bits) (handle-integer-cases bits)]
+                  [(fp-unsigned ,bits) (handle-integer-cases bits)]
+                  [(fp-ftd& ,ftd) (handle-ftd&-case ftd)]
+                  [else (values (reg-list %Cretval) 0 (lambda (e) e))]))))
         (define do-indirect-result-from-registers
           (lambda (ftd offset)
             (let ([tmp %Carg8])
