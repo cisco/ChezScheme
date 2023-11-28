@@ -74,6 +74,7 @@
     aligned-label? make-aligned-label
     return-point-label? make-return-point-label
     return-point-label-compact? return-point-label-compact?-set!
+    trap-check-label? make-trap-check-label
     Lsrc Lsrc? Ltype Ltype? unparse-Ltype unparse-Lsrc
     lookup-primref primref? primref-level primref-name primref-flags primref-arity
     preinfo-src preinfo-sexpr preinfo-lambda-name preinfo-lambda-flags preinfo-lambda-libspec
@@ -380,6 +381,12 @@
       (lambda (pargs->new)
         (lambda (name)
           ((pargs->new name) #f)))))
+
+  (define-record-type trap-check-label
+    (parent label)
+    (nongenerative #{trap-check-label cqq98nvi9kqrjx85wecpaw2ni-0})
+    (sealed #t)
+    (fields))
 
   (module ()
     (define lookup-unique-label

@@ -1845,6 +1845,10 @@
 
 (define $event (lambda () ($event)))
 
+;; expected to be inlined, but if not, the fact that an uninlined
+;; function is called will create a trap check
+(define $event-trap-check (lambda () (void)))
+
 (let ()
   (define (inc)
     ;; make up for decrement that will happen immediately on retry:

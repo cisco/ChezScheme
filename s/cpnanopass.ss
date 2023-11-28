@@ -718,7 +718,7 @@
            (let ([e* (map CaseLambdaExpr e* uvar*)])
              `(letrec ([,uvar* ,e*] ...) ,(Expr body))))]
         [(call ,preinfo ,e ,[e*] ...)
-         (unless (preinfo-call? preinfo) (error 'preinfo-call "oops"))
+         (safe-assert (preinfo-call? preinfo))
          `(call ,(make-info-call (preinfo-src preinfo) (preinfo-sexpr preinfo) (preinfo-call-check? preinfo) #f
                                  (and (preinfo-call-no-return? preinfo) (not (preinfo-call-check? preinfo))))
             ,(Expr e) ,e* ...)]
@@ -3004,6 +3004,8 @@
                    (add-trap-check overflow? call))))
            (let ([noc? (eq? (fold-left combine-seq oc oc*) 'no)])
              (cond
+               [(and (not e?) (trap-check-label? mdcl))
+                (values `(immediate ,(constant svoid)) 'no request-trap-check)]
                [(and (or tail? (and (info-call-error? info) (fx< (debug-level) 2))) noc?)
                 (let ([call `(call ,info ,mdcl ,e? ,e* ...)])
                   (if (info-call-pariah? info)

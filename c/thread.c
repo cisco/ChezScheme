@@ -176,6 +176,10 @@ ptr S_create_thread_object(const char *who, ptr p_tc) {
 
   CP(tc) = 0;
 
+  /* if a collection is needed, then ask the new thread to check right away */
+  if (Sboolean_value(S_symbol_value(S_G.collect_request_pending_id)))
+    TRAP(tc) = (ptr)1;
+
   tc_mutex_release();
 
   return thread;

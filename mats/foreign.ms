@@ -3521,7 +3521,7 @@
       (let* ([exception #f]
              [callback (make-ftype-pointer thread-callback-T
                          (lambda (arg)
-                           ;; Don't let an exception reset this tread.
+                           ;; Don't let an exception reset this thread.
                            (guard [c (else (set! exception c) 0.0)]
                              (cb-proc arg))))]
              [r (proc callback)])
@@ -3538,8 +3538,7 @@
          [else (loop (fx+ i 1) (proc arg))])))
     (define call-in-unknown-thread-2
       ;; Call in the current thread, but through the foreign procedure
-      (if (and (threaded?)
-               (foreign-entry? "call_in_unknown_thread"))
+      (if (threaded?)
           (let ([call (foreign-procedure "call_in_unknown_thread"
                                          ((* thread-callback-T) double int boolean boolean)
                                          double)])
@@ -3550,8 +3549,7 @@
           call-in-unknown-thread-1))
     (define call-in-unknown-thread-3
       ;; Call in a truly unknown thread:
-      (if (and (threaded?)
-               (foreign-entry? "call_in_unknown_thread"))
+      (if (threaded?)
           (let ([call (foreign-procedure "call_in_unknown_thread"
                                          ((* thread-callback-T) double int boolean boolean)
                                          double)])
@@ -3564,8 +3562,7 @@
       ;; In an truly unknown thread, but also using `__collect_safe` to
       ;; deactivate the current thread instead of using `Sdeactivate_thread`
       ;; within the foreign function:
-      (if (and (threaded?)
-               (foreign-entry? "call_in_unknown_thread"))
+      (if (threaded?)
           (let ([call (foreign-procedure __collect_safe "call_in_unknown_thread"
                                          ((* thread-callback-T) double int boolean boolean)
                                          double)])
@@ -3626,6 +3623,26 @@
               (loop))))
         (when exception (raise exception))
         ok?))
+
+  ;; make sure that lots of threads created to perform very little work
+  ;; doesn't use a huge amount of memory --- that is, that some of the
+  ;; threads trigger a GC
+  (or (not (threaded?))
+      (let ([old-max (maximum-memory-bytes)])
+        (let ([call (foreign-procedure __collect_safe
+                                       "call_in_many_unknown_threads" (uptr int int)
+                                       int)]
+              ;; manage callable pointer directly so that callback is minimal
+              [callable (foreign-callable (lambda (n) n) (int) int)])
+          (lock-object callable)
+          (and
+           (equal? 17
+                   (call (foreign-callable-entry-point callable)
+                         17
+                         10000))
+           (begin
+             (unlock-object callable)
+             (< (maximum-memory-bytes) (* 1.2 old-max)))))))
 )
 
 (machine-case

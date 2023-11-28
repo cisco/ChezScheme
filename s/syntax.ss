@@ -9519,7 +9519,9 @@
                       "invalid return value ~s from ~s"
                       x p))
                   #,@(if unsafe? #'() #'((unless (procedure? p) ($oops 'foreign-callable "~s is not a procedure" p))))
-                  (lambda (extra ... t ... ...) (result-filter (p extra ... actual ...))))
+                  (lambda (extra ... t ... ...)
+                    ($event-trap-check) ; ensure eventual `($event)` in the case of many short callbacks
+                    (result-filter (p extra ... actual ...))))
                 (extra-arg ... arg ... ...)
                 result)))))))
 
