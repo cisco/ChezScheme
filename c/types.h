@@ -520,7 +520,7 @@ typedef struct thread_gc {
 
 #define main_sweeper_index maximum_parallel_collect_threads
 
-#if defined(__MINGW32__) && !defined(HAND_CODED_SETJMP_SIZE)
+#if defined(__MINGW32__) && !defined(HAND_CODED_SETJMP_SIZE) && !defined(__aarch64__)
 /* With MinGW on 64-bit Windows, setjmp/longjmp is not reliable. Using
    __builtin_setjmp/__builtin_longjmp is reliable, but
    __builtin_longjmp requires 1 as its second argument. So, allocate
@@ -539,8 +539,14 @@ typedef struct thread_gc {
 /* assuming malloc will give us required alignment */
 # define CREATEJMPBUF() malloc(sizeof(jmp_buf))
 # define FREEJMPBUF(jb) free(jb)
-# define SETJMP(jb) _setjmp(jb)
-# define LONGJMP(jb,n) _longjmp(jb, n)
+# if defined(__MINGW32__) && defined(__aarch64__)
+   /* no _-prefixed variants */
+#  define SETJMP(jb) setjmp(jb)
+#  define LONGJMP(jb,n) longjmp(jb, n)
+#else
+#  define SETJMP(jb) _setjmp(jb)
+#  define LONGJMP(jb,n) _longjmp(jb, n)
+# endif
 #endif
 
 #define DOUNDERFLOW\

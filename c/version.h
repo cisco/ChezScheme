@@ -196,7 +196,7 @@ typedef int tputsputcchar;
 typedef char *memcpy_t;
 struct timespec;
 #ifdef __MINGW32__
-# if defined(__aarch64__)
+# if defined(__aarch64__) && !defined(PORTABLE_BYTECODE)
 #  define HAND_CODED_SETJMP_SIZE 32
 # endif
 #else
