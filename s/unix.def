@@ -3,6 +3,5 @@
 
 (define-constant machine-type (constant machine-type-$(M)))
 (features iconv expeditor)
-(define-constant time-t-bits $(Mtimet))
 (include "$(March).def")
 (include "default.def")

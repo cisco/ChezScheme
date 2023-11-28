@@ -42,11 +42,7 @@ static long adjust_time_zone(ptr dtvec, struct tm *tmxp, ptr given_tzoff);
 
 /********  unique-id  ********/
 
-#if (time_t_bits == 32)
-#define S_integer_time_t(x) Sinteger32((iptr)(x))
-#elif (time_t_bits == 64)
 #define S_integer_time_t(x) Sinteger64(x)
-#endif
 
 #ifdef WIN32
 

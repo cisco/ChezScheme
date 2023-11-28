@@ -219,9 +219,9 @@ static void idiot_checks(void) {
               (long)sizeof(ptrdiff_t), ptrdiff_t_bits);
     oops = 1;
   }
-  if (sizeof(time_t) * 8 != time_t_bits) {
-    fprintf(stderr, "sizeof(time_t) * 8 [%ld] != time_t_bits [%d]\n",
-              (long)sizeof(time_t), time_t_bits);
+  if (sizeof(time_t) * 8 > 64) {
+    fprintf(stderr, "sizeof(time_t) [%ld] * 8 > 64\n",
+              (long)sizeof(time_t));
     oops = 1;
   }
 #endif

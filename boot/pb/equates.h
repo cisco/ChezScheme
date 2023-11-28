@@ -1189,7 +1189,6 @@ typedef uint64_t U64;
 #define time_duration 0x2
 #define time_monotonic 0x3
 #define time_process 0x0
-#define time_t_bits 0x40
 #define time_thread 0x1
 #define time_utc 0x4
 #define timer_interrupt_index 0x2
