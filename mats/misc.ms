@@ -1127,7 +1127,9 @@
                             (let loop ()
                               (unless (check)
                                 (sleep (make-time 'time-duration 10000 0))
-                                (loop))))])
+                                (loop))))]
+             ;; to make sure a thread parameter's content is not counted:
+             [new-param (make-thread-parameter (make-bytevector (* 3 N)))])
         (mutex-acquire m)
         (let* ([th-code
                 ;; we'll measure the difference between data reachable by this
@@ -1150,7 +1152,13 @@
           ;; Wait for thread to become inactive, blocked on the mutex
           (pause-until (lambda () (= 1 (#%$top-level-value '$active-threads))))
           ;; Get thread's size, which should include bstr
-          (let ([pre-sizes (compute-size-increments (list th-code th))])
+          (let ([pre-sizes (compute-size-increments (list th-code
+                                                          th
+                                                          ;; don't count parameters towards the thread's
+                                                          ;; size; in particular, the `$tt-fat` parameter
+                                                          ;; from a "thread.ms" test can have random symbols,
+                                                          ;; some of which may be bound to large values
+                                                          (#%$tc-field 'parameters (#%$thread-tc th))))])
             (mutex-release m)
             ;; Wait for bytevector to be discarded in the thread
             (pause-until (lambda () (unbox saved)))
@@ -1162,11 +1170,7 @@
             ;; Get thread's size, which shouldn't include bstr
             (let ([post-sizes (compute-size-increments (list th-code
                                                              th
-                                                             ;; don't count parameters towards te thread's
-                                                             ;; size; in particluar, the `$tt-fat` parameter
-                                                             ;; from a "thread.ms" test can have random symbols,
-                                                             ;; some of which may be bound to large values
-                                                             (#%$tc-field 'parameters (#%$tc))))])
+                                                             (#%$tc-field 'parameters (#%$thread-tc th))))])
               (printf "SIZES ~s\n" (list pre-sizes N post-sizes))
               (mutex-release m)
               ;; Wait for thread to exit
@@ -1174,6 +1178,8 @@
               ;; Make sure `compute-size-increments` doesn't crash on a
               ;; terminated thread:
               (compute-size-increments (list th))
+              ;; drop extra bytevector from the current thread:
+              (new-param #f)
               ;; Main result: detected size of `bstr` in the thread
               ;; while it was part of the continuation
               (or (eq? (current-eval) interpret) ; interpreter continuation is not precise enough
