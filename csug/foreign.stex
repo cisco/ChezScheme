@@ -3097,6 +3097,7 @@ program.
 \cfunction{void}{Sregister_boot_relative_file}{const char *\var{name}}
 \cfunction{void}{Sregister_boot_file_fd}{const char *\var{name}, int \var{fd}}
 \cfunctTwo{void}{Sregister_boot_file_fd_region}{const char *\var{name}, int \var{fd},}{iptr \var{offset}, iptr \var{len}, int \var{close}_\var{after}}
+\cfunction{void}{Sregister_boot_file_bytes}{const char *\var{name}, void *\var{content}, iptr \var{len}}
 \cfunction{void}{Sbuild_heap}{const char *\var{exec}, void (*\var{custom}_\var{init})(void)}
 \cfunction{void}{Senable_expeditor}{const char *\var{history}_\var{file}}
 \cfunction{void}{Sretain_static_relocation}{void}
@@ -3161,6 +3162,12 @@ descriptor is used for multiple boot files, then
 \scheme{\var{close}_\var{after}} should be non-zero only for the last
 one. The boot file content is read only when \scheme{Sbuild_heap} is
 called.
+
+The \scheme{Sregister_boot_file_bytes} function is another alternative
+to the \scheme{Sregister_boot_file} functions that registers boot-file
+content that is already loaded into memory, instead of reading from a
+file. The registered bytes must remain available until
+\scheme{Sbuild_heap} reads them.
 
 \scheme{Sbuild_heap} creates the Scheme heap from the registered boot
 files.

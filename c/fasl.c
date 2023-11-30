@@ -210,31 +210,16 @@
 
 #define PREPARE_BYTEVECTOR(bv,n) {if (bv == Sfalse || Sbytevector_length(bv) < (n)) bv = S_bytevector(n);}
 
-typedef struct unbufFaslFileObj {
-  ptr path;
-  INT type;
-  INT fd;
-} *unbufFaslFile;
-
-typedef struct faslFileObj {
-  unbufFaslFile uf;
-  iptr size;
-  octet *next;
-  octet *end;
-  octet *buf;
-} *faslFile;
-
 /* locally defined functions */
-static INT uf_read(unbufFaslFile uf, octet *s, iptr n);
-static octet uf_bytein(unbufFaslFile uf);
-static uptr uf_uptrin(unbufFaslFile uf, INT *bytes_consumed);
-static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf, ptr externals);
-static ptr bv_fasl_entry(ptr tc, ptr bv, IFASLCODE ty, uptr offset, uptr len, unbufFaslFile uf, ptr externals);
+static iptr uf_read(unbufFaslFile uf, octet *s, iptr n);
+static void uf_skipbytes(unbufFaslFile uf, iptr n);
+static ptr fasl_entry(ptr tc, IFASLCODE situation, faslFile f, ptr externals);
+static ptr bv_fasl_entry(ptr tc, ptr bv, IFASLCODE ty, uptr offset, uptr len, faslFile f, ptr externals);
 static void fillFaslFile(faslFile f);
-static void bytesin(octet *s, iptr n, faslFile f);
 static void toolarge(ptr path);
 static iptr iptrin(faslFile f);
-static uptr uptrin(faslFile f);
+static int must_bytein(faslFile f);
+static void skipbytes(iptr n, faslFile f);
 static float singlein(faslFile f);
 static double doublein(faslFile f);
 static iptr stringin(ptr *pstrbuf, iptr start, faslFile f);
@@ -327,109 +312,59 @@ void S_fasl_init(void) {
 #endif
 }
 
+void S_fasl_init_fd(fileFaslFile ffo, ptr path, INT fd,
+                    int buffer_mode, uptr size) {
+  ffo->f.uf.path = path;
+  ffo->f.uf.type = UFFO_TYPE_FD;
+  ffo->f.uf.fd = fd;
+
+  ffo->f.buffer_mode = buffer_mode;
+  ffo->f.remaining = size;
+  ffo->f.next = ffo->f.end = ffo->f.buf = ffo->buf_space;
+}
+
+void S_fasl_init_bytes(faslFile ffo, ptr path, void *data, iptr len) {
+  ffo->uf.path = path;
+  ffo->uf.type = UFFO_TYPE_BV;
+  ffo->uf.fd = -1;
+
+  ffo->buffer_mode = FASL_BUFFER_READ_ALL;
+  ffo->remaining = 0;
+  ffo->next = ffo->buf = data;
+  ffo->end = ffo->buf + len;
+}
+
+void S_fasl_init_bv(faslFile ffo, ptr path, ptr bv) {
+  S_fasl_init_bytes(ffo, path, &BVIT(bv,0), Sbytevector_length(bv));
+}
+
 ptr S_fasl_read(INT fd, IFASLCODE situation, ptr path, ptr externals) {
   ptr tc = get_thread_context();
-  ptr x; struct unbufFaslFileObj uffo;
+  struct fileFaslFileObj ffo;
 
-  uffo.path = path;
-  uffo.type = UFFO_TYPE_FD;
-  uffo.fd = fd;
-  x = fasl_entry(tc, situation, &uffo, externals);
-  return x;
+  S_fasl_init_fd(&ffo, path, fd,
+                 /* For `fasl-read`, don't consume any more bytes than
+                    necessary from the file descriptor: */
+                 FASL_BUFFER_READ_MINIMAL, 0);
+
+  return fasl_entry(tc, situation, &ffo.f, externals);
 }
 
 ptr S_bv_fasl_read(ptr bv, int ty, uptr offset, uptr len, ptr path, ptr externals) {
   ptr tc = get_thread_context();
-  ptr x; struct unbufFaslFileObj uffo;
+  struct faslFileObj ffo;
 
-  uffo.path = path;
-  uffo.type = UFFO_TYPE_BV;
-  x = bv_fasl_entry(tc, bv, ty, offset, len, &uffo, externals);
-  return x;
+  S_fasl_init_bv(&ffo, path, bv);
+
+  return bv_fasl_entry(tc, bv, ty, offset, len, &ffo, externals);
 }
 
-ptr S_boot_read(INT fd, const char *path) {
+ptr S_boot_read(faslFile f, const char *path) {
   ptr tc = get_thread_context();
-  struct unbufFaslFileObj uffo;
 
-  uffo.path = Sstring_utf8(path, -1);
-  uffo.type = UFFO_TYPE_FD;
-  uffo.fd = fd;
-  return fasl_entry(tc, fasl_type_visit_revisit, &uffo, S_G.null_vector);
-}
+  f->uf.path = Sstring_utf8(path, -1);
 
-#ifdef WIN32
-#define IO_SIZE_T unsigned int
-#else /* WIN32 */
-#define IO_SIZE_T size_t
-#endif /* WIN32 */
-
-static INT uf_read(unbufFaslFile uf, octet *s, iptr n) {
-  iptr k;
-  while (n > 0) {
-    uptr nx = n;
-
-#if (iptr_bits > 32)
-  if (WIN32 && (unsigned int)nx != nx) nx = 0xffffffff;
-#endif
-
-    switch (uf->type) {
-      case UFFO_TYPE_FD:
-        k = READ(uf->fd, s, (IO_SIZE_T)nx);
-        if (k > 0)
-          n -= k;
-        else if (k == 0)
-          return -1;
-        else if (errno != EINTR)
-         S_error1("", "error reading from ~a", uf->path);
-        break;
-      default:
-        return -1;
-    }
-
-    s += k;
-  }
-  return 0;
-}
-
-
-int S_fasl_stream_read(void *stream, octet *dest, iptr n)
-{
-  return uf_read((unbufFaslFile)stream, dest, n);
-}
-
-static void uf_skipbytes(unbufFaslFile uf, iptr n) {
-  switch (uf->type) {
-    case UFFO_TYPE_FD:
-       if (LSEEK(uf->fd, n, SEEK_CUR) == -1) {
-         S_error1("", "error seeking ~a", uf->path);
-       }
-       break;
-  }
-}
-
-static octet uf_bytein(unbufFaslFile uf) {
-  octet buf[1];
-  if (uf_read(uf, buf, 1) < 0)
-    S_error1("", "unexpected eof in fasl file ~a", uf->path);
-  return buf[0];
-}
-
-static uptr uf_uptrin(unbufFaslFile uf, INT *bytes_consumed) {
-  uptr n, m; octet k;
-
-  if (bytes_consumed) *bytes_consumed = 1;
-  k = uf_bytein(uf);
-  n = k & 0x7F;
-  while (k & 0x80) {
-    if (bytes_consumed) *bytes_consumed += 1;
-    k = uf_bytein(uf);
-    m = n << 7;
-    if (m >> 7 != n) toolarge(uf->path);
-    n = m | (k & 0x7F);
-  }
-
-  return n;
+  return fasl_entry(tc, fasl_type_visit_revisit, f, S_G.null_vector);
 }
 
 char *S_format_scheme_version(uptr n) {
@@ -455,42 +390,40 @@ char *S_lookup_machine_type(uptr n) {
     return "unknown";
 }
 
-static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf, ptr externals) {
+static ptr fasl_entry(ptr tc, IFASLCODE situation, faslFile f, ptr externals) {
   ptr x; ptr strbuf = S_G.null_string;
-  octet tybuf[1]; IFASLCODE ty; iptr size;
-  /* gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-28) co-locates buf and x if we put the declaration of buf down where we use it */
-  octet buf[SBUFSIZ];
+  IFASLCODE ty; iptr size;
 
   for (;;) {
-    if (uf_read(uf, tybuf, 1) < 0) return Seof_object; 
-    ty = tybuf[0];
+    ty = S_fasl_bytein(f);
+    if (ty == -1) return Seof_object;
 
     while (ty == fasl_type_header) {
       uptr n; ICHAR c;
     
      /* check for remainder of magic number */
-      if (uf_bytein(uf) != 0 ||
-          uf_bytein(uf) != 0 ||
-          uf_bytein(uf) != 0 || 
-          uf_bytein(uf) != 'c' || 
-          uf_bytein(uf) != 'h' || 
-          uf_bytein(uf) != 'e' || 
-          uf_bytein(uf) != 'z')
-        S_error1("", "malformed fasl-object header (missing magic word) found in ~a", uf->path);
+      if (S_fasl_bytein(f) != 0 ||
+          S_fasl_bytein(f) != 0 ||
+          S_fasl_bytein(f) != 0 ||
+          S_fasl_bytein(f) != 'c' ||
+          S_fasl_bytein(f) != 'h' ||
+          S_fasl_bytein(f) != 'e' ||
+          S_fasl_bytein(f) != 'z')
+        S_error1("", "malformed fasl-object header (missing magic word) found in ~a", f->uf.path);
     
-      if ((n = uf_uptrin(uf, (INT *)0)) != scheme_version)
-        S_error2("", "incompatible fasl-object version ~a found in ~a", S_string(S_format_scheme_version(n), -1), uf->path);
+      if ((n = S_fasl_uptrin(f, NULL)) != scheme_version)
+        S_error2("", "incompatible fasl-object version ~a found in ~a", S_string(S_format_scheme_version(n), -1), f->uf.path);
     
-      if ((n = uf_uptrin(uf, (INT *)0)) != machine_type_any && n != machine_type)
-        S_error2("", "incompatible fasl-object machine-type ~a found in ~a", S_string(S_lookup_machine_type(n), -1), uf->path);
+      if ((n = S_fasl_uptrin(f, NULL)) != machine_type_any && n != machine_type)
+        S_error2("", "incompatible fasl-object machine-type ~a found in ~a", S_string(S_lookup_machine_type(n), -1), f->uf.path);
     
-      if (uf_bytein(uf) != '(')
-        S_error1("", "malformed fasl-object header (missing open paren) found in ~a", uf->path);
+      if (S_fasl_bytein(f) != '(')
+        S_error1("", "malformed fasl-object header (missing open paren) found in ~a", f->uf.path);
     
-      while ((c = uf_bytein(uf)) != ')')
-        if (c < 0) S_error1("", "malformed fasl-object header (missing close paren) found in ~a", uf->path);
+      while ((c = S_fasl_bytein(f)) != ')')
+        if (c < 0) S_error1("", "malformed fasl-object header (missing close paren) found in ~a", f->uf.path);
   
-      ty = uf_bytein(uf);
+      ty = S_fasl_bytein(f);
     }
   
     switch (ty) {
@@ -501,18 +434,20 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf, ptr externa
       case fasl_type_terminator:
         return Seof_object;
       default:
-        S_error2("", "malformed fasl-object header (missing situation, got ~s) found in ~a", FIX(ty), uf->path);
+        S_error2("", "malformed fasl-object header (missing situation, got ~s) found in ~a", FIX(ty), f->uf.path);
         return (ptr)0;
     }
 
-    size = uf_uptrin(uf, (INT *)0);
+    size = S_fasl_uptrin(f, NULL);
   
     if (ty == situation || situation == fasl_type_visit_revisit || ty == fasl_type_visit_revisit) {
-      struct faslFileObj ffo;
-      ptr bv; IFASLCODE kind;
+      struct faslFileObj bv_ffo;
+      faslFile in_f;
+      ptr bv = (ptr)0; IFASLCODE kind;
+      int old_mode = FASL_BUFFER_READ_ALL;
 
-      ty = uf_bytein(uf);
-      kind = uf_bytein(uf); /* fasl or vfasl */
+      ty = S_fasl_bytein(f);
+      kind = S_fasl_bytein(f); /* fasl or vfasl */
 
       if ((kind == fasl_type_vfasl) && S_vfasl_boot_mode) {
         /* compact every time, because running previously loaded
@@ -526,72 +461,70 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, unbufFaslFile uf, ptr externa
         case fasl_type_gzip:
         case fasl_type_lz4: {
           ptr result; INT bytes_consumed;
-          iptr dest_size = uf_uptrin(uf, &bytes_consumed);
+          iptr dest_size = S_fasl_uptrin(f, &bytes_consumed);
           iptr src_size = size - (2 + bytes_consumed); /* adjust for u8 compression type, u8 fasl type, and uptr dest_size */
 
           PREPARE_BYTEVECTOR(SRCBV(tc), src_size);
           PREPARE_BYTEVECTOR(DSTBV(tc), dest_size);
-          if (uf_read(uf, &BVIT(SRCBV(tc),0), src_size) < 0)
-            S_error1("", "unexpected eof in fasl file ~a", uf->path);
+          S_fasl_bytesin(&BVIT(SRCBV(tc),0), src_size, f);
           result = S_bytevector_uncompress(DSTBV(tc), 0, dest_size, SRCBV(tc), 0, src_size,
                       (ty == fasl_type_gzip ? COMPRESS_GZIP : COMPRESS_LZ4));
           if (result != FIX(dest_size)) {
             if (Sstringp(result)) S_error2("fasl-read", "~@?", result, SRCBV(tc));
             S_error3("fasl-read", "uncompressed size ~s for ~s is smaller than expected size ~s", result, SRCBV(tc), FIX(dest_size));
           }
-          ffo.size = dest_size;
-          ffo.next = ffo.buf = &BVIT(DSTBV(tc),0);
-          ffo.end = &BVIT(DSTBV(tc),dest_size);
-          ffo.uf = uf;
           bv = DSTBV(tc);
+          S_fasl_init_bv(&bv_ffo, f->uf.path, bv);
+          size = dest_size;
+          in_f = &bv_ffo;
           break;
         }
         case fasl_type_uncompressed: {
-          ffo.size = size - 2; /* adjust for u8 compression type and u8 fasl type */
-          ffo.next = ffo.end = ffo.buf = buf;
-          bv = (ptr)0;
-          ffo.uf = uf;
+          in_f = f;
+          old_mode = f->buffer_mode;
+          size -= 2;  /* adjust for u8 compression type and u8 fasl type */
+          if (old_mode == FASL_BUFFER_READ_MINIMAL) {
+            f->buffer_mode = FASL_BUFFER_READ_REMAINING;
+            f->remaining = size;
+          }
           break;
         }
         default:
-          S_error2("", "malformed fasl-object header (missing possibly-compressed, got ~s) found in ~a", FIX(ty), uf->path);
+          S_error2("", "malformed fasl-object header (missing possibly-compressed, got ~s) found in ~a", FIX(ty), f->uf.path);
           return (ptr)0;
       }
       switch (kind) {
         case fasl_type_fasl:
-          faslin(tc, &x, externals, &strbuf, &ffo);
+          faslin(tc, &x, externals, &strbuf, in_f);
           break;
         case fasl_type_vfasl:
-          x = S_vfasl(bv, uf, 0, ffo.size);
+          x = S_vfasl(bv, in_f, 0, size);
           break;
         default:
-          S_error2("", "malformed fasl-object header (got ~s) found in ~a", FIX(ty), uf->path);
+          S_error2("", "malformed fasl-object header (got ~s) found in ~a", FIX(ty), f->uf.path);
           return (ptr)0;
       }
+      if (old_mode == FASL_BUFFER_READ_MINIMAL)
+        in_f->buffer_mode = old_mode;
       S_flush_instruction_cache(tc);
       S_thread_end_code_write(tc, S_vfasl_boot_mode ? static_generation : 0, 1, NULL, 0);
       return x;
     } else {
-      uf_skipbytes(uf, size);
+      skipbytes(size, f);
     }
   }
 }
 
-static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, unbufFaslFile uf, ptr externals) {
+static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, faslFile f, ptr externals) {
   ptr x; ptr strbuf = S_G.null_string;
-  struct faslFileObj ffo;
 
   S_thread_start_code_write(tc, S_vfasl_boot_mode ? static_generation : 0, 1, NULL, 0);
 
   if (ty == fasl_type_vfasl) {
-    x = S_vfasl(bv, NULL, offset, len);
+    x = S_vfasl(bv, f, offset, len);
   } else if (ty == fasl_type_fasl) {
-    ffo.size = len;
-    ffo.next = ffo.buf = &BVIT(bv, offset);
-    ffo.end = &BVIT(bv, offset + len);
-    ffo.uf = uf;
-    
-    faslin(tc, &x, externals, &strbuf, &ffo);
+    f->next += offset;
+    faslin(tc, &x, externals, &strbuf, f);
   } else {
     S_error1("", "bad entry type (got ~s)", FIX(ty));
   }
@@ -602,18 +535,89 @@ static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, unbufFas
   return x;
 }
 
-static void fillFaslFile(faslFile f) {
-  iptr n = f->size < SBUFSIZ ? f->size : SBUFSIZ;
-  if (uf_read(f->uf, f->buf, n) < 0)
-    S_error1("", "unexpected eof in fasl file ~a", f->uf->path);
-  f->end = (f->next = f->buf) + n;
-  f->size -= n;
+#ifdef WIN32
+#define IO_SIZE_T unsigned int
+#else /* WIN32 */
+#define IO_SIZE_T size_t
+#endif /* WIN32 */
+
+static iptr uf_read(unbufFaslFile uf, octet *s, iptr n) {
+  iptr k, got = 0;
+
+  while (n > 0) {
+    uptr nx = n;
+
+#if (iptr_bits > 32)
+  if (WIN32 && (unsigned int)nx != nx) nx = 0xffffffff;
+#endif
+
+    switch (uf->type) {
+      case UFFO_TYPE_FD:
+        k = READ(uf->fd, s, (IO_SIZE_T)nx);
+        if (k > 0) {
+          n -= k;
+          got += k;
+          s += k;
+        } else if (k == 0)
+          return got;
+        else if (errno != EINTR) {
+          if (uf->path != (ptr)0)
+            S_error1("", "error reading from ~a", uf->path);
+          else
+            return 0;
+        }
+        break;
+      default:
+        return 0;
+    }
+  }
+  return got;
 }
 
-#define bytein(f) ((((f)->next == (f)->end) ? fillFaslFile(f) : (void)0), *((f)->next++))
+static void uf_skipbytes(unbufFaslFile uf, iptr n) {
+  switch (uf->type) {
+    case UFFO_TYPE_FD:
+       if (LSEEK(uf->fd, n, SEEK_CUR) == -1) {
+         S_error1("", "error seeking ~a", uf->path);
+       }
+       break;
+  }
+}
 
-static void bytesin(octet *s, iptr n, faslFile f) {
-  iptr avail = f->end - f->next;
+static void fillFaslFile(faslFile f) {
+  iptr n, got;
+
+  if (f->buffer_mode == FASL_BUFFER_READ_REMAINING) {
+    n = (f->remaining < SBUFSIZ ? f->remaining : SBUFSIZ);
+  } else if (f->buffer_mode == FASL_BUFFER_READ_MINIMAL)
+    n = 1;
+  else
+    n = SBUFSIZ;
+
+  got = uf_read(&f->uf, f->buf, n);
+  f->end = (f->next = f->buf) + got;
+  f->remaining -= got;
+}
+
+/* returns -1 for EOF */
+int S_fasl_bytein(faslFile f) {
+  if (f->next == f->end) {
+    fillFaslFile(f);
+    if (f->next == f->end)
+      return -1;
+  }
+  return *(f->next++);
+}
+
+static int must_bytein(faslFile f) {
+  int b = S_fasl_bytein(f);
+  if ((b == -1) && (f->uf.path != (ptr)0))
+    S_error1("", "unexpected eof in fasl file ~a", f->uf.path);
+  return b;
+}
+
+void S_fasl_bytesin(octet *s, iptr n, faslFile f) {
+  iptr avail = f->end - f->next, got;
   if (avail < n) {
     if (avail != 0) {
       memcpy(s, f->next, avail);
@@ -621,11 +625,26 @@ static void bytesin(octet *s, iptr n, faslFile f) {
       n -= avail;
       s += avail;
     }
-    if (uf_read(f->uf, s, n) < 0)
-      S_error1("", "unexpected eof in fasl file ~a", f->uf->path);
-    f->size -= n;
+    got = uf_read(&f->uf, s, n);
+    if (got != n)
+      S_error1("", "unexpected eof in fasl file ~a", f->uf.path);
+    f->remaining -= got;
   } else {
     memcpy(s, f->next, n);
+    f->next += n;
+  }
+}
+
+static void skipbytes(iptr n, faslFile f) {
+  iptr avail = f->end - f->next;
+  if (avail < n) {
+    if (avail != 0) {
+      f->next = f->end;
+      n -= avail;
+    }
+    uf_skipbytes(&f->uf, n);
+    f->remaining -= n;
+  } else {
     f->next += n;
   }
 }
@@ -635,23 +654,25 @@ static void code_bytesin(octet *s, iptr n, faslFile f) {
   while (1) {
     iptr avail = f->end - f->next;
     if (avail < n) {
-      bytesin(s, avail, f);
+      S_fasl_bytesin(s, avail, f);
       n -= avail;
       s += avail;
       fillFaslFile(f);
     } else {
-      bytesin(s, n, f);
+      S_fasl_bytesin(s, n, f);
       break;
     }
   }
 #else
-  bytesin(s, n, f);
+  S_fasl_bytesin(s, n, f);
 #endif
 }
 
 static void toolarge(ptr path) {
   S_error1("", "fasl value too large for this machine type in ~a", path);
 }
+
+#define bytein(f) (((f)->next == (f)->end) ? must_bytein(f) : *((f)->next++))
 
 static iptr iptrin(faslFile f) {
   uptr n, m; octet k, k0;
@@ -661,7 +682,7 @@ static iptr iptrin(faslFile f) {
   while (k & 1) {
     k = bytein(f);
     m = n << 7;
-    if (m >> 7 != n) toolarge(f->uf->path);
+    if (m >> 7 != n) toolarge(f->uf.path);
     n = m | (k >> 1);
   }
 
@@ -669,7 +690,7 @@ static iptr iptrin(faslFile f) {
     if (n < ((uptr)1 << (ptr_bits - 1))) {
       return -(iptr)n;
     } else if (n > ((uptr)1 << (ptr_bits - 1))) {
-      toolarge(f->uf->path);
+      toolarge(f->uf.path);
     }
 #if (fixnum_bits > 32)
     return (iptr)0x8000000000000000;
@@ -677,25 +698,40 @@ static iptr iptrin(faslFile f) {
     return (iptr)0x80000000;
 #endif
   } else {
-    if (n >= ((uptr)1 << (ptr_bits - 1))) toolarge(f->uf->path);
+    if (n >= ((uptr)1 << (ptr_bits - 1))) toolarge(f->uf.path);
     return (iptr)n;
   }
 }
 
-static uptr uptrin(faslFile f) {
-  uptr n, m; octet k;
+/* `*bytes_consumed` is set to -1 on error when there's no
+   `f->uf.path` to report an error */
+uptr S_fasl_uptrin(faslFile f, INT *bytes_consumed) {
+  uptr n, m; int k;
 
+  if (bytes_consumed) *bytes_consumed = 1;
   k = bytein(f);
+  if (k < 0) return -1; /* in case `f->uf.path` is 0 */
   n = (k & 0x7F);
   while (k & 0x80) {
     k = bytein(f);
+    if (k < 0) return -1; /* in case `f->uf.path` is 0 */
     m = n << 7;
-    if (m >> 7 != n) toolarge(f->uf->path);
+    if (m >> 7 != n) {
+      if (f->uf.path != (ptr)0)
+        toolarge(f->uf.path);
+      else {
+        if (bytes_consumed) *bytes_consumed = -1;
+        return 0;
+      }
+    }
     n = m | (k & 0x7F);
+    if (bytes_consumed) *bytes_consumed += 1;
   }
 
   return n;
 }
+
+#define uptrin(f) S_fasl_uptrin(f, NULL)
 
 static float singlein(faslFile f) {
   union { float f; U32 u; } val;
@@ -809,7 +845,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             p = &FXVECTIT(*x, 0);
             while (n--) {
               iptr t = iptrin(f);
-              if (!FIXRANGE(t)) toolarge(f->uf->path);
+              if (!FIXRANGE(t)) toolarge(f->uf.path);
               *p++ = FIX(t);
             }
             return;
@@ -823,7 +859,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               ptr fl;
               faslin(tc, &fl, t, pstrbuf, f);
               if (!Sflonump(fl))
-                S_error1("", "not a flonum in flvector ~a", f->uf->path);
+                S_error1("", "not a flonum in flvector ~a", f->uf.path);
               *p++ = Sflonum_value(fl);
             }
             return;
@@ -833,7 +869,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             iptr n;
             n = uptrin(f);
             *x = S_bytevector(n);
-            bytesin(&BVIT(*x,0), n, f);
+            S_fasl_bytesin(&BVIT(*x,0), n, f);
             if (ty == fasl_type_immutable_bytevector) {
               if (Sbytevector_length(*x) == 0)
                 *x = S_G.null_immutable_bytevector;
@@ -880,7 +916,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
                 if (size != 0) {
                   fasl_record(tc, &tmp, t, pstrbuf, f, size);
                   if (!rtd_equiv(tmp, rtd))
-                    S_error2("", "incompatible record type ~s in ~a", RECORDDESCNAME(tmp), f->uf->path);
+                    S_error2("", "incompatible record type ~s in ~a", RECORDDESCNAME(tmp), f->uf.path);
                 }
                 tc_mutex_release();
                 return;
@@ -889,7 +925,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
 
             size = uptrin(f);
             if (size == 0)
-              S_error2("", "unregistered record type ~s in ~a", rtd_uid, f->uf->path);
+              S_error2("", "unregistered record type ~s in ~a", rtd_uid, f->uf.path);
             fasl_record(tc, x, t, pstrbuf, f, size);
             rtd = *x;
 
@@ -922,7 +958,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               INITPTRFIELD(ht,eq_hashtable_subtype_disp) = FIX(subtype);
               break;
             default:
-              S_error2("", "invalid eq-hashtable subtype code", FIX(subtype), f->uf->path);
+              S_error2("", "invalid eq-hashtable subtype code", FIX(subtype), f->uf.path);
             }
             INITPTRFIELD(ht,eq_hashtable_minlen_disp) = FIX(uptrin(f));
             veclen = uptrin(f);
@@ -990,7 +1026,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
                 }
                 break;
               default:
-                S_error2("", "invalid symbol-hashtable equiv code", FIX(equiv_code), f->uf->path);
+                S_error2("", "invalid symbol-hashtable equiv code", FIX(equiv_code), f->uf.path);
                 /* make compiler happy */
                 equiv = Sfalse;
             }
@@ -1159,7 +1195,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             return;
         }
         default:
-            S_error2("", "invalid object type ~d in fasl file ~a", FIX(ty), f->uf->path);
+            S_error2("", "invalid object type ~d in fasl file ~a", FIX(ty), f->uf.path);
     }
 }
 

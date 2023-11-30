@@ -582,3 +582,27 @@ typedef struct thread_gc {
      else                                                 \
        TRAP(tc) = (ptr)1;                                 \
   } while (0)
+
+typedef struct unbufFaslFileObj {
+  ptr path;
+  INT type;
+  INT fd;
+} *unbufFaslFile;
+
+typedef struct faslFileObj {
+  struct unbufFaslFileObj uf;
+  int buffer_mode;
+  iptr remaining;
+  octet *next;
+  octet *end;
+  octet *buf;
+} *faslFile;
+
+typedef struct fileFaslFileObj {
+  struct faslFileObj f;
+  octet buf_space[SBUFSIZ];
+} *fileFaslFile;
+
+#define FASL_BUFFER_READ_ALL        0
+#define FASL_BUFFER_READ_MINIMAL    1
+#define FASL_BUFFER_READ_REMAINING  2

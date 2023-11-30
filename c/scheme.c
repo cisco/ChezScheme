@@ -30,7 +30,6 @@
 #define O_BINARY 0
 #endif /* O_BINARY */
 
-static INT boot_count;
 static IBOOL verbose;
 
 typedef enum { UNINITIALIZED, BOOTING, RUNNING, DEINITIALIZED } heap_state;
@@ -615,92 +614,106 @@ static IBOOL next_path(const char *execpath, char *path,
 /***************************************************************************/
 /* BOOT FILES */
 
-typedef struct {
-  INT fd;
+typedef struct boot_desc {
+  struct fileFaslFileObj ffo;
   iptr len; /* 0 => unknown */
   iptr offset;
-  IBOOL need_check, close_after;
+  IBOOL is_fd, need_check, close_after;
   char path[BOOT_PATH_MAX];
+  struct boot_desc *next;
 } boot_desc;
 
-#define MAX_BOOT_FILES 10
-static boot_desc bd[MAX_BOOT_FILES];
+static boot_desc *boots = NULL, *last_boot = NULL;
 
 /* locally defined functions */
-static octet get_u8(INT fd);
-static uptr get_uptr(INT fd, uptr *pn);
-static INT get_string(INT fd, char *s, iptr max, INT *c);
-static void load(ptr tc, iptr n, IBOOL base);
+static INT get_string(faslFile fd, char *s, iptr max, INT *c);
+static void load(ptr tc, struct boot_desc *boot, IBOOL base);
 static void check_boot_file_state(const char *who);
 
-static IBOOL check_boot(int fd, IBOOL verbose, const char *path) {
+static void add_boot(boot_desc *boot, const char *path) {
+  boot->next = NULL;
+  if (boots == NULL)
+    boots = boot;
+  else
+    last_boot->next = boot;
+  last_boot = boot;
+
+  if (strlen(path) >= BOOT_PATH_MAX) {
+    fprintf(stderr, "boot-file path is too long %s\n", path);
+    S_abnormal_exit();
+  }
+  strcpy(boot->path, path);
+}
+
+static IBOOL check_boot(faslFile f, IBOOL verbose, const char *path) {
   uptr n = 0;
+  int got;
 
   /* check for magic number */
-  if (get_u8(fd) != fasl_type_header ||
-      get_u8(fd) != 0 ||
-      get_u8(fd) != 0 ||
-      get_u8(fd) != 0 ||
-      get_u8(fd) != 'c' ||
-      get_u8(fd) != 'h' ||
-      get_u8(fd) != 'e' ||
-      get_u8(fd) != 'z') {
+  if (S_fasl_bytein(f) != fasl_type_header ||
+      S_fasl_bytein(f) != 0 ||
+      S_fasl_bytein(f) != 0 ||
+      S_fasl_bytein(f) != 0 ||
+      S_fasl_bytein(f) != 'c' ||
+      S_fasl_bytein(f) != 'h' ||
+      S_fasl_bytein(f) != 'e' ||
+      S_fasl_bytein(f) != 'z') {
     if (verbose) fprintf(stderr, "malformed fasl-object header in %s\n", path);
-    CLOSE(fd);
+    CLOSE(f->uf.fd);
     return 0;
   }
 
   /* check version */
-  if (get_uptr(fd, &n) != 0) {
+  n = S_fasl_uptrin(f, &got);
+  if (got < 0) {
     if (verbose) fprintf(stderr, "unexpected end of file on %s\n", path);
-    CLOSE(fd);
+    CLOSE(f->uf.fd);
     return 0;
   }
-
   if (n != scheme_version) {
     if (verbose) {
       fprintf(stderr, "%s is for Version %s; ", path, S_format_scheme_version(n));
       /* use separate fprintf since S_format_scheme_version returns static string */
       fprintf(stderr, "need Version %s\n", S_format_scheme_version(scheme_version));
     }
-    CLOSE(fd);
+    CLOSE(f->uf.fd);
     return 0;
   }
 
   /* check machine type */
-  if (get_uptr(fd, &n) != 0) {
+  n = S_fasl_uptrin(f, &got);
+  if (got < 0) {
     if (verbose) fprintf(stderr, "unexpected end of file on %s\n", path);
-    CLOSE(fd);
+    CLOSE(f->uf.fd);
     return 0;
   }
-
   if (n != machine_type) {
     if (verbose)
       fprintf(stderr, "%s is for machine-type %s; need machine-type %s\n", path,
               S_lookup_machine_type(n), S_lookup_machine_type(machine_type));
-    CLOSE(fd);
+    CLOSE(f->uf.fd);
     return 0;
   }
 
   return 1;
 }
 
-static void check_dependencies_header(int fd, const char *path) {
-  if (get_u8(fd) != '(') {  /* ) */
+static void check_dependencies_header(faslFile f, const char *path) {
+  if (S_fasl_bytein(f) != '(') {  /* ) */
     fprintf(stderr, "malformed boot file %s\n", path);
-    CLOSE(fd);
+    CLOSE(f->uf.fd);
     S_abnormal_exit();
   }
 }
 
-static void finish_dependencies_header(int fd, const char *path, int c) {
+static void finish_dependencies_header(faslFile f, int c, const char *path) {
   while (c != ')') {
     if (c < 0) {
       fprintf(stderr, "malformed boot file %s\n", path);
-      CLOSE(fd);
+      CLOSE(f->uf.fd);
       S_abnormal_exit();
     }
-    c = get_u8(fd);
+    c = S_fasl_bytein(f);
   }
 }
 
@@ -708,10 +721,13 @@ static IBOOL find_boot(const char *execpath, const char *name, const char *ext, 
                        int fd,
                        IBOOL errorp) {
   char pathbuf[BOOT_PATH_MAX], buf[BOOT_PATH_MAX];
-  uptr n = 0;
   INT c;
   const char *path;
   char *expandedpath;
+  faslFile f;
+  struct boot_desc *boot;
+
+  boot = malloc(sizeof(boot_desc));
 
   if ((fd != -1) || direct_pathp || S_fixedpathp(name)) {
     if (strlen(name) >= BOOT_PATH_MAX) {
@@ -738,7 +754,9 @@ static IBOOL find_boot(const char *execpath, const char *name, const char *ext, 
     }
     if (verbose) fprintf(stderr, "trying %s...opened\n", path);
 
-    if (!check_boot(fd, 1, path))
+    S_fasl_init_fd(&boot->ffo, (ptr)0, fd, FASL_BUFFER_READ_ALL, 0);
+
+    if (!check_boot(&boot->ffo.f, 1, path))
       S_abnormal_exit();
   } else {
     const char *sp = Sschemeheapdirs;
@@ -768,27 +786,31 @@ static IBOOL find_boot(const char *execpath, const char *name, const char *ext, 
 
       if (verbose) fprintf(stderr, "trying %s...opened\n", path);
 
-      if (check_boot(fd, verbose, path))
+      S_fasl_init_fd(&boot->ffo, (ptr)0, fd, FASL_BUFFER_READ_ALL, 0);
+
+      if (check_boot(&boot->ffo.f, verbose, path))
         break;
     }
   }
 
   if (verbose) fprintf(stderr, "version and machine type check\n");
 
-  check_dependencies_header(fd, path);
+  f = &boot->ffo.f;
+
+  check_dependencies_header(f, path);
 
   /* ( */
-  if ((c = get_u8(fd)) == ')') {
-    if (boot_count != 0) {
+  if ((c = S_fasl_bytein(f)) == ')') {
+    if (boots != NULL) {
       fprintf(stderr, "base boot file %s must come before other boot files\n", path);
       CLOSE(fd);
       S_abnormal_exit();
     }
   } else {
-    if (boot_count == 0) {
+    if (boots == NULL) {
       for (;;) {
        /* try to load heap or boot file this boot file requires */
-        if (get_string(fd, buf, BOOT_PATH_MAX, &c) != 0) {
+        if (get_string(f, buf, BOOT_PATH_MAX, &c) != 0) {
           fprintf(stderr, "unexpected end of file on %s\n", path);
           CLOSE(fd);
           S_abnormal_exit();
@@ -802,13 +824,14 @@ static IBOOL find_boot(const char *execpath, const char *name, const char *ext, 
             CLOSE(fd);
             S_abnormal_exit();
           }
-          (void) get_uptr(fd, &n); /* version */
-          (void) get_uptr(fd, &n); /* machine type */
-          (void) get_u8(fd);        /* open paren */
-          c = get_u8(fd);
+          S_fasl_init_fd(&boot->ffo, (ptr)0, fd, FASL_BUFFER_READ_ALL, 0);
+          (void) S_fasl_uptrin(f, NULL); /* version */
+          (void) S_fasl_uptrin(f, NULL); /* machine type */
+          (void) S_fasl_bytein(f); /* open paren */
+          c = S_fasl_bytein(f);
           for (sep = " "; ; sep = "or ") {
             if (c == ')') break;
-            (void) get_string(fd, buf, BOOT_PATH_MAX, &c);
+            (void) get_string(f, buf, BOOT_PATH_MAX, &c);
             fprintf(stderr, "%s%s.boot ", sep, buf);
           }
           fprintf(stderr, "required by %s\n", path);
@@ -819,58 +842,29 @@ static IBOOL find_boot(const char *execpath, const char *name, const char *ext, 
     }
 
    /* skip to end of header */
-    finish_dependencies_header(fd, path, c);
+    finish_dependencies_header(f, c, path);
   }
 
-  if (boot_count >= MAX_BOOT_FILES) {
-    fprintf(stderr, "exceeded maximum number of boot files (%d)\n", MAX_BOOT_FILES);
-    S_abnormal_exit();
-  }
-
-  bd[boot_count].fd = fd;
-  bd[boot_count].offset = 0;
-  bd[boot_count].len = 0;
-  bd[boot_count].need_check = 0;
-  bd[boot_count].close_after = 1;
-  strcpy(bd[boot_count].path, path);
-  boot_count += 1;
+  boot->offset = 0;
+  boot->len = 0;
+  boot->is_fd = 1;
+  boot->need_check = 0;
+  boot->close_after = 1;
+  add_boot(boot, path);
 
   return 1;
 }
 
-static octet get_u8(INT fd) {
-  octet buf[1];
-  if (READ(fd, &buf, 1) != 1) return -1;
-  return buf[0];
-}
-
-static uptr get_uptr(INT fd, uptr *pn) {
-  uptr n, m; int c; octet k;
-
-  if ((c = get_u8(fd)) < 0) return -1;
-  k = (octet)c;
-  n = k & 0x7F;
-  while (k & 128) {
-    if ((c = get_u8(fd)) < 0) return -1;
-    k = (octet)c;
-    m = n << 7;
-    if (m >> 7 != n) return -1;
-    n = m | (k  & 0x7F);
-  }
-  *pn = n;
-  return 0;
-}
-
-static INT get_string(INT fd, char *s, iptr max, INT *c) {
+static INT get_string(faslFile f, char *s, iptr max, INT *c) {
   while (max-- > 0) {
     if (*c < 0) return -1;
     if (*c == ' ' || *c == ')') {
-      if (*c == ' ') *c = get_u8(fd);
+      if (*c == ' ') *c = S_fasl_bytein(f);
       *s = 0;
       return 0;
     }
     *s++ = *c;
-    *c = get_u8(fd);
+    *c = S_fasl_bytein(f);
   }
   return -1;
 }
@@ -878,21 +872,21 @@ static INT get_string(INT fd, char *s, iptr max, INT *c) {
 static IBOOL loadecho = 0;
 #define LOADSKIP 0
 
-static int set_load_binary(iptr n) {
+static int set_load_binary(boot_desc *boot) {
   if (!Ssymbolp(SYMVAL(S_G.scheme_version_id))) return 0; // set by back.ss
   ptr make_load_binary = SYMVAL(S_G.make_load_binary_id);
   if (Sprocedurep(make_load_binary)) {
-    S_G.load_binary = Scall1(make_load_binary, Sstring_utf8(bd[n].path, -1));
+    S_G.load_binary = Scall1(make_load_binary, Sstring_utf8(boot->path, -1));
     return 1;
   }
   return 0;
 }
 
-static void boot_element(ptr tc, ptr x, iptr n) {
+static void boot_element(ptr tc, ptr x, struct boot_desc *boot) {
   if (Sprocedurep(x)) {
     S_initframe(tc, 0);
     x = boot_call(tc, x, 0);
-  } else if (Sprocedurep(S_G.load_binary) || set_load_binary(n)) {
+  } else if (Sprocedurep(S_G.load_binary) || set_load_binary(boot)) {
     S_initframe(tc, 1);
     S_put_arg(tc, 1, x);
     x = boot_call(tc, S_G.load_binary, 1);
@@ -900,50 +894,55 @@ static void boot_element(ptr tc, ptr x, iptr n) {
     /* sequence combination by vfasl, where vectors are not nested */
     iptr i;
     for (i = 0; i < Svector_length(x); i++)
-      boot_element(tc, Svector_ref(x, i), n);
+      boot_element(tc, Svector_ref(x, i), boot);
   }
 }
 
-static void load(ptr tc, iptr n, IBOOL base) {
+static void load(ptr tc, struct boot_desc *boot, IBOOL base) {
   ptr x; iptr i;
 
-  if (bd[n].need_check) {
-    if (LSEEK(bd[n].fd, bd[n].offset, SEEK_SET) != bd[n].offset) {
-      fprintf(stderr, "seek in boot file %s failed\n", bd[n].path);
-      S_abnormal_exit();
+  if (boot->need_check) {
+    if (boot->is_fd) {
+      if (LSEEK(boot->ffo.f.uf.fd, boot->offset, SEEK_SET) != boot->offset) {
+        fprintf(stderr, "seek in boot file %s failed\n", boot->path);
+        S_abnormal_exit();
+      }
+      S_fasl_init_fd(&boot->ffo, (ptr)0, boot->ffo.f.uf.fd,
+                     (boot->len > 0) ? FASL_BUFFER_READ_REMAINING : FASL_BUFFER_READ_ALL,
+                     boot->len);
     }
-    check_boot(bd[n].fd, 1, bd[n].path);
-    check_dependencies_header(bd[n].fd, bd[n].path);
-    finish_dependencies_header(bd[n].fd, bd[n].path, 0);
+    check_boot(&boot->ffo.f, 1, boot->path);
+    check_dependencies_header(&boot->ffo.f, boot->path);
+    finish_dependencies_header(&boot->ffo.f, 0, boot->path);
   }
 
   if (base) {
-    S_G.error_invoke_code_object = S_boot_read(bd[n].fd, bd[n].path);
+    S_G.error_invoke_code_object = S_boot_read(&boot->ffo.f, boot->path);
     if (!Scodep(S_G.error_invoke_code_object)) {
       (void) fprintf(stderr, "first object on boot file not code object\n");
       S_abnormal_exit();
     }
 
-    S_G.invoke_code_object = S_boot_read(bd[n].fd, bd[n].path);
+    S_G.invoke_code_object = S_boot_read(&boot->ffo.f, boot->path);
     if (!Scodep(S_G.invoke_code_object)) {
       (void) fprintf(stderr, "second object on boot file not code object\n");
       S_abnormal_exit();
     }
-    S_G.base_rtd = S_boot_read(bd[n].fd, bd[n].path);
+    S_G.base_rtd = S_boot_read(&boot->ffo.f, boot->path);
     if (!Srecordp(S_G.base_rtd)) {
       S_abnormal_exit();
     }
   }
 
   i = 0;
-  while (i++ < LOADSKIP && S_boot_read(bd[n].fd, bd[n].path) != Seof_object);
+  while (i++ < LOADSKIP && S_boot_read(&boot->ffo.f, boot->path) != Seof_object);
 
-  while ((x = S_boot_read(bd[n].fd, bd[n].path)) != Seof_object) {
+  while ((x = S_boot_read(&boot->ffo.f, boot->path)) != Seof_object) {
     if (loadecho) {
       printf("%ld: ", (long)i);
       fflush(stdout);
     }
-    boot_element(tc, x, n);
+    boot_element(tc, x, boot);
     if (loadecho) {
       S_prin1(x);
       putchar('\n');
@@ -953,8 +952,8 @@ static void load(ptr tc, iptr n, IBOOL base) {
   }
 
   S_G.load_binary = Sfalse;
-  if (bd[n].close_after)
-    CLOSE(bd[n].fd);
+  if (boot->close_after)
+    CLOSE(boot->ffo.f.uf.fd);
 }
 
 /***************************************************************************/
@@ -1034,7 +1033,7 @@ extern void Sscheme_init(void (*abnormal_exit)(void)) {
   S_G.enable_object_counts = 0;
   S_G.enable_object_backreferences = 0;
 
-  boot_count = 0;
+  boots = last_boot = NULL;
 
 #ifdef WIN32
   Sschemeheapdirs = Sgetenv("SCHEMEHEAPDIRS");
@@ -1107,20 +1106,37 @@ extern void Sregister_boot_file_fd_region(const char *name,
                                           iptr offset,
                                           iptr len,
                                           int close_after) {
+  struct boot_desc *boot;
+
   check_boot_file_state("Sregister_boot_file_fd_region");
 
-  if (strlen(name) >= BOOT_PATH_MAX) {
-    fprintf(stderr, "boot-file path is too long %s\n", name);
-    S_abnormal_exit();
-  }
+  boot = malloc(sizeof(boot_desc));
 
-  bd[boot_count].fd = fd;
-  bd[boot_count].offset = offset;
-  bd[boot_count].len = len;
-  bd[boot_count].need_check = 1;
-  bd[boot_count].close_after = close_after;
-  strcpy(bd[boot_count].path, name);
-  boot_count += 1;
+  S_fasl_init_fd(&boot->ffo, (ptr)0, fd, FASL_BUFFER_READ_REMAINING, len);
+  boot->offset = offset;
+  boot->len = len;
+  boot->is_fd = 1;
+  boot->need_check = 1;
+  boot->close_after = close_after;
+  add_boot(boot, name);
+}
+
+extern void Sregister_boot_file_bytes(const char *name,
+                                      void *data,
+                                      iptr len) {
+  struct boot_desc *boot;
+
+  check_boot_file_state("Sregister_boot_file_bytes");
+
+  boot = malloc(sizeof(boot_desc));
+
+  S_fasl_init_bytes(&boot->ffo.f, (ptr)0, data, len);
+  boot->offset = 0;
+  boot->len = len;
+  boot->is_fd = 0;
+  boot->need_check = 1;
+  boot->close_after = 0;
+  add_boot(boot, name);
 }
 
 extern void Sregister_heap_file(UNUSED const char *path) {
@@ -1149,7 +1165,7 @@ extern void Sbuild_heap(const char *execpath, void (*custom_init)(void)) {
 
   S_boot_time = 1;
 
-  if (boot_count == 0) {
+  if (boots == NULL) {
     const char *name = path_last(execpath);
 #if defined(ALWAYS_USE_BOOT_FILE)
     name = ALWAYS_USE_BOOT_FILE;
@@ -1185,10 +1201,10 @@ extern void Sbuild_heap(const char *execpath, void (*custom_init)(void)) {
     }
   }
 
-  S_vfasl_boot_mode = 1; /* to static generation after compacting */
+  if (boots != NULL) {
+    struct boot_desc *boot, *next_boot;
 
-  if (boot_count != 0) {
-    INT i = 0;
+    S_vfasl_boot_mode = 1; /* to static generation after compacting */
 
     main_init();
     if (custom_init) custom_init();
@@ -1209,15 +1225,24 @@ extern void Sbuild_heap(const char *execpath, void (*custom_init)(void)) {
     COMPRESSFORMAT(tc) = FIX(COMPRESS_LZ4);
     COMPRESSLEVEL(tc) = FIX(COMPRESS_MEDIUM);
 
-    load(tc, i++, 1);
+    load(tc, boots, 1);
     S_boot_time = 0;
 
-    while (i < boot_count) load(tc, i++, 0);
+    next_boot = boots->next;
+    free(boots);
+
+    for (boot = next_boot; boot != NULL; boot = next_boot) {
+      next_boot = boot->next;
+      load(tc, boot, 0);
+      free(boot);
+    }
+
+    Scompact_heap();
+
+    S_vfasl_boot_mode = 0;
+
+    boots = last_boot = NULL;
   }
-
-  S_vfasl_boot_mode = 0;
-
-  if (boot_count != 0) Scompact_heap();
 
  /* complete the initialization on the Scheme side */
   p = S_symbol_value(S_intern((const unsigned char *)"$scheme-init"));

@@ -89,7 +89,7 @@ static ptr lookup_singleton(iptr which);
 /************************************************************/
 /* Loading                                                  */
 
-ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
+ptr S_vfasl(ptr bv, faslFile stream, iptr offset, iptr input_len)
 {
   ptr vspaces[vspaces_count];
   uptr vspace_offsets[vspaces_count+1];
@@ -112,10 +112,8 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
 
   if (bv)
     memcpy(&header_space, &BVIT(bv, offset), size_vfasl_header);
-  else {
-    if (S_fasl_stream_read(stream, header_space, size_vfasl_header) < 0)
-      S_error("fasl-read", "input truncated");
-  }
+  else
+    S_fasl_bytesin(header_space, size_vfasl_header, stream);
 
   used_len += VFASLHEADER_DATA_SIZE(header) + VFASLHEADER_TABLE_SIZE(header);
   if (used_len > input_len)
@@ -152,8 +150,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
 #else
 	dest = vspaces[s];
 #endif
-        if (S_fasl_stream_read(stream, TO_VOIDP(dest), sz) < 0)
-          S_error("fasl-read", "input truncated");
+        S_fasl_bytesin(TO_VOIDP(dest), sz, stream);
 #ifdef CANNOT_READ_DIRECTLY_INTO_CODE
 	if (dest != vspaces[s])
 	  memcpy(TO_VOIDP(vspaces[s]), TO_VOIDP(dest), sz);
@@ -171,8 +168,7 @@ ptr S_vfasl(ptr bv, void *stream, iptr offset, iptr input_len)
     table = TO_PTR(bv_addr);
   else {
     newspace_find_room(tc, type_untyped, ptr_align(VFASLHEADER_TABLE_SIZE(header)), table);
-    if (S_fasl_stream_read(stream, TO_VOIDP(table), VFASLHEADER_TABLE_SIZE(header)) < 0)
-      S_error("fasl-read", "input truncated");
+    S_fasl_bytesin(TO_VOIDP(table), VFASLHEADER_TABLE_SIZE(header), stream);
   }
 
   symrefs = TO_VOIDP(table);
