@@ -8344,6 +8344,7 @@
              (let ([ptrace* (map CaseLambdaExpr le* func*)])
                (for-each resolve-funcrel! funcrel*)
                (when aop
+                 (fprintf aop "output of np-generate-code (assembly):\n")
                  (for-each (lambda (ptrace) (ptrace aop)) ptrace*)
                  (flush-output-port aop))
                (local-label-func l)))])
