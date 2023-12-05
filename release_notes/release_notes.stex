@@ -102,7 +102,7 @@ A version number listed in parentheses in the header for a change
 indicates the first minor release or internal prerelease to support
 the change.
 
-More information on {\ChezScheme} and {\PetiteChezScheme} can 
+More information on {\ChezScheme} and {\PetiteChezScheme} can
 \scheme{be} found at \hyperlink{http://www.scheme.com/}{http://www.scheme.com},
 and extensive documentation is available in
 \TSPL{4}{th} (available directly from MIT Press or from online and local retailers)
@@ -776,6 +776,13 @@ When searching for boot files, the two-character escape sequence
 Scheme is configured to use this facility to find boot files relative
 to the executable, even when installed.
 
+\subsection{Syntax quoting (9.9.9)}
+
+The new \scheme{quote-syntax} form is like the R$^6$RS \scheme{syntax}
+form except that pattern variables are not substituted.  It can be
+useful for macro transformers that need to embed syntax objects based
+on the input in the output.
+
 \subsection{New conversions from Scheme to C signed and unsigned integers (9.6.4)}
 
 The following new functions
@@ -1354,7 +1361,7 @@ leaves all imported libraries visible.
 \subsection{24-, 40-, 48-, and 56-bit bit-field containers (9.3.3)}
 
 The total size of the fields within an ftype \scheme{bits} can now be
-24, 40, 48, or 56 (as well as 8, 16, 32, and 64). 
+24, 40, 48, or 56 (as well as 8, 16, 32, and 64).
 
 \subsection{Object-counting for static-generation collections (9.3.3)}
 
@@ -2379,7 +2386,7 @@ the registers.
 
 \subsection{24-, 40-, 48-, and 56-bit integer values (8.9.3)}
 
-Support for storing and extracting 24-, 40-, 48-, and 56-bit integers 
+Support for storing and extracting 24-, 40-, 48-, and 56-bit integers
 to and from records, bytevectors, and foreign types (ftypes) has been
 added.
 For records and ftypes, this is accomplished by declaring a field
@@ -3084,7 +3091,7 @@ A bug in the source optimizer that caused pariah forms to be ignored
 has been fixed.
 [This bug dated back to at least Version 9.3.1.]
 
-\subsection{Invalid memory references involving complex numbers (9.5)} 
+\subsection{Invalid memory references involving complex numbers (9.5)}
 
 A bug on 64-bit platforms that occasionally caused invalid memory
 references when operating on inexact complex numbers or the imaginary parts
@@ -3348,7 +3355,7 @@ a large number of libraries.
 
 \scheme{profile-release-counters} is now generation-friendly, meaning
 it does not incur any overhead for code objects in generations that
-have not been collected since the last call to\scheme{profile-release-counters}. 
+have not been collected since the last call to\scheme{profile-release-counters}.
 Also, it no longer allocates memory when counters are released.
 
 \subsection{Reduced cost for obtaining profile counts (9.5.4)}
