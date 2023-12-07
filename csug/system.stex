@@ -249,6 +249,8 @@ an \emph{exception state} comprising the current stack of handlers established
 by \scheme{with-exception-handler} and \scheme{guard}.
 When called with a single argument, which must be an exception state,
 \scheme{current-exception-state} sets the exception state.
+When a new thread is created, it starts with a default exception state
+equivalent to \scheme{(create-exception-state)}.
 
 %----------------------------------------------------------------------------
 \entryheader

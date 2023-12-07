@@ -211,7 +211,10 @@ TODO:
     (lambda (x)
       ((base-exception-handler) x)))
 
-  (define-threaded handler-stack (create-exception-stack default-handler))
+  ;; the initial value of `($current-handler-stack)` in a thread
+  ;; is #f; treat that the same as `default-handler-stack`:
+  (define default-handler-stack
+    (create-exception-stack default-handler))
 
   (let ()
     (define-record-type exception-state
@@ -229,38 +232,40 @@ TODO:
 
     (set-who! current-exception-state
       (case-lambda
-        [() (make-exception-state handler-stack)]
+        [() (make-exception-state ($current-handler-stack))]
         [(x)
          (unless (exception-state? x)
            ($oops who "~s is not an exception state" x))
-         (set! handler-stack (exception-state-stack x))])))
+         ($current-handler-stack (exception-state-stack x))])))
 
   (set-who! with-exception-handler
     (lambda (handler thunk)
       (unless (procedure? handler) ($oops who "~s is not a procedure" handler))
       (unless (procedure? thunk) ($oops who "~s is not a procedure" thunk))
-      (fluid-let ([handler-stack (cons handler handler-stack)])
+      (parameterize ([$current-handler-stack (cons handler ($current-handler-stack))])
         (thunk))))
 
   (set-who! raise
     (lambda (obj)
-      (let ([handler (car handler-stack)])
-        (fluid-let ([handler-stack (cdr handler-stack)])
-          (handler obj)
-          (raise (make-non-continuable-violation))))))
+      (let ([stack (or ($current-handler-stack) default-handler-stack)])
+        (let ([handler (car stack)])
+          (parameterize ([$current-handler-stack (cdr stack)])
+            (handler obj)
+            (raise (make-non-continuable-violation)))))))
 
   (set-who! raise-continuable
     (lambda (obj)
-      (let ([handler (car handler-stack)])
-        (fluid-let ([handler-stack (cdr handler-stack)])
-          (handler obj)))))
+      (let ([stack (or ($current-handler-stack) default-handler-stack)])
+        (let ([handler (car stack)])
+          (parameterize ([$current-handler-stack (cdr stack)])
+            (handler obj))))))
 
   (set-who! $guard
     (lambda (supply-else? guards body)
       (if supply-else?
           ((call/cc
              (lambda (kouter)
-               (let ([original-handler-stack handler-stack])
+               (let ([original-handler-stack ($current-handler-stack)])
                  (with-exception-handler
                    (lambda (arg)
                      ((call/cc
@@ -271,7 +276,7 @@ TODO:
                                 (lambda ()
                                   (kinner
                                     (lambda ()
-                                      (fluid-let ([handler-stack original-handler-stack])
+                                      (parameterize ([$current-handler-stack original-handler-stack])
                                         (raise-continuable arg))))))))))))
                    (lambda ()
                      (call-with-values

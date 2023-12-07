@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x09090915)
+(define-constant scheme-version #x09090916)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1608,6 +1608,7 @@
    [iptr scheme-stack-size]
    [ptr winders]
    [ptr attachments]
+   [ptr handler-stack]
    [ptr cached-frame]
    [ptr U]
    [ptr V]

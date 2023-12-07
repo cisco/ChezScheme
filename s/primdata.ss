@@ -1953,6 +1953,7 @@
   ($cte-optimization-info [flags single-valued])
   ($c-tlv [flags single-valued])
   ($current-attachments [flags single-valued])
+  ($current-handler-stack [flags single-valued])
   ($current-stack-link [flags single-valued])
   ($current-winders [flags single-valued])
   ($datum->environment-syntax [flags single-valued])

@@ -973,6 +973,7 @@
       (trace-pure (tc-stack-link tc))
       (trace-pure (tc-winders tc))
       (trace-pure (tc-attachments tc))
+      (trace-pure (tc-handler-stack tc))
       (case-mode
        [sweep
         (set! (tc-cached-frame tc) Sfalse)]
