@@ -1623,7 +1623,7 @@
                    (and maybe-reg (rex-required? maybe-reg)))
                b)))
       (record-case ea
-        [(index) (size index-reg base-reg) 
+        [(index) (size index-reg base-reg)
          (build-rex
            (fxsrl (reg-mdinfo index-reg) 3)
            (fxsrl (reg-mdinfo base-reg) 3))]
@@ -2485,53 +2485,53 @@
     (if-feature windows
       ;; Windows: either passed in one register or not
       (define (classify-eightbytes ftd)
-	(cond
-	 [($ftd-compound? ftd)
-	  (if (memv ($ftd-size ftd) '(1 2 4 8))
-	      '(integer)
-	      '(memory))]
-	 [(eq? 'float (caar ($ftd->members ftd)))
-	  '(sse)]
-	 [else '(integer)]))
+        (cond
+         [($ftd-compound? ftd)
+          (if (memv ($ftd-size ftd) '(1 2 4 8))
+              '(integer)
+              '(memory))]
+         [(eq? 'float (caar ($ftd->members ftd)))
+          '(sse)]
+         [else '(integer)]))
       ;; Non-Windows: SYSV ABI is a more general classification of
       ;; 8-byte segments into 'integer, 'sse, or 'memory modes
       (define (classify-eightbytes ftd)
-	(define (merge t1 t2)
-	  (cond
-	   [(eq? t1 t2) t1]
-	   [(eq? t1 'no-class) t2]
-	   [(eq? t2 'no-class) t1]
-	   [(eq? t1 'memory) 'memory]
-	   [(eq? t2 'memory) 'memory]
-	   [else 'integer]))
-	(cond
-	 [(or (> ($ftd-size ftd) 16) ; more than 2 eightbytes => passed in memory
-	      (fx= 0 ($ftd-size ftd)))
-	  '(memory)]
-	 [else
-	  (let ([classes (make-vector (fxsrl (align ($ftd-size ftd) 8) 3) 'no-class)])
-	    (let loop ([mbrs ($ftd->members ftd)])
-	      (cond
-	       [(null? mbrs)
-		(vector->list classes)]
-	       [else
-		(let ([kind (caar mbrs)]
-		      [size (cadar mbrs)]
-		      [offset (caddar mbrs)])
-		  (cond
-		   [(not (fx= offset (align offset size)))
-		    ;; misaligned
-		    '(memory)]
-		   [else
-		    (let* ([pos (fxsrl offset 3)]
-			   [class (vector-ref classes pos)]
-			   [new-class (merge class (if (eq? kind 'float) 'sse 'integer))])
-		      (cond
-		       [(eq? new-class 'memory)
-			'(memory)]
-		       [else
-			(vector-set! classes pos new-class)
-			(loop (cdr mbrs))]))]))])))])))
+        (define (merge t1 t2)
+          (cond
+           [(eq? t1 t2) t1]
+           [(eq? t1 'no-class) t2]
+           [(eq? t2 'no-class) t1]
+           [(eq? t1 'memory) 'memory]
+           [(eq? t2 'memory) 'memory]
+           [else 'integer]))
+        (cond
+         [(or (> ($ftd-size ftd) 16) ; more than 2 eightbytes => passed in memory
+              (fx= 0 ($ftd-size ftd)))
+          '(memory)]
+         [else
+          (let ([classes (make-vector (fxsrl (align ($ftd-size ftd) 8) 3) 'no-class)])
+            (let loop ([mbrs ($ftd->members ftd)])
+              (cond
+               [(null? mbrs)
+                (vector->list classes)]
+               [else
+                (let ([kind (caar mbrs)]
+                      [size (cadar mbrs)]
+                      [offset (caddar mbrs)])
+                  (cond
+                   [(not (fx= offset (align offset size)))
+                    ;; misaligned
+                    '(memory)]
+                   [else
+                    (let* ([pos (fxsrl offset 3)]
+                           [class (vector-ref classes pos)]
+                           [new-class (merge class (if (eq? kind 'float) 'sse 'integer))])
+                      (cond
+                       [(eq? new-class 'memory)
+                        '(memory)]
+                       [else
+                        (vector-set! classes pos new-class)
+                        (loop (cdr mbrs))]))]))])))])))
 
     (define (count v l)
       (cond
@@ -2959,7 +2959,7 @@
                       (returnem frame-size locs
                         (lambda (t0 not-varargs?)
                           (let* ([t (if adjust-active? %deact t0)] ; need a register if `adjust-active?`
-                                 [kill* (add-caller-save-registers result-reg*)]                                 
+                                 [kill* (add-caller-save-registers result-reg*)]
                                  [c-call
                                   (add-deactivate adjust-active? t0 (append fp-live* live*)
                                    result-reg*
@@ -3030,8 +3030,8 @@ incoming           |   incoming return address | one quad
                    +---------------------------+
                    | pad word / indirect space | one quad
              sp+0: +---------------------------+<- 16-byte boundary
-      
-      
+
+
       Standard:
                    Frame Layout
                    +---------------------------+
@@ -3212,14 +3212,14 @@ incoming           |   incoming return address | one quad
                            (nanopass-case (Ltype Type) (car types)
                              [(fp-double-float) (load-double-stack isp)]
                              [(fp-single-float) (load-single-stack isp)]
-			     [(fp-ftd& ,ftd)
-			      (cond
-			       [(memq ($ftd-size ftd) '(1 2 4 8))
-				;; passed by value
-				(load-stack-address isp)]
-			       [else
-				;; passed by reference
-				(load-int-stack (car types) isp)])]
+                             [(fp-ftd& ,ftd)
+                              (cond
+                               [(memq ($ftd-size ftd) '(1 2 4 8))
+                                ;; passed by value
+                                (load-stack-address isp)]
+                               [else
+                                ;; passed by reference
+                                (load-int-stack (car types) isp)])]
                              [else (load-int-stack (car types) isp)])
                            locs)
                          (fx+ isp 8))))
@@ -3399,7 +3399,7 @@ incoming           |   incoming return address | one quad
                                  (set! ,(%mref ,%sp ,active-state-offset) ,%rax)
                                  ,e)
                                 e))
-                          (%seq 
+                          (%seq
                            (set! ,%rax ,(%inline get-tc))
                            (set! ,%tc ,%rax)))
                          `(set! ,%tc (literal ,(make-info-literal #f 'entry (lookup-c-entry thread-context) 0))))))

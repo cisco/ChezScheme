@@ -387,7 +387,7 @@
     (define-instruction value (fpcastto)
       [(op (x mem) (y fpur)) `(set! ,(make-live-info) ,(mem->mem x 'fp) ,y)]
       [(op (x ur) (y fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpcastto ,y))])
-    
+
     (define-instruction value (fpcastfrom)
       [(op (x fpmem) (y ur)) `(set! ,(make-live-info) ,(mem->mem x 'uptr) ,y)]
       [(op (x fpur) (y ur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpcastfrom ,y))]))
@@ -1413,7 +1413,7 @@
     ;; dest can be an mref, and then the offset is double-aligned
     (lambda (code* dest src)
       (gen-fpmove who code* dest src #t)))
-    
+
   (define-who asm-fpmove-single
     (lambda (code* dest src)
       (gen-fpmove who code* dest src #f)))
@@ -1465,7 +1465,7 @@
     (lambda (code* dest src)
       (Trivit (dest src)
         (emit fmov.d.x dest src '() code*))))
-  
+
   ;; flonum to fixnum
   (define-who asm-fptrunc
     (lambda (code* dest src)

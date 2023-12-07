@@ -38,14 +38,14 @@
 
 (define rtd-ancestry (csv7:record-field-accessor #!base-rtd 'ancestry))
 
-;; After the `np-expand-primitives` pass, some expression produce
+;; After the `np-expand-primitives` pass, some expressions produce
 ;; double (i.e., floating-point) values instead of pointer values.
 ;; Those expression results always flow to an `inline` primitive
 ;; that expects double values. The main consequence is that a later
 ;; pass must only put such returns in a temporary with type 'fp.
 
 ; TODO: recognize a direct call when it is at the end of a sequence, closures, or let form
-; TODO: push call into if? (would need to pull arguments into temporaries to ensure order of evaluation
+; TODO: push call into if? (would need to pull arguments into temporaries to ensure order of evaluation)
 ; TODO: how does this interact with mvcall?
 (module (np-expand-primitives)
   (define-threaded new-l*)
@@ -99,7 +99,7 @@
               (single-valued? e))
           e
           (with-output-language (L7 Expr)
-            (let ([t (make-tmp 'v)])                    
+            (let ([t (make-tmp 'v)])
               `(values ,(make-info-call #f #f #f #f #f) ,e))))]
      [(e) (ensure-single-valued e (fx= (optimize-level) 3))]))
   (define-pass np-expand-primitives : L7 (ir) -> L9 ()

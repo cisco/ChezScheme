@@ -584,7 +584,7 @@ static void contract_segment_table(uptr base, uptr end) {
 }
 
 /* Bracket all writes to `space_code` memory with calls to
-   `S_thread_start_code_write` and `S_thread_start_code_write'.
+   `S_thread_start_code_write` and `S_thread_end_code_write'.
 
    On a platform where a page cannot be both writable and executable
    at the same time (a.k.a. W^X), AND assuming that the disposition is
