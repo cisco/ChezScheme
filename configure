@@ -624,7 +624,7 @@ if [ "$help" = "yes" ]; then
   echo "  --installschemename=<schemename>  install scheme as ($installschemename)"
   echo "  --installpetitename=<petitename>  install petite as ($installpetitename)"
   echo "  --installscriptname=<scriptname>  install scheme-script as ($installscriptname)"
-  echo "  --installabsolute                 disable relative boot-file search"
+  echo "  --installabsolute                 disable relative boot-file search, bin links"
   echo "  --toolprefix=<prefix>             prefix tool (compiler, linker, ...) names"
   echo "  --boot=<machine type>-<tag>       build from prepared variant (e.g., pbchunk)"
   echo "  --emboot=\"<file> ...\"             additional boot <file>s with emscripten"
