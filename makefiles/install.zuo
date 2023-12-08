@@ -170,6 +170,8 @@
     (shell/wait* "rm" "-rf" d))
   (define (ln-f from to)
     (shell/wait* "ln" "-f" from to))
+  (define (ln-s from to)
+    (shell/wait* "ln" "-s" from to))
 
   (when (or (not uninstall?) script-to)
     (when script-to (out "\ninstall:"))
@@ -181,9 +183,24 @@
     (rm-f SchemePath)
     (rm-f PetitePath)
     (rm-f SchemeScriptPath)
-    (I "-m" "555" Scheme SchemePath)
-    (ln-f SchemePath PetitePath)
-    (ln-f SchemePath SchemeScriptPath)
+    (cond
+      [(equal? (hash-ref config 'relativeBootFiles #f) "yes")
+       (define SchemeLibPath (build-path LibBin InstallSchemeName))
+       (define PetiteLibPath (build-path LibBin InstallPetiteName))
+       (define ScriptLibPath (build-path LibBin InstallScriptName))
+       (define (ln-s/rel from to)
+         (define to-dir (car (split-path to)))
+         (ln-s (find-relative-path to-dir from) to))
+       (I "-m" "555" Scheme SchemeLibPath)
+       (ln-f SchemeLibPath PetiteLibPath)
+       (ln-f SchemeLibPath ScriptLibPath)
+       (ln-s/rel SchemeLibPath SchemePath)
+       (ln-s/rel PetiteLibPath PetitePath)
+       (ln-s/rel ScriptLibPath SchemeScriptPath)]
+      [else
+       (I "-m" "555" Scheme SchemePath)
+       (ln-f SchemePath PetitePath)
+       (ln-f SchemePath SchemeScriptPath)])
 
     ;; lib
     (I "-m" "444" PetiteBoot (build-path* LibBin "petite.boot"))
