@@ -335,15 +335,12 @@ For example:
 \endentryheader
 
 A \scheme{quote-syntax} expression is like a \scheme{quote}
-expression except that contextual information associated with
+expression, except that contextual information associated with
 the datum is retained.
 
 Unlike \scheme{syntax}, \scheme{quote-syntax} does not substitute
 pattern variables bound by \scheme{with-syntax} or
 \scheme{syntax-case}.
-
-(This form is identical to the Revised$^4$ Report
-\scheme{syntax}.)
 
 \schemedisplay
 (let-syntax ([m (lambda (stx)
