@@ -1,11 +1,11 @@
 % Copyright 2005-2017 Cisco Systems, Inc.
-% 
+%
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
 % You may obtain a copy of the License at
-% 
+%
 % http://www.apache.org/licenses/LICENSE-2.0
-% 
+%
 % Unless required by applicable law or agreed to in writing, software
 % distributed under the License is distributed on an "AS IS" BASIS,
 % WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -326,6 +326,29 @@ For example:
 
 \scheme{datum->syntax-object} is identical to the Revised$^6$ Report
 \scheme{datum->syntax}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{quote-syntax}{\categorysyntax}{(quote-syntax \var{datum})}
+\returns a syntax object
+\listlibraries
+\endentryheader
+
+A \scheme{quote-syntax} expression is like a \scheme{quote}
+expression, except that contextual information associated with
+the datum is retained.
+
+Unlike \scheme{syntax}, \scheme{quote-syntax} does not substitute
+pattern variables bound by \scheme{with-syntax} or
+\scheme{syntax-case}.
+
+\schemedisplay
+(let-syntax ([m (lambda (stx)
+                  (syntax-case stx ()
+                    [(_ x)
+                     #`(list 'x '#,(quote-syntax x))]))])
+  (m y)) ;=> (y x)
+\endschemedisplay
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -1667,7 +1690,7 @@ procedure:
 
 \scheme{get-datum/annotations} is like \scheme{get-datum} but instead of returning
 a plain datum, it returns an annotation encapsulating a datum (possibly with nested
-annotations), a source object, and the plain (stripped) datum.  
+annotations), a source object, and the plain (stripped) datum.
 It also returns a second value, the position of the first character beyond the
 object in the file.
 Character positions are accepted and returned by

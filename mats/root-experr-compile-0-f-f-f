@@ -9373,6 +9373,8 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat extend-syntax: "extend-syntax: invalid context for ... in (foo x . ...)".
 8.mo:Expected error in mat extend-syntax: "extend-syntax: invalid context for ... in (foo (...))".
 8.mo:Expected error in mat extend-syntax: "extend-syntax: duplicate pattern variable name x in (foo x x)".
+8.mo:Expected error in mat quote-syntax: "invalid syntax (quote-syntax)".
+8.mo:Expected error in mat quote-syntax: "invalid syntax (quote-syntax a b)".
 fx.mo:Expected error in mat fx=: "fx=: (a) is not a fixnum".
 fx.mo:Expected error in mat fx=: "fx=: <int> is not a fixnum".
 fx.mo:Expected error in mat fx=: "fx=: <-int> is not a fixnum".

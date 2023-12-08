@@ -1,12 +1,12 @@
 ;;; syntax.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -4940,7 +4940,7 @@
                     ($oops who "loading ~a did not define library ~s" obj-path path))]))))
       (define do-load-library-src-or-obj
         (lambda (src-path obj-path)
-          (define (load-source) 
+          (define (load-source)
             (with-message "object file is out-of-date"
               (with-message (format "loading source file ~s" src-path)
                 (do-load-library src-path 'load))))
@@ -5172,7 +5172,7 @@
                     (eq? x 'exists))
           ($oops who "~s is not a timestamp mode" x))
         x)))
-  
+
   (set! expand-omit-library-invocations
     ($make-thread-parameter #f
       (lambda (v) (and v #t))))
@@ -5214,7 +5214,7 @@
                 (let loop ([rlpinfo* '()])
                   (let ([x (fasl-read ip situation)])
                     (if (or (library-info? x) (program-info? x))
-                        (loop (cons x rlpinfo*)) 
+                        (loop (cons x rlpinfo*))
                         (begin (close-port ip) (reverse rlpinfo*))))))))))
       (unless (memq situation '(load visit revisit)) ($oops who "invalid situation ~s; should be one of load, visit, or revisit" situation))
       (let-values ([(libdirs* fn*) (parse-inputs input*)])
@@ -5511,7 +5511,7 @@
                     (for-each (lambda (req) (import-library (libreq-uid req))) (libdesc-import-req* desc))
                     (p)))]))]
           [else ($oops #f "library ~:s is not defined" uid)])))
-  
+
     ; invoking or visiting a possibly unloaded library occurs in two separate steps:
     ;   1. load library and all dependencies first, recompiling or reloading if requested and required
     ;   2. invoke or visit the library and dependencies
@@ -5892,7 +5892,7 @@
                        [else (put-global-definition-hook s b)])))])
              ; add system bindings to other modules as appropriate
               (cond
-                [(any-set? (prim-mask (or keyword system-keyword)) m)
+               [(any-set? (prim-mask (or keyword system-keyword)) m)
                  (let ([id (make-resolved-id s (wrap-marks top-wrap) s)])
                    (cond
                      [(any-set? (prim-mask keyword) m)
@@ -6024,6 +6024,12 @@
    (lambda (e r w ae)
       (syntax-case e ()
          ((_ e) (build-data ae (strip (syntax e) w)))
+         (_ (syntax-error (source-wrap e w ae))))))
+
+(global-extend 'core 'quote-syntax
+   (lambda (e r w ae)
+      (syntax-case e ()
+         ((_ e) (build-data no-source (source-wrap (syntax e) w ae)))
          (_ (syntax-error (source-wrap e w ae))))))
 
 (global-extend 'core 'syntax
