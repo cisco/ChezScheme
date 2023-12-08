@@ -362,11 +362,14 @@ polling.
 
 \subsection{Exact zeros, transcendentals, and exponentials (9.9.9)}
 
-Division of an inexact number by an exact \scheme{0} now raises
-exception instead of producing \scheme{+inf.0} or \scheme{-inf.0}.
-This makes division more consistent with with the existing behavior of
+Division of an exact \scheme{0} by an inexact number now always
+produces exact \scheme{0}, and
+division of an inexact number by an exact \scheme{0} now raises an
+exception instead of producing \scheme{+inf.0} or \scheme{-inf.0},
+This change makes division more consistent with the existing behavior of
 multiplication, where multiplication of an inexact number by an exact
-\scheme{0} produces an exact \scheme{0}.
+\scheme{0} produces an exact \scheme{0}. It should be noted, however, that
+this change takes \scheme{/} out of compliance with R6RS.
 
 Small changes to transcendental functions help improve consistency for
 derived compositions. The \scheme{expt} function with two
