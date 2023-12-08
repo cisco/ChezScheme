@@ -560,6 +560,10 @@ implement fencing operators suitable for abstractions that acquire
 (load-load and load-store fence) or release (store-store and
 store-load fence) shared resources.
 
+When a new thread is created, it now starts with the default
+exception-handler stack instead of inheriting the stack of the
+creating thread.
+
 
 \subsection{Garbage collection introspection (9.9.9)}\label{sec:gc-reflect}
 

@@ -172,6 +172,19 @@
               (raise-continuable 'oops)
               'continuing)))))
     "returning...\n(continuing)\n")
+
+  ;; check that a thread starts with the default exception-handler stack
+  (or (not (threaded?))
+      (let ([thread-exn-handled? #f])
+        (let ([th
+               (with-exception-handler
+                (lambda (e) (set! thread-exn-handled? #t) (exit))
+                (lambda ()
+                  (parameterize ([base-exception-handler (lambda (exn) (exit))])
+                    (fork-thread (lambda () (error 't ""))))))])
+          (thread-join th)
+          (not thread-exn-handled?))))
+
 )
 
 (mat assert

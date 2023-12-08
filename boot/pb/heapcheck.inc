@@ -237,6 +237,7 @@ static void check_object(ptr p, uptr seg, ISPC s_in, IBOOL aftergc)
           check_pointer(&(STACKLINK(tc)), 1, 0, p, seg, s_in, aftergc);
           check_pointer(&(WINDERS(tc)), 1, 0, p, seg, s_in, aftergc);
           check_pointer(&(ATTACHMENTS(tc)), 1, 0, p, seg, s_in, aftergc);
+          check_pointer(&(HANDLERSTACK(tc)), 1, 0, p, seg, s_in, aftergc);
           {
             ptr xcp = FRAME(tc, 0);
             {

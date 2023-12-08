@@ -125,6 +125,7 @@ ptr S_create_thread_object(const char *who, ptr p_tc) {
 
   WINDERS(tc) = Snil;
   ATTACHMENTS(tc) = Snil;
+  HANDLERSTACK(tc) = Sfalse;
   CACHEDFRAME(tc) = Sfalse;
   STACKLINK(tc) = SYMVAL(S_G.null_continuation_id);
   STACKCACHE(tc) = Snil;

@@ -3430,6 +3430,7 @@
       (define-tc-parameter $current-stack-link stack-link)
       (define-tc-parameter $current-winders winders)
       (define-tc-parameter $current-attachments attachments)
+      (define-tc-parameter $current-handler-stack handler-stack)
       (define-tc-parameter default-record-equal-procedure default-record-equal-procedure)
       (define-tc-parameter default-record-hash-procedure default-record-hash-procedure)
       )

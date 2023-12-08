@@ -1788,6 +1788,11 @@
        ($oops '$current-attachments "malformed attachments ~s" w))
      ($current-attachments w)]))
 
+(define-who $current-handler-stack
+  (case-lambda
+   [() ($current-handler-stack)]
+   [(w) ($current-handler-stack w)]))
+
 (define lock-object
   (foreign-procedure "(cs)lock_object" (scheme-object) void))
 (define unlock-object
