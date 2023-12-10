@@ -41,6 +41,14 @@ if [ "$srcdir" != "." ]; then
 fi
 machs=$machs$sep2$last
 
+if [ "${CFLAGS}" != "" ] ; then
+    cflagsset=yes
+elif [ "${CFLAGS-default}" = "" ] ; then
+    cflagsset=yes
+else
+    cflagsset=no    
+fi
+
 m=""
 w=""
 pb=no
@@ -65,7 +73,6 @@ installpetitename="petite"
 installscriptname="scheme-script"
 unamebits=""
 relativeBootFiles=yes
-cflagsset=no
 disablex11=no
 disablecurses=no
 disableiconv=no
@@ -83,6 +90,7 @@ default_warning_flags="-Wpointer-arith -Wall -Wextra -Wno-implicit-fallthrough"
 : ${RANLIB:="ranlib"}
 : ${WINDRES:="windres"}
 : ${STRIP:="strip"}
+CFLAGS_ADD=
 zlibLib=
 LZ4Lib=
 Kernel=KernelLib
@@ -389,9 +397,15 @@ while [ $# != 0 ] ; do
     CPPFLAGS=*)
       CPPFLAGS=`echo $1 | sed -e 's/^CPPFLAGS=//'`
       ;;
+    CPPFLAGS+=*)
+      CPPFLAGS="$CPPFLAGS "`echo $1 | sed -e 's/^CPPFLAGS+=//'`
+      ;;
     CFLAGS=*)
       CFLAGS=`echo $1 | sed -e 's/^CFLAGS=//'`
       cflagsset=yes
+      ;;
+    CFLAGS+=*)
+      CFLAGS_ADD="$CFLAGS_ADD "`echo $1 | sed -e 's/^CFLAGS+=//'`
       ;;
     CC_FOR_BUILD=*)
       CC_FOR_BUILD=`echo $1 | sed -e 's/^CC_FOR_BUILD=//'`
@@ -402,8 +416,14 @@ while [ $# != 0 ] ; do
     LDFLAGS=*)
       LDFLAGS=`echo $1 | sed -e 's/^LDFLAGS=//'`
       ;;
+    LDFLAGS+=*)
+      LDFLAGS=`echo $1 | sed -e 's/^LDFLAGS+=//'`
+      ;;
     LIBS=*)
       LIBS=`echo $1 | sed -e 's/^LIBS=//'`
+      ;;
+    LIBS+=*)
+      LIBS="${LIBS} "`echo $1 | sed -e 's/^LIBS+=//'`
       ;;
     AR=*)
       AR=`echo $1 | sed -e 's/^AR=//'`
@@ -636,11 +656,15 @@ if [ "$help" = "yes" ]; then
   echo "  --as-is                           skip Git submodule update"
   echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   C preprocessor flags"
+  echo "  CPPFLAGS+=<C preprocessor flags>  add C preprocessor flags"
   echo "  CFLAGS=<C compiler flags>         C compiler flags"
+  echo "  CFLAGS+=<C compiler flags>        add C compiler flags"
   echo "  CC_FOR_BUILD=<C compiler>         C compiler and flags for build machine"
   echo "  LD=<linker>                       linker"
   echo "  LDFLAGS=<linker flags>            additional linker flags"
+  echo "  LDFLAGS+=<linker flags>           add additional linker flags"
   echo "  LIBS=<libraries>                  additional libraries"
+  echo "  LIBS+=<libraries>                 add additional libraries"
   echo "  AR=<archiver>                     archiver"
   echo "  ARFLAGS=<archiver flgs>           archiver flags"
   echo "  RANLIB=<archive indexer>          archive indexer"
@@ -766,6 +790,8 @@ if [ "$cflagsset" = "no" ] ; then
         ;;
   esac
 fi
+
+CFLAGS="${CFLAGS}${CFLAGS_ADD}"
 
 if [ "$CC_FOR_BUILD" = "" ] ; then
     CC_FOR_BUILD="${CC} ${CFLAGS}"
