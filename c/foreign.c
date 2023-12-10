@@ -134,7 +134,8 @@ static ptr lookup_dynamic(const char *s, ptr tbl) {
         if (!handle) {
             HMODULE *modules = S_enum_process_modules();
             if (modules) {
-                for (HMODULE *m = modules; *m; ++m) {
+                HMODULE *m;
+                for (m = modules; *m; ++m) {
                     value = dlsym(*m, s);
                     if (value != NULL) break;
                 }
