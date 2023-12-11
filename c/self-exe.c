@@ -110,6 +110,11 @@ static char *copy_string(const char *s) {
 
 #if defined(__APPLE__) && defined(__MACH__)
 #include <mach-o/dyld.h>
+#include <AvailabilityMacros.h>
+#if __MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+/* `PATH_MAX` mode for `realpath` is needed for 10.6 and earlier: */
+# include <sys/param.h>
+#endif
 #define HAVE_GET_SELF_PATH_PLATFORM
 static char *get_self_path_platform() {
   uint32_t bufsize = 256;
@@ -260,7 +265,17 @@ static char *get_process_executable_path(const char *exec_file) {
   }
   char *rr = NULL;
   if (r != NULL) {
+    /* `PATH_MAX` is a problem in various ways, but if `realpath` doesn't
+       accept a NULL second argument, then make sure `PATH_MAX` is defined.
+       Otherwise, avoid having `PATH_MAX` defined. */
+#ifdef PATH_MAX
+    char buffer[PATH_MAX];
+    rr = realpath(r, buffer);
+    if (rr != NULL)
+      rr = copy_string(rr);
+#else
     rr = realpath(r, NULL);
+#endif
   }
   free(r);
   return rr;
