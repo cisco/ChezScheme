@@ -73,7 +73,8 @@ static char *wide_to_utf8(const wchar_t *arg) {
 
 static char *get_process_executable_path(const char *exec_file) {
   wchar_t *path = NULL;
-  for (DWORD n = 0, sz = 256;; sz *= 2) {
+  DWORD n, sz;
+  for (n = 0, sz = 256;; sz *= 2) {
     path = (wchar_t *)malloc(sz * sizeof(wchar_t));
     if (path == NULL) {
       return NULL;
@@ -153,7 +154,8 @@ static char *get_self_path_platform() {
      sysctl may not return the desired path if there are multiple hardlinks
      to the file. */
 #if __FreeBSD_version >= 1300057
-  for (size_t bufsize = 256;; bufsize *= 2) {
+  size_t bufsize;
+  for (bufsize = 256;; bufsize *= 2) {
     char *buf = (char *)malloc(bufsize);
     if (buf == NULL) {
       return NULL;
@@ -174,7 +176,8 @@ static char *get_self_path_platform() {
   while (*p++ != 0)
     ;
   /* Iterate through auxiliary vectors for AT_EXECPATH. */
-  for (Elf_Auxinfo *aux = (Elf_Auxinfo *)p; aux->a_type != AT_NULL; aux++) {
+  Elf_Auxinfo *aux;
+  for (aux = (Elf_Auxinfo *)p; aux->a_type != AT_NULL; aux++) {
     if (aux->a_type == AT_EXECPATH) {
       return copy_string((char *)aux->a_un.a_ptr);
     }
@@ -238,7 +241,8 @@ static char *get_self_path_generic(const char *exec_file) {
   if (s == NULL) {
     return NULL;
   }
-  for (char *p = s + strspn(s, ":"); *p != '\0'; p += strspn(p, ":")) {
+  char *p;
+  for (p = s + strspn(s, ":"); *p != '\0'; p += strspn(p, ":")) {
     char *t = p;
     p += strcspn(p, ":");
     if (*p != '\0') {
