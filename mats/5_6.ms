@@ -1340,6 +1340,46 @@
                 (fprintf (console-output-port) "\n~s\n" ls)
                 (errorf #f "failed")))))))
     (make-string 200 #\.))
+
+  (let ([Ns '(10 100 1024 2048 4096)])
+    (with-interrupts-disabled
+     (andmap
+      (lambda (N)
+        (define vec (make-vector (* 2 N)))
+        ;; make the vector gen-1:
+        (collect 0 1)
+        ;; fill first half with immediates and second half with gen-0 objects,
+        ;; where both halves are already in order
+        (let loop ([i 0])
+          (unless (fx= i N)
+            (vector-set! vec i i)
+            (vector-set! vec (fx+ i N) (number->string i))
+            (loop (fx+ i 1))))
+        ;; sort, moving objects in second half to first
+        (vector-sort! (lambda (a b)
+                        (cond
+                          [(string? a)
+                           (if (string? b)
+                               (< (string->number a) (string->number b))
+                               #t)]
+                          [(string? b) #f]
+                          [else (< a b)]))
+                      vec)
+        ;; check whether dirty words got recorded correctly...
+        ;; collect all gen-0 into gen-1
+        (collect 0 1)
+        ;; make sure the right values are in the still in vector,
+        ;; which suggests that gen-0 references were updated correctly
+        (let loop ([i 0])
+          (unless (fx= i N)
+            (unless (equal? (vector-ref vec (fx+ i N)) i)
+              (errorf 'oops "at ~s ~s" i (vector-ref vec (fx+ i N))))
+            (unless (equal? (vector-ref vec i) (number->string i))
+              (errorf 'oops "at ~s ~s" i (vector-ref vec i)))
+            (loop (fx+ i 1))))
+        ;; passes
+        #t)
+      Ns)))
 )
 
 (mat vector->immutable-vector

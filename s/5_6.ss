@@ -36,20 +36,24 @@
     v))
 
 (define ($vector-copy! v1 v2 n)
+  (let loop ([i (fx- n 1)])
+    (cond
+      [(fx> i 0)
+       (vector-set! v2 i (vector-ref v1 i))
+       (let ([i (fx- i 1)]) (vector-set! v2 i (vector-ref v1 i)))
+       (loop (fx- i 2))]
+      [(fx= i 0) (vector-set! v2 i (vector-ref v1 i))])))
+
+;; assumes that `v2` is newer than values to copy
+(define ($vector-fill-copy! v1 v2 n)
   (if (fx<= n 10)
-      (let loop ([i (fx- n 1)])
-        (cond
-          [(fx> i 0)
-           (vector-set! v2 i (vector-ref v1 i))
-           (let ([i (fx- i 1)]) (vector-set! v2 i (vector-ref v1 i)))
-           (loop (fx- i 2))]
-          [(fx= i 0) (vector-set! v2 i (vector-ref v1 i))]))
+      ($vector-copy! v1 v2 n)
       ($ptr-copy! v1 (constant vector-data-disp) v2
         (constant vector-data-disp) n)))
 
 (define ($vector-copy v1 n)
   (let ([v2 (make-vector n)])
-    ($vector-copy! v1 v2 n)
+    ($vector-fill-copy! v1 v2 n)
     v2))
 
 (set! vector->list
