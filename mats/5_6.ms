@@ -114,6 +114,10 @@
 (mat vector-copy
     (equal? (vector-copy '#()) '#())
     (equal? (vector-copy '#(a b c)) '#(a b c))
+    (equal? (vector-copy '#(a b c) 0 1) '#(a))
+    (equal? (vector-copy '#(a b c) 2 1) '#(c))
+    (equal? (vector-copy '#(a b c d) 1 2) '#(b c))
+    (eq? (vector-copy '#(a b c d) 1 0) '#())
     (let* ((x1 (vector 1 2 3)) (x2 (vector-copy x1)))
         (and (equal? x2 x1) (not (eq? x2 x1))))
     (andmap
@@ -122,6 +126,60 @@
           (equal? (vector-copy v) v)))
       (map random (make-list 500 2500)))
     (error? (vector-copy '(a b c)))
+    (error? (vector-copy '#(a b c) 'x 2))
+    (error? (vector-copy '#(a b c) 1 'x))
+    (error? (vector-copy '#(a b c) -1 2))
+    (error? (vector-copy '#(a b c) 1 3))
+    (error? (vector-copy '#(a b c) 2 -1))
+    )
+
+(mat vector-set/copy
+    (equal? (vector-set/copy '#(a b c) 0 'x) '#(x b c))
+    (equal? (vector-set/copy '#(a b c) 1 'x) '#(a x c))
+    (equal? (vector-set/copy '#(a b c) 2 'x) '#(a b x))
+    (equal? (vector-set/copy '#(a b c d e f g h i) 2 'x) '#(a b x d e f g h i))
+    (error? (vector-set/copy 1))
+    (error? (vector-set/copy '#(a b c)))
+    (error? (vector-set/copy '#(a b c) 1))
+    (error? (vector-set/copy '#(a b c) 'y 'x))
+    (error? (vector-set/copy '#(a b c) -1 'x))
+    (error? (vector-set/copy '#(a b c) 3 'x))
+ )
+
+(mat vector-append
+    (eq? (vector-append) '#())
+    (eq? (vector-append '#()) '#())
+    (eq? (vector-append '#() '#()) '#())
+    (eq? (vector-append '#() '#() '#()) '#())
+    (eq? (vector-append '#() '#() '#() '#()) '#())
+    (equal? (vector-append '#(a b c)) '#(a b c))
+    (equal? (vector-append '#(a b c) '#(d e)) '#(a b c d e))
+    (equal? (vector-append '#(a b c) '#(d e) '#(f) '#(g h i)) '#(a b c d e f g h i))
+    (equal? (vector-append (vector 'p) '#()) '#(p))
+    (equal? (vector-append '#() (vector 'p)) '#(p))
+    (equal? (vector-append (vector 'p) '#(a b c)) '#(p a b c))
+    (equal? (vector-append '#(a b c) (vector 'p)) '#(a b c p))
+    (error? (vector-append 1))
+    (error? (vector-append '#(a b c) 'x))
+    (error? (vector-append '#(a b c) '#(d) 'x))
+    (error? (vector-append '#(a b c) '#(d) '#(e)'x))
+
+    ;; ensure that `vector-append` optimization doesn't misorder
+    ;; evaluation and potential collection with respect to filling
+    ;; the vector
+    (with-interrupts-disabled
+      (letrec ([f (lambda (m)
+                    (collect 0 1)
+                    (number->string m))]
+               [N 1000])
+        (let ([v (vector-append (make-vector N)
+                                (vector (f 8)))])
+          (and (eqv? 0 (#%$generation (vector-ref v N)))
+               (eqv? 0 (#%$generation v))
+               (begin
+                 (collect 0 1)
+                 (and (eqv? 1 (#%$generation (vector-ref v N)))
+                      (equal? (vector-ref v N) "8")))))))
  )
 
 (mat vector-fill!

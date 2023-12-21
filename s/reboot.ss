@@ -529,7 +529,7 @@
 
 (define-primitive ($make-source-oops who . args)
   (($top-level-value 'datum->syntax) (or who ($make-interaction-syntax 'unknown))
-                                     '(error "oops")))
+                                     `(error 'source "oops ~s" '(,who . ,args))))
 
 (define-primitive ($source-warning . args)
   (printf "~s\n" args))

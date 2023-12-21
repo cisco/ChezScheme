@@ -35,26 +35,74 @@
             (loop (cdr ls) (fx+ i 2))))))
     v))
 
-(define ($vector-copy! v1 v2 n)
+(define ($vector-copy! v1 v2 n delta)
   (let loop ([i (fx- n 1)])
     (cond
       [(fx> i 0)
-       (vector-set! v2 i (vector-ref v1 i))
-       (let ([i (fx- i 1)]) (vector-set! v2 i (vector-ref v1 i)))
+       (vector-set! v2 (fx+ i delta) (vector-ref v1 i))
+       (let ([i (fx- i 1)]) (vector-set! v2 (fx+ i delta) (vector-ref v1 i)))
        (loop (fx- i 2))]
-      [(fx= i 0) (vector-set! v2 i (vector-ref v1 i))])))
+      [(fx= i 0) (vector-set! v2 (fx+ i delta) (vector-ref v1 i))])))
 
-;; assumes that `v2` is newer than values to copy
-(define ($vector-fill-copy! v1 v2 n)
-  (if (fx<= n 10)
-      ($vector-copy! v1 v2 n)
-      ($ptr-copy! v1 (constant vector-data-disp) v2
-        (constant vector-data-disp) n)))
+(set-who! vector-copy
+  (case-lambda
+   [(v)
+    (unless (vector? v)
+      ($oops who "~s is not a vector" v))
+    (#3%vector-copy v 0 (vector-length v))]
+   [(v start len)
+    (unless (vector? v)
+      ($oops who "~s is not a vector" v))
+    (unless (and (fixnum? start) (fx>= start 0))
+      ($oops who "invalid start value ~s" start))
+    (unless (and (fixnum? len) (fx>= len 0))
+      ($oops who "invalid count ~s" len))
+    (unless (fx<= len (fx- (vector-length v) start)) ; avoid overflow
+      ($oops who "index ~s + count ~s is beyond the end of ~s" start len v))
+    (#3%vector-copy v start len)]))
 
-(define ($vector-copy v1 n)
-  (let ([v2 (make-vector n)])
-    ($vector-fill-copy! v1 v2 n)
-    v2))
+(set-who! vector-append
+  (let ([not-a-vector
+         (lambda (v)
+           ($oops who "~s is not a vector" v))])
+    (case-lambda
+      [(v)
+       (unless (vector? v) (not-a-vector v))
+       (vector-copy v)]
+      [(v1 v2)
+       (unless (vector? v1) (not-a-vector v1))
+       (unless (vector? v2) (not-a-vector v2))
+       (#3%vector-append v1 v2)]
+      [(v1 v2 v3)
+       (unless (vector? v1) (not-a-vector v1))
+       (unless (vector? v2) (not-a-vector v2))
+       (unless (vector? v3) (not-a-vector v3))
+       (#3%vector-append v1 v2 v3)]
+      [vs
+       (let ([len (let loop ([vs vs])
+                    (cond
+                      [(null? vs) 0]
+                      [else
+                       (let ([v (car vs)])
+                         (unless (vector? v) (not-a-vector v))
+                         (fx+ (vector-length v) (loop (cdr vs))))]))])
+         (let ([dest (make-vector len)])
+           (let loop ([vs vs] [i 0])
+             (cond
+               [(null? vs) dest]
+               [else
+                (let* ([v (car vs)]
+                       [len (vector-length v)])
+                  ($vector-copy! v dest len i)
+                  (loop (cdr vs) (fx+ i len)))]))))])))
+
+(set-who! vector-set/copy
+  (lambda (v idx val)
+    (unless (vector? v)
+      ($oops who "~s is not a vector" v))
+    (unless (and (fixnum? idx) (fx<= 0 idx) (fx< idx (vector-length v)))
+      ($oops who "~s is not a valid index for ~s" idx v))
+    (#3%vector-set/copy v idx val)))
 
 (set! vector->list
   (lambda (v)
@@ -65,12 +113,6 @@
 (set! list->vector
   (lambda (ls)
     ($list->vector ls ($list-length ls 'list->vector))))
-
-(set! vector-copy
-  (lambda (v)
-    (unless (vector? v)
-      ($oops 'vector-copy "~s is not a vector" v))
-    ($vector-copy v (vector-length v))))
 
 (set-who! vector->immutable-vector
   (lambda (v)
@@ -395,7 +437,7 @@
       (unless (procedure? elt<) ($oops who "~s is not a procedure" elt<))
       (unless (vector? v) ($oops who "~s is not a vector" v))
       (let ([n (vector-length v)])
-        (if (fx<= n 1) v (dovsort! elt< ($vector-copy v n) n)))))
+        (if (fx<= n 1) v (dovsort! elt< (vector-copy v 0 n) n)))))
 
   (set-who! vector-sort!
     (lambda (elt< v)
@@ -405,7 +447,7 @@
         (unless (fx<= n 1)
           (let ([outvec (dovsort! elt< v n)])
             (unless (eq? outvec v)
-              ($vector-copy! outvec v n)))))))
+              ($vector-copy! outvec v n 0)))))))
 
   (set-who! list-sort
     (lambda (elt< ls)

@@ -1455,7 +1455,7 @@
 ; not safe; assumes `val` is older than `v`
 (define $stencil-vector-fill-set!
   (lambda (v i val)
-    ($stencil-vector-set! v i val)))
+    ($stencil-vector-fill-set! v i val)))
 
 ; not safe
 (define $record-ref

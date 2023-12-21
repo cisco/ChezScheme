@@ -760,20 +760,71 @@ Any attempt to modify an immutable vector causes an exception to be raised.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{vector-copy}{\categoryprocedure}{(vector-copy \var{vector})}
-\returns a copy of \var{vector}
+\formdef{vector-copy}{\categoryprocedure}{(vector-copy \var{vector} \var{start} \var{n})}
+\returns a new vector
 \listlibraries
 \endentryheader
 
 \noindent
-\scheme{vector-copy} creates a new vector of the same length and contents
-as \var{vector}.
-The elements themselves are not copied.
+\var{vector} must be a vector.
+\var{start} and \var{n} must be exact nonnegative integers.
+The sum of \var{start} and \var{n} must not exceed the length
+of \var{vector}. When \var{start}
+and \var{n} are not supplied, \scheme{0} and
+\scheme{(vector-length \var{vector})} are used.
+
+\noindent
+\scheme{vector-copy} creates a new vector
+that contains \var{n} consecutive elements of \var{vector}
+from position \var{start}. When \var{start} and \var{n} are not
+supplied, the result is a copy of \var{vector}. The vector elements
+themselves are not copied.
 
 \schemedisplay
 (vector-copy '#(a b c)) ;=> #(a b c)
+(vector-copy '#(a b c d) 1 2) ;=> #(b c)
 
 (let ([v '#(a b c)])
   (eq? v (vector-copy v))) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{vector-append}{\categoryprocedure}{(vector-append \var{vector} \dots)}
+\returns a new vector
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{vector-append} creates a new vector whose content is the
+concatenation of the given \var{vector}s in order.
+
+\schemedisplay
+(vector-append '#(a b c)) ;=> #(a b c)
+(vector-append '#(a b c) '#(d e) '#(f)) ;=> #(a b c d e f)
+(vector-append) ;=> #()
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{vector-set/copy}{\categoryprocedure}{(vector-set/copy \var{vector} \var{n} \var{val})}
+\returns a new vector with \var{val} at index \var{n}
+\listlibraries
+\endentryheader
+
+\noindent
+\var{vector} must be a vector.
+\var{n} must be exact nonnegative integer that is a valid element index
+for the vector.
+
+\noindent
+\scheme{vector-set/copy} creates a new vector whose content is the
+same as \var{vector}, except that the element at index \var{n}
+is changed to \var{val}.
+
+\schemedisplay
+(vector-set/copy '#(a b c) 0 'x) ;=> #(x b c)
+(vector-set/copy '#(a b c) 2 'x) ;=> #(a b x)
 \endschemedisplay
 
 %----------------------------------------------------------------------------

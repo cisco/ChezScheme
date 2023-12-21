@@ -7352,8 +7352,8 @@
       (let ()
         (define do-make-vector
           (lambda (e-length e-fill)
-            ; NB: caller must bind e-fill
-            (safe-assert (no-need-to-bind? #f e-fill))
+            ; NB: caller must bind e-fill, if not #f
+            (safe-assert (or (not e-fill) (no-need-to-bind? #f e-fill)))
             (if (constant? (lambda (x) (and (fixnum? x) (fx<= 0 x 10000))) e-length)
                 (let ([n (constant-value e-length)])
                   (if (fx= n 0)
@@ -7365,7 +7365,9 @@
                              (set! ,(%mref ,t ,(constant vector-type-disp))
                                (immediate ,(+ (fx* n (constant vector-length-factor))
                                               (constant type-vector))))
-                             ,(build-vector-fill t `(immediate ,bytes) e-fill))))))
+                             ,(if e-fill
+                                  (build-vector-fill t `(immediate ,bytes) e-fill)
+                                  t))))))
                 (bind #t (e-length) ; fixnum length doubles as byte count
                   (let ([t-vec (make-tmp 'tvec)])
                     `(if ,(%inline eq? ,e-length (immediate 0))
@@ -7382,11 +7384,112 @@
                                   (constant type-vector)
                                   (constant fixnum-offset)
                                   (constant vector-length-offset)))
-                             ,(build-vector-fill t-vec e-length e-fill)))))))))
+                             ,(if e-fill
+                                  (build-vector-fill t-vec e-length e-fill)
+                                  t-vec)))))))))
         (define default-fill `(immediate ,(fix 0)))
         (define-inline 3 make-vector
           [(e-length) (do-make-vector e-length default-fill)]
           [(e-length e-fill) (bind #t (e-fill) (do-make-vector e-length e-fill))])
+        (let ()
+          (define (extract-vector-length vec)
+            (extract-length (%mref ,vec ,(constant vector-type-disp)) (constant vector-length-offset)))
+          (define build-vector-copy
+            (lambda (e-vec e-start e-len e-elem prefix-elem?)
+              (let ([Ltop (make-local-label 'Ltop)]
+                    [vec (make-assigned-tmp 'vec 'ptr)]
+                    [t (make-assigned-tmp 't 'uptr)])
+                (bind #t (e-vec e-start e-len)
+                  `(let ([,t (immediate 0)]
+                         [,vec ,(if (not e-elem)
+                                    (do-make-vector e-len #f)
+                                    (let ([total-len (make-assigned-tmp 'total-len 'uptr)])
+                                      `(let ([,total-len ,(%inline + ,e-len (immediate ,(fix 1)))])
+                                         ,(do-make-vector total-len #f))))])
+                     (label ,Ltop
+                       (if ,(%inline eq? ,t ,e-len)
+                           ,(cond
+                              [(not e-elem) vec]
+                              [else
+                               (let ([idx (if prefix-elem? `(immediate 0) e-len)])
+                                 (%seq
+                                  (set! ,(%mref ,vec ,idx ,(constant vector-data-disp)) ,e-elem)
+                                  ,vec))])
+                           ,(%seq
+                             (set! ,(let ([idx (if prefix-elem?
+                                                   (with-output-language (L7 Expr)
+                                                     (%inline + ,t (immediate ,(fix 1))))
+                                                   t)])
+                                      (%mref ,vec ,idx ,(constant vector-data-disp)))
+                                   ,(%mref ,e-vec ,(%inline + ,t ,e-start) ,(constant vector-data-disp)))
+                             (set! ,t ,(%inline + ,t (immediate ,(constant ptr-bytes))))
+                             (goto ,Ltop)))))))))
+          (define build-vector-set/copy
+            (lambda (e-vec e-idx e-val)
+              (let ([Ltop (make-local-label 'Ltop)]
+                    [vec (make-assigned-tmp 'vec 'ptr)]
+                    [t (make-assigned-tmp 't 'uptr)])
+                (bind #t (e-vec e-idx)
+                  (bind #f (e-val)
+                    `(let ([,t ,(extract-vector-length e-vec)])
+                       (let ([,vec ,(do-make-vector t #f)])
+                         (label ,Ltop
+                           (if ,(%inline eq? ,t (immediate 0))
+                               ,(%seq
+                                 (set! ,(%mref ,vec ,e-idx ,(constant vector-data-disp)) ,e-val)
+                                 ,vec)
+                               ,(%seq
+                                 (set! ,t ,(%inline - ,t (immediate ,(constant ptr-bytes))))
+                                 (set! ,(%mref ,vec ,t ,(constant vector-data-disp))
+                                       ,(%mref ,e-vec ,t ,(constant vector-data-disp)))
+                                 (goto ,Ltop)))))))))))
+          (define build-vector-append
+            (lambda (e-vecs)
+              (let loop ([e-vecs e-vecs] [len `(immediate 0)])
+                (cond
+                  [(null? e-vecs)
+                   (do-make-vector len #f)]
+                  [else
+                   (let ([Ltop (make-local-label 'Ltop)]
+                         [d-vec (make-assigned-tmp 'd-vec 'ptr)]
+                         [e-vec (car e-vecs)]
+                         [t (make-assigned-tmp 't 'uptr)]
+                         [e-len (make-assigned-tmp 'e-len 'uptr)])
+                     (bind #t (e-vec)
+                       `(let ([,t ,len]
+                              [,e-len ,(extract-vector-length e-vec)])
+                          (let ([,d-vec ,(loop (cdr e-vecs) (%inline + ,t ,e-len))])
+                            (label ,Ltop
+                                   (if ,(%inline eq? ,e-len (immediate 0))
+                                       ,d-vec
+                                       ,(%seq
+                                         (set! ,e-len ,(%inline - ,e-len (immediate ,(constant ptr-bytes))))
+                                         (set! ,(%mref ,d-vec ,(%inline + ,t ,e-len) ,(constant vector-data-disp))
+                                               ,(%mref ,e-vec ,e-len ,(constant vector-data-disp)))
+                                         (goto ,Ltop))))))))]))))
+          (define-inline 3 vector-copy
+            [(vec) (bind #t (vec)
+                     (build-vector-copy vec `(immediate ,(fix 0)) (extract-vector-length vec) #f #f))]
+            [(vec start len) (build-vector-copy vec start len #f #f)])
+          (define-inline 3 vector-set/copy
+            [(vec idx val) (build-vector-set/copy vec idx val)])
+          (define-inline 3 vector-append
+            [() `(quote ,(vector))]
+            [(vec1 vec2) (nanopass-case (L7 Expr) vec1
+                           [(call ,info1 ,mdcl1 ,pr ,e1)
+                            (guard (eq? (primref-name pr) 'vector))
+                            (bind #f (e1)
+                              (bind #t (vec2)
+                                (build-vector-copy vec2 `(immediate ,(fix 0)) (extract-vector-length vec2) e1 #t)))]
+                           [else
+                            (nanopass-case (L7 Expr) vec2
+                              [(call ,info2 ,mdcl2 ,pr ,e2)
+                               (guard (eq? (primref-name pr) 'vector))
+                               (bind #t (vec1)
+                                 (bind #f (e2)
+                                   (build-vector-copy vec1 `(immediate ,(fix 0)) (extract-vector-length vec1) e2 #f)))]
+                              [else (build-vector-append (list vec1 vec2))])])]
+            [(vec . vecs) (build-vector-append (cons vec vecs))]))
         (let ()
           (define (valid-length? e-length)
             (constant?

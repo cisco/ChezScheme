@@ -461,6 +461,22 @@ stencil-vector-mask-width
 \endschemedisplay
 
 
+\subsection{New vector functions (9.9.9)}
+
+New and extended (in the case of \scheme{vector-copy}) vector functions
+support creating a vector from the content of others:
+
+\schemedisplay
+vector-copy
+vector-append
+vector-set/copy
+\endschemedisplay
+
+Although these functions could be implemented with
+\scheme{make-vector} and \scheme{vector-set!}, the new versions avoid
+redundant initialization and write barriers.
+
+
 \subsection{New symbol functions (9.9.9)}
 
 While gensyms support most symbol-generation needs, uninterned symbols
