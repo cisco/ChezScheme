@@ -2928,8 +2928,8 @@
       [else
        (let ()
          (define (build-seginfo maybe? object? e)
-           (let ([ptr (make-assigned-tmp 'ptr)]
-                 [seginfo (make-assigned-tmp 'seginfo)])
+           (let ([ptr (make-tmp 'ptr)]
+                 [seginfo (make-tmp 'seginfo)])
              (define (build-level-3 seginfo k)
                (constant-case segment-table-levels
                  [(3)
@@ -2948,7 +2948,7 @@
              (define (build-level-2 s3 k)
                (constant-case segment-table-levels
                  [(2 3)
-                  (let ([s2 (make-assigned-tmp 's2)])
+                  (let ([s2 (make-tmp 's2)])
                     `(let ([,s2 ,(%mref ,s3 ,(%inline logand
                                                       ,(%inline srl ,ptr (immediate ,(fx- (constant segment-t1-bits)
                                                                                           (constant log2-ptr-bytes))))
@@ -2980,7 +2980,7 @@
                 (if ,(%type-check mask-immediate type-immediate ,e)
                     ,(%constant sfalse)
                     ,(let ([s-e (build-seginfo #t #t e)]
-                           [si (make-assigned-tmp 'si)])
+                           [si (make-tmp 'si)])
                        `(let ([,si ,s-e])
                           (if ,(%inline eq? ,si (immediate 0))
                               ,(%constant sfalse)
@@ -2995,7 +2995,7 @@
                    (if ,(%type-check mask-immediate type-immediate ,e)
                        ,(%constant sfalse)
                        ,(let ([s-e (build-seginfo #t #t e)]
-                              [si (make-assigned-tmp 'si)])
+                              [si (make-tmp 'si)])
                           `(let ([,si ,s-e])
                              (if ,(%inline eq? ,si (immediate 0))
                                  ,(%constant sfalse)
@@ -3013,10 +3013,10 @@
          (define-inline 2 $list-bits-ref
            [(e)
             (bind #t (e)
-                  (let ([si (make-assigned-tmp 'si)]
-                        [list-bits (make-assigned-tmp 'list-bits)]
-                        [offset (make-assigned-tmp 'offset)]
-                        [byte (make-assigned-tmp 'byte)])
+                  (let ([si (make-tmp 'si)]
+                        [list-bits (make-tmp 'list-bits)]
+                        [offset (make-tmp 'offset)]
+                        [byte (make-tmp 'byte)])
                     `(let ([,si ,(build-seginfo #f #t e)])
                        (let ([,list-bits ,(%mref ,si ,(constant seginfo-list-bits-disp))])
                          (if ,(%inline eq? ,list-bits (immediate 0))
@@ -3033,7 +3033,7 @@
               `(if ,(%type-check mask-fixnum type-fixnum ,e)
                    ,(%constant sfalse)
                    ,(let ([s-e (build-seginfo #t #t e)]
-                          [si (make-assigned-tmp 'si)])
+                          [si (make-tmp 'si)])
                       `(let ([,si ,s-e])
                          (if ,(%inline eq? ,si (immediate 0))
                              ,(%constant sfalse)
@@ -7397,13 +7397,13 @@
           (define build-vector-copy
             (lambda (e-vec e-start e-len e-elem prefix-elem?)
               (let ([Ltop (make-local-label 'Ltop)]
-                    [vec (make-assigned-tmp 'vec 'ptr)]
+                    [vec (make-tmp 'vec 'ptr)]
                     [t (make-assigned-tmp 't 'uptr)])
                 (bind #t (e-vec e-start e-len)
                   `(let ([,t (immediate 0)]
                          [,vec ,(if (not e-elem)
                                     (do-make-vector e-len #f)
-                                    (let ([total-len (make-assigned-tmp 'total-len 'uptr)])
+                                    (let ([total-len (make-tmp 'total-len 'uptr)])
                                       `(let ([,total-len ,(%inline + ,e-len (immediate ,(fix 1)))])
                                          ,(do-make-vector total-len #f))))])
                      (label ,Ltop
@@ -7427,7 +7427,7 @@
           (define build-vector-set/copy
             (lambda (e-vec e-idx e-val)
               (let ([Ltop (make-local-label 'Ltop)]
-                    [vec (make-assigned-tmp 'vec 'ptr)]
+                    [vec (make-tmp 'vec 'ptr)]
                     [t (make-assigned-tmp 't 'uptr)])
                 (bind #t (e-vec e-idx)
                   (bind #f (e-val)
@@ -7451,9 +7451,9 @@
                    (do-make-vector len #f)]
                   [else
                    (let ([Ltop (make-local-label 'Ltop)]
-                         [d-vec (make-assigned-tmp 'd-vec 'ptr)]
+                         [d-vec (make-tmp 'd-vec 'ptr)]
                          [e-vec (car e-vecs)]
-                         [t (make-assigned-tmp 't 'uptr)]
+                         [t (make-tmp 't 'uptr)]
                          [e-len (make-assigned-tmp 'e-len 'uptr)])
                      (bind #t (e-vec)
                        `(let ([,t ,len]
