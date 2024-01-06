@@ -2681,7 +2681,11 @@
                      (let ([e (car e*)] [e* (cdr e*)])
                        (if (nanopass-case (Lsrc Expr) e
                              [(quote ,d) #t]
-                             [(ref ,maybe-src ,x) (not (prelex-was-assigned x))]
+                             [(ref ,maybe-src ,x)
+                              (guard (not (prelex-was-assigned x)))
+                              (unless (prelex-multiply-referenced x)
+                                (set-prelex-multiply-referenced! x #t))
+                              #t]
                              [else #f])
                            (loop e* lhs* rhs* (cons e re*))
                            (let ([t (cp0-make-temp #t)])
@@ -2711,19 +2715,73 @@
               empty-flvector-rec)]
         [args #f])
 
-      (define-inline 2 vector->immutable-vector
-        [(e) (let ([e-val (value-visit-operand! e)])
-               (nanopass-case (Lsrc Expr) (result-exp e-val)
-                 [(quote ,d)
-                  (cond
-                    [(immutable-vector? d)
-                     (residualize-seq (list e) '() ctxt)
-                      e-val]
-                    [(eq? d '#())
-                     (residualize-seq '() (list e) ctxt)
-                     `(quote ,(vector->immutable-vector '#()))]
-                    [else #f])]
-                 [else #f]))])
+      (let ()
+        (define (build-immediate-immutable-vector e ctxt)
+          (let ([e-val (value-visit-operand! e)])
+            (nanopass-case (Lsrc Expr) (result-exp e-val)
+              [(quote ,d)
+               (cond
+                 [(immutable-vector? d)
+                  (residualize-seq (list e) '() ctxt)
+                  e-val]
+                 [(eq? d '#())
+                  (residualize-seq '() (list e) ctxt)
+                  `(quote ,(vector->immutable-vector '#()))]
+                 [else #f])]
+              [(immutable-vector (,e* ...) ,e2)
+               (residualize-seq (list e) '() ctxt)
+               e-val]
+              [(call ,preinfo ,pr ,e* ...)
+               (case (primref-name pr)
+                 [(vector->immutable-vector immutable-vector
+                                            immutable-vector-copy immutable-vector-set/copy immutable-vector-append)
+                  (residualize-seq (list e) '() ctxt)
+                  e-val]
+                 [(vector vector-copy vector-set/copy vector-append)
+                  (residualize-seq (list e) '() ctxt)
+                  (non-result-exp e-val
+                                  (build-primcall 3
+                                                  (case (primref-name pr)
+                                                    [(vector) 'immutable-vector]
+                                                    [(vector-copy) 'immutable-vector-copy]
+                                                    [(vector-set/copy) 'immutable-vector-set/copy]
+                                                    [(vector-append) 'immutable-vector-append]
+                                                    [else ($oops #f "missing conversion")])
+                                                  e*))]
+                 [else #f])]
+              [else #f])))
+        (define (build-append-immediate-vectors prim orig-vec-e* ctxt)
+          (let loop ([vec-e* orig-vec-e*] [accum '()])
+            (cond
+              [(null? vec-e*)
+               (residualize-seq orig-vec-e* '() ctxt)
+               (build-primcall 3 prim (reverse accum))]
+              [else
+               (let ([vec-e-val (value-visit-operand! (car vec-e*))])
+                 (nanopass-case (Lsrc Expr) vec-e-val
+                   [(quote ,d)
+                    (guard (vector? d))
+                    (loop (cdr vec-e*) (append (map (lambda (v) `(quote ,v))
+                                                    (reverse (vector->list d)))
+                                               accum))]
+                   [(immutable-vector (,e* ...) ,e)
+                    (loop (cdr vec-e*) (append (reverse e*) accum))]
+                   [(call ,preinfo ,pr ,e* ...)
+                    (guard (memq (primref-name pr) '(vector immutable-vector)))
+                    (loop (cdr vec-e*) (append (reverse e*) accum))]
+                   [else #f]))])))
+
+        (define-inline 2 vector->immutable-vector
+          [(e) (build-immediate-immutable-vector e ctxt)])
+        (define-inline 2 immutable-vector-copy
+          [(e) (build-immediate-immutable-vector e ctxt)])
+        (define-inline 2 vector-copy
+          [(e) (build-append-immediate-vectors 'vector (list e) ctxt)])
+        (define-inline 2 vector-append
+          [e* (build-append-immediate-vectors 'vector e* ctxt)])
+        (define-inline 2 immutable-vector-append
+          [(e) (build-immediate-immutable-vector e ctxt)]
+          [e* (build-append-immediate-vectors 'immutable-vector e* ctxt)]))
 
       (define-inline 2 string->immutable-string
         [(e) (let ([e-val (value-visit-operand! e)])

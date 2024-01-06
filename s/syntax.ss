@@ -8323,7 +8323,7 @@
                    (lambda () expr)
                    (rec define-values-consumer
                      #,(if (or (= (optimize-level) 3) (identifier? #'formals))
-                           #'(lambda formals (vector ffml ...))
+                           #'(lambda formals (immutable-vector ffml ...))
                            #`(case-lambda
                                [formals (immutable-vector ffml ...)]
                                [args #,($make-source-oops #'define-values

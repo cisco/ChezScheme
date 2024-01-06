@@ -469,18 +469,24 @@ stencil-vector-mask-width
 \subsection{New vector functions (9.9.9)}
 
 New and extended (in the case of \scheme{vector-copy}) vector functions
-support creating a vector from the content of others:
+support creating a vector from the content of others and creating immutable
+vectors:
 
 \schemedisplay
 vector-copy
 vector-append
 vector-set/copy
+immutable-vector
+immutable-vector-copy
+immutable-vector-append
+immutable-vector-set/copy
 \endschemedisplay
 
-Although these functions could be implemented with
-\scheme{make-vector} and \scheme{vector-set!}, the new versions avoid
-redundant initialization and write barriers.
-
+Although the mutable-vector variants of these functions could be
+implemented with \scheme{make-vector} and \scheme{vector-set!}, the
+new versions can avoid redundant initialization and write barriers.
+The immutable-vector functions similarly can avoid allocating an
+intermediate mutable vector.
 
 \subsection{New symbol functions (9.9.9)}
 

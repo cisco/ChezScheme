@@ -1894,7 +1894,7 @@ Notes:
       [(immutable-vector (,[e* 'value types plxc -> e* r* t* t-t* f-t*] ...)
                          ,[e 'value types plxc -> e ret types t-types f-types])
        (values `(immutable-vector (,e*  ...) ,e)
-               ret types #f #f)]
+               ret types t-types f-types)]
       [(moi) (values ir #f types #f #f)]
       [(pariah) (values ir void-rec types #f #f)]
       [(cte-optimization-loc ,box ,[e 'value types plxc -> e ret types t-types f-types] ,exts)
