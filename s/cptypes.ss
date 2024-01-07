@@ -1132,6 +1132,38 @@ Notes:
                                        (pred-env-add/ref ntypes val (rtd->record-predicate rtd #t) plxc))
                                   #f)]))])
 
+      (define-specialize 2 (add1 sub1)
+        [(n) (let ([r (get-type n)])
+               (cond
+                 [(predicate-implies? r 'exact-integer)
+                  (values `(call ,preinfo ,pr ,n)
+                          'exact-integer ntypes #f #f)]
+                 [(predicate-implies? r flonum-pred)
+                  (values `(call ,preinfo ,(lookup-primref 3 (if (eq? prim-name 'add1) 'fl+ 'fl-)) ,n (quote 1.0))
+                          flonum-pred ntypes #f #f)]
+                 [(predicate-implies? r real-pred)
+                  (values `(call ,preinfo ,pr ,n)
+                          real-pred ntypes #f #f)]
+                 [else
+                  (values `(call ,preinfo ,pr ,n)
+                          ret ntypes #f #f)]))])
+
+      (define-specialize 2 abs
+        [(n) (let ([r (get-type n)])
+               (cond
+                 ; not closed for fixnums
+                 [(predicate-implies? r 'bignum)
+                  (values `(call ,preinfo ,pr ,n)
+                          'bignum ntypes #f #f)]
+                 [(predicate-implies? r 'exact-integer)
+                  (values `(call ,preinfo ,pr ,n)
+                          'exact-integer ntypes #f #f)]
+                 [(predicate-implies? r flonum-pred)
+                  (values `(call ,preinfo ,(lookup-primref 3 'flabs) ,n)
+                          flonum-pred ntypes #f #f)]
+                 [else
+                  (values `(call ,preinfo ,pr ,n) ret ntypes #f #f)]))])
+
       (define-specialize 2 zero?
         [(n) (let ([r (get-type n)])
                (cond
