@@ -856,6 +856,38 @@
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (#2%exact? x))
          '(lambda (x) (#3%exact? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (add1 x)])
+                     (and (integer? y) (exact? y)))))
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (add1 x)])
+                     #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x)
+                   (real? (add1 x))))
+    '(lambda (x) (when (real? x)
+                   #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (flonum? (add1 x))))
+    '(lambda (x) (when (flonum? x)
+                   #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (add1 x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl+ x 1.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (sub1 x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl- x 1.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x)
+                   (real? (abs x))))
+    '(lambda (x) (when (real? x)
+                   #t)))
 )
 
 (mat cptypes-rest-argument
