@@ -5168,6 +5168,14 @@
                  [else #f])
                (tryref ctxt ?x ?i 'vector #f))])
 
+        (define-inline 2 vector-length
+          [(?x)
+           (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?x))
+             [(immutable-vector (,e* ...) ,e)
+              (residualize-seq '() (app-opnds ctxt) ctxt)
+              `(quote ,(length e*))]
+             [else #f])])
+
         (define-inline 2 string-ref
           [(?x ?i) (tryref ctxt ?x ?i 'string char?)])
 

@@ -327,7 +327,7 @@
   (vector? [sig [(ptr) -> (boolean)]] [pred vector] [flags pure unrestricted mifoldable discard ieee r5rs])
   (make-vector [sig [(length) (length ptr) -> (vector)]] [flags alloc ieee r5rs])
   (vector [sig [(ptr ...) -> (vector)]] [flags unrestricted alloc ieee r5rs cp02])
-  (vector-length [sig [(vector) -> (length)]] [flags pure true ieee r5rs mifoldable discard safeongoodargs])
+  (vector-length [sig [(vector) -> (length)]] [flags pure true ieee r5rs mifoldable discard safeongoodargs cp02])
   (vector-ref [sig [(nonempty-vector sub-index) -> (ptr)]] [flags ieee r5rs mifoldable discard cp02])
   (vector-set! [sig [(nonempty-vector sub-index ptr) -> (void)]] [flags true ieee r5rs cptypes2])
   (vector->list [sig [(vector) -> (list)]] [flags alloc safeongoodargs ieee r5rs])
