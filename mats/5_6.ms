@@ -236,6 +236,19 @@
     (mutable-vector? (vector-append '#(a b c) (vector 'p)))
     (equal? (vector-append (vector 'p) (make-vector 3 'ok)) '#(p ok ok ok))
     (mutable-vector? (vector-append (vector 'p) (make-vector 3 'ok)))
+    (let* ([ip (open-input-string "4 0")]
+           [c 0]
+           [v0 (vector-append (make-vector (read ip) (begin (set! c (+ c 1)) c)) (vector 'x 2 3 4))]
+           [c0 c]
+           [v1 (vector-append (make-vector (read ip) (begin (set! c (+ c 1)) c)) (vector 'y 'not))])
+      (and (equal? v0 '#(1 1 1 1 x 2 3 4))
+           (mutable-vector? v0)
+           (= c0 1)
+           (equal? v1 '#(y not))
+           (mutable-vector? v1)
+           (= c 2)))
+    (equal? (vector-append (make-vector 1 'p) '#(d q)) '#(p d q))
+    (mutable-vector? (vector-append (make-vector 1 'p) '#(d q)))
     (equal? (vector-append (vector 'p) (make-vector 0 'ok)) '#(p))
     (mutable-vector? (vector-append (vector 'p) (make-vector 0 'ok)))
     (error? (vector-append 1))
@@ -286,6 +299,19 @@
     (immutable-vector? (immutable-vector-append (vector 'p) (make-vector 3 'ok)))
     (equal? (immutable-vector-append (vector 'p) (make-vector 0 'ok)) '#(p))
     (immutable-vector? (immutable-vector-append (vector 'p) (make-vector 0 'ok)))
+    (equal? (immutable-vector-append (make-vector 1 'p) '#(d q)) '#(p d q))
+    (immutable-vector? (immutable-vector-append (make-vector 1 'p) '#(d q)))
+    (let* ([ip (open-input-string "4 0")]
+           [c 0]
+           [v0 (immutable-vector-append (make-vector (read ip) (begin (set! c (+ c 1)) c)) (vector 'x 2 3 4))]
+           [c0 c]
+           [v1 (immutable-vector-append (make-vector (read ip) (begin (set! c (+ c 1)) c)) (vector 'y 'not))])
+      (and (equal? v0 '#(1 1 1 1 x 2 3 4))
+           (immutable-vector? v0)
+           (= c0 1)
+           (equal? v1 '#(y not))
+           (immutable-vector? v1)
+           (= c 2)))
     (error? (immutable-vector-append 1))
     (error? (immutable-vector-append '#(a b c) 'x))
     (error? (immutable-vector-append '#(a b c) '#(d) 'x))
