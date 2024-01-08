@@ -879,14 +879,43 @@
     '(lambda (x) (when (flonum? x)
                    (#3%fl+ x 1.0))))
   (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (sub1 x)])
+                     (and (integer? y) (exact? y)))))
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (sub1 x)])
+                     #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x)
+                   (real? (sub1 x))))
+    '(lambda (x) (when (real? x)
+                   #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (flonum? (sub1 x))))
+    '(lambda (x) (when (flonum? x)
+                   #t)))
+  (cptypes-equivalent-expansion?
     '(lambda (x) (when (flonum? x)
                    (sub1 x)))
     '(lambda (x) (when (flonum? x)
                    (#3%fl- x 1.0))))
   (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (abs x)])
+                     (and (integer? y) (exact? y)))))
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (abs x)])
+                     #t))))
+  (cptypes-equivalent-expansion?
     '(lambda (x) (when (real? x)
                    (real? (abs x))))
     '(lambda (x) (when (real? x)
+                   #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (flonum? (abs x))))
+    '(lambda (x) (when (flonum? x)
                    #t)))
 )
 
