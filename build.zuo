@@ -153,9 +153,8 @@
        (boot:cross-build-boot token ccopts make-targets xpatch?
                               xm host-scheme host-workarea
                               at-dir config vars m)
-       ;; record success so boot files will not be rebuilt from pb
-       (when (and record-from-pb? record-dep?)
-         (build-boot-target token xm m host-scheme host-workarea void)))))
+       (when record-dep?
+         (record-build-success token xm m host-scheme host-workarea)))))
 
   (define (cross-build-boot/safe+examples token args)
     (cross-build-boot token args (hash 'o "2" 'd "3" 'i "t") '("all" "examples") #t))
@@ -177,7 +176,13 @@
                            (hash)))
        (reboot m xm scheme (hash 'shell-options options
                                  'out-dir (at-dir "..")
-                                 'work-dir (at-dir ".."))))))
+                                 'work-dir (at-dir "..")))
+       (record-build-success token xm m host-scheme host-workarea))))
+
+  (define (record-build-success token xm m host-scheme host-workarea)
+    ;; record success so boot files will not be rebuilt from pb
+    (when record-from-pb?
+      (build-boot-target token xm m host-scheme host-workarea void)))
 
   ;; used to create a target for "quickboot", or just record dependency for other modes
   ;; of building boot files
@@ -327,11 +332,11 @@
                     args
                     'defaultm
                     (lambda (xm m host-scheme host-workarea xpatch?)
-                      (unless (or host-scheme host-workarea)
-                        (build/dep (find-target "kernel" the-targets) token))
                       (build-boot-target
                        token xm m host-scheme host-workarea
                        (lambda ()
+                         (unless (or host-scheme host-workarea)
+                           (build/dep (find-target "kernel" the-targets) token))
                          (cross-build-boot token args (hash) '("all") #f))))))
                 :command]
 
