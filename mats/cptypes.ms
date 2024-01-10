@@ -856,6 +856,97 @@
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (#2%exact? x))
          '(lambda (x) (#3%exact? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (add1 x)])
+                     (and (integer? y) (exact? y)))))
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (add1 x)])
+                     #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (fixnum? x)
+                        (fixnum? (add1 x))))
+         '(lambda (x) (when (fixnum? x)
+                        #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (bignum? x)
+                        (bignum? (add1 x))))
+         '(lambda (x) (when (bignum? x)
+                        #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x)
+                   (real? (add1 x))))
+    '(lambda (x) (when (real? x)
+                   #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (flonum? (add1 x))))
+    '(lambda (x) (when (flonum? x)
+                   #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (add1 x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl+ x 1.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (sub1 x)])
+                     (and (integer? y) (exact? y)))))
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (sub1 x)])
+                     #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (fixnum? x)
+                        (fixnum? (sub1 x))))
+         '(lambda (x) (when (fixnum? x)
+                        #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (bignum? x)
+                        (bignum? (sub1 x))))
+         '(lambda (x) (when (bignum? x)
+                        #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x)
+                   (real? (sub1 x))))
+    '(lambda (x) (when (real? x)
+                   #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (flonum? (sub1 x))))
+    '(lambda (x) (when (flonum? x)
+                   #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (sub1 x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl- x 1.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (abs x)])
+                     (and (integer? y) (exact? y)))))
+    '(lambda (x) (when (fixnum? x)
+                   (let ([y (abs x)])
+                     #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (fixnum? x)
+                        (fixnum? (abs x))))
+         '(lambda (x) (when (fixnum? x)
+                        #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (bignum? x)
+                   (bignum? (abs x))))
+    '(lambda (x) (when (bignum? x)
+                   #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x)
+                   (real? (abs x))))
+    '(lambda (x) (when (real? x)
+                   #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (flonum? (abs x))))
+    '(lambda (x) (when (flonum? x)
+                   #t)))
 )
 
 (mat cptypes-rest-argument
