@@ -863,6 +863,16 @@
     '(lambda (x) (when (fixnum? x)
                    (let ([y (add1 x)])
                      #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (fixnum? x)
+                        (fixnum? (add1 x))))
+         '(lambda (x) (when (fixnum? x)
+                        #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (bignum? x)
+                        (bignum? (add1 x))))
+         '(lambda (x) (when (bignum? x)
+                        #t))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (real? x)
                    (real? (add1 x))))
@@ -885,6 +895,16 @@
     '(lambda (x) (when (fixnum? x)
                    (let ([y (sub1 x)])
                      #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (fixnum? x)
+                        (fixnum? (sub1 x))))
+         '(lambda (x) (when (fixnum? x)
+                        #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (bignum? x)
+                        (bignum? (sub1 x))))
+         '(lambda (x) (when (bignum? x)
+                        #t))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (real? x)
                    (real? (sub1 x))))
@@ -907,6 +927,16 @@
     '(lambda (x) (when (fixnum? x)
                    (let ([y (abs x)])
                      #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (when (fixnum? x)
+                        (fixnum? (abs x))))
+         '(lambda (x) (when (fixnum? x)
+                        #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (bignum? x)
+                   (bignum? (abs x))))
+    '(lambda (x) (when (bignum? x)
+                   #t)))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (real? x)
                    (real? (abs x))))
