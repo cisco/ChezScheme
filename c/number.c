@@ -119,7 +119,7 @@ static ptr big_logxor(ptr tc, ptr x, ptr y, iptr xl, iptr yl, IBOOL xs, IBOOL ys
 #endif
 
 #if (U64_bigits == 4)
-see v7.4 number.c for U64_TO_BIGNUM w/U64_bigits == 4
+#error see v7.4 number.c for U64_TO_BIGNUM w/U64_bigits == 4
 #endif
 
 #define ptr_bigits (ptr_bits / bigit_bits)
