@@ -933,8 +933,9 @@ is immutable; otherwise, the result is an immutable vector with the same content
 \endentryheader
 
 Like \scheme{vector}, \scheme{vector-copy},  \scheme{vector-append}, and
-\scheme{vector-set/copy}, but producing an immutable vector instead of a mutable
-vector. In the case of \scheme{immutable-vector-copy},  \scheme{immutable-vector-append}, or
+\scheme{vector-set/copy}, but these procedures return an immutable vector instead of a mutable
+one, and they may return an existing object instead of allocating a new one.
+In the case of \scheme{immutable-vector-copy}, \scheme{immutable-vector-append}, or
 \scheme{immutable-vector-set/copy}, an argument vector can be mutable or immutable.
 
 %----------------------------------------------------------------------------
