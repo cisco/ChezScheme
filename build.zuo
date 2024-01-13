@@ -181,7 +181,8 @@
 
   (define (record-build-success token xm m host-scheme host-workarea)
     ;; record success so boot files will not be rebuilt from pb
-    (when record-from-pb?
+    (when (and record-from-pb?
+               (not (equal? xm "pb")))
       (build-boot-target token xm m host-scheme host-workarea void)))
 
   ;; used to create a target for "quickboot", or just record dependency for other modes

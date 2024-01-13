@@ -234,10 +234,15 @@
     (equal? (vector-append '#(a b c) (vector 'p)) '#(a b c p))
     (mutable-vector? (vector-append (vector 'p) '#(a b c)))
     (mutable-vector? (vector-append '#(a b c) (vector 'p)))
+    (equal? (vector-append (vector 'p) (make-vector 3 'ok)) '#(p ok ok ok))
+    (mutable-vector? (vector-append (vector 'p) (make-vector 3 'ok)))
+    (equal? (vector-append (vector 'p) (make-vector 0 'ok)) '#(p))
+    (mutable-vector? (vector-append (vector 'p) (make-vector 0 'ok)))
     (error? (vector-append 1))
     (error? (vector-append '#(a b c) 'x))
     (error? (vector-append '#(a b c) '#(d) 'x))
     (error? (vector-append '#(a b c) '#(d) '#(e)'x))
+    (error? (vector-append (vector 'p) (make-vector -1 'ok)))
 
     ;; ensure that `vector-append` optimization doesn't misorder
     ;; evaluation and potential collection with respect to filling
@@ -277,10 +282,15 @@
     (equal? (immutable-vector-append '#(a b c) (vector 'p)) '#(a b c p))
     (immutable-vector? (immutable-vector-append (vector 'p) '#(a b c)))
     (immutable-vector? (immutable-vector-append '#(a b c) (vector 'p)))
+    (equal? (immutable-vector-append (vector 'p) (make-vector 3 'ok)) '#(p ok ok ok))
+    (immutable-vector? (immutable-vector-append (vector 'p) (make-vector 3 'ok)))
+    (equal? (immutable-vector-append (vector 'p) (make-vector 0 'ok)) '#(p))
+    (immutable-vector? (immutable-vector-append (vector 'p) (make-vector 0 'ok)))
     (error? (immutable-vector-append 1))
     (error? (immutable-vector-append '#(a b c) 'x))
     (error? (immutable-vector-append '#(a b c) '#(d) 'x))
     (error? (immutable-vector-append '#(a b c) '#(d) '#(e)'x))
+    (error? (immutable-vector-append (vector 'p) (make-vector -1 'ok)))
 
     ;; same as mutable-vector test above
     (with-interrupts-disabled
@@ -447,6 +457,17 @@
                                                                         (vector y 0))
                                                2)))))
       `(lambda (x y) (#3%immutable-vector x y)))
+
+     (equivalent-expansion?
+      (expand/optimize `(lambda (x)
+                          (vector-length (immutable-vector x x x))))
+      `(lambda (x) 3))
+     (equivalent-expansion?
+      (expand/optimize `(lambda (x)
+                          (vector-length (immutable-vector x (#2%printf "hi\n") x))))
+      `(lambda (x)
+         (#2%printf "hi\n")
+         3))
 
      )
 

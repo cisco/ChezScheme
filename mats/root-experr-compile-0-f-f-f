@@ -4303,10 +4303,12 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat vector-append: "vector-append: x is not a vector".
 5_6.mo:Expected error in mat vector-append: "vector-append: x is not a vector".
 5_6.mo:Expected error in mat vector-append: "vector-append: x is not a vector".
+5_6.mo:Expected error in mat vector-append: "make-vector: -1 is not a valid vector length".
 5_6.mo:Expected error in mat immutable-vector-append: "immutable-vector-append: 1 is not a vector".
 5_6.mo:Expected error in mat immutable-vector-append: "immutable-vector-append: x is not a vector".
 5_6.mo:Expected error in mat immutable-vector-append: "immutable-vector-append: x is not a vector".
 5_6.mo:Expected error in mat immutable-vector-append: "immutable-vector-append: x is not a vector".
+5_6.mo:Expected error in mat immutable-vector-append: "make-vector: -1 is not a valid vector length".
 5_6.mo:Expected error in mat vector-fill!: "vector-fill!: #vfx() is not a mutable vector".
 5_6.mo:Expected error in mat list->vector: "list->vector: #(a b c) is not a proper list".
 5_6.mo:Expected error in mat list->vector: "list->vector: (#\a #\b . #\c) is not a proper list".
