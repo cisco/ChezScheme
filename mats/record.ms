@@ -9008,9 +9008,10 @@
                        (new q x)))))))
            (make-foo 3))))
     `(let ([ctr 0])
-       (letrec ([g0 (lambda (new) (lambda (q) (new q (begin (set! ctr (#2%+ 1 xtr)) ctr))))])
+       (letrec ([g0 (lambda (new) (lambda (q) (set! ctr (#2%+ 1 xtr)) (new q ctr)))])
          (#3%$value (#3%$make-record-constructor-descriptor ',record-type-descriptor?  #f g0 'define-record-type))
-         (#3%$record ',record-type-descriptor? 3 (begin (set! ctr (#2%+ 1 xtr)) ctr)))))
+         (set! ctr (#2%+ 1 xtr))
+         (#3%$record ',record-type-descriptor? 3 ctr))))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize
@@ -9027,9 +9028,10 @@
                        (new q x)))))))
            (make-foo 3))))
     `(let ([ctr 0])
-       (letrec ([g0 (lambda (new) (lambda (q) (new q (begin (set! ctr (#3%+ 1 xtr)) ctr))))])
+       (letrec ([g0 (lambda (new) (lambda (q) (set! ctr (#3%+ 1 xtr)) (new q ctr)))])
          (#3%$value (#3%$make-record-constructor-descriptor ',record-type-descriptor?  #f g0 'define-record-type))
-         (#3%$record ',record-type-descriptor? 3 (begin (set! ctr (#3%+ 1 xtr)) ctr)))))
+         (set! ctr (#3%+ 1 xtr))
+         (#3%$record ',record-type-descriptor? 3 ctr))))
   (error? ; invalid uid
     (let ()
       (define useless

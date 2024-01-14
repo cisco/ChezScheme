@@ -2982,6 +2982,74 @@
              [n (if v v 72)])
          (#2%display "1")
          (#2%list q n))))
+  ((lambda (x ls) (and (member x ls) #t))
+   (with-input-from-string "#(0 1 2 #\\e)"
+     (lambda ()
+       (with-output-to-string
+        (lambda ()
+          (define-syntax check
+            (identifier-syntax
+             (unless (read) ;; !#eof is true
+               (raise 'issue))))
+          (display
+           (let* ([x (read)] ;; confound cp0
+                  [e (if (and (vector? x) (= (vector-length x) 4))
+                         (vector-ref x 3)
+                         (raise 'issue))]
+                  [e ((begin (write 'a) check (begin (write 'b) (lambda (x) (display x) (char-upcase x))))
+                      (begin (write 'c) check (begin (write 'd) check e)))])
+             (if (char? e)
+                 e
+                 'bad)))))))
+   '("abcdeE" "cdabeE"))
+  (equivalent-expansion?
+   (parameterize ([#%$suppress-primitive-inlining #f] [run-cp0 (lambda (cp0 x) (cp0 (cp0 x)))] [optimize-level 2])
+     (expand/optimize
+      '(let ()
+         (define-syntax <foo> ;; stripped down
+           (syntax-rules (assert copy* is? make)
+             [(_ assert e0)
+              (unless (<foo> is? e0) (raise 'bad))]
+             [(_ copy* e0 [a e1])
+              (eq? (datum a) 'a)
+              (let ([v e0])
+                (<foo> assert v)
+                (<foo> make
+                  [a (let ([a (#3%vector-ref v 1)]) e1)]
+                  [b (#3%vector-ref v 2)]))]
+             [(_ is? e0)
+              (let ([v e0])
+                (and (vector? v)
+                     (fx= (vector-length v) 3)
+                     (eq? (#3%vector-ref v 0) '<foo>)))]
+             [(_ make [a e0] [b e1])
+              (equal? (datum (a b)) '(a b))
+              (immutable-vector '<foo> e0 e1)]
+             [(_ field e0)
+              (memq (datum field) '(a b))
+              (let ([v e0])
+                (<foo> assert v)
+                (#3%vector-ref v (case 'field [a 1] [b 2])))]))
+         (values
+          (lambda (x)
+            (let* ([x (<foo> copy* x [a 10])]
+                   [x (<foo> copy* x [a (+ a 1)])]
+                   [x (<foo> copy* x [a (+ a 2)])]
+                   [x (<foo> copy* x [a (+ a 3)])])
+              (+ (<foo> a x) (<foo> b x))))
+          (<foo> make [a 1] [b 2])))))
+   '(#2%values
+     (lambda (x)
+       (if (if (#2%vector? x)
+               (if (#3%fx= (#3%vector-length x) 3)
+                   (#2%eq? (#3%vector-ref x 0) '<foo>)
+                   #f)
+               #f)
+           (#2%void)
+           (#2%raise 'bad))
+       (let ([g (#3%vector-ref x 2)])
+         (#2%+ 16 g)))
+     '#(<foo> 1 2)))
 )
 
 (mat equality-of-refs

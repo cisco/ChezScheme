@@ -1705,6 +1705,14 @@
                     ; (let ((x e)) x) => e
                     ; x is clearly not assigned, even if flags are polluted and say it is
                     (make-nontail (app-ctxt ctxt) (car rhs*))]
+                   [(and (= (length id*) 1)
+                         (= (length rhs*) 1)
+                         (nanopass-case (Lsrc Expr) (car rhs*)
+                           [(seq ,e1 ,e2)
+                            ; (let ((x (begin e1 e2))) e3) => (begin e1 (let ((x e2)) e3))
+                            ; this can expose (immutable-vector ...) in e2 to optimization
+                            `(seq ,e1 ,(build-let lambda-preinfo id* (list e2) body))]
+                           [else #f]))]
                    ; we drop the RHS of a let binding into the let body when the body expression is a call 
                    ; and we can do so without violating evaluation order of bindings wrt the let body:
                    ;  * for pure, singly referenced bindings, we drop them to the variable reference site
