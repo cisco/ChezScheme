@@ -1327,7 +1327,7 @@
       (if (not (= n (length chars)))
           (begin (display " but expected ")
                  (write n)
-                 (display " in Unicode 15.0")))
+                 (display " in Unicode 15.1")))
       (newline)
       0)
     (define-syntax test

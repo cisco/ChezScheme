@@ -1,0 +1,17 @@
+#!/bin/bash
+set -euo pipefail
+cd "$(dirname "$0")/UNIDATA"
+
+function fetch() {
+  curl -fsSL "$1" > "$(basename "$1")" || ( echo "Failed to fetch $1"; exit 1 )
+}
+
+fetch http://www.unicode.org/Public/UCD/latest/ucd/CompositionExclusions.txt
+fetch http://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
+fetch http://www.unicode.org/Public/UCD/latest/ucd/CaseFolding.txt
+fetch http://www.unicode.org/Public/UCD/latest/ucd/SpecialCasing.txt
+fetch http://www.unicode.org/Public/UCD/latest/ucd/auxiliary/WordBreakProperty.txt
+fetch http://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
+fetch http://www.unicode.org/Public/UCD/latest/ucd/NormalizationTest.txt
+fetch http://www.unicode.org/Public/UCD/latest/ucd/auxiliary/GraphemeBreakProperty.txt
+fetch http://www.unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt
