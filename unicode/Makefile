@@ -1,6 +1,8 @@
 Scheme=../bin/zuo .. run
 
-doit: update unicode-char-cases.ss unicode-charinfo.ss
+doit:
+	$(MAKE) update
+	$(MAKE) unicode-char-cases.ss unicode-charinfo.ss
 
 update:
 	./get-UNIDATA
@@ -23,4 +25,3 @@ unicode-charinfo.ss: \
  UNIDATA/WordBreakProperty.txt\
  UNIDATA/PropList.txt\
  UNIDATA/emoji-data.txt
-
