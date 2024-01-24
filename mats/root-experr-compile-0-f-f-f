@@ -4281,16 +4281,34 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat vector-copy: "vector-copy: invalid start value -1".
 5_6.mo:Expected error in mat vector-copy: "vector-copy: index 1 + count 3 is beyond the end of #(a b c)".
 5_6.mo:Expected error in mat vector-copy: "vector-copy: invalid count -1".
+5_6.mo:Expected error in mat immutable-vector-copy: "immutable-vector-copy: (a b c) is not a vector".
+5_6.mo:Expected error in mat immutable-vector-copy: "immutable-vector-copy: invalid start value x".
+5_6.mo:Expected error in mat immutable-vector-copy: "immutable-vector-copy: invalid count x".
+5_6.mo:Expected error in mat immutable-vector-copy: "immutable-vector-copy: invalid start value -1".
+5_6.mo:Expected error in mat immutable-vector-copy: "immutable-vector-copy: index 1 + count 3 is beyond the end of #(a b c)".
+5_6.mo:Expected error in mat immutable-vector-copy: "immutable-vector-copy: invalid count -1".
 5_6.mo:Expected error in mat vector-set/copy: "incorrect argument count in call (vector-set/copy 1)".
 5_6.mo:Expected error in mat vector-set/copy: "incorrect argument count in call (vector-set/copy (quote #(a b c)))".
 5_6.mo:Expected error in mat vector-set/copy: "incorrect argument count in call (vector-set/copy (quote #(a b c)) 1)".
 5_6.mo:Expected error in mat vector-set/copy: "vector-set/copy: y is not a valid index for #(a b c)".
 5_6.mo:Expected error in mat vector-set/copy: "vector-set/copy: -1 is not a valid index for #(a b c)".
 5_6.mo:Expected error in mat vector-set/copy: "vector-set/copy: 3 is not a valid index for #(a b c)".
+5_6.mo:Expected error in mat immutable-vector-set/copy: "incorrect argument count in call (immutable-vector-set/copy 1)".
+5_6.mo:Expected error in mat immutable-vector-set/copy: "incorrect argument count in call (immutable-vector-set/copy (quote #(a b c)))".
+5_6.mo:Expected error in mat immutable-vector-set/copy: "incorrect argument count in call (immutable-vector-set/copy (quote #(a b c)) 1)".
+5_6.mo:Expected error in mat immutable-vector-set/copy: "immutable-vector-set/copy: y is not a valid index for #(a b c)".
+5_6.mo:Expected error in mat immutable-vector-set/copy: "immutable-vector-set/copy: -1 is not a valid index for #(a b c)".
+5_6.mo:Expected error in mat immutable-vector-set/copy: "immutable-vector-set/copy: 3 is not a valid index for #(a b c)".
 5_6.mo:Expected error in mat vector-append: "vector-append: 1 is not a vector".
 5_6.mo:Expected error in mat vector-append: "vector-append: x is not a vector".
 5_6.mo:Expected error in mat vector-append: "vector-append: x is not a vector".
 5_6.mo:Expected error in mat vector-append: "vector-append: x is not a vector".
+5_6.mo:Expected error in mat vector-append: "make-vector: -1 is not a valid vector length".
+5_6.mo:Expected error in mat immutable-vector-append: "immutable-vector-append: 1 is not a vector".
+5_6.mo:Expected error in mat immutable-vector-append: "immutable-vector-append: x is not a vector".
+5_6.mo:Expected error in mat immutable-vector-append: "immutable-vector-append: x is not a vector".
+5_6.mo:Expected error in mat immutable-vector-append: "immutable-vector-append: x is not a vector".
+5_6.mo:Expected error in mat immutable-vector-append: "make-vector: -1 is not a valid vector length".
 5_6.mo:Expected error in mat vector-fill!: "vector-fill!: #vfx() is not a mutable vector".
 5_6.mo:Expected error in mat list->vector: "list->vector: #(a b c) is not a proper list".
 5_6.mo:Expected error in mat list->vector: "list->vector: (#\a #\b . #\c) is not a proper list".

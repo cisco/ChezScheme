@@ -754,7 +754,9 @@ The length and indices of a vector in {\ChezScheme} are always fixnums.
 \index{immutable vectors}\index{mutable vectors}%
 All vectors are mutable by default, including constants.
 A program can create immutable vectors via
-\index{\scheme{vector->immutable-vector}}\scheme{vector->immutable-vector}.
+\index{\scheme{vector->immutable-vector}}\scheme{vector->immutable-vector},
+\index{\scheme{immutable-vector}}\scheme{immutable-vector},
+and other functions.
 Any attempt to modify an immutable vector causes an exception to be raised.
 
 %----------------------------------------------------------------------------
@@ -919,6 +921,22 @@ is immutable; otherwise, the result is an immutable vector with the same content
 (define v (vector->immutable-vector (vector 1 2 3)))
 (vector-set! v 0 0) ;=> \var{exception: not mutable}
 \endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{immutable-vector}{\categoryprocedure}{(immutable-vector \var{obj} \dots)}
+\formdef{immutable-vector-copy}{\categoryprocedure}{(immutable-vector-copy \var{vector})}
+\formdef{immutable-vector-copy}{\categoryprocedure}{(immutable-vector-copy \var{vector} \var{start} \var{n})}
+\formdef{immutable-vector-append}{\categoryprocedure}{(immutable-vector-append \var{vector} \dots)}
+\formdef{immutable-vector-set/copy}{\categoryprocedure}{(vector-set/copy \var{vector} \var{n} \var{val})}
+\listlibraries
+\endentryheader
+
+Like \scheme{vector}, \scheme{vector-copy},  \scheme{vector-append}, and
+\scheme{vector-set/copy}, but these procedures return an immutable vector instead of a mutable
+one, and they may return an existing object instead of allocating a new one.
+In the case of \scheme{immutable-vector-copy}, \scheme{immutable-vector-append}, or
+\scheme{immutable-vector-set/copy}, an argument vector can be mutable or immutable.
 
 %----------------------------------------------------------------------------
 \entryheader

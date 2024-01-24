@@ -311,6 +311,7 @@
 (define-primitive $stencil-vector? (lambda (v) #f))
 (define-primitive $system-stencil-vector? (lambda (v) #f))
 (define-primitive $symbol-name #%$symbol-name)
+(define-primitive immutable-vector (lambda args (vector->immutable-vector (apply vector args))))
 
 (define-primitive ($char-grapheme-other-state) 1) ; probably correct, shouldn't matter for compiler
 

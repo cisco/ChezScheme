@@ -7351,27 +7351,27 @@
       (meta-assert (= (constant log2-ptr-bytes) (constant fixnum-offset)))
       (let ()
         (define do-make-vector
-          (lambda (e-length e-fill)
+          (lambda (type e-length e-fill)
             ; NB: caller must bind e-fill, if not #f
             (safe-assert (or (not e-fill) (no-need-to-bind? #f e-fill)))
             (if (constant? (lambda (x) (and (fixnum? x) (fx<= 0 x 10000))) e-length)
                 (let ([n (constant-value e-length)])
                   (if (fx= n 0)
-                      `(quote ,(vector))
+                      `(quote ,(if (fx= type (constant type-vector)) (vector) (immutable-vector)))
                       (let ([bytes (fx* n (constant ptr-bytes))])
                         (bind #t ([t (%constant-alloc type-typed-object
                                        (fx+ (constant header-size-vector) bytes))])
                           `(seq
                              (set! ,(%mref ,t ,(constant vector-type-disp))
                                (immediate ,(+ (fx* n (constant vector-length-factor))
-                                              (constant type-vector))))
+                                              type)))
                              ,(if e-fill
                                   (build-vector-fill t `(immediate ,bytes) e-fill)
                                   t))))))
                 (bind #t (e-length) ; fixnum length doubles as byte count
                   (let ([t-vec (make-tmp 'tvec)])
                     `(if ,(%inline eq? ,e-length (immediate 0))
-                         (quote ,(vector))
+                         (quote ,(if (fx= type (constant type-vector)) (vector) (immutable-vector)))
                          (let ([,t-vec (alloc ,(make-info-alloc (constant type-typed-object) #f #f)
                                          ,(%inline logand
                                             ,(%inline + ,e-length
@@ -7381,7 +7381,7 @@
                            (seq
                              (set! ,(%mref ,t-vec ,(constant vector-type-disp))
                                ,(build-type/length e-length
-                                  (constant type-vector)
+                                  type
                                   (constant fixnum-offset)
                                   (constant vector-length-offset)))
                              ,(if e-fill
@@ -7389,50 +7389,75 @@
                                   t-vec)))))))))
         (define default-fill `(immediate ,(fix 0)))
         (define-inline 3 make-vector
-          [(e-length) (do-make-vector e-length default-fill)]
-          [(e-length e-fill) (bind #t (e-fill) (do-make-vector e-length e-fill))])
+          [(e-length) (do-make-vector (constant type-vector) e-length default-fill)]
+          [(e-length e-fill) (bind #t (e-fill) (do-make-vector (constant type-vector) e-length e-fill))])
         (let ()
           (define (extract-vector-length vec)
             (extract-length (%mref ,vec ,(constant vector-type-disp)) (constant vector-length-offset)))
           (define build-vector-copy
-            (lambda (e-vec e-start e-len e-elem prefix-elem?)
+            (lambda (type e-vec e-start e-len e-elem prefix-elem? n-elem)
               (let ([Ltop (make-local-label 'Ltop)]
                     [vec (make-tmp 'vec 'ptr)]
                     [t (make-assigned-tmp 't 'uptr)])
                 (bind #t (e-vec e-start e-len)
                   `(let ([,t (immediate 0)]
                          [,vec ,(if (not e-elem)
-                                    (do-make-vector e-len #f)
+                                    (do-make-vector type e-len #f)
                                     (let ([total-len (make-tmp 'total-len 'uptr)])
-                                      `(let ([,total-len ,(%inline + ,e-len (immediate ,(fix 1)))])
-                                         ,(do-make-vector total-len #f))))])
+                                      `(let ([,total-len ,(%inline + ,e-len ,n-elem)])
+                                         ,(do-make-vector type total-len #f))))])
                      (label ,Ltop
                        (if ,(%inline eq? ,t ,e-len)
                            ,(cond
-                              [(not e-elem) vec]
-                              [else
-                               (let ([idx (if prefix-elem? `(immediate 0) e-len)])
-                                 (%seq
-                                  (set! ,(%mref ,vec ,idx ,(constant vector-data-disp)) ,e-elem)
-                                  ,vec))])
+                             [(not e-elem) vec]
+                             [(nanopass-case (L7 Expr) n-elem
+                                [(immediate ,imm) (guard (eqv? imm (fix 1))) #t]
+                                [(quote ,d) (guard (eqv? d 1)) #t]
+                                [else #f])
+                              (let ([idx (if prefix-elem? `(immediate 0) e-len)])
+                                (%seq
+                                 (set! ,(%mref ,vec ,idx ,(constant vector-data-disp)) ,e-elem)
+                                 ,vec))]
+                             [else
+                              (let ([Lfill (make-local-label 'Lfill)]
+                                    [idx (if prefix-elem?
+                                             t
+                                             (with-output-language (L7 Expr)
+                                               (%inline + ,t ,e-len)))])
+                                (%seq
+                                 (set! ,t (immediate 0))
+                                 (label ,Lfill
+                                   (if ,(%inline eq? ,t ,n-elem)
+                                       ,vec
+                                       ,(%seq
+                                         (set! ,(%mref ,vec ,idx ,(constant vector-data-disp)) ,e-elem)
+                                         (set! ,t ,(%inline + ,t (immediate ,(constant ptr-bytes))))
+                                         (goto ,Lfill))))))])
                            ,(%seq
                              (set! ,(let ([idx (if prefix-elem?
                                                    (with-output-language (L7 Expr)
-                                                     (%inline + ,t (immediate ,(fix 1))))
+                                                     (%inline + ,t ,n-elem))
                                                    t)])
                                       (%mref ,vec ,idx ,(constant vector-data-disp)))
                                    ,(%mref ,e-vec ,(%inline + ,t ,e-start) ,(constant vector-data-disp)))
                              (set! ,t ,(%inline + ,t (immediate ,(constant ptr-bytes))))
                              (goto ,Ltop)))))))))
+          (define build-immutable-vector-copy
+            (lambda (vec)
+              (bind #t (vec)
+                `(if ,(%typed-object-check mask-mutable-vector type-immutable-vector ,vec)
+                     ,vec
+                     ,(build-vector-copy (constant type-immutable-vector) vec
+                                         `(immediate ,(fix 0)) (extract-vector-length vec) #f #f #f)))))
           (define build-vector-set/copy
-            (lambda (e-vec e-idx e-val)
+            (lambda (type e-vec e-idx e-val)
               (let ([Ltop (make-local-label 'Ltop)]
                     [vec (make-tmp 'vec 'ptr)]
                     [t (make-assigned-tmp 't 'uptr)])
                 (bind #t (e-vec e-idx)
                   (bind #f (e-val)
                     `(let ([,t ,(extract-vector-length e-vec)])
-                       (let ([,vec ,(do-make-vector t #f)])
+                       (let ([,vec ,(do-make-vector type t #f)])
                          (label ,Ltop
                            (if ,(%inline eq? ,t (immediate 0))
                                ,(%seq
@@ -7444,11 +7469,11 @@
                                        ,(%mref ,e-vec ,t ,(constant vector-data-disp)))
                                  (goto ,Ltop)))))))))))
           (define build-vector-append
-            (lambda (e-vecs)
+            (lambda (type e-vecs)
               (let loop ([e-vecs e-vecs] [len `(immediate 0)])
                 (cond
                   [(null? e-vecs)
-                   (do-make-vector len #f)]
+                   (do-make-vector type len #f)]
                   [else
                    (let ([Ltop (make-local-label 'Ltop)]
                          [d-vec (make-tmp 'd-vec 'ptr)]
@@ -7467,29 +7492,56 @@
                                          (set! ,(%mref ,d-vec ,(%inline + ,t ,e-len) ,(constant vector-data-disp))
                                                ,(%mref ,e-vec ,e-len ,(constant vector-data-disp)))
                                          (goto ,Ltop))))))))]))))
+          (define (okay-make-vector? pr e1)
+            (and (eq? (primref-name pr) 'make-vector)
+                 (or (>= (primref-level pr) 3)
+                     (constant? (lambda (x) (and (target-fixnum? x) (>= x 0))) e1))))
+          (define build-vector-append-two
+            (lambda (type vec1 vec2)
+              (nanopass-case (L7 Expr) vec1
+                [(call ,info1 ,mdcl1 ,pr ,e1)
+                 (guard (memq (primref-name pr) '(vector immutable-vector)))
+                 (bind #f (e1)
+                   (bind #t (vec2)
+                     (build-vector-copy type vec2 `(immediate ,(fix 0)) (extract-vector-length vec2) e1 #t `(immediate ,(fix 1)))))]
+                [(call ,info1 ,mdcl1 ,pr ,e1 ,e2)
+                 (guard (okay-make-vector? pr e1))
+                 (bind #t (e1 e2 vec2)
+                   (build-vector-copy type vec2 `(immediate ,(fix 0)) (extract-vector-length vec2) e2 #t e1))]
+                [else
+                 (nanopass-case (L7 Expr) vec2
+                   [(call ,info2 ,mdcl2 ,pr ,e2)
+                    (guard (memq (primref-name pr) '(vector immutable-vector)))
+                    (bind #t (vec1)
+                      (bind #f (e2)
+                        (build-vector-copy type vec1 `(immediate ,(fix 0)) (extract-vector-length vec1) e2 #f `(immediate ,(fix 1)))))]
+                   [(call ,info2 ,mdcl2 ,pr ,e1 ,e2)
+                    (guard (okay-make-vector? pr e1))
+                    (bind #t (e1 e2 vec1)
+                      (build-vector-copy type vec1 `(immediate ,(fix 0)) (extract-vector-length vec1) e2 #f e1))]
+                   [else (build-vector-append type (list vec1 vec2))])])))
           (define-inline 3 vector-copy
             [(vec) (bind #t (vec)
-                     (build-vector-copy vec `(immediate ,(fix 0)) (extract-vector-length vec) #f #f))]
-            [(vec start len) (build-vector-copy vec start len #f #f)])
+                     (build-vector-copy (constant type-vector) vec `(immediate ,(fix 0)) (extract-vector-length vec) #f #f #f))]
+            [(vec start len) (build-vector-copy (constant type-vector) vec start len #f #f #f)])
+          (define-inline 3 immutable-vector-copy
+            [(vec) (build-immutable-vector-copy vec)]
+            [(vec start len) (build-vector-copy (constant type-immutable-vector) vec start len #f #f #f)])
+          (define-inline 3 vector->immutable-vector
+            [(vec) (build-immutable-vector-copy vec)])
           (define-inline 3 vector-set/copy
-            [(vec idx val) (build-vector-set/copy vec idx val)])
+            [(vec idx val) (build-vector-set/copy (constant type-vector) vec idx val)])
+          (define-inline 3 immutable-vector-set/copy
+            [(vec idx val) (build-vector-set/copy (constant type-immutable-vector) vec idx val)])
           (define-inline 3 vector-append
             [() `(quote ,(vector))]
-            [(vec1 vec2) (nanopass-case (L7 Expr) vec1
-                           [(call ,info1 ,mdcl1 ,pr ,e1)
-                            (guard (eq? (primref-name pr) 'vector))
-                            (bind #f (e1)
-                              (bind #t (vec2)
-                                (build-vector-copy vec2 `(immediate ,(fix 0)) (extract-vector-length vec2) e1 #t)))]
-                           [else
-                            (nanopass-case (L7 Expr) vec2
-                              [(call ,info2 ,mdcl2 ,pr ,e2)
-                               (guard (eq? (primref-name pr) 'vector))
-                               (bind #t (vec1)
-                                 (bind #f (e2)
-                                   (build-vector-copy vec1 `(immediate ,(fix 0)) (extract-vector-length vec1) e2 #f)))]
-                              [else (build-vector-append (list vec1 vec2))])])]
-            [(vec . vecs) (build-vector-append (cons vec vecs))]))
+            [(vec1 vec2) (build-vector-append-two (constant type-vector) vec1 vec2)]
+            [(vec . vecs) (build-vector-append (constant type-vector) (cons vec vecs))])
+          (define-inline 3 immutable-vector-append
+            [() `(quote ,(immutable-vector))]
+            [(vec) (build-immutable-vector-copy vec)]
+            [(vec1 vec2) (build-vector-append-two (constant type-immutable-vector) vec1 vec2)]
+            [(vec . vecs) (build-vector-append (constant type-immutable-vector) (cons vec vecs))]))
         (let ()
           (define (valid-length? e-length)
             (constant?
@@ -7498,11 +7550,11 @@
           (define-inline 2 make-vector
             [(e-length)
              (and (valid-length? e-length)
-                  (do-make-vector e-length default-fill))]
+                  (do-make-vector (constant type-vector) e-length default-fill))]
             [(e-length e-fill)
              (and (valid-length? e-length)
                   (constant? fixnum? e-fill)
-                  (do-make-vector e-length e-fill))]))
+                  (do-make-vector (constant type-vector) e-length e-fill))]))
         (define-inline 2 vector->immutable-vector
           [(e-vec)
            (nanopass-case (L7 Expr) e-vec

@@ -16,7 +16,24 @@
 (mat vector
     (equal? (vector 1 2 3 4) '#(1 2 3 4))
     (eq? (vector) '#())
- )
+    )
+
+(mat immutable-vector
+  (equal? (immutable-vector 1 2 3 4) (vector->immutable-vector '#(1 2 3 4)))
+  (eq? (immutable-vector) (vector->immutable-vector '#()))
+  (begin
+    (define (f x)
+      (let ([v (immutable-vector (begin (write 'a) (+ x 1)) (begin (write 'a) 2) (begin (write 'a) (cons 3 x)))])
+        (for-each write
+          (list
+           (begin (write 'b) (vector-ref v 0))
+           (begin (write 'b) (vector-ref v 1))
+           (begin (write 'b) (vector-ref v 2))))))
+    #t)
+  (equal?
+   (with-output-to-string (lambda () (f 7)))
+   "aaabbb82(3 . 7)")
+  )
 
 (mat make-vector
     (eqv? (vector-length (make-vector 10)) 10)
@@ -112,12 +129,16 @@
  )
 
 (mat vector-copy
-    (equal? (vector-copy '#()) '#())
+    (eq? (vector-copy '#()) '#())
     (equal? (vector-copy '#(a b c)) '#(a b c))
     (equal? (vector-copy '#(a b c) 0 1) '#(a))
     (equal? (vector-copy '#(a b c) 2 1) '#(c))
     (equal? (vector-copy '#(a b c d) 1 2) '#(b c))
     (eq? (vector-copy '#(a b c d) 1 0) '#())
+    (mutable-vector? (vector-copy '#(a b c)))
+    (mutable-vector? (vector-copy '#(a b c) 0 1))
+    (mutable-vector? (vector-copy '#(a b c) 2 1))
+    (mutable-vector? (vector-copy '#(a b c d) 1 2))
     (let* ((x1 (vector 1 2 3)) (x2 (vector-copy x1)))
         (and (equal? x2 x1) (not (eq? x2 x1))))
     (andmap
@@ -133,17 +154,64 @@
     (error? (vector-copy '#(a b c) 2 -1))
     )
 
+(mat immutable-vector-copy
+    (eq? (immutable-vector-copy '#()) (immutable-vector))
+    (equal? (immutable-vector-copy '#(a b c)) '#(a b c))
+    (equal? (immutable-vector-copy '#(a b c) 0 1) '#(a))
+    (equal? (immutable-vector-copy '#(a b c) 2 1) '#(c))
+    (equal? (immutable-vector-copy '#(a b c d) 1 2) '#(b c))
+    (immutable-vector? (immutable-vector-copy '#(a b c)))
+    (immutable-vector? (immutable-vector-copy '#(a b c) 0 1))
+    (immutable-vector? (immutable-vector-copy '#(a b c) 2 1))
+    (immutable-vector? (immutable-vector-copy '#(a b c d) 1 2))
+    (eq? (immutable-vector-copy '#(a b c d) 1 0) (immutable-vector))
+    (let* ((x1 (vector 1 2 3)) (x2 (immutable-vector-copy x1)))
+        (and (equal? x2 x1) (not (eq? x2 x1))))
+    (andmap
+      (lambda (n)
+        (let ([v (vector-map random (make-vector n 1000))])
+          (equal? (immutable-vector-copy v) v)))
+      (map random (make-list 500 2500)))
+    (error? (immutable-vector-copy '(a b c)))
+    (error? (immutable-vector-copy '#(a b c) 'x 2))
+    (error? (immutable-vector-copy '#(a b c) 1 'x))
+    (error? (immutable-vector-copy '#(a b c) -1 2))
+    (error? (immutable-vector-copy '#(a b c) 1 3))
+    (error? (immutable-vector-copy '#(a b c) 2 -1))
+    )
+
 (mat vector-set/copy
     (equal? (vector-set/copy '#(a b c) 0 'x) '#(x b c))
     (equal? (vector-set/copy '#(a b c) 1 'x) '#(a x c))
     (equal? (vector-set/copy '#(a b c) 2 'x) '#(a b x))
     (equal? (vector-set/copy '#(a b c d e f g h i) 2 'x) '#(a b x d e f g h i))
+    (mutable-vector? (vector-set/copy '#(a b c) 0 'x))
+    (mutable-vector? (vector-set/copy '#(a b c) 1 'x))
+    (mutable-vector? (vector-set/copy '#(a b c) 2 'x))
+    (mutable-vector? (vector-set/copy '#(a b c d e f g h i) 2 'x))
     (error? (vector-set/copy 1))
     (error? (vector-set/copy '#(a b c)))
     (error? (vector-set/copy '#(a b c) 1))
     (error? (vector-set/copy '#(a b c) 'y 'x))
     (error? (vector-set/copy '#(a b c) -1 'x))
     (error? (vector-set/copy '#(a b c) 3 'x))
+ )
+
+(mat immutable-vector-set/copy
+    (equal? (immutable-vector-set/copy '#(a b c) 0 'x) '#(x b c))
+    (equal? (immutable-vector-set/copy '#(a b c) 1 'x) '#(a x c))
+    (equal? (immutable-vector-set/copy '#(a b c) 2 'x) '#(a b x))
+    (equal? (immutable-vector-set/copy '#(a b c d e f g h i) 2 'x) '#(a b x d e f g h i))
+    (immutable-vector? (immutable-vector-set/copy '#(a b c) 0 'x))
+    (immutable-vector? (immutable-vector-set/copy '#(a b c) 1 'x))
+    (immutable-vector? (immutable-vector-set/copy '#(a b c) 2 'x))
+    (immutable-vector? (immutable-vector-set/copy '#(a b c d e f g h i) 2 'x))
+    (error? (immutable-vector-set/copy 1))
+    (error? (immutable-vector-set/copy '#(a b c)))
+    (error? (immutable-vector-set/copy '#(a b c) 1))
+    (error? (immutable-vector-set/copy '#(a b c) 'y 'x))
+    (error? (immutable-vector-set/copy '#(a b c) -1 'x))
+    (error? (immutable-vector-set/copy '#(a b c) 3 'x))
  )
 
 (mat vector-append
@@ -153,16 +221,41 @@
     (eq? (vector-append '#() '#() '#()) '#())
     (eq? (vector-append '#() '#() '#() '#()) '#())
     (equal? (vector-append '#(a b c)) '#(a b c))
+    (mutable-vector? (vector-append '#(a b c)))
     (equal? (vector-append '#(a b c) '#(d e)) '#(a b c d e))
+    (mutable-vector? (vector-append '#(a b c) '#(d e)))
     (equal? (vector-append '#(a b c) '#(d e) '#(f) '#(g h i)) '#(a b c d e f g h i))
+    (mutable-vector? (vector-append '#(a b c) '#(d e) '#(f) '#(g h i)))
     (equal? (vector-append (vector 'p) '#()) '#(p))
+    (mutable-vector? (vector-append (vector 'p) '#()))
     (equal? (vector-append '#() (vector 'p)) '#(p))
+    (mutable-vector? (vector-append '#() (vector 'p)))
     (equal? (vector-append (vector 'p) '#(a b c)) '#(p a b c))
     (equal? (vector-append '#(a b c) (vector 'p)) '#(a b c p))
+    (mutable-vector? (vector-append (vector 'p) '#(a b c)))
+    (mutable-vector? (vector-append '#(a b c) (vector 'p)))
+    (equal? (vector-append (vector 'p) (make-vector 3 'ok)) '#(p ok ok ok))
+    (mutable-vector? (vector-append (vector 'p) (make-vector 3 'ok)))
+    (let* ([ip (open-input-string "4 0")]
+           [c 0]
+           [v0 (vector-append (make-vector (read ip) (begin (set! c (+ c 1)) c)) (vector 'x 2 3 4))]
+           [c0 c]
+           [v1 (vector-append (make-vector (read ip) (begin (set! c (+ c 1)) c)) (vector 'y 'not))])
+      (and (equal? v0 '#(1 1 1 1 x 2 3 4))
+           (mutable-vector? v0)
+           (= c0 1)
+           (equal? v1 '#(y not))
+           (mutable-vector? v1)
+           (= c 2)))
+    (equal? (vector-append (make-vector 1 'p) '#(d q)) '#(p d q))
+    (mutable-vector? (vector-append (make-vector 1 'p) '#(d q)))
+    (equal? (vector-append (vector 'p) (make-vector 0 'ok)) '#(p))
+    (mutable-vector? (vector-append (vector 'p) (make-vector 0 'ok)))
     (error? (vector-append 1))
     (error? (vector-append '#(a b c) 'x))
     (error? (vector-append '#(a b c) '#(d) 'x))
     (error? (vector-append '#(a b c) '#(d) '#(e)'x))
+    (error? (vector-append (vector 'p) (make-vector -1 'ok)))
 
     ;; ensure that `vector-append` optimization doesn't misorder
     ;; evaluation and potential collection with respect to filling
@@ -181,6 +274,228 @@
                  (and (eqv? 1 (#%$generation (vector-ref v N)))
                       (equal? (vector-ref v N) "8")))))))
  )
+
+(mat immutable-vector-append
+    (eq? (immutable-vector-append) (immutable-vector))
+    (eq? (immutable-vector-append '#()) (immutable-vector))
+    (eq? (immutable-vector-append '#() '#()) (immutable-vector))
+    (eq? (immutable-vector-append '#() '#() '#()) (immutable-vector))
+    (eq? (immutable-vector-append '#() '#() '#() '#()) (immutable-vector))
+    (equal? (immutable-vector-append '#(a b c)) '#(a b c))
+    (immutable-vector? (immutable-vector-append '#(a b c)))
+    (equal? (immutable-vector-append '#(a b c) '#(d e)) '#(a b c d e))
+    (immutable-vector? (immutable-vector-append '#(a b c) '#(d e)))
+    (equal? (immutable-vector-append '#(a b c) '#(d e) '#(f) '#(g h i)) '#(a b c d e f g h i))
+    (immutable-vector? (immutable-vector-append '#(a b c) '#(d e) '#(f) '#(g h i)))
+    (equal? (immutable-vector-append (vector 'p) '#()) '#(p))
+    (immutable-vector? (immutable-vector-append (vector 'p) '#()))
+    (equal? (immutable-vector-append '#() (vector 'p)) '#(p))
+    (immutable-vector? (immutable-vector-append '#() (vector 'p)))
+    (equal? (immutable-vector-append (vector 'p) '#(a b c)) '#(p a b c))
+    (equal? (immutable-vector-append '#(a b c) (vector 'p)) '#(a b c p))
+    (immutable-vector? (immutable-vector-append (vector 'p) '#(a b c)))
+    (immutable-vector? (immutable-vector-append '#(a b c) (vector 'p)))
+    (equal? (immutable-vector-append (vector 'p) (make-vector 3 'ok)) '#(p ok ok ok))
+    (immutable-vector? (immutable-vector-append (vector 'p) (make-vector 3 'ok)))
+    (equal? (immutable-vector-append (vector 'p) (make-vector 0 'ok)) '#(p))
+    (immutable-vector? (immutable-vector-append (vector 'p) (make-vector 0 'ok)))
+    (equal? (immutable-vector-append (make-vector 1 'p) '#(d q)) '#(p d q))
+    (immutable-vector? (immutable-vector-append (make-vector 1 'p) '#(d q)))
+    (let* ([ip (open-input-string "4 0")]
+           [c 0]
+           [v0 (immutable-vector-append (make-vector (read ip) (begin (set! c (+ c 1)) c)) (vector 'x 2 3 4))]
+           [c0 c]
+           [v1 (immutable-vector-append (make-vector (read ip) (begin (set! c (+ c 1)) c)) (vector 'y 'not))])
+      (and (equal? v0 '#(1 1 1 1 x 2 3 4))
+           (immutable-vector? v0)
+           (= c0 1)
+           (equal? v1 '#(y not))
+           (immutable-vector? v1)
+           (= c 2)))
+    (error? (immutable-vector-append 1))
+    (error? (immutable-vector-append '#(a b c) 'x))
+    (error? (immutable-vector-append '#(a b c) '#(d) 'x))
+    (error? (immutable-vector-append '#(a b c) '#(d) '#(e)'x))
+    (error? (immutable-vector-append (vector 'p) (make-vector -1 'ok)))
+
+    ;; same as mutable-vector test above
+    (with-interrupts-disabled
+      (letrec ([f (lambda (m)
+                    (collect 0 1)
+                    (number->string m))]
+               [N 1000])
+        (let ([v (immutable-vector-append (make-vector N)
+                                          (vector (f 8)))])
+          (and (eqv? 0 (#%$generation (vector-ref v N)))
+               (eqv? 0 (#%$generation v))
+               (begin
+                 (collect 0 1)
+                 (and (eqv? 1 (#%$generation (vector-ref v N)))
+                      (equal? (vector-ref v N) "8")))))))
+    )
+
+(mat vector-cbuild-cp0 (parameters [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (equivalent-expansion?
+      (expand/optimize '(vector->immutable-vector (vector 1 2)))
+      `(quote ,(immutable-vector 1 2)))
+     (equivalent-expansion?
+      (expand/optimize '(vector->immutable-vector (immutable-vector 1 2)))
+      `(quote ,(immutable-vector 1 2)))
+     (not
+      (equivalent-expansion?
+       (expand/optimize `(vector->immutable-vector '#(1 2)))
+       `(quote ,(immutable-vector 1 2))))
+     (equivalent-expansion?
+      (expand/optimize `(vector->immutable-vector '#()))
+      `(quote ,(immutable-vector)))
+     (equivalent-expansion?
+      (expand/optimize `(vector->immutable-vector ',(immutable-vector 1 2)))
+      `(quote ,(immutable-vector 1 2)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (vector->immutable-vector (vector x y))))
+      `(lambda (x y) (#3%immutable-vector x y)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (vector->immutable-vector (immutable-vector x y))))
+      `(lambda (x y) (#3%immutable-vector x y)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (vector->immutable-vector (begin (x) (vector x y)))))
+      `(lambda (x y) (x) (#3%immutable-vector x y)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (vector->immutable-vector (begin (x) (immutable-vector x y)))))
+      `(lambda (x y) (x) (#3%immutable-vector x y)))
+
+     (equivalent-expansion?
+      (expand/optimize '(immutable-vector-copy (vector 1 2)))
+      `(quote ,(immutable-vector 1 2)))
+     (equivalent-expansion?
+      (expand/optimize '(immutable-vector-copy (immutable-vector 1 2)))
+      `(quote ,(immutable-vector 1 2)))
+     (equivalent-expansion?
+      (expand/optimize `(immutable-vector-copy ',(immutable-vector 1 2)))
+      `(quote ,(immutable-vector 1 2)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (immutable-vector-copy (vector x y))))
+      `(lambda (x y) (#3%immutable-vector x y)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (immutable-vector-copy (immutable-vector x y))))
+      `(lambda (x y) (#3%immutable-vector x y)))
+
+     (equivalent-expansion?
+      (expand/optimize '(vector-copy (vector 1 2)))
+      `(#3%vector 1 2))
+     (equivalent-expansion?
+      (expand/optimize '(vector-copy (immutable-vector 1 2)))
+      `(#3%vector 1 2))
+     (equivalent-expansion?
+      (expand/optimize `(vector-copy ',(immutable-vector 1 2)))
+      `(#3%vector 1 2))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (vector-copy (vector x y))))
+      `(lambda (x y) (#3%vector x y)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (vector-copy (immutable-vector x y))))
+      `(lambda (x y) (#3%vector x y)))
+
+     (equivalent-expansion?
+      (expand/optimize '(immutable-vector-append (vector 1 2)))
+      `(quote ,(immutable-vector 1 2)))
+     (equivalent-expansion?
+      (expand/optimize '(immutable-vector-append (vector 1 2) (vector 3 4)))
+      `(quote ,(immutable-vector 1 2 3 4)))
+     (equivalent-expansion?
+      (expand/optimize '(immutable-vector-append (immutable-vector 1 2)))
+      `(quote ,(immutable-vector 1 2)))
+     (equivalent-expansion?
+      (expand/optimize '(immutable-vector-append (immutable-vector 1 2) (vector 3 4)))
+      `(quote ,(immutable-vector 1 2 3 4)))
+     (equivalent-expansion?
+      (expand/optimize `(immutable-vector-append ',(immutable-vector 1 2)))
+      `(quote ,(immutable-vector 1 2)))
+     (equivalent-expansion?
+      (expand/optimize `(immutable-vector-append ',(immutable-vector 1 2) (vector 3 4)))
+      `(quote ,(immutable-vector 1 2 3 4)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (immutable-vector-append (vector x y))))
+      `(lambda (x y) (#3%immutable-vector x y)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (immutable-vector-append (vector x y) (vector y x))))
+      `(lambda (x y) (#3%immutable-vector x y y x)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (immutable-vector-append (immutable-vector x y))))
+      `(lambda (x y) (#3%immutable-vector x y)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (immutable-vector-append (immutable-vector x y) (immutable-vector y x))))
+      `(lambda (x y) (#3%immutable-vector x y y x)))
+     (equivalent-expansion?
+      (expand/optimize `(lambda (x y) (immutable-vector-append (immutable-vector 1 x)
+                                                               (vector 2 y)
+                                                               (vector-copy (vector 6 7 x))
+                                                               ',(immutable-vector 8))))
+      `(lambda (x y) (#3%immutable-vector 1 x 2 y 6 7 x 8)))
+
+     (equivalent-expansion?
+      (expand/optimize '(vector-append (vector 1 2)))
+      `(#3%vector 1 2))
+     (equivalent-expansion?
+      (expand/optimize '(vector-append (vector 1 2) (vector 3 4)))
+      `(#3%vector 1 2 3 4))
+     (equivalent-expansion?
+      (expand/optimize '(vector-append (immutable-vector 1 2)))
+      `(#3%vector 1 2))
+     (equivalent-expansion?
+      (expand/optimize '(vector-append (immutable-vector 1 2) (vector 3 4)))
+      `(#3%vector 1 2 3 4))
+     (equivalent-expansion?
+      (expand/optimize `(vector-append ',(immutable-vector 1 2)))
+      `(#3%vector 1 2))
+     (equivalent-expansion?
+      (expand/optimize `(vector-append ',(immutable-vector 1 2) (vector 3 4)))
+      `(#3%vector 1 2 3 4))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (vector-append (vector x y))))
+      `(lambda (x y) (#3%vector x y)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (vector-append (vector x y) (vector y x))))
+      `(lambda (x y) (#3%vector x y y x)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (vector-append (immutable-vector x y))))
+      `(lambda (x y) (#3%vector x y)))
+     (equivalent-expansion?
+      (expand/optimize '(lambda (x y) (vector-append (immutable-vector x y) (immutable-vector y x))))
+      `(lambda (x y) (#3%vector x y y x)))
+     (equivalent-expansion?
+      (expand/optimize `(lambda (x y) (vector-append (immutable-vector 1 x)
+                                                     (vector 2 y)
+                                                     (vector-copy (vector 6 7 x))
+                                                     ',(immutable-vector 8))))
+      `(lambda (x y) (#3%vector 1 x 2 y 6 7 x 8)))
+
+     
+     (equivalent-expansion?
+      (expand/optimize `(lambda (x y)
+                          (vector-ref (vector-copy (immutable-vector 1 x)) 1)))
+      `(lambda (x y) x))
+     (equivalent-expansion?
+      (expand/optimize `(lambda (x y)
+                          (vector->immutable-vector
+                           (vector (vector-ref (vector-copy (immutable-vector 1 x)) 1)
+                                   (vector-ref (immutable-vector-append (immutable-vector 2 3)
+                                                                        (vector y 0))
+                                               2)))))
+      `(lambda (x y) (#3%immutable-vector x y)))
+
+     (equivalent-expansion?
+      (expand/optimize `(lambda (x)
+                          (vector-length (immutable-vector x x x))))
+      `(lambda (x) 3))
+     (equivalent-expansion?
+      (expand/optimize `(lambda (x)
+                          (vector-length (immutable-vector x (#2%printf "hi\n") x))))
+      `(lambda (x)
+         (#2%printf "hi\n")
+         3))
+
+     )
 
 (mat vector-fill!
     (let ([v (vector-copy '#5(a b c d e))])
@@ -1452,7 +1767,14 @@
     (equal? '#(1 2 3) immutable-123-vector)
     (eq? immutable-123-vector
          (vector->immutable-vector immutable-123-vector))
-    
+
+    ;; these also turn out to be conversions that should
+    ;; leave an immutable vector alone:
+    (eq? immutable-123-vector
+         (immutable-vector-copy immutable-123-vector))
+    (eq? immutable-123-vector
+         (immutable-vector-append immutable-123-vector))
+
     (mutable-vector? (make-vector 5))
     (not (immutable-vector? (make-vector 5)))
     

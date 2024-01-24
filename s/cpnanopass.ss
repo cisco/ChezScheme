@@ -6250,12 +6250,16 @@
                                         (set! ,%ac0 ,%xp)
                                         (jump ,%ref-ret (,%ac0)))
                                      ,(f (cdr reg*) (fx+ i 1))))))))))]
-           [(vector-procedure)
-            (let ([Ltop (make-local-label 'ltop)])
-              `(lambda ,(make-info "vector" '(-1) #t) 0 ()
+           [(vector-procedure immutable-vector-procedure)
+            (let* ([Ltop (make-local-label 'ltop)]
+                   [mut? (eq? sym 'vector-procedure)]
+                   [constant-type-*vector (if mut?
+                                              (constant type-vector)
+                                              (constant type-immutable-vector))])
+              `(lambda ,(make-info (if mut? "vector" "immutable-vector") '(-1) #t) 0 ()
                  (if ,(%inline eq? ,%ac0 (immediate 0))
                      ,(%seq
-                        (set! ,%ac0 (literal ,(make-info-literal #f 'object '#() 0)))
+                        (set! ,%ac0 (literal ,(make-info-literal #f 'object (if mut? '#() (vector->immutable-vector '#())) 0)))
                         (jump ,%ref-ret (,%ac0)))
                      ,(%seq
                         (set! ,%ac0 ,(%inline sll ,%ac0 ,(%constant log2-ptr-bytes)))
@@ -6265,17 +6269,17 @@
                         ,(let ([delta (fx- (constant vector-length-offset) (constant log2-ptr-bytes))])
                            (safe-assert (fx>= delta 0))
                            (if (fx= delta 0)
-                               (if (fx= (constant type-vector) 0)
+                               (if (fx= constant-type-*vector 0)
                                    `(set! ,(%mref ,%xp ,(constant vector-type-disp)) ,%ac0)
                                    (%seq
-                                     (set! ,%td ,(%inline logor ,%ac0 (immediate ,(constant type-vector))))
+                                     (set! ,%td ,(%inline logor ,%ac0 (immediate ,constant-type-*vector)))
                                      (set! ,(%mref ,%xp ,(constant vector-type-disp)) ,%td)))
                                (%seq
                                  (set! ,%td ,(%inline sll ,%ac0 (immediate ,delta)))
-                                 ,(if (fx= (constant type-vector) 0)
+                                 ,(if (fx= constant-type-*vector 0)
                                       `(set! ,(%mref ,%xp ,(constant vector-type-disp)) ,%td)
                                       (%seq
-                                        (set! ,%td ,(%inline logor ,%td (immediate ,(constant type-vector))))
+                                        (set! ,%td ,(%inline logor ,%td (immediate ,constant-type-*vector)))
                                         (set! ,(%mref ,%xp ,(constant vector-type-disp)) ,%td))))))
                         ,(let f ([reg* arg-registers] [i 0])
                            (if (null? reg*)
