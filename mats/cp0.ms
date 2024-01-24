@@ -2889,6 +2889,11 @@
          (begin (#2%write 'b) x)
          (begin (#2%write 'c) 2)
          (begin (#2%write 'd) 3))))
+  ((lambda (x) (and (member x '("abc" "cab")) #t))
+   (with-output-to-string
+     (lambda ()
+       (vector-ref (begin (write 'a) (immutable-vector (begin (write 'b) 123)))
+         (begin (write 'c) 0)))))
  )
 
 (mat let-pushing
