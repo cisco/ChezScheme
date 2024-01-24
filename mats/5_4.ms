@@ -1459,6 +1459,7 @@
   (test cat1 (char-general-category #\a) => 'Ll)
   (test cat2 (char-general-category #\space) => 'Zs)
   (test cat3 (char-general-category (integer->char #x10FFFF)) => 'Cn)
+  (test cat4 (char-general-category #\x31EF) => 'So) ; Unicode 15.1
 
   (test alpha1 (char-alphabetic? #\a) => #t)
   (test numer1 (char-numeric? #\1) => #t)
