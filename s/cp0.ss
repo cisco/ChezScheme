@@ -1673,6 +1673,17 @@
           [(apply2) (values)]
           [(apply3) (find-apply-lambda-clause exp (app-opnds ctxt))])))
 
+    (define (build-let-help lambda-preinfo id* rhs* body)
+      (or (and (= (length id*) 1)
+               (= (length rhs*) 1)
+               (nanopass-case (Lsrc Expr) (car rhs*)
+                 [(seq ,e1 ,e2)
+                  ; (let ((x (begin e1 e2))) e3) => (begin e1 (let ((x e2)) e3))
+                  ; this can expose (immutable-vector ...) in e2 to optimization
+                  `(seq ,e1 ,(build-let lambda-preinfo id* (list e2) body))]
+                 [else #f]))
+          (build-let lambda-preinfo id* rhs* body)))
+
     (define letify
       (case-lambda
         [(lambda-preinfo id* ctxt body) (letify lambda-preinfo id* ctxt '() body)]
@@ -1705,14 +1716,6 @@
                     ; (let ((x e)) x) => e
                     ; x is clearly not assigned, even if flags are polluted and say it is
                     (make-nontail (app-ctxt ctxt) (car rhs*))]
-                   [(and (= (length id*) 1)
-                         (= (length rhs*) 1)
-                         (nanopass-case (Lsrc Expr) (car rhs*)
-                           [(seq ,e1 ,e2)
-                            ; (let ((x (begin e1 e2))) e3) => (begin e1 (let ((x e2)) e3))
-                            ; this can expose (immutable-vector ...) in e2 to optimization
-                            `(seq ,e1 ,(build-let lambda-preinfo id* (list e2) body))]
-                           [else #f]))]
                    ; we drop the RHS of a let binding into the let body when the body expression is a call 
                    ; and we can do so without violating evaluation order of bindings wrt the let body:
                    ;  * for pure, singly referenced bindings, we drop them to the variable reference site
@@ -1794,7 +1797,7 @@
                                    (lambda (new-e* . ignore)
                                      (let ([body (if (andmap eq? new-e* e*) body (build-body (car new-e*) (cdr new-e*)))])
                                        (let ([alist (filter cdr alist)])
-                                         (if (null? alist) body (build-let lambda-preinfo (map car alist) (map cdr alist) body)))))))))
+                                         (if (null? alist) body (build-let-help lambda-preinfo (map car alist) (map cdr alist) body)))))))))
                            (nanopass-case (Lsrc Expr) body
                              [(call ,preinfo ,e ,e* ...)
                               (drop-let (cons e e*) (lambda (e e*) (build-call preinfo e e*)))]
@@ -1807,7 +1810,7 @@
                              [(record-type ,rtd ,e)
                               (drop-let (list e) (lambda (e e*) (safe-assert (null? e*)) `(record-type ,rtd ,e)))]
                              [else #f])))]
-                   [else (build-let lambda-preinfo id* rhs* body)]))))]))
+                   [else (build-let-help lambda-preinfo id* rhs* body)]))))]))
 
     (define cp0-let
       (lambda (lambda-preinfo ids body ctxt env sc wd name moi)
