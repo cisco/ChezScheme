@@ -9008,10 +9008,9 @@
                        (new q x)))))))
            (make-foo 3))))
     `(let ([ctr 0])
-       (letrec ([g0 (lambda (new) (lambda (q) (set! ctr (#2%+ 1 xtr)) (new q ctr)))])
+       (letrec ([g0 (lambda (new) (lambda (q) (new q (begin (set! ctr (#2%+ 1 xtr)) ctr))))])
          (#3%$value (#3%$make-record-constructor-descriptor ',record-type-descriptor?  #f g0 'define-record-type))
-         (set! ctr (#2%+ 1 xtr))
-         (#3%$record ',record-type-descriptor? 3 ctr))))
+         (#3%$record ',record-type-descriptor? 3 (begin (set! ctr (#2%+ 1 xtr)) ctr)))))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
       (expand/optimize
@@ -9028,10 +9027,9 @@
                        (new q x)))))))
            (make-foo 3))))
     `(let ([ctr 0])
-       (letrec ([g0 (lambda (new) (lambda (q) (set! ctr (#3%+ 1 xtr)) (new q ctr)))])
+       (letrec ([g0 (lambda (new) (lambda (q) (new q (begin (set! ctr (#3%+ 1 xtr)) ctr))))])
          (#3%$value (#3%$make-record-constructor-descriptor ',record-type-descriptor?  #f g0 'define-record-type))
-         (set! ctr (#3%+ 1 xtr))
-         (#3%$record ',record-type-descriptor? 3 ctr))))
+         (#3%$record ',record-type-descriptor? 3 (begin (set! ctr (#3%+ 1 xtr)) ctr)))))
   (error? ; invalid uid
     (let ()
       (define useless
@@ -9051,6 +9049,76 @@
         (foo-x (make-foo 3.0 y))))
     #t)
   (equal? ($foo 17) 3.0)
+  ;; two regression tests as extra confirmation that `begin` rotation and let-binding
+  ;; dropping work together ok
+  (equivalent-expansion?
+   (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize
+      '(lambda (instance)
+         (define-record-type instance-variable-reference
+           (fields inst kind))
+         (define (variable-reference-constant? v)
+           (eq? (instance-variable-reference-kind v) 'constant))
+         (lambda (x_1 y_2 f_3)
+           (begin
+             (set! x_1 5)
+             (let ([app_6 (variable-reference-constant?
+                           (letrec* ([z_4 (let ([z (lambda () z_4)]) z)])
+                             (begin
+                               (f_3 z_4)
+                               (make-instance-variable-reference
+                                instance
+                                'mutable))))])
+               (list #f #t app_6
+                     (variable-reference-constant?
+                      (letrec* ([z_5 (let ([z (lambda () z_5)]) intentionally-free-x)])
+                        (begin
+                          (f_3 z_5)
+                          (make-instance-variable-reference
+                           instance
+                           'constant)))))))))))
+   '(lambda (instance)
+      (let ([rtd (#2%$make-record-type-descriptor #!base-rtd 'instance-variable-reference #f #f #f #f
+                                                  '#((immutable inst) (immutable kind)) 'define-record-type)])
+        (lambda (x_1 y_2 f_3)
+          (letrec ([z_4 (lambda () z_4)])
+            (f_3 z_4)
+            (let ([z_5 intentionally-free-x])
+              (f_3 z_5)
+              (#2%list #f #t #f #t)))))))
+  (equivalent-expansion?
+   (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
+     (expand/optimize
+      '(let ()
+         (define-record variable-reference
+           (inst var-or-info))
+         (define (variable-reference-constant? v)
+           (eq? (variable-reference-var-or-info v) 'constant))
+         (lambda (instance-variable-reference)
+           (lambda (x_1 y_2 f_3)
+             (begin
+               (set! x_1 5)
+               (let ([app_6 (variable-reference-constant?
+                             (letrec* ([z_4 (lambda () z_4)])
+                               (begin
+                                 (f_3 z_4)
+                                 (make-variable-reference
+                                  instance-variable-reference
+                                  'mutable))))])
+                 (list app_4 app_5 #f #t app_6
+                       (variable-reference-constant?
+                        (letrec* ([z_5 (lambda () z_5)])
+                          (begin
+                            (f_3 z_5)
+                            (make-variable-reference
+                             instance-variable-reference
+                             'constant))))))))))))
+   '(lambda (instance-variable-reference)
+      (lambda (x_1 y_2 f_3)
+        (letrec ([z_4 (lambda () z_4)])
+          (f_3 z_4)
+          (letrec ([z_5 (lambda () z_5)])
+            (#3%list app_4 app_5 #f #t #f (begin (f_3 z_5) #t)))))))
  )
 
 (mat cp0-rtd-inspection-optimizations
