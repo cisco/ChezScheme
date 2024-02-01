@@ -1058,7 +1058,7 @@ returns the symbol \scheme{box}.
 returns an inspector object containing the contents of the box.
 
 \instype{TLC}
-Box inspector objects contain {\ChezScheme} boxes.
+TLC inspector objects contain {\ChezScheme} transport link cells.
 
 \insmsg{tlc}{\scheme{'type}}
 returns the symbol \scheme{tlc}.
