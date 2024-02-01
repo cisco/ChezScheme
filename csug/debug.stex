@@ -26,7 +26,7 @@ the tutorial ``How to Debug Chez Scheme Programs.''
 HTML and PDF versions
 % of the tutorial
 are available at
-\hyperlink{http://www.cs.indiana.edu/chezscheme/debug/}{http://www.cs.indiana.edu/chezscheme/debug/}.
+\hyperlink{https://scheme.com/debug/debug.html}{https://scheme.com/debug/debug.html}.
 
 
 \section{Tracing\label{SECTDEBUGTRACING}}
@@ -1058,7 +1058,7 @@ returns the symbol \scheme{box}.
 returns an inspector object containing the contents of the box.
 
 \instype{TLC}
-Box inspector objects contain {\ChezScheme} boxes.
+TLC inspector objects contain {\ChezScheme} transport link cells.
 
 \insmsg{tlc}{\scheme{'type}}
 returns the symbol \scheme{tlc}.
