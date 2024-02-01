@@ -2960,7 +2960,7 @@ For example, the programmer can define \scheme{case} as follows:
          ...))]))
 \endschemedisplay
 
-and count on the introduce \scheme{let} expression to be eliminated
+and count on the introduced \scheme{let} expression to be eliminated
 if \scheme{e} turns out to be an unassigned variable, and count on
 the entire \scheme{case} expression to be folded if \scheme{e} turns
 out to be a constant.

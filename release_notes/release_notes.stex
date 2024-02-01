@@ -1,9 +1,9 @@
 \documentclass{releasenotes}
 
-\thisversion{Version 9.9.9}
+\thisversion{Version 10.0.0}
 \thatversion{Version 8.4}
-\pubmonth{September}
-\pubyear{2023}
+\pubmonth{February}
+\pubyear{2024}
 
 \iflatex
 \usepackage{enumitem}
@@ -113,12 +113,12 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Unicode 15.1 support (9.9.9)}
+\subsection{Unicode 15.1 support (10.0.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,
 and Unicode-related bytevector operations have now been updated to Unicode 15.1.
 
-\subsection{New supported platforms and portable bytecode (9.9.9)}
+\subsection{New supported platforms and portable bytecode (10.0.0)}
 
 AArch64 (64-bit Arm), RV64G (64-bit RISC-V), and LoongArch64 architectures are
 supported. Threads are supported on architectures with weak memory
@@ -144,8 +144,7 @@ bytecode interpretation. In particular, since Chez Scheme is mostly
 written in Chez Scheme, a pbchunk conversion of its boot files
 improves performance of primitives and compilation.
 
-
-\subsection{Threaded default and build system changes (9.9.9)}
+\subsection{Threaded default and build system changes (10.0.0)}
 
 Running \scheme{configure} assumes a threaded target machine type,
 unless \scheme{--nothreads} or a non-threaded machine type is
@@ -172,8 +171,7 @@ The new \scheme{scheme-build-number} function complements
 during development. The \scheme{scheme-build-number} procedure always
 returns zero for a released version of Chez Scheme.
 
-
-\subsection{Compiler improvements (9.9.9)}\label{sec:unbox-floats}
+\subsection{Compiler improvements (10.0.0)}\label{sec:unbox-floats}
 
 The compiler generates code that locally unboxes floating-point
 operations, so that compositions of floating-point operations can be
@@ -233,8 +231,7 @@ The internal representation of record types has changed so that a
 record-type predicate is a constant-time operation, instead of
 proportional to the subtype depth.
 
-
-\subsection{Garbage-collector improvements (9.9.9)}
+\subsection{Garbage-collector improvements (10.0.0)}
 
 Garbage collection takes advantage of machine parallelism. Parallel
 collection is automatically enabled when a program has multiple Scheme
@@ -263,8 +260,7 @@ previous versions of Chez Scheme.
 See also Sections~\ref{sec:gc-reflect} and \ref{sec:ffi-storage} for
 related new functionality.
 
-
-\subsection{Continuation marks (9.9.9)}\label{sec:cont-marks}
+\subsection{Continuation marks (10.0.0)}\label{sec:cont-marks}
 
 \emph{Continuation marks} add key--value information to continuations.
 The \scheme{with-continuation-mark} form associates a key--value pair
@@ -288,8 +284,7 @@ similar to calling a procedure as a function, but instead of a value
 to deliver to the continuation, it takes a procedure of no arguments
 to call within the continuation.
 
-
-\subsection{New fixnum operations (9.9.9)}
+\subsection{New fixnum operations (10.0.0)}
 
 New operations support common bit-related operations on fixnums:
 
@@ -312,8 +307,7 @@ mutable-fxvector?               ; removed
 immutable-fxvector?             ; removed
 \endschemedisplay
 
-
-\subsection{New flonum operations (9.9.9)}
+\subsection{New flonum operations (10.0.0)}
 
 The \scheme{eq?} operator works on flonums in the sense that two
 flonums values that are \scheme{eq?} at some point (such as creation
@@ -355,8 +349,7 @@ The \scheme{fl=}, \scheme{fl<}, , \scheme{fl>}, \scheme{fl<=}, and
 that's \scheme{+nan.0}, which makes them consistent with \scheme{=},
 \scheme{<}, \scheme{>}, \scheme{<=}, and \scheme{>=}.
 
-
-\subsection{Improved bignum arithmetic (9.9.9)}
+\subsection{Improved bignum arithmetic (10.0.0)}
 
 Multiplication of very large numbers uses Karatsuba, Toom-3, or
 Toom-4, while division (including GCD) uses Burnikel-Ziegler. These
@@ -364,8 +357,7 @@ changes make arithmetic and number-to-string conversions faster for
 large values, and they avoid unbounded delays between interrupt
 polling.
 
-
-\subsection{Exact zeros, transcendentals, and exponentials (9.9.9)}
+\subsection{Exact zeros, transcendentals, and exponentials (10.0.0)}
 
 Division of an exact \scheme{0} by an inexact number now always
 produces exact \scheme{0}, and
@@ -389,8 +381,7 @@ The \scheme{expt} function recognizes an exact \scheme{1/2} as its
 second argument, and in that case it behaves like \scheme{sqrt}, which
 may produce an exact result.
 
-
-\subsection{New character, string, and Unicode functions (9.9.9)}
+\subsection{New character, string, and Unicode functions (10.0.0)}
 
 New functions support decoding grapheme clusters within strings or
 character streams and expose the underlying new character classifiers:
@@ -410,9 +401,7 @@ creating an intermediate mutable string.
 The \scheme{path-build} procedure combines two path strings to form a
 path, adding a directory separator between them if necessary.
 
-
-\subsection{Hashtable changes (9.9.9)}
-
+\subsection{Hashtable changes (10.0.0)}
 
 Operations returning hashtable cells (\scheme{hashtable-cell},
 \scheme{eq-hashtable-cell}, \scheme{symbol-hashtable-cell}, and
@@ -447,8 +436,7 @@ changes to \scheme{eq?} for flonum values and the availability of weak
 and ephemeron hash tables with arbitrary equality and hashing
 functions.
 
-
-\subsection{Stencil vectors (9.9.9)}
+\subsection{Stencil vectors (10.0.0)}
 
 Stencil vectors provide support in the compiler and runtime for
 implementing data structures such as persistent maps:
@@ -465,8 +453,7 @@ stencil-vector-truncate!
 stencil-vector-mask-width
 \endschemedisplay
 
-
-\subsection{New vector functions (9.9.9)}
+\subsection{New vector functions (10.0.0)}
 
 New and extended (in the case of \scheme{vector-copy}) vector functions
 support creating a vector from the content of others and creating immutable
@@ -488,7 +475,7 @@ new versions can avoid redundant initialization and write barriers.
 The immutable-vector functions similarly can avoid allocating an
 intermediate mutable vector.
 
-\subsection{New symbol functions (9.9.9)}
+\subsection{New symbol functions (10.0.0)}
 
 While gensyms support most symbol-generation needs, uninterned symbols
 are useful for purposes where properties must not prevent a symbol
@@ -501,8 +488,7 @@ uninterned-symbol?
 
 The string returned by \scheme{symbol->string} is always immutable.
 
-
-\subsection{Record anonymous fields (9.9.9)}
+\subsection{Record anonymous fields (10.0.0)}
 
 Records can have anonymous fields, which can save memory in the
 representation when many record types need to be created (as opposed
@@ -521,8 +507,7 @@ The new \scheme{record-instance?} predicate is a specialization of
 An unsafe \scheme{record-instance?} test can be faster than an unsafe
 \scheme{record?} test.
 
-
-\subsection{Lists assuming immutability (9.9.9)}
+\subsection{Lists assuming immutability (10.0.0)}
 
 In a context where pairs are not mutated, the new
 \scheme{list-assuming-immutable?} predicate is useful as a variant of
@@ -531,8 +516,7 @@ efficient, amortized constant-time decision on whether a value
 represents a list, but its behavior is unspecified if the
 \scheme{cdr} or any pair relevant to the result is mutated.
 
-
-\subsection{New random number generation (9.9.9)}
+\subsection{New random number generation (10.0.0)}
 
 A new random-number API implements the MRG32K3A algorithm:
 
@@ -545,8 +529,7 @@ pseudo-random-generator->vector
 vector->pseudo-random-generator
 \endschemedisplay
 
-
-\subsection{Wrapper procedures (9.9.9)}
+\subsection{Wrapper procedures (10.0.0)}
 
 A \emph{wrapper procedure} provides an inexpensive way to an adjust a
 procedure's name, constrain its arity, or associate extra data to the
@@ -564,8 +547,7 @@ set-wrapper-procedure-data!
 set-wrapper-procedure!
 \endschemedisplay
 
-
-\subsection{New thread functions (9.9.9)}\label{sec:threads}
+\subsection{New thread functions (10.0.0)}\label{sec:threads}
 
 The new \scheme{thread-join} operator can be used to wait for a thread
 to terminate. Waiting for termination in this sense can be useful to
@@ -591,8 +573,7 @@ When a new thread is created, it now starts with the default
 exception-handler stack instead of inheriting the stack of the
 creating thread.
 
-
-\subsection{Garbage collection introspection (9.9.9)}\label{sec:gc-reflect}
+\subsection{Garbage collection introspection (10.0.0)}\label{sec:gc-reflect}
 
 Similar to \scheme{enable-object-counts}, the
 \scheme{enable-object-backreferences} parameter enables recording of
@@ -633,8 +614,7 @@ garbage collection, the \scheme{collect} function takes a list as
 an optional last argument to fuse a garbage collection with size
 accounting.
 
-
-\subsection{Storage management and foreign interfaces (9.9.9)}\label{sec:ffi-storage}
+\subsection{Storage management and foreign interfaces (10.0.0)}\label{sec:ffi-storage}
 
 The \scheme{make-guardian} function accepts an option to create an
 \emph{ordered guardian}. An ordered guardian treats each of its
@@ -691,8 +671,7 @@ internal changes that make allocation thread-local, which in turn
 makes the size of a thread's representation proportional to the
 maximum number of generations.
 
-
-\subsection{Foreign interface extensions (9.9.9)}
+\subsection{Foreign interface extensions (10.0.0)}
 
 Some ABIs treat functions with varargs (i.e., specified with
 \scheme{...} in the C prototype) differently than functions without
@@ -728,8 +707,7 @@ file descriptor and offset. This form of boot-file registration is
 useful for loading boot files that are embedded with an executable
 segment.
 
-
-\subsection{Fasl and vfasl (9.9.9)}
+\subsection{Fasl and vfasl (10.0.0)}
 
 Reading fasl data has been made safe no matter how deeply nested the
 structure of the data.
@@ -752,8 +730,7 @@ for boot files to load directly into a static generation can make
 startup much faster; otherwise, the time--space tradeoff rarely pays
 off. Convert from fasl to vfasl using \scheme{vfasl-convert-file}.
 
-
-\subsection{New compiler options (9.9.9)}
+\subsection{New compiler options (10.0.0)}
 
 Two new parameters skip safety checks in specific situations:
 \scheme{enable-unsafe-application} assumes that the target of a
@@ -803,14 +780,14 @@ The \scheme{enable-error-source-expression} parameter determines
 whether error messages that become embedded in code can refer to the
 original source file's path.
 
-\subsection{Executable-relative boot files (9.9.9)}
+\subsection{Executable-relative boot files (10.0.0)}
 
 When searching for boot files, the two-character escape sequence
 ``\scheme{%x}'' is now supported on more platforms. By default, Chez
 Scheme is configured to use this facility to find boot files relative
 to the executable, even when installed.
 
-\subsection{Syntax quoting (9.9.9)}
+\subsection{Syntax quoting (10.0.0)}
 
 The new \scheme{quote-syntax} form is like the R$^6$RS \scheme{syntax}
 form except that pattern variables are not substituted.  It can be
@@ -2749,13 +2726,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{\scheme{library-exports} for library that is not yet imported (9.9.9)}
+\subsection{\scheme{library-exports} for library that is not yet imported (10.0.0)}
 
 When visiting or loading a separately compiled library,
 \scheme{library-exports} raised an exception if the library was not
 yet imported.
 
-\subsection{Incorrect code for \scheme{record?} at optimize-level 3 (9.9.9)}
+\subsection{Incorrect code for \scheme{record?} at optimize-level 3 (10.0.0)}
 
 At optimize-level 3, the \scheme{record?} predicate could short circuit without
 evaluating the \var{rtd} expression.

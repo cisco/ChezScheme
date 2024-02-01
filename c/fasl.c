@@ -371,11 +371,8 @@ char *S_format_scheme_version(uptr n) {
   static char buf[40]; INT len;
   if ((n >> 24) != ((n >> 24) & 0xffff)) return "unknown";
   if ((n & 0xff) == 0) {
-    if ((n & 0xff) == 0)
-      len = snprintf(buf, sizeof(buf), "%d.%d", (int) n >> 24, (int) (n >> 16) & 0xff);
-    else
-      len = snprintf(buf, sizeof(buf), "%d.%d.%d", (int) n >> 24, (int) (n >> 16) & 0xff,
-                     (int) (n >> 8) & 0xff);
+    len = snprintf(buf, sizeof(buf), "%d.%d.%d", (int) n >> 24, (int) (n >> 16) & 0xff,
+                   (int) (n >> 8) & 0xff);
   } else
     len = snprintf(buf, sizeof(buf), "%d.%d.%d-pre-release.%d", (int) n >> 24, (int) (n >> 16) & 0xff,
                    (int) (n >> 8) & 0xff, (int) n & 0xff);

@@ -709,14 +709,10 @@
 
 (define $format-scheme-version
   (lambda (n)
-    (if (= (logand (ash n -8) 255) 0)
-        (format "~d.~d"
-          (ash n -24)
-          (logand (ash n -16) 255))
-        (format "~d.~d.~d"
-          (ash n -24)
-          (logand (ash n -16) 255)
-          (logand (ash n -8) 255)))))
+    (format "~d.~d.~d"
+      (ash n -24)
+      (logand (ash n -16) 255)
+      (logand (ash n -8) 255))))
 
 ; set in back.ss
 (define $scheme-version)
@@ -785,7 +781,7 @@
 
 (define $scheme-greeting
   (lambda ()
-    (format "~a\nCopyright 1984-2023 Cisco Systems, Inc.\n"
+    (format "~a\nCopyright 1984-2024 Cisco Systems, Inc.\n"
       (scheme-version #t))))
 
 (define $session-key #f)

@@ -63,7 +63,6 @@
       <Feature Id="ti3nt" Level="1" Title="Chez Scheme 32-bit threaded">
         <ComponentGroupRef Id="ti3nt"/>
       </Feature>
-      <FeatureRef Id="VCRedist32"/>
     <?endif?>
 
     <?if $(sys.BUILDARCH)="x64"?>
@@ -73,7 +72,6 @@
       <Feature Id="ta6nt" Level="1" Title="Chez Scheme 64-bit threaded">
         <ComponentGroupRef Id="ta6nt"/>
       </Feature>
-      <FeatureRef Id="VCRedist64"/>
     <?endif?>
 
     <Feature Id="Registry" Level="1" Title="Chez Scheme Registry Entries">

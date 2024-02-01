@@ -1,5 +1,5 @@
-Building Chez Scheme Version 9.9.9
-Copyright 1984-2023 Cisco Systems, Inc.
+Building Chez Scheme Version 10.0.0
+Copyright 1984-2024 Cisco Systems, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -350,12 +350,12 @@ To build on Windows with Microsoft Visual Studio, use
 where <machine type> is one of the following:
 
  * pb        (portable bytecode, usually for bootstrapping)
- * ta6nt     (64-bit Intel threaded
- * a6nt      (64-bit Intel non-threaded
- * tarm64nt  (64-bit Arm threaded)
- * arm64nt   (64-bit Arm non-threaded)
- * ti3nt     (32-bit threaded)
- * i3nt      (32-bit non-threaded)
+ * ta6nt     (64-bit Intel threaded)
+ * a6nt      (64-bit Intel non-threaded)
+ * tarm64nt  (64-bit ARM threaded)
+ * arm64nt   (64-bit ARM non-threaded)
+ * ti3nt     (32-bit Intel threaded)
+ * i3nt      (32-bit Intel non-threaded)
 
 If you're using Visual Studio 2022 or 2019, install "Desktop
 development with C++" on the "Workloads" tabs and the "C++ 20[xx]

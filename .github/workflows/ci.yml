@@ -63,7 +63,7 @@ jobs:
         if: ${{ runner.os == 'Windows' }}
         run: git config --global core.autocrlf false
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - name: Setup 32-bit Linux
@@ -87,7 +87,7 @@ jobs:
         run: tar -c -h -z -f $TARGET_MACHINE$TOOLCHAIN$VARIANT.tgz $TARGET_MACHINE
       - name: Upload archive
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}${{ matrix.config.variant }}
           path: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}${{ matrix.config.variant }}.tgz
