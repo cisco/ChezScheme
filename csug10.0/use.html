@@ -2009,13 +2009,14 @@ arguments for which search tracing is desired.
 <p>
 Ordinarily, the search for
 boot files is limited to a set of
-installation directories, but this may be overridden by setting
+installation directories relative to the executable, but this may be overridden by setting
 the environment variable <a name="./use:s102"></a><tt>SCHEMEHEAPDIRS</tt>.
 <tt>SCHEMEHEAPDIRS</tt> should be a colon-separated list of directories, listed in
 the order in which they should be searched.
-Within each directory, the two-character escape sequence "<tt>%v</tt>"
-is replaced by the current version, and the two-character escape sequence
-"<tt>%m</tt>" is replaced by the machine type.
+Within each directory, the two-character escape sequence "<tt>%v</tt>" is
+replaced by the current version, the two-character escape sequence "<tt>%m</tt>"
+is replaced by the machine type, and the two-character escape sequence "<tt>%x</tt>"
+is replaced by the directory in which the executable file resides.
 A percent followed by any other character is replaced by the second
 character; in particular, "<tt>%%</tt>" is replaced by "<tt>%</tt>", and
 "<tt>%:</tt>" is replaced by "<tt>:</tt>".
@@ -2024,9 +2025,7 @@ searched after those in <tt>SCHEMEHEAPDIRS</tt>; otherwise, only those listed in
 <tt>SCHEMEHEAPDIRS</tt> are searched.
 
 <p>
-Under Windows, semi-colons are used in place of colons, and one additional
-escape is recognized: "<tt>%x</tt>," which is replaced by the directory in
-which the executable file resides.
+Under Windows, semi-colons are used in place of colons.
 The default search path under Windows consists of "<tt>%x</tt>"
 and "<tt>%x\..\..\boot\%m</tt>."
 The registry key <tt>HeapSearchPath</tt> in
@@ -2043,18 +2042,16 @@ source files.
 See Section&nbsp;<a href="./use.html#g13">2.8</a> for instructions on how to create
 boot files.
 
-<p>
-
 
 
 
 <hr class=copyright align=left>
 <p>
 <a class=plain href="index.html">Chez Scheme Version 10 User's Guide</a><br>
-Copyright &copy; 2023 Cisco Systems, Inc.<br>
+Copyright &copy; 2024 Cisco Systems, Inc.<br>
 Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License Version 2.0</a>
 (<a class=plain href="canned/copyright.html">full copyright notice.</a>).</br>
-Revised November 2023 for Chez Scheme Version 9.9.9-pre-release.20<br>
+Revised February 2024 for Chez Scheme Version 10.0.0<br>
 <a class=plain href="canned/about.html">about this book</a>
 </tr></table>
 </body>
