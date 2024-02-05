@@ -1506,8 +1506,8 @@ Checks whether \var{val} is a pseudo-random generator state.
 provided, it must be a positive, exact integer.
 
 Steps a pseudo-random generator to produce a number. The result is an
-inexact number between \scheme{0.0} (inclusive) and \scheme{1.0}
-(exclusive) if \var{below-int} is not provided. If \scheme{below-int} is
+inexact number between \scheme{0.0} and \scheme{1.0}
+(both exclusive) if \var{below-int} is not provided. If \scheme{below-int} is
 provided, the result is an exact integer between \scheme{0} (inclusive)
 and \scheme{below-int} (exclusive).
 
