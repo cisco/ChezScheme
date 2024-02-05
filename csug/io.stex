@@ -3297,10 +3297,8 @@ prints
 
 \noindent
 When \scheme{print-vector-length} is set to a true value,
-\scheme{write}, \scheme{put-datum}, and \scheme{pretty-print} includes the length
-for all vectors between the ``\scheme{#}'' and open parenthesis,
-all bytevectors between the ``\scheme{#vu8}'' and open parenthesis,
-and all fxvectors between the ``\scheme{#vfx}'' and open parenthesis.
+\scheme{write}, \scheme{put-datum}, and \scheme{pretty-print} include the length
+for all vectors, bytevectors, and fxvectors immediately after the ``\scheme{#}''.
 This parameter is set to \scheme{#f} by default.
 
 \index{vector printing}When \scheme{print-vector-length} is set to a
