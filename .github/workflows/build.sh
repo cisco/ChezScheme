@@ -13,9 +13,12 @@ else
 fi
 case "$TARGET_MACHINE" in
   *a6nt)
-    curl -Ls https://github.com/burgerrg/win-iconv/releases/download/v0.0.9/iconv-x64.dll > "$TARGET_MACHINE"/bin/"$TARGET_MACHINE"/iconv.dll
+    curl -Ls https://github.com/burgerrg/win-iconv/releases/download/v0.0.10/iconv-x64.dll > "$TARGET_MACHINE"/bin/"$TARGET_MACHINE"/iconv.dll
     ;;
   *i3nt)
-    curl -Ls https://github.com/burgerrg/win-iconv/releases/download/v0.0.9/iconv-x86.dll > "$TARGET_MACHINE"/bin/"$TARGET_MACHINE"/iconv.dll
+    curl -Ls https://github.com/burgerrg/win-iconv/releases/download/v0.0.10/iconv-x86.dll > "$TARGET_MACHINE"/bin/"$TARGET_MACHINE"/iconv.dll
+    ;;
+  *arm64nt)
+    curl -Ls https://github.com/burgerrg/win-iconv/releases/download/v0.0.10/iconv-arm64.dll > "$TARGET_MACHINE"/bin/"$TARGET_MACHINE"/iconv.dll
     ;;
 esac
