@@ -2273,6 +2273,50 @@ static void s_iconv_close(uptr cd) {
   ICONV_CLOSE((iconv_t)cd);
 }
 
+#ifdef DISTRUST_ICONV_PROGRESS
+# define ICONV_FROM iconv_fixup
+static size_t iconv_fixup(iconv_t cd, char **src, size_t *srcleft, char **dst, size_t *dstleft) {
+  size_t r;
+  char *orig_src = *src, *orig_dst = *dst;
+  size_t orig_srcleft = *srcleft, orig_dstleft = *dstleft, srcuntried = 0;
+
+  while (1) {
+    r = iconv((iconv_t)cd, src, srcleft, dst, dstleft);
+    if ((r == (size_t)-1)
+        && (errno == E2BIG)
+        && ((*srcleft < orig_srcleft) || (*dstleft < orig_dstleft))) {
+      /* Avoid a macOS (as of 14.2.1 and 14.3.1) iconv bug in this
+         case, where we don't trust that consumed input characters are
+         reflected in the output pointer. Reverting progress should be
+         ok for a correct iconv, too, since a -1 result means that no
+         irreversible progress was made. */
+      *src = orig_src;
+      *dst = orig_dst;
+      *srcleft = orig_srcleft;
+      *dstleft = orig_dstleft;
+
+      /* We need to make progress, if possible, to satify normal iconv
+         behavior and "io.ss" expectations. Try converting fewer
+         characters. */
+      if (orig_srcleft > sizeof(string_char)) {
+        size_t try_chars = (orig_srcleft / sizeof(string_char)) / 2;
+        srcuntried += orig_srcleft - (try_chars * sizeof(string_char));
+        orig_srcleft = try_chars * sizeof(string_char);
+        *srcleft = orig_srcleft;
+      } else
+        break;
+    } else
+      break;
+  }
+
+  *srcleft += srcuntried;
+
+  return r;
+}
+#else
+# define ICONV_FROM ICONV
+#endif
+
 #define ICONV_BUFSIZ 400
 
 static ptr s_iconv_from_string(uptr cd, ptr in, uptr i, uptr iend, ptr out, uptr o, uptr oend) {
@@ -2298,7 +2342,8 @@ static ptr s_iconv_from_string(uptr cd, ptr in, uptr i, uptr iend, ptr out, uptr
     under Windows, the iconv dll might have been linked against a different C runtime
     and might therefore set a different errno */
   errno = 0;
-  ICONV((iconv_t)cd, (ICONV_INBUF_TYPE)&inbuf, &inbytesleft, &outbuf, &outbytesleft);
+  ICONV_FROM((iconv_t)cd, (ICONV_INBUF_TYPE)&inbuf, &inbytesleft, &outbuf, &outbytesleft);
+
   new_i = i + inmax - inbytesleft / sizeof(string_char);
   new_o = oend - outbytesleft;
   if (new_i != i || new_o != o) return Scons(Sinteger(new_i), Sinteger(new_o));

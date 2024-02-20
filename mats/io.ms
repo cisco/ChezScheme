@@ -1012,7 +1012,9 @@
                 '()
                 (if (fx= i #xD800)
                     (f #xE000)
-                    (cons i (f (fx+ i 1)))))))
+                    (if (fx= i #xFEFF) ; avoid BOM, which an encoder is arguably justified in dropping
+                        (f (fx+ i 1))
+                        (cons i (f (fx+ i 1))))))))
         (define ls2
           (let f ([n 1000000])
             (if (fx= n 0)
@@ -1021,7 +1023,9 @@
                   (let ([n (random (- #x110000 (- #xE000 #xD800)))])
                     (if (<= #xD800 n #xDFFF)
                         (+ n (- #xE000 #xD800))
-                        n))
+                        (if (fx= n #xFEFF) ; avoid BOM
+                            #xFEFE
+                            n)))
                   (f (fx- n 1))))))
         (define s (apply string (map integer->char (append ls1 ls2))))
         #;(define s (apply string (map integer->char ls1)))

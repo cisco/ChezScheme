@@ -328,6 +328,8 @@ typedef int tputsputcchar;
 #define NSECCTIME(sb) (sb).st_ctimespec.tv_nsec
 #define NSECMTIME(sb) (sb).st_mtimespec.tv_nsec
 #define ICONV_INBUF_TYPE char **
+/* workaround issue in macOS 14.2.1 iconv: */
+#define DISTRUST_ICONV_PROGRESS
 #endif
 
 #if defined(__QNX__)
