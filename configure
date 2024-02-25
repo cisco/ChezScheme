@@ -93,6 +93,7 @@ default_warning_flags="-Wpointer-arith -Wall -Wextra -Wno-implicit-fallthrough"
 CFLAGS_ADD=
 zlibLib=
 LZ4Lib=
+STEXLIB=
 Kernel=KernelLib
 buildKernelOnly=no
 enableFrompb=yes
@@ -447,6 +448,9 @@ while [ $# != 0 ] ; do
     LZ4=*)
       LZ4Lib=`echo $1 | sed -e 's/^LZ4=//'`
       ;;
+    STEXLIB=*)
+      STEXLIB=`echo $1 | sed -e 's/^STEXLIB=//'`
+      ;;
     ZUO=*)
       zuoExternal=`echo $1 | sed -e 's/^ZUO=//'`
       ;;
@@ -676,6 +680,7 @@ if [ "$help" = "yes" ]; then
   echo "  STRIP=<strip>                     executable stripper"
   echo "  ZLIB=<lib>                        link to <lib> instead of own zlib"
   echo "  LZ4=<lib>                         link to <lib> instead of own LZ4"
+  echo "  STEXLIB=<stex>                    build docs with <stex> instead of own stex"
   echo "  ZUO=<zuo>                         build with <zuo> instead of own Zuo"
   echo ""
   echo "Available machine types: $machs"
@@ -923,8 +928,10 @@ if [ "${LZ4Lib}" = "" ] ; then
     fi
 fi
 
-if [ ! -f "$srcdir"/stex/Mf-stex ] ; then
-    submod_instructions 'Source in "stex" is missing'
+if [ "${STEXLIB}" = "" ] ; then
+    if [ ! -f "$srcdir"/stex/Mf-stex ] ; then
+        submod_instructions 'Source in "stex" is missing'
+    fi
 fi
 
 # more compile and link flags for c/Mf-unix and mats/Mf-unix
@@ -1133,6 +1140,7 @@ cursesLib=$cursesLib
 ncursesLib=$ncursesLib
 zlibLib=$zlibLib
 LZ4Lib=$LZ4Lib
+STEXLIB=$STEXLIB
 warningFlags=$warningFlags
 Kernel=$Kernel
 installscriptname=$installscriptname
