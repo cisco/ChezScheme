@@ -897,13 +897,13 @@ if [ ! -f "$srcdir"/nanopass/nanopass.ss ] ; then
     submod_instructions 'Source in "nanopass" is missing'
 fi
 
-if [ "${zlibDep}" != "" ] ; then
+if [ "${zlibLib}" = "" ] ; then
     if [ ! -f "$srcdir"/zlib/configure ] ; then
         submod_instructions 'Source in "zlib" is missing'
     fi
 fi
 
-if [ "${LZ4Dep}" != "" ] ; then
+if [ "${LZ4Lib}" = "" ] ; then
     if [ ! -f "$srcdir"/lz4/lib/Makefile ] ; then
         submod_instructions 'Source in "lz4" is missing'
     fi
@@ -1083,7 +1083,7 @@ cp "$srcdir"/makefiles/buildmain.zuo main.zuo
 # Some idea, but in the workarea, so it refers to "workarea.zuo" here:
 cp "$srcdir"/makefiles/workmain.zuo $w/main.zuo
 
-# The content of "$w/Makefile" records configuration decisions,
+# The content of "$w/Mf-config" records configuration decisions,
 # and the Zuo build script takes it from there
 cat > $w/Mf-config << END
 srcdir=$srcdir
