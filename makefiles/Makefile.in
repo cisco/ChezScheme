@@ -3,8 +3,6 @@ workarea=$(w)
 
 include $(workarea)/Mf-config
 
-ZUO=bin/zuo
-
 .PHONY: build
 build: $(ZUO)
 	+ $(ZUO) $(workarea) MAKE="$(MAKE)"
@@ -144,9 +142,9 @@ pkg: $(ZUO)
 .PHONY: clean
 clean: $(ZUO)
 	+ $(ZUO) $(workarea) clean MAKE="$(MAKE)"
-	rm -f bin/zuo
+	$(RM_ZUO)
 
 # Using `+` here means that $(ZUO) gets built even if `-n`/`--dry-run` is provided to `make`
-$(ZUO): $(srcdir)/zuo/zuo.c
+$(ZUO_TARGET): $(srcdir)/zuo/zuo.c
 	+ mkdir -p bin
 	+ $(CC_FOR_BUILD) -DZUO_LIB_PATH='"'"../zuo/lib"'"' -o $(ZUO) $(srcdir)/zuo/zuo.c

@@ -103,6 +103,7 @@ moreBootFiles=
 preloadBootFiles=
 alwaysUseBootFile=
 skipSubmoduleUpdate=
+zuoExternal=
 
 CONFIG_UNAME=`uname`
 
@@ -446,6 +447,9 @@ while [ $# != 0 ] ; do
     LZ4=*)
       LZ4Lib=`echo $1 | sed -e 's/^LZ4=//'`
       ;;
+    ZUO=*)
+      zuoExternal=`echo $1 | sed -e 's/^ZUO=//'`
+      ;;
     *)
       echo "option '$1' unrecognized or missing an argument; try $0 --help"
       exit 1
@@ -672,6 +676,7 @@ if [ "$help" = "yes" ]; then
   echo "  STRIP=<strip>                     executable stripper"
   echo "  ZLIB=<lib>                        link to <lib> instead of own zlib"
   echo "  LZ4=<lib>                         link to <lib> instead of own LZ4"
+  echo "  ZUO=<zuo>                         build with <zuo> instead of own Zuo"
   echo ""
   echo "Available machine types: $machs"
   echo ""
@@ -889,8 +894,17 @@ submod_instructions () {
     exit 1
 }
 
-if [ ! -f "$srcdir"/zuo/configure ] ; then
-    submod_instructions 'Source in "zuo" is missing'
+if [ "${zuoExternal}" = "" ] ; then
+    if [ ! -f "$srcdir"/zuo/configure ] ; then
+        submod_instructions 'Source in "zuo" is missing'
+    fi
+    ZUO="bin/zuo"
+    RM_ZUO="rm -f bin/zuo"
+    ZUO_TARGET="bin/zuo"
+else
+    ZUO="${zuoExternal}"
+    RM_ZUO="@echo 'Not cleaning external ${zuoExternal}'"
+    ZUO_TARGET="DoNotBuildZuo"
 fi
 
 if [ ! -f "$srcdir"/nanopass/nanopass.ss ] ; then
@@ -1129,6 +1143,10 @@ enablelibffi=$libffi
 preloadBootFiles=$preloadBootFiles
 alwaysUseBootFile=$alwaysUseBootFile
 relativeBootFiles=$relativeBootFiles
+
+ZUO=$ZUO
+RM_ZUO=$RM_ZUO
+ZUO_TARGET=$ZUO_TARGET
 
 InstallBin=$installbin
 InstallLib=$installlib
