@@ -1097,7 +1097,7 @@ and a boolean that is true if the object file exists.
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{library-timestamp-mode}{\categorythreadparameter}{library-timstamp-mode}
+\formdef{library-timestamp-mode}{\categorythreadparameter}{library-timestamp-mode}
 \listlibraries
 \endentryheader
 
