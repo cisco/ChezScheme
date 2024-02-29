@@ -149,7 +149,8 @@ information on the supported options.
 The generated makefile mostly just ensures that a `zuo` executable is
 built in a `bin` directory, and then it defers the actual build work
 to `zuo`, which uses the "main.zuo" file. If you have `zuo` installed,
-you can use `zuo` directly instead of `make`. In general, instead of
+you can use `zuo` directly instead of `make`: in that case, you may
+wish to use `./configure ZUO=<zuo>`. In general, instead of
 the command `make X` to build target `X` as described below, you can
 use `zuo . X` (or `bin/zuo . X` after `bin/zuo` is built).
 
@@ -333,7 +334,7 @@ The makefile supports several targets:
  * `make clean`
 
    Removes all built elements from the workarea, and then removes
-   `bin/zuo`.
+   `bin/zuo` (unless configured with `ZUO=<zuo>`).
 
 
 WINDOWS VIA COMMAND PROMPT
