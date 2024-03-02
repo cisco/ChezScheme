@@ -40,6 +40,7 @@ void S_thread_init(void) {
     s_thread_cond_init(&S_terminated_cond);
     S_alloc_mutex.owner = 0;
     S_alloc_mutex.count = 0;
+    S_main_thread_id = s_thread_self();
 
 # ifdef IMPLICIT_ATOMIC_AS_EXPLICIT
     s_thread_mutex_init(&S_implicit_mutex);

@@ -49,6 +49,7 @@ EXTERN int S_num_preserve_ownership_threads;
 # ifdef IMPLICIT_ATOMIC_AS_EXPLICIT
 EXTERN s_thread_mutex_t S_implicit_mutex;
 # endif
+EXTERN s_thread_t S_main_thread_id;
 #endif
 
 /* segment.c */

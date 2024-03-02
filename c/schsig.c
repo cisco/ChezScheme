@@ -666,6 +666,16 @@ ptr S_dequeue_scheme_signals(ptr tc) {
 static void forward_signal_to_scheme(INT sig) {
   ptr tc = get_thread_context();
 
+#ifdef PTHREADS
+  /* deliver signals to the main thread, only; depending
+     on the threads that are running, `tc` might even be NULL */
+  if (tc != TO_PTR(&S_G.thread_context)) {
+    pthread_kill(S_main_thread_id, sig);
+    RESET_SIGNAL
+    return;
+  }
+#endif
+
   if (enqueue_scheme_signal(tc, sig)) {
     SIGNALINTERRUPTPENDING(tc) = Strue;
     SOMETHINGPENDING(tc) = Strue;

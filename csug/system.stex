@@ -547,6 +547,8 @@ After a signal handler for a given signal has been registered, receipt
 of the specified signal results in a call to the handler.
 The handler is passed the signal number, allowing the same handler to
 be used for different signals while differentiating among them.
+In a threaded version of the system, signals are always delivered to
+the main thread.
 
 Signals handled in this fashion are treated like keyboard interrupts in
 that the handler is not called immediately when the signal is delivered
