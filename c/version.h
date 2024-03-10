@@ -48,6 +48,11 @@
 # define FLUSHCACHE
 #endif
 
+#if defined(__s390__) || defined(__s390x__) || defined(__zarch__)
+# define PORTABLE_BYTECODE_BIGENDIAN
+# define BIG_ENDIAN_IEEE_DOUBLE
+#endif
+
 #ifdef PORTABLE_BYTECODE
 # undef FLUSHCACHE
 # ifdef PORTABLE_BYTECODE_BIGENDIAN
