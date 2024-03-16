@@ -5211,7 +5211,7 @@ The procedure \scheme{object-backreferences} returns a list of
 backreference lists. Each backreference list is a list of pairs, where
 the \scheme{car} of the pair is a referenced object, and the
 \scheme{cdr} of the pair is either \scheme{#f} or a value that caused
-the \scheme{car}'s value or be retained during collection. The
+the \scheme{car}'s value to be retained during collection. The
 \scheme{cdr} of a backreference pair is \scheme{#f} if the object in
 the \scheme{car} is retained by a root reference within the system's
 implementation or static generation. By locating the \scheme{cdr} of
