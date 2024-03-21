@@ -89,7 +89,7 @@ FORCEINLINE int CAS_STORE_RELEASE(volatile void *addr, void *old_val, void *new_
                         : "cc", "memory", "x12", "x7");
   return ret;
 }
-#elif defined(__arm__)
+#elif defined(__arm__) && ((arm_isa_version >= 6) || (__ARM_ARCH >= 6))
 FORCEINLINE int S_cas_any_fence(int load_acquire, volatile void *addr, void *old_val, void *new_val) {
   int ret;
   if (load_acquire)
