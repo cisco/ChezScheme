@@ -2281,7 +2281,7 @@ static size_t iconv_fixup(iconv_t cd, char **src, size_t *srcleft, char **dst, s
   size_t orig_srcleft = *srcleft, orig_dstleft = *dstleft, srcuntried = 0;
 
   while (1) {
-    r = iconv((iconv_t)cd, src, srcleft, dst, dstleft);
+    r = ICONV((iconv_t)cd, src, srcleft, dst, dstleft);
     if ((r == (size_t)-1)
         && (errno == E2BIG)
         && ((*srcleft < orig_srcleft) || (*dstleft < orig_dstleft))) {
