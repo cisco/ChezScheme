@@ -458,8 +458,18 @@
         (trace-reference-ptrs bytevector-data len)
         (pad (when _bytevector-pad?_
                (set! (* (cast ptr* (TO_VOIDP (+ (cast uptr _copy_) bytevector_pad_disp)))) (FIX 0))))
-        (pad (when (== (& len 1) (if _bytevector-pad?_ 1 0))
-               (set! (INITBVREFIT _copy_ len) (FIX 0))))
+        (pad (let* ([extra : uptr (- (Sbytevector_length _) (* len ptr_bytes))])
+               ;; copy another word if needed for extra bytes, and
+               ;; then one more word if needed for allocation alignment
+               (cond
+                 [(== extra 0)
+                  (when (== (& len 1) (if _bytevector-pad?_ 1 0))
+                    (set! (INITBVREFIT _copy_ len) (FIX 0)))]
+                 [else
+                  (set! (INITBVREFIT _copy_ len) (INITBVREFIT _ len))
+                  (let* ([xlen : uptr (+ len 1)])
+                    (when (== (& xlen 1) (if _bytevector-pad?_ 1 0))
+                      (set! (INITBVREFIT _copy_ xlen) (FIX 0))))])))
         (count countof-bytevector)]
        [else
         (space space-data)
