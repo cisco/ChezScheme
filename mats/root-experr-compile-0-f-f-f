@@ -10458,9 +10458,22 @@ foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result 
 foreign.mo:Expected error in mat reference-bytevector: "make-reference-bytevector: -1 is not a valid bytevector length".
 foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: #vu8(1 2 3) is not a reference bytevector".
 foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: invalid index -8 for #vu8(0 0 0 0 0 0 ...)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: invalid index 1 for #vu8(0 0 0)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: invalid index 0 for #vu8(0 0 0)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: invalid index -1 for #vu8(0 0 0)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: failed as expected".
 foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: invalid index oops for #vu8(0 0 0 0 0 0 ...)".
 foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference*-ref: invalid index -8 for #vu8(0 0 0 0 0 0 ...)".
 foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference*-ref: invalid index oops for #vu8(0 0 0 0 0 0 ...)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference*-ref: invalid index 1 for #vu8(0 0 0)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference*-ref: invalid index 0 for #vu8(0 0 0)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference*-ref: invalid index -1 for #vu8(0 0 0)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: failed as expected".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-set!: invalid index -8 for #vu8(0 0 0 0 0 0 ...)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-set!: invalid index oops for #vu8(0 0 0 0 0 0 ...)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-set!: invalid index 1 for #vu8(0 0 0)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-set!: invalid index 0 for #vu8(0 0 0)".
+foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-set!: failed as expected".
 foreign.mo:Expected error in mat reference-bytevector: "reference-address->object: invalid address #f".
 foreign.mo:Expected error in mat reference-bytevector: "reference*-address->object: invalid address #f".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype outside pointer field (function #f (int) int)".
