@@ -1353,6 +1353,15 @@ code for a basic build; on a big-endian machine, the kernel rewrites
 instruction bytes to big-endian form while loading a fasl file, so the
 interpreter can decode instructions in native order.
 
+A basic build supports only a limited, hardwired set of foreign
+interfaces that are sufficient to access kernel functions. A non-basic
+build can support the full foreign interface if the Scheme build is
+configured to use libffi. The pb32 variants assume 8-byte alignment in
+structs for doubles and 64-bit integer values, which can limit
+interoperability with foreign libraries on platforms with a different
+alignment convention (such as non-Windows x86, where doubles and
+64-bit integers need only 4-byte alignment).
+
 For a non-basic build, fragments of static Scheme code can be turned
 into C code to compile and plug back into the kernel. These fragments
 are called *pbchunks*.

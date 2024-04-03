@@ -666,7 +666,8 @@
       [(pb)
        (unless (vector? x)
          ($oops 'foreign-callable-entry-point "~s is not a vector" x))
-       (bitwise-arithmetic-shift-left (vector-ref x 2) (constant fixnum-offset))]
+       (bitwise-and (bitwise-arithmetic-shift-left (vector-ref x 2) (constant fixnum-offset))
+                    (- (bitwise-arithmetic-shift-left 1 (constant ptr-bits)) 1))]
       [else
        (unless ($code? x)
          ($oops 'foreign-callable-entry-point "~s is not a code object" x))
