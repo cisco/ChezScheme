@@ -59,12 +59,14 @@
   (begin
     (define max-integer-alignment
       (if (or (> (fixnum-width) 32)
-              (memq (machine-type) '(i3nt ti3nt i3qnx ti3qnx arm32le tarm32le ppc32le tppc32le)))
+              (memq (machine-type) '(i3nt ti3nt i3qnx ti3qnx arm32le tarm32le ppc32le tppc32le
+                                          pb32l tpb32l pb32b tpb32b)))
           8
           4))
     (define max-float-alignment
       (if (or (> (fixnum-width) 32)
-              (memq (machine-type) '(i3nt ti3nt arm32le tarm32le ppc32le tppc32le)))
+              (memq (machine-type) '(i3nt ti3nt arm32le tarm32le ppc32le tppc32le
+                                          pb32l tpb32l pb32b tpb32b)))
           8
           4))
     (define-syntax fptr-free

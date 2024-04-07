@@ -509,9 +509,9 @@ void S_ffi_call(ptr types, ptr proc, ptr *arena) {
         if (sizeof(I64) > sizeof(ptr)) {
 #         ifdef PORTABLE_BYTECODE_BIGENDIAN
           {
-            ptr lo = arena[0];
-            arena[0] = arena[1];
-            arena[1] = lo;
+            ptr lo = arena_start[0];
+            arena_start[0] = arena_start[1];
+            arena_start[1] = lo;
           }
 #         endif
         }
@@ -584,7 +584,7 @@ ptr S_ffi_closure(ptr types, ptr proc) {
 
 static void closure_callback(UNUSED ffi_cif *cif, void *ret, void **args, void *user_data) {
   ptr caller_saved[4]; /* first four registers are preserved */
-  ptr vec = (ptr)user_data;
+  ptr vec = TO_PTR(user_data);
   ptr types = Svector_ref(vec, 1), type;
   ptr tc;
   ptr *arena_start, *arena;
@@ -638,16 +638,16 @@ static void closure_callback(UNUSED ffi_cif *cif, void *ret, void **args, void *
         break;
       case ffi_typerep_uint64:
         if (sizeof(U64) > sizeof(ptr)) {
-          arena[0] = (ptr)((*(U64 *)args[i]) >> 32);
-          arena[1] = (ptr)*(U64 *)args[i];
+          arena[1] = (ptr)((*(U64 *)args[i]) >> 32);
+          arena[0] = (ptr)*(U64 *)args[i];
           arena++;
         } else
           *arena = *(U64*)args[i];
         break;
       case ffi_typerep_sint64:
         if (sizeof(I64) > sizeof(ptr)) {
-          arena[0] = (ptr)((*(I64 *)args[i]) >> 32);
-          arena[1] = (ptr)*(I64 *)args[i];
+          arena[1] = (ptr)((*(I64 *)args[i]) >> 32);
+          arena[0] = (ptr)*(I64 *)args[i];
           arena++;
         } else
           *arena = *(I64*)args[i];
@@ -691,11 +691,11 @@ static void closure_callback(UNUSED ffi_cif *cif, void *ret, void **args, void *
       case ffi_typerep_sint64:
         if (sizeof(U64) > sizeof(ptr)) {
 #        ifdef PORTABLE_BYTECODE_BIGENDIAN
-          ((U32 *)ret)[0] = arena_start[0];
-          ((U32 *)ret)[1] = arena_start[1];
-#        else
           ((U32 *)ret)[1] = arena_start[0];
           ((U32 *)ret)[0] = arena_start[1];
+#        else
+          ((U32 *)ret)[0] = arena_start[0];
+          ((U32 *)ret)[1] = arena_start[1];
 #        endif
         } else {
           *(ptr *)ret = *arena_start;

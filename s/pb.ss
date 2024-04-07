@@ -1661,7 +1661,7 @@
                 (%seq
                  (set! ,%Carg1 ,lo)
                  ,(%inline call-arena-in ,%Carg1 (immediate ,off))
-                 (set! ,%Carg1 ,lo)
+                 (set! ,%Carg1 ,hi)
                  ,(%inline call-arena-in ,%Carg1 (immediate ,(fx+ off 4)))))))
           (define save-double/unboxed
             (lambda (off)
@@ -1726,10 +1726,7 @@
                                          e
                                          (box e)))
                                    encs)
-                             (fx+ off (if ($ftd-compound? ftd)
-                                          (constant ptr-bytes)
-                                          (max (constant ptr-bytes)
-                                               ($ftd-size ftd)))))]
+                             (fx+ off (constant ptr-bytes)))]
                       [(fp-void)
                        (loop types
                              (cons (lambda () `(nop)) locs)
