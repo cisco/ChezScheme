@@ -631,7 +631,7 @@
     (define need-store-fence?
       (if-feature pthreads
 	              (constant-case architecture
-                                 [(arm32 arm64 riscv64 loongarch64 pb) #t]
+                                 [(arm32 arm64 riscv64 loongarch64 ppc32 pb) #t]
                                  [else #f])
                   #f))
     (define add-store-fence

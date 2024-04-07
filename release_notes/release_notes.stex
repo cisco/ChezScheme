@@ -2726,6 +2726,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Missing memory fences for some platforms (10.1.0)}
+
+Compilation for tppc32le lacked memory fences that are needed to
+ensure safety on multicore machines. The pb machine variant also
+needed a more portable approach to memory fences via compiler
+intrinsics (as needed for MIPS, for example).
+
 \subsection{Bounds checking and collection for some reference-bytevector lengths (10.1.0)}
 
 When a reference bytevector's length is smaller than the machine's
