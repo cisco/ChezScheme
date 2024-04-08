@@ -701,6 +701,18 @@
                `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
                `(asm ,info ,asm-cas ,base ,index ,old ,new ,u)))))]))
 
+  (define-instruction effect (store-store-fence)
+    [(op)
+     `(asm ,info ,(asm-fence 'store-store))])
+
+  (define-instruction effect (acquire-fence)
+    [(op)
+     `(asm ,info ,(asm-fence 'acquire))])
+
+  (define-instruction effect (release-fence)
+    [(op)
+     `(asm ,info ,(asm-fence 'release))])
+
   (define-instruction effect (pause)
     [(op) `(asm ,info ,asm-isync)])
 
@@ -744,7 +756,7 @@
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
                      asm-indirect-call asm-condition-code
                      asm-trunc asm-fpt asm-fpcastto asm-fpcastfrom asm-fpsingle
-                     asm-lock asm-lock+/- asm-cas
+                     asm-lock asm-lock+/- asm-cas asm-fence
                      asm-load-single->double asm-store-double->single
                      asm-fpop-2 asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
@@ -971,6 +983,7 @@
   (define-op mtxer move-to-special-reg-op (ax-spr-code 'xer))
 
   (define-op isync isync-op)
+  (define-op sync  sync-op)
 
   (define arithmetic-op
     (lambda (op opcode set-cr? set-oe? dest-ea opnd0-ea opnd1-ea code*)
@@ -1235,6 +1248,16 @@
         [16 #b00000]
         [11 #b00000]
         [1  #b0010010110]
+        [0  #b0])))
+
+  (define sync-op
+    (lambda (op code*)
+      (emit-code (op code*)
+        [26 #b011111]
+        [21 #b00000]
+        [16 #b00000]
+        [11 #b00000]
+        [1  #b1001010110]
         [0  #b0])))
 
   (define-syntax emit-code
@@ -1772,6 +1795,11 @@
             (emit bne 2
               (emit stwcx. new base index
                 code*)))))))
+
+  (define-who asm-fence
+    (lambda (kind)
+      (lambda (code*)
+        (emit sync code*))))
 
   (define asm-fp-relop
     (lambda (info)
