@@ -956,10 +956,10 @@ enum {
   *(float *)TO_VOIDP(regs[reg] + imm) = (float)fpregs[dest]
 
 #if defined(PTHREADS)
-# define CAS_ANY_FENCE_SEQOK(addr, old_r, r) \
-  CAS_ANY_FENCE(TO_VOIDP(addr), TO_VOIDP(old_r), TO_VOIDP(r))
+# define COMPARE_AND_SWAP_PTR_SEQOK(addr, old_r, r) \
+  COMPARE_AND_SWAP_PTR(TO_VOIDP(addr), TO_VOIDP(old_r), TO_VOIDP(r))
 #else
-# define CAS_ANY_FENCE_SEQOK(addr, old_r, r) \
+# define COMPARE_AND_SWAP_PTR_SEQOK(addr, old_r, r) \
   (*(uptr *)TO_VOIDP(addr) = r, 1)
 #endif
 
@@ -971,7 +971,7 @@ enum {
     while (1) {                                                         \
       uptr old_r = *(uptr *)TO_VOIDP(addr);                             \
       uptr r = old_r + regs[reg];                                       \
-      if (CAS_ANY_FENCE_SEQOK(addr, old_r, r)) {                        \
+      if (COMPARE_AND_SWAP_PTR_SEQOK(addr, old_r, r)) {                 \
         flag = (r == 0);                                                \
         break;                                                          \
       }                                                                 \
@@ -986,7 +986,7 @@ enum {
     while (1) {                                                         \
       uptr old_r = *(uptr *)TO_VOIDP(addr);                             \
       uptr r = old_r + imm;                                             \
-      if (CAS_ANY_FENCE_SEQOK(addr, old_r, r)) {                        \
+      if (COMPARE_AND_SWAP_PTR_SEQOK(addr, old_r, r)) {                 \
         flag = (r == 0);                                                \
         break;                                                          \
       }                                                                 \
@@ -999,7 +999,7 @@ enum {
 # define do_pb_lock(dest)                                        \
   do {                                                           \
     uptr *l = TO_VOIDP(regs[dest]);                              \
-    flag = CAS_ANY_FENCE(l, TO_VOIDP(0), TO_VOIDP(1));           \
+    flag = COMPARE_AND_SWAP_PTR(l, TO_VOIDP(0), TO_VOIDP(1));    \
   } while (0)
 #else
 # define doi_pb_lock(instr) \
@@ -1023,7 +1023,7 @@ enum {
     uptr *l = TO_VOIDP(regs[dest]);           \
     uptr old = regs[reg1];                    \
     uptr new = regs[reg2];                    \
-    flag = CAS_ANY_FENCE(l, TO_VOIDP(old), TO_VOIDP(new));     \
+    flag = COMPARE_AND_SWAP_PTR(l, TO_VOIDP(old), TO_VOIDP(new));     \
   } while (0)
 #else
 #define doi_pb_cas(instr) \
