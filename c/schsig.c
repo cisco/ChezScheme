@@ -568,7 +568,7 @@ static BOOL WINAPI handle_signal(DWORD dwCtrlType) {
     case CTRL_BREAK_EVENT: {
 #ifdef PTHREADS
      /* get_thread_context() always returns 0, so assume main thread */
-      ptr tc = S_G.thread_context;
+      ptr tc = TO_PTR(S_G.thread_context);
 #else
       ptr tc = get_thread_context();
 #endif

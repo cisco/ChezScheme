@@ -502,7 +502,7 @@ ptr *S_get_call_arena(ptr tc) {
 #if defined(PTHREADS)
 void S_pb_spinlock(void *addr) {
   while (1) {
-    if (CAS_ANY_FENCE(addr, TO_VOIDP(0), TO_VOIDP(1)))
+    if (COMPARE_AND_SWAP_PTR(addr, TO_VOIDP(0), TO_VOIDP(1)))
       break;
   }
 }
@@ -511,7 +511,7 @@ int S_pb_locked_adjust(void *addr, int delta) {
   while (1) {
     uptr oldv = *(uptr *)addr;
     uptr newv = oldv + delta;
-    if (CAS_ANY_FENCE(addr, TO_VOIDP(oldv), TO_VOIDP(newv)))
+    if (COMPARE_AND_SWAP_PTR(addr, TO_VOIDP(oldv), TO_VOIDP(newv)))
       return newv == 0;
   }
 }

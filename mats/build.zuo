@@ -363,7 +363,7 @@
                                                  "cc")))
                         (cons "FTYPE_CFLAGS"
                               (build-shell (or (lookup 'CPPFLAGS) "")
-                                           (if (glob-match? "*nt" m)
+                                           (if (eq? 'windows (system-type))
                                                "-DWIN32"
                                                "")
                                            (or (lookup 'mdinclude) "")
@@ -759,7 +759,7 @@
                                                       (string->shell (at-dir "../bin" m
                                                                              (~a "csv" (get-dll-version)
                                                                                  ".lib"))))]
-				       [(glob-match? "*nt" m)
+				       [(eq? 'windows (system-type))
 					(config-merge config 'LDFLAGS
 						      (string->shell (at-dir "../boot" m "schemeexe.lib")))]
 				       [else config])])

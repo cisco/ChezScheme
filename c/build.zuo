@@ -504,14 +504,14 @@
                                       " /DSCHEME_STATIC")
                                   " /Ox /W3 /DWIN32 /D_CRT_SECURE_NO_WARNINGS"
                                   " /Zi /FS /Fd" (string->shell (at-dir "scheme.pdb"))
-                                  (if (glob-match? "pb*" (hash-ref config 'm))
+                                  (if (glob-match? "pb*" (m->arch (hash-ref config 'm)))
                                       " /DFEATURE_WINDOWS"
                                       "")))]
             [config (hash-set config 'LDFLAGS (if (as-runtime-dll? config) "/MD" "/MT"))]
             [config (hash-set config 'LIBS "rpcrt4.lib ole32.lib advapi32.lib User32.lib")])
        config)]
-    [(and (eq? 'windows (system-type))
-          (glob-match? "pb*" (hash-ref config 'm)))
+    [(and (glob-match? "*nt" (hash-ref config 'defaultm ""))
+          (glob-match? "pb*" (m->arch (hash-ref config 'm))))
      (config-merge config 'CFLAGS "-DFEATURE_WINDOWS")]
     [else config]))
 
