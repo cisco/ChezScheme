@@ -728,7 +728,7 @@ fi
 
 # Infer flags needed for threads:
 case "${flagsm}" in
-  t*le|t*gnu|t*fb|t*ob|t*nb)
+  t*le|*l|t*gnu|t*fb|t*ob|t*nb)
       threadFlags="-D_REENTRANT -pthread"
       threadLibs="-lpthread"
       ;;
@@ -840,7 +840,7 @@ fi
 # Add automatic linking flags, unless suppressed by --disable-auto-flags
 if [ "$addflags" = "yes" ] ; then
   case "${flagsm}" in
-    *le|*gnu)
+    *le|*l|*gnu)
         LDFLAGS="${LDFLAGS} -rdynamic"
         ;;
     *fb|*nb)
@@ -854,7 +854,7 @@ if [ "$addflags" = "yes" ] ; then
   esac
 
   case "${flagsm}" in
-    *le|*gnu)
+    *le|*l|*gnu)
         LIBS="${LIBS} -lm -ldl ${ncursesLib} -lrt"
         ;;
     *fb|*ob)
@@ -950,7 +950,7 @@ exeSuffix=
 
 # compile flags for c/Mf-unix and mats/Mf-unix
 case "${flagsmuni}" in
-    *le|*gnu)
+    *le|*l|*gnu)
         mdcflags="-fPIC -shared"
         ;;
     *fb|*ob)
@@ -984,7 +984,7 @@ case "${flagsmuni}" in
     i3le)
         mdldflags="-melf_i386"
         ;;
-    *le|*gnu)
+    *le|*l|*gnu)
         ;;
     i3nb)
         mdldflags="-m elf_i386"
