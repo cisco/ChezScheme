@@ -146,6 +146,14 @@ type of build and the installation location. For example,
 specifies the installation root. Run `./configure --help` for
 information on the supported options.
 
+For platforms without support for native-code compilation in Chez
+Scheme, use a machine specification like `-m=tpb64l`, which is a
+threaded, 64-bit, little-endian build. The "configure" script will
+still attept to infer compilation and linking flags for the kernel; if
+you need to give it a hint, you can use the `--os` flag with something
+like `--os=tXle`, which indicates a threaded configuration (due to the
+leading "t") on Linux (due to the trailing "le").
+
 The generated makefile mostly just ensures that a `zuo` executable is
 built in a `bin` directory, and then it defers the actual build work
 to `zuo`, which uses the "main.zuo" file. If you have `zuo` installed,
