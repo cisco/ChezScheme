@@ -49,8 +49,21 @@ else
     cflagsset=no    
 fi
 
+# Machine type to build:
 m=""
+
+# Working directory, defaults to $m
 w=""
+
+# Machine describing the OS that the kernel runs on, so it determines
+# default compiler and linker flags; when $m is a pb variant, then
+# this OS is inferred if not specified with `--osmachine=`
+flagsm=""
+
+# Used to select a default $m, but in the end corresponds to
+# the target machine for boot files when built via pb
+defaultm=""
+
 pb=no
 pbarch=no
 threads=yes
@@ -256,6 +269,9 @@ while [ $# != 0 ] ; do
       ;;
     --machine=*)
       m=`echo $1 | sed -e 's/^--machine=//'`
+      ;;
+    --os=*)
+      flagsm=`echo $1 | sed -e 's/^--os=//'`
       ;;
     --boot=*)
       mboot=`echo $1 | sed -e 's/^--boot=//'`
@@ -477,15 +493,6 @@ if [ $emscripten = yes ] ; then
     tm32=tpb32l
 fi
 
-case "$m" in
-    pb)
-        echo "Don't select pb using -m or --machine, because pb prefers to use the"
-        echo " machine as the kernel host machine. Instead, use --pb or --pbarch"
-        echo " to select a pb (portable bytecode) build."
-        exit 1
-        ;;
-esac
-
 if [ "$bits" = "" ] ; then
   # infer default bits; this will be irrelevant if a machine is specified
   if [ "$unamebits" != "" ] ; then
@@ -506,7 +513,14 @@ fi
 # to the host platform's threadedness, and we want that to default
 # the same way as when `--pb` is not used
 if [ "$threads" = "" ] ; then
-    defaultthreads=yes
+    case "$m" in
+        pb*)
+            defaultthreads=no
+            ;;
+        *)
+            defaultthreads=yes
+            ;;
+    esac
 else
     defaultthreads=$threads
 fi
@@ -542,26 +556,33 @@ if [ "$m" = "" ] ; then
   machine_supplied=no
   if [ $pb = yes ] ; then
      m=pb
-     if [ "$threads" = yes ] ; then m=t$m ; fi
-     if [ $bits = 64 ] ; then mpbhost=$m64 ; else mpbhost=$m32 ; fi
-     flagsm=$mpbhost
-     if [ "$mpbhost" = "" ] ; then
-         flagsm=unknown
+     if [ $bits = 64 ] ; then defaultflagsm=$m64 ; else defaultflagsm=$m32 ; fi
+     if [ "$defaultflagsm" = "" ] ; then
+         defaultflagsm=unknown
+     fi
+     if [ "$threads" = yes ] ; then
+         m=t$m
+         defaultflagsm=t$defaultflagsm
      fi
   else
     if [ "$unknownm" != "yes" ] ; then
         m=$defaultm
     fi
-    flagsm=$defaultm
-    # note that m (and flagsm) could still be "" at this point, in which
+    defaultflagsm=$defaultm
+    # note that m (and defaultflagsm) could still be "" at this point, in which
     # case "No suitable machine type" will be reported further below
   fi
 elif [ $pb = yes ] ; then
-  mpbhost=$m
-  flagsm=$m
+  defaultflagsm=$m
   m=pb
 else
-  flagsm=$m
+  case "${m}" in
+      pb*|tpb*)
+          defaultflagsm=$defaultm
+          ;;
+      *)
+          defaultflagsm=$m
+  esac
   defaultm=$m
 fi
 
@@ -569,7 +590,12 @@ if [ $pbarch = yes ] ; then
     m=pb$bits$pbendian
     if [ "$defaultthreads" = yes ] ; then
         m=t$m
+        defaultflagsm=t$defaultflagsm
     fi
+fi
+
+if [ "$flagsm" = "" ] ; then
+    flagsm=$defaultflagsm
 fi
 
 if [ "$mboot" = "" ] ; then
@@ -623,6 +649,7 @@ if [ "$help" = "yes" ]; then
   echo "Options (defaults shown in parens):"
   echo "  --machine=<machine type>          explicitly specify machine type ($m)"
   echo "  -m=<machine type>                 same as --machine=<machine type> ($m)"
+  echo "  --os=<machine type>               specify OS as a machine type ($flagsm)"
   echo "  --threads                         specify threaded version ($threads)"
   echo "  --nothreads                       specify non-threaded version ($nothreads)"
   echo "  --32|--64                         specify 32/64-bit version ($bits)"
@@ -1042,6 +1069,10 @@ else
     configuringin=" in $w"
 fi
 
+if [ "$flagsm" != "$m" ] ; then
+    configuringin="$configuringin to run on $flagsm"
+fi
+
 if [ "$m" = "" ] ; then
     enableFrompb=no
     forceworkarea=no
@@ -1113,6 +1144,7 @@ srcdir=$srcdir
 upsrcdir=$upsrcdir
 m=$m
 defaultm=$defaultm
+flagsm=$flagsm
 mboot=$mboot
 buildKernelOnly=$buildKernelOnly
 enableFrompb=$enableFrompb
