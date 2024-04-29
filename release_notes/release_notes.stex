@@ -2726,6 +2726,14 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Random number generation for large exact integers (10.1.0)}
+
+Given an exact integer greater than 4294967087,
+\scheme{pseudo-random-generator-next!} did not produce a valid result.
+Generated results did not cover the intended range uniformly, and by
+mistreating the largest part of the integer, it could always produce
+\scheme{0} (e.g., for \scheme{(expt 2 32)}).
+
 \subsection{Missing memory fences for some platforms (10.1.0)}
 
 Compilation for tppc32le lacked memory fences that are needed to
