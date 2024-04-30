@@ -2827,7 +2827,7 @@
                    (loop (sub1 i)))))
              ;; We expect about 100 hits in each bin. Having less than 50 or
              ;; more than 150 should be so extremely unlikely that we can rely on
-             ;; it not happning:
+             ;; it not happening:
              (let loop ([i (vector-length hits)])
                (or (= i 0)
                    (and (< 50 (vector-ref hits (sub1 i)) 150)

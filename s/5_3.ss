@@ -3169,7 +3169,7 @@
                           (loop (+ r (bitwise-arithmetic-shift-left (random-int s #x80000000) shift))
                                 (- len 31)
                                 (+ shift 31)))))])
-             ;; probably of a bad choice is at most 1/2
+             ;; probability of a bad choice is at most 1/2
              (if (>= maybe-result x)
                  (random-integer s x)
                  maybe-result)))
