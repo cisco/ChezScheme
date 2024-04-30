@@ -2809,20 +2809,30 @@
     (= 0.970453319804345 (pseudo-random-generator-next! prgen))
     (= 0.41754101818626094 (pseudo-random-generator-next! prgen))
     (= 0.13061439482676662 (pseudo-random-generator-next! prgen))
-    (let ([hits (make-vector 10)])
-      (let loop ([i 1000])
-        (unless (zero? i)
-          (let* ([n (pseudo-random-generator-next! prgen (expt 10 1000))]
-                 [k (quotient n (expt 10 999))])
-            (vector-set! hits k (add1 (vector-ref hits k)))
-            (loop (sub1 i)))))
-      ;; We expect about 100 hits in each bin. Having less than 50 or
-      ;; more than 150 should be so etxremely unlikely that we can rely on
-      ;; it not happning:
-      (let loop ([i (vector-length hits)])
-        (or (= i 0)
-            (and (< 50 (vector-ref hits (sub1 i)) 150)
-                 (loop (sub1 i))))))
+    (let nloop ([ns (list (expt 2 31)
+                          (expt 2 32)
+                          (expt 2 33)
+                          (expt 2 64)
+                          (expt 10 1000))])
+      (or (null? ns)
+          (and
+           (let* ([M 64]
+                  [hits (make-vector M)])
+             (let loop ([i (* M 100)])
+               (unless (zero? i)
+                 (let* ([n (pseudo-random-generator-next! prgen (car ns))]
+                        [k (quotient n (quotient (car ns) M))])
+                   (when (>= n (car ns)) (error 'random "too big"))
+                   (vector-set! hits k (add1 (vector-ref hits k)))
+                   (loop (sub1 i)))))
+             ;; We expect about 100 hits in each bin. Having less than 50 or
+             ;; more than 150 should be so extremely unlikely that we can rely on
+             ;; it not happening:
+             (let loop ([i (vector-length hits)])
+               (or (= i 0)
+                   (and (< 50 (vector-ref hits (sub1 i)) 150)
+                        (loop (sub1 i))))))
+           (nloop (cdr ns)))))
  )
       
 
