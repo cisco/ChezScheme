@@ -56,7 +56,7 @@
 
 % Just don't care about small overflows, most of the time:
 \iflatex
-\hfuzz=26.0pt
+\hfuzz=16.0pt
 \fi
 
 \iflatex
