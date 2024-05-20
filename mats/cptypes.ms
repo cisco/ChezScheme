@@ -206,6 +206,10 @@
   (cptypes-equivalent-expansion?
     '(lambda () (box (let ([x (error 'who "msg")]) (cons x (random)))))
     '(lambda () (error 'who "msg")))
+  (parameterize ([debug-level 2])
+    (cptypes-equivalent-expansion?
+     '(lambda () (box (let ([x (error 'who "msg")]) (cons x (random)))))
+     '(lambda () (#%$value (error 'who "msg")))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (vector-set! (box 5) 0 0) 1)
     '(lambda (x) (vector-set! (box 5) 0 0) 2))
@@ -1565,6 +1569,25 @@
   (cptypes-equivalent-expansion?
    '(lambda (x) (error 'x "no") (add1 x))
    '(lambda (x) (error 'x "no")))
+  (parameterize ([debug-level 2])
+    (cptypes-equivalent-expansion?
+     '(lambda (x) (error 'x "no") (add1 x))
+     '(lambda (x) (error 'x "no") (void))))
+  (parameterize ([debug-level 2])
+    (not
+     (cptypes-equivalent-expansion?
+      '(lambda (x) (error 'x "no") (add1 x))
+      '(lambda (x) (error 'x "no")))))
+  (parameterize ([debug-level 2])
+    (not
+     (cptypes-equivalent-expansion?
+      '(lambda (x) (rationalize "no") (add1 x))
+      '(lambda (x) (rationalize "no")))))
+  (parameterize ([debug-level 2])
+    (not
+     (cptypes-equivalent-expansion?
+      '(lambda (x) (+ 1 "no") (add1 x))
+      '(lambda (x) (+ 1 "no")))))
   (cptypes-equivalent-expansion?
    '(lambda (f) (f (error 'x "no") f))
    '(lambda (f) (error 'x "no")))
@@ -1574,6 +1597,11 @@
   (cptypes-equivalent-expansion?
    '(lambda (x) (if (error 'x "no") (add1 x) (sub1 x)))
    '(lambda (x) (error 'x "no")))
+  (parameterize ([debug-level 2])
+    (not
+     (cptypes-equivalent-expansion?
+      '(lambda (x) (if (error 'x "no") (add1 x) (sub1 x)))
+      '(lambda (x) (error 'x "no")))))
   (cptypes-equivalent-expansion?
    '(lambda (x) (+ (error 'x "no") x))
    '(lambda (x) (error 'x "no")))
@@ -1595,9 +1623,30 @@
   (cptypes-equivalent-expansion?
    '(let ([x #f]) (case-lambda [() x] [(y) (set! x (error 'x "no"))]))
    '(let ([x #f]) (case-lambda [() x] [(y) (error 'x "no")])))
+  (parameterize ([debug-level 2])
+    (cptypes-equivalent-expansion?
+     '(let ([x #f]) (case-lambda [() x] [(y) (set! x (error 'x "no"))]))
+     '(let ([x #f]) (case-lambda [() x] [(y) (error 'x "no") (void)]))))
+  (parameterize ([debug-level 2])
+    (not
+     (cptypes-equivalent-expansion?
+      '(let ([x #f]) (case-lambda [() x] [(y) (set! x (error 'x "no"))]))
+      '(let ([x #f]) (case-lambda [() x] [(y) (error 'x "no")])))))
+
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (if x (x) (error 'x "no")))
+   '(lambda (x) (if x (void) (error 'x "no")) (x)))
+  (parameterize ([debug-level 2])
+    (not
+     (cptypes-equivalent-expansion?
+      '(lambda (x) (if x (x) (error 'x "no")))
+      '(lambda (x) (if x (void) (error 'x "no")) (x)))))
 
   (cptypes-equivalent-expansion?
    '(lambda (x) (+ (#%$call-setting-continuation-attachment 'a (lambda () (error 'x "no ~s" a))) 1))
+   '(lambda (x) (#%$value (#%$call-setting-continuation-attachment 'a (lambda () (error 'x "no ~s" a))))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (if (#%$call-setting-continuation-attachment 'a (lambda () (error 'x "no ~s" a))) 1))
    '(lambda (x) (#%$value (#%$call-setting-continuation-attachment 'a (lambda () (error 'x "no ~s" a))))))
   (not
    (cptypes-equivalent-expansion?
@@ -1617,6 +1666,10 @@
    (cptypes-equivalent-expansion?
     '(lambda (x) (+ (#%$call-consuming-continuation-attachment 'a (lambda (a) (error 'x "no ~s" a))) 1))
     '(lambda (x) (#%$call-consuming-continuation-attachment 'a (lambda (a) (error 'x "no ~s" a))))))
+  (parameterize ([optimize-level 2])
+    (cptypes-equivalent-expansion?
+     '(lambda (p) (car p) (vector-ref p 0) (oops))
+     '(lambda (p) (car p) (vector-ref p 0))))
 )
 
 (mat cptypes-boxes

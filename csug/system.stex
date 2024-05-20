@@ -2724,10 +2724,13 @@ It is used to tell the compiler how important the preservation of
 debugging information is, with 0 being least important and 3 being
 most important.
 The default value is 1.
-As of Version~9.0, it is used solely to determine whether an
-error-causing call encountered in nontail position is treated as
-if it were in tail position (thus causing the caller's frame not
-to appear in a stack backtrace); this occurs at debug levels below~2.
+
+As of Version~9.0, the value of \scheme{debug-level} is used by the
+system only to discourage optimizations that affect the continuation
+as revealed by the inspector. The reduced optimization is intended to
+produce more informative stack backtraces at the point when an
+exception is raised, and the reduction applies when the debug level is
+2 or 3.
 
 %----------------------------------------------------------------------------
 \entryheader

@@ -2726,6 +2726,28 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Optimization and \scheme{debug-level} $\geq$ 2 (10.1.0)}
+
+Setting \scheme{debug-level} to 2 or higher did not prevent an
+error-causing call in nontail position to stay nontail when
+\scheme{enable-type-recovery} is \scheme{#t} (the default value).
+Furthermore, a tail error-causing call could be made non-tail by
+optimizations that aim to expose non-error paths. Those behaviors
+moved further from the documented behavior of \scheme{debug-level}
+than Chez Scheme version 9.x---but version 9.x was also not consistent
+with the documentation due to cp0 conversions such as replacing
+\scheme{(let ([x \var{expr}]) x)} with just \var{expr}.
+
+Instead of guaranteeing any specific behavior, a \scheme{debug-level}
+value of 2 or higher is now defined to merely \emph{discourage}
+optimizations that affect the continuation structure as revealed by the
+inspector, where the goal is to produce more informative stack
+backtraces at the point where an exception is raised. The
+implementation produces results that are more in line with Chez Scheme
+9.x. Meanwhile, continuation marks support predictable and
+well-defined reflection on continuations in a way that is compatible
+with compiler optimizations.
+
 \subsection{Random number generation for large exact integers (10.1.0)}
 
 Given an exact integer greater than 4294967087,
