@@ -634,11 +634,11 @@ if [ "$installdoc" = "" ] ; then
 fi
 
 if [ "$installcsug" = "" ] ; then
-  installcsug=$installdoc/csug9.5
+  installcsug=$installdoc/csug10.0
 fi
 
 if [ "$installreleasenotes" = "" ] ; then
-  installreleasenotes=$installdoc/csv9
+  installreleasenotes=$installdoc/csv10
 fi
 
 if [ "$help" = "yes" ]; then
