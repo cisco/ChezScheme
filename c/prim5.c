@@ -749,8 +749,8 @@ static ptr s_system(const char *s) {
 #ifdef WIN32
   return Sinteger(status);
 #else
-  if WIFEXITED(status) return Sinteger(WEXITSTATUS(status));
-  if WIFSIGNALED(status) return Sinteger(-WTERMSIG(status));
+  if (WIFEXITED(status)) return Sinteger(WEXITSTATUS(status));
+  if (WIFSIGNALED(status)) return Sinteger(-WTERMSIG(status));
   S_error("system", "cannot determine subprocess exit status");
   return 0 /* not reached */;
 #endif /* WIN32 */
