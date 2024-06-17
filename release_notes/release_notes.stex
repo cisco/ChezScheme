@@ -2726,6 +2726,10 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Case-insensitive ``V'' format directive (10.1.0)}
+
+The ``V'' format directive is now recognized in uppercase as well as lowercase.
+
 \subsection{\scheme{library-exports} for library that is not yet imported (10.0.0)}
 
 When visiting or loading a separately compiled library,
