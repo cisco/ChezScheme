@@ -1437,7 +1437,10 @@
       ;; Returns #t, #f, 'value/inspect (single-valued, but may
       ;; inspect continuation), or a prelex for a lambda that needs to
       ;; be single-valued to imply #t. The prelex case is useful to
-      ;; detect a single-valued loop.
+      ;; detect a single-valued loop. When `debug-level` is 2 or more,
+      ;; we treat aborting ops as 'value/inspect instead of #t so that
+      ;; those calls are not moved into tail position (especially after
+      ;; cptypes lifts them into a sequence with `(void)`).
       (define-who single-valued
         (lambda (e)
           (with-memoize () e
@@ -1445,13 +1448,20 @@
             (nanopass-case (Lsrc Expr) e
               [(quote ,d) #t]
               [(call ,preinfo ,e ,e* ...)
-               (or (and (preinfo-call-single-valued? preinfo)
+               (or (and (or (and (preinfo-call-no-return? preinfo)
+                                 (if (fx< (debug-level) 2)
+                                     #t
+                                     'value/inspect))
+                            (preinfo-call-single-valued? preinfo))
                         (not (preinfo-call-check? preinfo)))
                    (let procedure-single-valued ([e e] [e* e*])
                      (nanopass-case (Lsrc Expr) (result-exp e)
                        [,pr
-                        (or (all-set? (prim-mask single-valued) (primref-flags pr))
-                            (all-set? (prim-mask abort-op) (primref-flags pr))
+                        (or (and (all-set? (prim-mask abort-op) (primref-flags pr))
+                                 (if (fx< (debug-level) 2)
+                                     #t
+                                     'value/inspect))
+                            (all-set? (prim-mask single-valued) (primref-flags pr))
                             (and e*
                                  (cond
                                    [(extract-called-procedure pr e*)
@@ -1568,6 +1578,8 @@
            ;; conservative assumption for a prelex:
            [else #f])))
 
+      ;; Single-valued and ok to move from non-tail to tail position
+      ;; (because it doesn't inspect the continuation)?
       (define-who single-valued?
         (lambda (e)
           (single-valued-reduce? (single-valued e)))))

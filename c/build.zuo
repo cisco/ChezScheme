@@ -93,7 +93,7 @@
          kernel-srcs))
 
   (define kernel-asm-files
-    (if (glob-match? "*nt" (or (lookup 'defaultm) m))
+    (if (glob-match? "*nt" (or (lookup 'flagsm) m))
 	(cond
           [(and msvc?
                 (string=? arch "a6"))
@@ -504,14 +504,14 @@
                                       " /DSCHEME_STATIC")
                                   " /Ox /W3 /DWIN32 /D_CRT_SECURE_NO_WARNINGS"
                                   " /Zi /FS /Fd" (string->shell (at-dir "scheme.pdb"))
-                                  (if (glob-match? "pb*" (hash-ref config 'm))
+                                  (if (glob-match? "pb*" (m->arch (hash-ref config 'm)))
                                       " /DFEATURE_WINDOWS"
                                       "")))]
             [config (hash-set config 'LDFLAGS (if (as-runtime-dll? config) "/MD" "/MT"))]
             [config (hash-set config 'LIBS "rpcrt4.lib ole32.lib advapi32.lib User32.lib")])
        config)]
-    [(and (eq? 'windows (system-type))
-          (glob-match? "pb*" (hash-ref config 'm)))
+    [(and (glob-match? "*nt" (hash-ref config 'flagsm ""))
+          (glob-match? "pb*" (m->arch (hash-ref config 'm))))
      (config-merge config 'CFLAGS "-DFEATURE_WINDOWS")]
     [else config]))
 
@@ -554,7 +554,7 @@
 (define (for-windows? config)
   (or (is-msvc? config)
       (glob-match? "*nt" (hash-ref config 'm))
-      (glob-match? "*nt" (or (hash-ref config 'defaultm #f) ""))))
+      (glob-match? "*nt" (or (hash-ref config 'flagsm #f) ""))))
 
 (define (lib-build-suffix config)
   (if (is-msvc? config)

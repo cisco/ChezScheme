@@ -93,6 +93,7 @@ Notes:
                  [else #f]
                  #;[else ($oops who "unrecognized record ~s" e)])))))
 
+    ;; Unlike `single-valued?` in cp0, the result is always #t for aborting operations
     (module (single-valued?)
       (define default-fuel 5)
       (define (single-valued? e)
@@ -103,7 +104,7 @@ Notes:
                (nanopass-case (Lsrc Expr) e
                  [(quote ,d) #t]
                  [(seq ,e1 ,e2)
-                  (sv? e fuel)]
+                  (sv? e2 fuel)]
                  [(if ,e1 ,e2, e3)
                   (and (sv? e2 fuel)
                        (sv? e3 fuel))]
@@ -226,17 +227,6 @@ Notes:
          #t]
         [else #f]))
 
-    (define make-nontail
-      (lambda (ctxt e)
-        (case ctxt
-          [(value)
-           (if (single-valued? e)
-               e
-               `(call ,(make-preinfo-call) ,(lookup-primref 3 '$value) ,e))]
-          [else
-           ;; 'test and 'effect contexts cannot have an active attachment
-           e])))
-    
     (define make-seq
       ; ensures that the right subtree of the output seq is not a seq if the
       ; last argument is similarly constrained, to facilitate result-exp
@@ -254,7 +244,7 @@ Notes:
          (if (simple? e1)
                e2
                (if (and (eq? ctxt 'effect) (simple? e2))
-                   (make-nontail ctxt e1)
+                   e1
                    (nanopass-case (Lsrc Expr) e2
                      [(seq ,e21 ,e22) `(seq (seq ,e1 ,e21) ,e22)]
                      [else `(seq ,e1 ,e2)])))]
@@ -673,7 +663,28 @@ Notes:
          (predicate-implies? x $fixmediate-pred)))
 
   (define (unwrapped-error ctxt e)
-    (values (make-nontail ctxt e) 'bottom pred-env-bottom #f #f))
+    (let ([e (cond
+               [(or (and (fx< (debug-level) 2)
+                         ;; Calling functions for continuation-attachment operations
+                         ;; will not count as `single-valued?` (even though we get
+                         ;; here because we know an error will be raised); we need to keep
+                         ;; those non-tail:
+                         (single-valued? e))
+                    ;; A 'test or 'effect context cannot have an active attachment,
+                    ;; and they are non-tail with respect to the enclosing function,
+                    ;; so ok to have `e` immediately:
+                    (not (eq? 'value ctxt)))
+                ;; => It's ok to potentially move `e` into tail position
+                ;; from a continuation-marks perspective. Although an
+                ;; error may trigger a handler that has continuation-mark
+                ;; operations, but the handler is called by `raise` in
+                ;; non-tail position.
+                e]
+               [else
+                ;; Wrap `e` to keep it non-tail
+                (with-output-language (Lsrc Expr)
+                  `(seq ,e ,void-rec))])])
+      (values e 'bottom pred-env-bottom #f #f)))
 
   (module ()
     (with-output-language (Lsrc Expr)
@@ -1758,12 +1769,20 @@ Notes:
                 [(predicate-implies? ret2 'bottom) ;check bottom first
                  (values (if (unsafe-unreachable? e2)
                              (make-seq ctxt e1 e3)
-                             (make-seq ctxt `(if ,e1 ,e2 ,void-rec) e3))
+                             (if (or (< (debug-level) 2)
+                                     (not (eq? ctxt 'value)))
+                                 (make-seq ctxt `(if ,e1 ,e2 ,void-rec) e3)
+                                 ;; If `debug-level` >= 2, may need to keep in tail position
+                                 ir))
                          ret3 types3 t-types3 f-types3)]
                 [(predicate-implies? ret3 'bottom) ;check bottom first
                  (values (if (unsafe-unreachable? e3)
                              (make-seq ctxt e1 e2)
-                             (make-seq ctxt `(if ,e1 ,void-rec ,e3) e2))
+                             (if (or (< (debug-level) 2)
+                                     (not (eq? ctxt 'value)))
+                                 (make-seq ctxt `(if ,e1 ,void-rec ,e3) e2)
+                                 ;; As above:
+                                 ir))
                          ret2 types2 t-types2 f-types2)]
                 [else
                  (let ([new-types (pred-env-union/super-base types2 t-types1

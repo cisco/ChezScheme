@@ -449,12 +449,6 @@ typedef struct {
 # define END_IMPLICIT_ATOMIC() do {  } while (0)
 #endif
 
-#define S_cas_load_acquire_voidp(a, old, new) CAS_LOAD_ACQUIRE(a, old, new)
-#define S_cas_store_release_voidp(a, old, new) CAS_STORE_RELEASE(a, old, new)
-#define S_cas_load_acquire_ptr(a, old, new) CAS_LOAD_ACQUIRE(a, TO_VOIDP(old), TO_VOIDP(new))
-#define S_cas_store_release_ptr(a, old, new) CAS_STORE_RELEASE(a, TO_VOIDP(old), TO_VOIDP(new))
-#define S_store_release() RELEASE_FENCE()
-
 #else
 #define get_thread_context() TO_PTR(S_G.thread_context)
 #define deactivate_thread(tc) {}
@@ -465,11 +459,6 @@ typedef struct {
 #define alloc_mutex_release() do {} while (0)
 #define IS_TC_MUTEX_OWNER() 1
 #define IS_ALLOC_MUTEX_OWNER() 1
-#define S_cas_load_acquire_voidp(a, old, new) (*(a) = new, 1)
-#define S_cas_store_release_voidp(a, old, new) (*(a) = new, 1)
-#define S_cas_load_acquire_ptr(a, old, new) (*(a) = new, 1)
-#define S_cas_store_release_ptr(a, old, new) (*(a) = new, 1)
-#define S_store_release() do { } while (0)
 #define BEGIN_IMPLICIT_ATOMIC() do {  } while (0)
 #define END_IMPLICIT_ATOMIC() do {  } while (0)
 #define AS_IMPLICIT_ATOMIC(T, X) X

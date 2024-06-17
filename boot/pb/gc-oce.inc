@@ -206,9 +206,26 @@ static IGEN copy(thread_gc *tgc, ptr p, seginfo *si, ptr *dest)
                   {
                     uptr len = Sbytevector_reference_length(p);
                     memcpy_aligned(&BVIT(new_p, 0), &BVIT(p, 0), ptr_bytes * len);
-                    if ((len & 1) == 0)
                     {
-                      INITBVREFIT(new_p, len) = FIX(0);
+                      uptr extra = (Sbytevector_length(p)) - (len * ptr_bytes);
+                      if (extra == 0)
+                      {
+                        if ((len & 1) == 0)
+                        {
+                          INITBVREFIT(new_p, len) = FIX(0);
+                        }
+                      }
+                      else
+                      {
+                        INITBVREFIT(new_p, len) = INITBVREFIT(p, len);
+                        {
+                          uptr xlen = len + 1;
+                          if ((xlen & 1) == 0)
+                          {
+                            INITBVREFIT(new_p, xlen) = FIX(0);
+                          }
+                        }
+                      }
                     }
                     S_G.countof[tg][countof_bytevector] += 1;
                     S_G.bytesof[tg][countof_bytevector] += p_sz;

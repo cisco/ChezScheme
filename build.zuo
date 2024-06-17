@@ -224,10 +224,15 @@
            token))
 
   (define stexlib
-    (let ((found (assoc "STEXLIB" (hash-ref (runtime-env) 'env))))
-      (if found
-          (cdr found)
-          (at-source "stex"))))
+    (let ([configured (hash-ref config 'STEXLIB "")]
+          [env (assoc "STEXLIB" (hash-ref (runtime-env) 'env))])
+      (cond
+        [(not (equal? "" configured))
+         configured]
+        [env
+         (cdr env)]
+        [else
+         (at-source "stex")])))
   (define stex-sources
     (source-tree stexlib))
 

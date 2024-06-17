@@ -3156,19 +3156,23 @@
          (random-double s)]
         [(s x)
          (define (random-integer s x)
-           (let ([bits (integer-length x)])
-             (let loop ([shift 0])
-               (cond
-                 [(<= bits shift) 0]
-                 [else
-                  ;; Assuming that a `uptr` is at least 32 bits:
-                  (bitwise-ior (loop (+ shift 32))
-                               (let ([n (bitwise-bit-field x shift (+ shift 32))])
-                                 (if (zero? n)
-                                     0
-                                     (bitwise-arithmetic-shift-left
-                                      (random-int s n)
-                                      shift))))]))))
+           ;; assumes that uptr is at least 32 bits
+           (let ([maybe-result
+                  ;; get a number that might be too big, because we bump
+                  ;; the high 31-bit digit by one to cover the range created
+                  ;; by lower 31-bit digits (assuming that one of them is non-zero)
+                  (let ([y (- x 1)]) ; might reduce bit width; more than compensated by `(+ z 1)` below
+                    (let loop ([r 0] [len (integer-length y)] [shift 0])
+                      (if (< len 32)
+                          (let ([z (bitwise-bit-field y shift (+ shift 31))])
+                            (+ r (bitwise-arithmetic-shift-left (random-int s (+ z 1)) shift)))
+                          (loop (+ r (bitwise-arithmetic-shift-left (random-int s #x80000000) shift))
+                                (- len 31)
+                                (+ shift 31)))))])
+             ;; probability of a bad choice is at most 1/2
+             (if (>= maybe-result x)
+                 (random-integer s x)
+                 maybe-result)))
          (unless (is-pseudo-random-generator? s) ($oops who "not a pseudo-random generator ~s" s))
          (cond
           [(fixnum? x)

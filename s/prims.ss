@@ -88,7 +88,7 @@
   (lambda (bv i)
     (unless (reference-bytevector? bv) ($oops who "~s is not a reference bytevector" bv))
     (unless (and (fixnum? i)
-                 (not ($fxu< (fx- (bytevector-length bv) (fx- (constant ptr-bytes) 1)) i)))
+                 (fx<= 0 i (fx- (bytevector-length bv) (constant ptr-bytes))))
       ($oops who "invalid index ~s for ~s" i bv))
     (bytevector-reference-ref bv i)))
 
@@ -97,7 +97,7 @@
     (lambda (bv i)
       (unless (reference-bytevector? bv) ($oops who "~s is not a reference bytevector" bv))
       (unless (and (fixnum? i)
-                   (not ($fxu< (fx- (bytevector-length bv) (fx- (constant ptr-bytes) 1)) i)))
+                   (fx<= 0 i (fx- (bytevector-length bv) (constant ptr-bytes))))
         ($oops who "invalid index ~s for ~s" i bv))
       (ref bv i))))
 
@@ -105,7 +105,7 @@
   (lambda (bv i val)
     (unless (reference-bytevector? bv) ($oops who "~s is not a reference bytevector" bv))
     (unless (and (fixnum? i)
-                 (not ($fxu< (fx- (bytevector-length bv) (fx- (constant ptr-bytes) 1)) i)))
+                 (fx<= 0 i (fx- (bytevector-length bv) (constant ptr-bytes))))
       ($oops who "invalid index ~s for ~s" i bv))
     (bytevector-reference-set! bv i val)))
 
@@ -666,7 +666,8 @@
       [(pb)
        (unless (vector? x)
          ($oops 'foreign-callable-entry-point "~s is not a vector" x))
-       (bitwise-arithmetic-shift-left (vector-ref x 2) (constant fixnum-offset))]
+       (bitwise-and (bitwise-arithmetic-shift-left (vector-ref x 2) (constant fixnum-offset))
+                    (- (bitwise-arithmetic-shift-left 1 (constant ptr-bits)) 1))]
       [else
        (unless ($code? x)
          ($oops 'foreign-callable-entry-point "~s is not a code object" x))

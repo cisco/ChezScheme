@@ -547,6 +547,8 @@ After a signal handler for a given signal has been registered, receipt
 of the specified signal results in a call to the handler.
 The handler is passed the signal number, allowing the same handler to
 be used for different signals while differentiating among them.
+In a threaded version of the system, signals are always delivered to
+the main thread.
 
 Signals handled in this fashion are treated like keyboard interrupts in
 that the handler is not called immediately when the signal is delivered
@@ -2722,10 +2724,13 @@ It is used to tell the compiler how important the preservation of
 debugging information is, with 0 being least important and 3 being
 most important.
 The default value is 1.
-As of Version~9.0, it is used solely to determine whether an
-error-causing call encountered in nontail position is treated as
-if it were in tail position (thus causing the caller's frame not
-to appear in a stack backtrace); this occurs at debug levels below~2.
+
+As of Version~9.0, the value of \scheme{debug-level} is used by the
+system only to discourage optimizations that affect the continuation
+as revealed by the inspector. The reduced optimization is intended to
+produce more informative stack backtraces at the point when an
+exception is raised, and the reduction applies when the debug level is
+2 or 3.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -5209,7 +5214,7 @@ The procedure \scheme{object-backreferences} returns a list of
 backreference lists. Each backreference list is a list of pairs, where
 the \scheme{car} of the pair is a referenced object, and the
 \scheme{cdr} of the pair is either \scheme{#f} or a value that caused
-the \scheme{car}'s value or be retained during collection. The
+the \scheme{car}'s value to be retained during collection. The
 \scheme{cdr} of a backreference pair is \scheme{#f} if the object in
 the \scheme{car} is retained by a root reference within the system's
 implementation or static generation. By locating the \scheme{cdr} of

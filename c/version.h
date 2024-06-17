@@ -48,6 +48,11 @@
 # define FLUSHCACHE
 #endif
 
+#if defined(__s390__) || defined(__s390x__) || defined(__zarch__)
+# define PORTABLE_BYTECODE_BIGENDIAN
+# define BIG_ENDIAN_IEEE_DOUBLE
+#endif
+
 #ifdef PORTABLE_BYTECODE
 # undef FLUSHCACHE
 # ifdef PORTABLE_BYTECODE_BIGENDIAN
@@ -81,9 +86,13 @@ FORCEINLINE void store_unaligned_uptr(uptr *addr, uptr val) {
 /*****************************************/
 /* Operating systems                     */
 
-#if defined(__linux__) || defined(__GNU__) /* Hurd */
+#if defined(__linux__) || defined(__COSMOPOLITAN__) || defined(__GNU__) /* Hurd */
 #define NOBLOCK O_NONBLOCK
-#define LOAD_SHARED_OBJECT
+/* cosmo dylib support is experimental, disable when using cosmo libc
+   https://github.com/jart/cosmopolitan/blob/3.3.10/libc/dlopen/dlopen.c#L801 */
+#ifndef __COSMOPOLITAN__
+# define LOAD_SHARED_OBJECT
+#endif
 #define USE_MMAP
 #define MMAP_HEAP
 #define IEEE_DOUBLE

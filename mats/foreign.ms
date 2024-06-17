@@ -3680,11 +3680,46 @@
   (error? (make-reference-bytevector -1))
   (error? (bytevector-reference-ref #vu8(1 2 3) 0))
   (error? (bytevector-reference-ref (make-reference-bytevector 8) -8))
+  (< 3 (foreign-sizeof 'ptr)) ;; assumption for some of the following tests
+  (error? (bytevector-reference-ref (make-reference-bytevector 3) 1))
+  (error? (bytevector-reference-ref (make-reference-bytevector 3) 0))
+  (error? (bytevector-reference-ref (make-reference-bytevector 3) -1))
+  (error? (guard (x [#t (error 'bytevector-reference-ref "failed as expected")])
+                 ;; guard the exception to hide the size of the vector, which
+                 ;; varies with the machine's word size
+                 (bytevector-reference-ref (make-reference-bytevector (foreign-sizeof 'ptr)) 1)))
   (error? (bytevector-reference-ref (make-reference-bytevector 8) 'oops))
   (error? (bytevector-reference*-ref (make-reference-bytevector 8) -8))
   (error? (bytevector-reference*-ref (make-reference-bytevector 8) 'oops))
+  (error? (bytevector-reference*-ref (make-reference-bytevector 3) 1))
+  (error? (bytevector-reference*-ref (make-reference-bytevector 3) 0))
+  (error? (bytevector-reference*-ref (make-reference-bytevector 3) -1))
+  (error? (guard (x [#t (error 'bytevector-reference-ref "failed as expected")])
+                 (bytevector-reference-ref (make-reference*-bytevector (foreign-sizeof 'ptr)) 1)))
+  (error? (bytevector-reference-set! (make-reference-bytevector 8) -8 #false))
+  (error? (bytevector-reference-set! (make-reference-bytevector 8) 'oops #false))
+  (error? (bytevector-reference-set! (make-reference-bytevector 3) 1 #false))
+  (error? (bytevector-reference-set! (make-reference-bytevector 3) 0 #false))
+  (error? (guard (x [#t (error 'bytevector-reference-set! "failed as expected")])
+                 (bytevector-reference-set! (make-reference-bytevector  (foreign-sizeof 'ptr)) 1 #false)))
   (error? (reference-address->object #f))
   (error? (reference*-address->object #f))
+
+  (equal? #false (bytevector-reference-ref (make-reference-bytevector (foreign-sizeof 'ptr)) 0))
+  (equal? #false (bytevector-reference*-ref (make-reference-bytevector (foreign-sizeof 'ptr)) 0))
+  (equal? (void) (bytevector-reference-set! (make-reference-bytevector (foreign-sizeof 'ptr)) 0 #false))
+
+  ;; ensure that a GC correctly handles extra bytes that don't fit into a word:
+  (let ([make (lambda ()
+                (let ([bv (make-reference-bytevector (- (foreign-sizeof 'ptr) 1))]
+                      [bv2 (make-reference-bytevector (+ (foreign-sizeof 'ptr) 1))])
+                  (bytevector-u8-set! bv 0 72)
+                  (bytevector-u8-set! bv2 (foreign-sizeof 'ptr) 73)
+                  (list bv bv2)))])
+    (let ([pre (make)])
+      (collect-rendezvous)
+      (equal? pre
+              (make))))
 
   (not (reference-bytevector? #vu8(1 2 3)))
   (not (reference-bytevector? 7))
