@@ -213,7 +213,7 @@
                 [(#\,) (state s4-comma () (fx+ i 1) b '(#f))]
                 [(#\') (state s4-quote () (fx+ i 1) b '())]
                 [(#\#) (state s4-after-param () (fx+ i 1) b '(hash))]
-                [(#\v) (state s4-after-param ([nargs (bump nargs 1)]) (fx+ i 1) b '(v))]
+                [(#\v #\V) (state s4-after-param ([nargs (bump nargs 1)]) (fx+ i 1) b '(v))]
                 [else (state s5 () i b '())]))))
         (define s4-sign
           (state lambda (i b p* bp)
@@ -253,7 +253,7 @@
                 [(#\,) (state s4-comma () (fx+ i 1) b (cons #f p*))]
                 [(#\') (state s4-quote () (fx+ i 1) b p*)]
                 [(#\#) (state s4-after-param () (fx+ i 1) b (cons 'hash p*))]
-                [(#\v) (state s4-after-param ([nargs (bump nargs 1)]) (fx+ i 1) b (cons 'v p*))]
+                [(#\v #\V) (state s4-after-param ([nargs (bump nargs 1)]) (fx+ i 1) b (cons 'v p*))]
                 [else (state s5 () i b (reverse (cons #f p*)))]))))
         (define s5
           (state lambda (i b p*)
