@@ -1461,8 +1461,10 @@
 
 (mat format-slib17 ; variable parameter
   (equal? (format "~va" 10 "abc") "abc       ")
+  (equal? (format "~Va" 10 "abc") "abc       ")
  ; changed 42 to #\* below
   (equal? (format "~v,,,va" 10 #\* "abc") "abc*******")
+  (equal? (format "~V,,,Va" 10 #\* "abc") "abc*******")
 )
 
 (mat format-slib18 ; number of remaining arguments as parameter

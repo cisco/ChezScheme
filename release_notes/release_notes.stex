@@ -2726,6 +2726,10 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Case-insensitive ``V'' format directive (10.1.0)}
+
+The ``V'' format directive is now recognized in uppercase as well as lowercase.
+
 \subsection{Optimization and \scheme{debug-level} $\geq$ 2 (10.1.0)}
 
 Setting \scheme{debug-level} to 2 or higher did not prevent an
