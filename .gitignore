@@ -24,8 +24,10 @@
 /xc-*/
 /em-*/
 *.*run
+*.katex-css-link
 /csug/math/
 /csug/gifs/
+/csug/katex/
 /csug/Makefile
 /csug/*.aux
 /csug/*.html
@@ -50,6 +52,7 @@
 /csug/primdata.ss
 /release_notes/math/
 /release_notes/gifs/
+/release_notes/katex/
 /release_notes/Makefile
 /release_notes/*.tex
 /release_notes/*.aux
