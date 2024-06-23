@@ -52,7 +52,7 @@
 # define STORE_FENCE()   __asm__ __volatile__ ("dbar 0" : : : "memory")
 # define ACQUIRE_FENCE() STORE_FENCE()
 # define RELEASE_FENCE() STORE_FENCE()
-#elif (__GNUC__ >= 5) || defined(__clang__)
+#elif (__GNUC__ >= 5) || C_COMPILER_HAS_BUILTIN(__sync_synchronize)
 # define STORE_FENCE() __sync_synchronize()
 # define ACQUIRE_FENCE() STORE_FENCE()
 # define RELEASE_FENCE() STORE_FENCE()
@@ -112,7 +112,7 @@ FORCEINLINE int COMPARE_AND_SWAP_PTR(volatile void *addr, void *old_val, void *n
                         : "cc", "memory", "r12", "r7");
   return ret;
 }
-#elif (__GNUC__ >= 5) || defined(__clang__)
+#elif (__GNUC__ >= 5) || C_COMPILER_HAS_BUILTIN(__sync_bool_compare_and_swap)
 # define COMPARE_AND_SWAP_PTR(a, old, new) __sync_bool_compare_and_swap((ptr *)(a), TO_PTR(old), TO_PTR(new))
 #elif defined(__i386__) || defined(__x86_64__)
 # if ptr_bits == 64

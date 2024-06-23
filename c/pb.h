@@ -71,10 +71,23 @@ enum {
 
 #define SIGN_FLIP(r, a, b) ((~((a ^ b) | (r ^ ~b))) >> (ptr_bits-1))
 
-#if (__GNUC__ >= 5) || defined(__clang__)
+#if C_COMPILER_HAS_BUILTIN(__builtin_add_overflow) \
+  && C_COMPILER_HAS_BUILTIN(__builtin_sub_overflow) \
+  && C_COMPILER_HAS_BUILTIN(__builtin_mul_overflow)
+# define USE_OVERFLOW_INTRINSICS 1
+#elif (__GNUC__ >= 5)
 # define USE_OVERFLOW_INTRINSICS 1
 #else
 # define USE_OVERFLOW_INTRINSICS 0
+#endif
+
+#if C_COMPILER_HAS_BUILTIN(__builtin_bswap16) \
+  && C_COMPILER_HAS_BUILTIN(__builtin_bswap32)
+# define USE_BSWAP_INTRINSICS 1
+#elif (__GNUC__ >= 5)
+# define USE_BSWAP_INTRINSICS 1
+#else
+# define USE_BSWAP_INTRINSICS 0
 #endif
 
 /* Use `machine_state * RESTRICT_PTR`, because machine registers won't
@@ -714,7 +727,7 @@ enum {
 #if ptr_bits == 64
 #define doi_pb_rev_op_pb_int16_pb_register(instr) \
   do_pb_rev_op_pb_int16_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
-# if USE_OVERFLOW_INTRINSICS
+# if USE_BSWAP_INTRINSICS
 /* See note below on unsigned swap. */
 #  define do_pb_rev_op_pb_int16_pb_register(dest, reg) \
   regs[dest] = ((uptr)(((iptr)((uptr)__builtin_bswap16(regs[reg]) << 48)) >> 48))
@@ -740,7 +753,7 @@ enum {
 #if ptr_bits == 64
 # define doi_pb_rev_op_pb_int32_pb_register(instr) \
    do_pb_rev_op_pb_int32_pb_register(INSTR_dr_dest(instr), INSTR_dr_reg(instr))
-# if USE_OVERFLOW_INTRINSICS
+# if USE_BSWAP_INTRINSICS
 /* x86_64 GCC before 12.2 incorrectly compiles the code below to an unsigned swap.
    Defeat that by using the unsigned-swap intrinsic (which is good, anyway), then
    shift up and back. */
