@@ -33,6 +33,14 @@
 #define FORCEINLINE static inline
 #endif
 
+/* GCC 10 and later and all versions of Clang provide `__has_builtin` for
+   checking for builtins. */
+#ifdef __has_builtin
+# define C_COMPILER_HAS_BUILTIN(x) __has_builtin(x)
+#else
+# define C_COMPILER_HAS_BUILTIN(x) 0
+#endif
+
 /*****************************************/
 /* Architectures                         */
 
