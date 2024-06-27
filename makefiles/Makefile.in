@@ -17,7 +17,7 @@ kernel: $(ZUO_DEP)
 
 .PHONY: install
 install: $(ZUO_DEP)
-	$(ZUO) $(workarea) install MAKE="$(MAKE)"
+	$(ZUO) $(workarea) install MAKE="$(MAKE)" DESTDIR="$(DESTDIR)"
 
 .PHONY: uninstall
 uninstall: $(ZUO_DEP)
@@ -103,6 +103,23 @@ bootpbchunk: $(ZUO_DEP)
 %.bootpbchunk: $(ZUO_DEP)
 	+ $(ZUO) $(workarea) bootpbchunk $* $(ARGS) MAKE="$(MAKE)"
 
+# Supply XM=<machine> to compile for <machine> with configure
+# arguments in ARGS
+cross: $(ZUO_DEP)
+	+ $(ZUO) $(workarea) MAKE="$(MAKE)" -- cross "$(XM)" $(ARGS)
+
+# `<machine>.cross` as alias for `cross XM=<machine>`
+%.cross: $(ZUO_DEP)
+	+ $(ZUO) $(workarea) MAKE="$(MAKE)" -- cross $* $(ARGS)
+
+# Supply XM=<machine> to install cross-compiled for <machine>
+cross-install: $(ZUO_DEP)
+	+ $(ZUO) $(workarea) MAKE="$(MAKE)"  DESTDIR="$(DESTDIR)" -- cross-install "$(XM)"
+
+# `<machine>.install` as alias for `cross-install XM=<machine>`
+%.install: $(ZUO_DEP)
+	+ $(ZUO) $(workarea) MAKE="$(MAKE)"  DESTDIR="$(DESTDIR)" -- cross-install $*
+
 .PHONY: docs
 docs: build $(ZUO_DEP)
 	+ $(ZUO) $(workarea) docs MAKE="$(MAKE)"
@@ -147,4 +164,4 @@ clean: $(ZUO_DEP)
 # Using `+` here means that $(ZUO) gets built even if `-n`/`--dry-run` is provided to `make`
 $(ZUO_TARGET): $(srcdir)/zuo/zuo.c
 	+ mkdir -p bin
-	+ $(CC_FOR_BUILD) -DZUO_LIB_PATH='"'"$(upsrcdir)/zuo/lib"'"' -o $(ZUO) $(srcdir)/zuo/zuo.c
+	+ $(CC_FOR_BUILD) $(CFLAGS_FOR_BUILD) -DZUO_LIB_PATH='"'"$(upsrcdir)/zuo/lib"'"' -o $(ZUO) $(srcdir)/zuo/zuo.c
