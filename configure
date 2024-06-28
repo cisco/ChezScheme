@@ -113,10 +113,12 @@ enableFrompb=yes
 pbendian=l
 emscripten=no
 empetite=no
+crossCompile=no
 moreBootFiles=
 preloadBootFiles=
 alwaysUseBootFile=
 skipSubmoduleUpdate=
+skipImmediateMakefile=
 zuoExternal=
 
 CONFIG_UNAME=`uname`
@@ -309,6 +311,9 @@ while [ $# != 0 ] ; do
     --as-is)
       skipSubmoduleUpdate=yes
       ;;
+    --nomakefile)
+      skipImmediateMakefile=yes
+      ;;
     --installprefix=*)
       installprefix=`echo $1 | sed -e 's/^--installprefix=//'`
       ;;
@@ -406,6 +411,9 @@ while [ $# != 0 ] ; do
     --empetite)
       empetite=yes
       ;;
+    --cross)
+      crossCompile=yes
+      ;;
     --start=*)
       alwaysUseBootFile=`echo $1 | sed -e 's/^--start=//'`
       ;;
@@ -427,6 +435,9 @@ while [ $# != 0 ] ; do
       ;;
     CC_FOR_BUILD=*)
       CC_FOR_BUILD=`echo $1 | sed -e 's/^CC_FOR_BUILD=//'`
+      ;;
+    CFLAGS_FOR_BUILD=*)
+      CFLAGS_FOR_BUILD=`echo $1 | sed -e 's/^CFLAGS_FOR_BUILD=//'`
       ;;
     LD=*)
       LD=`echo $1 | sed -e 's/^LD=//'`
@@ -656,6 +667,7 @@ if [ "$help" = "yes" ]; then
   echo "  --pb                              specify pb (portable bytecode) version"
   echo "  --pbarch                          specify pb with inferred word and endianness"
   echo "  --emscripten                      build via emscripten (\"em\" tool prefix)"
+  echo "  --cross                           build host to bootstrap target"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
   echo "  --disable-iconv                   disable iconv support"
@@ -689,12 +701,14 @@ if [ "$help" = "yes" ]; then
   echo "  --workarea=<pathname>             build directory ($w)"
   echo "  --force                           disable use of pb to (re)build boot files"
   echo "  --as-is                           skip Git submodule update"
+  echo "  --nomakefile                      create build-directory files only"
   echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   C preprocessor flags"
   echo "  CPPFLAGS+=<C preprocessor flags>  add C preprocessor flags"
   echo "  CFLAGS=<C compiler flags>         C compiler flags"
   echo "  CFLAGS+=<C compiler flags>        add C compiler flags"
   echo "  CC_FOR_BUILD=<C compiler>         C compiler and flags for build machine"
+  echo "  CFLAGS_FOR_BUILD=<C compiler>     additional C flags for build machine"
   echo "  LD=<linker>                       linker"
   echo "  LDFLAGS=<linker flags>            additional linker flags"
   echo "  LDFLAGS+=<linker flags>           add additional linker flags"
@@ -832,8 +846,6 @@ CFLAGS="${CFLAGS}${CFLAGS_ADD}"
 
 if [ "$CC_FOR_BUILD" = "" ] ; then
     CC_FOR_BUILD="${CC} ${CFLAGS}"
-else
-    enableFrompb=no
 fi
 
 # Add automatic thread compilation flags, unless suppressed by --disable-auto-flags
@@ -1124,15 +1136,23 @@ case "$srcdir" in
         ;;
 esac
 
-# Makefile to build and launch Zuo
-sed -e 's/$(w)/'$w'/g'\
-    "$srcdir"/makefiles/Makefile.in > Makefile
+if [ "$skipImmediateMakefile" = "" ] ; then
+    # Makefile to build and launch Zuo
+    if [ "$crossCompile" = "yes" ] ; then
+        makefile_in=Makefile-cross.in
+    else
+        makefile_in=Makefile.in
+    fi
+    sed -e 's/$(w)/'$w'/g' "$srcdir"/makefiles/"$makefile_in" > Makefile
+fi
 
 mkdir -p $w
 
-# Stub Zuo script to lanch the real one, using "Makefile"
-# to locate the workarea:
-cp "$srcdir"/makefiles/buildmain.zuo main.zuo
+if [ "$skipImmediateMakefile" = "" ] ; then
+    # Stub Zuo script to lanch the real one, using "Makefile"
+    # to locate the workarea:
+    cp "$srcdir"/makefiles/buildmain.zuo main.zuo
+fi
 
 # Some idea, but in the workarea, so it refers to "workarea.zuo" here:
 cp "$srcdir"/makefiles/workmain.zuo $w/main.zuo
@@ -1146,6 +1166,7 @@ m=$m
 defaultm=$defaultm
 flagsm=$flagsm
 mboot=$mboot
+crossCompile=$crossCompile
 buildKernelOnly=$buildKernelOnly
 enableFrompb=$enableFrompb
 mdinclude=$mdinclude
@@ -1159,6 +1180,7 @@ exeSuffix=$exeSuffix
 zlibConfigureEnv=$zlibConfigureEnv
 zlibConfigureFlags=
 CC_FOR_BUILD=$CC_FOR_BUILD
+CFLAGS_FOR_BUILD=$CFLAGS_FOR_BUILD
 CC=$CC
 CPPFLAGS=$CPPFLAGS
 CFLAGS=$CFLAGS

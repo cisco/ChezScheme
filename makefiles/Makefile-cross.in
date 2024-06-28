@@ -1,0 +1,30 @@
+# The `configure` script adjusts the next line:
+workarea=$(w)
+
+include $(workarea)/Mf-config
+
+# This is a simplified variant of the makefile that is
+# for cross compilation, where `kernel` is the only
+# build option and `build` is mapped to `kernel`
+
+.PHONY: build
+build: $(ZUO_DEP)
+	+ $(ZUO) $(workarea) kernel MAKE="$(MAKE)"
+
+.PHONY: kernel
+kernel: $(ZUO_DEP)
+	+ $(ZUO) $(workarea) kernel MAKE="$(MAKE)"
+
+.PHONY: install
+install: $(ZUO_DEP)
+	$(ZUO) $(workarea) install MAKE="$(MAKE)" DESTDIR="$(DESTDIR)"
+
+.PHONY: clean
+clean: $(ZUO_DEP)
+	+ $(ZUO) $(workarea) clean MAKE="$(MAKE)"
+	$(RM_ZUO)
+
+# Using `+` here means that $(ZUO) gets built even if `-n`/`--dry-run` is provided to `make`
+$(ZUO_TARGET): $(srcdir)/zuo/zuo.c
+	+ mkdir -p bin
+	+ $(CC_FOR_BUILD) $(CFLAGS_FOR_BUILD) -DZUO_LIB_PATH='"'"$(upsrcdir)/zuo/lib"'"' -o $(ZUO) $(srcdir)/zuo/zuo.c

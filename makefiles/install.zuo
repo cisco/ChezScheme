@@ -29,6 +29,15 @@
 
   (define m (lookup 'm))
 
+  ;; This script relies on Unix utilities and isn't meant to be run on
+  ;; Windows, but it can be useful to gather results for cross-compiling
+  ;; to Windows
+  (define windows? (glob-match? "*nt" m))
+  (define (add-exe s)
+    (if windows?
+        (~a s ".exe")
+        s))
+
   ;; The following variables determine where the executables, boot files,
   ;; example programs, and manual pages are installed.
 
@@ -47,11 +56,17 @@
   ;; installation group
   (define-var InstallGroup "")
 
-  ;; Files are actually installed at ${TempRoot}${InstallBin},
-  ;; ${TempRoot}${InstallLib}, and ${TempRoot}${InstallMan}.
+  ;; Files are actually installed at ${DESTDIR}${InstallBin},
+  ;; ${DESTDIR}${InstallLib}, and ${DESTDIR}${InstallMan}.
   ;; This useful for testing the install process and for building
-  ;; installation scripts
+  ;; installation scripts. The ${TempRoot} variable is a configure-time
+  ;; selection of the destination, but it can be overriddedn with
+  ;; via ${DESTDIR}.
   (define-var TempRoot "")
+  (define DESTDIR (let ([d (hash-ref vars 'DESTDIR "")])
+                    (if (equal? d "")
+                        TempRoot
+                        d)))
 
   ;; compress man pages?
   (define-var GzipManPages "yes")
@@ -112,7 +127,7 @@
   (define PetiteBoot (at-workarea* "boot" m "petite.boot"))
   (define SchemeBoot (at-workarea* "boot" m "scheme.boot"))
   (define Revision (at-workarea* "boot" m "revision"))
-  (define Scheme (at-workarea* "bin" m "scheme"))
+  (define Scheme (at-workarea* "bin" m (add-exe "scheme")))
   (define InstallLibExamples (build-path* InstallLib Version "examples"))
   (define InstallLibBin (build-path* InstallLib Version m))
 
@@ -127,14 +142,14 @@
                                             accum
                                             (loop (car l) (cons (cdr l) accum))))))]))
 
-  (define Bin (prefix-path TempRoot InstallBin))
-  (define Lib (prefix-path TempRoot (build-path InstallLib Version)))
-  (define LibExamples (prefix-path TempRoot InstallLibExamples))
-  (define LibBin (prefix-path TempRoot InstallLibBin))
-  (define Man (prefix-path TempRoot InstallMan))
-  (define PetitePath (build-path* Bin InstallPetiteName))
-  (define SchemePath (build-path* Bin InstallSchemeName))
-  (define SchemeScriptPath (build-path* Bin InstallScriptName))
+  (define Bin (prefix-path DESTDIR InstallBin))
+  (define Lib (prefix-path DESTDIR (build-path InstallLib Version)))
+  (define LibExamples (prefix-path DESTDIR InstallLibExamples))
+  (define LibBin (prefix-path DESTDIR InstallLibBin))
+  (define Man (prefix-path DESTDIR InstallMan))
+  (define PetitePath (build-path* Bin (add-exe InstallPetiteName)))
+  (define SchemePath (build-path* Bin (add-exe InstallSchemeName)))
+  (define SchemeScriptPath (build-path* Bin (add-exe InstallScriptName)))
 
   (struct literal (content))
 
@@ -181,18 +196,19 @@
     (rm-f SchemeScriptPath)
     (cond
       [(equal? (hash-ref config 'relativeBootFiles #f) "yes")
-       (define SchemeLibPath (build-path LibBin InstallSchemeName))
-       (define PetiteLibPath (build-path LibBin InstallPetiteName))
-       (define ScriptLibPath (build-path LibBin InstallScriptName))
+       (define SchemeLibPath (build-path LibBin (add-exe InstallSchemeName)))
+       (define PetiteLibPath (build-path LibBin (add-exe InstallPetiteName)))
+       (define ScriptLibPath (build-path LibBin (add-exe InstallScriptName)))
        (define (ln-s/rel from to)
          (define to-dir (car (split-path to)))
          (ln-s (find-relative-path to-dir from) to))
        (I "-m" "555" Scheme SchemeLibPath)
        (ln-f SchemeLibPath PetiteLibPath)
        (ln-f SchemeLibPath ScriptLibPath)
-       (ln-s/rel SchemeLibPath SchemePath)
-       (ln-s/rel PetiteLibPath PetitePath)
-       (ln-s/rel ScriptLibPath SchemeScriptPath)]
+       (unless windows?
+         (ln-s/rel SchemeLibPath SchemePath)
+         (ln-s/rel PetiteLibPath PetitePath)
+         (ln-s/rel ScriptLibPath SchemeScriptPath))]
       [else
        (I "-m" "555" Scheme SchemePath)
        (ln-f SchemePath PetitePath)
