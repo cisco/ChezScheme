@@ -300,7 +300,8 @@
                 ,(lambda (token)
                    (check-not-kernel-only)
                    ((dynamic-require (at-source "makefiles/install.zuo") 'install)
-                    at-dir))]
+                    at-dir
+                    (hash 'DESTDIR (hash-ref config 'DESTDIR ""))))]
 
        [:target uninstall ()
                 ,(lambda (token)
@@ -501,14 +502,23 @@
                            (alert (~a "checking boot files for " m " against pb"))
                            (define pb-dir (at-dir ".." "pb"))
                            (mkdir-p pb-dir)
-                           (define config (map (lambda (s) (string-trim (string-trim s "\r")))
-                                               (string-split (file->string (at-dir "Mf-config")) "\n")))
+                           (define cross? #t)
+                           (define Mf-config
+                             (cond
+                               [(string=? (hash-ref config 'crossCompile "no") "yes")
+                                (shell/wait (build-raw-path (at-source ".") "configure")
+                                            "--nomakefile"
+                                            "--pb")
+                                (build-path pb-dir "Mf-config")]
+                               [else (at-dir "Mf-config")]))
+                           (define old-config (map (lambda (s) (string-trim (string-trim s "\r")))
+                                                   (string-split (file->string Mf-config) "\n")))
                            (define m-line (~a "m=" m))
                            (define mboot-line (~a "mboot=" mboot))
                            (define new-config (cons "m=pb"
                                                     (filter (lambda (s) (not (or (string=? s m-line)
                                                                                  (string=? s mboot-line))))
-                                                            config)))
+                                                            old-config)))
                            (display-to-file (string-join new-config "\n") (build-path pb-dir "Mf-config")
                                             :truncate)
                            (build (command-target->target (find-target "bootquick"
