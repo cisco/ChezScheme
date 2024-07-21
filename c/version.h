@@ -44,7 +44,7 @@
 /*****************************************/
 /* Architectures                         */
 
-#if defined(__powerpc__) || defined(__POWERPC__) || defined(__sparc__)
+#if defined(__powerpc__) || defined(__POWERPC__) || defined(__sparc__) || defined(__s390x__) || defined(__m68k__) || defined(__hppa__)
 # if !(defined(__LITTLE_ENDIAN__) || defined(_LITTLE_ENDIAN))
 #  define PORTABLE_BYTECODE_BIGENDIAN
 #  define BIG_ENDIAN_IEEE_DOUBLE
