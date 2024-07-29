@@ -5,9 +5,9 @@
 .ds ]W 
 .TH SCHEME 1 "Chez Scheme Version 10.0.0 February 2024"
 .SH NAME
-\fIChez Scheme\fP
+{InstallSchemeName} - Chez Scheme
 .br
-\fIPetite Chez Scheme\fP
+{InstallPetiteName} - Petite Chez Scheme
 .SH SYNOPSIS
 \fB{InstallSchemeName}\fP [ \fIoptions\fP ] \fIfile\fP ...
 .br
