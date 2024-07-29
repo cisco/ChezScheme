@@ -126,6 +126,14 @@ CONFIG_UNAME=`uname`
 # using `uname`, infer OS-based defaults
 case "${CONFIG_UNAME}" in
   Linux)
+    if command -v lscpu > /dev/null 2>&1; then
+      if lscpu | egrep -i 'Byte Order.*Big Endian' > /dev/null 2>&1 ; then
+        pbendian=b
+      fi
+    fi
+    if command -v getconf > /dev/null 2>&1; then
+      unamebits=`getconf LONG_BIT`
+    fi
     unixsuffix=le
     installprefix=/usr
     installmansuffix=share/man
