@@ -1772,7 +1772,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat logbit?: "incorrect argument count in call (logbit?)".
 5_3.mo:Expected error in mat logbit?: "incorrect argument count in call (logbit? 1)".
 5_3.mo:Expected error in mat logbit?: "incorrect argument count in call (logbit? 1 2 3)".
-5_3.mo:Expected error in mat logbit?: "logbit?: 3.4 is not an exact integer".
+5_3.mo:Expected error in mat logbit?: "logbit?: invalid bit index 3.4".
 5_3.mo:Expected error in mat logbit?: "logbit?: "3" is not an exact integer".
 5_3.mo:Expected error in mat logbit?: "logbit?: invalid bit index -1".
 5_3.mo:Expected error in mat bitwise-bit-set?: "incorrect argument count in call (bitwise-bit-set?)".
@@ -1780,19 +1780,19 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat bitwise-bit-set?: "incorrect argument count in call (bitwise-bit-set? 3 4 5)".
 5_3.mo:Expected error in mat bitwise-bit-set?: "bitwise-bit-set?: 3.0 is not an exact integer".
 5_3.mo:Expected error in mat bitwise-bit-set?: "bitwise-bit-set?: "hi" is not an exact integer".
-5_3.mo:Expected error in mat bitwise-bit-set?: "bitwise-bit-set?: 4/3 is not an exact integer".
-5_3.mo:Expected error in mat bitwise-bit-set?: "bitwise-bit-set?: a is not an exact integer".
+5_3.mo:Expected error in mat bitwise-bit-set?: "bitwise-bit-set?: invalid bit index 4/3".
+5_3.mo:Expected error in mat bitwise-bit-set?: "bitwise-bit-set?: invalid bit index a".
 5_3.mo:Expected error in mat bitwise-bit-set?: "bitwise-bit-set?: invalid bit index -3".
 5_3.mo:Expected error in mat logbit0: "incorrect argument count in call (logbit0)".
 5_3.mo:Expected error in mat logbit0: "incorrect argument count in call (logbit0 1)".
 5_3.mo:Expected error in mat logbit0: "incorrect argument count in call (logbit0 1 2 3)".
-5_3.mo:Expected error in mat logbit0: "logbit0: 3.4 is not an exact integer".
+5_3.mo:Expected error in mat logbit0: "logbit0: invalid bit index 3.4".
 5_3.mo:Expected error in mat logbit0: "logbit0: "3" is not an exact integer".
 5_3.mo:Expected error in mat logbit0: "logbit0: invalid bit index -1".
 5_3.mo:Expected error in mat logbit1: "incorrect argument count in call (logbit1)".
 5_3.mo:Expected error in mat logbit1: "incorrect argument count in call (logbit1 1)".
 5_3.mo:Expected error in mat logbit1: "incorrect argument count in call (logbit1 1 2 3)".
-5_3.mo:Expected error in mat logbit1: "logbit1: 3.4 is not an exact integer".
+5_3.mo:Expected error in mat logbit1: "logbit1: invalid bit index 3.4".
 5_3.mo:Expected error in mat logbit1: "logbit1: "3" is not an exact integer".
 5_3.mo:Expected error in mat logbit1: "logbit1: invalid bit index -1".
 5_3.mo:Expected error in mat bitwise-copy-bit: "incorrect argument count in call (bitwise-copy-bit)".
@@ -1800,8 +1800,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat bitwise-copy-bit: "incorrect argument count in call (bitwise-copy-bit 1 2)".
 5_3.mo:Expected error in mat bitwise-copy-bit: "incorrect argument count in call (bitwise-copy-bit 1 2 0 4)".
 5_3.mo:Expected error in mat bitwise-copy-bit: "bitwise-copy-bit: 3.4 is not an exact integer".
-5_3.mo:Expected error in mat bitwise-copy-bit: "bitwise-copy-bit: a is not a nonnegative exact integer".
-5_3.mo:Expected error in mat bitwise-copy-bit: "bitwise-copy-bit: -2 is not a nonnegative exact integer".
+5_3.mo:Expected error in mat bitwise-copy-bit: "bitwise-copy-bit: invalid bit index a".
+5_3.mo:Expected error in mat bitwise-copy-bit: "bitwise-copy-bit: invalid bit index -2".
 5_3.mo:Expected error in mat bitwise-copy-bit: "bitwise-copy-bit: bit argument 2 is not 0 or 1".
 5_3.mo:Expected error in mat bitwise-copy-bit: "bitwise-copy-bit: bit argument -1 is not 0 or 1".
 5_3.mo:Expected error in mat bitwise-copy-bit: "bitwise-copy-bit: bit argument a is not 0 or 1".

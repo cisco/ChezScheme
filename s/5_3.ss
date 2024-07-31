@@ -2976,7 +2976,7 @@
       ($oops who "~s is not an exact integer" x))
     (unless (or (and (fixnum? y) (fxnonnegative? y))
                 (and (bignum? y) ($bigpositive? y)))
-      ($oops who "~s is not a nonnegative exact integer" y))
+      ($oops who "invalid bit index ~s" y))
     (cond
       [(eq? b 0) (logbit0 y x)]
       [(eq? b 1) (logbit1 y x)]
