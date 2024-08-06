@@ -68,6 +68,8 @@
    flzero-pred
    $fixmediate-pred
    $list-pred ; immutable lists
+   list-pair-pred
+   pair-pred
    box-pred
    vector*-pred
    vector-pred
@@ -263,7 +265,8 @@
            char-pred
            symbol-pred interned-symbol-pred uninterned-symbol-pred gensym-pred
            box-pred
-           fxvector*-pred flvector*-pred bytevector*-pred string*-pred vector*-pred)
+           fxvector*-pred flvector*-pred bytevector*-pred string*-pred vector*-pred
+           list-pair-pred nonlist-pair-pred)
 
     (define exact-complex-mask         #b0000000000000001)
     (define ratnum-mask                #b0000000000000010)
@@ -285,9 +288,13 @@
     (define flvector*-mask             #b0100000000000000)
     (define box-mask                   #b1000000000000000)
 
+    ; These two are trickier, because they are not constant properties.
+    (define list-pair-mask           #b010000000000000000)
+    (define nonlist-pair-mask        #b100000000000000000)
+
     (define number*-pred-mask          #b0000000000111111)
     (define symbol-pred-mask           #b0000001110000000)
-    (define multiplet-pred-mask        #b1111111111111111) ; for the check in is-ptr?
+    (define multiplet-pred-mask      #b111111111111111111) ; for the check in is-ptr?
 
     (define flonum-pred-mask (fxior flonum*-mask flinteger*-mask flzero-mask))
     (define flinteger-pred-mask (fxior flinteger*-mask flzero-mask))
@@ -343,6 +350,8 @@
     (define fxvector*-pred (make-pred-multiplet fxvector*-mask))
     (define flvector*-pred (make-pred-multiplet flvector*-mask))
     (define box-pred (make-pred-multiplet box-mask))
+    (define list-pair-pred (make-pred-multiplet list-pair-mask))
+    (define nonlist-pair-pred (make-pred-multiplet nonlist-pair-mask))
     (define multiplet-pred (make-pred-multiplet multiplet-pred-mask))
   )
 
@@ -440,9 +449,9 @@
       [(pair? name)
        (cond
          [(equal? name '(ptr . ptr))
-          'pair]
+          pair-pred]
          [else
-          (if (not extend?) 'bottom 'pair)])]
+          (if (not extend?) 'bottom pair-pred)])]
       [else
        (let ([r (do-primref-name/nqm->predicate name extend?)])
          (cond
@@ -469,11 +478,19 @@
       [bwp-object bwp-rec]
       [$immediate immediate-pred]
 
-      [pair 'pair]
+      [pair pair-pred]
       [maybe-pair maybe-pair-pred]
-      [list (cons $list-pred null-or-pair-pred)]
+      [char/pair (predicate-union char-pred pair-pred)]
       [list-assuming-immutable $list-pred]
-      [char/pair (predicate-union char-pred 'pair)]
+      [list
+       (cons null-rec null-or-pair-pred)] ; Very conservative to avoid problems with mutations.
+      [(sub-list list-of-string-pairs list-of-symbols)
+       (cons 'bottom null-or-pair-pred)]
+      [void/list
+       (cons (predicate-union void-rec null-rec) (predicate-union void-rec null-or-pair-pred))]
+      [symbol/list
+       (cons (predicate-union symbol-pred null-rec) (predicate-union symbol-pred null-or-pair-pred))]
+
       [box box-pred]
       [immutable-box (cons 'bottom box-pred)]
       [mutable-box (cons 'bottom box-pred)]
@@ -694,16 +711,7 @@
            (predicate-union/multiplet x y)
            'normalptr)]
       [else
-       (case y
-         [(pair $list-pair)
-          (cond 
-	        [(or (eq? x 'pair)
-		         (eq? x '$list-pair))
-	         'pair]
-	        [else
-	         'normalptr])]
-         [else
-          'normalptr])]))
+       'normalptr]))
 
   (define (predicate-union/exact-integer x y)
     (or (cond
@@ -879,16 +887,7 @@
            (predicate-intersect/multiplet x y)
            'bottom)]
       [else
-       (case y
-         [(pair $list-pair)
-          (cond
-            [(or (eq? x 'pair)
-                 (eq? x '$list-pair))
-             '$list-pair]
-            [else
-             'bottom])]
-         [else
-          'bottom])]))
+       'bottom]))
 
   (define (predicate-intersect/exact-integer x y)
     (cond
@@ -1439,9 +1438,10 @@
   (define true-pred (make-pred-or true-singleton-pred multiplet-pred 'normalptr 'exact-integer '$record))
   (define immediate-pred (predicate-union immediate*-pred char-pred))
   (define $fixmediate-pred (predicate-union immediate-pred 'fixnum))
-  (define maybe-pair-pred (maybe 'pair))
-  (define null-or-pair-pred (predicate-union null-rec 'pair))
-  (define $list-pred (predicate-union null-rec '$list-pair))
+  (define pair-pred (predicate-union list-pair-pred nonlist-pair-pred))
+  (define maybe-pair-pred (maybe pair-pred))
+  (define null-or-pair-pred (predicate-union null-rec pair-pred))
+  (define $list-pred (predicate-union null-rec list-pair-pred))
   (define maybe-fixnum-pred (maybe 'fixnum))
   (define eof/fixnum-pred (eof/ 'fixnum))
   (define maybe-exact-integer-pred (maybe 'exact-integer))
