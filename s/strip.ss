@@ -282,8 +282,9 @@
           [(fasl-type-immediate fasl-type-entry fasl-type-library fasl-type-library-code)
            (fasl-atom ty (read-uptr p))]
           [(fasl-type-graph) (read-fasl p (let ([new-g (make-vector (read-uptr p) #f)])
-                                            (unless (zero? (read-uptr p))
-                                              (bogus "fasl content needs an external vector in ~a"  (port-name p)))
+                                            (let ([n (read-uptr p)])
+                                              (unless (or (zero? n) (and g (>= (vector-length g) n)))
+                                                (bogus "incompatible external vector in ~a" (port-name p))))
                                             (when g
                                               (let ([delta (fx- (vector-length new-g) (vector-length g))])
                                                 (let loop ([i 0])
