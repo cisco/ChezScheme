@@ -1,5 +1,7 @@
 srcdir=oops-missing-srcdir
 installdir=oops-missing-installdir
+InstallCSUG=oops-missing-InstallCSUG
+relInstallCSUG=oops-missing-relInstallCSUG
 m=oops-missing-m
 STEXLIB=oops-missing-stexlib
 # Zuo overrides the above variables when running `make`
@@ -25,7 +27,7 @@ bib =
 include $(STEXLIB)/Mf-stex
 
 srcs = $(x).stex releasenotes.cls releasenotes.hcls \
-  macros.stex releasenotes.css scheme.sty
+  macros.stex releasenotes.css
 
 # define or override suffixes here
 
@@ -42,10 +44,22 @@ install: $x.pdf $x.html
          fi)
 	$(INSTALL) -m 2755 -d $(installdir)/gifs
 	$(INSTALL) -m 0644 --ifdiff gifs/*.gif $(installdir)/gifs
-	$(INSTALL) -m 2755 -d $(installdir)/math
 	-rm -rf $(installdir)/$(mathdir)
+ifeq ($(strip $(KATEX)),)
+	$(INSTALL) -m 2755 -d $(installdir)/math
 	$(INSTALL) -m 2755 -d $(installdir)/$(mathdir)
 	if [ -e $(mathdir)/0.gif ] ; then $(INSTALL) -m 0644 $(mathdir)/*.gif $(installdir)/$(mathdir) ; fi
+else ifneq ($(strip $(KATEX_CSS)),no)
+# if already installed csug, share katex.css and fonts
+	(if $(if $(findstring Windows,$(OS)),[ ! "windows" ],[ -e $(InstallCSUG)/katex/katex.css ] && [ ! -L $(InstallCSUG)/katex ]) ; \
+	 then \
+	   (cd $(installdir); ln -s -f $(relInstallCSUG)/katex katex) ; \
+	 else \
+	   $(INSTALL) -m 2755 -d $(installdir)/katex/fonts ; \
+	   $(INSTALL) -m 0644 --ifdiff katex/katex.css $(installdir)/katex/katex.css ; \
+	   $(INSTALL) -m 0644 --ifdiff katex/fonts/* $(installdir)/katex/fonts ; \
+	 fi)
+endif
 
 # define any dependencies here
 
