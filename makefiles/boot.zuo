@@ -6,19 +6,6 @@
          cross-build-boot
          clean-links)
 
-(module+ main
-  (command-line
-   :args (scheme machine)
-   (lambda (accum)
-     (define vars (hash))
-     (cross-build-boot #f (hash) '("all")
-                       machine
-                       (if (car (split-path scheme))
-                           scheme
-                           (find-executable-path scheme))
-                       #f
-                       (make-at-dir "xc") vars vars #f))))
-
 (define boot-file-names
   '(;; the boot files proper
     "petite.boot" "scheme.boot"
