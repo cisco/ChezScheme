@@ -16,9 +16,13 @@
 ;;; Requires from C library:
 ;;;   close, dup, execl, fork, kill, listen, tmpnam, unlink
 (case (machine-type)
-  [(i3le ti3le a6le ta6le) (load-shared-object "libc.so.6")]
-  [(i3osx ti3osx a6osx ta6osx) (load-shared-object "libc.dylib")]
-  [else (load-shared-object "libc.so")])
+  [(i3le ti3le a6le ta6le)
+   (load-shared-object "libc.so.6")]
+  [(i3osx ti3osx a6osx ta6osx arm64osx tarm64osx
+          a6ios ta6ios arm64ios tarm64ios)
+   (load-shared-object "libc.dylib")]
+  [else
+   (load-shared-object "libc.so")])
 
 ;;; basic C-library stuff
 

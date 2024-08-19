@@ -232,7 +232,8 @@
       (error? (load-shared-object 3))
     )
    ]
-  [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx)
+  [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx
+          a6ios ta6ios arm64ios tarm64ios)
    (mat load-shared-object
      (file-exists? foreign1.so)
       (begin (load-shared-object foreign1.so) #t)
@@ -3091,7 +3092,8 @@
          '(load-shared-object "libc.so.7")]
         [(i3nt ti3nt a6nt ta6nt arm64nt tarm64nt)
          '(load-shared-object "msvcrt.dll")]
-        [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx)
+        [(i3osx ti3osx a6osx ta6osx ppc32osx tppc32osx arm64osx tarm64osx
+                a6ios ta6ios arm64ios tarm64ios)
          '(load-shared-object "libc.dylib")]
         [(pb pb32l pb32b pb64l pb64b tpb tpb32l tpb32b tpb64l tpb64b)
          '(let ([try-load (lambda (path)
