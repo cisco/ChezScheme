@@ -2458,7 +2458,7 @@
     (define alignment-via-lookahead
       (lambda (size types int* fp* fp-in-int? stack-align varargs-after k)
         (constant-case machine-type-name
-          [(arm64osx tarm64osx)
+          [(arm64osx tarm64osx arm64ios tarm64ios)
            (cond
              [(eqv? 0 varargs-after) (k (align 8 size) 0 0)]
              [else
@@ -2533,7 +2533,7 @@
     (define rest-of
       (lambda (regs n next-varargs-after)
         (constant-case machine-type-name
-          [(arm64osx tarm64osx)
+          [(arm64osx tarm64osx arm64ios tarm64ios)
            (cond
              [(eqv? next-varargs-after 0)
               ;; All the rest go on the stack
