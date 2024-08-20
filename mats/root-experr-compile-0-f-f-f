@@ -4727,8 +4727,8 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: non-fixnum found in fxvector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: non-fixnum found in fxvector at line 3, char 24 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: too many flvector elements supplied at line 3, char 16 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: non-fixnum found in flvector at line 3, char 25 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: non-fixnum found in flvector at line 3, char 26 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-flonum found in flvector at line 3, char 25 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: non-flonum found in flvector at line 3, char 26 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: too many fxvector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: too many stencil vector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: not enough stencil vector elements supplied at line 3, char 24 of testfile.ss".
@@ -5556,8 +5556,8 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: non-fixnum found in fxvector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: non-fixnum found in fxvector at line 3, char 24 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: too many flvector elements supplied at line 3, char 16 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: non-fixnum found in flvector at line 3, char 25 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: non-fixnum found in flvector at line 3, char 26 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-flonum found in flvector at line 3, char 25 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: non-flonum found in flvector at line 3, char 26 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: too many fxvector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: too many stencil vector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: not enough stencil vector elements supplied at line 3, char 24 of testfile.ss".
@@ -6385,8 +6385,8 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: non-fixnum found in fxvector at line 3, char 23 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: non-fixnum found in fxvector at line 3, char 24 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: too many flvector elements supplied at line 3, char 16 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: non-fixnum found in flvector at line 3, char 25 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: non-fixnum found in flvector at line 3, char 26 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-flonum found in flvector at line 3, char 25 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: non-flonum found in flvector at line 3, char 26 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: too many fxvector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: too many stencil vector elements supplied at line 3, char 16 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: not enough stencil vector elements supplied at line 3, char 24 of testfile.ss".
