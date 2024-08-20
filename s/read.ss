@@ -1501,7 +1501,7 @@
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "flvector"))]
       [else
        (unless (and (eq? type 'atomic) (flonum? value))
-         (xcall rd-error #f #t "non-fixnum found in flvector"))
+         (xcall rd-error #f #t "non-flonum found in flvector"))
        (xmvlet ((v) (xcall rd-flvector expr-bfp (fx+ i 1)))
          (flvector-set! v i value)
          (xvalues v))])))
@@ -1525,7 +1525,7 @@
       [(eof) (let ([bfp expr-bfp]) (xcall rd-eof-error "flvector"))]
       [else
        (unless (and (eq? type 'atomic) (flonum? value))
-         (xcall rd-error #f #t "non-fixnum found in flvector"))
+         (xcall rd-error #f #t "non-flonum found in flvector"))
        (unless (fx< i n)
          (let ([bfp expr-bfp])
            (xcall rd-error #f #t "too many flvector elements supplied")))
