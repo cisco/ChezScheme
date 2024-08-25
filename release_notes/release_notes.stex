@@ -46,7 +46,7 @@ procedure) is given in parentheses.
      \begin{itemizeC}
      \item x86, nonthreaded (i3osx) and threaded (ti3osx)
      \item x86\_64, nonthreaded (a6osx) and threaded (ta6osx)
-     \item AArch64 and iOS, nonthreaded (arm64osx) and threaded (tarm64osx)
+     \item AArch64, nonthreaded (arm64osx) and threaded (tarm64osx)
      \item PowerPC (32-bit) (ppc2osx) and threaded (tppc32osx)
      \end{itemizeC}
 \item Windows
@@ -94,6 +94,9 @@ procedure) is given in parentheses.
      \end{itemizeC}
 \end{itemize}
 
+{\thisversion} supports iOS to a limited extent. See
+\href[static]{section:ios-machine-types}{this section} for details.
+
 This document contains three sections describing significant
 (1) \href[static]{section:functionality}{functionality changes},
 (2) \href[static]{section:bugfixes}{bugs fixed}, and
@@ -112,6 +115,14 @@ Online versions of both books can be found at
 
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
+
+
+\subsection{New machine types for iOS (10.1.0)}\label{section:ios-machine-types}
+
+The a6ios, ta6ios, arm64ios and tarm64ios machine types correspond to
+an iOS compilation target. Support for iOS is currently limited to
+applications attached to a debugger as the platform does not allow
+executable code to be loaded at runtime.
 
 \subsection{Unicode 15.1 support (10.0.0)}
 
