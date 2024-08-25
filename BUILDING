@@ -562,6 +562,16 @@ as simple as specifying an `-arch` flag for the C compiler:
  ./configure --cross -m=tarm64osx CFLAGS="-arch arm64" CC_FOR_BUILD=cc
  make
 
+To cross compile for iOS, provide an iOS SDK path and define the
+`TARGET_OS_IPHONE` and `DISABLE_CURSES` macros:
+
+ ./configure \
+   --cross \
+   -m=tarm64ios \
+   CFLAGS="-arch arm64 -isysroot $(xcrun -sdk iphoneos --show-sdk-path) -DTARGET_OS_IPHONE -DDISABLE_CURSES -liconv" \
+   CC_FOR_BUILD=clang
+ make
+
 When additional configuration is needed for a *host* build (that is,
 when just `./configure --pb` would not be enough to build for the host
 platform), then more steps are needed. In that case, first build for
