@@ -94,7 +94,7 @@ procedure) is given in parentheses.
      \end{itemizeC}
 \end{itemize}
 
-{\thisversion} supports iOS to a limited extent. See
+{\thisversion} supports iOS natively to a limited extent. See
 \href[static]{section:ios-machine-types}{this section} for details.
 
 This document contains three sections describing significant
@@ -119,9 +119,9 @@ Online versions of both books can be found at
 
 \subsection{New machine types for iOS (10.1.0)}\label{section:ios-machine-types}
 
-The a6ios, ta6ios, arm64ios and tarm64ios machine types correspond to
-an iOS compilation target. Support for iOS is currently limited to
-applications attached to a debugger as the platform does not allow
+The a6ios, ta6ios, arm64ios and tarm64ios machine types correspond to an
+iOS compilation target. Native-code support for iOS is currently limited
+to applications attached to a debugger as the platform does not allow
 executable code to be loaded at runtime.
 
 \subsection{Unicode 15.1 support (10.0.0)}
