@@ -12030,6 +12030,7 @@
 (mat quote-syntax
    (equal? (syntax->datum (quote-syntax (a b c))) '(a b c))
    (equal? (syntax->datum (quote-syntax ...)) '...)
+   (identifier? (quote-syntax if))
    (bound-identifier=? (quote-syntax ...) (syntax (... ...)))
    (free-identifier=? (quote-syntax ...) (syntax (... ...)))
    (equal? (with-syntax ([x #'y]) (syntax->datum (quote-syntax x))) 'x)
