@@ -2728,9 +2728,8 @@ in fasl files does not generally make sense.
 
 \subsection{\scheme{quote-syntax} incorrectly applies wrap (10.1.0)}
 
-A bug in \scheme{quote-syntax} that caused \scheme{(identifier?
-(quote-syntax \var{symbol}))} to report the wrong result has been
-fixed.
+A bug in \scheme{quote-syntax} that caused \scheme{(identifier? (quote-syntax \var{symbol}))}
+to report the wrong result has been fixed.
 
 \subsection{Case-insensitive ``V'' format directive (10.1.0)}
 
