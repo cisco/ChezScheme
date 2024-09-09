@@ -2737,6 +2737,11 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Non-empty mantissa widths (10.1.0)}
+
+Non-empty mantissa widths are now taken into account.  For example,
+\scheme{(string->number "#e0.1|1")} now evaluates to \scheme{1/8}.
+
 \subsection{Case-insensitive ``V'' format directive (10.1.0)}
 
 The ``V'' format directive is now recognized in uppercase as well as lowercase.
