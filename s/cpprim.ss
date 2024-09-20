@@ -5268,7 +5268,7 @@
          [(quote ,d)
           (let ([type (filter-foreign-type d)])
             (and (memq type (record-datatype list))
-                 (not (memq type '(char wchar boolean)))
+                 (not (memq type '(char wchar boolean stdbool)))
                  (build-object-ref #f type base offset)))]
          [else #f])])
     (define-inline 2 $swap-object-ref
@@ -5277,7 +5277,7 @@
          [(quote ,d)
           (let ([type (filter-foreign-type d)])
             (and (memq type (record-datatype list))
-                 (not (memq type '(char wchar boolean)))
+                 (not (memq type '(char wchar boolean stdbool)))
                  (build-object-ref #t type base offset)))]
          [else #f])])
     (define-inline 3 foreign-ref
@@ -5286,7 +5286,7 @@
          [(quote ,d)
           (let ([type (filter-foreign-type d)])
             (and (memq type (record-datatype list))
-                 (not (memq type '(char wchar boolean)))
+                 (not (memq type '(char wchar boolean stdbool)))
                  (bind #f (e-offset)
                    (build-object-ref #f type
                      (ptr->integer e-addr (constant ptr-bits))
@@ -5298,7 +5298,7 @@
          [(quote ,d)
           (let ([type (filter-foreign-type d)])
             (and (memq type (record-datatype list))
-                 (not (memq type '(char wchar boolean)))
+                 (not (memq type '(char wchar boolean stdbool)))
                  (bind #f (e-offset)
                    (build-object-ref #t type
                      (ptr->integer e-addr (constant ptr-bits))
@@ -5310,7 +5310,7 @@
          [(quote ,d)
           (let ([type (filter-foreign-type d)])
             (and (memq type (record-datatype list))
-                 (not (memq type '(char wchar boolean)))
+                 (not (memq type '(char wchar boolean stdbool)))
                  (or (>= (constant ptr-bits) (type->width type)) (eq? type 'double-float))
                  (build-object-set! type base offset value)))]
          [else #f])])
@@ -5320,7 +5320,7 @@
          [(quote ,d)
           (let ([type (filter-foreign-type d)])
             (and (memq type (record-datatype list))
-                 (not (memq type '(char wchar boolean)))
+                 (not (memq type '(char wchar boolean stdbool)))
                  (or (>= (constant ptr-bits) (type->width type)) (eq? type 'double-float))
                  (bind #f (e-offset e-value)
                    (build-object-set! type
@@ -5334,7 +5334,7 @@
          [(quote ,d)
           (let ([type (filter-foreign-type d)])
             (and (memq type (record-datatype list))
-                 (not (memq type '(char wchar boolean single-float)))
+                 (not (memq type '(char wchar boolean stdbool single-float)))
                  (>= (constant ptr-bits) (type->width type))
                  (bind #f (e-offset e-value)
                    (build-swap-object-set! type
@@ -5550,6 +5550,21 @@
                  ,(%constant sfalse)
                  ,(%constant strue))))
 
+        (define-fptr-ref-inline $fptr-ref-stdbool
+          (constant-case stdbool-bits [(8) 'unsigned-8])
+          #f
+          (lambda (x)
+            `(if ,(%inline eq? ,x (immediate 0))
+                 ,(%constant sfalse)
+                 ,(%constant strue))))
+        (define-fptr-ref-inline $fptr-ref-swap-stdbool
+          (constant-case stdbool-bits [(8) 'unsigned-8])
+          #t
+          (lambda (x)
+            `(if ,(%inline eq? ,x (immediate 0))
+                 ,(%constant sfalse)
+                 ,(%constant strue))))
+
         (define-fptr-ref-inline $fptr-ref-fixnum 'fixnum #f)
         (define-fptr-ref-inline $fptr-ref-swap-fixnum 'fixnum #t))
       (let ()
@@ -5650,6 +5665,17 @@
           (constant-case int-bits
             [(32) 'unsigned-32]
             [(64) 'unsigned-64])
+          build-swap-object-set!
+          (lambda (z) `(if ,z (immediate ,(fix 1)) (immediate ,(fix 0)))))
+
+        (define-fptr-set!-inline #f $fptr-set-stdbool!
+          (constant-case stdbool-bits
+            [(8) 'unsigned-8])
+          build-object-set!
+          (lambda (z) `(if ,z (immediate ,(fix 1)) (immediate ,(fix 0)))))
+        (define-fptr-set!-inline #f $fptr-set-swap-stdbool!
+          (constant-case stdbool-bits
+            [(8) 'unsigned-8])
           build-swap-object-set!
           (lambda (z) `(if ,z (immediate ,(fix 1)) (immediate ,(fix 0)))))
 

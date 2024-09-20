@@ -197,7 +197,7 @@
              (set-who! foreign-ref  ; checks ty, addr, and offset, but inherently unsafe
                (lambda (ty addr offset)
                  (define-syntax ref
-                   (syntax-rules (scheme-object char wchar boolean
+                   (syntax-rules (scheme-object char wchar boolean stdbool
                                                 integer-24 unsigned-24 integer-40 unsigned-40 integer-48 unsigned-48
                                                 integer-56 unsigned-56 integer-64 unsigned-64)
                      [(_ scheme-object bytes pred) ($oops who "cannot load scheme pointers from foreign memory")]
@@ -210,6 +210,9 @@
                       (constant-case int-bits
                         [(32) (not (eq? (#3%foreign-ref 'integer-32 addr offset) 0))]
                         [(64) (not (eq? (#3%foreign-ref 'integer-64 addr offset) 0))])]
+                     [(_ stdbool bytes pred)
+                      (constant-case stdbool-bits
+                        [(8) (not (eq? (#3%foreign-ref 'integer-8 addr offset) 0))])]
                      [(_ integer-24 bytes pred)
                       (eq? 'unknown (constant native-endianness))
                       (build-multi-int (#3%foreign-ref addr offset) integer 16 8 swap?)]
@@ -256,7 +259,7 @@
                (lambda (ty addr offset v)
                  (define (value-err x t) ($oops who "invalid value ~s for foreign type ~s" x t))
                  (define-syntax set
-                   (syntax-rules (scheme-object char wchar boolean
+                   (syntax-rules (scheme-object char wchar boolean stdbool
                                                 integer-24 unsigned-24 integer-40 unsigned-40 integer-48 unsigned-48
                                                 integer-56 unsigned-56 integer-64 unsigned-64 double-float single-float)
                      [(_ scheme-object bytes pred) ($oops who "cannot store scheme pointers into foreign memory")]
@@ -274,6 +277,9 @@
                       (constant-case int-bits
                         [(32) (#3%foreign-set! 'integer-32 addr offset (if v 1 0))]
                         [(64) (#3%foreign-set! 'integer-64 addr offset (if v 1 0))])]
+                     [(_ stdbool bytes pred)
+                      (constant-case stdbool-bits
+                        [(8) (#3%foreign-set! 'integer-8 addr offset (if v 1 0))])]
                      [(_ integer-24 bytes pred)
                       (eq? 'unknown (constant native-endianness))
                       (begin
@@ -364,7 +370,7 @@
   (set-who! $object-ref ; not safe, just handles non-constant types
     (lambda (ty r offset)
       (define-syntax ref
-        (syntax-rules (char wchar boolean
+        (syntax-rules (char wchar boolean stdbool
                             integer-24 unsigned-24 integer-40 unsigned-40 integer-48 unsigned-48
                             integer-56 unsigned-56 integer-64 unsigned-64)
           [(_ char bytes pred) (integer->char (#3%$object-ref 'unsigned-8 r offset))]
@@ -376,6 +382,9 @@
            (constant-case int-bits
              [(32) (not (eq? (#3%$object-ref 'integer-32 r offset) 0))]
              [(64) (not (eq? (#3%$object-ref 'integer-64 r offset) 0))])]
+          [(_ stdbool bytes pred)
+           (constant-case stdbool-bits
+             [(8) (not (eq? (#3%$object-ref 'integer-8 r offset) 0))])]
           [(_ integer-24 bytes pred)
            (eq? 'unknown (constant native-endianness))
            (build-multi-int (#3%$object-ref r offset) integer 16 8 #f)]
@@ -407,7 +416,7 @@
   (set-who! $swap-object-ref ; not safe, just handles non-constant types
     (lambda (ty r offset)
       (define-syntax ref
-        (syntax-rules (char wchar boolean
+        (syntax-rules (char wchar boolean stdbool
                             integer-24 unsigned-24 integer-40 unsigned-40 integer-48 unsigned-48
                             integer-56 unsigned-56 integer-64 unsigned-64)
           [(_ char bytes pred) (integer->char (#3%$swap-object-ref 'unsigned-8 r offset))]
@@ -419,6 +428,9 @@
            (constant-case int-bits
              [(32) (not (eq? (#3%$swap-object-ref 'integer-32 r offset) 0))]
              [(64) (not (eq? (#3%$swap-object-ref 'integer-64 r offset) 0))])]
+          [(_ stdbool bytes pred)
+           (constant-case stdbool-bits
+             [(8) (not (eq? (#3%$swap-object-ref 'integer-8 r offset) 0))])]
           [(_ integer-24 bytes pred)
            (eq? 'unknown (constant native-endianness))
            (build-multi-int (#3%$swap-object-ref r offset) integer 16 8 #t)]
@@ -450,7 +462,7 @@
   (set-who! $object-set! ; not safe, just handles non-constant types
     (lambda (ty r offset v)
       (define-syntax set
-        (syntax-rules (char wchar boolean
+        (syntax-rules (char wchar boolean stdbool
                             integer-24 unsigned-24 integer-40 unsigned-40 integer-48 unsigned-48
                             integer-56 unsigned-56 integer-64 unsigned-64)
           [(_ char bytes pred)
@@ -463,6 +475,9 @@
            (constant-case int-bits
              [(32) (#3%$object-set! 'integer-32 r offset (if v 1 0))]
              [(64) (#3%$object-set! 'integer-64 r offset (if v 1 0))])]
+          [(_ stdbool bytes pred)
+           (constant-case stdbool-bits
+             [(8) (#3%$object-set! 'integer-8 r offset (if v 1 0))])]
           [(_ integer-24 bytes pred)
            (eq? 'unknown (constant native-endianness))
            (build-multi-int (#3%$object-set! r offset v) integer 16 8 #f)]

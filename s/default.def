@@ -1,6 +1,7 @@
 ;; types that are right for most platforms:
 (define-constant-default int-bits 32)
 (define-constant-default short-bits 16)
+(define-constant-default stdbool-bits 8)
 (define-constant-default typedef-ptr "void *")
 (define-constant-default typedef-iptr "long")
 (define-constant-default typedef-uptr "unsigned long")

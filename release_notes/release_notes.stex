@@ -124,6 +124,11 @@ iOS compilation target. Native-code support for iOS is currently limited
 to applications attached to a debugger as the platform does not allow
 executable code to be loaded at runtime.
 
+\subsection{Standard boolean foreign type (10.1.0)}
+
+The \scheme{stdbool} foreign type corresponds to \scheme{bool} as
+defined by the host machine's \scheme{stdbool.h} include file.
+
 \subsection{Unicode 15.1 support (10.0.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,

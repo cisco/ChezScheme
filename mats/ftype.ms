@@ -443,6 +443,7 @@
         (uptr . ,(if (< (fixnum-width) 32) "uint32_t" "uint64_t"))
         (fixnum . ,(if (< (fixnum-width) 32) "int32_t" "int64_t"))
         (boolean . "int")
+        (stdbool . "int8_t")
         (integer-8 . "int8_t")
         (unsigned-8 . "uint8_t")
         (integer-16 . "int16_t")
@@ -723,7 +724,8 @@
            [a15 fixnum]
            [a16 iptr]
            [a17 uptr]
-           [a18 void*]))
+           [a18 void*]
+           [a19 stdbool]))
        (define a (make-ftype-pointer A (foreign-alloc (ftype-sizeof A))))
        (free-after a
          (ftype-set! A (a1) a 3.5)
@@ -744,6 +746,7 @@
          (ftype-set! A (a16) a -30004)
          (ftype-set! A (a17) a #xabcdef07)
          (ftype-set! A (a18) a 25000)
+         (ftype-set! A (a19) a 'howdy)
          (list
            (ftype-ref A (a1) a)
            (ftype-ref A (a2) a)
@@ -762,7 +765,8 @@
            (ftype-ref A (a15) a)
            (ftype-ref A (a16) a)
            (ftype-ref A (a17) a)
-           (ftype-ref A (a18) a))))
+           (ftype-ref A (a18) a)
+           (ftype-ref A (a19) a))))
     `(3.5
       -4.5
       -30000
@@ -780,7 +784,8 @@
       ,(most-positive-fixnum)
       -30004
       #xabcdef07
-      25000))
+      25000
+      #t))
 
   (begin
     (define-ftype A
@@ -4022,7 +4027,8 @@
              [a15 fixnum]
              [a16 iptr]
              [a17 uptr]
-             [a18 void*])))
+             [a18 void*]
+             [a19 stdbool])))
        (define a (make-ftype-pointer A (foreign-alloc (ftype-sizeof A))))
        (free-after a
          (ftype-set! A (a1) a 3.5)
@@ -4043,6 +4049,7 @@
          (ftype-set! A (a16) a -30004)
          (ftype-set! A (a17) a #xabcdef07)
          (ftype-set! A (a18) a 25000)
+         (ftype-set! A (a19) a 'howdy)
          (list
            (ftype-ref A (a1) a)
            (ftype-ref A (a2) a)
@@ -4061,7 +4068,8 @@
            (ftype-ref A (a15) a)
            (ftype-ref A (a16) a)
            (ftype-ref A (a17) a)
-           (ftype-ref A (a18) a))))
+           (ftype-ref A (a18) a)
+           (ftype-ref A (a19) a))))
     `(3.5
       -4.5
       -30000
@@ -4079,7 +4087,8 @@
       ,(most-positive-fixnum)
       -30004
       #xabcdef07
-      25000))
+      25000
+      #t))
   (equal?
     (let ()
        (define-ftype A
@@ -4102,7 +4111,8 @@
              [a15 fixnum]
              [a16 iptr]
              [a17 uptr]
-             [a18 void*])))
+             [a18 void*]
+             [a19 stdbool])))
        (define a (make-ftype-pointer A (foreign-alloc (ftype-sizeof A))))
        (free-after a
          (ftype-set! A (a1) a 3.5)
@@ -4123,6 +4133,7 @@
          (ftype-set! A (a16) a -30004)
          (ftype-set! A (a17) a #xabcdef07)
          (ftype-set! A (a18) a 25000)
+         (ftype-set! A (a19) a 'howdy)
          (list
            (ftype-ref A (a1) a)
            (ftype-ref A (a2) a)
@@ -4141,7 +4152,8 @@
            (ftype-ref A (a15) a)
            (ftype-ref A (a16) a)
            (ftype-ref A (a17) a)
-           (ftype-ref A (a18) a))))
+           (ftype-ref A (a18) a)
+           (ftype-ref A (a19) a))))
     `(3.5
       -4.5
       -30000
@@ -4159,7 +4171,8 @@
       ,(most-positive-fixnum)
       -30004
       #xabcdef07
-      25000))
+      25000
+      #t))
   (equal?
     (let ()
        (define-ftype A
@@ -4182,7 +4195,8 @@
              [a15 fixnum]
              [a16 iptr]
              [a17 uptr]
-             [a18 void*])))
+             [a18 void*]
+             [a19 stdbool])))
        (define a (make-ftype-pointer A (foreign-alloc (ftype-sizeof A))))
        (free-after a
          (ftype-set! A (a1) a 3.5)
@@ -4203,6 +4217,7 @@
          (ftype-set! A (a16) a -30004)
          (ftype-set! A (a17) a #xabcdef07)
          (ftype-set! A (a18) a 25000)
+         (ftype-set! A (a19) a 'howdy)
          (list
            (ftype-ref A (a1) a)
            (ftype-ref A (a2) a)
@@ -4221,7 +4236,8 @@
            (ftype-ref A (a15) a)
            (ftype-ref A (a16) a)
            (ftype-ref A (a17) a)
-           (ftype-ref A (a18) a))))
+           (ftype-ref A (a18) a)
+           (ftype-ref A (a19) a))))
     `(3.5
       -4.5
       -30000
@@ -4239,7 +4255,8 @@
       ,(most-positive-fixnum)
       -30004
       #xabcdef07
-      25000))
+      25000
+      #t))
 
  ; ----------------
   (begin
@@ -5667,7 +5684,8 @@
           [a15 fixnum]
           [a16 iptr]
           [a17 uptr]
-          [a18 void*])))
+          [a18 void*]
+          [a19 stdbool])))
     #t)
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
@@ -5691,6 +5709,7 @@
            (ftype-ref A (a16) x)
            (ftype-ref A (a17) x)
            (ftype-ref A (a18) x)
+           (ftype-ref A (a19) x)
            x)))
     '(lambda (x) x))
   (equivalent-expansion?
@@ -5715,6 +5734,7 @@
            (ftype-&ref A (a16) x)
            (ftype-&ref A (a17) x)
            (ftype-&ref A (a18) x)
+           (ftype-&ref A (a19) x)
            x)))
     '(lambda (x) x))
   (begin
@@ -5738,7 +5758,8 @@
           [a15 fixnum]
           [a16 iptr]
           [a17 uptr]
-          [a18 void*])))
+          [a18 void*]
+          [a19 stdbool])))
     #t)
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
@@ -5762,6 +5783,7 @@
            (ftype-ref A (a16) x)
            (ftype-ref A (a17) x)
            (ftype-ref A (a18) x)
+           (ftype-ref A (a19) x)
            x)))
     '(lambda (x) x))
   (equivalent-expansion?
@@ -5786,6 +5808,7 @@
            (ftype-&ref A (a16) x)
            (ftype-&ref A (a17) x)
            (ftype-&ref A (a18) x)
+           (ftype-&ref A (a19) x)
            x)))
     '(lambda (x) x))
   (begin

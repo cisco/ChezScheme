@@ -8872,7 +8872,7 @@
         integer-8 unsigned-8 integer-16 unsigned-16 integer-24 unsigned-24
         integer-32 unsigned-32 integer-40 unsigned-40 integer-48 unsigned-48
         integer-56 unsigned-56 integer-64 unsigned-64
-        boolean fixnum char wchar u8* u16* u32* utf-8 utf-16le utf-16be utf-16
+        boolean stdbool fixnum char wchar u8* u16* u32* utf-8 utf-16le utf-16be utf-16
         utf-32le utf-32be utf-32) type]
       [(void) (and void-okay? type)]
       [(ptr) 'scheme-object]
@@ -8960,7 +8960,7 @@
            a))]
       [else
        (case type
-         [(boolean void) '(lambda (id) #t)]
+         [(boolean stdbool void) '(lambda (id) #t)]
          [(char) '(lambda (id) (and (char? id) (fx<= (char->integer id) #xff)))]
          [(wchar)
           (constant-case wchar-bits
@@ -9054,6 +9054,11 @@
                                        (#,(constant-case int-bits
                                             [(32) #'integer-32]
                                             [(64) #'integer-64])))]
+                                   [(stdbool)
+                                    #`(()
+                                       ((if x 1 0))
+                                       (#,(constant-case stdbool-bits
+                                            [(8) #'integer-8])))]
                                    [(char)
                                     #`(()
                                        (#,(if unsafe?
@@ -9178,6 +9183,9 @@
                                        #,(constant-case int-bits
                                            [(32) #'integer-32]
                                            [(64) #'integer-64]))]
+                         [(stdbool) #`((lambda (x) (not (eq? x 0)))
+                                       #,(constant-case stdbool-bits
+                                           [(8) #'integer-8]))]
                          [(char) #'((lambda (x) (#3%integer->char (#3%fxlogand x #xff)))
                                     unsigned-8)]
                          [(wchar) #`(integer->char
@@ -9274,6 +9282,12 @@
                                        (#,(constant-case int-bits
                                             [(32) #'integer-32]
                                             [(64) #'integer-64]))))]
+                                 [(stdbool)
+                                  (with-syntax ([(x) (generate-temporaries #'(*))])
+                                    #`((not (eq? x 0))
+                                       (x)
+                                       (#,(constant-case stdbool-bits
+                                            [(8) #'integer-8]))))]
                                  [(char)
                                   (with-syntax ([(x) (generate-temporaries #'(*))])
                                     #`((#3%integer->char (#3%fxlogand x #xff))
@@ -9374,6 +9388,10 @@
                                        #,(constant-case int-bits
                                            [(32) #'integer-32]
                                            [(64) #'integer-64])
+                                       [] [])]
+                         [(stdbool) #`((lambda (x) (if x 1 0))
+                                       #,(constant-case stdbool-bits
+                                           [(8) #'integer-8])
                                        [] [])]
                          [(char)
                           #`((lambda (x)

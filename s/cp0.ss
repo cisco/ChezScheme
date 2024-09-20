@@ -3729,7 +3729,7 @@
                 (lambda (x)
                   (syntax-case x ()
                     [(_ type bytes pred)
-                     (if (memq (datum type) '(scheme-object boolean))
+                     (if (memq (datum type) '(scheme-object boolean stdbool))
                          #'($oops who "unexpected type ~s" 'type)
                          #'(build-primcall 3 'pred
                              (list (build-ref val-t))))])))
@@ -3752,7 +3752,7 @@
                                    (lambda (fld t check*)
                                      (let* ([type (fld-type fld)]
                                             [real-type (filter-foreign-type type)])
-                                       (if (memq real-type '(scheme-object boolean))
+                                       (if (memq real-type '(scheme-object boolean stdbool))
                                            check*
                                            (cons
                                              `(if ,(type->pred 'record-constructor real-type t)
@@ -4007,7 +4007,7 @@
                                      [rec-t (cp0-make-temp #t)]
                                      [val-t (cp0-make-temp #t)])
                                 (let ([expr `(record-set! ,rtd ,type ,index (ref #f ,rec-t) (ref #f ,val-t))]
-                                      [pred (and (not (memq real-type '(scheme-object boolean)))
+                                      [pred (and (not (memq real-type '(scheme-object boolean stdbool)))
                                                  (type->pred who real-type val-t))])
                                   (cond
                                     [(fx= level 3)

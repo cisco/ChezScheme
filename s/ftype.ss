@@ -72,7 +72,7 @@ built-in ftype names:
     char | wchar
     float | double
     void* | iptr | uptr
-    fixnum | boolean
+    fixnum | boolean | stdbool
     integer-8 | unsigned-8
     integer-16 | unsigned-16
     integer-24 | unsigned-24
@@ -326,7 +326,7 @@ ftype operators:
     (define base-types
       '(short unsigned-short int unsigned unsigned-int long
         unsigned-long long-long unsigned-long-long char wchar float
-        double void* iptr uptr fixnum boolean integer-8 unsigned-8
+        double void* iptr uptr fixnum boolean stdbool integer-8 unsigned-8
         integer-16 unsigned-16 integer-24 unsigned-24 integer-32 unsigned-32
         integer-40 unsigned-40 integer-48 unsigned-48 integer-56 unsigned-56
         integer-64 unsigned-64 single-float double-float wchar_t size_t ssize_t ptrdiff_t))
@@ -1683,6 +1683,13 @@ ftype operators:
     (lambda (fptr offset)
       (#3%$fptr-ref-swap-boolean fptr offset)))
 
+  (set! $fptr-ref-stdbool
+    (lambda (fptr offset)
+      (#3%$fptr-ref-stdbool fptr offset)))
+  (set! $fptr-ref-swap-stdbool
+    (lambda (fptr offset)
+      (#3%$fptr-ref-swap-stdbool fptr offset)))
+
   (set! $fptr-ref-fixnum
     (lambda (fptr offset)
       (#3%$fptr-ref-fixnum fptr offset)))
@@ -1918,6 +1925,13 @@ ftype operators:
     (set! $fptr-set-swap-boolean!
       (lambda (info fptr offset val)
         (#3%$fptr-set-swap-boolean! info fptr offset val)))
+
+    (set! $fptr-set-stdbool!
+      (lambda (info fptr offset val)
+        (#3%$fptr-set-stdbool! info fptr offset val)))
+    (set! $fptr-set-swap-stdbool!
+      (lambda (info fptr offset val)
+        (#3%$fptr-set-swap-stdbool! info fptr offset val)))
 
     (set! $fptr-set-fixnum!
       (lambda (info fptr offset val)
