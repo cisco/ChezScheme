@@ -1151,6 +1151,14 @@
           (join-marks (wrap-marks w) (wrap-marks (syntax-object-wrap x))))
         (values (unannotate x) (wrap-marks w)))))
 
+(define id->unprefixed-id
+  (lambda (id)
+    (let* ([sym (id-sym-name id)]
+           [unprefixed-sym ($sgetprop sym '*unprefixed* sym)])
+      (if (eq? sym unprefixed-sym)
+          id
+          (make-syntax-object unprefixed-sym (syntax-object-wrap id))))))
+
 ;;; syntax object wraps
 
 ;;;         <wrap>     ::= ((<mark> ...) . (<subst> ...))
@@ -5900,13 +5908,14 @@
                       (store-global-subst id '*top* '())
                       (cond
                         [(any-set? (prim-mask r5rs) m)
-                         (store-global-subst id '*r5rs* '())
-                         (store-global-subst id '*r5rs-syntax* '())
-                         (cond
-                           [(any-set? (prim-mask ieee) m)
-                            (store-global-subst id '*ieee* '())
-                            (repartition id #t #t #t #t)]
-                           [else (repartition id #t #t #f #t)])]
+                         (let ([unprefixed-id (id->unprefixed-id id)])
+                           (store-global-subst unprefixed-id '*r5rs* '())
+                           (store-global-subst unprefixed-id '*r5rs-syntax* '())
+                           (cond
+                             [(any-set? (prim-mask ieee) m)
+                              (store-global-subst unprefixed-id '*ieee* '())
+                              (repartition id #t #t #t #t)]
+                             [else (repartition id #t #t #f #t)]))]
                         [else (repartition id #f #f #f #t)])]
                      [else (repartition id #f #f #f #f)]))]
                 [(any-set? (prim-mask (or primitive system)) m)
@@ -5918,12 +5927,13 @@
                       (store-global-subst id '*top* '())
                       (cond
                         [(any-set? (prim-mask r5rs) m)
-                         (store-global-subst id '*r5rs* '())
-                         (cond
-                           [(any-set? (prim-mask ieee) m)
-                            (store-global-subst id '*ieee* '())
-                            (repartition id #f #t #t #t)]
-                           [else (repartition id #f #t #f #t)])]
+                         (let ([unprefixed-id (id->unprefixed-id id)])
+                           (store-global-subst unprefixed-id '*r5rs* '())
+                           (cond
+                             [(any-set? (prim-mask ieee) m)
+                              (store-global-subst unprefixed-id '*ieee* '())
+                              (repartition id #f #t #t #t)]
+                             [else (repartition id #f #t #f #t)]))]
                         [else (repartition id #f #f #f #t)])]
                      [else (repartition id #f #f #f #f)]))]
                 [else (partition (cdr ls) r5rs-syntax r5rs ieee scheme system)]))))))
