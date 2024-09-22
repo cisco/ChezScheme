@@ -1205,7 +1205,7 @@
   (bytevector-u56-set! [sig [(bytevector sub-index u56 symbol) -> (void)]] [flags true])
   (bytevector-compress [sig [(ptr) -> (ptr)]] [flags])
   (bytevector-uncompress [sig [(ptr) -> (ptr)]] [flags])
-  (call/1cc [sig [(procedure) -> (ptr ...)]] [flags])
+  (call/1cc [sig [(procedure) -> (ptr ...)]] [flags cp02])
   (call-in-continuation [sig [(ptr procedure) -> (ptr ...)] [(ptr continuation-marks procedure) -> (ptr ...)]] [flags])
   (call-with-input-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])      ; has options argument
   (call-with-output-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])     ; has options argument

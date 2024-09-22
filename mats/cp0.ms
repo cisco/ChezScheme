@@ -3541,6 +3541,9 @@
      (expand/optimize '(call/cc (lambda (k) 10)))
      '10)
     (equivalent-expansion?
+     (expand/optimize '(call/1cc (lambda (k) 10)))
+     '10)
+    (equivalent-expansion?
      (expand/optimize '(call-with-current-continuation (lambda (k) 10)))
      '10)
     (equivalent-expansion?

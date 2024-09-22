@@ -2614,7 +2614,7 @@
                                        e]))
                                  c-val)))))])))))])
 
-      (define-inline 2 (call/cc call-with-current-continuation)
+      (define-inline 2 (call/cc call/1cc call-with-current-continuation)
         [(body)
          (nanopass-case (Lsrc Expr) (value-visit-operand! body)
            [(case-lambda ,preinfo (clause (,x) ,interface ,e))
