@@ -204,13 +204,30 @@ an exception.
 
 (define noround (lambda (x) x))
 (define rounder
-  (lambda (p)
+  (lambda (p ex)
     (if (zero? p)
         (lambda (n) 0)
         (lambda (n)
           (let ([a (numerator n)]
                 [b (denominator n)])
-	    (let ([d (- (bitwise-length a) (bitwise-length b))])
+	    (let* ([a-bits (bitwise-length a)]
+                   [b-bits (bitwise-length b)]
+                   [d (- a-bits b-bits)]
+                   ;; If `p` is large, we might run out of memory by
+                   ;; shifting by it directly, but in some cases, the right
+                   ;; result should fit into memory no matter how big `p` is.
+                   [p (cond
+                        [(not (eq? ex 'e))
+                         ;; end result will have at most 53 bits, anyway, so
+                         ;; bound p; we don't need a tight bound, and adding 2
+                         ;; extra bits over `double` precision to make sure
+                         ;; rounding will be right
+                         (min p (+ (max a-bits b-bits) 53 2))]
+                        [(= b (bitwise-arithmetic-shift-left 1 (- b-bits 1)))
+                         ;; no need for extra precision if the
+                         ;; denominator is a power of 2
+                         (min p (+ a-bits b-bits))]
+                        [else p])])
 	      (let*-values
 		  ([(a b)
 		    (if (positive? d)
@@ -476,9 +493,9 @@ an exception.
   [(digit 10) (mwidth1 r ex ms d x)])
 
 (mknum-state mwidth1 (r ex ms mw x)     ; saw digit after vertical bar
-  (finish-number ms ex x1 (x (rounder mw)))
+  (finish-number ms ex x1 (x (rounder mw ex)))
   [(digit 10) (mwidth1 r ex ms (+ (* 10 mw) d) x)]
-  [else (complex0 r ex ms (x (rounder mw)))])
+  [else (complex0 r ex ms (x (rounder mw ex)))])
 
 (mknum-state complex0 (r ex ms x)        ; saw end of real part before end of string
   (assert #f) ; should arrive here only from else clauses, thus not at the end of the string
