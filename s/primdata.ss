@@ -338,8 +338,8 @@
   (error [sig [(maybe-who string ptr ...) -> (bottom)]] [flags abort-op])
   (assertion-violation [sig [(maybe-who string ptr ...) -> (bottom)]] [flags abort-op])
   (apply [sig [(procedure ptr ... list) -> (ptr ...)]] [flags cp02 cptypes2x ieee r5rs])
-  (call-with-current-continuation [sig [(procedure) -> (ptr ...)]] [flags ieee r5rs])
-  (call/cc [sig [(procedure) -> (ptr ...)]] [flags])
+  (call-with-current-continuation [sig [(procedure) -> (ptr ...)]] [flags ieee r5rs cp02])
+  (call/cc [sig [(procedure) -> (ptr ...)]] [flags cp02])
   (values [sig [(ptr ...) -> (ptr ...)]] [flags unrestricted discard cp02 ieee r5rs])
   (call-with-values [sig [(procedure procedure) -> (ptr ...)]] [flags cp02 cptypes2x ieee r5rs])
   ((r6rs: dynamic-wind) [sig [(procedure procedure procedure) -> (ptr ...)]] [flags cptypes2x ieee r5rs])      ; restricted to 3 arguments
@@ -1205,7 +1205,7 @@
   (bytevector-u56-set! [sig [(bytevector sub-index u56 symbol) -> (void)]] [flags true])
   (bytevector-compress [sig [(ptr) -> (ptr)]] [flags])
   (bytevector-uncompress [sig [(ptr) -> (ptr)]] [flags])
-  (call/1cc [sig [(procedure) -> (ptr ...)]] [flags])
+  (call/1cc [sig [(procedure) -> (ptr ...)]] [flags cp02])
   (call-in-continuation [sig [(ptr procedure) -> (ptr ...)] [(ptr continuation-marks procedure) -> (ptr ...)]] [flags])
   (call-with-input-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])      ; has options argument
   (call-with-output-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])     ; has options argument

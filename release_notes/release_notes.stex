@@ -129,6 +129,13 @@ executable code to be loaded at runtime.
 The \scheme{stdbool} foreign type corresponds to \scheme{bool} as
 defined by the host machine's \scheme{stdbool.h} include file.
 
+\subsection{Optimization for \scheme{call/cc} (10.1.0)}
+
+When \scheme{call/cc} is applied to an immediate function that does
+not use its argument, then the application is replaced with the body
+of that function, which avoids the potential work of capturing a
+continuation at run time.
+
 \subsection{Unicode 15.1 support (10.0.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,

@@ -2614,6 +2614,15 @@
                                        e]))
                                  c-val)))))])))))])
 
+      (define-inline 2 (call/cc call/1cc call-with-current-continuation)
+        [(body)
+         (nanopass-case (Lsrc Expr) (value-visit-operand! body)
+           [(case-lambda ,preinfo (clause (,x) ,interface ,e))
+            (guard (not (prelex-was-referenced x)))
+            (residualize-seq (list) (list body) ctxt)
+            e]
+           [else #f])])
+
       (define-inline 2 $call-setting-continuation-attachment
         [(val body)
          (nanopass-case (Lsrc Expr) (value-visit-operand! body)

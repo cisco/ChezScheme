@@ -3535,6 +3535,18 @@
 
 (cp0-mat cp0-continuation-marks
     (equivalent-expansion?
+     (expand/optimize '(lambda () (call/cc (lambda (k) 10))))
+     '(lambda () 10))
+    (equivalent-expansion?
+     (expand/optimize '(call/cc (lambda (k) 10)))
+     '10)
+    (equivalent-expansion?
+     (expand/optimize '(call/1cc (lambda (k) 10)))
+     '10)
+    (equivalent-expansion?
+     (expand/optimize '(call-with-current-continuation (lambda (k) 10)))
+     '10)
+    (equivalent-expansion?
      (expand/optimize '(with-continuation-mark 'x 'y 10))
      '10)
     (equivalent-expansion?
