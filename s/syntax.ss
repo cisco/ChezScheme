@@ -6027,10 +6027,11 @@
          (_ (syntax-error (source-wrap e w ae))))))
 
 (global-extend 'core 'quote-syntax
-   (lambda (e r w ae)
+  (lambda (e r w ae)
+    (let ([e (source-wrap e w ae)])
       (syntax-case e ()
-         ((_ e) (build-data no-source (source-wrap (syntax e) w ae)))
-         (_ (syntax-error (source-wrap e w ae))))))
+         ((_ e) (build-data no-source (syntax e)))
+         (_ (syntax-error e))))))
 
 (global-extend 'core 'syntax
   (let ()
