@@ -1477,6 +1477,9 @@
   (eq? (eval '(let ((x 3)) x) (ieee-environment)) 3)
   (eq? (eval '(let ((x 3)) x) (null-environment 5)) 3)
 
+  (eq? (eval '(< 3 5) (scheme-report-environment 5)) #true)
+  (eq? (eval '(< 3 5) (ieee-environment)) #true)
+
   (eq? (eval '(let ((p (delay 3))) (force p))) 3)
   (eq? (eval '(let ((p (delay 3))) (force p)) (interaction-environment)) 3)
   (eq? (eval '(let ((p (delay 3))) (force p)) (scheme-report-environment 5)) 3)
@@ -1487,6 +1490,10 @@
   (error? (eval '(sort < '(3 2 4)) (scheme-report-environment 5)))
   (error? (eval '(sort < '(3 2 4)) (ieee-environment)))
   (error? (eval '(sort < '(3 2 4)) (null-environment 5)))
+
+  (error? (eval '(< 3) (scheme-report-environment 5)))
+  (error? (eval '(< 3) (ieee-environment)))
+
 )
 
 (mat eval2

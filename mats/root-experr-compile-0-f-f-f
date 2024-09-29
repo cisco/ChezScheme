@@ -4071,6 +4071,8 @@ misc.mo:Expected error in mat eval: "attempt to reference unbound identifier con
 misc.mo:Expected error in mat eval: "attempt to reference unbound identifier sort".
 misc.mo:Expected error in mat eval: "attempt to reference unbound identifier sort".
 misc.mo:Expected error in mat eval: "attempt to reference unbound identifier sort".
+misc.mo:Expected error in mat eval: "incorrect argument count in call (< 3)".
+misc.mo:Expected error in mat eval: "incorrect argument count in call (< 3)".
 misc.mo:Expected error in mat eval2: "attempt to reference unbound identifier list".
 misc.mo:Expected error in mat eval2: "attempt to reference unbound identifier force".
 misc.mo:Expected error in mat eval2: "attempt to reference unbound identifier force".
