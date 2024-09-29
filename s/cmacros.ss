@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x0a010002)
+(define-constant scheme-version #x0a010003)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1209,7 +1209,8 @@
       (fixnum (constant ptr-bytes) fixnum?)
       (char 1 $foreign-char?)
       (wchar (fxsrl (constant wchar-bits) 3) $foreign-wchar?)
-      (boolean (fxsrl (constant int-bits) 3) (lambda (x) #t)))))
+      (boolean (fxsrl (constant int-bits) 3) (lambda (x) #t))
+      (stdbool (fxsrl (constant stdbool-bits) 3) (lambda (x) #t)))))
 )
 
 (define-syntax record-datatype

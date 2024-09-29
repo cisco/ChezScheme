@@ -492,6 +492,12 @@ Transmission of fixnums is slightly faster than transmission of
 \scheme{#f} is converted to 0; all other objects are converted to 1.
 The argument is passed to C as an \scheme{int}.
 
+\foreigntype{\scheme{stdbool}}
+\index{\scheme{stdbool}}Any Scheme object may be passed as a boolean.
+\scheme{#f} is converted to 0; all other objects are converted to 1.
+The argument is passed to C as a \scheme{bool} defined by the the host
+machine's \scheme{stdbool.h} include file.
+
 \foreigntype{\scheme{char}}
 \index{\scheme{char}}Only Scheme characters with Unicode scalar values
 in the range 0 through 255 are valid \scheme{char} parameters.
@@ -770,6 +776,12 @@ fixed-size type above, depending on the size of a C pointer.
 \foreigntype{\scheme{boolean}}
 \index{\scheme{boolean}}This type converts a C \scheme{int} return value
 into a Scheme boolean.
+0 is converted to \scheme{#f}; all other values are converted to \scheme{#t}.
+
+\foreigntype{\scheme{stdbool}}
+\index{\scheme{stdbool}}This type converts a C \scheme{bool} return value
+into a Scheme boolean, where \scheme{bool} is from the host machine's \scheme{stdbool.h}
+include file.
 0 is converted to \scheme{#f}; all other values are converted to \scheme{#t}.
 
 \foreigntype{\scheme{char}}
@@ -1427,8 +1439,9 @@ Several additional machine-dependent types are recognized:
 \begin{itemize}
 \item \scheme{iptr},
 \item \scheme{uptr},
-\item \scheme{fixnum}, and
-\item \scheme{boolean}.
+\item \scheme{fixnum},
+\item \scheme{boolean}, and
+\item \scheme{stdbool}.
 \end{itemize}
 
 \scheme{uptr} is equivalent to \scheme{void*}; both are treated as
@@ -1437,6 +1450,9 @@ unsigned integers the size of a pointer.
 \scheme{fixnum} is treated as an \scheme{iptr}, but with a range limited
 to the fixnum range.
 \scheme{boolean} is treated as an \scheme{int}, with zero
+converted to the Scheme value \scheme{#f} and all
+other values converted to \scheme{#t}.
+\scheme{stdbool} is treated as an \scheme{bool} from \scheme{stdbool.h}, with zero
 converted to the Scheme value \scheme{#f} and all
 other values converted to \scheme{#t}.
 
@@ -1482,7 +1498,7 @@ to be stored, one of those listed in the description of
 \scheme{foreign-ref} above.
 Scheme characters are converted to type \scheme{char} or \scheme{wchar_t}
 as if via \scheme{char->integer}.
-For type \scheme{boolean}, Scheme \scheme{#f} is converted to the
+For type \scheme{boolean} or \scheme{stdbool}, Scheme \scheme{#f} is converted to the
 \scheme{int} 0, and any other Scheme object is converted to 1.
 
 \var{address} must be an exact integer in the range $-2^{w-1}$ through

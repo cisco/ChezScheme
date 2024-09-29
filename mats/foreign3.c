@@ -31,6 +31,9 @@
 #include "scheme.h"
 #endif
 
+/* Standard in C99, but widely available in environments for earlier C dialects: */
+#include <stdbool.h>
+
 EXPORT int chk_data(void) {
     static char c[10]="ABCDEFGH";
 
@@ -176,6 +179,10 @@ EXPORT double Srvtest_double(ptr code, ptr x1) {
 
 EXPORT char Srvtest_char(ptr code, ptr x1) {
     return (*((char (*)(ptr))Sforeign_callable_entry_point(code)))(x1);
+}
+
+EXPORT bool Srvtest_stdbool(ptr code, ptr x1) {
+    return (*((bool (*)(ptr))Sforeign_callable_entry_point(code)))(x1);
 }
 
 #ifdef _WIN32
