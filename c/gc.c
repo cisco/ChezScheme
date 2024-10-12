@@ -383,6 +383,11 @@ static ptr sweep_from;
 
 static int in_parallel_sweepers = 0;
 
+#ifdef USE_PAR_SWEEPERS_WORKAROUND
+FORCEINLINE int get_in_parallel_sweepers() { return in_parallel_sweepers; }
+# define PAR_SWEEPERS_WORKAROUND() int in_parallel_sweepers = get_in_parallel_sweepers()
+#endif
+
 #define HAS_SWEEPER_WRT(t_tc, tc) 1
 
 # define GC_MUTEX_ACQUIRE() alloc_mutex_acquire()
@@ -460,6 +465,10 @@ static void sweep_dirty(thread_gc *tgc);
 # define PARALLEL_UNUSED    /* empty */
 # define NO_PARALLEL_UNUSED UNUSED
 
+#endif
+
+#ifndef PAR_SWEEPERS_WORKAROUND
+# define PAR_SWEEPERS_WORKAROUND() do { } while (0)
 #endif
 
 #define SWEEP_NO_CHANGE        0

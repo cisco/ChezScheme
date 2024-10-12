@@ -1637,6 +1637,59 @@
       ok?))
 )
 
+(mat parallel-gc-regression
+  (equal?
+   ;; Create threads that refer to data owned by other threads, and try to
+   ;; mix things up to see if we can provoke a problem in parallel collection.
+   (parameterize ([collect-request-handler (lambda () (collect 3 1 3))])
+     (let loop ([j 50])
+       (unless (= j 0)
+         (let* ([N 8]
+                [DEPTH 24]
+                [common (make-vector N)])
+
+           (define (spin i)
+             (define (fib n)
+               (cond
+                 [(= n 0) #t]
+                 [(= n 1) #f]
+                 [else (cons (fib (- n 1)) (fib (- n 2)))]))
+             (vector-set! common i (fib DEPTH))
+             (when (= i (sub1 N))
+               (collect-rendezvous)))
+
+           (define (work i)
+             (lambda ()
+               (thread-preserve-ownership!)
+               (set-virtual-register! 0 (make-vector 128))
+               (vector-set! (virtual-register 0) 0 (make-eq-hashtable))
+               (map (lambda (j)
+                      (let ([r (random N)])
+                        (vector-set! common r (make-vector 10 ))))
+                    '(1 2 3))
+               (map (lambda (j)
+                      (let ([r (random N)])
+                        (set-virtual-register! j (vector-ref common r))))
+                    '(1 2 3))
+               (spin i)
+               (unless (hashtable? (vector-ref (virtual-register 0) 0))
+                 (error 'oops "something went wrong"))))
+
+           (define ths
+             (let loop ([i 0])
+               (cond
+                 [(= i N) '()]
+                 [else
+                  (let ([th (fork-thread (work i))])
+                    (vector-set! common i th)
+                    (cons th (loop (add1 i))))])))
+
+           (for-each thread-join ths)
+
+           (loop (sub1 j))))))
+   (void))
+)
+
 (mat wait-for-threads
   (begin
     ;; To avoid breaking later tests that use `(collect)`,
