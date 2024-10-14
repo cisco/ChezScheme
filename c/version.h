@@ -61,6 +61,10 @@
 # define BIG_ENDIAN_IEEE_DOUBLE
 #endif
 
+#if defined(__arm64__) && defined(__clang__) && (__clang_major__ == 15)
+# define USE_PAR_SWEEPERS_WORKAROUND
+#endif
+
 #ifdef PORTABLE_BYTECODE
 # undef FLUSHCACHE
 # ifdef PORTABLE_BYTECODE_BIGENDIAN

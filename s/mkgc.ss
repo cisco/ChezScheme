@@ -994,6 +994,7 @@
                    (cast uptr (FRAME tc 0)))
       (case-mode
        [(sweep)
+        (PAR_SWEEPERS_WORKAROUND)
         (set! (tc-U tc) 0)
         (set! (tc-V tc) 0)
         (set! (tc-W tc) 0)
