@@ -50,6 +50,10 @@ jobs:
             os: windows-2022
             toolchain: gcc
             configure: CFLAGS+=-std=gnu89
+          - machine: ta6le
+            os: ubuntu-22.04
+            test: test-more
+            variant: more
     runs-on: ${{ matrix.config.os }}
     env:
       TARGET_MACHINE: ${{ matrix.config.machine }}

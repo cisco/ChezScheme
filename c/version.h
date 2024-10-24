@@ -61,7 +61,7 @@
 # define BIG_ENDIAN_IEEE_DOUBLE
 #endif
 
-#if defined(__arm64__) && defined(__clang__) && (__clang_major__ == 15)
+#if defined(__arm64__) && defined(__clang__) && (__clang_major__ == 15) && defined(__apple_build_version__)
 # define USE_PAR_SWEEPERS_WORKAROUND
 #endif
 

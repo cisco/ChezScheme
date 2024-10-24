@@ -1,0 +1,22 @@
+-------- o=0 spi=t spi --------
+-------- o=3 spi=t spi --------
+-------- o=0 hci=503 ctb=(/ (collect-trip-bytes) 64) cl=9 ctb --------
+-------- o=3 hci=503 ctb=(/ (collect-trip-bytes) 64) cl=9 ctb --------
+-------- o=0 spi=t cis=t cmg=1 cis --------
+-------- o=3 spi=t cis=t cmg=1 cis --------
+-------- o=0 hci=101 cis=t cmg=6 hci-cis --------
+-------- o=3 hci=101 cis=t cmg=6 hci-cis --------
+-------- o=0 spi=t cp0=t ctb=(/ (collect-trip-bytes) 64) cgr=6 ctb-cgr --------
+-------- o=3 spi=t cp0=t ctb=(/ (collect-trip-bytes) 64) cgr=6 ctb-cgr --------
+-------- o=0 spi=t hci=101 p=t eoc=f hci-p --------
+-------- o=3 spi=t hci=101 p=t eoc=f hci-p --------
+-------- o=0 hci=101 cp0=t p=t cl=9 hci-cl-p --------
+-------- o=3 hci=101 cp0=t p=t cl=9 hci-cl-p --------
+-------- o=0 eval=interpret spi --------
+-------- o=3 eval=interpret spi --------
+-------- o=0 cp0=t eval=interpret spi-cp0 --------
+-------- o=3 cp0=t eval=interpret spi-cp0 --------
+-------- o=0 spi=t hci=503 eval=interpret ctb=(/ (collect-trip-bytes) 64) spi-ctb --------
+-------- o=3 spi=t hci=503 eval=interpret ctb=(/ (collect-trip-bytes) 64) spi-ctb --------
+-------- o=0 spi=t hci=101 cp0=t p=t eval=interpret cgr=2 hci-cgr-p --------
+-------- o=3 spi=t hci=101 cp0=t p=t eval=interpret cgr=2 hci-cgr-p --------
