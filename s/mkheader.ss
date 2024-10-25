@@ -391,7 +391,7 @@
         (export "ptr" "Sflonum" "(double)")
         (export "ptr" "Smake_vector" "(iptr, ptr)")
         (export "ptr" "Smake_fxvector" "(iptr, ptr)")
-        (export "ptr" "Smake_flvector" "(iptr, ptr)")
+        (export "ptr" "Smake_flvector" "(iptr, double)")
         (export "ptr" "Smake_bytevector" "(iptr, int)")
         (export "ptr" "Smake_string" "(iptr, int)")
         (export "ptr" "Smake_uninitialized_string" "(iptr)")

@@ -181,7 +181,7 @@ EXPORT ptr Ssymbol_to_string(ptr);
 EXPORT ptr Sflonum(double);
 EXPORT ptr Smake_vector(iptr, ptr);
 EXPORT ptr Smake_fxvector(iptr, ptr);
-EXPORT ptr Smake_flvector(iptr, ptr);
+EXPORT ptr Smake_flvector(iptr, double);
 EXPORT ptr Smake_bytevector(iptr, int);
 EXPORT ptr Smake_string(iptr, int);
 EXPORT ptr Smake_uninitialized_string(iptr);
