@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x0a010003)
+(define-constant scheme-version #x0a010004)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -1502,6 +1502,7 @@
   ([double data]))
 
 (define-constant flonum-bytes 8)
+(define-constant flonum-bits (* 8 (constant flonum-bytes)))
 
 ; on 32-bit systems, the iptr pad will have no effect above and
 ; beyond the normal padding.  on 64-bit systems, the pad
@@ -2822,6 +2823,7 @@
      (fl> #f 2 #t #t)
      (fl<= #f 2 #t #t)
      (fl>= #f 2 #t #t)
+     (flbit-field #f 3 #t #t)
      (flmin #f 2 #t #t)
      (flmax #f 2 #t #t)
      (callcc #f 1 #f #f)

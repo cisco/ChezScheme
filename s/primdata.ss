@@ -1345,6 +1345,7 @@
   (fllp [sig [(flonum) -> (ufixnum)]] [flags arith-op mifoldable discard safeongoodargs])
   (flsingle [sig [(flonum) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs unboxed-arguments])
   (fl-make-rectangular [sig [(flonum flonum) -> (inexactnum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (flbit-field [sig [(flonum sub-uint sub-uint) -> (uint)]] [flags arith-op mifoldable discard safeongoodargs])
   (flonum->fixnum [sig [(flonum) -> (fixnum)]] [flags arith-op cp02 unboxed-arguments])
   (flnonpositive? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
   (flnonnegative? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])

@@ -10230,6 +10230,17 @@ fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: 17 is not a flonum".
 fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: 17 is not a flonum".
 fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: a is not a flonum".
 fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: (a) is not a flonum".
+fl.mo:Expected error in mat flbit-field: "incorrect argument count in call (flbit-field)".
+fl.mo:Expected error in mat flbit-field: "incorrect argument count in call (flbit-field 0.0)".
+fl.mo:Expected error in mat flbit-field: "incorrect argument count in call (flbit-field 0.0 1)".
+fl.mo:Expected error in mat flbit-field: "flbit-field: 0 is not a flonum".
+fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index -1".
+fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index 1".
+fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index -1".
+fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index <int>".
+fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index <int>".
+fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index 1267650600228229401496703205376".
+fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index 1267650600228229401496703205376".
 cfl.mo:Expected error in mat fl-make-rectangular: "fl-make-rectangular: 3 is not a flonum".
 cfl.mo:Expected error in mat fl-make-rectangular: "fl-make-rectangular: b is not a flonum".
 cfl.mo:Expected error in mat fl-make-rectangular: "fl-make-rectangular: 3 is not a flonum".

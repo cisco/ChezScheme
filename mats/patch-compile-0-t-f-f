@@ -1,5 +1,5 @@
-*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	Fri Sep 20 10:53:07 2024
---- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Fri Sep 20 10:58:11 2024
+*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	Sat Oct 26 11:30:13 2024
+--- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Sat Oct 26 11:34:11 2024
 ***************
 *** 180,186 ****
   3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
@@ -6261,7 +6261,28 @@
   fl.mo:Expected error in mat fldenominator: "fldenominator: 3 is not a flonum".
   fl.mo:Expected error in mat fldenominator: "fldenominator: 0+1i is not a flonum".
 ***************
-*** 10247,10253 ****
+*** 10230,10238 ****
+  fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: 17 is not a flonum".
+  fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: a is not a flonum".
+  fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: (a) is not a flonum".
+! fl.mo:Expected error in mat flbit-field: "incorrect argument count in call (flbit-field)".
+! fl.mo:Expected error in mat flbit-field: "incorrect argument count in call (flbit-field 0.0)".
+! fl.mo:Expected error in mat flbit-field: "incorrect argument count in call (flbit-field 0.0 1)".
+  fl.mo:Expected error in mat flbit-field: "flbit-field: 0 is not a flonum".
+  fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index -1".
+  fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index 1".
+--- 10230,10238 ----
+  fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: 17 is not a flonum".
+  fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: a is not a flonum".
+  fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: (a) is not a flonum".
+! fl.mo:Expected error in mat flbit-field: "incorrect number of arguments 0 to #<procedure flbit-field>".
+! fl.mo:Expected error in mat flbit-field: "incorrect number of arguments 1 to #<procedure flbit-field>".
+! fl.mo:Expected error in mat flbit-field: "incorrect number of arguments 2 to #<procedure flbit-field>".
+  fl.mo:Expected error in mat flbit-field: "flbit-field: 0 is not a flonum".
+  fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index -1".
+  fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index 1".
+***************
+*** 10258,10264 ****
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
@@ -6269,7 +6290,7 @@
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
---- 10247,10253 ----
+--- 10258,10264 ----
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
@@ -6278,7 +6299,7 @@
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
 ***************
-*** 10257,10270 ****
+*** 10268,10281 ****
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
@@ -6293,7 +6314,7 @@
   foreign.mo:Expected error in mat load-shared-object: "load-shared-object: invalid path 3".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
---- 10257,10270 ----
+--- 10268,10281 ----
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
@@ -6309,7 +6330,7 @@
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 ***************
-*** 10299,10306 ****
+*** 10310,10317 ****
   foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle abcde".
   foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
@@ -6318,7 +6339,7 @@
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
   foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
---- 10299,10306 ----
+--- 10310,10317 ----
   foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle abcde".
   foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
@@ -6328,7 +6349,7 @@
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
   foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
 ***************
-*** 10820,10832 ****
+*** 10831,10843 ****
   unix.mo:Expected error in mat file-operations: "file-access-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-change-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-modification-time: failed for "testlink": no such file or directory".
@@ -6342,7 +6363,7 @@
   windows.mo:Expected error in mat registry: "get-registry: pooh is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
---- 10820,10832 ----
+--- 10831,10843 ----
   unix.mo:Expected error in mat file-operations: "file-access-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-change-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-modification-time: failed for "testlink": no such file or directory".
@@ -6357,7 +6378,7 @@
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
 ***************
-*** 10854,10925 ****
+*** 10865,10936 ****
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for -inf.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for +nan.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat fllp: "fllp: 3 is not a flonum".
@@ -6430,7 +6451,7 @@
   date.mo:Expected error in mat time: "time>=?: 3 is not a time record".
   date.mo:Expected error in mat time: "time>=?: #<procedure car> is not a time record".
   date.mo:Expected error in mat time: "time>=?: types of <time> and <time> differ".
---- 10854,10925 ----
+--- 10865,10936 ----
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for -inf.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for +nan.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat fllp: "fllp: 3 is not a flonum".
@@ -6504,7 +6525,7 @@
   date.mo:Expected error in mat time: "time>=?: #<procedure car> is not a time record".
   date.mo:Expected error in mat time: "time>=?: types of <time> and <time> differ".
 ***************
-*** 10927,10940 ****
+*** 10938,10951 ****
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
@@ -6519,7 +6540,7 @@
   date.mo:Expected error in mat date: "make-date: invalid nanosecond -1".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
---- 10927,10940 ----
+--- 10938,10951 ----
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
@@ -6535,7 +6556,7 @@
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
 ***************
-*** 10960,11020 ****
+*** 10971,11031 ****
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".
@@ -6597,7 +6618,7 @@
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset -90000".
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat conversions/sleep: "date->time-utc: <time> is not a date record".
---- 10960,11020 ----
+--- 10971,11031 ----
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".

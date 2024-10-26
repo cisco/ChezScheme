@@ -709,6 +709,7 @@
   (define-library-entry (fllog x) (flonum-oops 'fllog x))
   (define-library-entry (fllog2 x y) (flonum-oops 'fllog (if (flonum? x) y x)))
   (define-library-entry (flexpt x y) (flonum-oops 'flexpt (if (flonum? x) y x)))
+  (define-library-entry (flbit-field x y z) (flonum-oops 'flbit-field x))
 
   (define-library-entry (flonum->fixnum x) (if (flonum? x)
                                                ($oops 'flonum->fixnum "result for ~s would be outside of fixnum range" x)

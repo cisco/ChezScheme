@@ -617,7 +617,7 @@ It is useful primarily in the printing of floating-point numbers.
 
 \noindent
 \scheme{fllp} returns the 12-bit integer consisting of the exponent
-plus highest order represented bit of a flonum (ieee 64-bit
+plus highest order represented bit of a flonum (IEEE 64-bit
 floating-point number).
 It can be used to compute a fast approximation of the logarithm of
 the number.
@@ -636,6 +636,31 @@ the number.
 (fllp #b1.0e-10000000000) ;=> 0
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flbit-field}{\categoryprocedure}{(flbit-field \var{flonum} \var{exint_1} \var{exint_2})}
+\returns a nonnegative exact integer
+\listlibraries
+\endentryheader
+
+\var{flonum} must be a flonum, \var{exint_1} and \var{exint_2} must be
+exact integers in the range \scheme{0} to \scheme{64} (inclusive), and
+\var{exint_2} must be no less than \var{exint_1}.
+
+\noindent
+Analogous to \scheme{bitwise-bit-field} on exact integers,
+\scheme{flbit-field} extracts bits within an IEEE 64-bit
+floating-point representation from \var{exint_1} (inclusive) to
+\var{exint_2} (exclusive). Bit \scheme{0} is the low bit and bit
+\scheme{63} is the high (sign) bit. The extracted bit field is
+reported as a nonnegative exact integer.
+
+\schemedisplay
+(flbit-field 0.0 0 64)       ; => 0
+(flbit-field -0.0 63 64)     ; => 1
+(flbit-field +inf.0 48 64)   ; => #x7FF0
+(flbit-field 3.14e132 52 63) ; => 1463
+\endschemedisplay
 
 \section{Inexact Complex Operations\label{SECTNUMERICCOMPLEXNUM}}
 
