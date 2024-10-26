@@ -1641,7 +1641,10 @@
   (equal?
    ;; Create threads that refer to data owned by other threads, and try to
    ;; mix things up to see if we can provoke a problem in parallel collection.
-   (parameterize ([collect-request-handler (lambda () (collect 3 1 3))])
+   (parameterize ([collect-request-handler
+                   (lambda ()
+                     (let ([g (collect-maximum-generation)])
+                       (collect (- g 1) (min 1 (- g 1)) (- g 1))))])
      (let loop ([j 50])
        (unless (= j 0)
          (let* ([N 8]
