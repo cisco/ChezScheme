@@ -3579,14 +3579,16 @@ that it takes a C string (character pointer) as input.
 \end{flushleft}
 
 \noindent
-\scheme{Smake_string}, \scheme{Smake_vector}, \scheme{Smake_bytevector},
-and \scheme{Smake_fxvector} are similar to their Scheme counterparts.
+\scheme{Smake_string}, \scheme{Smake_vector},
+\scheme{Smake_bytevector}, \scheme{Smake_fxvector}, and
+\scheme{Smake_flvector} are similar to their Scheme counterparts.
 
 \begin{flushleft}
 \cfunction{ptr}{Smake_string}{iptr \var{n}, int \var{c}}
 \cfunction{ptr}{Smake_vector}{iptr \var{n}, ptr \var{obj}}
 \cfunction{ptr}{Smake_bytevector}{iptr \var{n}, int \var{fill}}
 \cfunction{ptr}{Smake_fxvector}{iptr \var{n}, ptr \var{fixnum}}
+\cfunction{ptr}{Smake_flvector}{iptr \var{n}, double \var{flonum}}
 \end{flushleft}
 
 \noindent

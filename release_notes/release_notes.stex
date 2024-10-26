@@ -2812,6 +2812,12 @@ and \scheme{bytevector-reference-set!}. In addition, the garbage
 collector would fail to preserve the last few bytes of a reference
 bytevector whose length is not a multiple of the word size.
 
+\subsection{Missing C implementation for \scheme{Smake_flvector} (10.1.0)}
+
+The header file scheme.h Scheme defines \scheme{Smake_flvector}, but
+Chez Scheme does not provide an implmentation. The
+\scheme{Smake_flvector} function is now implemented.
+
 \subsection{\scheme{library-exports} for library that is not yet imported (10.0.0)}
 
 When visiting or loading a separately compiled library,

@@ -77,6 +77,14 @@ ptr Smake_fxvector(iptr n, ptr x) {
     return p;
 }
 
+ptr Smake_flvector(iptr n, double x) {
+    ptr p; iptr i;
+
+    p = S_flvector(n);
+    for (i = 0; i < n; i += 1) Sflvector_set(p, i, x);
+    return p;
+}
+
 ptr Smake_bytevector(iptr n, int x) {
     ptr p; iptr i;
 
