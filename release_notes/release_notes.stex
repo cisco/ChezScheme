@@ -136,6 +136,12 @@ not use its argument, then the application is replaced with the body
 of that function, which avoids the potential work of capturing a
 continuation at run time.
 
+\subsection{New procedure \scheme{flbit-field} (10.1.0)}
+
+The \scheme{flbit-field} procedure extracts bits from an IEEE 64-bit
+floating-point representation in a way that is analogous to
+\scheme{bitwise-bit-field} on an exact integer.
+
 \subsection{Unicode 15.1 support (10.0.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,

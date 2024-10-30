@@ -4669,6 +4669,60 @@
       (define-inline 3 $flonum-exponent
         [(e) (build-flonum-extractor 20 11 e)]))
 
+    (let ()
+      (define build-flonum-bit-field-to-fixnum
+        (lambda (e start size)
+          (safe-assert (< size (constant fixnum-bits)))
+          (let ([mask (* (- (expt 2 size) 1) (expt 2 (constant fixnum-offset)))])
+            (define (finish n start)
+              (%inline logand
+                       ,(cond
+                          [(= start (constant fixnum-offset))
+                           n]
+                          [(< start (constant fixnum-offset))
+                           (%inline sll ,n (immediate ,(fx- (constant fixnum-offset) start)))]
+                          [else
+                           (%inline srl ,n (immediate ,(fx- start (constant fixnum-offset))))])
+                       (immediate ,mask)))
+            (constant-case ptr-bits
+              [(64)
+               (finish `(inline ,(make-info-unboxed-args '(#t)) ,%fpcastto ,e) start)]
+              [(32)
+               (cond
+                 [(<= (+ start size) 32)
+                  (finish `(inline ,(make-info-unboxed-args '(#t)) ,%fpcastto/lo ,e) start)]
+                 [(>= start 32)
+                  (finish `(inline ,(make-info-unboxed-args '(#t)) ,%fpcastto/hi ,e) (fx- start 32))]
+                 [else
+                  (finish (%inline logor
+                                   ,(%inline sll (inline ,(make-info-unboxed-args '(#t)) ,%fpcastto/hi ,e)
+                                             (immediate ,(fx- (fx+ 32 (constant fixnum-offset)) start)))
+                                   ,(%inline srl (inline ,(make-info-unboxed-args '(#t)) ,%fpcastto/lo ,e)
+                                             (immediate ,(fx- start (constant fixnum-offset)))))
+                          (constant fixnum-offset))])]))))
+      (define (maybe-build-flonum-bit-field-to-fixnum e start end unsafe? src sexpr)
+        (and (constant? fixnum? start) (constant? fixnum? end)
+             (let ([start (constant-value start)] [end (constant-value end)])
+               (and (fx<= 0 start end (constant flonum-bits))
+                    (fx<= (fx- end start) (fx- (constant fixnum-bits) 1))
+                    (let ()
+                      (define (extract e)
+                        (if (fx= end start)
+                            (%seq ,e (immediate ,(fix 0)))
+                            (build-flonum-bit-field-to-fixnum e start (fx- end start))))
+                      (if (or unsafe?
+                              (known-flonum-result? e))
+                          (bind #t fp (e)
+                                (extract e))
+                          (bind #t (e)
+                                `(if ,(%type-check mask-flonum type-flonum ,e)
+                                     ,(extract e)
+                                     ,(build-libcall #t src sexpr flbit-field e `(quote ,start) `(quote ,end))))))))))
+      (define-inline 3 flbit-field
+        [(e start end) (maybe-build-flonum-bit-field-to-fixnum e start end #t src sexpr)])
+      (define-inline 2 flbit-field
+        [(e start end) (maybe-build-flonum-bit-field-to-fixnum e start end #f src sexpr)]))
+
     (define-inline 3 $fleqv?
       [(e1 e2)
        (bind #t (e1 e2)

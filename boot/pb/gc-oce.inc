@@ -1053,6 +1053,7 @@ static void sweep(thread_gc *tgc, ptr p, IGEN from_g)
                               }
                             }
                           }
+                          PAR_SWEEPERS_WORKAROUND();
                           U(tc) = 0;
                           V(tc) = 0;
                           W(tc) = 0;
@@ -2507,6 +2508,7 @@ static void sweep_thread(thread_gc *tgc, ptr p)
                           }
                         }
                       }
+                      PAR_SWEEPERS_WORKAROUND();
                       U(tc) = 0;
                       V(tc) = 0;
                       W(tc) = 0;

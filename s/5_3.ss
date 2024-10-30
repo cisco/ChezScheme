@@ -38,6 +38,11 @@
       (float-type-case
          [(ieee) 53]))
 
+   (define-constant positive-fixnum-bits
+     (- (constant fixnum-bits) 1))
+   (define-constant flonum-high-positive-fixnum-start
+     (- 64 (- (constant fixnum-bits) 1)))
+
 )
 
 (let ()
@@ -3374,6 +3379,48 @@
         [(fl= x y) #f]
         [(fl= (fl+ y 1.0) x) #t]
         [else (noninteger-error who x)]))))
+
+(set-who! flbit-field
+  (lambda (x start end)
+    (unless (flonum? x) ($oops who "~s is not a flonum" x))
+    (unless (and (fixnum? start) (fx<= 0 start (constant flonum-bits))) ($oops who "invalid start index ~s" start))
+    (unless (and (fixnum? end) (fx<= start end (constant flonum-bits))) ($oops who "invalid end index ~s" end))
+    ;; inlined `flbit-field` works on immediate integer arguments whose
+    ;; difference is less than the fixnum width, so extract bits using
+    ;; statically selected pieces that definitely fit into a fixnum
+    (let ()
+      (define (fxextract n start end)
+        (fxand (fxsrl n start)
+               (fx- (fxsll 1 (fx- end start)) 1)))
+      (cond
+        [(fx<= end (constant positive-fixnum-bits))
+         (fxextract (flbit-field x 0 (constant positive-fixnum-bits)) start end)]
+        [(fx>= start (constant flonum-high-positive-fixnum-start))
+         (fxextract (flbit-field x (constant flonum-high-positive-fixnum-start) (constant flonum-bits))
+                    (fx- start (constant flonum-high-positive-fixnum-start))
+                    (fx- end (constant flonum-high-positive-fixnum-start)))]
+        [else
+         (constant-case ptr-bits
+           [(64)
+            ;; `start` through `end` must span high and low 32-bit sections
+            (bitwise-ior
+             (bitwise-arithmetic-shift-left (fxextract (flbit-field x 32 64) 0 (fx- end 32))
+                                            (fx- 32 start))
+             (fxextract (flbit-field x 0 32) start 32))]
+           [(32)
+            ;; `start` through `end` must hit middle 25 bits
+            (bitwise-ior
+             (if (fx> end 50)
+                 (bitwise-arithmetic-shift-left (fxextract (flbit-field x 50 64) 0 (fx- end 50))
+                                                (fx- 50 start))
+                 0)
+             (let ([v (fxextract (flbit-field x 25 50) (fx- (fxmax start 25) 25) (fx- (fxmin end 50) 25))])
+               (if (fx< start 25)
+                   (bitwise-arithmetic-shift-left v (fx- 25 start))
+                   v))
+             (if (fx< start 25)
+                 (fxextract (flbit-field x 0 25) start 25)
+                 0))])]))))
 
 (set-who! flmin
   (let ([$flmin (lambda (x y) (if (or (fl< x y) ($nan? x)) x y))])
