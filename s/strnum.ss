@@ -222,11 +222,11 @@ an exception.
                          ;; bound p; we don't need a tight bound, and adding 2
                          ;; extra bits over `double` precision to make sure
                          ;; rounding will be right
-                         (min p (+ (max a-bits b-bits) 53 2))]
+                         (min p (+ a-bits b-bits 53 2))]
                         [(= b (bitwise-arithmetic-shift-left 1 (- b-bits 1)))
                          ;; no need for extra precision if the
                          ;; denominator is a power of 2
-                         (min p (+ a-bits b-bits))]
+                         (min p a-bits)]
                         [else p])])
 	      (let*-values
 		  ([(a b)
