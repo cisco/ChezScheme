@@ -1,12 +1,12 @@
 ;;; strnum.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -180,14 +180,15 @@ an exception.
 ; other "interesting" variables:
 ;     r: radix, 2 <= r <= 36 (can be outside this range while constructing #<r>r prefix)
 ;    ex: exactness: 'i, 'e, or #f
-;     s: function to add sign to number 
+;     s: function to add sign to number
 ;    ms: meta-state: real, imag, angle
 ;     n: exact integer
 ;     m: exact or inexact integer
 ;     w: exact or inexact integer or norep
 ;    wi: exact integer or norep or 'inf or 'nan
-;     x: number, thunk, or norep
+;     x: number, thunk, procedure taking rounding procedure, or norep
 ;     e: exact integer exponent
+;    mw: exact integer mantissa width
 ;    i?: #t if number should be made inexact
 ; invariant: (thunk) != exact 0.
 
@@ -201,18 +202,63 @@ an exception.
 
 (define (implied-i ex) (if (not ex) 'i ex))
 
+(define noround (lambda (x) x))
+(define rounder
+  (lambda (p ex)
+    (if (zero? p)
+        (lambda (n) 0)
+        (lambda (n)
+          (let ([a (numerator n)]
+                [b (denominator n)])
+	    (let* ([a-bits (bitwise-length a)]
+                   [b-bits (bitwise-length b)]
+                   [d (- a-bits b-bits)]
+                   ;; If `p` is large, we might run out of memory by
+                   ;; shifting by it directly, but in some cases, the right
+                   ;; result should fit into memory no matter how big `p` is.
+                   [p (cond
+                        [(not (eq? ex 'e))
+                         ;; end result will have at most 53 bits, anyway, so
+                         ;; bound p; we don't need a tight bound, and adding 2
+                         ;; extra bits over `double` precision to make sure
+                         ;; rounding will be right
+                         (min p (+ a-bits b-bits 53 2))]
+                        [(= b (bitwise-arithmetic-shift-left 1 (- b-bits 1)))
+                         ;; no need for extra precision if the
+                         ;; denominator is a power of 2
+                         (min p a-bits)]
+                        [else p])])
+	      (let*-values
+		  ([(a b)
+		    (if (positive? d)
+			(values a (bitwise-arithmetic-shift-left b d))
+			(values (bitwise-arithmetic-shift-left a (- d)) b))]
+		   [(b d)
+		    (if (>= a b)
+			(values (bitwise-arithmetic-shift-left b 1) (+ d 1))
+			(values b d))]
+		   [(q r)
+		    (div-and-mod (bitwise-arithmetic-shift-left a (+ p 1))
+				 b)])
+		(* (+ q
+		      (cond [(not (bitwise-bit-set? q 0)) 0]
+			    [(or (not (zero? r))
+				 (bitwise-bit-set? q 1)) 1]
+			    [else -1]))
+		   (expt 2 (- d p 1))))))))))
+
 (define make-part
   (lambda (i? s n)
     (s (if i? (inexact n) n))))
 
 (define make-part/exponent
-  (lambda (i? s wi r e)
+  (lambda (i? s t wi r e)
     ; get out quick for really large/small exponents, like 1e1000000000
     ; no need for great precision here; using 2x the min/max base two
     ; exponent, which should be conservative for all bases.  1x should
     ; actually work for positive n, but for negative e we need something
     ; smaller than 1x to allow denormalized numbers.
-    ; s must be the actual sign of the result, with w >= 0 
+    ; s must be the actual sign of the result, with w >= 0
     (define max-float-exponent
       (float-type-case
         [(ieee) 1023]))
@@ -230,10 +276,10 @@ an exception.
                                     (integer-length (denominator wi)))
                                  (log r 2)))
                          (* max-float-exponent 2))
-                     (inexact (* wi (expt r e)))
+                     (inexact (t (* wi (expt r e))))
                      (if (< e 0) 0.0 +inf.0))))]
       [(eqv? wi 0) 0]
-      [else (lambda () (s (* wi (expt r e))))])))
+      [else (lambda () (s (t (* wi (expt r e)))))])))
 
 (define (thaw x) (if (procedure? x) (x) x))
 
@@ -329,7 +375,7 @@ an exception.
   (finish-number ms ex x1 (make-part (eq? ex 'i) s n))
   [(digit r) (num2 r ex ms s (+ (* n r) d))]
   [#\/ (rat0 r ex ex ms s (make-part #f plus n))]
-  [#\| (mwidth0 r ex ms (make-part (not (eq? ex 'e)) s n))]
+  [#\| (mwidth0 r ex ms (lambda (t) (make-part (not (eq? ex 'e)) s (t n))))]
   [#\. (let ([!r6rs (or !r6rs (not (fx= r 10)))]) (float1 r ex ms s n (fx+ i 1) 0))]
   [#\# (let ([!r6rs #t]) (numhash r ex ms s (* n r)))]
   [(#\e #\s #\f #\d #\l) (let ([!r6rs (or !r6rs (not (fx= r 10)))]) (exp0 r ex ms s n))]
@@ -415,7 +461,7 @@ an exception.
 (mknum-state float1 (r ex ms s m j n)    ; saw fraction digit at j
   (finish-number ms ex x1 (make-part (not (eq? ex 'e)) s (+ m (* n (expt r (- j i))))))
   [(digit r) (float1 r ex ms s m j (+ (* n r) d))]
-  [#\| (mwidth0 r ex ms (make-part (not (eq? ex 'e)) s (+ m (* n (expt r (- j i))))))]
+  [#\| (mwidth0 r ex ms (lambda (t) (make-part (not (eq? ex 'e)) s (t (+ m (* n (expt r (- j i))))))))]
   [#\# (let ([!r6rs #t]) (floathash r ex ms s m j (* n r)))]
   [(#\e #\s #\f #\d #\l) (exp0 r ex ms s (+ m (* n (expt r (- j i)))))]
   [else (complex0 r ex ms (make-part (not (eq? ex 'e)) s (+ m (* n (expt r (- j i))))))])
@@ -437,19 +483,19 @@ an exception.
   [(digit r) (exp2 r ex ms sm wi s d)])
 
 (mknum-state exp2 (r ex ms sm wi s e)     ; saw exponent digit(s)
-  (finish-number ms ex x1 (make-part/exponent (not (eq? ex 'e)) sm wi r (s e)))
+  (finish-number ms ex x1 (make-part/exponent (not (eq? ex 'e)) sm noround wi r (s e)))
   [(digit r) (exp2 r ex ms sm wi s (+ (* e r) d))]
-  [#\| (mwidth0 r ex ms (make-part/exponent (not (eq? ex 'e)) sm wi r (s e)))]
-  [else (complex0 r ex ms (make-part/exponent (not (eq? ex 'e)) sm wi r (s e)))])
+  [#\| (mwidth0 r ex ms (lambda (t) (make-part/exponent (not (eq? ex 'e)) sm t wi r (s e))))]
+  [else (complex0 r ex ms (make-part/exponent (not (eq? ex 'e)) sm noround wi r (s e)))])
 
-(mknum-state mwidth0 (r ex ms x)         ; saw vertical bar
+(mknum-state mwidth0 (r ex ms x)        ; saw vertical bar
   #f
-  [(digit 10) (mwidth1 r ex ms x)])
-  
-(mknum-state mwidth1 (r ex ms x)         ; saw digit after vertical bar
-  (finish-number ms ex x1 x)
-  [(digit 10) (mwidth1 r ex ms x)]
-  [else (complex0 r ex ms x)])
+  [(digit 10) (mwidth1 r ex ms d x)])
+
+(mknum-state mwidth1 (r ex ms mw x)     ; saw digit after vertical bar
+  (finish-number ms ex x1 (x (rounder mw ex)))
+  [(digit 10) (mwidth1 r ex ms (+ (* 10 mw) d) x)]
+  [else (complex0 r ex ms (x (rounder mw ex)))])
 
 (mknum-state complex0 (r ex ms x)        ; saw end of real part before end of string
   (assert #f) ; should arrive here only from else clauses, thus not at the end of the string

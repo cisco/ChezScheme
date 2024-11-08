@@ -2755,7 +2755,6 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-
 \subsection{\scheme{quote-syntax} incorrectly applies wrap (10.1.0)}
 
 A bug in \scheme{quote-syntax} that caused \scheme{(identifier? (quote-syntax \var{symbol}))}
@@ -2767,6 +2766,11 @@ The environments returned by \scheme{(scheme-report-environment 5)}
 and \scheme{(scheme-ieee-environment)} had some names incorrectly
 prefixed with \scheme{r6rs:}, such as \scheme{r6rs:<} instead of
 \scheme{<}.
+
+\subsection{Non-empty mantissa widths (10.1.0)}
+
+Non-empty mantissa widths are now taken into account.  For example,
+\scheme{(string->number "#e0.1|1")} now evaluates to \scheme{1/8}.
 
 \subsection{Case-insensitive ``V'' format directive (10.1.0)}
 
