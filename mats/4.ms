@@ -3789,6 +3789,26 @@
                                               (call/cc (lambda (k) k))))))
                  'x))
 
+  (equal? '42
+          (with-continuation-mark 'a 42
+            (with-continuation-mark 'b (continuation-marks-first (current-continuation-marks) 'a)
+              (continuation-marks-first (current-continuation-marks) 'b))))
+  (equal? '42
+          (with-continuation-mark 'a 42
+            (values
+             (with-continuation-mark 'b (continuation-marks-first (current-continuation-marks) 'a)
+               (continuation-marks-first (current-continuation-marks) 'b)))))
+
+  (equal? '43
+          (with-continuation-mark 'a 'b
+            (with-continuation-mark (continuation-marks-first (current-continuation-marks) 'a) 43
+              (continuation-marks-first (current-continuation-marks) 'b))))
+  (equal? '43
+          (with-continuation-mark 'a 'b
+            (values
+             (with-continuation-mark (continuation-marks-first (current-continuation-marks) 'a) 43
+               (continuation-marks-first (current-continuation-marks) 'b)))))
+
   ;; if this goes quadratic, then it will look like non-termination:
   (with-continuation-mark
       'x 'yes
