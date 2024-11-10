@@ -2755,6 +2755,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{\scheme{with-continuation-mark} key and value expressions (10.1.0)}
+
+A bug in \scheme{with-continuation-mark} positioned the key and
+value expressions outside of the current continuation marks, which
+meant that attempting to look up a continuation mark in the key or
+value expression would fail.
+
 \subsection{\scheme{quote-syntax} incorrectly applies wrap (10.1.0)}
 
 A bug in \scheme{quote-syntax} that caused \scheme{(identifier? (quote-syntax \var{symbol}))}
