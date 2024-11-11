@@ -320,7 +320,7 @@ The makefile supports several targets:
  * `make docs`
 
    Runs the build plus generates HTML and PDF versions of the Chez
-   Scheme Users Guide and the release notes. Unlike the other build
+   Scheme User's Guide and the release notes. Unlike the other build
    targets, the documentation is not built in the workarea, but rather
    in the "csug" and "release_notes" directories (where "configure" is
    run).
@@ -333,6 +333,14 @@ The makefile supports several targets:
 
     * ppmtogif and pnmcrop (from Netpbm)
 
+    * Optionally, KaTeX (for better math in HTML)
+
+   To use KaTeX but not copy the supporting CSS and font files
+   (e.g. because you wish to link to a copy already installed on your
+   system), use `make docs KATEX_CSS=no`. See also the documentation
+   in the "stex/doc" directory for further details and additional
+   configuration options.
+
    An X11 installation is not required, but ppmtogif does require an
    "rgb.txt" file, which it will automatically locate in the common
    X11 installation locations. If ppmtogif fails because it cannot
@@ -342,6 +350,16 @@ The makefile supports several targets:
    directory of the emacs installation. If your system has a Vim
    installation, then it might contain an "rgb.txt" in the directory
    identified by the `VIMRUNTIME` environment variable.
+
+ * `make csug` or `make release_notes`
+
+   Like `make docs`, but builds only the Chez Scheme User's Guide or
+   the release notes, respectively.
+
+ * `sudo make install-docs` (or `install-csug` or `install-release_notes`)
+
+   Like `make docs` (or `make csug` or `make release_notes`, respectively),
+   but also installs the built documentation.
 
  * `make clean`
 
