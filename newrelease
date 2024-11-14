@@ -36,9 +36,6 @@ if ({(echo -n "$1" | grep '^[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >& /dev/null
 
   # set ZR to release number w/o "."
   set ZR = $MR$mR$bR
-
-  # set underscoreR to release number w/ "_" in place of "."
-  set underscoreR = $MR"_"$mR"_"$bR
 else
   echo "invalid release number $R"
   exit 1
@@ -52,9 +49,12 @@ sed -e "s/Chez Scheme Version [^ ]*/Chez Scheme Version $R/" \
     -e "s/Copyright 1984-.... /Copyright 1984-`date +%Y` /" \
     -I "" NOTICE
 
-sed -e "s/csug[0-9][0-9]*\.[0-9][0-9]*/csug$MR.$mR/" \
-    -e "s/csug[0-9][0-9]*_[0-9][0-9]*/csug$MR""_$mR/" \
-    -I "" makefiles/Makefile-csug.in
+sed -e "s/csug[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/csug$R/g" \
+    -e "s/csv[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/csv$R/g" \
+    -I "" configure
+
+sed -e "s/csv[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/csv$R/g" \
+    -I "" maketarball
 
 sed -e "s/Chez Scheme Version [0-9][0-9]*\.[0-9][0-9]*\(\.[0-9][0-9]*\)* .* [0-9][0-9]*/Chez Scheme Version $R `date +'%B %Y'`/" \
     -e "s/Copyright .* Cisco Systems, Inc./Copyright `date +%Y` Cisco Systems, Inc./" \

@@ -12,9 +12,9 @@ jobs:
             configure: --pb --threads --enable-libffi
             test: test-some-fast
           - machine: a6osx
-            os: macos-12
+            os: macos-13
           - machine: ta6osx
-            os: macos-12
+            os: macos-13
           - machine: arm64osx
             os: macos-14
           - machine: tarm64osx

@@ -1,4 +1,4 @@
-Building Chez Scheme Version 10.0.0
+Building Chez Scheme Version 10.1.0
 Copyright 1984-2024 Cisco Systems, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -541,7 +541,7 @@ Finally, configure the Emscripten build to use "demo.boot":
 
 CROSS COMPILING
 
-To compile Chez Scheme for a target platform that is different than
+To compile Chez Scheme for a target platform that is different from
 the host platform, supply the `--cross` flag to the "configure" script
 while also specifying the target machine type, compiler settings to
 build for the target platform, and `CC_FOR_BUILD=<compiler>` to
@@ -598,7 +598,7 @@ step via `DESTDIR`:
 
 CROSS COMPILING SCHEME PROGRAMS
 
-After a non-cross build to work on the host platform, using
+After getting a non-cross build to work on the host platform, using
 
   make bootquick XM=<machine type>
 
@@ -606,8 +606,8 @@ or
 
   zuo . bootquick <machine type>
 
-creates a "boot" subdirectory for <machine type> containing boot file,
-and in the process create a cross-compilation patch file as
+creates a "boot" subdirectory for <machine type> containing boot files
+and in the process creates a cross-compilation patch file as
 "xc-<machine type>/s/xpatch". Loading that "xpatch" file into Chez
 Scheme for the current platform changes functions like `compile-file`
 and `make-boot-file` to generate code for the target <machine type>.
