@@ -298,10 +298,38 @@ Notes:
                (ensure-single-value e1 #f)
                (make-seq ctxt (ensure-single-value e1 #f)
                               (loop (car e*) (cdr e*)))))]))
-        (define (build-let var* e* body)
-          (if (null? var*)
-              body
-              `(call ,(make-preinfo-call) ,(build-lambda var* body) ,e* ...)))
+
+    (define (prepare-let e* r*) ; ==> (before* var* e* ref*)
+      ; The arguments e* and r* must have the same length.
+      ; In the results:
+      ;   before*, var* and e* may be shorter than the arguments.
+      ;   var* and e* have the same length.
+      ;   ref* has the same length as the arguments.
+      ;        It may be a mix of: references to the new variables
+      ;                            references to variables in the context
+      ;                            propagated constants
+      (let loop ([rev-rbefore* '()] [rev-rvar* '()] [rev-re* '()] [rev-rref* '()]
+                 [e* e*] [r* r*])
+        (cond
+          [(and (null? e*) (null? r*))
+           (values (reverse rev-rbefore*) (reverse rev-rvar*) (reverse rev-re*) (reverse rev-rref*))]
+          [(check-constant-is? (car r*))
+           (loop (cons (car e*) rev-rbefore*) rev-rvar* rev-re* (cons (car r*) rev-rref*)
+                 (cdr e*) (cdr r*))]
+          [(try-ref->prelex/not-assigned (car e*))
+           => (lambda (v)
+                (set-prelex-multiply-referenced! v #t) ; just in case it was singly referenced
+                (loop rev-rbefore* rev-rvar* rev-re* (cons (car e*) rev-rref*)
+                      (cdr e*) (cdr r*)))]
+          [else
+           (let ([v (make-temp-prelex #t)])
+             (loop rev-rbefore* (cons v rev-rvar*) (cons (car e*) rev-re*) (cons (build-ref v) rev-rref*)
+                   (cdr e*) (cdr r*)))])))
+
+    (define (build-let var* e* body)
+      (if (null? var*)
+          body
+          `(call ,(make-preinfo-call) ,(build-lambda var* body) ,e* ...)))
 
     (define build-lambda
       (case-lambda
@@ -318,10 +346,10 @@ Notes:
     (define (build-ref x)
       `(ref #f ,x))
 
-    (define (try-ref->prelex v)
+    (define (try-ref->prelex/not-assigned v)
       (and (Lsrc? v)
            (nanopass-case (Lsrc Expr) v
-             [(ref ,maybe-src ,x) x]
+             [(ref ,maybe-src ,x) (and (not (prelex-assigned x)) x)]
              [else #f])))
   )
 
@@ -978,33 +1006,6 @@ Notes:
       )
 
       (let ()
-        (define (prepare-let e* r*) ; ==> (before* var* e* ref*)
-          ; All the arguments must have the same length.
-          ; In the results:
-          ;   before*, var* and e* may be shorter than the arguments.
-          ;   var* and e* have the same length.
-          ;   ref* has the same lenght than the arguments.
-          ;        It may be a mix of: references to the new variables
-          ;                            references to variables in the context
-          ;                            propagated constants
-          (let loop ([rev-rbefore* '()] [rev-rvar* '()] [rev-re* '()] [rev-rref* '()]
-                     [e* e*] [r* r*])
-            (cond
-              [(null? e*)
-               (values (reverse rev-rbefore*) (reverse rev-rvar*) (reverse rev-re*) (reverse rev-rref*))]
-              [(check-constant-is? (car r*))
-               (loop (cons (car e*) rev-rbefore*) rev-rvar* rev-re* (cons (car r*) rev-rref*)
-                     (cdr e*) (cdr r*))]
-              [(try-ref->prelex (car e*))
-               => (lambda (v)
-                    (set-prelex-multiply-referenced! v #t) ; just in case it was sinlge referenced
-                    (loop rev-rbefore* rev-rvar* rev-re* (cons (car e*) rev-rref*)
-                          (cdr e*) (cdr r*)))]
-              [else
-               (let ([v (make-temp-prelex #t)])
-                 (loop rev-rbefore* (cons v rev-rvar*) (cons (car e*) rev-re*) (cons (build-ref v) rev-rref*)
-                       (cdr e*) (cdr r*)))])))
-
         (define (countmap f l*)
           (fold-left (lambda (x l) (if (f l) (+ 1 x) x)) 0 l*))
 
@@ -1146,15 +1147,16 @@ Notes:
                                        (pred-env-add/ref ntypes val (rtd->record-predicate rtd #t) plxc))
                                   #f)]))])
 
-      (define-specialize 2 (add1 sub1)
+      (define-specialize 2 (add1 sub1 1+ 1- -1+)
         [(n) (let ([r (get-type n)])
                (cond
                  [(predicate-implies? r 'exact-integer)
                   (values `(call ,preinfo ,pr ,n)
                           'exact-integer ntypes #f #f)]
                  [(predicate-implies? r flonum-pred)
-                  (values `(call ,preinfo ,(lookup-primref 3 (if (eq? prim-name 'add1) 'fl+ 'fl-)) ,n (quote 1.0))
-                          flonum-pred ntypes #f #f)]
+                  (let ([flprim-name (if (memq prim-name '(add1 1+)) 'fl+ 'fl-)])
+                    (values `(call ,preinfo ,(lookup-primref 3 flprim-name) ,n (quote 1.0))
+                            flonum-pred ntypes #f #f))]
                  [(predicate-implies? r real-pred)
                   (values `(call ,preinfo ,pr ,n)
                           real-pred ntypes #f #f)]
@@ -1165,7 +1167,14 @@ Notes:
       (define-specialize 2 abs
         [(n) (let ([r (get-type n)])
                (cond
-                 ; not closed for fixnums
+                 [(predicate-implies? r 'fixnum)
+                  (let-values ([(before* var* n* ref*) (prepare-let (list n) (list r))])
+                    (values (make-seq ctxt (make-1seq* 'effect before*)
+                                           (build-let var* n*
+                                                      `(if (call ,(make-preinfo-call) ,(lookup-primref 3 'fx=)  ,(car ref*) (quote ,(constant most-negative-fixnum)))
+                                                           ,(make-seq ctxt `(pariah) `(quote ,(- (constant most-negative-fixnum))))
+                                                           (call ,preinfo ,(lookup-primref 3 'fxabs) ,(car ref*)))))
+                           'exact-integer ntypes #f #f))]
                  [(predicate-implies? r 'bignum)
                   (values `(call ,preinfo ,pr ,n)
                           'bignum ntypes #f #f)]
@@ -1603,7 +1612,7 @@ Notes:
     (apply values sp-types untransposed))
 
   (define (map-values l f v*)
-    ; `l` is the default lenght, in case `v*` is null. 
+    ; `l` is the default length, in case `v*` is null. 
     (if (null? v*)
       (apply values (make-list l '()))
       (let ()

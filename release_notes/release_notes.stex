@@ -116,6 +116,11 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Type recovery improvements (10.2.0)}
+
+The type recovery pass has improved support for \scheme{abs} with a fixnum argument
+and added support for \scheme{1+}, \scheme{1-}, and \scheme{-1+}.
+
 \subsection{Constrain signal delivery to the main thread (10.1.0)}
 
 Signals are now always delivered to the main Scheme thread to avoid crashes when a signal

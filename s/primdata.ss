@@ -1138,9 +1138,9 @@
   (= [sig [(number number ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs cptypes2])       ; not restricted to 2+ arguments
   (> [sig [(real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs cptypes2])           ; not restricted to 2+ arguments
   (>= [sig [(real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs cptypes2])          ; not restricted to 2+ arguments
-  (-1+ [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs])
-  (1+ [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs])
-  (1- [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs])
+  (-1+ [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs cptypes2])
+  (1+ [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs cptypes2])
+  (1- [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs cptypes2])
   (abort [sig [() (ptr) -> (bottom)]] [flags abort-op])
   (acosh [sig [(number) -> (number)]] [flags arith-op mifoldable discard])
   (add1 [sig [(number) -> (number)]] [flags arith-op mifoldable discard safeongoodargs cptypes2])
