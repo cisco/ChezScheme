@@ -2769,6 +2769,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair executable-releative search for NetBSD (10.2.0)}
+
+An incorrect approach to finding the current executable's path on
+NetBSD meant that boot files could not be found relative to the
+executable.
+
 \subsection{Incorrect assembly code for threaded ARMv5 and earlier (10.1.0)}
 
 A bug that generated incorrect assembly code in threaded mode for ARMv5 and earlier
