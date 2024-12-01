@@ -187,6 +187,33 @@ static char *get_self_path_platform() {
 }
 #endif
 
+#if defined(__NetBSD__)
+#define HAVE_GET_SELF_PATH_PLATFORM
+#include <sys/sysctl.h>
+static char *get_self_path_platform() {
+  int mib[4];
+  char *s;
+  size_t len;
+  int r;
+
+  mib[0] = CTL_KERN;
+  mib[1] = KERN_PROC_ARGS;
+  mib[2] = getpid();
+  mib[3] = KERN_PROC_PATHNAME;
+
+  r = sysctl(mib, 4, NULL, &len, NULL, 0);
+  if (r < 0)
+    return NULL;
+  s = malloc(len);
+  if (s == NULL)
+    return NULL;
+  r = sysctl(mib, 4, s, &len, NULL, 0);
+  if (r < 0)
+    return NULL;
+  return s;
+}
+#endif
+
 #if defined(__sun__) && defined(__svr4__)
 #define HAVE_GET_SELF_PATH_PLATFORM
 static char *get_self_path_platform() {
@@ -203,10 +230,20 @@ static char *get_self_path_platform() {
 static char *get_self_path_platform() { return copy_string("/proc/self/exe"); }
 #endif
 
-#if defined(__NetBSD__) || defined(__minix) || defined(__DragonFly__) ||       \
+#if defined(__minix) || defined(__DragonFly__) ||       \
     defined(__FreeBSD_kernel__) || defined(_AIX)
 #define HAVE_GET_SELF_PATH_PLATFORM
 static char *get_self_path_platform() { return copy_string("/proc/curproc/file"); }
+#endif
+
+#ifndef HAVE_GET_SELF_PATH_PLATFORM
+/* sysctl() approach should be used, instead, but leaving this here as a reminder
+   (1) to not switch back to "/proc" for NetBSD; and (2) if switching is somehow
+   needed, don't confuse "/proc/curproc/file" with "/proc/curproc/exe" */
+#if defined(__NetBSD__)
+#define HAVE_GET_SELF_PATH_PLATFORM
+static char *get_self_path_platform() { return copy_string("/proc/curproc/exe"); }
+#endif
 #endif
 
 #ifndef HAVE_GET_SELF_PATH_PLATFORM
