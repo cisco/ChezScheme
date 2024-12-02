@@ -2769,7 +2769,7 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{Repair executable-releative search for NetBSD (10.2.0)}
+\subsection{Repair executable-relative search for NetBSD (10.2.0)}
 
 An incorrect approach to finding the current executable's path on
 NetBSD meant that boot files could not be found relative to the
