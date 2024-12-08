@@ -1304,9 +1304,18 @@ static void s_ee_flush(void) {
   fflush(stdout);
 }
 
+static ptr s_ee_pending_winch() {
+#ifdef HANDLE_SIGWINCH
+  return winched ? Strue : Sfalse;
+#else
+  return Sfalse;
+#endif
+}
+
 void S_expeditor_init(void) {
   Sforeign_symbol("(cs)ee_init_term", (void *)s_ee_init_term);
   Sforeign_symbol("(cs)ee_read_char", (void *)s_ee_read_char);
+  Sforeign_symbol("(cs)ee_pending_winch", (void *)s_ee_pending_winch);
   Sforeign_symbol("(cs)ee_write_char", (void *)s_ee_write_char);
   Sforeign_symbol("(cs)ee_char_width", (void *)s_ee_char_width);
   Sforeign_symbol("(cs)ee_set_color", (void *)s_ee_set_color);
