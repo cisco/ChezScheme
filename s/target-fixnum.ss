@@ -36,3 +36,17 @@
      (lambda (x)
        (and (bignum? x)
             (not (<= (constant most-negative-fixnum) x (constant most-positive-fixnum)))))]))
+
+(define target-fixnum-power-of-two
+  (let ([vec (list->vector
+              (do ([i 0 (fx+ i 1)] [m 2 (* m 2)] [ls '() (cons m ls)])
+                  ((not (target-fixnum? m)) (reverse ls))))])
+    (lambda (x)
+      (and (target-fixnum? x)
+           (let ([end (vector-length vec)])
+             (let f ([i 0])
+               (and (fx< i end)
+                    (let ([n (vector-ref vec i)] [next (fx+ i 1)])
+                      (if (= x n)
+                          next
+                          (and (> x n) (f next)))))))))))

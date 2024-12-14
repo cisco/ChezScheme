@@ -21,7 +21,7 @@
          preinfo-call-can-inline? preinfo-call-no-return? preinfo-call-single-valued?
          prelex? make-prelex prelex-name prelex-name-set! prelex-flags prelex-flags-set!
          prelex-source prelex-operand prelex-operand-set! prelex-uname make-prelex*
-         target-fixnum? target-bignum?)
+         target-fixnum? target-fixnum-power-of-two target-bignum?)
 
   (module (lookup-primref primref? primref-name primref-flags primref-arity primref-level)
     (include "primref.ss")

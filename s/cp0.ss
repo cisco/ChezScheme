@@ -3367,7 +3367,7 @@
       (define-inline 3 fxdiv-and-mod
         [(x y)
          (and likely-to-be-compiled?
-              (cp0-constant? (result-exp (value-visit-operand! y)))
+              (cp0-constant? target-fixnum-power-of-two (result-exp (value-visit-operand! y)))
               (cp0
                 (let ([tx (cp0-make-temp #t)] [ty (cp0-make-temp #t)])
                   (let ([refx (build-ref tx)] [refy (build-ref ty)])

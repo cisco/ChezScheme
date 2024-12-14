@@ -159,13 +159,7 @@
                          [(= mask (constant byte-constant-mask)) (%inline eq? ,expr (immediate ,type))]
                          [else (%inline type-check? ,expr (immediate ,mask) (immediate ,type))])))))])))
 
-(define target-fixnum?
-  (if (and (= (constant most-negative-fixnum) (most-negative-fixnum))
-           (= (constant most-positive-fixnum) (most-positive-fixnum)))
-      fixnum?
-      (lambda (x)
-        (and (or (fixnum? x) (bignum? x))
-             (<= (constant most-negative-fixnum) x (constant most-positive-fixnum))))))
+(include "target-fixnum.ss")
 
 (define unfix
   (lambda (imm)

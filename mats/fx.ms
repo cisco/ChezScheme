@@ -2561,6 +2561,12 @@
     (map (lambda (x) (let-values ([ls (fxdiv-and-mod x 64)]) ls))
       '(0 -5 -31 -32 -33 -63 -64 -65 -127 -128 -129))
     '((0 0) (-1 59) (-1 33) (-1 32) (-1 31) (-1 1) (-1 0) (-2 63) (-2 1) (-2 0) (-3 63)))
+  (test-cp0-expansion
+   '(#3%fxdiv-and-mod x 1000)
+   '(#3%fxdiv-and-mod x 1000))
+  (test-cp0-expansion
+   '(#3%fxdiv-and-mod x 1024)
+   '(let ([t x]) (#3%values (#3%fxdiv t 1024) (#3%fxmod t 1024))))
 )
 
 (mat fxdiv0-and-mod0
