@@ -419,6 +419,7 @@
               [(fixnum) -1 'q (+ (most-positive-fixnum) 1) (- (most-negative-fixnum) 1) #f]
               [(flonum) 0.0 0 0.0+1.0i 'a #f]
               [(ftype-pointer) *ftype-pointer 0 *time #f]
+              [(sub-ftype-pointer) no-good]
               [(fxvector) '#vfx(0) "a" #f]
               [(flvector) '#vfl(0.0) "a" #f]
               [(gensym) *genny 'sym #f]

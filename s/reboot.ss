@@ -373,8 +373,8 @@
  [else
   ;; If records in the host Scheme have the same representation as the target, we can
   ;; use the host Scheme's implementation of records, and things are about twice as fast:
-  (define-primitive ($make-record-type base-rtd parent name fields sealed? opaque? . extras)
-    (apply #%$make-record-type base-rtd parent name fields sealed? opaque? extras))
+  (define-primitive ($make-record-type base-rtd parent name fields sealed? opaque? alt-pm . extras)
+    (apply #%$make-record-type base-rtd parent name fields sealed? opaque? alt-pm extras))
   (define-primitive ($make-record-type-descriptor base-rtd parent name uid sealed? opaque? fields . extras)
     (apply #%$make-record-type-descriptor base-rtd parent name uid sealed? opaque? fields extras))
   (define-primitive ($make-record-constructor-descriptor rts parent protocol name)
@@ -404,7 +404,8 @@
 (define-primitive $expand-fp-ftype (lambda (who what r ftype)
                                      (#%$expand-fp-ftype who what r (syntax->datum ftype))))
 (define-primitive $ftd? #%$ftd?)
-(define-primitive $ftd-as-box? #%$ftd-as-box?)
+(define-primitive $ftd-pair? (lambda (x) (and (pair? x) (#%$ftd? (car x)))))
+(define-primitive $fptd? #%$ftd?)
 (define-primitive $filter-foreign-type #%$filter-foreign-type)
 
 (define-primitive $make-fmt->expr #%$make-fmt->expr)
@@ -530,7 +531,7 @@
 
 (define-primitive ($make-source-oops who . args)
   (($top-level-value 'datum->syntax) (or who ($make-interaction-syntax 'unknown))
-                                     `(error 'source "oops ~s" '(,who . ,args))))
+                                     `(error 'source "oops ~s" '(,who . ,(($top-level-value 'syntax->datum) args)))))
 
 (define-primitive ($source-warning . args)
   (printf "~s\n" args))

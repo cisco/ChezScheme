@@ -975,6 +975,7 @@
     (define call-u8* (foreign-procedure "call_u8_star" (ptr u8*) u8*))
     (define call-u16* (foreign-procedure "call_u16_star" (ptr u16*) u16*))
     (define call-u32* (foreign-procedure "call_u32_star" (ptr u32*) u32*))
+    (define call-void* (foreign-procedure "call_u8_star" (ptr ftype-pointer) ftype-pointer))
     (define $bytevector-map
       (lambda (p bv)
         (u8-list->bytevector (map p (bytevector->u8-list bv)))))
@@ -983,7 +984,7 @@
     (call-u8* (foreign-callable
                 (lambda (x) ($bytevector-map (lambda (x) (if (= x 255) 0 (+ x 100))) x))
                 (u8*) u8*)
-      #vu8(1 2 3 4 5 255 0 ))
+      #vu8(1 2 3 4 5 255 0))
     '#vu8(103 104 105))
   (equal?
     (call-u16* (foreign-callable
@@ -1027,6 +1028,21 @@
                  (lambda (x) (list x (bytevector-length x)))
                  (u32*) u32*)
       '#(1 2 3 4 5 6 7 8 0 0 0 0)))
+  (equal?
+   (let* ([r (call-void* (foreign-callable
+                          (lambda (x)
+                            (let* ([x (reference-address->object (- (ftype-pointer-address x) 1))]
+                                   [bv ($bytevector-map (lambda (x) (if (= x 255) 0 (+ x 100))) x)])
+                              ;; lock, because a GC could happen between the foreign-call return
+                              ;; and the point where we convert the reference address to an object
+                              (lock-object bv)
+                              (make-ftype-scheme-object-pointer bv)))
+                          (ftype-pointer) ftype-pointer)
+                         (make-ftype-scheme-object-pointer #vu8(1 2 3 4 5 255 0)))]
+          [new-bv (reference-address->object (- (ftype-pointer-address r) 1))])
+     (unlock-object new-bv)
+     new-bv)
+    '#vu8(101 102 103 104 105 0 100))
 )
 
 (mat foreign-strings
@@ -1972,6 +1988,9 @@
     (define B->uptr (foreign-procedure "uptr_to_uptr" ((* B) int) uptr))
     (define uptr->A (foreign-procedure "uptr_to_uptr" (uptr int) (* A)))
     (define b ((foreign-procedure (if (windows?) "windows_malloc" "malloc") (ssize_t) (* B)) (ftype-sizeof B)))
+    (define void*->void* (foreign-procedure "uptr_to_uptr" (ftype-pointer int) ftype-pointer))
+    (define obj-void*->obj-void* (foreign-procedure "uptr_to_uptr" (ftype-scheme-object-pointer int) ftype-scheme-object-pointer))
+    (define void*->obj-void* (foreign-procedure "uptr_to_uptr" (ftype-pointer int) ftype-scheme-object-pointer))
     #t)
   (eqv?
     (ftype-pointer-address (uptr->A (ftype-pointer-address (ftype-&ref B (y) b)) 0))
@@ -2238,6 +2257,44 @@
     #t)
   (eqv? (ftype-pointer-address ((ftype-ref A () a) a)) (ftype-pointer-address a))
 
+  (error? (void*->void* 0 0))
+  (ftype-pointer-null? (void*->void* (make-ftype-pointer integer-8 0) 0))
+  (error? (ftype-ref integer-8 (void*->void* (make-ftype-pointer integer-8 0) 0)))
+  (let* ([addr (foreign-alloc (ftype-sizeof integer-8))]
+         [p (make-ftype-pointer integer-8 addr)])
+    (and
+     (equal? (+ addr 3) (ftype-pointer-address (void*->void* p 3)))
+     (begin (foreign-free addr) #t)))
+  (let* ([bv (bytevector 1 2 3 4 5)]
+         [p (make-ftype-scheme-object-pointer bv 2)])
+    (collect)
+    (lock-object bv)
+    (and
+     (eqv? (+ (object->reference-address bv) 3)
+           (ftype-pointer-address (void*->void* p 1)))
+     (begin (unlock-object bv)
+            #t)))
+
+  (let* ([bv (bytevector 1 2 3 4 5)]
+         [p (make-ftype-scheme-object-pointer bv -1)])
+    (let ([new-p (obj-void*->obj-void* p 1)])
+      (collect)
+      (and (ftype-scheme-object-pointer? new-p)
+           (eq? bv (ftype-scheme-object-pointer-object new-p)))))
+
+  (let* ([bv (bytevector 1 2 3 4 5)]
+         [p (make-ftype-scheme-object-pointer bv -1)])
+    (let ([new-p (void*->obj-void* p 1)])
+      (collect)
+      (and (ftype-scheme-object-pointer? new-p)
+           (eq? bv (ftype-scheme-object-pointer-object new-p)))))
+
+  (error?
+   (obj-void*->obj-void* (make-ftype-pointer integer-8 1) 0))
+
+  (ftype-pointer-null? (void*->obj-void* (make-ftype-pointer integer-8 0) 0))
+  (ftype-pointer-null? (void*->obj-void* (make-ftype-pointer integer-8 -1) 1))
+
   (begin 
     (define-ftype A (struct [x uptr] [y uptr]))
     (define a (make-ftype-pointer A (foreign-alloc (ftype-sizeof A))))
@@ -2340,6 +2397,25 @@
                             double)])
     (= (proc 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 three-floats 9.0)
        (+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 10.0 11.0 12.0 9.0)))
+
+  (let ([proc
+         (foreign-procedure "many_doubles_and_three_floats_and_float" (double double double double double double double double (& three_floats ftype-pointer) float)
+                            double)]
+        [proc2
+         (foreign-procedure "many_doubles_and_three_floats_and_float" (double double double double double double double double (& three_floats ftype-scheme-object-pointer) float)
+                            double)]
+        [bv (make-bytevector (ftype-sizeof three_floats))])
+    (define (call proc three-floats)
+      (= (proc 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 three-floats 9.0)
+         (+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 10.0 11.0 12.0 9.0)))
+    (let loop ([i 0])
+      (unless (= i (ftype-sizeof three_floats))
+        (bytevector-s8-set! bv i (ftype-any-ref integer-8 () three-floats i))
+        (loop (add1 i))))
+    (and (call proc three-floats)
+         (call proc (make-ftype-pointer integer-8 (ftype-pointer-address three-floats)))
+         (call proc (make-ftype-scheme-object-pointer bv 0))
+         (call proc2 (make-ftype-scheme-object-pointer bv 0))))
 
   (let ([proc
          (foreign-procedure "many_doubles_and_float_and_three_floats" (double double double double double double double double float (& three_floats))

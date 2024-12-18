@@ -4476,6 +4476,13 @@
                                    (with-output-language (L13 Rhs)
                                      (%mref ,x ,%zero ,(constant flonum-data-disp) fp))
                                    x))))))
+                (define build-fptr-ref
+                  (lambda ()
+                    (let ([x (make-tmp 't)])
+                      `(seq
+                        (set! ,x ,t)
+                        ,(toC (in-context Rhs
+                                (%mref ,x ,(constant record-data-disp))))))))
                 (nanopass-case (Ltype Type) type
                   [(fp-scheme-object) (toC t)]
                   [(fp-fixnum) (toC (build-unfix t))]
@@ -4486,13 +4493,8 @@
                   [(fp-unsigned ,bits) (ptr->integer bits t toC)]
                   [(fp-double-float) (build-float)]
                   [(fp-single-float) (build-float)]
-                  [(fp-ftd ,ftd)
-                   (let ([x (make-tmp 't)])
-                     `(seq
-                        (set! ,x ,t)
-                        ,(toC (in-context Rhs
-                                (%mref ,x ,(constant record-data-disp))))))]
-                  [(fp-ftd& ,ftd)
+                  [(fp-fptd ,fptd) (build-fptr-ref)]
+                  [(fp-ftd& ,ftd ,fptd)
                    (let ([x (make-tmp 't)])
                      (%seq
                       (set! ,x ,t)
@@ -4503,7 +4505,7 @@
               (lambda (type toC t)
                 (nanopass-case (Ltype Type) type
                   [(fp-void) (toC)]
-                  [(fp-ftd& ,ftd)
+                  [(fp-ftd& ,ftd ,fptd)
                    ;; pointer isn't received as a result, but instead passed
                    ;; to the function as its first argument (or simulated as such)
                    (toC)]
@@ -4576,15 +4578,25 @@
                                          ,(e1 `(goto ,Lbig))
                                          (seq (label ,Lbig) ,e2)))))
                               (e1 e2))))))
-                (define (alloc-fptr ftd)
-                  (%seq
-                   (set! ,%xp
-                         ,(%constant-alloc type-typed-object (fx* (constant ptr-bytes) 2) #f))
-                   (set!
-                    ,(%mref ,%xp ,(constant record-type-disp))
-                    (literal ,(make-info-literal #f 'object ftd 0)))
-                   (set! ,(%mref ,%xp ,(constant record-data-disp)) ,%ac0)
-                   (set! ,lvalue ,%xp)))
+                (define (alloc-fptr fptd)
+                  (let ([object? ($fptd-object? fptd)])
+                    (let ([mk
+                           (%seq
+                            (set! ,%xp
+                                  ,(%constant-alloc type-typed-object (fx* (constant ptr-bytes) (if object? 3 2)) #f))
+                            (set! ,(%mref ,%xp ,(constant record-type-disp))
+                                  (literal ,(make-info-literal #f 'object fptd 0)))
+                            (set! ,(%mref ,%xp ,(constant record-data-disp)) ,%ac0)
+                            ,(if object?
+                                 `(set! ,(%mref ,%xp ,(fx+ (constant record-data-disp) (constant ptr-bytes)))
+                                        (immediate ,(constant reference-disp)))
+                                 `(nop))
+                            (set! ,lvalue ,%xp))])
+                      (if object?
+                          `(if ,(%inline eq? ,%ac0 (immediate 0))
+                               (set! ,lvalue (literal ,(make-info-literal #f 'object ($fptr-null-pointer) 0)))
+                               ,mk)
+                          mk))))
                 (define (receive-fp)
                   (if is-unboxed?
                       (fromC lvalue)
@@ -4632,14 +4644,14 @@
                       ,(unsigned->ptr bits lvalue))]
                   [(fp-double-float) (receive-fp)]
                   [(fp-single-float) (receive-fp)]
-                  [(fp-ftd ,ftd)
+                  [(fp-fptd ,fptd)
                    (%seq
                     ,(fromC %ac0) ; C integer return might be wiped out by alloc
-                    ,(alloc-fptr ftd))]
-                  [(fp-ftd& ,ftd)
+                    ,(alloc-fptr fptd))]
+                  [(fp-ftd& ,ftd ,fptd)
                    (%seq
                     ,(fromC %ac0)
-                    ,(alloc-fptr ftd))]
+                    ,(alloc-fptr fptd))]
                   [else ($oops who "invalid result type specifier ~s" type)]))))
           (define (pick-Scall result-type)
             (nanopass-case (Ltype Type) result-type
@@ -4673,7 +4685,7 @@
                                ,(let ([e (deallocate)])
                                   (if maybe-lvalue
                                       (nanopass-case (Ltype Type) result-type
-                                        [(fp-ftd& ,ftd)
+                                        [(fp-ftd& ,ftd ,fptd)
                                          ;; Don't actually return a value, because the result
                                          ;; was instead installed in the first argument.
                                          `(seq (set! ,maybe-lvalue ,(%constant svoid)) ,e)]

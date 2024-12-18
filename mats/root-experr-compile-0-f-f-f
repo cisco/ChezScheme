@@ -10451,6 +10451,9 @@ foreign.mo:Expected error in mat foreign-ftype: "invalid syntax (make-ftype-poin
 foreign.mo:Expected error in mat foreign-ftype: "foreign-entry: 1000000 is not a string".
 foreign.mo:Expected error in mat foreign-ftype: "foreign-entry: no entry for "i am not defined"".
 foreign.mo:Expected error in mat foreign-ftype: "unexpected function ftype name outside pointer field A".
+foreign.mo:Expected error in mat foreign-ftype: "void*->void*: invalid foreign-procedure argument 0".
+foreign.mo:Expected error in mat foreign-ftype: "invalid syntax (ftype-ref integer-8 (void*->void* (make-ftype-pointer integer-8 0) 0))".
+foreign.mo:Expected error in mat foreign-ftype: "obj-void*->obj-void*: invalid foreign-procedure argument <ftype-pointer>".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
@@ -10540,6 +10543,11 @@ ftype.mo:Expected error in mat ftype: "non-scalar value cannot be assigned (ftyp
 ftype.mo:Expected error in mat ftype: "non-scalar value cannot be referenced (ftype-ref B (tail *) b)".
 ftype.mo:Expected error in mat ftype: "recursive or forward reference outside pointer field Qfrob".
 ftype.mo:Expected error in mat ftype: "recursive or forward reference outside pointer field Qsnark".
+ftype.mo:Expected error in mat ftype: "ftype-ref: ftype mismatch for <ftype-pointer>".
+ftype.mo:Expected error in mat ftype: "ftype-set!: ftype mismatch for <ftype-pointer>".
+ftype.mo:Expected error in mat ftype: "ftype-ref: ftype mismatch for <ftype-pointer>".
+ftype.mo:Expected error in mat ftype: "cannot dereference generic pointer *".
+ftype.mo:Expected error in mat ftype: "invalid syntax (ftype-set! A (x *) bv-p)".
 ftype.mo:Expected error in mat ftype: "ftype-ref: invalid index -1 for #<ftd array>".
 ftype.mo:Expected error in mat ftype: "ftype-ref: invalid index 3.2 for #<ftd array>".
 ftype.mo:Expected error in mat ftype: "ftype-ref: invalid index <int> for #<ftd array>".

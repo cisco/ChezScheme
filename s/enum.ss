@@ -176,6 +176,7 @@ an-enum-set:
                      '() ; no fields to add
                      #t ; sealed
                      #f ; not opaque
+                     #f ; no alt-pm
                      sym->index
                      index->sym)])
               (make-enum-set this-enum-rtd members-universe)))))))

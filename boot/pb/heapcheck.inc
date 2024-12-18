@@ -43,6 +43,15 @@ static void check_object(ptr p, uptr seg, ISPC s_in, IBOOL aftergc)
                 }
               }
             }
+            else if (num == Strue)
+            {
+              uptr offset = (uptr)(*((pp + 1)));
+              {
+                ptr obj = TO_PTR((((uptr)(*(pp))) - offset));
+                check_pointer(&(obj), 0, 0, p, seg, s_in, aftergc);
+                *(pp) = TO_PTR((((uptr)obj) + offset));
+              }
+            }
             else
             {
               check_pointer(&(num), 0, 0, p, seg, s_in, aftergc);

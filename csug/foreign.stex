@@ -306,10 +306,11 @@ and
 must be used with caution, however, since they allow allocated
 Scheme objects to be used in places the Scheme memory management system
 cannot control. No problems will arise as long as such objects are not
-retained in foreign variables or data structures while Scheme code is running,
-and as long as they are not passed as arguments to a \scheme{__collect_safe} procedure,
+retained in foreign variables or data structures while Scheme code is running;
+as long as they are not passed as arguments to a \scheme{__collect_safe} procedure,
 since garbage collection can occur only while Scheme code is running
-or when concurrent garbage collection is enabled.
+or when concurrent garbage collection is enabled; and as long as the foreign
+procedure does not reenter Scheme via a callable before returning.
 Other parameter types are converted to equivalent foreign
 representations and consequently they can be retained indefinitely in
 foreign variables and data structures.
@@ -621,6 +622,12 @@ appropriate depending on the size of a C \scheme{wchar_t}.
 For example, \scheme{wstring} is equivalent to \scheme{utf-16}
 under Windows running on Intel hardware.
 
+\foreigntype{\var{ftype-name}}
+\index{ftype}Any defined foreign type (ftype) can be used as long as it is
+equivalent to a type that would be allowed when written directly.
+See Section~\ref{SECTFOREIGNDATA} for a description of
+foreign types.
+
 \foreigntype{\scheme{(* \var{ftype-name})}}
 \index{ftype}This type allows a pointer to a foreign
 type (ftype) to be passed.
@@ -628,8 +635,31 @@ The argument must be an ftype pointer of the type identified by
 \var{ftype-name},
 and the actual argument is the address encapsulated in the
 ftype pointer.
-See Section~\ref{SECTFOREIGNDATA} for a description of
-foreign types.
+
+\foreigntype{\scheme{ftype-pointer}}
+\index{ftype-pointer}This type allows any pointer to a foreign type
+(ftype) to be passed, independent of the foreign type, and including
+generic foreign pointers and foreign pointers to Scheme objects. In
+other words, this type is specific to foreign pointers created with
+\scheme{make-ftype-pointer} and similar, but otherwise generic like
+\scheme{void*}.
+
+\foreigntype{\scheme{ftype-scheme-object-pointer}}
+\index{ftype-scheme-object-pointer}This type allows a foreign pointer
+to a Scheme object, such as one created with
+\scheme{make-ftype-scheme-object-pointer}. The address received on the
+C side is like the one produced by \scheme{object->reference-address}
+for a non-\scheme{#f} value; using the result of
+\scheme{object->reference-address} with \scheme{make-ftype-pointer}
+woudl produce the result, but only with locked objects that
+cannot move, while \scheme{make-ftype-scheme-object-pointer} defers
+conversion to an address to a point before the call but after a
+garbage collection cna take place (assuming that
+\scheme{__collect_safe} is not used). Note that
+\scheme{ftype-scheme-object-pointer} differs from \scheme{scheme-object}
+by delivering specifically a reference address to the foreign
+procedure, which can be useful for communicating
+bytevector and flvector content.
 
 \foreigntype{\scheme{(& \var{ftype-name})}}
 \index{ftype}This type allows a foreign
@@ -642,6 +672,14 @@ content at the foreign pointer's address instead of as the
 address. For example, if \var{ftype-name} identifies a \scheme{struct} type,
 then \scheme{(& \var{ftype-name})} passes a struct argument instead of
 a struct-pointer argument. The \var{ftype-name} cannot refer to an array type.
+The variant \scheme{(& \var{ftype-name} ftype-pointer)} is the same,
+except that the Scheme-side representation can be any foreign pointer
+type, not necessarily one specific to \var{ftype-name}.
+The variant \scheme{(& \var{ftype-name} ftype-scheme-object-pointer)}
+is also the same, except that Scheme-side representation must be a
+foreign object pointer to a Scheme object like one created by
+\scheme{make-ftype-scheme-object-pointer}.
+
 
 \medskip\noindent
 The result types are similar to the parameter types with the addition of a
@@ -656,6 +694,7 @@ Particular caution should be exercised with the result types
 \index{\scheme{double}}\scheme{double},
 \index{\scheme{single-float}}\scheme{single-float},
 \index{\scheme{float}}\scheme{float},
+\index{\scheme{ftype-scheme-object-pointer}}\scheme{ftype-scheme-object-pointer},
 and the types that result in the construction of bytevectors or strings,
 since invalid
 return values may lead to invalid memory references as well as incorrect
@@ -918,12 +957,32 @@ or \scheme{utf-32} as appropriate depending on the size of a C \scheme{wchar_t}.
 For example, \scheme{wstring} is equivalent to \scheme{utf-16}
 under Windows running on Intel hardware.
 
+\foreigntype{\var{ftype-name}}
+\index{ftype}Any defined foreign type (ftype) can be used as long as it is
+equivalent to a type that would be allowed when written directly.
+See Section~\ref{SECTFOREIGNDATA} for a description of
+foreign types.
+
 \foreigntype{\scheme{(* \var{ftype-name})}}
 \index{ftype}The result is interpreted as the address of a foreign object
 whose structure is described by the ftype identified by \var{ftype-name}, and a freshly allocated
 ftype pointer encapsulating the address is returned.
-See Section~\ref{SECTFOREIGNDATA} for a description of
-foreign types.
+
+\foreigntype{\scheme{ftype-pointer}}
+\index{ftype-pointer}The result is interpreted as the address of a
+foreign object of unspecified content, and a freshly allocated
+generic ftype pointer encapsulating the address is returned.
+
+\foreigntype{\scheme{ftype-scheme-object-pointer}}
+\index{ftype-scheme-object-pointer}The result is interpreted as the reference
+address of a Scheme object, and it is returned as encapsulated within
+foreign object pointer as created with
+\scheme{make-ftype-scheme-object-pointer}. Note that
+\scheme{ftype-scheme-object-pointer} differs from
+\scheme{scheme-object} in that it receives a reference address from the
+foreign procedure, which might be the start of bytevector or flvector
+content. Like \scheme{scheme-object}, however, this type is inherently dangerous,
+and a foreign procedure would rarely be expected to produce such a value.
 
 \foreigntype{\scheme{(& \var{ftype-name})}}
 \index{ftype}The result is interpreted as a foreign object
@@ -933,7 +992,17 @@ must provide an extra \scheme{(* \var{ftype-name})} argument before
 all other arguments to receive the result. An unspecified Scheme object
 is returned when the foreign procedure is called, since the result
 is instead written into storage referenced by the extra argument.
- The \var{ftype-name} cannot refer to an array type.
+The \var{ftype-name} cannot refer to an array type.
+The variant \scheme{(& \var{ftype-name} ftype-pointer)} is the same,
+except that the foreign pointer passed as an extra initial argument
+can be any foreign pointer type, not necessarily one specific to
+\var{ftype-name}.
+The variant \scheme{(& \var{ftype-name} ftype-scheme-object-pointer)}
+is also the same, except that the foreign pointer passed as an extra
+initial argument must be a foreign object pointer to a Scheme object
+like one created by \scheme{make-ftype-scheme-object-pointer}.
+
+
 
 \medskip\noindent
 Consider a C identity procedure:
@@ -1680,9 +1749,11 @@ ftype.
 Each \var{ftype-name} in an \var{ftype} must either
 (a) have been defined previously by \scheme{define-ftype},
 (b) be defined by the current \scheme{define-ftype},
-or
 (c) be a base-type name, i.e., one of the type names supported by
-\scheme{foreign-ref} and \scheme{foreign-set!}.
+\scheme{foreign-ref} and \scheme{foreign-set!}, or
+(d) \scheme{ftype-pointer} or \scheme{ftype-scheme-object-pointer},
+which indicate a generic ftype pointer or an ftype pointer for a Scheme
+object, respectivly.
 In case (b), any reference within one \var{ftype} to the
 \var{ftype-name} of one of the earlier bindings is permissible,
 but a reference to the \var{ftype-name} of the current or a
@@ -2002,11 +2073,34 @@ A library that defines \var{memcpy} must be loaded first via
 via one of the methods described in Section ~\ref{SECTFOREIGNACCESS}.
 
 %----------------------------------------------------------------------------
+\entryheader\label{desc:make-ftype-scheme-object-pointer}
+\formdef{make-ftype-scheme-object-pointer}{\categorysyntax}{(make-ftype-scheme-object-pointer \var{expr})}
+\formdef{make-ftype-scheme-object-pointer}{\categorysyntax}{(make-ftype-scheme-object-pointer \var{expr} \var{offset})}
+\returns an ftype-pointer object that refers to a Scheme object
+\listlibraries
+\endentryheader
+
+Returns a ftype pointer object that can be used in the same places as
+a generic ftype pointer, and where the address encapsulated by the
+pointer a reference address in the sense of
+\scheme{object->reference-address}. The reference address is for the
+result of \var{expr}, without special treatment of \scheme{#f}. If
+an \var{offset} expression is present, then it must produce a
+\scheme{iptr}-compatible integer, and the address encapsulated by the
+pointer is shifted by that amount.
+
+The resulting ftype pointer is rcognized by
+\scheme{ftype-scheme-object-pointer?} as well as
+\scheme{ftype-pointer?} without a \var{ftype-name}.
+
+%----------------------------------------------------------------------------
 \entryheader
 \formdef{ftype-pointer?}{\categorysyntax}{(ftype-pointer? \var{obj})}
 \returns \scheme{#t} if \var{obj} is an ftype pointer, otherwise \scheme{#f}
 \formdef{ftype-pointer?}{\categorysyntax}{(ftype-pointer? \var{ftype-name} \var{obj})}
 \returns \scheme{#t} if \var{obj} is an \var{ftype-name}, otherwise \scheme{#f}
+\formdef{ftype-scheme-object-pointer?}{\categorysyntax}{(ftype-scheme-object-pointer? \var{obj})}
+\returns \scheme{#t} if \var{obj} is an ftype pointer for a Scheme object, otherwise \scheme{#f}
 \listlibraries
 \endentryheader
 
@@ -2042,6 +2136,23 @@ via one of the methods described in Section ~\ref{SECTFOREIGNACCESS}.
 \schemedisplay
 (define x (make-ftype-pointer E #x80000000))
 (ftype-pointer-address x) ;=> #x80000000
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{ftype-scheme-object-pointer-object}{\categoryprocedure}{(ftype-scheme-object-pointer-object \var{fptr})}
+\returns the Scheme object whose reference address is encapsulated within \var{fptr}
+\formdef{ftype-scheme-object-pointer-offset}{\categoryprocedure}{(ftype-scheme-object-pointer-offset \var{fptr})}
+\returns the offset of a reference address encapsulated within \var{fptr}
+\listlibraries
+\endentryheader
+
+\var{fptr} must be an ftype-pointer object that represents a Scheme object.
+
+\schemedisplay
+(define x (make-ftype-scheme-object-pointer #vu8(1 2 3) 1))
+(ftype-scheme-object-pointer-object x) ;=> #vu8(1 2 3)
+(ftype-scheme-object-pointer-offset x) ;=> 1
 \endschemedisplay
 
 %----------------------------------------------------------------------------
@@ -2155,7 +2266,7 @@ Otherwise, the \scheme{ftype-pointer} is freshly allocated.
 \returns unspecified
 \formdef{ftype-ref}{\categorysyntax}{(ftype-ref \var{ftype-name} (\var{a} ...) \var{fptr-expr})}
 \formdef{ftype-ref}{\categorysyntax}{(ftype-ref \var{ftype-name} (\var{a} ...) \var{fptr-expr} \var{index})}
-\returns an ftype-pointer object
+\returns a Scheme representation of a foreign object
 \listlibraries
 \endentryheader
 
@@ -2280,6 +2391,32 @@ Thus, \scheme{ftype-ref} with a function ftype is an alternative to
 (Section~\ref{SECTFOREIGNPROCEDURES})
 for creating Scheme-callable wrappers for
 C functions.
+
+%----------------------------------------------------------------------------
+\entryheader\label{defn:ftype-any-set!}
+\formdef{ftype-any-set!}{\categorysyntax}{(ftype-any-set! \var{ftype-name} (\var{a} ...) \var{fptr-expr} \var{val-expr})}
+\formdef{ftype-any-set!}{\categorysyntax}{(ftype-any-set! \var{ftype-name} (\var{a} ...) \var{fptr-expr} \var{offset} \var{val-expr})}
+\returns unspecified
+\formdef{ftype-any-ref}{\categorysyntax}{(ftype-any-ref \var{ftype-name} (\var{a} ...) \var{fptr-expr})}
+\formdef{ftype-any-ref}{\categorysyntax}{(ftype-any-ref \var{ftype-name} (\var{a} ...) \var{fptr-expr} \var{offset})}
+\returns a Scheme representation of a foreign object
+\listlibraries
+\endentryheader
+
+These forms are like \scheme{ftype-set!} and \scheme{ftype-ref}, but
+with two differences:
+
+\begin{enumerate}
+
+\item The ftype pointer produced by \var{fptr-expr} can be any
+pointer. It does not have to be specifically for \var{ftype-name},
+even though an \var{ftype-name} value is written or read.
+
+\item The pointer's address is shifted by an absolute \var{offset}
+that is not scaled by the size of \var{fptr-expr} values.
+
+\end{enumerate}
+
 
 %----------------------------------------------------------------------------
 \entryheader

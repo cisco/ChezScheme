@@ -2183,12 +2183,12 @@
   (define callee-expects-result-pointer?
     (lambda (result-type)
       (nanopass-case (Ltype Type) result-type
-        [(fp-ftd& ,ftd) (constant-case machine-type-name
-                          [(i3osx ti3osx i3nt ti3nt)
-                           (case ($ftd-size ftd)
-                             [(1 2 4 8) #f]
-                             [else #t])]
-                          [else ($ftd-compound? ftd)])]
+        [(fp-ftd& ,ftd  ,fptd) (constant-case machine-type-name
+                                 [(i3osx ti3osx i3nt ti3nt)
+                                  (case ($ftd-size ftd)
+                                    [(1 2 4 8) #f]
+                                    [else #t])]
+                                 [else ($ftd-compound? ftd)])]
         [else #f])))
   (define callee-pops-result-pointer?
     (lambda (result-type)
@@ -2196,7 +2196,7 @@
   (define fill-result-pointer-from-registers?
     (lambda (result-type)
       (nanopass-case (Ltype Type) result-type
-        [(fp-ftd& ,ftd) (not (callee-expects-result-pointer? result-type))]
+        [(fp-ftd& ,ftd ,fptd) (not (callee-expects-result-pointer? result-type))]
         [else #f])))
 
   (module (push-registers pop-registers push-registers-size)
@@ -2297,12 +2297,12 @@
                            (cons (load-single-stack n) locs)
                            (fx+ n 4)
                            #f)]
-                        [(fp-ftd& ,ftd)
+                        [(fp-ftd& ,ftd ,fptd)
                          (do-stack (cdr types)
                            (cons (load-content n ($ftd-size ftd)) locs)
                            (fx+ n (fxlogand (fx+ ($ftd-size ftd) 3) -4))
                            #f)]
-                        [(fp-ftd ,ftd)
+                        [(fp-fptd ,fptd)
                          (cond
                           [(and result-type
                                 (fill-result-pointer-from-registers? result-type))
@@ -2341,7 +2341,7 @@
           (cond
            [fill-result-here?
             (let* ([ftd (nanopass-case (Ltype Type) result-type
-                          [(fp-ftd& ,ftd) ftd])]
+                          [(fp-ftd& ,ftd ,fptd) ftd])]
                    [size ($ftd-size ftd)])
               (case size
                 [(4)
@@ -2448,7 +2448,7 @@
                       (cond
                        [fill-result-here?
                         (let* ([ftd (nanopass-case (Ltype Type) result-type
-                                      [(fp-ftd& ,ftd) ftd])]
+                                      [(fp-ftd& ,ftd ,fptd) ftd])]
                                [size ($ftd-size ftd)])
                           (%seq
                            ,call
@@ -2598,7 +2598,7 @@
                    (do-stack (cdr types)
                      (cons (load-single-stack n) locs)
                      (fx+ n 4))]
-                  [(fp-ftd& ,ftd)
+                  [(fp-ftd& ,ftd ,fptd)
                    (do-stack (cdr types)
                      (cons (load-stack-address n) locs)
                      (fx+ n (fxlogand (fx+ ($ftd-size ftd) 3) -4)))]
@@ -2615,7 +2615,7 @@
                          (fx+ n 4)))]))))
           (define (do-result result-type init-stack-offset indirect-result-to-registers?)
             (nanopass-case (Ltype Type) result-type
-              [(fp-ftd& ,ftd)
+              [(fp-ftd& ,ftd ,fptd)
                (cond
                 [indirect-result-to-registers?
                  (cond

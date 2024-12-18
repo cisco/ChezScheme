@@ -189,6 +189,7 @@ reaching into Chez Scheme's internals for:
       "root-vtable-rtd"
       '((immutable ptr interfaces))
       #f
+      #f
       #f))
 
   (define construct-name
@@ -686,12 +687,14 @@ reaching into Chez Scheme's internals for:
                                               name
                                               flds
                                               #f
+                                              #f
                                               #f)]
                                      [vtable-rtd (#%$make-record-type
                                                    #!base-rtd
                                                    ($class-vtable-rtd bc)
                                                    "compile-time-vtable-rtd"
                                                    (syntax->datum (map minfo-mname #'(generic ...)))
+                                                   #f
                                                    #f
                                                    #f)])
                          (with-syntax ([(ivar ...) ivar*]
@@ -726,6 +729,7 @@ reaching into Chez Scheme's internals for:
                                                     parent-rtd
                                                     name
                                                     'flds
+                                                    #f
                                                     #f
                                                     #f
                                                     (list iface-elt ...)

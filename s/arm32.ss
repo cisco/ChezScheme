@@ -2396,7 +2396,7 @@
                                    (fx= (cadr m) 4)))
     (define (indirect-result-that-fits-in-registers? result-type)
       (nanopass-case (Ltype Type) result-type
-        [(fp-ftd& ,ftd)
+        [(fp-ftd& ,ftd ,fptd)
          (let* ([members ($ftd->members ftd)]
                 [num-members (length members)])
            (or (fx<= ($ftd-size ftd) 4)
@@ -2595,7 +2595,7 @@
                                (loop (cdr types)
                                      (cons (load-single-stack isp) locs)
                                      live* int* '() #f (fx+ isp 4))])]
-                            [(fp-ftd& ,ftd)
+                            [(fp-ftd& ,ftd ,fptd)
                              (let ([size ($ftd-size ftd)]
                                    [members ($ftd->members ftd)]
                                    [combine-loc (lambda (loc f)
@@ -2701,7 +2701,7 @@
                     (cond
                      [fill-result-here?
                       (nanopass-case (Ltype Type) result-type
-                        [(fp-ftd& ,ftd)
+                        [(fp-ftd& ,ftd ,fptd)
                          (let* ([members ($ftd->members ftd)]
                                 [num-members (length members)]
                                 ;; result pointer is stashed on the stack after all arguments:
@@ -2760,7 +2760,7 @@
                        (case bits
                          [(64) (list %r1 %Cretval)]
                          [else (list %Cretval)])]
-                      [(fp-ftd& ,ftd)
+                      [(fp-ftd& ,ftd ,fptd)
                        (let* ([members ($ftd->members ftd)]
                               [num-members (length members)])
                          (cond
@@ -2965,7 +2965,7 @@
                                (if (fx< idbl 8)
                                    (f (cdr types) iint (fx+ idbl 1) #t)
                                    (f (cdr types) iint idbl #f))))]
-                      [(fp-ftd& ,ftd)
+                      [(fp-ftd& ,ftd ,fptd)
                        (let* ([size ($ftd-size ftd)]
                               [members ($ftd->members ftd)]
                               [num-members (length members)])
@@ -3076,7 +3076,7 @@
                            (loop (cdr types)
                                  (cons (load-single-stack stack-arg-offset) locs)
                                  iint num-dbl-regs #f int-reg-offset float-reg-offset (fx+ stack-arg-offset 4))])]
-                        [(fp-ftd& ,ftd)
+                        [(fp-ftd& ,ftd ,fptd)
                          (let* ([size ($ftd-size ftd)]
                                 [members ($ftd->members ftd)]
                                 [num-members (length members)])
@@ -3163,7 +3163,7 @@
           (define do-result
             (lambda (result-type synthesize-first? varargs? return-stack-offset)
               (nanopass-case (Ltype Type) result-type
-                [(fp-ftd& ,ftd)
+                [(fp-ftd& ,ftd ,fptd)
                  (let* ([members ($ftd->members ftd)]
                         [num-members (length members)])
                    (cond

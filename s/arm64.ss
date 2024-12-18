@@ -2405,7 +2405,7 @@
                                    (fx= (cadr m) 4)))
     (define (indirect-result-that-fits-in-registers? result-type)
       (nanopass-case (Ltype Type) result-type
-        [(fp-ftd& ,ftd)
+        [(fp-ftd& ,ftd ,fptd)
          (let* ([members ($ftd->members ftd)]
                 [num-members (length members)])
            (or (fx<= ($ftd-size ftd) 4)
@@ -2478,9 +2478,10 @@
                                                (= stack-align (align 8 stack-align)))
                                                4
                                                8)]
-                                              [(fp-ftd& ,ftd) (cond
-                                                                [(> ($ftd-size ftd) 16) 8]
-                                                                [else ($ftd-alignment ftd)])]
+                                              [(fp-ftd& ,ftd ,fptd)
+                                               (cond
+                                                 [(> ($ftd-size ftd) 16) 8]
+                                                 [else ($ftd-alignment ftd)])]
                                               [(fp-integer ,bits) (fxquotient bits 8)]
                                               [(fp-unsigned ,bits) (fxquotient bits 8)]
                                               [else 8])])])
@@ -2513,19 +2514,20 @@
                        (nanopass-case (Ltype Type) (car types)
                          [(fp-double-float) (use-fp-regs 1)]
                          [(fp-single-float) (use-fp-regs 1)]
-                         [(fp-ftd& ,ftd) (cond
-                                           [(> ($ftd-size ftd) 16) (next-is-stack types)]
-                                           [else
-                                            (let ([members ($ftd->members ftd)])
-                                              (cond
-                                                [(and (fx= 8 ($ftd-alignment ftd))
-                                                      (andmap double-member? members))
-                                                 (use-fp-regs (length members))]
-                                                [(and (fx= 4 ($ftd-alignment ftd))
-                                                      (andmap float-member? members))
-                                                 (use-fp-regs (length members))]
-                                                [else
-                                                 (use-int-regs (fxquotient (align ($ftd-size ftd) 8) 8))]))])]
+                         [(fp-ftd& ,ftd ,fptd)
+                          (cond
+                            [(> ($ftd-size ftd) 16) (next-is-stack types)]
+                            [else
+                             (let ([members ($ftd->members ftd)])
+                               (cond
+                                 [(and (fx= 8 ($ftd-alignment ftd))
+                                       (andmap double-member? members))
+                                  (use-fp-regs (length members))]
+                                 [(and (fx= 4 ($ftd-alignment ftd))
+                                       (andmap float-member? members))
+                                  (use-fp-regs (length members))]
+                                 [else
+                                  (use-int-regs (fxquotient (align ($ftd-size ftd) 8) 8))]))])]
                          [else (use-int-regs 1)]))])))])]
           [else
            (k (align 8 size) 0 0)])))
@@ -2599,7 +2601,7 @@
                             (loop (cdr types) (rest-of int* 0 next-varargs-after)(rest-of fp* 1 next-varargs-after)
                                   next-varargs-after
                                   stack-align))])]
-                  [(fp-ftd& ,ftd)
+                  [(fp-ftd& ,ftd ,fptd)
                    (let* ([size ($ftd-size ftd)]
                           [members (filter-union ($ftd->members ftd))]
                           [num-members (length members)]
@@ -2820,7 +2822,7 @@
                                   (loop types cats
                                         (cons (load-single-stack isp) locs)
                                         (fx+ isp (cat-size cat) (cat-pad cat)) ind-sp)])]
-                              [(fp-ftd& ,ftd)
+                              [(fp-ftd& ,ftd ,fptd)
                                (let ([size ($ftd-size ftd)])
                                  (case (cat-place cat)
                                    [(int)
@@ -2903,7 +2905,7 @@
                   ;; may destroy the values in result registers
                   (lambda (result-cat result-type args-frame-size fill-result-here? e)
                     (nanopass-case (Ltype Type) result-type
-                      [(fp-ftd& ,ftd)
+                      [(fp-ftd& ,ftd ,fptd)
                        (let* ([size ($ftd-size ftd)]
                               [tmp %argtmp])
                          (case (and fill-result-here?
@@ -2949,7 +2951,7 @@
             (let* ([arg-type* (info-foreign-arg-type* info)]
                    [result-type (info-foreign-result-type info)]
                    [ftd-result? (nanopass-case (Ltype Type) result-type
-                                  [(fp-ftd& ,ftd) #t]
+                                  [(fp-ftd& ,ftd ,fptd) #t]
                                   [else #f])]
                    [arg-type* (if ftd-result?
                                   (cdr arg-type*)
@@ -3141,7 +3143,7 @@
                             (loop types cats
                                   (cons (load-single-stack stack-arg-offset) locs)
                                   int-reg-offset float-reg-offset (fx+ stack-arg-offset (cat-size cat) (cat-pad cat)))])]
-                        [(fp-ftd& ,ftd)
+                        [(fp-ftd& ,ftd ,fptd)
                          (case (cat-place cat)
                            [(int)
                             (let ([indirect-bytes (cat-indirect-bytes cat)])
@@ -3220,7 +3222,7 @@
                    `(set! ,%Cfpretval ,(%inline double->single ,(%mref ,rhs ,%zero ,(constant flonum-data-disp) fp))))]
                 [(fp-void)
                  (lambda () `(nop))]
-                [(fp-ftd& ,ftd)
+                [(fp-ftd& ,ftd ,fptd)
                  (cond
                   [(cat-indirect-bytes result-cat)
                    ;; we passed the pointer to be filled, so nothing more to do here
@@ -3280,7 +3282,7 @@
             (let* ([arg-type* (info-foreign-arg-type* info)]
                    [result-type (info-foreign-result-type info)]
                    [ftd-result? (nanopass-case (Ltype Type) result-type
-                                  [(fp-ftd& ,ftd) #t]
+                                  [(fp-ftd& ,ftd ,fptd) #t]
                                   [else #f])]
                    [arg-type* (if ftd-result?
                                   (cdr arg-type*)

@@ -3593,6 +3593,7 @@
                '()               ; no fields to add
                #t                ; sealed
                #f                ; not opaque
+               #f                ; no alt-pm
                '*sym->index*     ; extras (tacked onto end of rtd)
                '*index->sym*)])  ; i.e., static (per enumeration type) fields
         (let ([make-this-enum (record-constructor this-enum-rtd)])
@@ -3605,8 +3606,8 @@
                 (get-index->sym rtd)))))))
     '(*members* *sym->index* *index->sym*))
   (error? ; cannot extend sealed record type
-    (let ([rtd1 (#%$make-record-type #!base-rtd #f "foo" '() #t #f '())])
-      (#%$make-record-type #!base-rtd rtd1 "bar" '() #f #f '())))
+    (let ([rtd1 (#%$make-record-type #!base-rtd #f "foo" '() #t #f #f '())])
+      (#%$make-record-type #!base-rtd rtd1 "bar" '() #f #f #f '())))
 )
 
 (mat record25
@@ -3789,9 +3790,9 @@
                (define-syntax a
                  (lambda (x)
                    (let* ([rtd1 (#%$make-record-type #!base-rtd #!base-rtd
-                                  "rtd1" '((mutable q)) #f #f)]
+                                  "rtd1" '((mutable q)) #f #f #f)]
                           [rtd2 (#%$make-record-type rtd1 #!base-rtd
-                                  "rtd2" '() #f #f #f)])
+                                  "rtd2" '() #f #f #f #f)])
                      ((record-mutator rtd1 0) rtd2 rtd2)
                      #`(quote #,rtd2))))
                a))))
@@ -3818,11 +3819,11 @@
                (define-syntax a
                  (lambda (x)
                    (let* ([rtd1 (#%$make-record-type #!base-rtd #!base-rtd
-                                  "rtd1" '((mutable q)) #f #f)]
+                                  "rtd1" '((mutable q)) #f #f #f)]
                           [rtd2 (#%$make-record-type rtd1 #!base-rtd
-                                  "rtd2" '() #f #f #f)]
+                                  "rtd2" '() #f #f #f #f)]
                           [rtd3 (#%$make-record-type rtd2 #!base-rtd
-                                  "rtd3" '() #f #f)])
+                                  "rtd3" '() #f #f #f)])
                      ((record-mutator rtd1 0) rtd2 rtd3)
                      #`(quote #,rtd3))))
                a))))
@@ -3848,11 +3849,11 @@
                (define-syntax a
                  (lambda (x)
                    (let* ([rtd1 (#%$make-record-type #!base-rtd #!base-rtd
-                                  "rtd1" '((mutable q)) #f #f)]
+                                  "rtd1" '((mutable q)) #f #f #f)]
                           [rtd2 (#%$make-record-type rtd1 #!base-rtd
-                                  "rtd2" '() #f #f #f)]
+                                  "rtd2" '() #f #f #f #f)]
                           [rtd3 (#%$make-record-type rtd2 #f
-                                  "rtd3" '((immutable a)) #f #f)])
+                                  "rtd3" '((immutable a)) #f #f #f)])
                      ((record-mutator rtd1 0) rtd2 ((record-constructor rtd3) 23))
                      #`(quote #,rtd3))))
                a))))
