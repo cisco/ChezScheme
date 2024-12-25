@@ -840,7 +840,7 @@
                (set! mask >>= 1)
                (set! pp += 1))]))]
         [(== num #t)
-         ;; special protocol for an object created by `make-object-ftype-pointer`
+         ;; special protocol for an object created by `make-ftype-scheme-object-pointer`
          (define offset : uptr (cast uptr (* (+ pp  1))))
          (define obj : ptr (TO_PTR (- (cast uptr (* pp)) offset)))
          (trace (just obj))

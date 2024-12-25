@@ -651,10 +651,10 @@ to a Scheme object, such as one created with
 C side is like the one produced by \scheme{object->reference-address}
 for a non-\scheme{#f} value; using the result of
 \scheme{object->reference-address} with \scheme{make-ftype-pointer}
-woudl produce the result, but only with locked objects that
+would produce the result, but only with locked objects that
 cannot move, while \scheme{make-ftype-scheme-object-pointer} defers
 conversion to an address to a point before the call but after a
-garbage collection cna take place (assuming that
+garbage collection can take place (assuming that
 \scheme{__collect_safe} is not used). Note that
 \scheme{ftype-scheme-object-pointer} differs from \scheme{scheme-object}
 by delivering specifically a reference address to the foreign
@@ -976,7 +976,7 @@ generic ftype pointer encapsulating the address is returned.
 \foreigntype{\scheme{ftype-scheme-object-pointer}}
 \index{ftype-scheme-object-pointer}The result is interpreted as the reference
 address of a Scheme object, and it is returned as encapsulated within
-foreign object pointer as created with
+a foreign object pointer as created with
 \scheme{make-ftype-scheme-object-pointer}. Note that
 \scheme{ftype-scheme-object-pointer} differs from
 \scheme{scheme-object} in that it receives a reference address from the
@@ -1753,7 +1753,7 @@ Each \var{ftype-name} in an \var{ftype} must either
 \scheme{foreign-ref} and \scheme{foreign-set!}, or
 (d) \scheme{ftype-pointer} or \scheme{ftype-scheme-object-pointer},
 which indicate a generic ftype pointer or an ftype pointer for a Scheme
-object, respectivly.
+object, respectively.
 In case (b), any reference within one \var{ftype} to the
 \var{ftype-name} of one of the earlier bindings is permissible,
 but a reference to the \var{ftype-name} of the current or a
@@ -2080,18 +2080,18 @@ via one of the methods described in Section ~\ref{SECTFOREIGNACCESS}.
 \listlibraries
 \endentryheader
 
-Returns a ftype pointer object that can be used in the same places as
+Returns an ftype pointer object that can be used in the same places as
 a generic ftype pointer, and where the address encapsulated by the
-pointer a reference address in the sense of
+pointer is a reference address in the sense of
 \scheme{object->reference-address}. The reference address is for the
 result of \var{expr}, without special treatment of \scheme{#f}. If
 an \var{offset} expression is present, then it must produce a
 \scheme{iptr}-compatible integer, and the address encapsulated by the
 pointer is shifted by that amount.
 
-The resulting ftype pointer is rcognized by
+The resulting ftype pointer is recognized by
 \scheme{ftype-scheme-object-pointer?} as well as
-\scheme{ftype-pointer?} without a \var{ftype-name}.
+\scheme{ftype-pointer?} without an \var{ftype-name}.
 
 %----------------------------------------------------------------------------
 \entryheader

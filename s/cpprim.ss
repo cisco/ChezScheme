@@ -7717,7 +7717,7 @@
                            ,(%seq
                              (set! ,(%mref ,t-vec ,(constant stencil-vector-type-disp))
                                    ,(build-stencil-vector-type e-mask type))
-                             ;; Content not filled! This function is meant to be cal<led by
+                             ;; Content not filled! This function is meant to be called by
                              ;; `[$]$stencil-vector-do-update`, which has GC disabled between
                              ;; allocation and filling in the data
                              ,t-vec)))))))
