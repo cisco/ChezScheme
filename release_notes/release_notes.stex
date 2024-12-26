@@ -135,7 +135,7 @@ under control of the memory manager---especially addresses for
 bytevector and flvector content. Unlike extracting an address via
 \scheme{object->reference-address} and using it to construct a regular
 ftype pointer, the \scheme{make-ftype-scheme-object-pointer} function
-creates an ftype pointer that coopeartes with the memory manager to
+creates an ftype pointer that cooperates with the memory manager to
 ensure that the encapsulated address does not go stale. When the
 pointer is passed in a call to a foreign function, its address can be
 extracted after the point where garbage collections can occur,
