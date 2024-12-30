@@ -353,8 +353,11 @@
        (#2%fx+/wraparound x1 x2)))
 
    (set-who! fx-/wraparound
-     (lambda (x1 x2)
-       (#2%fx-/wraparound x1 x2)))
+     (case-lambda
+      [(x)
+       (#2%fx-/wraparound x)]
+      [(x1 x2)
+       (#2%fx-/wraparound x1 x2)]))
 
    (set! fx1-
       (lambda (x)

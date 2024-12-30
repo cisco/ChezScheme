@@ -1796,6 +1796,7 @@
       [(e) (%inline - (immediate 0) ,e)]
       [(e1 e2) (%inline - ,e1 ,e2)])
     (define-inline 3 fx-/wraparound
+      [(e) (%inline - (immediate 0) ,e)]
       [(e1 e2) (%inline - ,e1 ,e2)])
     (define-inline 3 fx1-
       [(e) (%inline - ,e (immediate ,(fix 1)))])
@@ -1840,6 +1841,11 @@
         [(e) (go src sexpr `(immediate ,(fix 0)) e)]
         [(e1 e2) (go src sexpr e1 e2)])
       (define-inline 2 fx-/wraparound
+        [(e)
+         (bind #t (e)
+           `(if ,(build-fixnums? (list e))
+                ,(%inline - (immediate 0) ,e)
+                ,(build-libcall #t src sexpr fx-/wraparound `(immediate 0) e)))]
         [(e1 e2)
          (bind #t (e1 e2)
            `(if ,(build-fixnums? (list e1 e2))
