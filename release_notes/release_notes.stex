@@ -121,6 +121,12 @@ Online versions of both books can be found at
 The type recovery pass has improved support for \scheme{abs} with a fixnum argument
 and added support for \scheme{1+}, \scheme{1-}, and \scheme{-1+}.
 
+\subsection{Single-argument \scheme{fx-/wraparound} (10.2.0)}
+
+The \scheme{fx-/wraparound} function changed to accept a single
+argument, which makes it more consistent with the R6RS \scheme{fx-}
+function.
+
 \subsection{Constrain signal delivery to the main thread (10.1.0)}
 
 Signals are now always delivered to the main Scheme thread to avoid crashes when a signal
@@ -2768,6 +2774,13 @@ in fasl files does not generally make sense.
 
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
+
+\subsection{Fix \scheme{fx-/wraparound} with \scheme{0} first argument (10.2.0)}
+
+When \scheme{fx-/wraparound} was called with \scheme{0} as its first
+argument, the call could be rewritten to have a single argument, even though
+\scheme{fx-/wraparound} required two arguments. As part of the repair,
+\scheme{fx-/wraparound} changed to accept a single argument.
 
 \subsection{Performance regression for \scheme{fxdiv-and-mod} at optimize-level 3 (10.2.0)}
 

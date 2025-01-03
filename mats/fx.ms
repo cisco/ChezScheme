@@ -564,7 +564,9 @@
 (mat fx-/wraparound
    (eqv? (fx-/wraparound 3 0) 3)
    (eqv? (fx-/wraparound 3 1) 2)
+   (eqv? (fx-/wraparound 0 3) -3)
    (eqv? (fx-/wraparound -3 4) -7)
+   (eqv? (fx-/wraparound 3) -3)
    (error? (fx-/wraparound '(a . b) 0))
    (error? (fx- (add1 (most-positive-fixnum)) 1))
    (error? (fx- 1 (add1 (most-positive-fixnum))))

@@ -338,10 +338,11 @@ dividing \var{fixnum_1} by the product of the remaining arguments
 
 %----------------------------------------------------------------------------
 \entryheader
-\formdef{fx+/wraparound}{\categoryprocedure}{(fx+/wraparound \var{fixnum} \dots)}
-\formdef{fx-/wraparound}{\categoryprocedure}{(fx-/wraparound \var{fixnum} \dots)}
-\formdef{fx*/wraparound}{\categoryprocedure}{(fx*/wraparound \var{fixnum} \dots)}
-\formdef{fxsll/wraparound}{\categoryprocedure}{(fxsll/wraparound \var{fixnum} \dots)}
+\formdef{fx+/wraparound}{\categoryprocedure}{(fx+/wraparound \var{fixnum} \var{fixnum})}
+\formdef{fx-/wraparound}{\categoryprocedure}{(fx-/wraparound \var{fixnum} \var{fixnum})}
+\formdef{fx-/wraparound}{\categoryprocedure}{(fx-/wraparound \var{fixnum})}
+\formdef{fx*/wraparound}{\categoryprocedure}{(fx*/wraparound \var{fixnum} \var{fixnum})}
+\formdef{fxsll/wraparound}{\categoryprocedure}{(fxsll/wraparound \var{fixnum} \var{fixnum})}
 \returns the arithmetic result, wrapping on overflow
 \listlibraries
 \endentryheader
