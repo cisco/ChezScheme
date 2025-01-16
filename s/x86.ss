@@ -2183,12 +2183,12 @@
   (define callee-expects-result-pointer?
     (lambda (result-type)
       (nanopass-case (Ltype Type) result-type
-        [(fp-ftd& ,ftd  ,fptd) (constant-case machine-type-name
-                                 [(i3osx ti3osx i3nt ti3nt)
-                                  (case ($ftd-size ftd)
-                                    [(1 2 4 8) #f]
-                                    [else #t])]
-                                 [else ($ftd-compound? ftd)])]
+        [(fp-ftd& ,ftd ,fptd) (constant-case machine-type-name
+                                [(i3osx ti3osx i3nt ti3nt)
+                                 (case ($ftd-size ftd)
+                                   [(1 2 4 8) #f]
+                                   [else #t])]
+                                [else ($ftd-compound? ftd)])]
         [else #f])))
   (define callee-pops-result-pointer?
     (lambda (result-type)
