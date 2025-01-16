@@ -256,11 +256,11 @@ ftype operators:
                #f
                #t)])
       (make-compile-time-value
-       (lambda (which)
-         (case which
-           [(base) rtd]
-           [(object) rtd/object]
-           [_ ($oops 'get-rtd/fptr "unrecognized ~s" which)])))))
+        (lambda (which)
+          (case which
+            [(base) rtd]
+            [(object) rtd/object]
+            [_ ($oops 'get-rtd/fptr "unrecognized ~s" which)])))))
   (define-syntax rtd/fptr
     (lambda (x) (lambda (r) #`'#,((r #'get-rtd/fptr) 'base))))
   (define-syntax rtd/object-fptr
