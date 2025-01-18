@@ -576,6 +576,15 @@ static void sweep(thread_gc *tgc, ptr p, IGEN from_g)
                   }
                 }
               }
+              else if (num == Strue)
+              {
+                uptr offset = (uptr)(*((pp + 1)));
+                {
+                  ptr obj = TO_PTR((((uptr)(*(pp))) - offset));
+                  relocate_impure(&obj, from_g);
+                  *(pp) = TO_PTR((((uptr)obj) + offset));
+                }
+              }
               else
               {
                 relocate_pure(&(RECORDDESCPM(rtd)));
@@ -1258,6 +1267,15 @@ static void sweep_object_in_old(thread_gc *tgc, ptr p)
                   }
                 }
               }
+              else if (num == Strue)
+              {
+                uptr offset = (uptr)(*((pp + 1)));
+                {
+                  ptr obj = TO_PTR((((uptr)(*(pp))) - offset));
+                  relocate_indirect(obj);
+                  *(pp) = TO_PTR((((uptr)obj) + offset));
+                }
+              }
               else
               {
                 relocate_pure(&(RECORDDESCPM(rtd)));
@@ -1837,6 +1855,15 @@ static IGEN sweep_dirty_object(thread_gc *tgc, ptr p, IGEN youngest)
                 }
               }
             }
+            else if (num == Strue)
+            {
+              uptr offset = (uptr)(*((pp + 1)));
+              {
+                ptr obj = TO_PTR((((uptr)(*(pp))) - offset));
+                relocate_dirty(&obj, youngest);
+                *(pp) = TO_PTR((((uptr)obj) + offset));
+              }
+            }
             else
             {
               {
@@ -2095,6 +2122,15 @@ static void sweep_record(thread_gc *tgc, ptr p, IGEN from_g)
               }
             }
           }
+          else if (num == Strue)
+          {
+            uptr offset = (uptr)(*((pp + 1)));
+            {
+              ptr obj = TO_PTR((((uptr)(*(pp))) - offset));
+              relocate_impure(&obj, from_g);
+              *(pp) = TO_PTR((((uptr)obj) + offset));
+            }
+          }
           else
           {
             relocate_pure(&(RECORDDESCPM(rtd)));
@@ -2155,6 +2191,15 @@ static IGEN sweep_dirty_record(thread_gc *tgc, ptr p, IGEN youngest)
               mask >>= 1;
               pp += 1;
             }
+          }
+        }
+        else if (num == Strue)
+        {
+          uptr offset = (uptr)(*((pp + 1)));
+          {
+            ptr obj = TO_PTR((((uptr)(*(pp))) - offset));
+            relocate_dirty(&obj, youngest);
+            *(pp) = TO_PTR((((uptr)obj) + offset));
           }
         }
         else
@@ -3578,6 +3623,15 @@ static IBOOL object_directly_refers_to_self(ptr p)
                       pp += 1;
                     }
                   }
+                }
+              }
+              else if (num == Strue)
+              {
+                uptr offset = (uptr)(*((pp + 1)));
+                {
+                  ptr obj = TO_PTR((((uptr)(*(pp))) - offset));
+                  if (p == obj) return 1;
+                  *(pp) = TO_PTR((((uptr)obj) + offset));
                 }
               }
               else

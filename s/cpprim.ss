@@ -5419,13 +5419,34 @@
                 (set! ,(%mref ,t ,(constant record-data-disp))
                   ,(ptr->integer e-addr (constant ptr-bits)))
                 ,t)))])])
+    (define-inline 3 $make-object-fptr
+      [(e-ftype e-obj e-offset)
+       (bind #f (e-ftype e-obj e-offset)
+         (let ([offset (make-assigned-tmp 'offset 'uptr)])
+           `(let ([,offset ,(%inline + ,(ptr->integer e-offset (constant ptr-bits))
+                                     (immediate ,(constant reference-disp)))])
+              ,(bind #t ([t (%constant-alloc type-typed-object (fx* 3 (constant ptr-bytes)))])
+                 (%seq
+                  (set! ,(%mref ,t ,(constant record-type-disp)) ,e-ftype)
+                  (set! ,(%mref ,t ,(constant record-data-disp)) ,(%inline + ,e-obj ,offset))
+                  (set! ,(%mref ,t ,(fx+ (constant record-data-disp) (constant ptr-bytes))) ,offset)
+                  ,t)))))])
     (define-inline 3 ftype-pointer-address
       [(e-fptr)
-       (build-object-ref #f
-         (constant-case ptr-bits
-           [(64) 'unsigned-64]
-           [(32) 'unsigned-32])
-         e-fptr %zero (constant record-data-disp))])
+       (build-object-ref #f ptr-type e-fptr %zero (constant record-data-disp))])
+    (define-inline 3 ftype-scheme-object-pointer-object
+      [(e-fptr)
+       (bind #t (e-fptr)
+         (%inline -
+                  ,(%mref ,e-fptr ,(constant record-data-disp))
+                  ,(%mref ,e-fptr ,(fx+ (constant record-data-disp)
+                                        (constant ptr-bytes)))))])
+    (define-inline 3 ftype-scheme-object-pointer-offset
+      [(e-fptr)
+       (unsigned->ptr (%inline -
+                               ,(%mref ,e-fptr ,(fx+ (constant record-data-disp) (constant ptr-bytes)))
+                               (immediate ,(constant reference-disp)))
+                      (constant ptr-bits))])
     (define-inline 3 ftype-pointer-null?
       [(e-fptr) (make-ftype-pointer-null? e-fptr)])
     (define-inline 3 ftype-pointer=?
@@ -5501,10 +5522,10 @@
              (build-$record e-ftd
                (list (build-fx+raw e-offset ($extract-fptr-address e-fptr)))))]))
       (define-inline 3 $fptr-fptr-ref
-        [(e-fptr e-offset e-ftd)
+        [(e-fptr e-offset e-fptrtd)
          (let-values ([(e-index imm-offset) (offset-expr->index+offset e-offset)])
            (bind #f (e-index)
-             (build-$record e-ftd
+             (build-$record e-fptrtd
                (list `(inline ,(make-info-load ptr-type #f) ,%load
                         ,($extract-fptr-address e-fptr)
                         ,e-index (immediate ,imm-offset))))))])
@@ -5515,6 +5536,18 @@
              `(inline ,(make-info-load ptr-type #f) ,%store ,e-addr ,e-index (immediate ,imm-offset)
                 (inline ,(make-info-load ptr-type #f) ,%load ,e-val ,%zero
                   ,(%constant record-data-disp)))))])
+      (define-inline 3 $fptr-object-fptr-ref
+        [(e-fptr e-offset e-fptrtd)
+         (let-values ([(e-index imm-offset) (offset-expr->index+offset e-offset)])
+           (bind #f (e-index)
+             (bind #t ([val `(inline ,(make-info-load ptr-type #f) ,%load
+                               ,($extract-fptr-address e-fptr)
+                               ,e-index (immediate ,imm-offset))])
+               `(if ,(%inline eq? ,val (immediate 0))
+                    (literal ,(make-info-literal #f 'object ($fptr-null-pointer) 0))
+                    ,(build-$record e-fptrtd
+                       (list val
+                             `(immediate ,(constant reference-disp))))))))])
       (let ()
         (define $do-fptr-ref-inline
           (lambda (swapped? type e-fptr e-offset)

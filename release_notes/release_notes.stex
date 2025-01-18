@@ -127,6 +127,43 @@ The \scheme{fx-/wraparound} function changed to accept a single
 argument, which makes it more consistent with the R6RS \scheme{fx-}
 function.
 
+\subsection{Foreign pointers to Scheme objects (10.2.0)}
+
+The \scheme{make-ftype-scheme-object-pointer} function facilitates a
+unified view of foreign-allocated addresses and addresses that are
+under control of the memory manager---especially addresses for
+bytevector and flvector content. Unlike extracting an address via
+\scheme{object->reference-address} and using it to construct a regular
+ftype pointer, the \scheme{make-ftype-scheme-object-pointer} function
+creates an ftype pointer that cooperates with the memory manager to
+ensure that the encapsulated address does not go stale. When the
+pointer is passed in a call to a foreign function, its address can be
+extracted after the point where garbage collections can occur,
+assuming that \scheme{__collect_safe} is not used.
+
+To make this unified pointer representation at the ftype pointer layer
+(\scheme{ftype-ref}, \scheme{ftype-set!}, etc.) as flexible as the raw
+address layer (\scheme{foreign-ref}, \scheme{foreign-set!}, etc.), new
+forms such as \scheme{ftype-any-ref} use generic pointers independent
+of the pointer's ftype. This flexibility comes at the cost of
+consistency checking, which means that the new operations are less
+safe than operations that are sensitive to a pointer's ftype.
+
+Additions:
+
+\schemedisplay
+make-ftype-scheme-object-pointer
+ftype-scheme-object-pointer?
+ftype-scheme-object-pointer-object
+ftype-scheme-object-pointer-offset
+ftype-any-ref
+ftype-any-set!
+ftype-pointer               ; as \var{ftype-name}
+ftype-scheme-object-pointer ; as \var{ftype-name}
+(& \var{ftype-name} ftype-pointer) ; as call argument or result
+(& \var{ftype-name} ftype-scheme-object-pointer) ; as argument/result
+\endschemedisplay
+
 \subsection{Constrain signal delivery to the main thread (10.1.0)}
 
 Signals are now always delivered to the main Scheme thread to avoid crashes when a signal

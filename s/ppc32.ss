@@ -2185,17 +2185,17 @@
     (define fp-result-regs (lambda () (list %Cfpretval)))
     (define (indirect-result-that-fits-in-registers? result-type)
       (nanopass-case (Ltype Type) result-type
-        [(fp-ftd& ,ftd) (not ($ftd-compound? ftd))]
+        [(fp-ftd& ,ftd ,fptd) (not ($ftd-compound? ftd))]
         [else #f]))
     (define (indirect-result-to-pointer result-type arg-type*)
       (constant-case machine-type-name
         [(ppc32osx tppc32osx)
          (nanopass-case (Ltype Type) result-type
-           [(fp-ftd& ,ftd) (if ($ftd-compound? ftd)
-                               (cons (with-output-language (Ltype Type)
-                                       `(fp-integer 32))
-                                     (cdr arg-type*))
-                               arg-type*)]
+           [(fp-ftd& ,ftd ,fptd) (if ($ftd-compound? ftd)
+                                     (cons (with-output-language (Ltype Type)
+                                             `(fp-integer 32))
+                                           (cdr arg-type*))
+                                     arg-type*)]
            [else arg-type*])]
         [else arg-type*]))
 
@@ -2520,7 +2520,7 @@
                                 (cons (load-single-reg+int-regs (car flt*) (car int*) (cadr int*) isp indirect?) locs)
                                 (cons* (car int*) (cadr int*) live*) (cdr (cdr int*)) (cdr flt*) (fx+ isp 8) (fx+ fp-live-count 1)
                                 #f)])]
-                       [(fp-ftd& ,ftd)
+                       [(fp-ftd& ,ftd ,fptd)
                         (let ([members ($ftd->members ftd)])
                           (cond
                            [(or (not (and (pair? members)
@@ -2680,7 +2680,7 @@
                                       (cons (load-single-reg (car flt*) fp-disp) locs)
                                       live* int* (cdr flt*) isp (fx+ fp-live-count 1)
                                       #f)))]
-                       [(fp-ftd& ,ftd)
+                       [(fp-ftd& ,ftd ,fptd)
                         (cond
                           [($ftd-compound? ftd)
                            ;; pass as pointer
@@ -2780,7 +2780,7 @@
                   [(fp-single-float) (handle-32-bit)]
                   [(fp-integer ,bits) (handle-integer-cases bits)]
                   [(fp-integer ,bits) (handle-integer-cases bits)]
-                  [(fp-ftd& ,ftd) (handle-ftd&-case ftd)]
+                  [(fp-ftd& ,ftd ,fptd) (handle-ftd&-case ftd)]
                   [else (values (reg-list %Cretval) 0 (lambda (e) e))]))
               (let ()
                 (define handle-integer-cases
@@ -2809,7 +2809,7 @@
                   [(fp-single-float) (values (reg-list) 1 (lambda (e) e))]
                   [(fp-integer ,bits) (handle-integer-cases bits)]
                   [(fp-unsigned ,bits) (handle-integer-cases bits)]
-                  [(fp-ftd& ,ftd) (handle-ftd&-case ftd)]
+                  [(fp-ftd& ,ftd ,fptd) (handle-ftd&-case ftd)]
                   [else (values (reg-list %Cretval) 0 (lambda (e) e))]))))
         (define do-indirect-result-from-registers
           (lambda (ftd offset)
@@ -3187,7 +3187,7 @@
                                             (fx+ stack-arg-offset size)
                                             next-varargs-after)])))]
                            [(nanopass-case (Ltype Type) (car types)
-                              [(fp-ftd& ,ftd) ftd]
+                              [(fp-ftd& ,ftd ,fptd) ftd]
                               [else #f])
                             =>
                             (lambda (ftd)
@@ -3295,7 +3295,7 @@
                           (f (cdr types)
                              (fxmin gp-reg-count (fx+ iint 1))
                              (fxmin fp-reg-count (fx+ iflt 1)))]
-                         [(fp-ftd& ,ftd)
+                         [(fp-ftd& ,ftd ,fptd)
                           (let ([words (fxsra (align 4 ($ftd-size ftd)) 2)]
                                 [members ($ftd->members ftd)])
                             (cond
@@ -3385,11 +3385,11 @@
                                    (cons (load-soft-single-stack stack-arg-offset) locs)
                                    iint iflt int-reg-offset float-reg-offset (fx+ stack-arg-offset 4)))]
                         [(nanopass-case (Ltype Type) (car types)
-                                        [(fp-ftd& ,ftd) (not ($ftd-compound? ftd))]
+                                        [(fp-ftd& ,ftd ,fptd) (not ($ftd-compound? ftd))]
                                         [else #f])
                          ;; load pointer to address on the stack
                          (let ([ftd (nanopass-case (Ltype Type) (car types)
-                                                   [(fp-ftd& ,ftd) ftd])])
+                                                   [(fp-ftd& ,ftd ,fptd) ftd])])
                            (case (and (not (constant software-floating-point))
                                       ($ftd-atomic-category ftd))
                              [(float)
@@ -3458,14 +3458,14 @@
                               (nanopass-case (Ltype Type) (car types)
                                 [(fp-double-float) #t]
                                 [(fp-single-float) #t]
-                                [(fp-ftd& ,ftd) (eq? 'float ($ftd-atomic-category ftd))]
+                                [(fp-ftd& ,ftd ,fptd) (eq? 'float ($ftd-atomic-category ftd))]
                                 [else #f]))
                          (f (cdr types) iint (if (fx< iflt fp-reg-count) (fx+ iflt 1) iflt))]
                         [(or (nanopass-case (Ltype Type) (car types)
                                [(fp-integer ,bits) (fx= bits 64)]
                                [(fp-unsigned ,bits) (fx= bits 64)]
-                               [(fp-ftd& ,ftd) (and (not ($ftd-compound? ftd))
-                                                    (fx= 8 ($ftd-size ftd)))]
+                               [(fp-ftd& ,ftd ,fptd) (and (not ($ftd-compound? ftd))
+                                                          (fx= 8 ($ftd-size ftd)))]
                                [else #f])
                              (and (constant software-floating-point)
                                   (nanopass-case (Ltype Type) (car types)
@@ -3517,7 +3517,7 @@
           (define do-result
             (lambda (result-type return-space-offset int-reg-offset)
               (nanopass-case (Ltype Type) result-type
-                [(fp-ftd& ,ftd)
+                [(fp-ftd& ,ftd ,fptd)
                  (case ($ftd-atomic-category ftd)
                    [(float)
                     (values

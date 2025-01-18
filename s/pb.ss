@@ -1595,7 +1595,7 @@
 
     (define (is-result-as-arg? info)
       (nanopass-case (Ltype Type) (info-foreign-result-type info)
-        [(fp-ftd& ,ftd) #t]
+        [(fp-ftd& ,ftd ,fptd) #t]
         [else #f]))
 
     (define (adjust-active? info)
@@ -1715,7 +1715,7 @@
                                    locs)
                              (cons (constant ffi-typerep-float) encs)
                              (fx+ off 8))]
-                      [(fp-ftd& ,ftd)
+                      [(fp-ftd& ,ftd ,fptd)
                        (loop types
                              (cons (if in?
                                        (load-int off)
@@ -1803,7 +1803,7 @@
                                      (cons (load-double-reg (car fp*)) locs)
                                      (cons (car fp*) live*)
                                      int* (cdr fp*))]
-                              [(fp-ftd& ,ftd)
+                              [(fp-ftd& ,ftd ,fptd)
                                (sorry! who "indirect arguments not supported")]
                               [else
                                (when (null? int*) (sorry! who "too many integer/pointer arguments: ~s" (length in-types)))
@@ -1830,7 +1830,7 @@
                        (values (lambda (lvalue) ; unboxed
                                  `(set! ,lvalue ,(%inline single->double ,%Cfpretval)))
                                (list %Cfpretval))]
-                      [(fp-ftd& ,ftd)
+                      [(fp-ftd& ,ftd ,fptd)
                        (sorry! who "unhandled result type ~s" type)]
                       [else
                        (when (64-bit-type-on-32-bit? type)
@@ -1871,7 +1871,7 @@
                                      [(fp-scheme-object) 'uptr]
                                      [(fp-fixnum) 'uptr]
                                      [(fp-u8*) 'void*]
-                                     [(fp-ftd ,ftd) 'void*]
+                                     [(fp-fptd ,fptd) 'void*]
                                      [(fp-void) 'void]
                                      [else (if (eq? (subset-mode) 'system)
                                                (sorry! who "unhandled type in prototype ~s" type)

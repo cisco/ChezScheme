@@ -2473,12 +2473,12 @@
 
     (define (classify-type type)
       (nanopass-case (Ltype Type) type
-        [(fp-ftd& ,ftd) (classify-eightbytes ftd)]
+        [(fp-ftd& ,ftd ,fptd) (classify-eightbytes ftd)]
         [else #f]))
 
     (define (classified-size type)
       (nanopass-case (Ltype Type) type
-        [(fp-ftd& ,ftd) ($ftd-size ftd)]
+        [(fp-ftd& ,ftd ,fptd) ($ftd-size ftd)]
         [else #f]))
 
     ;; classify-eightbytes: returns '(memory) or a nonemtpy list of 'integer/'sse
@@ -2740,7 +2740,7 @@
                                    (loop (cdr types)
                                      (cons (load-single-stack isp) locs)
                                      regs fp-regs i (fx+ isp 8)))]
-                              [(fp-ftd& ,ftd)
+                              [(fp-ftd& ,ftd ,fptd)
                                (cond
                                 [(memv ($ftd-size ftd) '(1 2 4 8))
                                  ;; pass as value in register or as value on the stack
@@ -2808,7 +2808,7 @@
                                    (loop (cdr types)
                                      (cons (load-single-stack isp) locs)
                                      regs fp-regs iint ifp (fx+ isp 8)))]
-                              [(fp-ftd& ,ftd)
+                              [(fp-ftd& ,ftd ,fptd)
                                (let* ([classes (classify-eightbytes ftd)]
                                       [ints (count 'integer classes)]
                                       [fps (count 'sse classes)])
@@ -3116,7 +3116,7 @@ incoming           |   incoming return address | one quad
                                ,(%inline store-single ,(%mref ,%sp ,%zero ,isp fp) ,(vector-ref vfp i))
                                ,(f (cdr types) (fx+ i 1) (fx+ isp 8)))
                              (f (cdr types) i isp))]
-                        [(fp-ftd& ,ftd)
+                        [(fp-ftd& ,ftd ,fptd)
                          (cond
                           [(memv ($ftd-size ftd) '(1 2 4 8))
                            ;; receive as value in register or on the stack
@@ -3171,7 +3171,7 @@ incoming           |   incoming return address | one quad
                                ,(%inline store-single ,(%mref ,%sp ,%zero ,isp fp) ,(vector-ref vfp ifp))
                                ,(f (cdr types) iint (fx+ ifp 1) (fx+ isp 8)))
                              (f (cdr types) iint ifp isp))]
-                        [(fp-ftd& ,ftd)
+                        [(fp-ftd& ,ftd ,fptd)
                          (let* ([classes (classify-eightbytes ftd)]
                                 [ints (count 'integer classes)]
                                 [fps (count 'sse classes)])
@@ -3212,7 +3212,7 @@ incoming           |   incoming return address | one quad
                            (nanopass-case (Ltype Type) (car types)
                              [(fp-double-float) (load-double-stack isp)]
                              [(fp-single-float) (load-single-stack isp)]
-                             [(fp-ftd& ,ftd)
+                             [(fp-ftd& ,ftd ,fptd)
                               (cond
                                [(memq ($ftd-size ftd) '(1 2 4 8))
                                 ;; passed by value
@@ -3248,7 +3248,7 @@ incoming           |   incoming return address | one quad
                              (f (cdr types)
                                (cons (load-single-stack risp) locs)
                                iint (fx+ ifp 1) (fx+ risp 8) sisp))]
-                        [(fp-ftd& ,ftd)
+                        [(fp-ftd& ,ftd ,fptd)
                          (let* ([classes (classify-eightbytes ftd)]
                                 [ints (count 'integer classes)]
                                 [fps (count 'sse classes)])
@@ -3275,7 +3275,7 @@ incoming           |   incoming return address | one quad
                                (fx+ iint 1) ifp (fx+ risp 8) sisp))]))))))
           (define (do-result result-type result-classes adjust-active?)
             (nanopass-case (Ltype Type) result-type
-              [(fp-ftd& ,ftd)
+              [(fp-ftd& ,ftd ,fptd)
                (cond
                 [(result-fits-in-registers? result-classes)
                  ;; Copy content of result area on stack into

@@ -1794,7 +1794,7 @@
                 (nanopass-case (Ltype Type) (car types)
                   [(fp-double-float) (fp-arg)]
                   [(fp-single-float) (fp-arg)]
-                  [(fp-ftd& ,ftd)
+                  [(fp-ftd& ,ftd ,fptd)
                    ;; A non-union with one floating-point member is treated
                    ;;  like that member by itself.
                    ;; A non-union that has exactly two members, at least one as
@@ -1895,7 +1895,7 @@
 
     (define (result-via-pointer-argument? type)
       (nanopass-case (Ltype Type) type
-        [(fp-ftd& ,ftd) (> ($ftd-size ftd) 16)]
+        [(fp-ftd& ,ftd ,fptd) (> ($ftd-size ftd) 16)]
         [else #f]))
 
     ;; result only meaningful if not `(result-via-pointer-argument? type)`
@@ -2054,7 +2054,7 @@
                                    [(fp) (use-fp-reg (load-single-reg reg))]
                                    [(int) (use-int-reg (load-single-into-int-reg reg))]
                                    [else (use-stack (load-single-stack isp))])]
-                                [(fp-ftd& ,ftd)
+                                [(fp-ftd& ,ftd ,fptd)
                                  (case (cat-place cat)
                                    [(fp)
                                     ;; must be 1 register
@@ -2170,7 +2170,7 @@
                    [arg-type* (info-foreign-arg-type* info)]
                    [result-type (info-foreign-result-type info)]
                    [ftd-result? (nanopass-case (Ltype Type) result-type
-                                  [(fp-ftd& ,ftd) #t]
+                                  [(fp-ftd& ,ftd ,fptd) #t]
                                   [else #f])]
                    [pass-result-ptr? (result-via-pointer-argument? result-type)]
                    [arg-type* (if (and ftd-result?
@@ -2322,7 +2322,7 @@
                            (case (cat-place cat)
                              [(fp int) (use-reg (load-single-stack reg-offset))]
                              [else (use-stack (load-single-stack stack-arg-offset))])]
-                          [(fp-ftd& ,ftd)
+                          [(fp-ftd& ,ftd ,fptd)
                            (cond
                              [(cat-by-reference cat)
                               ;; register or stack contains pointer to data; we
@@ -2386,7 +2386,7 @@
                      `(set! ,(car regs) ,(%inline double->single ,(%mref ,rhs ,%zero ,(constant flonum-data-disp) fp))))]
                   [(fp-void)
                    (lambda () `(nop))]
-                  [(fp-ftd& ,ftd)
+                  [(fp-ftd& ,ftd ,fptd)
                    (cond
                      [(not synthesize-first?)
                       ;; we passed the pointer to be filled, so nothing more to do here
@@ -2437,7 +2437,7 @@
                                         '()
                                         (cat-regs result-cat))]
                        [ftd-result? (nanopass-case (Ltype Type) result-type
-                                      [(fp-ftd& ,ftd) #t]
+                                      [(fp-ftd& ,ftd ,fptd) #t]
                                       [else #f])]
                        [synthesize-first? (and ftd-result?
                                                (not pass-result-ptr?))]

@@ -133,7 +133,7 @@
   (define ctrtd-opaque-known #b0000001)
   (define ctrtd-sealed-known #b0000010)
 
-  (define base-ctrtd ($make-record-type #!base-rtd #!base-rtd "ctrtd" '((immutable flags)) #t #f))
+  (define base-ctrtd ($make-record-type #!base-rtd #!base-rtd "ctrtd" '((immutable flags)) #t #f #f))
   (define ctrtd? (record-predicate base-ctrtd))
   (define ctrtd-flags (record-accessor base-ctrtd 0))
 
@@ -3477,8 +3477,12 @@
                          (values #f ctrtd-opaque-known)
                          (values #f 0)))]
                 [else (values #f 0)])))
+        (define (get-alt-pm x)
+          (nanopass-case (Lsrc Expr) (if x (result-exp (value-visit-operand! x)) false-rec)
+            [(quote ,d) d]
+            [else #f]))
         (let ()
-          (define (mrt ?parent ?name ?fields maybe-?sealed maybe-?opaque ctxt level prim primname opnd*)
+          (define (mrt ?parent ?name ?fields maybe-?sealed maybe-?opaque maybe-?alt-pm ctxt level prim primname opnd*)
             (or (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?name))
                   [(quote ,d)
                    (and (gensym? d)
@@ -3495,11 +3499,12 @@
                     (get-fields ?fields
                       (lambda (fields)
                         (let-values ([(sealed? sealed-flag) (get-sealed maybe-?sealed)]
-                                     [(opaque? opaque-flag) (get-opaque maybe-?opaque prtd)])
+                                     [(opaque? opaque-flag) (get-opaque maybe-?opaque prtd)]
+                                     [(alt-pm) (get-alt-pm maybe-?alt-pm)])
                           (cond
                             [(guard (c [#t #f])
                                ($make-record-type base-ctrtd prtd "tmp" fields
-                                 sealed? opaque? (fxlogor sealed-flag opaque-flag))) =>
+                                  sealed? opaque? alt-pm (fxlogor sealed-flag opaque-flag))) =>
                              (lambda (ctrtd)
                                (residualize-seq opnd* '() ctxt)
                                `(record-type ,ctrtd
@@ -3509,16 +3514,16 @@
 
           (define-inline 2 make-record-type
             [(?name ?fields)
-             (mrt #f ?name ?fields #f #f ctxt level make-record-type 'make-record-type
+             (mrt #f ?name ?fields #f #f #f ctxt level make-record-type 'make-record-type
                (list ?name ?fields))]
             [(?parent ?name ?fields)
-             (mrt ?parent ?name ?fields #f #f ctxt level make-record-type 'make-record-type
+             (mrt ?parent ?name ?fields #f #f #f ctxt level make-record-type 'make-record-type
                (list ?parent ?name ?fields))])
 
           (define-inline 2 $make-record-type
-            [(?base-id ?parent ?name ?fields ?sealed ?opaque . ?extras)
-             (mrt ?parent ?name ?fields ?sealed ?opaque ctxt level $make-record-type '$make-record-type
-               (list* ?base-id ?parent ?name ?fields ?sealed ?opaque ?extras))]))
+            [(?base-id ?parent ?name ?fields ?sealed ?opaque ?alt-pm . ?extras)
+             (mrt ?parent ?name ?fields ?sealed ?opaque ?alt-pm ctxt level $make-record-type '$make-record-type
+               (list* ?base-id ?parent ?name ?fields ?sealed ?opaque ?alt-pm ?extras))]))
         (let ()
           (define (mrtd ?parent ?uid ?fields ?sealed ?opaque ctxt level prim primname opnd*)
             (or (nanopass-case (Lsrc Expr) (result-exp (value-visit-operand! ?uid))

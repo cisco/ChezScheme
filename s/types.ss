@@ -103,7 +103,7 @@
                      (let ([rtd ($make-record-type #!base-rtd #f
                                   '#{profile-counter b5vnnom9h4o4uny0-2}
                                   '((mutable uptr count))
-                                  #t #f)])
+                                  #t #f #f)])
                        #`(begin
                            (define make-profile-counter (record-constructor '#,rtd))
                            (define profile-counter? (record-predicate '#,rtd))
