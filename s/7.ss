@@ -1,12 +1,12 @@
 ;;; 7.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -466,7 +466,7 @@
     (define-record-type (sstats make-sstats sstats?)
       (nongenerative #{sstats pfwch3jd8ts96giujpitoverj-0})
       (sealed #t)
-      (fields 
+      (fields
         (mutable cpu sstats-cpu set-sstats-cpu!)
         (mutable real sstats-real set-sstats-real!)
         (mutable bytes sstats-bytes set-sstats-bytes!)
@@ -479,7 +479,7 @@
           (lambda (cpu real bytes gc-count gc-cpu gc-real gc-bytes)
             (new cpu real bytes gc-count gc-cpu gc-real gc-bytes))))))
   (define exact-integer? (lambda (x) (and (integer? x) (exact? x))))
-  (set-who! make-sstats 
+  (set-who! make-sstats
     (lambda (cpu real bytes gc-count gc-cpu gc-real gc-bytes)
       (define verify-time
         (lambda (name x)
@@ -616,29 +616,26 @@
      (unless (and (real? v) (not (negative? v)))
        ($oops 'collect-maximum-generation-threshold-factor "~s is not a nonnegative real" v))
      v)))
-  
+
 (define $reset-protect
   (lambda (body out)
-    ((call/cc
-       (lambda (k)
-         (parameterize ([reset-handler
+    (call/cc
+      (lambda (k)
+        (parameterize ([reset-handler
                          (lambda ()
-                           (k (lambda ()
-                                (out)
-                                ((reset-handler)))))])
-           (with-exception-handler
-             (lambda (c)
-              ; would prefer not to burn bridges even for serious condition
-              ; if the exception is continuable, but we have no way to know
-              ; short of grubbing through the continuation
-               (if (serious-condition? c)
-                   (k (lambda () (out) (raise c)))
-                   (raise-continuable c)))
-             (lambda ()
-               (call-with-values body
-                 (case-lambda
-                   [(v) (lambda () v)]
-                   [v* (lambda () (apply values v*))]))))))))))
+                           (call-in-continuation k
+                             (lambda ()
+                               (out)
+                               ((reset-handler)))))])
+          (with-exception-handler
+              (lambda (c)
+               ; would prefer not to burn bridges even for serious condition
+               ; if the exception is continuable, but we have no way to know
+               ; short of grubbing through the continuation
+                (if (serious-condition? c)
+                    (call-in-continuation k (lambda () (out) (raise c)))
+                    (raise-continuable c)))
+            body))))))
 
 (define exit-handler)
 (define reset-handler)
@@ -890,7 +887,7 @@
         (docollect
           (lambda (gct prev-allocated-after-max)
             (let ([max-gen? (fx= g (collect-maximum-generation))])
-              (values 
+              (values
                ; make gc-trip to look like we've just collected generation g
                ; w/o also having collected generation g+1
                (if max-gen?
@@ -1288,7 +1285,7 @@
                  (condition-wait $collect-cond $tc-mutex)
                  (f)]))))
         (critical-section
-          (dynamic-wind 
+          (dynamic-wind
             once
             (collect-request-handler)
             (lambda () (set! $collect-request-pending #f))))))))
@@ -1467,7 +1464,7 @@
   (define-record-type pass-stats
     (nongenerative)
     (sealed #t)
-    (fields 
+    (fields
       (mutable calls)
       (mutable cpu)
       (mutable gc-cpu)
@@ -1489,7 +1486,7 @@
       (set! stats-ht (make-eq-hashtable))))
 
   (set! $enable-pass-timing (make-parameter #f))
-  
+
   (set-who! $pass-time
     (lambda (name thunk)
       (unless (symbol? name) ($oops who "~s is not a symbol" name))
@@ -1539,8 +1536,8 @@
       (define (build-result namev psv)
         (vector->list
           (vector-map
-            (lambda (name ps) 
-              (list name 
+            (lambda (name ps)
+              (list name
                 (pass-stats-calls ps)
                 (pass-stats-cpu ps)
                 (pass-stats-gc-cpu ps)
