@@ -1,12 +1,12 @@
 ;;; read.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -932,13 +932,19 @@
     (state-case c
       [eof (with-unread-char c
              (state-return atomic (xcall rd-make-number-or-symbol i)))]
-      [((#\0 - #\9) (#\a - #\z) #\- #\+ #\. #\/ #\@ #\# #\|)
+      [((#\0 - #\9) (#\a - #\z) #\- #\+ #\. #\/ #\@ #\|)
        (with-stretch-buffer i c
          (*state rd-token-number-or-symbol (fx+ i 1)))]
       [((#\A - #\Z))
        (with-stretch-buffer i c
          (*state rd-token-number-or-symbol (fx+ i 1)))]
-      [(#\space #\( #\) #\[ #\] #\" #\; #\#)
+      [(#\#)
+       (if ($port-flags-set? (rcb-ip rcb) (constant port-flag-r6rs))
+           (with-unread-char c
+             (state-return atomic (xcall rd-make-number-or-symbol i)))
+           (with-stretch-buffer i c
+             (*state rd-token-number-or-symbol (fx+ i 1))))]
+      [(#\space #\( #\) #\[ #\] #\" #\;)
        (with-unread-char c
          (state-return atomic (xcall rd-make-number-or-symbol i)))]
       [char-whitespace?

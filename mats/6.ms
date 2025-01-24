@@ -1,12 +1,12 @@
 ;;; 6.ms
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,7 +78,7 @@
    ; and write-char---and builds testfile.ss for the next test
    (equal? (call-with-values
              (lambda ()
-               (with-output-to-file "testfile.ss" 
+               (with-output-to-file "testfile.ss"
                  (lambda ()
                    (for-each (lambda (c) (write-char c))
                              (string->list "a b c d e"))
@@ -103,7 +103,7 @@
    ; and write-char---and builds testfile.ss for the next test
    (equal? (call-with-values
              (lambda ()
-               (call-with-output-file "testfile.ss" 
+               (call-with-output-file "testfile.ss"
                  (lambda (p)
                    (for-each (lambda (c) (write-char c p))
                              (string->list "a b c d e"))
@@ -1016,7 +1016,7 @@
   (error? (fasl-write 'any (let-values ([(o get) (open-bytevector-output-port)]) o) 10))
   (error? (fasl-read (open-bytevector-input-port #vu8()) 'load #f))
   (error? (fasl-read (open-bytevector-input-port #vu8()) 'load 10))
-  
+
   (let-values ([(o get) (open-bytevector-output-port)])
     (fasl-write '(apple (banana cream pie) (vector coconut banana cream)) o (lambda (v)
                                                                               (or (eq? v 'banana)
@@ -1718,6 +1718,11 @@
   (error? (read (open-input-string "\"ab\\xg\"")))
   (equal? (format "~s" "\bab\nc\f\rd\t\v\a") "\"\\bab\\nc\\f\\rd\\t\\v\\a\"")
  )
+
+(mat r6rs
+  (equal? '(3 #f) (let ([ip (open-input-string "#!r6rs 3#f")])
+                    (let* ([x (read ip)] [y (read ip)])
+                      (list x y)))))
 
 (mat read-token
   (let ([ip (open-input-string "(cons 33 #;hello \"rot\")")])
@@ -2816,12 +2821,12 @@
       (load "fatfib.ss" compile))
     (procedure? fatfib))
   (equal? ((inspect/object fatfib) 'type) 'procedure)
-  (equal? 
+  (equal?
     (call-with-values
       (lambda () (((inspect/object fatfib) 'code) 'source-path))
       list)
     (list (format "../examples~afatfib.ss" (directory-separator)) 16 4))
-  (equal? 
+  (equal?
     (parameterize ([source-directories '("." "../examples")])
       (call-with-values
         (lambda () (((inspect/object fatfib) 'code) 'source-path))
