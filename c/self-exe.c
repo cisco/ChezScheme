@@ -74,6 +74,7 @@ static char *wide_to_utf8(const wchar_t *arg) {
 static char *get_process_executable_path(const char *exec_file) {
   wchar_t *path = NULL;
   DWORD n, sz;
+  (void)exec_file;
   for (n = 0, sz = 256;; sz *= 2) {
     path = (wchar_t *)malloc(sz * sizeof(wchar_t));
     if (path == NULL) {
