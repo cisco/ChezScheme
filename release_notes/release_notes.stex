@@ -2826,6 +2826,13 @@ correctly when expressions are evaluated in the various continuations
 specified by the \scheme{guard} form.  Necessary fixes to uses of
 \scheme{call-in-continuation} have been applied in the implementation.
 
+\subsection{Treat \scheme{#} as a delimiter when reading numbers in R$^6$RS mode}
+
+A bug in the reader didn't treat the character \scheme{#} as a
+delimiter when reading numbers. In R$^6$RS, a string like
+\scheme{"3#f"} has to be read as two tokens, \scheme{3} and
+\scheme{#f}.
+
 \subsection{Fix \scheme{fx-/wraparound} with \scheme{0} first argument (10.2.0)}
 
 When \scheme{fx-/wraparound} was called with \scheme{0} as its first
