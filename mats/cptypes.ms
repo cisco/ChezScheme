@@ -893,6 +893,11 @@
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (#2%exact? x))
          '(lambda (x) (#3%exact? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (add1 x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%$fxx+ x 1))))
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (when (fixnum? x)
                         (fixnum? (add1 x))))
@@ -909,10 +914,20 @@
     '(lambda (x) (when (flonum? x)
                    (#3%fl+ x 1.0))))
   (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (1+ x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%$fxx+ x 1))))
+  (cptypes-equivalent-expansion?
     '(lambda (x) (when (flonum? x)
                    (1+ x)))
     '(lambda (x) (when (flonum? x)
                    (#3%fl+ x 1.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (sub1 x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%$fxx+ x -1))))
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (when (fixnum? x)
                         (fixnum? (sub1 x))))
@@ -929,10 +944,20 @@
     '(lambda (x) (when (flonum? x)
                    (#3%fl- x 1.0))))
   (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (1- x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%$fxx+ x -1))))
+  (cptypes-equivalent-expansion?
     '(lambda (x) (when (flonum? x)
                    (1- x)))
     '(lambda (x) (when (flonum? x)
                    (#3%fl- x 1.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (-1+ x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%$fxx+ x -1))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (flonum? x)
                    (-1+ x)))

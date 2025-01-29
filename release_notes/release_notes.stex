@@ -118,7 +118,8 @@ Online versions of both books can be found at
 
 \subsection{Type recovery improvements (10.2.0)}
 
-The type recovery pass has improved support for \scheme{abs} with a fixnum argument
+The type recovery pass has improved support for \scheme{abs},
+\scheme{add1} and \scheme{sub1}  with a fixnum argument
 and added support for \scheme{1+}, \scheme{1-}, and \scheme{-1+}.
 
 \subsection{Single-argument \scheme{fx-/wraparound} (10.2.0)}
