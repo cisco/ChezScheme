@@ -1,12 +1,12 @@
 ;;; 5-7.ms
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -153,3 +153,41 @@
                 (equal? "hello" (symbol->string (car r)))))))
 
      )
+
+(mat generate-symbol
+  (symbol? (generate-symbol))
+  (symbol? (generate-symbol "pretty"))
+  (symbol? (let ([x (generate-symbol)])
+             (symbol->string x)         ; intern
+             x))
+  (symbol? (let ([x (generate-symbol "pretty")])
+             (symbol->string x)         ; intern
+             x))
+  (not (uninterned-symbol? (generate-symbol)))
+  (not (uninterned-symbol? (generate-symbol "beautiful")))
+  (not (uninterned-symbol? (let ([x (generate-symbol)])
+                  (symbol->string x)      ; intern
+                  x)))
+  (not (uninterned-symbol? (let ([x (generate-symbol "beautiful")])
+                  (symbol->string x)      ; intern
+                  x)))
+  (not (gensym? (generate-symbol)))
+  (not (gensym? (generate-symbol "handsome")))
+  (not (gensym? (let ([x (generate-symbol)])
+                  (symbol->string x)      ; intern
+                  x)))
+  (not (gensym? (let ([x (generate-symbol "handsome")])
+                  (symbol->string x)      ; intern
+                  x)))
+  (let ([s (generate-symbol)])
+    (symbol=? s s))
+  (let ([s1 (generate-symbol)] [s2 (generate-symbol)])
+    (not (symbol=? s1 s2)))
+  (let ([s1 (generate-symbol "g1")] [s2 (generate-symbol "g1")])
+    (not (symbol=? s1 s2)))
+  (let ([s1 (generate-symbol "g1")] [s2 'g1])
+    (not (symbol=? s1 s2)))
+  (let ([s (generate-symbol "g1")])
+    (not (string=? (symbol->string s) "g1")))
+  (let ([s (generate-symbol)])          ;FIXME
+    (symbol=? (string->symbol (symbol->string s)) s)))
