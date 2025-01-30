@@ -1,12 +1,12 @@
 ;;; cp0.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -231,7 +231,7 @@
                            (if (null? old-ids)
                                (reverse rnew-ids)
                                (loop
-                                 (cdr old-ids) 
+                                 (cdr old-ids)
                                  (and opnds (cdr opnds))
                                  (cons
                                    (let ([old-id (car old-ids)]
@@ -250,7 +250,7 @@
                                        id))
                                    rnew-ids))))])
             (values (make-env (list->vector old-ids) (list->vector new-ids) old-env) new-ids))))
-      
+
       (define deinitialize-ids!
         (lambda (ids)
           ; clear operand field (a) to release storage the operands occupy and (b) to
@@ -749,7 +749,12 @@
 
     (define (symbol->lambda-name sym)
       (let ([x ($symbol-name sym)])
-        (if (pair? x) (or (cdr x) (car x)) x)))
+        (if (pair? x)
+            (if (eq? #t (cdr x))
+                (car x)
+                (or (cdr x) (car x)))
+            (and (not (eq? x #t))
+                 x))))
 
     (define (preinfo-lambda-set-name-and-flags preinfo name flags)
       (let ([new-name (and
@@ -1231,7 +1236,7 @@
               [(case-lambda ,preinfo ,cl* ...) #t]
               [(if ,e1 ,e2 ,e3) (memoize (and (ivory1? e1) (ivory? e2) (ivory? e3)))]
               [(seq ,e1 ,e2) (memoize (and (ivory? e1) (ivory? e2)))]
-              [(record-ref ,rtd ,type ,index ,e) 
+              [(record-ref ,rtd ,type ,index ,e)
                ; here ivory? differs from pure?
                (and (rtd-immutable-field? rtd index)
                     (memoize (ivory1? e)))]
@@ -1728,11 +1733,11 @@
                     ; (let ((x e)) x) => e
                     ; x is clearly not assigned, even if flags are polluted and say it is
                     (make-nontail (app-ctxt ctxt) (car rhs*))]
-                   ; we drop the RHS of a let binding into the let body when the body expression is a call 
+                   ; we drop the RHS of a let binding into the let body when the body expression is a call
                    ; and we can do so without violating evaluation order of bindings wrt the let body:
                    ;  * for pure, singly referenced bindings, we drop them to the variable reference site
                    ;  * for impure, singly referenced bindings, we drop them only into the most deeply
-                   ;    nested call of the let body to ensure the expression is fully evaluated before 
+                   ;    nested call of the let body to ensure the expression is fully evaluated before
                    ;    any body (sub-)expressions
                    ; when we drop an impure let binding, we require the other bindings at the same level
                    ; to be unassigned so the location creation for the other bindings remains in the
@@ -3471,7 +3476,7 @@
               (values #t ctrtd-opaque-known)
               (nanopass-case (Lsrc Expr) (if x (result-exp (value-visit-operand! x)) false-rec)
                 [(quote ,d)
-                 (if d 
+                 (if d
                      (values #t ctrtd-opaque-known)
                      (if (and (not d) (or (not prtd) (and (record-type-opaque-known? prtd) (not (record-type-opaque? prtd)))))
                          (values #f ctrtd-opaque-known)
@@ -4509,7 +4514,7 @@
                            (let ([main
                                   (let f ([t** temp**] [e** (reverse e**)] [ls* (cons ?ls ?ls*)])
                                     (if (null? t**)
-                                        (let ([results 
+                                        (let ([results
                                                (let ([preinfo (app-preinfo ctxt)])
                                                  (let g ([t** temp**])
                                                    (if (null? (car t**))
@@ -4526,7 +4531,7 @@
                                                   (make-seq* (app-ctxt ctxt) results))))
                                         (non-result-exp (value-visit-operand! (car ls*))
                                           (build-let (car t**) (car e**)
-                                            (f (cdr t**) (cdr e**) (cdr ls*))))))]) 
+                                            (f (cdr t**) (cdr e**) (cdr ls*))))))])
                              (if (fx= lvl 2)
                                (make-seq (app-ctxt ctxt)
                                  `(if ,(build-primcall 2 'procedure? (list `(ref #f ,p)))
@@ -5377,7 +5382,7 @@
           (inline-make-guardian ctxt empty-env sc wd name moi
                 formal*
                 (lambda (ref-tc)
-                  (list 
+                  (list
                     (let* ([obj (cp0-make-temp #t)] [ref-obj (build-ref obj)])
                       (list (list obj)
                         (build-primcall 3 '$install-guardian
@@ -5386,7 +5391,7 @@
                       (list (list obj rep)
                         (build-primcall 3 '$install-guardian
                           (list (build-ref obj) (build-ref rep) ref-tc ordered?-bool))))))))
-      
+
         (define-inline 2 make-guardian
           [() (build-make-guardian '() false-rec ctxt empty-env sc wd name moi)]
           [(?ordered?)
