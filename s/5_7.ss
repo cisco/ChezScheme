@@ -84,23 +84,26 @@
 (eval-when (compile) (optimize-level 3))
 
 (let ([prefix "g"] [count 0])
+  (define unique-id (foreign-procedure "(cs)unique_id" () scheme-object))
+  (define make-key
+    (lambda (post*)
+      (define alphabet "abcdefghijklmnopqrstuvwxyz0123456789")
+      (define b (string-length alphabet))
+      (define digit->char (lambda (n) (string-ref alphabet n)))
+      (list->string
+        (let loop ([n (unique-id)] [a post*])
+          (if (< n b)
+                                        ; ensure name starts with letter.  assumes a-z first in alphabet.
+              (if (< n 26)
+                  (cons (digit->char n) a)
+                  (cons* (string-ref alphabet 0) (digit->char n) a))
+              (loop (quotient n b) (cons (digit->char (remainder n b)) a)))))))
   (define generate-unique-name
    ; a-z must come first in alphabet.  separator must not be in alphabet.
     (let ([suffix 0])
-      (define unique-id (foreign-procedure "(cs)unique_id" () scheme-object))
       (define (make-session-key)
-        (define alphabet "abcdefghijklmnopqrstuvwxyz0123456789")
         (define separator #\-)
-        (define b (string-length alphabet))
-        (define digit->char (lambda (n) (string-ref alphabet n)))
-        (list->string
-          (let loop ([n (unique-id)] [a (list separator)])
-            (if (< n b)
-               ; ensure name starts with letter.  assumes a-z first in alphabet.
-                (if (< n 26)
-                    (cons (digit->char n) a)
-                    (cons* (string-ref alphabet 0) (digit->char n) a))
-                (loop (quotient n b) (cons (digit->char (remainder n b)) a))))))
+        (make-key (list separator)))
       (define (session-key)
         (or $session-key
           (let ([k (make-session-key)])
@@ -218,23 +221,20 @@
        ($strings->gensym pretty-name unique-name)]))
   (set! $generated-symbol->name
     (lambda (x)
-      ;; do not generate name within the mutex...
-      (with-tc-mutex
-        (let ([name ($symbol-name x)])
-          (cond
-            [(pair? name)
-             (if (eq? (car name) #t)
-                 (let ([uname (string-append (cdr name) "-" (generate-unique-name))])
-                   ;; FIXME: (generate-unique-name) is not quite right.
-                   ($string-set-immutable! uname)
-                   ($intern-gensym x (cons uname #t))
-                   uname)
-                 (car name))]
-            [else
-              (let ([uname (generate-unique-name)])
-                ($string-set-immutable! uname)
-                ($intern-gensym x (cons uname #t))
-                uname)])))))
+      (let ([key (make-key '())]) ; construct the key outside the critical section
+        (with-tc-mutex
+          (let ([name ($symbol-name x)])
+            (if (pair? name)
+                (if (eq? (car name) #t)
+                    (let ([uname (string-append (cdr name) "-" key)])
+                      ($string-set-immutable! uname)
+                      ($intern-gensym x (cons uname #t))
+                      uname)
+                    (car name))
+                (let ([uname (string-append "g-" key)])
+                  ($string-set-immutable! uname)
+                  ($intern-gensym x (cons uname #t))
+                  uname)))))))
   (set-who! generate-symbol
     (case-lambda
       [() (#3%$generate-symbol)]
