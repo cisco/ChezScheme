@@ -8199,10 +8199,10 @@
            (bind #t ([t (%mref ,e ,(constant symbol-name-disp))])
              `(if ,t
                   ,(build-and (%type-check mask-pair type-pair ,t)
-                     (bind #t ([t2 (%mref ,t ,(constant pair-cdr-disp))])
-                       (build-and t2
+                     (bind #t ([e-cdr (%mref ,t ,(constant pair-cdr-disp))])
+                       (build-and e-cdr
                          (build-and
-                           (build-not (%inline eq? ,t2 ,(%constant strue)))
+                           (build-not (%inline eq? ,e-cdr ,(%constant strue)))
                            (build-not (%inline eq? ,(%mref ,t ,(constant pair-car-disp)) ,(%constant strue)))))))
                   ,(%constant strue)))))])
     (define-inline 2 uninterned-symbol?
@@ -8284,9 +8284,14 @@
          (bind #t ([e-name (%mref ,e-sym ,(constant symbol-name-disp))])
            `(if ,e-name
                 (if ,(%type-check mask-pair type-pair ,e-name)
-                    ,(bind #t ([e-cdr (%mref ,e-name ,(constant pair-cdr-disp))])
+                    ,(bind #t ([e-car (%mref ,e-name ,(constant pair-car-disp))]
+                               [e-cdr (%mref ,e-name ,(constant pair-cdr-disp))])
                        `(if ,e-cdr
-                            ,e-cdr
+                            (if ,(%inline eq? ,e-cdr ,(%constant strue))
+                                ,e-car
+                                (if ,(%inline eq? ,e-car ,(%constant strue))
+                                    ,(%primcall #f sexpr $generated-symbol->name ,e-sym)
+                                    ,e-cdr))
                             ,(%mref ,e-name ,(constant pair-car-disp))))
                     (if ,(%inline eq? ,e-name ,(%constant strue))
                         ,(%primcall #f sexpr $generated-symbol->name ,e-sym)

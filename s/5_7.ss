@@ -218,17 +218,18 @@
        ($strings->gensym pretty-name unique-name)]))
   (set! $generated-symbol->name
     (lambda (x)
+      ;; do not generate name within the mutex...
       (with-tc-mutex
         (let ([name ($symbol-name x)])
           (cond
             [(pair? name)
-             (if (eq? (cdr name) #t)
-                 (car name)
-                 (let ([uname (string-append (car name) "-" (generate-unique-name))])
+             (if (eq? (car name) #t)
+                 (let ([uname (string-append (cdr name) "-" (generate-unique-name))])
                    ;; FIXME: (generate-unique-name) is not quite right.
                    ($string-set-immutable! uname)
                    ($intern-gensym x (cons uname #t))
-                   uname))]
+                   uname)
+                 (car name))]
             [else
               (let ([uname (generate-unique-name)])
                 ($string-set-immutable! uname)
