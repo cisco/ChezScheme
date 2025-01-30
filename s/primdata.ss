@@ -2217,6 +2217,7 @@
   ($gc-real-time [flags true])
   ($generation [flags single-valued])
   ($generate-symbol [sig [() (immutable-string) -> (symbol)]] [flags alloc]) ; needs immutable strings
+  ($generated-symbol->name [flags single-valued])
   ($gensym [sig [() (immutable-string) (immutable-string immutable-string) -> (gensym)]] [flags alloc]) ; needs immutable strings
   ($gensym->pretty-name [flags single-valued])
   ($get-timer [flags single-valued])

@@ -8285,7 +8285,9 @@
                        `(if ,e-cdr
                             ,e-cdr
                             ,(%mref ,e-name ,(constant pair-car-disp))))
-                    ,e-name)
+                    (if ,(%inline eq? ,e-name ,(%constant strue))
+                        ,(%primcall #f sexpr $generated-symbol->name ,e-sym)
+                        ,e-name))
                 ,(%primcall #f sexpr $gensym->pretty-name ,e-sym))))])
     (define-inline 3 $fxaddress
       [(e) (%inline logand

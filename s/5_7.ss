@@ -216,6 +216,24 @@
        (unless (immutable-string? pretty-name) ($oops who "~s is not an immutable string" pretty-name))
        (unless (immutable-string? unique-name) ($oops who "~s is not an immutable string" unique-name))
        ($strings->gensym pretty-name unique-name)]))
+  (set! $generated-symbol->name
+    (lambda (x)
+      (with-tc-mutex
+        (let ([name ($symbol-name x)])
+          (cond
+            [(pair? name)
+             (if (eq? (cdr name) #t)
+                 (car name)
+                 (let ([uname (string-append (car name) "-" (generate-unique-name))])
+                   ;; FIXME: (generate-unique-name) is not quite right.
+                   ($string-set-immutable! uname)
+                   ($intern-gensym x (cons uname #t))
+                   uname))]
+            [else
+              (let ([uname (generate-unique-name)])
+                ($string-set-immutable! uname)
+                ($intern-gensym x (cons uname #t))
+                uname)])))))
   (set-who! generate-symbol
     (case-lambda
       [() (#3%$generate-symbol)]
