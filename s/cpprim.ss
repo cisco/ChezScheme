@@ -8199,8 +8199,11 @@
            (bind #t ([t (%mref ,e ,(constant symbol-name-disp))])
              `(if ,t
                   ,(build-and (%type-check mask-pair type-pair ,t)
-                              (build-and (%mref ,t ,(constant pair-cdr-disp))
-                                         (%constant strue)))
+                     (bind #t ([t2 (%mref ,t ,(constant pair-cdr-disp))])
+                       (build-and t2
+                         (build-and
+                           (build-not (%inline eq? ,t2 ,(%constant strue)))
+                           (build-not (%inline eq? ,(%mref ,t ,(constant pair-car-disp)) ,(%constant strue)))))))
                   ,(%constant strue)))))])
     (define-inline 2 uninterned-symbol?
       [(e)
