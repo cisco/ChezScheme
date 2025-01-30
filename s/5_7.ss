@@ -1,12 +1,12 @@
 ;;; 5_7.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -192,7 +192,7 @@
       [(x)
        (unless (and (or (fixnum? x) (bignum? x)) (>= x 0))
          ($oops 'gensym-count "~s is not a nonnegative integer" x))
-       (set! count x)])) 
+       (set! count x)]))
   (set-who! gensym
     (case-lambda
       [() (#3%gensym)]
@@ -215,4 +215,13 @@
       [(pretty-name unique-name)
        (unless (immutable-string? pretty-name) ($oops who "~s is not an immutable string" pretty-name))
        (unless (immutable-string? unique-name) ($oops who "~s is not an immutable string" unique-name))
-       ($strings->gensym pretty-name unique-name)])))
+       ($strings->gensym pretty-name unique-name)]))
+  (set-who! generate-symbol
+    (case-lambda
+      [() (#3%$generate-symbol)]
+      [(pretty-name)
+       (if (immutable-string? pretty-name)
+           (#3%$generate-symbol pretty-name)
+           (if (string? pretty-name)
+               (#3%$generate-symbol (string->immutable-string pretty-name))
+               ($oops who "~s is not a string" pretty-name)))])))

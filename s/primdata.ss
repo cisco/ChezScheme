@@ -297,7 +297,7 @@
   (map [sig [(procedure list list ...) -> (list)]] [flags cp02 cp03 ieee r5rs true])
   (for-each [sig [(procedure list list ...) -> (ptr ...)]] [flags cp02 cp03 ieee r5rs])
   (symbol? [sig [(ptr) -> (boolean)]] [pred symbol] [flags pure unrestricted mifoldable discard ieee r5rs])
-  (symbol->string [sig [(symbol) -> (string)]] [flags true mifoldable discard safeongoodargs ieee r5rs])
+  (symbol->string [sig [(symbol) -> (string)]] [flags true mifoldable safeongoodargs ieee r5rs])
   (symbol=? [sig [(symbol symbol symbol ...) -> (boolean)]] [flags pure mifoldable discard cp03 safeongoodargs])
   (string->symbol [sig [(string) -> (interned-symbol)]] [flags true mifoldable discard safeongoodargs ieee r5rs])
   (char? [sig [(ptr) -> (boolean)]] [pred char] [flags pure unrestricted mifoldable discard ieee r5rs])
@@ -1434,6 +1434,7 @@
   (fxvector-ref [sig [(nonempty-fxvector sub-index) -> (fixnum)]] [flags mifoldable discard cp02])
   (fxvector-set! [sig [(nonempty-fxvector sub-index fixnum) -> (void)]] [flags true])
   (fxvector? [sig [(ptr) -> (boolean)]]  [pred fxvector] [flags pure unrestricted mifoldable discard])
+  (generate-symbol [sig [() (string) -> (symbol)]] [flags alloc safeongoodargs])
   (gensym [sig [() (string) (string string) -> (gensym)]] [flags alloc safeongoodargs])
   (gensym? [sig [(ptr) -> (boolean)]] [pred gensym] [flags pure unrestricted mifoldable discard])
   (gensym->unique-string [sig [(gensym) -> (string)]] [flags true mifoldable]) ; can't discard ... if we have our hands on it, it must be in the oblist after this
@@ -2215,6 +2216,7 @@
   ($gc-cpu-time [flags true])
   ($gc-real-time [flags true])
   ($generation [flags single-valued])
+  ($generate-symbol [sig [() (immutable-string) -> (symbol)]] [flags alloc]) ; needs immutable strings
   ($gensym [sig [() (immutable-string) (immutable-string immutable-string) -> (gensym)]] [flags alloc]) ; needs immutable strings
   ($gensym->pretty-name [flags single-valued])
   ($get-timer [flags single-valued])

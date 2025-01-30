@@ -2987,7 +2987,7 @@
                               ,(%constant sfalse)
                               ,(let ([s `(inline ,(make-info-load 'unsigned-8 #f) ,%load ,si ,%zero (immediate 0))])
                                  (%inline eq? (immediate ,space) ,s))))))))
-   
+
          (define-inline 2 $maybe-seginfo
            [(e)
             (bind #t (e)
@@ -4799,7 +4799,7 @@
         [(e) (ensure-single-valued e)]
         [(e1 e2) (build-fp-op-2 %fp+ e1 e2)]
         [(e1 . e*) (reduce-fp src sexpr 3 'fl+ e1 e*)])
-         
+
       (define-inline 3 fl*
         [() `(quote 1.0)]
         [(e) (ensure-single-valued e)]
@@ -4865,7 +4865,7 @@
 
       (define-inline 3 flexpt
         [(e1 e2) (build-fl-call (lookup-c-entry flexpt) e1 e2)])
-      
+
       (let ()
         (define build-fl-make-rectangular
           (lambda (e1 e2)
@@ -5236,7 +5236,7 @@
         (define-fl2-call flatan flatan2)
         (define-fl-call flexp)
         (define-fl2-call fllog fllog2))
-      
+
       (define-inline 2 flexpt
         [(e1 e2) (build-checked-fp-op e1 e2
                    (lambda (e1 e2) (build-fl-call (lookup-c-entry flexpt) e1 e2))
@@ -5594,7 +5594,7 @@
          (define-fptr-ref-inline $fptr-ref-unsigned-48 'unsigned-48 #f)
          (define-fptr-ref-inline $fptr-ref-swap-integer-48 'integer-48 #t)
          (define-fptr-ref-inline $fptr-ref-swap-unsigned-48 'unsigned-48 #t)
-         
+
          (define-fptr-ref-inline $fptr-ref-integer-56 'integer-56 #f)
          (define-fptr-ref-inline $fptr-ref-unsigned-56 'unsigned-56 #f)
          (define-fptr-ref-inline $fptr-ref-swap-integer-56 'integer-56 #t)
@@ -5711,7 +5711,7 @@
          (define-fptr-set!-inline #t $fptr-set-unsigned-48! 'unsigned-48 build-object-set!)
          (define-fptr-set!-inline #t $fptr-set-swap-integer-48! 'integer-48 build-swap-object-set!)
          (define-fptr-set!-inline #t $fptr-set-swap-unsigned-48! 'unsigned-48 build-swap-object-set!)
-         
+
          (define-fptr-set!-inline #t $fptr-set-integer-56! 'integer-56 build-object-set!)
          (define-fptr-set!-inline #t $fptr-set-unsigned-56! 'unsigned-56 build-object-set!)
          (define-fptr-set!-inline #t $fptr-set-swap-integer-56! 'integer-56 build-swap-object-set!)
@@ -7846,7 +7846,7 @@
         (%mref ,(%mref ,e-k ,(constant continuation-stack-disp))
                ,(translate e-i (constant fixnum-offset) (constant log2-ptr-bytes))
                0))
-      
+
       (define build-return-code
         (lambda (e-ra)
           (safe-assert (= (constant compact-return-address-toplink-disp)
@@ -7881,7 +7881,7 @@
                                            ,(%constant compact-frame-words-mask))
                              ,(%constant fixnum-offset))
                    ,(%mref ,ra ,(constant return-address-frame-size-disp)))))))
-      
+
       (define-inline 3 $continuation-return-code
         [(e) (build-return-code (build-ra e))])
       (define-inline 3 $continuation-return-offset
@@ -8244,6 +8244,37 @@
         [() (build-make-symbol (%constant sfalse))]
         [(e-pname) (and (constant? immutable-string? e-pname) (go e-pname))]
         [(e-pname e-uname) #f]))
+    (let ()
+      (define build-make-symbol
+        (lambda (e-name)
+          (bind #t ([t (%constant-alloc type-symbol (constant size-symbol))])
+            (%seq
+              (set! ,(%mref ,t ,(constant symbol-name-disp)) ,e-name)
+              (set! ,(%mref ,t ,(constant symbol-value-disp)) ,(%constant sunbound))
+              (set! ,(%mref ,t ,(constant symbol-pvalue-disp))
+                (literal
+                  ,(make-info-literal #f 'library
+                     (lookup-libspec nonprocedure-code)
+                     (constant code-data-disp))))
+              (set! ,(%mref ,t ,(constant symbol-plist-disp)) ,(%constant snil))
+              (set! ,(%mref ,t ,(constant symbol-splist-disp)) ,(%constant snil))
+              (set! ,(%mref ,t ,(constant symbol-hash-disp)) ,(%constant sfalse))
+              ,t))))
+      (define (go e-pname)
+        (bind #t ([t (%constant-alloc type-pair (constant size-pair))])
+          (%seq
+            (set! ,(%mref ,t ,(constant pair-cdr-disp)) ,e-pname)
+            (set! ,(%mref ,t ,(constant pair-car-disp)) ,(%constant strue))
+            ,(build-make-symbol t))))
+      (define-inline 3 $generate-symbol
+        [() (build-make-symbol (%constant strue))]
+        [(e-pname) (bind  #f (e-pname) (go e-pname))])
+      (define-inline 3 generate-symbol
+        [() (build-make-symbol (%constant strue))]
+        [(e-pname) (and (constant? immutable-string? e-pname) (go e-pname))])
+      (define-inline 2 generate-symbol
+        [() (build-make-symbol (%constant strue))]
+        [(e-pname) (and (constant? immutable-string? e-pname) (go e-pname))]))
     (define-inline 3 symbol->string
       [(e-sym)
        (bind #t (e-sym)
@@ -8251,9 +8282,9 @@
            `(if ,e-name
                 (if ,(%type-check mask-pair type-pair ,e-name)
                     ,(bind #t ([e-cdr (%mref ,e-name ,(constant pair-cdr-disp))])
-                           `(if ,e-cdr
-                                ,e-cdr
-                                ,(%mref ,e-name ,(constant pair-car-disp))))
+                       `(if ,e-cdr
+                            ,e-cdr
+                            ,(%mref ,e-name ,(constant pair-car-disp))))
                     ,e-name)
                 ,(%primcall #f sexpr $gensym->pretty-name ,e-sym))))])
     (define-inline 3 $fxaddress
