@@ -242,4 +242,10 @@
            (#3%$generate-symbol pretty-name)
            (if (string? pretty-name)
                (#3%$generate-symbol (string->immutable-string pretty-name))
-               ($oops who "~s is not a string" pretty-name)))])))
+               ($oops who "~s is not a string" pretty-name)))]))
+  (set-who! $generate-symbol
+    (case-lambda
+      [() (#3%$generate-symbol)]
+      [(pretty-name)
+       (unless (immutable-string? pretty-name) ($oops who "~s is not an immutable string" pretty-name))
+       (#3%$generate-symbol pretty-name)])))
