@@ -189,5 +189,5 @@
     (not (symbol=? s1 s2)))
   (let ([s (generate-symbol "g1")])
     (not (string=? (symbol->string s) "g1")))
-  (let ([s (generate-symbol)])          ;FIXME
+  (let ([s (generate-symbol)])
     (symbol=? (string->symbol (symbol->string s)) s)))
