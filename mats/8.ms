@@ -792,6 +792,40 @@
   (equal? $gt-x '(53 -10 . 17))
 )
 
+(mat r6rs:generate-temporaries
+  (error? (r6rs:generate-temporaries))
+  (error? (r6rs:generate-temporaries '(a b c) '(d e f)))
+  (error? (r6rs:generate-temporaries '(a b . c)))
+  (error? (r6rs:generate-temporaries (let ([x (list 'a 'b 'c)]) (set-cdr! (cddr x) (cdr x)) x)))
+  (andmap identifier? (r6rs:generate-temporaries '(a b c)))
+  (= (length (r6rs:generate-temporaries '(a b c))) 3)
+  (andmap identifier? (r6rs:generate-temporaries #'(a b c)))
+  (= (length (r6rs:generate-temporaries #'(a b c))) 3)
+  (andmap identifier? (r6rs:generate-temporaries (cons 'q #'(1 2 3))))
+  (= (length (r6rs:generate-temporaries (cons 'q #'(1 2 3)))) 4)
+  (andmap (lambda (x) (not (gensym? (syntax->datum x)))) (r6rs:generate-temporaries '(a b c)))
+ ; make sure r6rs:generate-temporaries isn't confused by annotations
+  (begin
+    (let ((op (open-output-file "testfile.ss" 'replace)))
+      (pretty-print
+        '(begin
+           (define-syntax $gt-a
+             (lambda (x)
+               (syntax-case x ()
+                 [(_ x)
+                  (with-syntax ([(t1 t2 t3) (r6rs:generate-temporaries #'(1 1 1))])
+                    #'(define x (let ([t1 17] [t2 53] [t3 -10]) (cons* t2 t3 t1))))])))
+           ($gt-a $gt-x))
+        op)
+        (close-output-port op)
+        (compile-file "testfile.ss"))
+    #t)
+  (begin
+    (load "testfile.so")
+    #t)
+  (equal? $gt-x '(53 -10 . 17))
+)
+
 (mat syntax->list
   (error? (syntax->list #'a))
   (error? (syntax->list #'(a b . e)))

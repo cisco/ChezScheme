@@ -7334,6 +7334,28 @@
                                 (f (cdr fast) (cdr slow))
                                 ($oops who "improper list structure ~s" x)))))]
                    [else ($oops who "improper list structure ~s" x)])))]
+            [else ($oops who "improper list structure ~s" x)])))))
+  (set-who! #(r6rs: generate-temporaries)
+    (lambda (x)
+      (define (gen-temp) (wrap (generate-symbol) top-wrap))
+      (let f ([fast x] [slow x])
+        (let ([fast (strip-outer fast)])
+          (cond
+            [(null? fast) '()]
+            [(pair? fast)
+             (cons (gen-temp)
+               (let ([fast (strip-outer (cdr fast))])
+                 (cond
+                   [(null? fast) '()]
+                   [(pair? fast)
+                    (cons (gen-temp)
+                      (let ([slow (strip-outer slow)])
+                        (if (eq? fast slow)
+                            ($oops who "cyclic list structure ~s" x)
+                            (if (pair? slow)
+                                (f (cdr fast) (cdr slow))
+                                ($oops who "improper list structure ~s" x)))))]
+                   [else ($oops who "improper list structure ~s" x)])))]
             [else ($oops who "improper list structure ~s" x)]))))))
 
 (set-who! free-identifier=?

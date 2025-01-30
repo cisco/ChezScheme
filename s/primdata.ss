@@ -799,7 +799,7 @@
   (free-identifier=? [sig [(identifier identifier) -> (boolean)]] [flags pure mifoldable discard cp03])
   (syntax->datum [sig [(ptr) -> (ptr)]] [flags pure unrestricted mifoldable discard])
   (datum->syntax [sig [(identifier ptr) -> (syntax)]] [flags pure mifoldable discard true])
-  (generate-temporaries [sig [(ptr) -> (list)]] [flags alloc]) ; the argument can be a list or a syntax with a list or an annotation
+  ((r6rs: generate-temporaries) [sig [(ptr) -> (list)]] [flags alloc]) ; the argument can be a list or a syntax with a list or an annotation
   (syntax-violation [sig [(maybe-who string ptr) (maybe-who string ptr ptr) -> (bottom)]] [flags abort-op])
 )
 
@@ -1435,6 +1435,7 @@
   (fxvector-set! [sig [(nonempty-fxvector sub-index fixnum) -> (void)]] [flags true])
   (fxvector? [sig [(ptr) -> (boolean)]]  [pred fxvector] [flags pure unrestricted mifoldable discard])
   (generate-symbol [sig [() (string) -> (symbol)]] [flags alloc safeongoodargs])
+  (generate-temporaries [sig [(ptr) -> (list)]] [flags alloc]) ; the argument can be a list or a syntax with a list or an annotation
   (gensym [sig [() (string) (string string) -> (gensym)]] [flags alloc safeongoodargs])
   (gensym? [sig [(ptr) -> (boolean)]] [pred gensym] [flags pure unrestricted mifoldable discard])
   (gensym->unique-string [sig [(gensym) -> (string)]] [flags true mifoldable]) ; can't discard ... if we have our hands on it, it must be in the oblist after this
