@@ -8282,6 +8282,15 @@
       [(e-sym)
        (bind #t (e-sym)
          (bind #t ([e-name (%mref ,e-sym ,(constant symbol-name-disp))])
+          ; the symbol name can be of the following forms:
+          ;  - <string>: ordinary symbol
+          ;  - #f: gensym, yet uninterned
+          ;  - #t: generated symbol, yet uninterned
+          ;  - (<string> . #f): uninterned symbol
+          ;  - (#f . <pname>): gensym with pretty name, yet uninterned
+          ;  - (#t . <pname>): generated symbol with pretty name, yet uninterned
+          ;  - (<uname> . <pname>): gensym, interned
+          ;  - (<uname> . #t): generated symbol, interned
            `(if ,e-name
                 (if ,(%type-check mask-pair type-pair ,e-name)
                     ,(bind #t ([e-car (%mref ,e-name ,(constant pair-car-disp))]
