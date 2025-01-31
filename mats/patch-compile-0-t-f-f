@@ -1,5 +1,5 @@
-*** errors-compile-0-f-f-f	2025-01-31 07:30:30.869627363 +0100
---- output-compile-0-t-f-f-spi-rmg/errors-compile-0-t-f-f	2025-01-31 07:41:21.423357785 +0100
+*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	2025-01-31 10:14:10.594298664 +0100
+--- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	2025-01-31 10:20:19.547355131 +0100
 ***************
 *** 180,186 ****
   3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
