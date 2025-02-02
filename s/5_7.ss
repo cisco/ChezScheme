@@ -93,7 +93,7 @@
       (list->string
         (let loop ([n (unique-id)] [a post*])
           (if (< n b)
-                                        ; ensure name starts with letter.  assumes a-z first in alphabet.
+             ; ensure name starts with letter.  assumes a-z first in alphabet.
               (if (< n 26)
                   (cons (digit->char n) a)
                   (cons* (string-ref alphabet 0) (digit->char n) a))
@@ -158,20 +158,36 @@
       scheme-object))
   (set! $gensym->pretty-name
     (lambda (x)
-      (with-tc-mutex
-        (cond
-          [($symbol-name x) => cdr] ; someone beat us to it
-          [else
-           (let ([name (generate-pretty-name)])
-             ($set-symbol-name! x (cons #f name))
-             name)]))))
+      (cond
+        [(gensym? x)
+         (with-tc-mutex
+           (cond
+             [($symbol-name x) => cdr] ; someone beat us to it
+             [else
+              (let ([name (generate-pretty-name)])
+                ($set-symbol-name! x (cons #f name))
+                name)]))]
+        [else
+         ;; generated symbol
+         (let ([key (make-key '())]) ; construct the key outside the critical section
+           (with-tc-mutex
+            (let ([name ($symbol-name x)])
+              (cond
+                [($symbol-name x) => (lambda (n) n)] ; someone beat us to it
+                [else
+                 (let ([uname (if (string? ($symbol-hash x))
+                                  (string-append ($symbol-hash x) "-" key)
+                                  (string-append "g-" key))])
+                   ($string-set-immutable! uname)
+                   ($intern-gensym x uname)
+                   uname)]))))])))
   (set-who! gensym->unique-string
     (lambda (sym)
       (unless (symbol? sym) ($oops who "~s is not a gensym" sym))
       (let ([name ($symbol-name sym)])
         (or (and (pair? name) (car name)) ; get out quick if name already recorded
           (begin
-            (unless (or (not name) (pair? name)) ($oops who "~s is not a gensym" sym))
+            (unless (gensym? sym) ($oops who "~s is not a gensym" sym))
             (with-tc-mutex
              ; grab name again once safely inside the critical section
               (let ([name ($symbol-name sym)])
@@ -219,22 +235,6 @@
        (unless (immutable-string? pretty-name) ($oops who "~s is not an immutable string" pretty-name))
        (unless (immutable-string? unique-name) ($oops who "~s is not an immutable string" unique-name))
        ($strings->gensym pretty-name unique-name)]))
-  (set! $generated-symbol->name
-    (lambda (x)
-      (let ([key (make-key '())]) ; construct the key outside the critical section
-        (with-tc-mutex
-          (let ([name ($symbol-name x)])
-            (if (pair? name)
-                (if (eq? (car name) #t)
-                    (let ([uname (string-append (cdr name) "-" key)])
-                      ($string-set-immutable! uname)
-                      ($intern-gensym x (cons uname #t))
-                      uname)
-                    (car name))
-                (let ([uname (string-append "g-" key)])
-                  ($string-set-immutable! uname)
-                  ($intern-gensym x (cons uname #t))
-                  uname)))))))
   (set-who! generate-symbol
     (case-lambda
       [() (#3%$generate-symbol)]

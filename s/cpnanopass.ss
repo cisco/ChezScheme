@@ -791,12 +791,7 @@
               [(string? x) x]
               [(symbol? x)
                (let ([name ($symbol-name x)])
-                 (if (pair? name)
-                     (if (eq? #t (cdr name))
-                         (car name)
-                         (or (cdr name) (car name)))
-                     (and (not (eq? name #t))
-                          name)))]
+                 (if (pair? name) (or (cdr name) (car name)) name))]
               [(eq? #f x) #f]
               [else (error 'np-discover-names "x is not a name" x)]))))
       (Expr : Expr (ir name moi) -> Expr ()

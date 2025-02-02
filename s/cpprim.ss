@@ -8195,27 +8195,25 @@
       [(e)
        (bind #t (e)
          (build-and
-           (%type-check mask-symbol type-symbol ,e)
-           (bind #t ([t (%mref ,e ,(constant symbol-name-disp))])
-             `(if ,t
-                  ,(build-and (%type-check mask-pair type-pair ,t)
-                     (bind #t ([e-cdr (%mref ,t ,(constant pair-cdr-disp))])
-                       (build-and e-cdr
-                         (build-and
-                           (build-not (%inline eq? ,e-cdr ,(%constant strue)))
-                           (build-not (%inline eq? ,(%mref ,t ,(constant pair-car-disp)) ,(%constant strue)))))))
-                  ,(%constant strue)))))])
+          (%type-check mask-symbol type-symbol ,e)
+          `(if ,(%mref ,e ,(constant symbol-hash-disp))
+               ,(bind #t ([t (%mref ,e ,(constant symbol-name-disp))])
+                  (build-and (%type-check mask-pair type-pair ,t)
+                    (build-and (%mref ,t ,(constant pair-car-disp))
+                      (%constant strue))))
+               ,(%constant strue))))])
     (define-inline 2 uninterned-symbol?
       [(e)
        (bind #t (e)
          (build-and
-           (%type-check mask-symbol type-symbol ,e)
-           (bind #t ([t (%mref ,e ,(constant symbol-name-disp))])
-                 (build-and (%type-check mask-pair type-pair ,t)
-                            (build-not (%mref ,t ,(constant pair-cdr-disp)))))))])
+          (%type-check mask-symbol type-symbol ,e)
+          (build-and (%mref ,e ,(constant symbol-hash-disp))
+            (bind #t ([t (%mref ,e ,(constant symbol-name-disp))])
+              (build-and (%type-check mask-pair type-pair ,t)
+                (build-not (%mref ,t ,(constant pair-car-disp))))))))])
     (let ()
       (define build-make-symbol
-        (lambda (e-name)
+        (lambda (e-name e-hash)
           (bind #t ([t (%constant-alloc type-symbol (constant size-symbol))])
             (%seq
               (set! ,(%mref ,t ,(constant symbol-name-disp)) ,e-name)
@@ -8227,84 +8225,44 @@
                      (constant code-data-disp))))
               (set! ,(%mref ,t ,(constant symbol-plist-disp)) ,(%constant snil))
               (set! ,(%mref ,t ,(constant symbol-splist-disp)) ,(%constant snil))
-              (set! ,(%mref ,t ,(constant symbol-hash-disp)) ,(%constant sfalse))
+              (set! ,(%mref ,t ,(constant symbol-hash-disp)) ,e-hash)
               ,t))))
       (define (go e-pname)
         (bind #t ([t (%constant-alloc type-pair (constant size-pair))])
           (%seq
             (set! ,(%mref ,t ,(constant pair-cdr-disp)) ,e-pname)
             (set! ,(%mref ,t ,(constant pair-car-disp)) ,(%constant sfalse))
-            ,(build-make-symbol t))))
+            ,(build-make-symbol t (%constant sfalse)))))
       (define-inline 3 $gensym
-        [() (build-make-symbol (%constant sfalse))]
+        [() (build-make-symbol (%constant sfalse) (%constant sfalse))]
         [(e-pname) (bind #f (e-pname) (go e-pname))]
         [(e-pname e-uname) #f])
       (define-inline 3 gensym
-        [() (build-make-symbol (%constant sfalse))]
+        [() (build-make-symbol (%constant sfalse)(%constant sfalse))]
         [(e-pname) (and (constant? immutable-string? e-pname) (go e-pname))]
         [(e-pname e-uname) #f])
       (define-inline 2 gensym
-        [() (build-make-symbol (%constant sfalse))]
+        [() (build-make-symbol (%constant sfalse) (%constant sfalse))]
         [(e-pname) (and (constant? immutable-string? e-pname) (go e-pname))]
-        [(e-pname e-uname) #f]))
-    (let ()
-      (define build-make-symbol
-        (lambda (e-name)
-          (bind #t ([t (%constant-alloc type-symbol (constant size-symbol))])
-            (%seq
-              (set! ,(%mref ,t ,(constant symbol-name-disp)) ,e-name)
-              (set! ,(%mref ,t ,(constant symbol-value-disp)) ,(%constant sunbound))
-              (set! ,(%mref ,t ,(constant symbol-pvalue-disp))
-                (literal
-                  ,(make-info-literal #f 'library
-                     (lookup-libspec nonprocedure-code)
-                     (constant code-data-disp))))
-              (set! ,(%mref ,t ,(constant symbol-plist-disp)) ,(%constant snil))
-              (set! ,(%mref ,t ,(constant symbol-splist-disp)) ,(%constant snil))
-              (set! ,(%mref ,t ,(constant symbol-hash-disp)) ,(%constant sfalse))
-              ,t))))
-      (define (go e-pname)
-        (bind #t ([t (%constant-alloc type-pair (constant size-pair))])
-          (%seq
-            (set! ,(%mref ,t ,(constant pair-cdr-disp)) ,e-pname)
-            (set! ,(%mref ,t ,(constant pair-car-disp)) ,(%constant strue))
-            ,(build-make-symbol t))))
+        [(e-pname e-uname) #f])
       (define-inline 3 $generate-symbol
-        [() (build-make-symbol (%constant strue))]
-        [(e-pname) (bind  #f (e-pname) (go e-pname))])
+        [() (build-make-symbol (%constant sfalse) (%constant strue))]
+        [(e-pname) (bind  #f (e-pname) (build-make-symbol (%constant sfalse) e-pname))])
       (define-inline 3 generate-symbol
-        [() (build-make-symbol (%constant strue))]
-        [(e-pname) (and (constant? immutable-string? e-pname) (go e-pname))])
+        [() (build-make-symbol (%constant sfalse) (%constant strue))]
+        [(e-pname) (and (constant? immutable-string? e-pname) (build-make-symbol (%constant sfalse) e-pname))])
       (define-inline 2 generate-symbol
-        [() (build-make-symbol (%constant strue))]
-        [(e-pname) (and (constant? immutable-string? e-pname) (go e-pname))]))
+        [() (build-make-symbol (%constant sfalse) (%constant strue))]
+        [(e-pname) (and (constant? immutable-string? e-pname) (build-make-symbol (%constant sfalse) e-pname))]))
     (define-inline 3 symbol->string
       [(e-sym)
        (bind #t (e-sym)
          (bind #t ([e-name (%mref ,e-sym ,(constant symbol-name-disp))])
-          ; the symbol name can be of the following forms:
-          ;  - <string>: ordinary symbol
-          ;  - #f: gensym, yet uninterned
-          ;  - #t: generated symbol, yet uninterned
-          ;  - (<string> . #f): uninterned symbol
-          ;  - (#f . <pname>): gensym with pretty name, yet uninterned
-          ;  - (#t . <pname>): generated symbol with pretty name, yet uninterned
-          ;  - (<uname> . <pname>): gensym, interned
-          ;  - (<uname> . #t): generated symbol, interned
+           ;; see "cmacro.ss" for info on name state
            `(if ,e-name
                 (if ,(%type-check mask-pair type-pair ,e-name)
-                    ,(bind #t ([e-car (%mref ,e-name ,(constant pair-car-disp))]
-                               [e-cdr (%mref ,e-name ,(constant pair-cdr-disp))])
-                       `(if ,e-cdr
-                            (if ,(%inline eq? ,e-cdr ,(%constant strue))
-                                ,e-car
-                                (if ,(%inline eq? ,e-car ,(%constant strue))
-                                    ,(%primcall #f sexpr $generated-symbol->name ,e-sym)
-                                    ,e-cdr))
-                            ,(%mref ,e-name ,(constant pair-car-disp))))
-                    (if ,(%inline eq? ,e-name ,(%constant strue))
-                        ,(%primcall #f sexpr $generated-symbol->name ,e-sym)
-                        ,e-name))
+                    ,(%mref ,e-name ,(constant pair-cdr-disp))
+                    ,e-name)
                 ,(%primcall #f sexpr $gensym->pretty-name ,e-sym))))])
     (define-inline 3 $fxaddress
       [(e) (%inline logand

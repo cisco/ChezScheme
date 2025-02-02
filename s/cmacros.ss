@@ -1450,9 +1450,21 @@
   ([ptr value]
    [ptr pvalue]
    [ptr plist]
-   [ptr name] ; (cons str #f) => uninterned; #f or (cons ptr str) => gensym
+   [ptr name]   ; see below
    [ptr splist]
-   [ptr hash]))
+   [ptr hash])) ; or pre-hash state; see below
+
+;;  name            |  hash |  meaning
+;; -----------------+-------|-------------------------------------------
+;;  <str>           | <num> |  interned symbol (possibly originally generated)
+;;  #f              |  #f   |  gensym, not yet unique name, no pretty name
+;;  #f              |  #t   |  generated symbol, not yet interned, no pretty
+;;  (#f . <str>)    | <num> |  uninterned symbol
+;;  (#f . <str>)    |  #f   |  gensym, unique name, yet, pretty name supplied
+;;  #f              | <str> |  generated symbol, has pretty name, not yet interned
+;;  (<str> . <str>) | <num> |  gensym, fully generated and interned
+;;
+;; => a ready pretty name is always immediate or in the cdr of a pair
 
 (define-primitive-structure-disps ratnum type-typed-object
   ([iptr type]

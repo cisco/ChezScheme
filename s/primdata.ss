@@ -297,7 +297,7 @@
   (map [sig [(procedure list list ...) -> (list)]] [flags cp02 cp03 ieee r5rs true])
   (for-each [sig [(procedure list list ...) -> (ptr ...)]] [flags cp02 cp03 ieee r5rs])
   (symbol? [sig [(ptr) -> (boolean)]] [pred symbol] [flags pure unrestricted mifoldable discard ieee r5rs])
-  (symbol->string [sig [(symbol) -> (string)]] [flags true mifoldable safeongoodargs ieee r5rs])
+  (symbol->string [sig [(symbol) -> (string)]] [flags true mifoldable discard safeongoodargs ieee r5rs])
   (symbol=? [sig [(symbol symbol symbol ...) -> (boolean)]] [flags pure mifoldable discard cp03 safeongoodargs])
   (string->symbol [sig [(string) -> (interned-symbol)]] [flags true mifoldable discard safeongoodargs ieee r5rs])
   (char? [sig [(ptr) -> (boolean)]] [pred char] [flags pure unrestricted mifoldable discard ieee r5rs])
@@ -2218,7 +2218,6 @@
   ($gc-real-time [flags true])
   ($generation [flags single-valued])
   ($generate-symbol [sig [() (immutable-string) -> (symbol)]] [flags alloc]) ; needs immutable strings
-  ($generated-symbol->name [flags single-valued])
   ($gensym [sig [() (immutable-string) (immutable-string immutable-string) -> (gensym)]] [flags alloc]) ; needs immutable strings
   ($gensym->pretty-name [flags single-valued])
   ($get-timer [flags single-valued])

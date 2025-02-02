@@ -1203,9 +1203,14 @@ Documentation notes:
     (set-who! symbol-hash
       (lambda (x)
         (unless (symbol? x) ($oops who "~s is not a symbol" x))
-        (or ($symbol-hash x)
-            (and (gensym? x) (begin (gensym->unique-string x) ($symbol-hash x)))
-            ($oops who "symbol hash is not set for ~s" x))))
+        (let ([hash ($symbol-hash x)])
+          (if (fixnum? hash)
+              hash
+              (begin
+                (if (not hash)
+                    (gensym->unique-string x)
+                    ($gensym->pretty-name x)) ; generated symbol
+                ($symbol-hash x))))))
 
     (set-who! equal-hash
       (lambda (x)

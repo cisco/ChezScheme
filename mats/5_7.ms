@@ -139,6 +139,10 @@
      (uninterned-symbol? (string->uninterned-symbol "hello"))
      (not (gensym? (string->uninterned-symbol "hello")))
 
+     (let ([s (string->uninterned-symbol "hello")])
+       (and (fixnum? (symbol-hash s))
+            (eq? (symbol-hash s) (symbol-hash s))))
+
      (equal? "hello" (symbol->string (string->uninterned-symbol "hello")))
      (immutable-string? (symbol->string (string->uninterned-symbol "hello")))
 
@@ -155,29 +159,39 @@
      )
 
 (mat generate-symbol
+  (begin
+    (define ($force-intern! s)
+      (keep-live (symbol->string s)))
+    #t)
   (symbol? (generate-symbol))
   (symbol? (generate-symbol "pretty"))
+  (let ([s (generate-symbol)])
+    (and (fixnum? (symbol-hash s))
+         (eq? (symbol-hash s) (symbol-hash s))))
+  (let ([s (generate-symbol "pretty")])
+    (and (fixnum? (symbol-hash s))
+         (eq? (symbol-hash s) (symbol-hash s))))
   (symbol? (let ([x (generate-symbol)])
-             (symbol->string x)         ; intern
+             ($force-intern! x)
              x))
   (symbol? (let ([x (generate-symbol "pretty")])
-             (symbol->string x)         ; intern
+             ($force-intern! x)
              x))
   (not (uninterned-symbol? (generate-symbol)))
   (not (uninterned-symbol? (generate-symbol "beautiful")))
   (not (uninterned-symbol? (let ([x (generate-symbol)])
-                  (symbol->string x)      ; intern
-                  x)))
+                             ($force-intern! x)
+                             x)))
   (not (uninterned-symbol? (let ([x (generate-symbol "beautiful")])
-                  (symbol->string x)      ; intern
-                  x)))
+                             ($force-intern! x)
+                             x)))
   (not (gensym? (generate-symbol)))
   (not (gensym? (generate-symbol "handsome")))
   (not (gensym? (let ([x (generate-symbol)])
-                  (symbol->string x)      ; intern
+                  ($force-intern! x)
                   x)))
   (not (gensym? (let ([x (generate-symbol "handsome")])
-                  (symbol->string x)      ; intern
+                  ($force-intern! x)
                   x)))
   (let ([s (generate-symbol)])
     (symbol=? s s))
