@@ -749,12 +749,7 @@
 
     (define (symbol->lambda-name sym)
       (let ([x ($symbol-name sym)])
-        (if (pair? x)
-            (if (eq? #t (cdr x))
-                (car x)
-                (or (cdr x) (car x)))
-            (and (not (eq? x #t))
-                 x))))
+        (if (pair? x) (or (cdr x) (car x)) x)))
 
     (define (preinfo-lambda-set-name-and-flags preinfo name flags)
       (let ([new-name (and
