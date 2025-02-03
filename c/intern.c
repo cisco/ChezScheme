@@ -151,15 +151,6 @@ ptr S_mkstring(const string_char *s, iptr n) {
   return mkstring(s, n);
 }
 
-static ptr real_symname(ptr sym) {
-  ptr name = SYMNAME(sym);
-  if (!GENSYMP(sym))
-    return name;
-  if (Scdr(name) != Strue)
-    return Sfalse;
-  return Scar(name);
-}
-
 /* handles single-byte characters, implicit length */
 ptr S_intern(const unsigned char *s) {
   iptr n = strlen((const char *)s);
@@ -173,8 +164,8 @@ ptr S_intern(const unsigned char *s) {
   b = S_G.oblist[idx];
   while (b != NULL) {
     sym = b->sym;
-    ptr str = real_symname(sym);
-    if (str != Sfalse) {
+    if (!GENSYMP(sym)) {
+      ptr str = SYMNAME(sym);
        if (Sstring_length(str) == n) {
           iptr i;
           for (i = 0; ; i += 1) {
@@ -212,8 +203,8 @@ ptr S_intern_sc(const string_char *name, iptr n, ptr name_str) {
   b = S_G.oblist[idx];
   while (b != NULL) {
     sym = b->sym;
-    ptr str = real_symname(sym);
-    if (str != Sfalse) {
+    if (!GENSYMP(sym)) {
+       ptr str = SYMNAME(sym);
        if (Sstring_length(str) == n) {
           iptr i;
           for (i = 0; ; i += 1) {
