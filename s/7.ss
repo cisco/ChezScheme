@@ -621,21 +621,22 @@
   (lambda (body out)
     (call/cc
       (lambda (k)
-        (parameterize ([reset-handler
-                         (lambda ()
-                           (call-in-continuation k
-                             (lambda ()
-                               (out)
-                               ((reset-handler)))))])
-          (with-exception-handler
-              (lambda (c)
-               ; would prefer not to burn bridges even for serious condition
-               ; if the exception is continuable, but we have no way to know
-               ; short of grubbing through the continuation
-                (if (serious-condition? c)
-                    (call-in-continuation k (lambda () (out) (raise c)))
-                    (raise-continuable c)))
-            body))))))
+        (let ([marks (current-continuation-marks)])
+          (parameterize ([reset-handler
+                           (lambda ()
+                             (call-in-continuation k
+                               (lambda ()
+                                 (out)
+                                 ((reset-handler)))))])
+            (with-exception-handler
+                (lambda (c)
+                 ; would prefer not to burn bridges even for serious condition
+                 ; if the exception is continuable, but we have no way to know
+                 ; short of grubbing through the continuation
+                  (if (serious-condition? c)
+                      (call-in-continuation k marks (lambda () (out) (raise c)))
+                      (raise-continuable c)))
+              body)))))))
 
 (define exit-handler)
 (define reset-handler)

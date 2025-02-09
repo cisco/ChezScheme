@@ -265,25 +265,28 @@ TODO:
       (if supply-else?
           (call/cc
             (lambda (kouter)
-              (let ([original-handler-stack ($current-handler-stack)])
+              (let ([original-handler-stack ($current-handler-stack)]
+                    [kouter-marks (current-continuation-marks)])
                 (with-exception-handler
                     (lambda (arg)
                       (call/cc
                         (lambda (kinner)
-                          (call-in-continuation kouter
-                            (lambda ()
-                              (guards arg
-                                (lambda ()
-                                  (call-in-continuation kinner
-                                    (lambda ()
-                                      (parameterize ([$current-handler-stack original-handler-stack])
-                                        (raise-continuable arg)))))))))))
+                          (let ([kinner-marks (current-continuation-marks)])
+                            (call-in-continuation kouter kouter-marks
+                              (lambda ()
+                                (guards arg
+                                  (lambda ()
+                                    (call-in-continuation kinner kinner-marks
+                                      (lambda ()
+                                        (parameterize ([$current-handler-stack original-handler-stack])
+                                          (raise-continuable arg))))))))))))
                   body))))
           (call/cc
             (lambda (k)
-              (with-exception-handler
-                  (lambda (arg) (call-in-continuation k (lambda () (guards arg))))
-                body))))))
+              (let ([marks (current-continuation-marks)])
+                (with-exception-handler
+                    (lambda (arg) (call-in-continuation k marks (lambda () (guards arg))))
+                  body)))))))
 )
 
 (define-syntax guard

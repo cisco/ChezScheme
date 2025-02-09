@@ -2812,6 +2812,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Restore immediate table of marks where \scheme{call-in-continuation} is used (10.2.0)}
+
+Tests have been added that test that the (immediate) table of marks is set
+correctly when expressions are evaluated in the various continuations
+specified by the \scheme{guard} form.  Necessary fixes to uses of
+\scheme{call-in-continuation} have been applied in the implementation.
+
 \subsection{Fix \scheme{fx-/wraparound} with \scheme{0} first argument (10.2.0)}
 
 When \scheme{fx-/wraparound} was called with \scheme{0} as its first

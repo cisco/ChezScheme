@@ -1,12 +1,12 @@
 ;;; 4.ms
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -293,37 +293,37 @@
       (if (eq? x 'a) (set! x 'c))
       (eq? x 'b))
 
-   (equivalent-expansion? 
+   (equivalent-expansion?
      (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
        (expand/optimize '(if (not (not (f x))) e1 e2)))
      '(if (f x) e1 e2))
 
-   (equivalent-expansion? 
+   (equivalent-expansion?
      (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
        (expand/optimize '(if (begin (set! x y) (if (begin (set! z y) (zero? h)) #f #t)) e1 e2)))
      '(begin (set! x y) (if (begin (set! z y) (#2%zero? h)) e2 e1)))
 
-  (equivalent-expansion? 
+  (equivalent-expansion?
      (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
        (expand/optimize '(if (begin (set! x y) (if (begin (set! z y) (zero? h)) #f #f)) e1 e2)))
      '(begin (set! x y) (set! z y) (#2%zero? h) e2))
 
-  (equivalent-expansion? 
+  (equivalent-expansion?
      (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
        (expand/optimize '(if (begin (set! x y) (if (begin (set! z y) (zero? h)) #t #t)) e1 e2)))
      '(begin (set! x y) (set! z y) (#2%zero? h) e1))
-  
-  (equivalent-expansion? 
+
+  (equivalent-expansion?
      (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
        (expand/optimize '(if (begin (set! x y) (if (begin (set! z y) (zero? h)) #t #f)) e1 e2)))
      '(if (begin (set! x y) (set! z y) (#2%zero? h)) e1 e2))
 
-  (equivalent-expansion? 
+  (equivalent-expansion?
      (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
        (expand/optimize '(if (begin (set! x y) (if (begin (set! z y) (zero? h)) (begin (set! l z) #t) (begin (set! l y) #f))) e1 e2)))
      '(begin (set! x y) (if (begin (set! z y) (#2%zero? h)) (begin (set! l z) e1) (begin (set! l y) e2))))
 
-  (equivalent-expansion? 
+  (equivalent-expansion?
      (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
        (expand/optimize '(if (begin (set! x y) (if (begin (set! z y) (zero? h)) (begin (set! l z) #t) (begin (set! l y) #t))) e1 e2)))
      '(begin (set! x y) (if (begin (set! z y) (#2%zero? h)) (set! l z) (set! l y)) e1))
@@ -333,7 +333,7 @@
        (expand/optimize '(if (begin (set! x y) (if (begin (set! z y) (zero? h)) (begin (set! l z) #f) (begin (set! l y) #f))) e1 e2)))
      '(begin (set! x y) (if (begin (set! z y) (#2%zero? h)) (set! l z) (set! l y)) e2))
 
-  (equivalent-expansion? 
+  (equivalent-expansion?
      (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
        (expand/optimize '(if (begin (set! x y) (if (begin (set! z y) (zero? h)) (begin (set! l z) #f) (begin (set! l y) #t))) e1 e2)))
      '(begin (set! x y) (if (begin (set! z y) (#2%zero? h)) (begin (set! l z) e2) (begin (set! l y) e1))))
@@ -1205,7 +1205,7 @@
               (set! next 0)))
         (let ([m next])
           (unless (= m n)
-            (set! next (fx+ next 1)) 
+            (set! next (fx+ next 1))
             (let ([p (list-ref orig-ls m)])
               (unless (eqv? (cdr p) m)
                 (errorf #f "unexpected cdr value (~s instead of ~s)" (cdr p) m))
@@ -1257,48 +1257,48 @@
   ;; avoid creating each list and doing the actual map
   (equivalent-expansion?
     (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(map (lambda (x y z) (apply + x y z)) 
+      (expand/optimize
+        '(map (lambda (x y z) (apply + x y z))
            (list 1 2 3)
            (list 4 5 6)
            (list '(7) '(8) '(9)))))
     '(#2%list 12 15 18))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(map (lambda (x y z) (apply + x y z)) 
+      (expand/optimize
+        '(map (lambda (x y z) (apply + x y z))
            (list 1 2 3)
            (list 4 5 6)
            (list '(7) '(8) '(9)))))
     '(#3%list 12 15 18))
   (equivalent-expansion?
     (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(map (lambda (x y z) (apply + x y z)) 
+      (expand/optimize
+        '(map (lambda (x y z) (apply + x y z))
            '(1 2 3)
            (list 4 5 6)
            (list '(7) '(8) '(9)))))
     '(#2%list 12 15 18))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(map (lambda (x y z) (apply + x y z)) 
+      (expand/optimize
+        '(map (lambda (x y z) (apply + x y z))
            '(1 2 3)
            (list 4 5 6)
            (list '(7) '(8) '(9)))))
     '(#3%list 12 15 18))
   (equivalent-expansion?
     (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(map (lambda (x y z) (apply + x y z)) 
+      (expand/optimize
+        '(map (lambda (x y z) (apply + x y z))
            '(1 2 3)
            '(4 5 6)
            '((7) (8) (9)))))
     '(#2%list 12 15 18))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(map (lambda (x y z) (apply + x y z)) 
+      (expand/optimize
+        '(map (lambda (x y z) (apply + x y z))
            '(1 2 3)
            '(4 5 6)
            '((7) (8) (9)))))
@@ -1430,7 +1430,7 @@
   (equal?
     (fold-left cons '(q) '(a b c))
     '((((q) . a) . b) . c))
-  (eqv? 
+  (eqv?
     (fold-left + 0 '(1 2 3) '(4 5 6))
     21)
   (procedure? (lambda (x) (fold-left x)))
@@ -2125,48 +2125,48 @@
   ;; avoid creating each list and doing the actual for-each
   (equivalent-expansion?
     (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(for-each (lambda (x y z) (display (apply + x y z))) 
+      (expand/optimize
+        '(for-each (lambda (x y z) (display (apply + x y z)))
            (list 1 2 3)
            (list 4 5 6)
            (list '(7) '(8) '(9)))))
     '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(for-each (lambda (x y z) (display (apply + x y z))) 
+      (expand/optimize
+        '(for-each (lambda (x y z) (display (apply + x y z)))
            (list 1 2 3)
            (list 4 5 6)
            (list '(7) '(8) '(9)))))
     '(begin (#3%display 12) (#3%display 15) (#3%display 18)))
   (equivalent-expansion?
     (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(for-each (lambda (x y z) (display (apply + x y z))) 
+      (expand/optimize
+        '(for-each (lambda (x y z) (display (apply + x y z)))
            '(1 2 3)
            (list 4 5 6)
            (list '(7) '(8) '(9)))))
     '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(for-each (lambda (x y z) (display (apply + x y z))) 
+      (expand/optimize
+        '(for-each (lambda (x y z) (display (apply + x y z)))
            '(1 2 3)
            (list 4 5 6)
            (list '(7) '(8) '(9)))))
     '(begin (#3%display 12) (#3%display 15) (#3%display 18)))
   (equivalent-expansion?
     (parameterize ([optimize-level 2] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(for-each (lambda (x y z) (display (apply + x y z))) 
+      (expand/optimize
+        '(for-each (lambda (x y z) (display (apply + x y z)))
            '(1 2 3)
            '(4 5 6)
            '((7) (8) (9)))))
     '(begin (#2%display 12) (#2%display 15) (#2%display 18)))
   (equivalent-expansion?
     (parameterize ([optimize-level 3] [enable-cp0 #t] [#%$suppress-primitive-inlining #f])
-      (expand/optimize 
-        '(for-each (lambda (x y z) (display (apply + x y z))) 
+      (expand/optimize
+        '(for-each (lambda (x y z) (display (apply + x y z)))
            '(1 2 3)
            '(4 5 6)
            '((7) (8) (9)))))
@@ -2684,19 +2684,19 @@
             (l #f))
         'hi)
    (((call/cc call/cc) (lambda (x) x)) #t)
-   (let () 
+   (let ()
      (define f
        (lambda (n)
          (let f ((n n))
-           (or (fx= n 0) 
+           (or (fx= n 0)
                (and (call/cc (lambda (k) k))
                     (f (fx- n 1)))))))
      (f 100000))
-   (let () 
+   (let ()
      (define f
        (lambda (n)
          (let f ((n n))
-           (or (fx= n 0) 
+           (or (fx= n 0)
                (and (call/cc (lambda (k) (k k)))
                     (f (fx- n 1)))))))
      (f 100000))
@@ -2790,7 +2790,7 @@
     (and (eq? (leaf-eq? '(a (b (c))) '((a) b c)) #t)
          (eq? (leaf-eq? '(a (b (c))) '((a) b c d)) #f)))
  )
- 
+
 (mat dynamic-wind
    (let ([x 3])
       (and (eqv? x 3)
@@ -3075,11 +3075,11 @@
         (case-lambda
           [() me]
           [(x) #t]))))
-   (let () 
+   (let ()
      (define f
        (lambda (n)
          (let f ((n n))
-           (or (fx= n 0) 
+           (or (fx= n 0)
                (and (call/cc (lambda (k) (k k)))
                     (f (fx- n 1)))))))
      (f 100000))
@@ -3453,7 +3453,7 @@
   (error? (call-with-yep (lambda () (call-with-yeah* (lambda () ((returns-not-a-procedure)))))))
   (error? (call-with-yep (lambda () (list (call-with-yeah* (lambda () ((returns-not-a-procedure))))))))
   (error? (call-with-yep (lambda () (act-like-list (call-with-yeah* (lambda () ((returns-not-a-procedure))))))))
-  
+
   (equal? '() (if (call-with-yep list)
                   (#%$current-attachments)
                   #f))
@@ -3736,7 +3736,7 @@
        [(marks keys) ($mark-iter->lists (continuation-marks->iterator marks (list->vector keys)))]
        [(marks keys no) ($mark-iter->lists (continuation-marks->iterator marks (list->vector keys) no))]))
     #t)
-  
+
   (equal? '((xv1 yv)) (with-continuation-mark
                           'x 'xv0
                         (with-continuation-mark
@@ -3828,6 +3828,32 @@
                  (with-continuation-mark
                      'other 'no
                    (loop (sub1 depth)))))))))
+
+  (with-continuation-mark
+      'key #t
+    (guard
+        (c [#t (call-with-immediate-continuation-mark 'key values)])
+      (raise #f)))
+
+  (with-continuation-mark
+      'key #t
+    (guard
+        (c [#t (call-with-immediate-continuation-mark 'key values)]
+           [else #f])
+      (raise #f)))
+
+  (equal? 'inner
+    (call/cc
+      (lambda (k)
+        (with-continuation-mark 'key 'outer
+          (with-exception-handler
+              (lambda (c)
+                (k (continuation-marks-first (current-continuation-marks) 'key)))
+            (lambda ()
+              (guard (c [#f #f])
+                (with-continuation-mark 'key 'inner
+                  (raise #f)))))))))
+
   )
 
 (mat call-in-continuation
@@ -3959,7 +3985,7 @@
             (lambda (k)
               (#%$call-in-continuation
                k
-               (lambda () 
+               (lambda ()
                  (#%$call-consuming-continuation-attachment
                   'also-unknown
                   (lambda (v)
@@ -4866,7 +4892,7 @@
    (begin
      (define ephemeron-key car)
      (define ephemeron-value cdr)
-     
+
      (define gdn (make-guardian))
      #t)
 
@@ -4891,7 +4917,7 @@
                                es))
                    (weak-cons k1 (weak-cons k2 wps))
                    (cons k1 saved)))])))
-     
+
      (collect (collect-maximum-generation))
 
      ;; All now waiting to be reported by the guardian
@@ -4934,7 +4960,7 @@
    ;; behavior
    (let ()
      (define (wrapper v) (list 1 2 3 4 5 v))
-     
+
      ;; Create a chain of ephemerons where we have all
      ;; the the ephemerons immediately in a list,
      ;; but we discover the keys one at a time
@@ -5008,7 +5034,7 @@
 
    ;; ----------------------------------------
    ;; Check interaction of mutation and generations
-   
+
    ;; This check disables interrupts so that a garbage collection
    ;; happens only for the explicit `collect` request.
    (with-interrupts-disabled
