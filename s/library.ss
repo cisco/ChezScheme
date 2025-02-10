@@ -1706,7 +1706,7 @@
 
     (define-library-entry (symbol-hashtable-ref h x v)
       (let ([hc ($symbol-hash x)])
-        (if hc
+        (if (fixnum? hc)
             (let ([vec (ht-vec h)])
               (let loop ([b (vector-ref vec (fxlogand hc (fx- (vector-length vec) 1)))])
                 (if (null? b)
@@ -1717,7 +1717,7 @@
 
     (define-library-entry (symbol-hashtable-ref-cell h x)
       (let ([hc ($symbol-hash x)])
-        (if hc
+        (if (fixnum? hc)
             (let ([vec (ht-vec h)])
               (let loop ([b (vector-ref vec (fxlogand hc (fx- (vector-length vec) 1)))])
                 (if (null? b)
@@ -1728,7 +1728,7 @@
 
     (define-library-entry (symbol-hashtable-contains? h x)
       (let ([hc ($symbol-hash x)])
-        (and hc
+        (and (fixnum? hc)
              (let ([vec (ht-vec h)])
                (let loop ([b (vector-ref vec (fxlogand hc (fx- (vector-length vec) 1)))])
                  (and (not (null? b))
@@ -1737,7 +1737,7 @@
 
     (define-library-entry (symbol-hashtable-cell h x v)
       (let ([vec (ht-vec h)] [hc ($symbol-hash x)])
-        (if hc
+        (if (fixnum? hc)
             (let ([idx (fxlogand hc (fx- (vector-length vec) 1))])
               (let ([bucket (vector-ref vec idx)])
                 (let loop ([b bucket])
@@ -1758,7 +1758,7 @@
 
     (define-library-entry (symbol-hashtable-set! h x v)
       (let ([vec (ht-vec h)] [hc ($symbol-hash x)])
-        (if hc
+        (if (fixnum? hc)
             (let ([idx (fxlogand hc (fx- (vector-length vec) 1))])
               (let ([bucket (vector-ref vec idx)])
                 (let loop ([b bucket])
@@ -1774,7 +1774,7 @@
 
     (define-library-entry (symbol-hashtable-update! h x p v)
       (let ([vec (ht-vec h)] [hc ($symbol-hash x)])
-        (if hc
+        (if (fixnum? hc)
             (let ([idx (fxlogand hc (fx- (vector-length vec) 1))])
               (let ([bucket (vector-ref vec idx)])
                 (let loop ([b bucket])
@@ -1792,7 +1792,7 @@
 
     (define-library-entry (symbol-hashtable-delete! h x)
       (let ([hc ($symbol-hash x)])
-        (when hc
+        (when (fixnum? hc)
           (let ([vec (ht-vec h)])
             (let ([idx (fxlogand hc (fx- (vector-length vec) 1))])
               (let loop ([b (vector-ref vec idx)] [p #f])

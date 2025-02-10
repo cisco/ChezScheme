@@ -1,11 +1,11 @@
 % Copyright 2005-2017 Cisco Systems, Inc.
-% 
+%
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
 % You may obtain a copy of the License at
-% 
+%
 % http://www.apache.org/licenses/LICENSE-2.0
-% 
+%
 % Unless required by applicable law or agreed to in writing, software
 % distributed under the License is distributed on an "AS IS" BASIS,
 % WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,7 +71,7 @@ This predicate is not defined by the Revised$^6$ Report, but should be.
 \var{n} must be an exact nonnegative integer less than or equal to
 the length of \var{list}.
 
-\scheme{list-head} and the standard Scheme procedure \scheme{list-tail} 
+\scheme{list-head} and the standard Scheme procedure \scheme{list-tail}
 may be used together to split a list into two separate lists.
 While \scheme{list-tail} performs no allocation but instead returns a
 sublist of the original list, \scheme{list-head} always returns a copy
@@ -581,10 +581,10 @@ source before the operation began.
 
 (string-copy! s1 3 s2 1 3)
 s2 ;=> "-bol------"
- 
+
 (string-copy! s1 7 s2 4 2)
 s2 ;=> "-bolly----"
- 
+
 (string-copy! s2 2 s2 5 4)
 s2 ;=> "-bollolly-"
 \endschemedisplay
@@ -943,7 +943,7 @@ In the case of \scheme{immutable-vector-copy}, \scheme{immutable-vector-append},
 \formdef{self-evaluating-vectors}{\categorythreadparameter}{self-evaluating-vectors}
 \listlibraries
 \endentryheader
-    
+
 \noindent
 The default value of this parameter is \scheme{#f}, meaning that vector literals must be quoted, as
 required by the Revised$^6$ Report.
@@ -1154,7 +1154,7 @@ as \var{fxvector}.
 \endschemedisplay
 
 
-    
+
 \section{Flonum-Only Vectors\label{SECTFLVECTORS}}
 
 \index{flvectors}%
@@ -1352,7 +1352,7 @@ as \var{flvector}.
 \endschemedisplay
 
 
-    
+
 \section{Bytevectors\label{SECTBYTEVECTORS}}
 
 As with vectors, {\ChezScheme} extends the syntax of bytevectors to allow
@@ -1403,7 +1403,7 @@ A negative fill value is treated as its two's complement equivalent.
 
 The values in the returned list are exact eight-bit signed integers,
 i.e., values in the range -128 to 127 inclusive.
-\scheme{bytevector->s8-list} is similar to the Revised$^6$ Report 
+\scheme{bytevector->s8-list} is similar to the Revised$^6$ Report
 \scheme{bytevector->u8-list} except the values in the returned list
 are signed rather than unsigned.
 
@@ -1424,7 +1424,7 @@ are signed rather than unsigned.
 
 \var{list} must consist entirely of exact eight-bit signed integers, i.e.,
 values in the range -128 to 127 inclusive.
-\scheme{s8-list->bytevector} is similar to the Revised$^6$ Report 
+\scheme{s8-list->bytevector} is similar to the Revised$^6$ Report
 procedure
 \scheme{u8-list->bytevector}, except the elements of the input list
 are signed rather than unsigned.
@@ -1464,21 +1464,21 @@ bv ;=> #vu8(19 19 19)
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{bytevector-u24-ref}{\categoryprocedure}{(bytevector-u24-ref \var{bytevector} \var{n} \var{eness})}
-\returns the 24-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector} 
+\returns the 24-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector}
 \formdef{bytevector-s24-ref}{\categoryprocedure}{(bytevector-s24-ref \var{bytevector} \var{n} \var{eness})}
-\returns the 24-bit signed integer at index \var{n} (zero-based) of \var{bytevector} 
+\returns the 24-bit signed integer at index \var{n} (zero-based) of \var{bytevector}
 \formdef{bytevector-u40-ref}{\categoryprocedure}{(bytevector-u40-ref \var{bytevector} \var{n} \var{eness})}
-\returns the 40-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector} 
+\returns the 40-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector}
 \formdef{bytevector-s40-ref}{\categoryprocedure}{(bytevector-s40-ref \var{bytevector} \var{n} \var{eness})}
-\returns the 40-bit signed integer at index \var{n} (zero-based) of \var{bytevector} 
+\returns the 40-bit signed integer at index \var{n} (zero-based) of \var{bytevector}
 \formdef{bytevector-u48-ref}{\categoryprocedure}{(bytevector-u48-ref \var{bytevector} \var{n} \var{eness})}
-\returns the 48-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector} 
+\returns the 48-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector}
 \formdef{bytevector-s48-ref}{\categoryprocedure}{(bytevector-s48-ref \var{bytevector} \var{n} \var{eness})}
-\returns the 48-bit signed integer at index \var{n} (zero-based) of \var{bytevector} 
+\returns the 48-bit signed integer at index \var{n} (zero-based) of \var{bytevector}
 \formdef{bytevector-u56-ref}{\categoryprocedure}{(bytevector-u56-ref \var{bytevector} \var{n} \var{eness})}
-\returns the 56-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector} 
+\returns the 56-bit unsigned integer at index \var{n} (zero-based) of \var{bytevector}
 \formdef{bytevector-s56-ref}{\categoryprocedure}{(bytevector-s56-ref \var{bytevector} \var{n} \var{eness})}
-\returns the 56-bit signed integer at index \var{n} (zero-based) of \var{bytevector} 
+\returns the 56-bit signed integer at index \var{n} (zero-based) of \var{bytevector}
 \listlibraries
 \endentryheader
 
@@ -1988,7 +1988,7 @@ Symbol names may begin with \scheme{@}, but \scheme{,@abc} is parsed
 as \scheme{(unquote-splicing abc)}; to produce \scheme{(unquote @abc)}
 one can type \scheme{, @abc}, \scheme{\x40;abc}, or \scheme{,|@abc|}.
 
-\item 
+\item
 The single-character sequences \scheme{\schlbrace} and \scheme{\schrbrace}
 are read as symbols.
 
@@ -2024,7 +2024,6 @@ They may also be printed using the pretty name only with the prefix
 These extensions are disabled in an input stream after \scheme{#!r6rs} has
 been seen by the reader, unless \scheme{#!chezscheme} has been seen more
 recently.
-
 
 %----------------------------------------------------------------------------
 \entryheader\label{desc:gensym}
@@ -2167,7 +2166,7 @@ These parameters are not consulted until that time; setting them when
 \endschemedisplay
 
 
-%----------------------------------------------------------------------------
+% ----------------------------------------------------------------------------
 \entryheader
 \formdef{gensym->unique-string}{\categoryprocedure}{(gensym->unique-string \var{gensym})}
 \returns the unique name of \var{gensym}
@@ -2196,7 +2195,38 @@ These parameters are not consulted until that time; setting them when
 \endschemedisplay
 
 
-%----------------------------------------------------------------------------
+% ----------------------------------------------------------------------------
+\entryheader
+\formdef{generate-symbol}{\categoryprocedure}{(generate-symbol)}
+\formdef{generate-symbol}{\categoryprocedure}{(generate-symbol \var{pretty-name})}
+\returns an unguessable standard symbol
+\listlibraries
+\endentryheader
+
+\noindent
+\index{generated symbols}Each call to \scheme{generate-symbol} returns
+a symbol that is not identical to any existing or potentially existing
+symbol. Contrary to the gensyms returned by \scheme{gensym}, the
+symbols returned by \scheme{generate-symbol} are standard Revised$^6$
+Report symbols, two of which are identical if and only if their names
+are spelled the same.
+
+As with gensyms, the symbol's name is generated lazily. If, as in the
+second form above, a pretty name is given as a string, it is used as a
+prefix for the generated name. Otherwise, the single character string
+\scheme{"g"} is used.
+
+\schemedisplay
+(generate-symbol) ;=> g-jj13vro48lgrjzoe5yun7fp9k
+(generate-symbol "hello") ;=> hello-clo1em9up7ajy9ihclroexrfk
+(let ([s (generate-symbol)])
+  (symbol=? s (string->symbol (symbol->string s)))) ;=> #t
+(gensym? (generate-symbol)) ;=> #f
+(uninterned-symbol? (generate-symbol)) ;=> #f
+\endschemedisplay
+
+
+% ----------------------------------------------------------------------------
 \entryheader
 \formdef{string->uninterned-symbol}{\categoryprocedure}{(string->uninterned-symbol \var{str})}
 \returns a fresh uninterned symbol
@@ -2287,14 +2317,14 @@ the \var{default} argument is not supplied.
 
 \schemedisplay
 (putprop 'fred 'species 'snurd)
-(putprop 'fred 'age 4)  
+(putprop 'fred 'age 4)
 (putprop 'fred 'colors '(black white))
 
 (getprop 'fred 'species) ;=> snurd
 (getprop 'fred 'colors) ;=> (black white)
 (getprop 'fred 'nonkey) ;=> #f
 (getprop 'fred 'nonkey 'unknown) ;=> unknown
- 
+
 (putprop 'fred 'species #f)
 (getprop 'fred 'species 'unknown) ;=> #f
 \endschemedisplay
@@ -2630,7 +2660,7 @@ may return different subsets of \var{hashtable}'s entries.
 (hashtable-set! ht 'a "one")
 (hashtable-set! ht 'b "two")
 (hashtable-entries ht) ;=> #(a b) #("one" "two") \var{or the other permutation}
-(hashtable-entries ht 1) ;=> #(a) #("one") \var{or} #(b) #("two") 
+(hashtable-entries ht 1) ;=> #(a) #("one") \var{or} #(b) #("two")
 \endschemedisplay
 
 %----------------------------------------------------------------------------
@@ -3575,7 +3605,7 @@ and \scheme{y}, and defines the following procedures:
 The names of these procedures follow a regular naming convention by
 default, but the programmer can override the defaults if desired.
 \scheme{define-record} allows the programmer to control which fields
-are arguments to the generated constructor procedure and which 
+are arguments to the generated constructor procedure and which
 are explicitly initialized by the constructor procedure.
 Fields are mutable by default, but may be declared immutable.
 Fields can generally contain any Scheme value, but the internal
@@ -3723,9 +3753,9 @@ where \var{name} is the ``pretty'' name of the record (not the full
 gensym) or the reader name first assigned to the record
 type.
 
-%%% need more define-record examples 
+%%% need more define-record examples
 %%%   - show use of field types other than ptr
-%%%   - show non-top-level use 
+%%%   - show non-top-level use
 
 %%% make-record-type and company
 %%%   - (scan primvars for record-related primitives)
@@ -3769,7 +3799,7 @@ If the \scheme{immutable} class specifier is present, the field is
 immutable; otherwise, the field is mutable.
 \var{type}, if present, specifies how the field is represented,
 as described below.
- 
+
 \begin{tabular}{ll}\label{record-field-types}
 \scheme{ptr} &            any Scheme object\\
 \scheme{scheme-object} &  same as \scheme{ptr}\\
@@ -4159,7 +4189,7 @@ When passed only one argument, \scheme{record-writer} returns the
 record writer associated with \var{rtd}, which is initially the
 default record writer for all records.
 The default print method prints all records in a uniform syntax that
-includes the generated name for the record 
+includes the generated name for the record
 and the values of each of the fields, as described in the introduction
 to this section.
 

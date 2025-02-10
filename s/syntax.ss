@@ -7313,20 +7313,20 @@
         [(syntax-object? x) (strip-outer (syntax-object-expression x))]
         [(annotation? x) (annotation-stripped x)]
         [else x])))
-  (set-who! generate-temporaries
-    (lambda (x)
-      (define (gen-temp) (wrap (gensym) top-wrap))
+  (define gen-temps
+    (lambda (who x gensym)
+      (define (gen-temp name) (wrap (gensym name) top-wrap))
       (let f ([fast x] [slow x])
         (let ([fast (strip-outer fast)])
           (cond
             [(null? fast) '()]
             [(pair? fast)
-             (cons (gen-temp)
+             (cons (gen-temp (car fast))
                (let ([fast (strip-outer (cdr fast))])
                  (cond
                    [(null? fast) '()]
                    [(pair? fast)
-                    (cons (gen-temp)
+                    (cons (gen-temp (car fast))
                       (let ([slow (strip-outer slow)])
                         (if (eq? fast slow)
                             ($oops who "cyclic list structure ~s" x)
@@ -7334,7 +7334,18 @@
                                 (f (cdr fast) (cdr slow))
                                 ($oops who "improper list structure ~s" x)))))]
                    [else ($oops who "improper list structure ~s" x)])))]
-            [else ($oops who "improper list structure ~s" x)]))))))
+            [else ($oops who "improper list structure ~s" x)])))))
+  (set-who! generate-temporaries
+    (lambda (x)
+      (gen-temps who x (lambda (name) (gensym)))))
+  (set-who! #(r6rs: generate-temporaries)
+    (lambda (x)
+      (gen-temps who x
+        (lambda (name)
+          (cond
+            [(symbol? name) (generate-symbol (symbol->string name))]
+            [(identifier? name) (generate-symbol (symbol->string (syntax->datum name)))]
+            [else (generate-symbol)]))))))
 
 (set-who! free-identifier=?
   (lambda (x y)

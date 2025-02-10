@@ -533,6 +533,17 @@ This procedure is identical to the Revised$^6$ Report
 \scheme{free-identifier=?}, and is provided for backward
 compatibility only.
 
+%----------------------------------------------------------------------------
+\entryheader\label{generate-temporaries}
+\formdef{generate-temporaries}{\categoryprocedure}{(generate-temporaries \var{list})}
+\returns a list of distinct generated identifiers
+\listlibraries
+\endentryheader
+
+This procedure is identical to the Revised$^6$ Report
+\scheme{generate-temporaries} except that the symbolic names of the
+generated identifiers are gensyms and not standard Revised$^6$ Report symbols.
+
 \section{Compile-time Values and Properties\label{SECTSYNTAXCTVS}}
 
 When defining sets of dependent macros, it is often convenient to attach

@@ -659,7 +659,7 @@
               (let ([seqno next-lambda-seqno])
                 (set! next-lambda-seqno (fx+ seqno 1))
                 seqno))))
-    
+
     (include "np-info.ss")
 
     (module ()
@@ -5203,7 +5203,7 @@
                                ,(if (not reify?)
                                     `(set! ,lvalue ,t)
                                     (%seq
-                                     (set! ,lvalue ,t) 
+                                     (set! ,lvalue ,t)
                                      (set! ,%td (inline ,(intrinsic-info-asmlib reify-1cc #f) ,%asmlibcall))))
                                ;; Reified with attachment
                                ,(let ([get `(set! ,lvalue ,(%mref ,ats ,(constant pair-car-disp)))])
@@ -8501,7 +8501,7 @@
               (fx- offset (fx- (constant size-rp-header)
                                (constant size-rp-compact-header)))
               offset)))
-      
+
       (define asm-data-label
         (lambda (code* l offset func code-size)
           (let ([rel (make-funcrel 'abs l offset)])

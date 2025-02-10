@@ -8706,6 +8706,10 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat generate-temporaries: "incorrect argument count in call (generate-temporaries (quote (a b c)) (quote (d e f)))".
 8.mo:Expected error in mat generate-temporaries: "generate-temporaries: improper list structure (a b . c)".
 8.mo:Expected error in mat generate-temporaries: "generate-temporaries: cyclic list structure (a b c b c b ...)".
+8.mo:Expected error in mat r6rs:generate-temporaries: "incorrect argument count in call (generate-temporaries)".
+8.mo:Expected error in mat r6rs:generate-temporaries: "incorrect argument count in call (generate-temporaries (quote (a b c)) (quote (d e f)))".
+8.mo:Expected error in mat r6rs:generate-temporaries: "generate-temporaries: improper list structure (a b . c)".
+8.mo:Expected error in mat r6rs:generate-temporaries: "generate-temporaries: cyclic list structure (a b c b c b ...)".
 8.mo:Expected error in mat syntax->list: "syntax->list: invalid argument #<syntax a>".
 8.mo:Expected error in mat syntax->list: "syntax->list: invalid argument #<syntax (a b . e)>".
 8.mo:Expected error in mat syntax->vector: "syntax->vector: invalid argument #<syntax a>".

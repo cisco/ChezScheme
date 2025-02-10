@@ -1,12 +1,12 @@
 ;;; 5_7.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,23 +84,26 @@
 (eval-when (compile) (optimize-level 3))
 
 (let ([prefix "g"] [count 0])
+  (define unique-id (foreign-procedure "(cs)unique_id" () scheme-object))
+  (define make-key
+    (lambda (post*)
+      (define alphabet "abcdefghijklmnopqrstuvwxyz0123456789")
+      (define b (string-length alphabet))
+      (define digit->char (lambda (n) (string-ref alphabet n)))
+      (list->string
+        (let loop ([n (unique-id)] [a post*])
+          (if (< n b)
+             ; ensure name starts with letter.  assumes a-z first in alphabet.
+              (if (< n 26)
+                  (cons (digit->char n) a)
+                  (cons* (string-ref alphabet 0) (digit->char n) a))
+              (loop (quotient n b) (cons (digit->char (remainder n b)) a)))))))
   (define generate-unique-name
    ; a-z must come first in alphabet.  separator must not be in alphabet.
     (let ([suffix 0])
-      (define unique-id (foreign-procedure "(cs)unique_id" () scheme-object))
       (define (make-session-key)
-        (define alphabet "abcdefghijklmnopqrstuvwxyz0123456789")
         (define separator #\-)
-        (define b (string-length alphabet))
-        (define digit->char (lambda (n) (string-ref alphabet n)))
-        (list->string
-          (let loop ([n (unique-id)] [a (list separator)])
-            (if (< n b)
-               ; ensure name starts with letter.  assumes a-z first in alphabet.
-                (if (< n 26)
-                    (cons (digit->char n) a)
-                    (cons* (string-ref alphabet 0) (digit->char n) a))
-                (loop (quotient n b) (cons (digit->char (remainder n b)) a))))))
+        (make-key (list separator)))
       (define (session-key)
         (or $session-key
           (let ([k (make-session-key)])
@@ -155,20 +158,36 @@
       scheme-object))
   (set! $gensym->pretty-name
     (lambda (x)
-      (with-tc-mutex
-        (cond
-          [($symbol-name x) => cdr] ; someone beat us to it
-          [else
-           (let ([name (generate-pretty-name)])
-             ($set-symbol-name! x (cons #f name))
-             name)]))))
+      (cond
+        [(gensym? x)
+         (with-tc-mutex
+           (cond
+             [($symbol-name x) => cdr] ; someone beat us to it
+             [else
+              (let ([name (generate-pretty-name)])
+                ($set-symbol-name! x (cons #f name))
+                name)]))]
+        [else
+         ;; generated symbol
+         (let ([key (make-key '())]) ; construct the key outside the critical section
+           (with-tc-mutex
+            (let ([name ($symbol-name x)])
+              (cond
+                [($symbol-name x) => (lambda (n) n)] ; someone beat us to it
+                [else
+                 (let ([uname (if (string? ($symbol-hash x))
+                                  (string-append ($symbol-hash x) "-" key)
+                                  (string-append "g-" key))])
+                   ($string-set-immutable! uname)
+                   ($intern-gensym x uname)
+                   uname)]))))])))
   (set-who! gensym->unique-string
     (lambda (sym)
       (unless (symbol? sym) ($oops who "~s is not a gensym" sym))
       (let ([name ($symbol-name sym)])
         (or (and (pair? name) (car name)) ; get out quick if name already recorded
           (begin
-            (unless (or (not name) (pair? name)) ($oops who "~s is not a gensym" sym))
+            (unless (gensym? sym) ($oops who "~s is not a gensym" sym))
             (with-tc-mutex
              ; grab name again once safely inside the critical section
               (let ([name ($symbol-name sym)])
@@ -192,7 +211,7 @@
       [(x)
        (unless (and (or (fixnum? x) (bignum? x)) (>= x 0))
          ($oops 'gensym-count "~s is not a nonnegative integer" x))
-       (set! count x)])) 
+       (set! count x)]))
   (set-who! gensym
     (case-lambda
       [() (#3%gensym)]
@@ -215,4 +234,19 @@
       [(pretty-name unique-name)
        (unless (immutable-string? pretty-name) ($oops who "~s is not an immutable string" pretty-name))
        (unless (immutable-string? unique-name) ($oops who "~s is not an immutable string" unique-name))
-       ($strings->gensym pretty-name unique-name)])))
+       ($strings->gensym pretty-name unique-name)]))
+  (set-who! generate-symbol
+    (case-lambda
+      [() (#3%$generate-symbol)]
+      [(pretty-name)
+       (if (immutable-string? pretty-name)
+           (#3%$generate-symbol pretty-name)
+           (if (string? pretty-name)
+               (#3%$generate-symbol (string->immutable-string pretty-name))
+               ($oops who "~s is not a string" pretty-name)))]))
+  (set-who! $generate-symbol
+    (case-lambda
+      [() (#3%$generate-symbol)]
+      [(pretty-name)
+       (unless (immutable-string? pretty-name) ($oops who "~s is not an immutable string" pretty-name))
+       (#3%$generate-symbol pretty-name)])))

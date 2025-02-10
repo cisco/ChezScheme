@@ -297,6 +297,7 @@
 
 (define-primitive symbol? (lambda (x) (and (#%symbol? x)
                                            (not (eq? x $the-unbound-object)))))
+(define-primitive generate-symbol gensym)
 (define-primitive gensym? (lambda (x) (and (symbol? x) (#%gensym? x))))
 (define-primitive uninterned-symbol? (lambda (x) #f)) ; assuming not used in compiler
 

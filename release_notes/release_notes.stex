@@ -116,6 +116,18 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{New procedure \scheme{generate-symbol} (10.2.0)}
+
+The \scheme{generate-symbol} function has been added. It returns
+(interned) unique symbols like \scheme{gensym}, but the symbols
+procedured by \scheme{generate-symbol} are valid R6RS symbols; in
+particular, they are written and read as ordinary symbols.
+
+The version of \scheme{generate-temporaries} exported by the
+\scheme{(rnrs)} and \scheme{(rnrs syntax-case)} libraries now uses
+\scheme{generate-symbol} to generate symbolic names for the temporary
+identifiers for R6RS compatibility.
+
 \subsection{Type recovery improvements (10.2.0)}
 
 The type recovery pass has improved support for \scheme{abs} with a fixnum argument

@@ -629,7 +629,7 @@
                      vfi)]
        [(fasl-type-uninterned-symbol)
         (symbol-copy v
-                     (pair-copy (string-copy string vfi) (constant sfalse) vfi)
+                     (pair-copy (constant sfalse) (string-copy string vfi) vfi)
                      #f
                      string
                      vfi)]

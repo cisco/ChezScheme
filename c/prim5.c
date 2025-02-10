@@ -1152,7 +1152,7 @@ ptr S_uninterned(ptr x) {
   if (!(STRTYPE(x) & string_immutable_flag))
     x = S_mkstring(&STRIT(x, 0), Sstring_length(x));
 
-  sym = S_symbol(Scons(x, Sfalse));
+  sym = S_symbol(Scons(Sfalse, x));
 
   /* Wraparound on `hc++` is ok. It's technically illegal with
      threads, since multiple thread might increment `hc` at the same

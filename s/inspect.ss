@@ -2449,7 +2449,7 @@
               (make-object ($top-level-value x))
               (make-object ($unbound-object)))]
         [system-property-list () (make-object ($system-property-list x))]
-        [symbol-hash () (make-object ($symbol-hash x))]
+        [symbol-hash () (make-object (symbol-hash x))]
         [name () (make-object (symbol->string x))]
         [property-list () (make-object ($symbol-property-list x))]
         [size (g) (compute-size x g)]
