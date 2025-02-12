@@ -3653,7 +3653,7 @@
                                  [(case-lambda ,preinfo ,cl* ...) #t]
                                  [(seq (profile ,src) (case-lambda ,preinfo ,cl* ...)) #t]
                                  [else #f])))
-                        (define (protocol-ok? d pctrcd)
+                        (define (protocol-ok?-or-level d pctrcd)
                           (or (procedure? d)
                               (and (eq? d #f)
                                    (or (not pctrcd)
@@ -3665,7 +3665,7 @@
                           (cond
                             [(nanopass-case (Lsrc Expr) result-protocol-expr
                                [(quote ,d)
-                                (let ([lvl (protocol-ok? d pctrcd)])
+                                (let ([lvl (protocol-ok?-or-level d pctrcd)])
                                   (if (eq? lvl #t) 3 lvl))]
                                [(ref ,maybe-src ,x)
                                 (and (not (prelex-was-assigned x))
