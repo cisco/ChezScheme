@@ -8123,6 +8123,7 @@ record.mo:Expected error in mat record-inheritance: "make-record-constructor-des
 record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> specified for base record type #<record type B>".
 record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type B>".
 record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: no protocol specified, but parent #<record constructor descriptor> has protocol".
+record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: no protocol specified, but parent #<record constructor descriptor> has protocol".
 record.mo:Expected error in mat record-writer: "record-writer: sp is not a record-type descriptor".
 record.mo:Expected error in mat record-writer: "record-writer: "oops" is not a procedure".
 record.mo:Expected error in mat record-writer: "write: ugh is not a textual output port".
