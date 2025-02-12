@@ -2812,6 +2812,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Respect constraint on \scheme{make-record-constructor-descriptor} (10.2.0)}
+
+The source optimizer (cp0) overlooked the constraint that, when forming a
+record-constructor descriptor, one must specify a protocol if the parent
+record-constructor descriptor has a protocol.
+
 \subsection{Restore immediate table of marks where \scheme{call-in-continuation} is used (10.2.0)}
 
 Tests have been added that test that the (immediate) table of marks is set

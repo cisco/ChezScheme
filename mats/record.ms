@@ -2870,6 +2870,13 @@
                      #f)
                  #f)
              #f))))
+  (error? ; no protocol specified for B.rcd, but parent A.rcd does specify a protocol
+   (let ()
+     (define A.rtd (make-record-type-descriptor 'A #f #f #f #f '#((immutable x))))
+     (define A.rcd (make-record-constructor-descriptor A.rtd #f (lambda (new) (lambda () (new 1)))))
+     (define B.rtd (make-record-type-descriptor 'B A.rtd #f #f #f '#((immutable y))))
+     (define B.rcd (make-record-constructor-descriptor B.rtd A.rcd #f))
+     (record-constructor B.rcd)))
 )
 
 (mat record-writer
