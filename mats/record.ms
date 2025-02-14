@@ -2870,6 +2870,69 @@
                      #f)
                  #f)
              #f))))
+
+  (error? ; not a record-type descriptor
+   (let ()
+     (define B.rcd (make-record-constructor-descriptor "wrong" #f #f))
+     (record-constructor B.rcd)))
+
+  (error? ; invalid record constructor descriptor
+   (let ()
+     (define A.rtd (make-record-type-descriptor 'A #f #f #f #f '#((immutable x))))
+     (define A.rcd (make-record-constructor-descriptor A.rtd #f "toast"))
+     (define B.rtd (make-record-type-descriptor 'B A.rtd #f #f #f '#((immutable y))))
+     (define B.rcd (make-record-constructor-descriptor B.rtd A.rcd #f))
+     (record-constructor B.rcd)))
+
+  (error? ; invalid record constructor descriptor
+   (let ()
+     (define A.rtd (make-record-type-descriptor 'A #f #f #f #f '#((immutable x))))
+     (define A.rcd (make-record-constructor-descriptor A.rtd #f #f))
+     (define B.rtd (make-record-type-descriptor 'B A.rtd #f #f #f '#((immutable y))))
+     (define B.rcd (make-record-constructor-descriptor B.rtd A.rcd "jam"))
+     (record-constructor B.rcd)))
+
+  (error? ; cannot create constructor descriptor for record type with non-scheme-object fields
+   (let ()
+     (define A.rtd (make-record-type "A" '((immutable double x))))
+     (define B.rtd (make-record-type-descriptor 'B A.rtd #f #f #f '#((immutable y))))
+     (define B.rcd (make-record-constructor-descriptor B.rtd #f #f))
+     (record-constructor B.rcd)))
+
+  (error? ; record constructor descriptor specified for base record type
+   (let ()
+     (define A.rtd (make-record-type-descriptor 'A #f #f #f #f '#((immutable x))))
+     (define A.rcd (make-record-constructor-descriptor A.rtd #f (lambda (new) (lambda () (new 1)))))
+     (define B.rtd (make-record-type-descriptor 'B #f #f #f #f '#((immutable y))))
+     (define B.rcd (make-record-constructor-descriptor B.rtd A.rcd #f))
+     (record-constructor B.rcd)))
+
+  (error? ; record constructor descriptor is not for parent of record type
+   (let ()
+     (define A.rtd (make-record-type-descriptor 'A #f #f #f #f '#((immutable x))))
+     (define A2.rtd (make-record-type-descriptor 'A #f #f #f #f '#((immutable x))))
+     (define A2.rcd (make-record-constructor-descriptor A2.rtd #f #f))
+     (define B.rtd (make-record-type-descriptor 'B A.rtd #f #f #f '#((immutable y))))
+     (define B.rcd (make-record-constructor-descriptor B.rtd A2.rcd #f))
+     (record-constructor B.rcd)))
+
+  (error? ; no protocol specified for B.rcd, but parent A.rcd does specify a protocol
+   (let ()
+     (define A.rtd (make-record-type-descriptor 'A #f #f #f #f '#((immutable x))))
+     (define A.rcd (make-record-constructor-descriptor A.rtd #f (lambda (new) (lambda () (new 1)))))
+     (define B.rtd (make-record-type-descriptor 'B A.rtd #f #f #f '#((immutable y))))
+     (define B.rcd (make-record-constructor-descriptor B.rtd A.rcd #f))
+     (record-constructor B.rcd)))
+
+  (error? ; no protocol specified for B.rcd, but parent A.rcd does specify a protocol
+   (let ()
+     (define A.rtd (make-record-type-descriptor 'A #f #f #f #f '#((immutable x))))
+     (define A.rcd (make-record-constructor-descriptor A.rtd #f (lambda (new) (lambda () (new 1)))))
+     (define B.rtd (make-record-type-descriptor 'B A.rtd #f #f #f '#((immutable y))))
+     (define B.rcd (make-record-constructor-descriptor B.rtd A.rcd #f))
+     ;; cp0 may fold the predicate, but will residualize a call to make-record-constructor-descriptor
+     ;; that raises an exception
+     (record-constructor-descriptor? B.rcd)))
 )
 
 (mat record-writer

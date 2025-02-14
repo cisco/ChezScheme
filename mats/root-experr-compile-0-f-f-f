@@ -8116,6 +8116,14 @@ record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 fo
 record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 for foreign type single-float".
 record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 for foreign type double".
 record.mo:Expected error in mat foreign-data: "foreign-set!: invalid value 17 for foreign type double-float".
+record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: "wrong" is not a record-type descriptor".
+record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: invalid protocol "toast"".
+record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: invalid protocol "jam"".
+record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: cannot create constructor descriptor for record type with non-scheme-object fields".
+record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> specified for base record type #<record type B>".
+record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type B>".
+record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: no protocol specified, but parent #<record constructor descriptor> has protocol".
+record.mo:Expected error in mat record-inheritance: "make-record-constructor-descriptor: no protocol specified, but parent #<record constructor descriptor> has protocol".
 record.mo:Expected error in mat record-writer: "record-writer: sp is not a record-type descriptor".
 record.mo:Expected error in mat record-writer: "record-writer: "oops" is not a procedure".
 record.mo:Expected error in mat record-writer: "write: ugh is not a textual output port".
