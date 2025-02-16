@@ -1150,6 +1150,10 @@ Notes:
       (define-specialize 2 (add1 sub1 1+ 1- -1+)
         [(n) (let ([r (get-type n)])
                (cond
+                 [(predicate-implies? r 'fixnum)
+                  (let ([delta (if (memq prim-name '(add1 1+)) 1 -1)])
+                    (values `(call ,preinfo ,(lookup-primref 3 '$fxx+) ,n (quote ,delta))
+                            'exact-integer ntypes #f #f))]
                  [(predicate-implies? r 'exact-integer)
                   (values `(call ,preinfo ,pr ,n)
                           'exact-integer ntypes #f #f)]

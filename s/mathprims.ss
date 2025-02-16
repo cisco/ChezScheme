@@ -523,6 +523,12 @@
        (unless (fixnum? y) (fxargerr '$fxu< y))
        (#3%$fxu< x y)))
 
+   (set! $fxx+
+     (lambda (x y)
+       (unless (fixnum? x) (fxargerr '$fxx+ x))
+       (unless (fixnum? y) (fxargerr '$fxx+ y))
+       (#3%$fxx+ x y)))
+
    (define-addop fxlogand)
    (define-addop fxlogior)
    (define-addop fxlogor)
