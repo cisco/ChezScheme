@@ -1,7 +1,8 @@
 #lang zuo
 (require "../makefiles/lib.zuo"
          "../makefiles/version.zuo"
-         "lib.zuo")
+         "lib.zuo"
+         "mingw.zuo")
 
 (provide-targets targets-at)
 
@@ -233,7 +234,7 @@
               ,void
               :recur]
 
-     [:target ,exe (,kernel-dep ,@main-objs ,@res-deps ,@preload-files)
+     [:target ,exe (,kernel-dep ,@main-objs ,@res-deps ,@preload-files ,(at-source "mingw.zuo"))
               ,(lambda (path token)
                  (mkdir-p (path-only path))
                  (c-link path
@@ -242,12 +243,16 @@
                                  (append
                                   (list kernel-dep)
                                   (if zlib-system-lib '() (list zlib-lib))
-                                  (if lz4-system-lib '() (list lz4-lib))))
+                                  (if lz4-system-lib '() (list lz4-lib)))
+                                 (if (and (not msvc?)
+                                          (for-windows? config))
+                                     (make-mingw-to-ms-link-libraries m (at-dir) config)
+                                     '()))
                          (let* ([config (config-merge (add-preloads config preload-files)
                                                       'LDFLAGS
                                                       (or (lookup 'mdlinkflags) ""))]
-				[config (if (and (for-windows? config)
-						 (not (is-msvc? config)))
+				[config (if (and (not msvc?)
+						 (for-windows? config))
 					    (config-merge config
 							  'LDFLAGS
 							  ;; for tests, at least:

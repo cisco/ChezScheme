@@ -2840,6 +2840,13 @@ At optimize-level 3, the source optimizer (cp0) could replace calls to
 \scheme{fxdiv} and \scheme{fxmod} that the back-end would choose not to inline
 because the constant was not a power of two.
 
+\subsection{Link to system libraries for some math functions with MinGW (10.2.0)}
+
+When building with MinGW, the C libraries for i3nt and a6nt implement
+less precise versions of \scheme{pow}, \scheme{sin}, and \scheme{cos},
+so link instead to the MSVCRT or UCRT implementations of those
+functions.
+
 \subsection{Repair executable-relative search for NetBSD (10.2.0)}
 
 An incorrect approach to finding the current executable's path on

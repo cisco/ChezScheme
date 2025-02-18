@@ -1,0 +1,98 @@
+#lang zuo
+
+(provide make-mingw-to-ms-link-libraries)
+
+(define (make-mingw-to-ms-link-libraries m dir config)
+  (cond
+    [(member m '("ta6nt" "a6nt" "ti3nt" "i3nt"))
+     ;; Synthesize a library that links `sin`, `cos` and `pow` to MSVCRT,
+     ;; instead of using MinGW's implementation, because the MSVCRT
+     ;; implementation is more precise
+
+     (define dlls (get-linked-dlls dir config))
+     (define math-dll
+       ;; infer whether toolchain uses MSVCRT or UCRT
+       (ormap (lambda (s)
+                (cond
+                  [(string=? s "msvcrt.dll") s]
+                  [(glob-match? "*ms-win-crt-math*" s) s]
+                  [else #f]))
+              dlls))
+
+     (cond
+       [(not math-dll)
+        (alert "could not find DLL likely to export `pow`, etc.")
+        '()]
+       [else
+        (define dlltool (find-cc-like-tool config 'DLLTOOL "dlltool"))
+
+        (define msfuns-def (build-path dir "msfuns.def"))
+        (define out (fd-open-output msfuns-def :truncate))
+        (fd-write out (~a "LIBRARY " (path-replace-extension math-dll "") "\n"
+                          "EXPORTS\n"
+                          "  sin\n"
+                          "  cos\n"
+                          "  pow\n"))
+        (fd-close out)
+
+        (define msfuns-a (path-replace-extension msfuns-def ".a"))
+
+        (define proc (hash-ref
+                      (shell dlltool "-d" msfuns-def "-l" msfuns-a)
+                      'process))
+
+        (process-wait proc)
+        (or (and (equal? 0 (process-status proc))
+                 (list msfuns-a))
+            '())])]
+    [else '()]))
+
+(define (get-linked-dlls dir config)
+  (define tmp-c (build-path dir "math_tmp.c"))
+  (define out (fd-open-output tmp-c :truncate))
+  (fd-write out (~a "#include <math.h>\n"
+                    "int main() { return pow(1.0, 2.0) > 0.0; }\n"))
+  (fd-close out)
+
+  (define tmp-o (path-replace-extension tmp-c ".obj"))
+  (c-compile tmp-o tmp-c config)
+
+  (define tmp-exe (path-replace-extension tmp-c ".exe"))
+  (c-compile tmp-exe (list tmp-o) config)
+
+  (define objdump (find-cc-like-tool config 'OBJDUMP "objdump"))
+  (define p (shell objdump "-p" tmp-exe (hash 'stdout 'pipe)))
+  (define proc (hash-ref p 'process))
+  (define in (fd-read (hash-ref p 'stdout) eof))
+
+  (define ins (string-split (string-join (string-split in "\r") "")
+			    "\n"))
+
+  (process-wait proc)
+
+  (define dlls
+    (filter (lambda (v) v)
+            (map (lambda (s)
+                   (cond
+                     [(glob-match? "*DLL Name: *" s)
+                      (define l (string-split s "DLL Name: "))
+                      (and (= (length l) 2) (cadr l))]
+                     [else #f]))
+                 ins)))
+
+  (rm tmp-exe)
+  (rm tmp-o)
+  (rm tmp-c)
+
+  dlls)
+
+(define (find-cc-like-tool config key name)
+  (or (hash-ref config key #f)
+      (let ([cc (hash-ref config 'CC #f)])
+        (cond
+          [(and cc (glob-match? "*gcc" cc))
+           (~a (substring cc 0 (- (string-length cc) 3)) name)]
+          [(and cc (glob-match? "*cc" cc))
+           (~a (substring cc 0 (- (string-length cc) 2)) name)]
+          [else
+           name]))))
