@@ -4881,7 +4881,7 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat read-test: "read: |...| symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: @abc symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: 123a symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat read-test: "read: 123# number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat read-test: "read: invalid sharp-sign prefix #
 6.mo:Expected error in mat read-test: "read: 1/2e2 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: #x.3 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat read-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
@@ -5710,7 +5710,7 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat load-test: "read: |...| symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: @abc symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: 123a symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat load-test: "read: 123# number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat load-test: "read: invalid sharp-sign prefix #
 6.mo:Expected error in mat load-test: "read: 1/2e2 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: #x.3 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat load-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
@@ -6539,7 +6539,7 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat compile-test: "read: |...| symbol escape syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: @abc symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: 123a symbol syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
-6.mo:Expected error in mat compile-test: "read: 123# number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
+6.mo:Expected error in mat compile-test: "read: invalid sharp-sign prefix #
 6.mo:Expected error in mat compile-test: "read: 1/2e2 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: #x.3 number syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
 6.mo:Expected error in mat compile-test: "read: alternative boolean syntax is not allowed in #!r6rs mode at line 3, char 8 of testfile.ss".
