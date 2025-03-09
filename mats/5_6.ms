@@ -660,6 +660,102 @@
     (error? (fxvector-copy '(a b c)))
  )
 
+(mat fxvector-copy!
+  (begin
+    (define $v1 (fxvector 1 2 3 4))
+    (define $v2 (fxvector 255 254 253 252 251 250 249 248 247))
+    (and (fxvector? $v1)
+         (fxvector? $v2)
+         (eqv? (fxvector-length $v1) 4)
+         (eqv? (fxvector-length $v2) 9)))
+
+ ; wrong number of arguments
+  (error? (fxvector-copy!))
+  (error? (fxvector-copy! $v2))
+  (error? (fxvector-copy! $v2 3))
+  (error? (fxvector-copy! $v2 3 $v1))
+  (error? (fxvector-copy! $v2 3 $v1 1))
+  (error? (if (fxvector-copy! $v2 3 $v1 1 2 3) #f #t))
+
+ ; not fxvector
+  (error? (fxvector-copy! 0 0 $v2 0 0))
+  (error? (if (fxvector-copy! $v1 0 (vector 1 2 3) 0 0) #f #t))
+
+ ; bad index
+  (error? (fxvector-copy! $v1 -1 $v2 0 0))
+  (error? (fxvector-copy! $v1 0 $v2 -1 0))
+  (error? (fxvector-copy! $v1 'a $v2 0 0))
+  (error? (fxvector-copy! $v1 0 $v2 0.0 0))
+  (error? (fxvector-copy! $v1 (+ (most-positive-fixnum) 1) $v2 0 0))
+  (error? (if (fxvector-copy! $v1 0 $v2 (+ (most-positive-fixnum) 1) 0) #f #t))
+
+ ; bad count
+  (error? (fxvector-copy! $v1 0 $v2 0 -1))
+  (error? (fxvector-copy! $v1 0 $v2 0 (+ (most-positive-fixnum) 1)))
+  (error? (if (fxvector-copy! $v1 0 $v2 0 'a) #f #t))
+
+ ; beyond end
+  (error? (fxvector-copy! $v1 0 $v2 0 5))
+  (error? (fxvector-copy! $v2 0 $v1 0 5))
+  (error? (fxvector-copy! $v1 1 $v2 0 4))
+  (error? (fxvector-copy! $v2 0 $v1 1 4))
+  (error? (fxvector-copy! $v1 2 $v2 0 3))
+  (error? (fxvector-copy! $v2 0 $v1 2 3))
+  (error? (fxvector-copy! $v1 3 $v2 0 2))
+  (error? (fxvector-copy! $v2 0 $v1 3 2))
+  (error? (fxvector-copy! $v1 4 $v2 0 1))
+  (error? (fxvector-copy! $v2 0 $v1 4 1))
+  (error? (fxvector-copy! $v2 0 $v1 0 500))
+  (error? (if (fxvector-copy! $v2 500 $v1 0 0) #f #t))
+
+ ; make sure no damage done
+  (and (fxvector? $v1)
+       (fxvector? $v2)
+       (equal? $v1 #vfx(1 2 3 4))
+       (equal? $v2 #vfx(255 254 253 252 251 250 249 248 247)))
+
+  (begin
+    (fxvector-copy! $v2 3 $v1 1 2)
+    (and (equal? $v1 #vfx(1 252 251 4))
+         (equal? $v2 #vfx(255 254 253 252 251 250 249 248 247))))
+  (begin
+    (fxvector-copy! $v2 6 $v1 2 2)
+    (and (equal? $v1 #vfx(1 252 249 248))
+         (equal? $v2 #vfx(255 254 253 252 251 250 249 248 247))))
+  (begin
+    (fxvector-copy! $v2 0 $v1 4 0)
+    (and (equal? $v1 #vfx(1 252 249 248))
+         (equal? $v2 #vfx(255 254 253 252 251 250 249 248 247))))
+  (begin
+    (fxvector-copy! $v2 3 $v1 4 0)
+    (and (equal? $v1 #vfx(1 252 249 248))
+         (equal? $v2 #vfx(255 254 253 252 251 250 249 248 247))))
+  (begin
+    (fxvector-copy! $v2 3 $v2 4 0)
+    (and (equal? $v1 #vfx(1 252 249 248))
+         (equal? $v2 #vfx(255 254 253 252 251 250 249 248 247))))
+  (begin
+    (fxvector-copy! $v2 2 $v1 1 3)
+    (and (equal? $v1 #vfx(1 253 252 251))
+         (equal? $v2 #vfx(255 254 253 252 251 250 249 248 247))))
+  (begin
+    (fxvector-copy! $v1 0 $v2 3 4)
+    (and (equal? $v1 #vfx(1 253 252 251))
+         (equal? $v2 #vfx(255 254 253 1 253 252 251 248 247))))
+  (begin
+    (fxvector-copy! $v2 0 $v2 3 5)
+    (and (equal? $v1 #vfx(1 253 252 251))
+         (equal? $v2 #vfx(255 254 253 255 254 253 1 253 247))))
+  (begin
+    (fxvector-copy! $v2 4 $v2 2 5)
+    (and (equal? $v1 #vfx(1 253 252 251))
+         (equal? $v2 #vfx(255 254 254 253 1 253 247 253 247))))
+  (begin
+    (fxvector-copy! $v2 1 $v2 1 7)
+    (and (equal? $v1 #vfx(1 253 252 251))
+         (equal? $v2 #vfx(255 254 254 253 1 253 247 253 247))))
+)
+
 (mat fxvector-fill!
     (let ([v (fxvector-copy '#5vfx(1 2 3 4 5))])
        (and (equal? v '#5vfx(1 2 3 4 5))
@@ -814,6 +910,102 @@
       (map random (make-list 500 2500)))
     (error? (flvector-copy '(a b c)))
  )
+
+(mat flvector-copy!
+  (begin
+    (define $v1 (flvector 1.0 2.0 3.0 4.0))
+    (define $v2 (flvector 255.0 254.0 253.0 252.0 251.0 250.0 249.0 248.0 247.0))
+    (and (flvector? $v1)
+         (flvector? $v2)
+         (eqv? (flvector-length $v1) 4)
+         (eqv? (flvector-length $v2) 9)))
+
+ ; wrong number of arguments
+  (error? (flvector-copy!))
+  (error? (flvector-copy! $v2))
+  (error? (flvector-copy! $v2 3))
+  (error? (flvector-copy! $v2 3 $v1))
+  (error? (flvector-copy! $v2 3 $v1 1))
+  (error? (if (flvector-copy! $v2 3 $v1 1 2 3) #f #t))
+
+ ; not flvector
+  (error? (flvector-copy! 0 0 $v2 0 0))
+  (error? (if (flvector-copy! $v1 0 (vector 1 2 3) 0 0) #f #t))
+
+ ; bad index
+  (error? (flvector-copy! $v1 -1 $v2 0 0))
+  (error? (flvector-copy! $v1 0 $v2 -1 0))
+  (error? (flvector-copy! $v1 'a $v2 0 0))
+  (error? (flvector-copy! $v1 0 $v2 0.0 0))
+  (error? (flvector-copy! $v1 (+ (most-positive-fixnum) 1) $v2 0 0))
+  (error? (if (flvector-copy! $v1 0 $v2 (+ (most-positive-fixnum) 1) 0) #f #t))
+
+ ; bad count
+  (error? (flvector-copy! $v1 0 $v2 0 -1))
+  (error? (flvector-copy! $v1 0 $v2 0 (+ (most-positive-fixnum) 1)))
+  (error? (if (flvector-copy! $v1 0 $v2 0 'a) #f #t))
+
+ ; beyond end
+  (error? (flvector-copy! $v1 0 $v2 0 5))
+  (error? (flvector-copy! $v2 0 $v1 0 5))
+  (error? (flvector-copy! $v1 1 $v2 0 4))
+  (error? (flvector-copy! $v2 0 $v1 1 4))
+  (error? (flvector-copy! $v1 2 $v2 0 3))
+  (error? (flvector-copy! $v2 0 $v1 2 3))
+  (error? (flvector-copy! $v1 3 $v2 0 2))
+  (error? (flvector-copy! $v2 0 $v1 3 2))
+  (error? (flvector-copy! $v1 4 $v2 0 1))
+  (error? (flvector-copy! $v2 0 $v1 4 1))
+  (error? (flvector-copy! $v2 0 $v1 0 500))
+  (error? (if (flvector-copy! $v2 500 $v1 0 0) #f #t))
+
+ ; make sure no damage done
+  (and (flvector? $v1)
+       (flvector? $v2)
+       (equal? $v1 #vfl(1.0 2.0 3.0 4.0))
+       (equal? $v2 #vfl(255.0 254.0 253.0 252.0 251.0 250.0 249.0 248.0 247.0)))
+
+  (begin
+    (flvector-copy! $v2 3 $v1 1 2)
+    (and (equal? $v1 #vfl(1.0 252.0 251.0 4.0))
+         (equal? $v2 #vfl(255.0 254.0 253.0 252.0 251.0 250.0 249.0 248.0 247.0))))
+  (begin
+    (flvector-copy! $v2 6 $v1 2 2)
+    (and (equal? $v1 #vfl(1.0 252.0 249.0 248.0))
+         (equal? $v2 #vfl(255.0 254.0 253.0 252.0 251.0 250.0 249.0 248.0 247.0))))
+  (begin
+    (flvector-copy! $v2 0 $v1 4 0)
+    (and (equal? $v1 #vfl(1.0 252.0 249.0 248.0))
+         (equal? $v2 #vfl(255.0 254.0 253.0 252.0 251.0 250.0 249.0 248.0 247.0))))
+  (begin
+    (flvector-copy! $v2 3 $v1 4 0)
+    (and (equal? $v1 #vfl(1.0 252.0 249.0 248.0))
+         (equal? $v2 #vfl(255.0 254.0 253.0 252.0 251.0 250.0 249.0 248.0 247.0))))
+  (begin
+    (flvector-copy! $v2 3 $v2 4 0)
+    (and (equal? $v1 #vfl(1.0 252.0 249.0 248.0))
+         (equal? $v2 #vfl(255.0 254.0 253.0 252.0 251.0 250.0 249.0 248.0 247.0))))
+  (begin
+    (flvector-copy! $v2 2 $v1 1 3)
+    (and (equal? $v1 #vfl(1.0 253.0 252.0 251.0))
+         (equal? $v2 #vfl(255.0 254.0 253.0 252.0 251.0 250.0 249.0 248.0 247.0))))
+  (begin
+    (flvector-copy! $v1 0 $v2 3 4)
+    (and (equal? $v1 #vfl(1.0 253.0 252.0 251.0))
+         (equal? $v2 #vfl(255.0 254.0 253.0 1.0 253.0 252.0 251.0 248.0 247.0))))
+  (begin
+    (flvector-copy! $v2 0 $v2 3 5)
+    (and (equal? $v1 #vfl(1.0 253.0 252.0 251.0))
+         (equal? $v2 #vfl(255.0 254.0 253.0 255.0 254.0 253.0 1.0 253.0 247.0))))
+  (begin
+    (flvector-copy! $v2 4 $v2 2 5)
+    (and (equal? $v1 #vfl(1.0 253.0 252.0 251.0))
+         (equal? $v2 #vfl(255.0 254.0 254.0 253.0 1.0 253.0 247.0 253.0 247.0))))
+  (begin
+    (flvector-copy! $v2 1 $v2 1 7)
+    (and (equal? $v1 #vfl(1.0 253.0 252.0 251.0))
+         (equal? $v2 #vfl(255.0 254.0 254.0 253.0 1.0 253.0 247.0 253.0 247.0))))
+)
 
 (mat flvector-fill!
     (let ([v (flvector-copy '#5vfl(1.0 2.0 3.0 4.0 5.0))])
