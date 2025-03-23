@@ -5,8 +5,8 @@
 ;;;  Register usage:
 ;;;   r0-r7: C argument/result registers, caller-save
 ;;;   r8: indirect-result register, caller-save
-;;;   r9-18: caller-save
-;;;   r19-28: callee-save
+;;;   r9-17: caller-save
+;;;   r18-28: callee-save
 ;;;   r29: frame pointer, callee-save
 ;;;   r30: a.k.a. lr, link register
 ;;;   sp: stack pointer or (same register number) zero register
