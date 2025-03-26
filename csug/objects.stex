@@ -567,8 +567,8 @@ integers.
 The sum of \var{src-start} and \var{n} must not exceed the length of \var{src},
 and the sum of \var{dst-start} and \var{n} must not exceed the length of \var{dst}.
 
-\scheme{string-copy!} overwrites the \var{n} bytes of \var{dst}
-starting at \var{dst-start} with the \var{n} bytes of \var{dst}
+\scheme{string-copy!} overwrites the \var{n} characters of \var{dst}
+starting at \var{dst-start} with the \var{n} characters of \var{src}
 starting at \var{src-start}.
 This works even if \var{dst} is the same string as \var{src} and the
 source and destination locations overlap.
