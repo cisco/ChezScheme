@@ -1153,7 +1153,37 @@ as \var{fxvector}.
   (eq? v (fxvector-copy v))) ;=> #f
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fxvector-copy!}{\categoryprocedure}{(fxvector-copy! \var{src} \var{src-start} \var{dst} \var{dst-start} \var{n})}
+\returns unspecified
+\listlibraries
+\endnoskipentryheader
 
+\noindent
+\var{src} and \var{dst} must be fxvectors.
+\var{src-start}, \var{dst-start}, and \var{n} must be exact nonnegative
+integers.
+The sum of \var{src-start} and \var{n} must not exceed the length of \var{src},
+and the sum of \var{dst-start} and \var{n} must not exceed the length of \var{dst}.
+
+\scheme{fxvector-copy!} overwrites the \var{n} elements of \var{dst}
+starting at \var{dst-start} with the \var{n} elements of \var{src}
+starting at \var{src-start}.
+This works even if \var{dst} is the same fxvector as \var{src} and the
+source and destination locations overlap.
+That is, the destination is filled with the fixnums that appeared at the
+source before the operation began.
+
+\schemedisplay
+(let ([src (fxvector 1 2 3)] [dest (fxvector 0 0 0)])
+  (fxvector-copy! src 1 dest 0 2)
+  dest) ;=> #vfx(2 3 0)
+
+(let ([fxv (fxvector 1 2 3)])
+  (fxvector-copy! fxv 1 fxv 0 2)
+  fxv) ;=> #vfx(2 3 3)
+\endschemedisplay
     
 \section{Flonum-Only Vectors\label{SECTFLVECTORS}}
 
@@ -1351,7 +1381,37 @@ as \var{flvector}.
   (eq? v (flvector-copy v))) ;=> #f
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flvector-copy!}{\categoryprocedure}{(flvector-copy! \var{src} \var{src-start} \var{dst} \var{dst-start} \var{n})}
+\returns unspecified
+\listlibraries
+\endnoskipentryheader
 
+\noindent
+\var{src} and \var{dst} must be flvectors.
+\var{src-start}, \var{dst-start}, and \var{n} must be exact nonnegative
+integers.
+The sum of \var{src-start} and \var{n} must not exceed the length of \var{src},
+and the sum of \var{dst-start} and \var{n} must not exceed the length of \var{dst}.
+
+\scheme{flvector-copy!} overwrites the \var{n} elements of \var{dst}
+starting at \var{dst-start} with the \var{n} elements of \var{src}
+starting at \var{src-start}.
+This works even if \var{dst} is the same flvector as \var{src} and the
+source and destination locations overlap.
+That is, the destination is filled with the flonums that appeared at the
+source before the operation began.
+
+\schemedisplay
+(let ([src (flvector 1.0 2.0 3.0)] [dest (fxvector 0.0 0.0 0.0)])
+  (flvector-copy! src 1 dest 0 2)
+  dest) ;=> #vfl(2.0 3.0 0.0)
+
+(let ([flv (flvector 1.0 2.0 3.0)])
+  (flvector-copy! flv 1 flv 0 2)
+  flv) ;=> #vfl(2.0 3.0 3.0)
+\endschemedisplay
     
 \section{Bytevectors\label{SECTBYTEVECTORS}}
 

@@ -116,6 +116,13 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Efficient in-place fxvector and flvector copying (10.2.0)}
+
+The \scheme{fxvector-copy!} and \scheme{flvector-copy!} functions
+copy a subsequence from one fxvector (resp. flvector) to another
+in an efficient manner similar to \scheme{bytevector-copy!},
+avoiding the overhead of repeated accesses to individual vector positions.
+
 \subsection{Type recovery improvements (10.2.0)}
 
 The type recovery pass has improved support for \scheme{abs},

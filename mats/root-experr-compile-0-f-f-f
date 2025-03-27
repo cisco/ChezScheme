@@ -4346,6 +4346,35 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: <-int> is not a fixnum".
 5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: a is not a fixnum".
 5_6.mo:Expected error in mat fxvector-copy: "fxvector-copy: (a b c) is not an fxvector".
+5_6.mo:Expected error in mat fxvector-copy!: "incorrect argument count in call (fxvector-copy!)".
+5_6.mo:Expected error in mat fxvector-copy!: "incorrect argument count in call (fxvector-copy! $v2)".
+5_6.mo:Expected error in mat fxvector-copy!: "incorrect argument count in call (fxvector-copy! $v2 3)".
+5_6.mo:Expected error in mat fxvector-copy!: "incorrect argument count in call (fxvector-copy! $v2 3 $v1)".
+5_6.mo:Expected error in mat fxvector-copy!: "incorrect argument count in call (fxvector-copy! $v2 3 $v1 1)".
+5_6.mo:Expected error in mat fxvector-copy!: "incorrect argument count in call (fxvector-copy! $v2 3 $v1 1 2 ...)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: 0 is not an fxvector".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: #(1 2 3) is not an fxvector".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: invalid start value -1".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: invalid start value -1".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: invalid start value a".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: invalid start value 0.0".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: invalid start value <int>".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: invalid start value <int>".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: invalid count -1".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: invalid count <int>".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: invalid count a".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 0 + count 5 is beyond the end of #vfx(1 2 3 4)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 0 + count 5 is beyond the end of #vfx(1 2 3 4)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 1 + count 4 is beyond the end of #vfx(1 2 3 4)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 1 + count 4 is beyond the end of #vfx(1 2 3 4)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 2 + count 3 is beyond the end of #vfx(1 2 3 4)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 2 + count 3 is beyond the end of #vfx(1 2 3 4)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 3 + count 2 is beyond the end of #vfx(1 2 3 4)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 3 + count 2 is beyond the end of #vfx(1 2 3 4)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 4 + count 1 is beyond the end of #vfx(1 2 3 4)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 4 + count 1 is beyond the end of #vfx(1 2 3 4)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 0 + count 500 is beyond the end of #vfx(255 254 253 252 251 250 ...)".
+5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: index 500 + count 0 is beyond the end of #vfx(255 254 253 252 251 250 ...)".
 5_6.mo:Expected error in mat fxvector-fill!: "fxvector-fill!: a is not a fixnum".
 5_6.mo:Expected error in mat fxvector-fill!: "fxvector-fill!: #(1) is not a fxvector".
 5_6.mo:Expected error in mat list->fxvector: "list->fxvector: #(a b c) is not a proper list".
@@ -4381,6 +4410,35 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat flvector-set!: "flvector-set!: 1 is not a flonum".
 5_6.mo:Expected error in mat flvector-set!: "flvector-set!: a is not a flonum".
 5_6.mo:Expected error in mat flvector-copy: "flvector-copy: (a b c) is not an flvector".
+5_6.mo:Expected error in mat flvector-copy!: "incorrect argument count in call (flvector-copy!)".
+5_6.mo:Expected error in mat flvector-copy!: "incorrect argument count in call (flvector-copy! $v2)".
+5_6.mo:Expected error in mat flvector-copy!: "incorrect argument count in call (flvector-copy! $v2 3)".
+5_6.mo:Expected error in mat flvector-copy!: "incorrect argument count in call (flvector-copy! $v2 3 $v1)".
+5_6.mo:Expected error in mat flvector-copy!: "incorrect argument count in call (flvector-copy! $v2 3 $v1 1)".
+5_6.mo:Expected error in mat flvector-copy!: "incorrect argument count in call (flvector-copy! $v2 3 $v1 1 2 ...)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: 0 is not an flvector".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: #(1 2 3) is not an flvector".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: invalid start value -1".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: invalid start value -1".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: invalid start value a".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: invalid start value 0.0".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: invalid start value <int>".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: invalid start value <int>".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: invalid count -1".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: invalid count <int>".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: invalid count a".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 0 + count 5 is beyond the end of #vfl(1.0 2.0 3.0 4.0)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 0 + count 5 is beyond the end of #vfl(1.0 2.0 3.0 4.0)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 1 + count 4 is beyond the end of #vfl(1.0 2.0 3.0 4.0)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 1 + count 4 is beyond the end of #vfl(1.0 2.0 3.0 4.0)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 2 + count 3 is beyond the end of #vfl(1.0 2.0 3.0 4.0)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 2 + count 3 is beyond the end of #vfl(1.0 2.0 3.0 4.0)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 3 + count 2 is beyond the end of #vfl(1.0 2.0 3.0 4.0)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 3 + count 2 is beyond the end of #vfl(1.0 2.0 3.0 4.0)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 4 + count 1 is beyond the end of #vfl(1.0 2.0 3.0 4.0)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 4 + count 1 is beyond the end of #vfl(1.0 2.0 3.0 4.0)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 0 + count 500 is beyond the end of #vfl(255.0 254.0 253.0 252.0 251.0 250.0 ...)".
+5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: index 500 + count 0 is beyond the end of #vfl(255.0 254.0 253.0 252.0 251.0 250.0 ...)".
 5_6.mo:Expected error in mat flvector-fill!: "flvector-fill!: a is not a flonum".
 5_6.mo:Expected error in mat flvector-fill!: "flvector-fill!: #(1.0) is not a flvector".
 5_6.mo:Expected error in mat list->flvector: "list->flvector: #(a b c) is not a proper list".
