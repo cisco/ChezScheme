@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
-#ifdef TARGET_OS_IPHONE
+#ifdef S_TARGET_OS_IPHONE
 # include <libkern/OSCacheControl.h>
 #endif
 
@@ -42,7 +42,7 @@ void S_doflush(uptr start, uptr end) {
   printf("  doflush(%x, %x)\n", start, end); fflush(stdout);
 #endif
 
-#ifdef TARGET_OS_IPHONE
+#ifdef S_TARGET_OS_IPHONE
   sys_icache_invalidate((void *)start, (char *)end-(char *)start);
 #else
   __clear_cache((char *)start, (char *)end);

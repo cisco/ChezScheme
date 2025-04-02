@@ -568,7 +568,8 @@ To cross compile for iOS, provide an iOS SDK path and define the
  ./configure \
    --cross \
    -m=tarm64ios \
-   CFLAGS="-arch arm64 -isysroot $(xcrun -sdk iphoneos --show-sdk-path) -DTARGET_OS_IPHONE -DDISABLE_CURSES -liconv" \
+   CFLAGS="-arch arm64 -isysroot $(xcrun -sdk iphoneos --show-sdk-path) -DTARGET_OS_IPHONE=1 -DDISABLE_CURSES" \
+   LDFLAGS="-liconv" \
    CC_FOR_BUILD=clang
  make
 
