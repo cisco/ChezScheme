@@ -311,9 +311,10 @@ typedef int tputsputcchar;
 #define MMAP_HEAP
 #define IEEE_DOUBLE
 /* for both iPhone and iPhoneSimulator */
-#if defined(TARGET_OS_IPHONE)
+#if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
 # define SYSTEM(s) ((void)s, -1)
 # define WRITE_XOR_EXECUTE_CODE
+# define S_TARGET_OS_IPHONE
 #endif
 #if defined(__arm64__)
 # if !defined(WRITE_XOR_EXECUTE_CODE)
