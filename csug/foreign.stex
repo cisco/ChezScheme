@@ -17,7 +17,7 @@
 {\ChezScheme} provides two ways to interact with ``foreign'' code,
 i.e., code written in other languages.
 The first is via subprocess creation and communication, which is
-discussed in the Section~\ref{SECTFOREIGNSUBPROCESS}.
+discussed in Section~\ref{SECTFOREIGNSUBPROCESS}.
 The second is via static or dynamic loading and invocation from Scheme
 of procedures written in \index{C (programming language)}C and
 invocation from C of procedures written in Scheme.
