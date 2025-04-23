@@ -281,7 +281,8 @@ int main(int argc, const char *argv[]) {
       } else if (strcmp(arg,"--verbose") == 0) {
         Sset_verbose(1);     
       } else if (strcmp(arg,"--version") == 0) {
-        fprintf(stderr,"%s\n", VERSION);
+        fprintf(stdout,"%s\n", VERSION);
+        fflush(stdout);
         exit(0);
       } else {
         argv[new_argc++] = arg;
