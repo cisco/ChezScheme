@@ -162,7 +162,7 @@
 
 (define-trace-root
   (case-type
-   
+
    [pair
     (case-space
      [(< space-weakpair)
@@ -309,7 +309,7 @@
        (pad (when (== (& len 1) 0)
               (set! (closure-data _copy_ len) (FIX 0))))
        (count countof-closure)])]
-   
+
    [symbol
     (space space-symbol)
     (size size-symbol)
@@ -321,7 +321,7 @@
     (trace-nonself symbol-splist)
     (trace-nonself symbol-hash)
     (count countof-symbol)]
-   
+
    [flonum
     (space space-data)
     (size size-flonum)
@@ -329,7 +329,7 @@
     (copy-flonum flonum-data)
     (count countof-flonum)
     (skip-forwarding)]
-   
+
    [typed-object
     (case-typefield
 
@@ -672,7 +672,7 @@
         [off])
        (count count-pair size-pair 2)]
       [else
-       (size size-pair) 
+       (size size-pair)
        (do-car pair-car)
        (do-cdr pair-cdr)
        (count count-pair)])]
@@ -990,10 +990,11 @@
       (trace-pure (tc-winders tc))
       (trace-pure (tc-attachments tc))
       (trace-pure (tc-handler-stack tc))
+      (trace-pure (tc-expand-time-environment tc))
       (case-mode
-       [sweep
-        (set! (tc-cached-frame tc) Sfalse)]
-       [else])
+        [sweep
+          (set! (tc-cached-frame tc) Sfalse)]
+        [else])
       (trace-return NO-COPY-MODE (FRAME tc 0))
       (trace-stack (cast uptr (tc-scheme-stack tc))
                    (cast uptr (SFP tc))
@@ -1312,7 +1313,7 @@
 (let ()
 
   (define preserve-flonum-eq? #t)
-  
+
   ;; A config is an association list. Mostly, it determines the
   ;; generation mode, but it is also used to some degree as an
   ;; environment-like map to communicate information from one
@@ -1399,7 +1400,7 @@
                      [(null? object-types)
                       (generate-type-dispatch base-types config)]
                      [else
-                      (generate-type-dispatch 
+                      (generate-type-dispatch
                        (cons (cons 'typed-object
                                    (generate-typed-object-dispatch object-types (cons '(basetype typed-object)
                                                                                       config)))
@@ -2328,7 +2329,7 @@
          (when (and index (not (eq? index 0)))
            (error 'field-ref "index not allowed for non-array field ~s" acc-name))
          (format "~a(~a)" c-ref obj)])))
-  
+
   (define (ensure-segment-mark-mask si inset)
     (code
      (format "~aif (!~a->marked_mask) {" inset si)
@@ -2582,7 +2583,7 @@
   ;; macros:
   (let-values ([(op get) (open-bytevector-output-port (native-transcoder))])
     (mkequates.h op))
-  
+
   (set! mkgc-ocd.inc (lambda (ofn) (gen-gc ofn #f #f #f)))
   (set! mkgc-oce.inc (lambda (ofn) (gen-gc ofn #t #t #f))) ; not currently parallel (but could be "parallel" for ownership preservation)
   (set! mkgc-par.inc (lambda (ofn) (gen-gc ofn #f #f #t)))

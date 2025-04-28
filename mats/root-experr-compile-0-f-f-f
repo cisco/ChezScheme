@@ -57,6 +57,18 @@ primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fi
 primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (quote 2.0)): Exception in make-sstats: gc-bytes value 2.0 is not an exact integer
 primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (quote 1/2)): Exception in make-sstats: gc-bytes value 1/2 is not an exact integer
 primvars.mo:Expected error testing (make-sstats *time *time (- (most-negative-fixnum) 1) (- (most-negative-fixnum) 1) *time *time (quote #f)): Exception in make-sstats: gc-bytes value #f is not an exact integer
+primvars.mo:Expected error testing (property-value (quote x) (syntax x)): Exception in property-value: first argument x is not an identifier
+primvars.mo:Expected error testing (property-value (quote 17) (syntax x)): Exception in property-value: first argument 17 is not an identifier
+primvars.mo:Expected error testing (property-value (quote #f) (syntax x)): Exception in property-value: first argument #f is not an identifier
+primvars.mo:Expected error testing (property-value (syntax x) (quote x)): Exception in property-value: second argument #<syntax x> is not an identifier
+primvars.mo:Expected error testing (property-value (syntax x) (quote 17)): Exception in property-value: second argument #<syntax x> is not an identifier
+primvars.mo:Expected error testing (property-value (syntax x) (quote #f)): Exception in property-value: second argument #<syntax x> is not an identifier
+primvars.mo:Expected error testing (property-value (quote x) (syntax x) 1.0+2.0i): Exception in property-value: first argument x is not an identifier
+primvars.mo:Expected error testing (property-value (quote 17) (syntax x) 1.0+2.0i): Exception in property-value: first argument 17 is not an identifier
+primvars.mo:Expected error testing (property-value (quote #f) (syntax x) 1.0+2.0i): Exception in property-value: first argument #f is not an identifier
+primvars.mo:Expected error testing (property-value (syntax x) (quote x) 1.0+2.0i): Exception in property-value: second argument #<syntax x> is not an identifier
+primvars.mo:Expected error testing (property-value (syntax x) (quote 17) 1.0+2.0i): Exception in property-value: second argument #<syntax x> is not an identifier
+primvars.mo:Expected error testing (property-value (syntax x) (quote #f) 1.0+2.0i): Exception in property-value: second argument #<syntax x> is not an identifier
 primvars.mo:Expected error testing (pseudo-random-generator->vector (quote #f)): Exception in pseudo-random-generator->vector: not a pseudo-random generator #f
 primvars.mo:Expected error testing (pseudo-random-generator-seed! *pseudo-random-generator (quote #!eof)): Exception in pseudo-random-generator-seed!: not a nonnegative exact integer #!eof
 primvars.mo:Expected error testing (pseudo-random-generator-seed! *pseudo-random-generator (quote #f)): Exception in pseudo-random-generator-seed!: not a nonnegative exact integer #f
@@ -9229,6 +9241,19 @@ enum.mo:Expected error in mat enumeration: "make-record-type: cannot extend seal
 8.mo:Expected error in mat define-property: "set-top-level-value!: dp9-x is not a variable".
 8.mo:Expected error in mat define-property: "set-top-level-value!: cannot assign immutable variable dp10-x".
 8.mo:Expected error in mat define-property: "attempt to export multiple bindings for x from module (module () (export x (rename (...))) (define x 3) (define-property x k1 4) (alias y x) ...)".
+8.mo:Expected error in mat property-value: "multiple definitions for list in body (let () (define-property list type "procedure") (define list (lambda x x)) (list (get-property list type) (get-property car type)))".
+8.mo:Expected error in mat property-value: "multiple definitions for list in body (module m (list) (define-property list type "procedure") (define list (lambda x x)) (list (get-property list type) (get-property car type)))".
+8.mo:Expected error in mat property-value: "invalid definition in immutable environment (define-property frot rat 3)".
+8.mo:Expected error in mat property-value: "invalid definition in immutable environment (define-property cons rat 3)".
+8.mo:Expected error in mat property-value: "no visible binding for define-property id frot".
+8.mo:Expected error in mat property-value: "no visible binding for define-property key rat".
+8.mo:Expected error in mat property-value: "no visible binding for define-property id x".
+8.mo:Expected error in mat property-value: "no visible binding for define-property key frip".
+8.mo:Expected error in mat property-value: "no visible binding for define-property id x".
+8.mo:Expected error in mat property-value: "no visible binding for define-property key frip".
+8.mo:Expected error in mat property-value: "set-top-level-value!: dp9-x is not a variable".
+8.mo:Expected error in mat property-value: "set-top-level-value!: cannot assign immutable variable dp10-x".
+8.mo:Expected error in mat property-value: "attempt to export multiple bindings for x from module (module () (export x (rename (...))) (define x 3) (define-property x k1 4) (alias y x) ...)".
 8.mo:Expected error in mat library1: "compile-library: failed for /file/not/there.ss: no such file or directory".
 8.mo:Expected error in mat library1: "load-library: failed for /file/not/there: no such file or directory".
 8.mo:Expected error in mat library1: "load-library: abc is not a string".
