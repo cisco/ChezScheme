@@ -1,11 +1,11 @@
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;;
+;;; 
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;;
+;;; 
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;;
+;;; 
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -748,7 +748,7 @@
                  (define-constant max-sweep-space last-swept-value)
                  (define-constant max-real-space last-unswept-value)
                  (define-constant max-space last-unreal-value)))))])))
-
+  
 (define-alloc-spaces
   (real
     (swept
@@ -1636,7 +1636,6 @@
    [ptr fxlength-bv]
    [ptr fxfirst-bit-set-bv]
    [ptr meta-level]
-   [ptr expand-time-environment]
    [ptr compile-profile]
    [ptr generate-inspector-information]
    [ptr generate-procedure-source-information]
@@ -2287,12 +2286,12 @@
 (define-primitive-structure-disps vfasl-header type-untyped
   ([uptr data-size]
    [uptr table-size]
-
+   
    [uptr result-offset]
-
+   
    ;; first starting offset is 0, so skip it in this array:
    [uptr vspace-rel-offsets (constant vspaces-offsets-count)]
-
+   
    [uptr symref-count]
    [uptr rtdref-count]
    [uptr singletonref-count]))
@@ -2770,7 +2769,7 @@
                                (make-libspec-flags xindex-base #f xclosure? xinterface xerror? xhas-does-not-expect-headroom-version?)))
                            (when xhas-does-not-expect-headroom-version?
                              ($sputprop xname '*does-not-expect-headroom-libspec*
-                               (make-libspec xname
+                               (make-libspec xname 
                                  (make-libspec-flags xindex-base #t xclosure? xinterface xerror? xhas-does-not-expect-headroom-version?)))))
                  '(name ...)
                  '(index-base ...)
@@ -3267,7 +3266,7 @@
     pb-uint64
     pb-single
     pb-double)
-
+  
   (define-pb-enum pb-move-types
     pb-i->i
     pb-d->d

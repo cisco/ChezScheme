@@ -1208,10 +1208,12 @@
     [() ($tc-field 'meta-level ($tc))]
     [(x) ($tc-field 'meta-level ($tc) x)]))
 
-(define expand-time-environment
-  (case-lambda
-    [() ($tc-field 'expand-time-environment ($tc))]
-    [(x) ($tc-field 'expand-time-environment ($tc) x)]))
+(define expand-time-environment-key (list #f))
+(define-syntax with-expand-time-environment
+  (syntax-rules ()
+    [(_ r b) (with-continuation-mark expand-time-environment-key r b)]))
+(define (current-expand-time-environment)
+  (continuation-marks-first (current-continuation-marks) expand-time-environment-key))
 
 ; variant that builds lexical bindings
 (define make-lexical-label
@@ -3719,7 +3721,7 @@
                  " in output of macro"))
               (else x))))
     (rebuild-macro-output
-      (let ((out (parameterize ([expand-time-environment r])
+      (let ((out (with-expand-time-environment r
                    (p (source-wrap e (anti-mark w) ae)))))
         (if (procedure? out)
             (out (rec rho
@@ -7391,7 +7393,7 @@
                   (make-source-condition id) (make-undefined-violation))))
        (unless (identifier? id) ($oops who "first argument ~s is not an identifier" id))
        (unless (identifier? key-id) ($oops who "second argument ~s is not an identifier" id))
-       (let ([r (expand-time-environment)])
+       (let ([r (current-expand-time-environment)])
          (unless r ($oops who "called outside the dynamic extent of a transformer call of the expander"))
          (let-values ([(id-label/pl retry) (id->label/pl/retry id empty-wrap)])
            (let ([key-label (id->label key-id empty-wrap)])
