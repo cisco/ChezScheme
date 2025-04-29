@@ -249,40 +249,39 @@ int main(int argc, const char *argv[]) {
         programfile = argv[n];
         while (++n < argc) argv[new_argc++] = argv[n];
       } else if (strcmp(arg,"--help") == 0) {
-        fprintf(stderr,"usage: %s [options and files]\n", execpath);
-        fprintf(stderr,"options:\n");
-        fprintf(stderr,"  -q, --quiet                             suppress greeting and prompt\n");
-        fprintf(stderr,"  --script <path>                         run as shell script\n");
-        fprintf(stderr,"  --program <path>                        run rnrs program as shell script\n");
+        fprintf(stdout,"usage: %s [options and files]\n", execpath);
+        fprintf(stdout,"options:\n");
+        fprintf(stdout,"  -q, --quiet                             suppress greeting and prompt\n");
+        fprintf(stdout,"  --script <path>                         run as shell script\n");
+        fprintf(stdout,"  --program <path>                        run rnrs program as shell script\n");
 #ifdef WIN32
 #define sep ";"
 #else
 #define sep ":"
 #endif
-        fprintf(stderr,"  --libdirs <dir>%s...                     set library directories\n", sep);
-        fprintf(stderr,"  --libexts <ext>%s...                     set library extensions\n", sep);
-        fprintf(stderr,"  --compile-imported-libraries            compile libraries before loading\n");
-        fprintf(stderr,"  --import-notify                         enable import search messages\n");
-        fprintf(stderr,"  --optimize-level <0 | 1 | 2 | 3>        set optimize-level\n");
-        fprintf(stderr,"  --debug-on-exception                    on uncaught exception, call debug\n");
-        fprintf(stderr,"  --eedisable                             disable expression editor\n");
-        fprintf(stderr,"  --eehistory <off | path>                expression-editor history file\n");
-        fprintf(stderr,"  --enable-object-counts                  have collector maintain object counts\n");
-        fprintf(stderr,"  --retain-static-relocation              keep reloc info for compute-size, etc.\n");
-        fprintf(stderr,"  -b <path>, --boot <path>                load boot file\n");
-//        fprintf(stderr,"  -c, --compact                           toggle compaction flag\n");
-//        fprintf(stderr,"  -h <path>, --heap <path>                load heap file\n");
-//        fprintf(stderr,"  -s[<n>] <path>, --saveheap[<n>] <path>  save heap file\n");
-        fprintf(stderr,"  --verbose                               trace boot/heap search process\n");
-        fprintf(stderr,"  --version                               print version and exit\n");
-        fprintf(stderr,"  --help                                  print help and exit\n");
-        fprintf(stderr,"  --                                      pass through remaining args\n");
+        fprintf(stdout,"  --libdirs <dir>%s...                     set library directories\n", sep);
+        fprintf(stdout,"  --libexts <ext>%s...                     set library extensions\n", sep);
+        fprintf(stdout,"  --compile-imported-libraries            compile libraries before loading\n");
+        fprintf(stdout,"  --import-notify                         enable import search messages\n");
+        fprintf(stdout,"  --optimize-level <0 | 1 | 2 | 3>        set optimize-level\n");
+        fprintf(stdout,"  --debug-on-exception                    on uncaught exception, call debug\n");
+        fprintf(stdout,"  --eedisable                             disable expression editor\n");
+        fprintf(stdout,"  --eehistory <off | path>                expression-editor history file\n");
+        fprintf(stdout,"  --enable-object-counts                  have collector maintain object counts\n");
+        fprintf(stdout,"  --retain-static-relocation              keep reloc info for compute-size, etc.\n");
+        fprintf(stdout,"  -b <path>, --boot <path>                load boot file\n");
+//        fprintf(stdout,"  -c, --compact                           toggle compaction flag\n");
+//        fprintf(stdout,"  -h <path>, --heap <path>                load heap file\n");
+//        fprintf(stdout,"  -s[<n>] <path>, --saveheap[<n>] <path>  save heap file\n");
+        fprintf(stdout,"  --verbose                               trace boot/heap search process\n");
+        fprintf(stdout,"  --version                               print version and exit\n");
+        fprintf(stdout,"  --help                                  print help and exit\n");
+        fprintf(stdout,"  --                                      pass through remaining args\n");
         exit(0);
       } else if (strcmp(arg,"--verbose") == 0) {
         Sset_verbose(1);     
       } else if (strcmp(arg,"--version") == 0) {
         fprintf(stdout,"%s\n", VERSION);
-        fflush(stdout);
         exit(0);
       } else {
         argv[new_argc++] = arg;

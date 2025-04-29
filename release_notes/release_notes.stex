@@ -116,6 +116,12 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Command-line options \scheme{--version} and \scheme{--help} write to stdout
+(10.2.0)}
+
+Calling \scheme{scheme} or \scheme{petite} with \scheme{--version} or \scheme{--help} now
+writes output to stdout, not stderr.
+
 \subsection{Efficient in-place fxvector and flvector copying (10.2.0)}
 
 The \scheme{fxvector-copy!} and \scheme{flvector-copy!} functions
