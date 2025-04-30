@@ -7373,27 +7373,1040 @@
     '((a . b) (c . d)))
 )
 
+(mat property-value
+  (begin
+    (library (dp get-property) (export get-property) (import (scheme))
+      (define-syntax get-property
+        (lambda (x)
+          (syntax-case x ()
+            [(_ q prop) #`'#,(datum->syntax #'* (property-value #'q #'prop))]))))
+    (import (dp get-property))
+    #t)
+  (begin
+    (define-property cons frotz 'spamgle)
+    (equal?
+      (cons (get-property cons frotz) (get-property cons fratz))
+      '(spamgle . #f)))
+  (equal?
+    (cons (get-property cons frotz) (get-property cons fratz))
+    '(spamgle . #f))
+  (equal?
+    (let ()
+      (import scheme)
+      (cons (get-property cons frotz) (get-property cons fratz)))
+    (if (free-identifier=? #'cons (let () (import scheme) #'cons))
+        '(spamgle . #f)
+        '(#f . #f)))
+  (equal?
+    (let ()
+      (define-property cons fratz 'yubah)
+      (cons (get-property cons frotz) (get-property cons fratz)))
+    '(spamgle . yubah))
+  (equal?
+    (cons (get-property cons frotz) (get-property cons fratz))
+    '(spamgle . #f))
+ ; restore
+  (begin
+    (meta-cond
+      [(free-identifier=? #'cons (let () (import scheme) #'cons))
+       (import (only scheme cons))]
+      [else (define cons (let () (import scheme) cons))])
+    #t)
+  (equal?
+    (cons (get-property cons frotz) (get-property cons fratz))
+    '(#f . #f))
+  (equal?
+    (let ()
+      (import scheme)
+      (cons (get-property cons frotz) (get-property cons fratz)))
+    '(#f . #f))
+  (equal?
+    (let ()
+      (import scheme)
+      (define-property list type "procedure")
+      (list (get-property list type) (get-property car type)))
+    '("procedure" #f))
+  (equal?
+    (let ()
+      (define list (lambda x x))
+      (define-property list type "procedure")
+      (list (get-property list type) (get-property car type)))
+    '("procedure" #f))
+  (error? ; multiple definitions for list
+    (let ()
+      (define-property list type "procedure")
+      (define list (lambda x x))
+      (list (get-property list type) (get-property car type))))
+  (error? ; multiple definitions for list
+    (module m (list)
+      (define-property list type "procedure")
+      (define list (lambda x x))
+      (list (get-property list type) (get-property car type))))
+  (error? ; immutable environment
+    (eval '(define-property frot rat 3) (scheme-environment)))
+  (error? ; immutable environment
+    (eval '(define-property cons rat 3) (scheme-environment)))
+  (error? ; no visible binding
+    (eval '(let () (define-property frot cons 3) 3) (scheme-environment)))
+  (error? ; no visible binding
+    (eval '(let () (define-property cons rat 3) 3) (scheme-environment)))
+  (error? ; no visible binding
+    (library (dp err1) (export x) (import (scheme))
+      (define-property x cons "frap")))
+  (error? ; no visible binding
+    (library (dp err1) (export x) (import (scheme))
+      (define-property cons frip "frap")))
+  (error? ; no visible binding
+    (module (x) (import-only (scheme))
+      (define-property x cons "frap")))
+  (error? ; no visible binding
+    (module (x) (import-only (scheme))
+      (define-property cons frip "frap")))
+  (not (get-property list type))
+  (equal?
+    (let ()
+      (define type)
+      (define-property list type "proc")
+      (list
+        (get-property list type)
+        (let () (define type) (get-property list type))))
+    '("proc" #f))
+  (equal?
+    (let ()
+      (module (type iface list)
+        (define type)
+        (define iface)
+        (define-property list type "a proc")
+        (define-property list iface -1))
+      (list
+        (get-property list type)
+        (get-property list iface)))
+    '("a proc" -1))
+  (equal?
+    (let ()
+      (module (type list)
+        (define type)
+        (define iface)
+        (define-property list type "a proc")
+        (define-property list iface -1))
+      (list
+        (get-property list type)
+        (get-property list iface)))
+    '("a proc" #f))
+  (equal?
+    (let ()
+      (module (iface list)
+        (define type)
+        (define iface)
+        (define-property list type "a proc")
+        (define-property list iface -1))
+      (list
+        (get-property list type)
+        (get-property list iface)))
+    '(#f -1))
+  (equal?
+    (let ()
+      (module (list)
+        (define type)
+        (define iface)
+        (define-property list type "a proc")
+        (define-property list iface -1))
+      (list
+        (get-property list type)
+        (get-property list iface)))
+    '(#f #f))
+  (equal?
+    (let ()
+      (module (type iface)
+        (define type)
+        (define iface)
+        (define-property list type "a proc")
+        (define-property list iface -1))
+      (list
+        (get-property list type)
+        (get-property list iface)))
+    '(#f #f))
+  (begin
+    (define dp-out (open-output-string))
+    (module dp-m1 (x)
+      (import (scheme) (dp get-property))
+      (define x 444)
+      (define-property x frob "x-frob")
+      (define-property x spam "x-spam")
+      (fprintf dp-out "~s ~s ~s ~s\n"
+        (get-property x spam)
+        (get-property x frob)
+        (get-property x rats)
+        x))
+    (equal?
+      (get-output-string dp-out)
+      "\"x-spam\" \"x-frob\" #f 444\n"))
+  (equal?
+    (let ()
+      (import dp-m1)
+      (list
+        (get-property x spam)
+        (get-property x frob)
+        (get-property x rats)
+        x))
+    '("x-spam" "x-frob" #f 444))
+  (begin
+    (define dp-out (open-output-string))
+    (module dp-m1 ()
+      (import (scheme) (dp get-property))
+      (define-property dp-out spam "dp-out-spam")
+      (define-property dp-out frob "dp-out-frob")
+      (fprintf dp-out "~s ~s ~s\n"
+        (get-property dp-out spam)
+        (get-property dp-out frob)
+        (get-property dp-out rats)))
+    (and
+      (equal?
+        (get-output-string dp-out)
+        "\"dp-out-spam\" \"dp-out-frob\" #f\n")
+      (not (get-property dp-out spam))
+      (not (get-property dp-out frob))))
+  (equal?
+    (let ()
+      (import dp-m1)
+      (list
+        (get-property x spam)
+        (get-property x frob)
+        (get-property x rats)))
+    '(#f #f #f))
+  (begin
+    (module dp-m1 (m2 (f x y))
+      (import (scheme) (dp get-property))
+      (define y "yval")
+      (define-property y a "y-a")
+      (module m2 (x)
+        (define x "xval")
+        (define-property x a "x-a")
+        (define-property y b "y-b"))
+      (import m2)
+      (define-property x b "x-b")
+      (define-syntax f
+        (identifier-syntax
+          (list (list x (get-property x a) (get-property x b))
+                (list y (get-property y a) (get-property y b))))))
+    #t)
+  (equal?
+    (let () (import dp-m1) f)
+    '(("xval" "x-a" "x-b") ("yval" "y-a" #f)))
+  (equal?
+    (let ()
+      (import dp-m1)
+      (import m2)
+      (list
+        (get-property x a)
+        (get-property x b)
+        (get-property x c)
+        x))
+    '("x-a" #f #f "xval"))
+  (begin
+    (library (dp l1) (export x spam frob rats) (import (scheme) (dp get-property))
+      (define spam)
+      (define frob)
+      (define rats)
+      (define x (make-parameter 444))
+      (define-property x spam "x-spam")
+      (define-property x frob "x-frob")
+      (printf "~s ~s ~s ~s\n"
+        (get-property x spam)
+        (get-property x frob)
+        (get-property x rats)
+        (x)))
+    #t)
+  (begin (define dp-f) #t)
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (set! dp-f
+          (eval
+            '(lambda ()
+               (import (dp l1))
+               (printf "~s ~s ~s ~s\n"
+                 (get-property x spam)
+                 (get-property x frob)
+                 (get-property x rats)
+                 (x)))))))
+    "\"x-spam\" \"x-frob\" #f 444\n")
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (dp-f)))
+    "\"x-spam\" \"x-frob\" #f 444\n")
+  (begin
+    (library (dp l1) (export x spam frob rats) (import (scheme) (dp get-property))
+      (define spam)
+      (define frob)
+      (define rats)
+      (define-syntax x
+        (identifier-syntax
+          (list
+            (get-property x spam)
+            (get-property x frob)
+            (get-property x rats))))
+      (define-property x spam "x-spam")
+      (define-property x frob "x-frob")
+      (printf "~s ~s ~s ~s\n"
+        (get-property x spam)
+        (get-property x frob)
+        (get-property x rats)
+        x))
+    #t)
+  (begin (define dp-f) #t)
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (set! dp-f
+          (eval
+            '(lambda ()
+               (import (dp l1))
+               (printf "~s ~s ~s ~s\n"
+                 (get-property x spam)
+                 (get-property x frob)
+                 (get-property x rats)
+                 x))))))
+    "")
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (dp-f)))
+    "\"x-spam\" \"x-frob\" #f (\"x-spam\" \"x-frob\" #f)\n")
+  (begin
+    (library (dp l1) (export x qq spam frob rats) (import (scheme) (dp get-property))
+      (define spam)
+      (define frob)
+      (define rats)
+      (define qq (make-parameter 33))
+      (define-syntax x
+        (identifier-syntax
+          (list
+            (get-property x spam)
+            (get-property x frob)
+            (get-property x rats))))
+      (define-property x spam "x-spam")
+      (define-property x frob "x-frob")
+      (printf "~s ~s ~s ~s\n"
+        (get-property x spam)
+        (get-property x frob)
+        (get-property x rats)
+        x))
+    #t)
+  (begin (define dp-f) #t)
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (set! dp-f
+          (eval
+            '(lambda ()
+               (import (dp l1))
+               (printf "~s ~s ~s ~s ~s\n"
+                 (get-property x spam)
+                 (get-property x frob)
+                 (get-property x rats)
+                 x (qq)))))))
+    "\"x-spam\" \"x-frob\" #f (\"x-spam\" \"x-frob\" #f)\n")
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (dp-f)))
+    "\"x-spam\" \"x-frob\" #f (\"x-spam\" \"x-frob\" #f) 33\n")
+  (begin
+    (library (dp l1) (export qq spam frob rats) (import (scheme) (dp get-property))
+      (define spam)
+      (define frob)
+      (define rats)
+      (define qq (make-parameter 77))
+      (define x (make-parameter 444))
+      (define-property x spam "x-spam")
+      (define-property x frob "x-frob")
+      (printf "~s ~s ~s ~s\n"
+        (get-property x spam)
+        (get-property x frob)
+        (get-property x rats)
+        (x)))
+    #t)
+  (begin (define dp-f) #t)
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (set! dp-f
+          (eval
+            '(lambda (x)
+               (import (dp l1))
+               (printf "~s ~s ~s ~s\n"
+                 (get-property x spam)
+                 (get-property x frob)
+                 (get-property x rats)
+                 (qq)))))))
+    "\"x-spam\" \"x-frob\" #f 444\n")
+  (equal?
+    (with-output-to-string
+      (lambda ()
+        (dp-f 0)))
+    "#f #f #f 77\n")
+  (begin
+    (module (dp-a)
+      (module (dp-a)
+        (define-syntax dp-a (identifier-syntax 3)))
+      (define-property dp-a spam 55))
+    (and (eqv? dp-a 3)
+         (eqv? (get-property dp-a spam) 55)))
+  (begin
+    (module (dp-b)
+      (module ((dp-b q))
+        (define q 3)
+        (define-syntax dp-b (identifier-syntax q)))
+      (define-property dp-b spam 55))
+    (and (eqv? dp-b 3)
+         (eqv? (get-property dp-b spam) 55)))
+  (let ()
+    (module (dp-c)
+      (module (dp-c)
+        (define-syntax dp-c (identifier-syntax 3)))
+      (define-property dp-c spam 55))
+    (and (eqv? dp-c 3)
+         (eqv? (get-property dp-c spam) 55)))
+  (let ()
+    (module (dp-c)
+      (module ((dp-c q))
+        (define q 3)
+        (define-syntax dp-c (identifier-syntax q)))
+      (define-property dp-c spam 55))
+    (and (eqv? dp-c 3)
+         (eqv? (get-property dp-c spam) 55)))
+  (begin
+    (library (dp l2) (export dp-d dp-e spam) (import (scheme))
+      (define spam)
+      (module (dp-d)
+        (module (dp-d)
+          (define-syntax dp-d (identifier-syntax 3)))
+        (define-property dp-d spam 55))
+      (module (dp-e)
+        (module ((dp-e q))
+          (define q 13)
+          (define-syntax dp-e (identifier-syntax q)))
+        (define-property dp-e spam 155)))
+    (let ()
+      (import (dp l2))
+      (and (eqv? dp-d 3)
+           (eqv? (get-property dp-d spam) 55)
+           (eqv? dp-e 13)
+           (eqv? (get-property dp-e spam) 155))))
+  (begin
+    (import (dp l2))
+    (and (eqv? dp-d 3)
+         (eqv? (get-property dp-d spam) 55)
+         (eqv? dp-e 13)
+         (eqv? (get-property dp-e spam) 155)))
+  (begin
+    (with-output-to-file "testfile-dp0.ss"
+      (lambda ()
+        (pretty-print '(define $dp0-x "dp0-x"))
+        (pretty-print '(define-property $dp0-x dp0 17)))
+      'replace)
+    (with-output-to-file "testfile-dp1.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp1)
+             (export cons a b spud)
+             (import (scheme))
+             (define spud)
+             (define a "a")
+             (define b "b")
+             (define-property cons spud "spud-cons")
+             (define-property a spud "spud-a")
+             (define-property b spud "spud-b"))))
+      'replace)
+    (with-output-to-file "testfile-dp2.ss"
+      (lambda ()
+        (pretty-print
+          '(module dp2 (cons a b putz)
+             (import (scheme))
+             (define putz)
+             (define a "a")
+             (define b "b")
+             (define-property cons putz "putz-cons")
+             (define-property a putz "putz-a")
+             (define-property b putz "putz-b"))))
+      'replace)
+    (for-each separate-compile '(dp0 dp1 dp2))
+    #t)
+  (begin (load "testfile-dp0.so") #t)
+  (equal? $dp0-x "dp0-x")
+  (equal? (get-property $dp0-x dp0) 17)
+  (equal?
+    (let ()
+      (import (testfile-dp1))
+      (list (cons a b) (get-property cons spud) (get-property a spud) (get-property b spud)))
+    '(("a" . "b") "spud-cons" "spud-a" "spud-b"))
+  (begin (load "testfile-dp2.so") #t)
+  (equal?
+    (let ()
+      (import dp2)
+      (list (cons a b) (get-property cons putz) (get-property a putz) (get-property b putz)))
+    '(("a" . "b") "putz-cons" "putz-a" "putz-b"))
+ ; illustrate use of define-property for storing parent record info,
+ ; while still allowing the record name to be a variable whose value
+ ; is the record type descriptor
+  (equal?
+    (let ()
+      (module (drt)
+        (define drt-key)
+        (define-syntax drt
+          (lambda (x)
+            (define construct-name
+              (lambda (template-identifier . args)
+                (datum->syntax template-identifier
+                  (string->symbol
+                    (apply string-append
+                      (map (lambda (x)
+                             (if (string? x)
+                                 x
+                                 (symbol->string (syntax->datum x))))
+                           args))))))
+            (define do-drt
+              (lambda (rname fname* prtd)
+                (with-syntax ([rname rname]
+                              [rtd (make-record-type-descriptor
+                                     (syntax->datum rname) prtd #f #f #f
+                                     (list->vector (map (lambda (fname) `(immutable ,(syntax->datum fname))) fname*)))]
+                              [make-rname (construct-name rname "make-" rname)]
+                              [rname? (construct-name rname rname "?")]
+                              [(rname-fname ...)
+                               (map (lambda (fname) (construct-name fname rname "-" fname))
+                                    fname*)]
+                              [(i ...) (enumerate fname*)])
+                  #'(begin
+                      (define rname 'rtd)
+                      (define rcd (make-record-constructor-descriptor 'rtd #f #f))
+                      (define-property rname drt-key 'rtd)
+                      (define make-rname (record-constructor rcd))
+                      (define rname? (record-predicate 'rtd))
+                      (define rname-fname (record-accessor 'rtd i))
+                      ...))))
+            (syntax-case x (parent)
+              [(_ rname fname ...)
+               (for-all identifier? #'(rname fname ...))
+               (do-drt #'rname #'(fname ...) #f)]
+              [(_ rname (parent pname) fname ...)
+               (for-all identifier? #'(rname pname fname ...))
+               (let ([prtd (property-value #'pname #'drt-key)])
+                 (unless prtd (syntax-error #'pname "unrecognized parent record typd"))
+                 (do-drt #'rname #'(fname ...) prtd))]))))
+      (drt foo x y)
+      (drt bar (parent foo) z)
+      (let ([b (make-bar 1 2 3)])
+        (list
+          (record-type-descriptor? foo)
+          (record-type-descriptor? bar)
+          (foo? b) (bar? b)
+          (foo-x b)
+          (foo-y b)
+          (bar-z b))))
+    '(#t #t #t #t 1 2 3))
+ ; on no!
+  (equal?
+    (let ()
+      (define type-key)
+      (define-syntax declare
+        (syntax-rules ()
+          [(_ type id)
+           (identifier? #'id)
+           (define-property id type-key #'type)]))
+      (define-syntax type-of
+        (lambda (x)
+          (syntax-case x ()
+            [(_ id)
+             (identifier? #'id)
+             #`'#,(property-value #'id #'type-key)])))
+      (let ([x 3])
+        (define p (lambda (x) x))
+        (declare fixnum? x)
+        (declare procedure? p)
+        (list (type-of x) (type-of p))))
+    '(fixnum? procedure?))
+ ; make sure library is visited and invoked when needed by
+ ; top-level-xxx procedures, even when properties are defined
+  (begin
+    (with-output-to-file "testfile-dp3.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp3) (export dp3-x frop) (import (chezscheme))
+             (define frop)
+             (define dp3-x 3)
+             (define-property dp3-x frop "blob"))))
+      'replace)
+    (for-each separate-compile '(dp3))
+    #t)
+  (begin (import (testfile-dp3)) #t)
+  (top-level-bound? 'dp3-x)
+  (equal? (get-property dp3-x frop) "blob")
+  (begin
+    (with-output-to-file "testfile-dp4.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp4) (export dp4-x frop) (import (chezscheme))
+             (define frop)
+             (define dp4-x 3)
+             (define-property dp4-x frop "blob"))))
+      'replace)
+    (for-each separate-compile '(dp4))
+    #t)
+  (begin (import (testfile-dp4)) #t)
+  (eqv? (top-level-value 'dp4-x) 3)
+  (equal? (get-property dp4-x frop) "blob")
+  (begin
+    (with-output-to-file "testfile-dp5.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp5) (export dp5-x frop) (import (chezscheme))
+             (define frop)
+             (define dp5-x 3)
+             (define-property dp5-x frop "blob"))))
+      'replace)
+    (for-each separate-compile '(dp5))
+    #t)
+  (begin (import (testfile-dp5)) #t)
+ ; same as last, but reverse order of checks
+  (equal? (get-property dp5-x frop) "blob")
+  (eqv? (top-level-value 'dp5-x) 3)
+  (begin
+    (with-output-to-file "testfile-dp6.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp6) (export dp6-x frop) (import (chezscheme))
+             (define frop)
+             (define-syntax dp6-x (identifier-syntax 3))
+             (define-property dp6-x frop "blob"))))
+      'replace)
+    (for-each separate-compile '(dp6))
+    #t)
+  (begin (import (testfile-dp6)) #t)
+  (top-level-syntax? 'dp6-x)
+  (equal? (get-property dp6-x frop) "blob")
+  (begin
+    (with-output-to-file "testfile-dp7.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp7) (export dp7-x frop) (import (chezscheme))
+             (define frop)
+             (define-syntax dp7-x (identifier-syntax 3))
+             (define-property dp7-x frop "blob"))))
+      'replace)
+    (for-each separate-compile '(dp7))
+    #t)
+  (begin (import (testfile-dp7)) #t)
+ ; same as last, but reverse order of checks
+  (equal? (get-property dp7-x frop) "blob")
+  (top-level-syntax? 'dp7-x)
+  (begin
+    (with-output-to-file "testfile-dp8.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp8) (export dp8-x frop) (import (chezscheme))
+             (define frop)
+             (define-syntax dp8-x (identifier-syntax 3))
+             (define-property dp8-x frop "blob"))))
+      'replace)
+    (for-each separate-compile '(dp8))
+    #t)
+  (begin (import (testfile-dp8)) #t)
+ ; same as last, but reverse order of checks
+  (procedure? (top-level-syntax 'dp8-x))
+  (equal? (get-property dp8-x frop) "blob")
+  (begin
+    (with-output-to-file "testfile-dp9.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp9) (export dp9-x frop) (import (chezscheme))
+             (define frop)
+             (define-syntax dp9-x (identifier-syntax 3))
+             (define-property dp9-x frop "blob"))))
+      'replace)
+    (for-each separate-compile '(dp9))
+    #t)
+  (begin (import (testfile-dp9)) #t)
+  (error? ; not a variable
+    (set-top-level-value! 'dp9-x 11))
+  (equal? (get-property dp9-x frop) "blob")
+  (begin
+    (with-output-to-file "testfile-dp10.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp10) (export dp10-x frop) (import (chezscheme))
+             (define frop)
+             (define dp10-x 3)
+             (define-property dp10-x frop "blob"))))
+      'replace)
+    (for-each separate-compile '(dp10))
+    #t)
+  (begin (import (testfile-dp10)) #t)
+  (error? ; immutable
+    (set-top-level-value! 'dp10-x 11))
+  (equal? (get-property dp10-x frop) "blob")
+  (begin
+    (with-output-to-file "testfile-dp11.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp11) (export dp11-x frop) (import (chezscheme))
+             (define frop)
+             (define dp11-x 3)
+             (define-property dp11-x frop "blob"))))
+      'replace)
+    (for-each separate-compile '(dp11))
+    #t)
+  (begin (import (testfile-dp11)) #t)
+  (not (top-level-mutable? 'dp11-x))
+  (equal? (get-property dp11-x frop) "blob")
+  (equal?
+    (syntax-case '(a b c) ()
+      [(_ . x)
+       (let ()
+         (define-property x goofy 'stuff)
+         (define-property x amazingly 'unlikely)
+         (list (get-property x goofy)
+               (get-property x amazingly)
+               #'x))])
+    '(stuff unlikely (b c)))
+ (begin
+   (library (docstring)
+     (export define-docstring get-docstring)
+     (import (chezscheme))
+     (define check-docstring
+       (lambda (x s)
+         (unless (string? s)
+           (syntax-error x "invalid docstring definition"))
+         s))
+     (define-syntax define-docstring
+       (lambda (x)
+         (syntax-case x ()
+           [(_ id expr)
+            #`(define-property id check-docstring
+                (check-docstring #'#,x expr))])))
+     (define-syntax get-docstring
+       (lambda (x)
+         (syntax-case x ()
+           [(_ id)
+            (property-value #'id #'check-docstring "no documentation available")]))))
+   #t)
+  (equal?
+    (let ()
+      (import (docstring))
+      (define-docstring cons "cons takes three arguments")
+      (get-docstring cons))
+    "cons takes three arguments")
+  (equal?
+    (let ()
+      (import (docstring))
+      (define-docstring else "else is cool")
+      (cond [else (get-docstring else)]))
+    "else is cool")
+  ((lambda (x ls) (and (member x ls) #t))
+   (parameterize ([#%$suppress-primitive-inlining #f])
+     (expand
+       '(let ()
+          (import scheme)
+          (define-property cons car 3)
+          cons)))
+   `(#%cons #2%cons #3%cons))
+  (begin
+    (define dp-x #f)
+    (define dp-y #f)
+    (define-property dp-x dp-y "xy")
+    (define-syntax a
+      (lambda (z)
+        (define-property dp-x z "xz")
+        #'(get-property dp-x dp-y)))
+    (equal? a "xy"))
+  (begin
+    (define dp-x #f)
+    (define dp-y #f)
+    (define-property dp-x dp-y "outer")
+    (define-syntax a
+      (lambda (z)
+        (define-property dp-x dp-y "inner")
+        #'(get-property dp-x dp-y)))
+    (not a))
+  (equal?
+    (let ([x #f] [y #f])
+      (define-property x y "xy")
+      (define-syntax a
+        (lambda (z)
+          (define-property x z "xz")
+          #'(get-property x y)))
+      a)
+    "xy")
+  (eq?
+    (let ([x #f] [y #f])
+      (define-property x y "outer")
+      (define-syntax a
+        (lambda (z)
+          (define-property x y "inner")
+          #'(get-property x y)))
+      a)
+    #f)
+  (eq?
+    (let ([x #f])
+      (define-syntax a
+        (syntax-rules (x)
+          [(_ x) 'yes]
+          [(_ y) 'no]))
+      (let ()
+        (define-property x q 0)
+        (a x)))
+    'yes)
+  (begin
+    (library (dp l3) (export x)
+      (import (chezscheme))
+      (define x 5)
+      (define-property x car 17))
+    (import (dp l3))
+    (and (eqv? x 5) (eqv? (let () (import (chezscheme)) (get-property x car)) 17)))
+  (begin
+    (library (dp l4) (export sort)
+      (import (chezscheme))
+      (define-property sort car 53))
+    (library (dp l5) (export sort)
+      (import (chezscheme))
+      (define-property sort cdr 87))
+    (import (dp l4))
+    (import (dp l5))
+    (and (procedure? sort)
+         (eq? sort #%sort)
+         (eqv? (let () (import (only (chezscheme) car)) (get-property sort car)) 53)
+         (eqv? (let () (import (only (chezscheme) cdr)) (get-property sort cdr)) 87)))
+  (begin
+    (with-output-to-file "testfile-dp12.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp12) (export dp12-dq) (import (chezscheme))
+             (define-syntax dp12-dq (identifier-syntax "dq"))
+             (define-property dp12-dq car "dqp"))))
+      'replace)
+    (for-each separate-compile '(dp12))
+    #t)
+  (begin (import (testfile-dp12)) #t)
+  (equal? (list dp12-dq (let () (import (chezscheme)) (get-property dp12-dq car))) '("dq" "dqp"))
+  (equal?
+    (let ()
+      (define x 0)
+      (module m1 (x) (define-property x car "xcar"))
+      (module m2 (x) (define-property x cdr "xcdr"))
+      (let ([q1 (let () (import m1) (list x (get-property x car) (get-property x cdr)))]
+            [q2 (let () (import m2) (list x (get-property x car) (get-property x cdr)))]
+            [q3 (let () (import m1) (import m2) (list x (get-property x car) (get-property x cdr)))]
+            [q4 (let () (import m2) (import m1) (list x (get-property x car) (get-property x cdr)))])
+        (list x q1 q2 q3 q4 (get-property x car) (get-property x cdr))))
+    '(0 (0 "xcar" #f) (0 #f "xcdr") (0 "xcar" "xcdr") (0 "xcar" "xcdr") #f #f))
+  (equal?
+    (let ()
+      (define x 0)
+      (module m1 (x) (define-property x car "xcar"))
+      (import m1)
+      (module m2 (x) (define-property x cdr "xcdr"))
+      (import m2)
+      (list x (get-property x car) (get-property x cdr)))
+    '(0 "xcar" "xcdr"))
+  (begin
+    (module $dp13 (foo)
+      (define foo 17)
+      (module ((foo bar))
+        (define-property foo cons #'bar)
+        (define bar 35)))
+    #t)
+  (eqv?
+    (let ()
+      (import $dp13)
+      (define-syntax a
+        (lambda (x)
+          (syntax-case x ()
+            [(_ id) (property-value #'id #'cons)])))
+      (a foo))
+    35)
+  (eqv?
+    (let ()
+      (module m (x) (define x 3) (define-property x x 4))
+      (import m)
+      (get-property x x))
+    4)
+  (eqv?
+    (let ()
+      (module m (x) (define x 3) (define-property x x 4))
+      (import (alias m (x y)))
+      (get-property x x))
+    4)
+  (eqv?
+    (let ()
+      (module m (x) (define x 3) (define-property x x 4))
+      (import (alias m (x y)))
+      (get-property x y))
+    4)
+  (eqv?
+    (let ()
+      (module m (x) (define x 3) (define-property x x 4))
+      (import (alias m (x y)))
+      (get-property y x))
+    4)
+  (eqv?
+    (let ()
+      (module m (x) (define x 3) (define-property x x 4))
+      (import (alias m (x y)))
+      (get-property y y))
+    4)
+  (eqv?
+    (let ()
+      (module m (x) (define x 3) (define-property x x 4))
+      (import (rename m (x y)))
+      (get-property y y))
+    4)
+  (begin
+    (module $dp14 (x) (define x 3) (define-property x x 4))
+    #t)
+  (eqv?
+    (let ()
+      (import $dp14)
+      (get-property x x))
+    4)
+  (eqv?
+    (let ()
+      (import (alias $dp14 (x y)))
+      (get-property x x))
+    4)
+  (eqv?
+    (let ()
+      (import (alias $dp14 (x y)))
+      (get-property x y))
+    4)
+  (eqv?
+    (let ()
+      (import (alias $dp14 (x y)))
+      (get-property y x))
+    4)
+  (eqv?
+    (let ()
+      (import (alias $dp14 (x y)))
+      (get-property y y))
+    4)
+  (eqv?
+    (let ()
+      (import (rename $dp14 (x y)))
+      (get-property y y))
+    4)
+  (equal?
+    (let ([y 14])
+      (define k1)
+      (define k2)
+      (module ()
+        (export x (rename (y x)))
+        (define x 3)
+        (define-property x k1 4)
+        (define-property x k2 5)
+        (alias y x))
+      (list x y (get-property x k1) (get-property x k2) (get-property y k1) (get-property y k2)))
+    '(3 14 4 5 #f #f))
+  (error? ; attempt to export different bindings for x
+    (let ([y 14])
+      (define k1)
+      (define k2)
+      (module ()
+        (export x (rename (y x)))
+        (define x 3)
+        (define-property x k1 4)
+        (alias y x)
+        (define-property x k2 5))
+      (list x y (get-property x k1) (get-property y k2))))
+  (begin
+    (with-output-to-file "testfile-A.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-A)
+             (export $testfile-A-x $testfile-A-prop-id)
+             (import (scheme))
+             (define $testfile-A-x (cons 'a 'b))
+             (define $testfile-A-prop-id)
+             (define-property $testfile-A-x $testfile-A-prop-id (cons 'c 'd)))))
+      'replace)
+    (with-output-to-file "testfile-B.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-B)
+             (export)
+             (import (scheme) (testfile-A))
+             (export (import (testfile-A))))))
+      'replace)
+    (with-output-to-file "testfile-C.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-C)
+             (export)
+             (import (scheme) (testfile-A) (testfile-B))
+             (export (import (testfile-A)) (import (testfile-B))))))
+      'replace)
+    (for-each separate-compile '(A B C))
+    #t)
+  (equal?
+    (let ()
+      (import (testfile-C))
+      (list $testfile-A-x (get-property $testfile-A-x $testfile-A-prop-id)))
+    '((a . b) (c . d)))
+
+ ; use of property value outside dynamic extent of transformer call
+  (eqv? (let ([x #f] [y #f])
+         (define-property x y #'(+ 2 9))
+         (meta define z (property-value #'x #'y))
+         (let-syntax ([m (lambda (stx) z)])
+           m))
+    11)
+  (eqv? (let ([x #f] [y #f])
+          (define-property x y #'(+ 2 9))
+          (define z (property-value #'x #'y 0))
+          z)
+    0)
+  (begin
+    (with-output-to-file "testfile-dp15.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp15)
+             (export id-with-prop1 id-with-prop2)
+             (import (scheme))
+             (define private-id)
+             (define-property private-id + 41)
+             (define id-with-prop1)
+             (define-property id-with-prop1 * 40)
+             (define id-with-prop2)
+             (define-property id-with-prop2 * (property-value #'private-id #'+)))))
+      'replace)
+    (for-each separate-compile '(dp15))
+    #t)
+  (begin (import (testfile-dp15)) #t)
+  (eqv? (property-value #'id-with-prop1 #'*) 40)
+  (eqv? (property-value #'id-with-prop2 #'*) 41)
+)
+
 (mat library1
   (error? (compile-library "/file/not/there"))
   (error? (load-library "/file/not/there"))
-  (error? ; abc is not a string
+  (error?                               ; abc is not a string
     (load-library 'abc))
-  (error? ; xxx is not a procedure
+  (error?                               ; xxx is not a procedure
     (load-library "/file/not/there" 'xxx))
-  (error? ; 3 is not a string
+  (error?                               ; 3 is not a string
     (parameterize ([source-directories '("/tmp" ".")]) (load-library 3)))
-  (error? ; 3 is not a string
+  (error?                               ; 3 is not a string
     (parameterize ([source-directories '("/tmp" ".")]) (load-library 3 values)))
   (begin
     (library ($l1-a) (export $l1-x) (import (scheme))
-      (module $l1-x (($l1-a $l1-b) $l1-c $l1-e)
-        (define $l1-d 4)
-        (define-syntax $l1-a (identifier-syntax (cons $l1-b $l1-y)))
-        (define $l1-b 55)
-        (define $l1-c (lambda () (* $l1-d $l1-y)))
-        (define $l1-f 44)
-        (define-syntax $l1-e (identifier-syntax $l1-f)))
-      (define $l1-y 14))
+             (module $l1-x (($l1-a $l1-b) $l1-c $l1-e)
+               (define $l1-d 4)
+               (define-syntax $l1-a (identifier-syntax (cons $l1-b $l1-y)))
+               (define $l1-b 55)
+               (define $l1-c (lambda () (* $l1-d $l1-y)))
+               (define $l1-f 44)
+               (define-syntax $l1-e (identifier-syntax $l1-f)))
+             (define $l1-y 14))
     #t)
   (equal?
     (let () (import ($l1-a)) (import $l1-x) (list $l1-a ($l1-c)))
@@ -7406,29 +8419,29 @@
     #t)
   (equal? $l1-a '(55 . 14))
   (equal? ($l1-c) 56)
-  (error? ; unbound variable $l1-b
+  (error?                               ; unbound variable $l1-b
     $l1-b)
-  (error? ; unbound variable $l1-d
+  (error?                               ; unbound variable $l1-d
     $l1-d)
-  (error? ; unbound variable $l1-y
+  (error?                               ; unbound variable $l1-y
     $l1-y)
-  (error? ; unexported identifier $l1-f
+  (error?                               ; unexported identifier $l1-f
     $l1-e)
-  (error? ; unbound variable $l1-f
+  (error?                               ; unbound variable $l1-f
     $l1-f)
   (equal?
     (let () (import ($l1-a)) (import $l1-x) (list $l1-a ($l1-c)))
     '((55 . 14) 56))
   (begin
     (library ($l1-b) (export $l1-x) (import (scheme))
-      (module $l1-x ($l1-a $l1-c $l1-e)
-        (define $l1-d 4)
-        (define $l1-a (lambda () (cons $l1-b $l1-y)))
-        (define $l1-b 55)
-        (define $l1-c (lambda () (* $l1-d $l1-y)))
-        (define $l1-f 44)
-        (define $l1-e (lambda () $l1-f)))
-      (define $l1-y 14))
+             (module $l1-x ($l1-a $l1-c $l1-e)
+               (define $l1-d 4)
+               (define $l1-a (lambda () (cons $l1-b $l1-y)))
+               (define $l1-b 55)
+               (define $l1-c (lambda () (* $l1-d $l1-y)))
+               (define $l1-f 44)
+               (define $l1-e (lambda () $l1-f)))
+             (define $l1-y 14))
     #t)
   (equal?
     (let () (import ($l1-b)) (import $l1-x) (vector ($l1-a) ($l1-c) ($l1-e)))
@@ -7442,24 +8455,24 @@
   (equal? ($l1-a) '(55 . 14))
   (equal? ($l1-c) 56)
   (equal? ($l1-e) 44)
-  (error? ; unbound variable $l1-b
+  (error?                               ; unbound variable $l1-b
     $l1-b)
-  (error? ; unbound variable $l1-d
+  (error?                               ; unbound variable $l1-d
     $l1-d)
-  (error? ; unbound variable $l1-y
+  (error?                               ; unbound variable $l1-y
     $l1-y)
-  (error? ; unbound variable $l1-f
+  (error?                               ; unbound variable $l1-f
     $l1-f)
   (equal?
     (let () (import ($l1-b)) (import $l1-x) (vector ($l1-a) ($l1-c) ($l1-e)))
     '#((55 . 14) 56 44))
   (begin
     (library ($l1-c) (export (rename (q $l1-q) (a:x $l1-x)) $l1-p)
-      (import (scheme) (rename ($l1-a) ($l1-x a:x)) (rename ($l1-b) ($l1-x b:x)))
-      (import (drop-prefix a:x $l1-) (prefix (drop-prefix b:x $l1-) b:))
-      (define-syntax q (identifier-syntax (list a (c) (b:a) (b:c) ($l1-p) (r))))
-      (define $l1-p (lambda () (vector a (c) (b:a) (b:c))))
-      (define r (lambda () (cons* a (c) (b:a) (b:c)))))
+             (import (scheme) (rename ($l1-a) ($l1-x a:x)) (rename ($l1-b) ($l1-x b:x)))
+             (import (drop-prefix a:x $l1-) (prefix (drop-prefix b:x $l1-) b:))
+             (define-syntax q (identifier-syntax (list a (c) (b:a) (b:c) ($l1-p) (r))))
+             (define $l1-p (lambda () (vector a (c) (b:a) (b:c))))
+             (define r (lambda () (cons* a (c) (b:a) (b:c)))))
     #t)
   (equal?
     (let () (import ($l1-c)) $l1-q)
@@ -7475,21 +8488,21 @@
 
   (begin
     (library ($l1-d) (export $l1-x $l1-getx $l1-setx!) (import (scheme))
-      (define x 0)
-      (define-syntax $l1-x (identifier-syntax x))
-      (define $l1-getx (lambda () x))
-      (define $l1-setx! (lambda (v) (set! x v))))
+             (define x 0)
+             (define-syntax $l1-x (identifier-syntax x))
+             (define $l1-getx (lambda () x))
+             (define $l1-setx! (lambda (v) (set! x v))))
     #t)
   (eqv?
     (let () (import ($l1-d)) ($l1-setx! 'hello) ($l1-getx))
     'hello)
-  (error? ; unexported identifier x
+  (error?                               ; unexported identifier x
     (let () (import ($l1-d)) $l1-x))
-  (error? ; unexported identifier x
+  (error?                               ; unexported identifier x
     (expand '(let () (import ($l1-d)) $l1-x)))
-  (error? ; immutable variable $l1-x
+  (error?                               ; immutable variable $l1-x
     (let () (import ($l1-d)) (set! $l1-getx void)))
-  (error? ; immutable variable $l1-x
+  (error?                               ; immutable variable $l1-x
     (expand '(let () (import ($l1-d)) (set! $l1-getx void))))
   (begin
     (import ($l1-d))
@@ -7497,63 +8510,63 @@
   (eqv?
     (begin ($l1-setx! 'hello) ($l1-getx))
     'hello)
-  (error? ; unexported identifier x
+  (error?                               ; unexported identifier x
     $l1-x)
-  (error? ; unexported identifier x
+  (error?                               ; unexported identifier x
     (expand '$l1-x))
-  (error? ; immutable variable $l1-x
+  (error?                               ; immutable variable $l1-x
     (set! $l1-getx void))
-  (error? ; immutable variable $l1-x
+  (error?                               ; immutable variable $l1-x
     (expand '(set! $l1-getx void)))
 
   (error?
     (library ($l1-e) (export $l1-x) (import (scheme))
-      (define $l1-x 0)
-      (set! $l1-x 1)))
+             (define $l1-x 0)
+             (set! $l1-x 1)))
   (error?
     (expand
       '(library ($l1-e) (export $l1-x) (import (scheme))
-         (define $l1-x 0)
-         (set! $l1-x 1))))
+                (define $l1-x 0)
+                (set! $l1-x 1))))
 
   (begin
     (with-output-to-file "testfile.ss"
       (lambda ()
         (pretty-print
           '(library ($l1-f) (export $l1-x $l1-y) (import (scheme))
-             (define-syntax $l1-x (identifier-syntax q))
-             (define-syntax q
-               (begin
-                 (printf "An expand-time greeting from $l1-f\n")
-                 (lambda (x) 77)))
-             (define $l1-y (lambda () (* q 2)))
-             (printf "A run-time greeting from $l1-f\n")))
+                    (define-syntax $l1-x (identifier-syntax q))
+                    (define-syntax q
+                      (begin
+                        (printf "An expand-time greeting from $l1-f\n")
+                        (lambda (x) 77)))
+                    (define $l1-y (lambda () (* q 2)))
+                    (printf "A run-time greeting from $l1-f\n")))
         (pretty-print
           '(library ($l1-g) (export $l1-x $l1-z $l1-w) (import (scheme) ($l1-f))
-             (define-syntax $l1-z
-               (begin
-                 (printf "An expand-time greeting from $l1-g\n")
-                 (lambda (x) ($l1-y))))
-             (define $l1-w
-               (begin
-                 (printf "A run-time greeting from $l1-g\n")
-                 (lambda (x) (cons* x $l1-x ($l1-y)))))))
+                    (define-syntax $l1-z
+                      (begin
+                        (printf "An expand-time greeting from $l1-g\n")
+                        (lambda (x) ($l1-y))))
+                    (define $l1-w
+                      (begin
+                        (printf "A run-time greeting from $l1-g\n")
+                        (lambda (x) (cons* x $l1-x ($l1-y)))))))
         (pretty-print
           '(library ($l1-h) (export $l1-x $l1-y $l1-v) (import (scheme) ($l1-f) ($l1-g))
-             (define $l1-v (list $l1-x ($l1-y) $l1-z ($l1-w 13)))
-             (printf "A run-time greeting from $l1-h\n"))))
+                    (define $l1-v (list $l1-x ($l1-y) $l1-z ($l1-w 13)))
+                    (printf "A run-time greeting from $l1-h\n"))))
       'replace)
     (compile-file "testfile")
     #t)
- ; look, ma, no need to load...
+                                        ; look, ma, no need to load...
   (equal?
     (let () (import ($l1-h)) $l1-v)
     '(77 154 154 (13 77 . 154)))
   (begin
     (library ($l1-h) (export $l1-x $l1-y $l1-v) (import (scheme))
-      (define $l1-x "these aren't")
-      (define $l1-y "the exports")
-      (define $l1-v "you're looking for"))
+             (define $l1-x "these aren't")
+             (define $l1-y "the exports")
+             (define $l1-v "you're looking for"))
     #t)
   (begin (load "testfile.so") #t)
   (equal?
@@ -7565,46 +8578,46 @@
       (lambda ()
         (pretty-print
           '(library ($l1-f) (export $l1-x $l1-y) (import (scheme))
-             (define-syntax $l1-x (identifier-syntax q))
-             (define-syntax q
-               (begin
-                 (printf "An expand-time greeting from $l1-f\n")
-                 (lambda (x) 77)))
-             (define $l1-y (lambda () (* q 2)))
-             (printf "A run-time greeting from $l1-f\n")))
+                    (define-syntax $l1-x (identifier-syntax q))
+                    (define-syntax q
+                      (begin
+                        (printf "An expand-time greeting from $l1-f\n")
+                        (lambda (x) 77)))
+                    (define $l1-y (lambda () (* q 2)))
+                    (printf "A run-time greeting from $l1-f\n")))
         (pretty-print
           '(library ($l1-g) (export $l1-x $l1-z $l1-w) (import (scheme) ($l1-f))
-             (define-syntax $l1-z
-               (begin
-                 (printf "An expand-time greeting from $l1-g\n")
-                 (lambda (x) ($l1-y))))
-             (define $l1-w
-               (begin
-                 (printf "A run-time greeting from $l1-g\n")
-                 (lambda (x) (cons* x $l1-z $l1-x ($l1-y)))))))
+                    (define-syntax $l1-z
+                      (begin
+                        (printf "An expand-time greeting from $l1-g\n")
+                        (lambda (x) ($l1-y))))
+                    (define $l1-w
+                      (begin
+                        (printf "A run-time greeting from $l1-g\n")
+                        (lambda (x) (cons* x $l1-z $l1-x ($l1-y)))))))
         (pretty-print
           '(library ($l1-h) (export $l1-x $l1-y $l1-v) (import (scheme) ($l1-f) ($l1-g))
-             (define $l1-v (list $l1-x ($l1-y) $l1-z ($l1-w 13)))
-             (printf "A run-time greeting from $l1-h\n"))))
+                    (define $l1-v (list $l1-x ($l1-y) $l1-z ($l1-w 13)))
+                    (printf "A run-time greeting from $l1-h\n"))))
       'replace)
     (compile-file "testfile")
     #t)
- ; look, ma, no need to load...
+                                        ; look, ma, no need to load...
   (equal?
     (let () (import ($l1-h)) $l1-v)
     '(77 154 154 (13 154 77 . 154)))
   (begin
     (library ($l1-h) (export $l1-x $l1-y $l1-v) (import (scheme))
-      (define $l1-x "these aren't")
-      (define $l1-y "the exports")
-      (define $l1-v "you're looking for"))
+             (define $l1-x "these aren't")
+             (define $l1-y "the exports")
+             (define $l1-v "you're looking for"))
     #t)
   (begin (load "testfile.so") #t)
   (equal?
     (let () (import ($l1-h)) $l1-v)
     '(77 154 154 (13 154 77 . 154)))
 
-  (error? ; unknown library ($l1-ham)
+  (error?                               ; unknown library ($l1-ham)
     (begin
       (library ($l1-spam) (export) (import ($l1-ham)))
       (library ($l1-ham) (export) (import ($l1-spam)))))
@@ -7614,15 +8627,15 @@
       (lambda ()
         (pretty-print
           '(library ($l1-i) (export $l1-x $l1-y) (import (scheme))
-             (define $l1-x 'i-am-x)
-             (define-syntax $l1-y (identifier-syntax 'i-am-y))))
+                    (define $l1-x 'i-am-x)
+                    (define-syntax $l1-y (identifier-syntax 'i-am-y))))
         (pretty-print
           '(library ($l1-j) (export $l1-x $l1-y)
-             (import ($l1-i) (only (scheme) errorf))
-             (errorf #f "this error shouldn't happen")))
+                    (import ($l1-i) (only (scheme) errorf))
+                    (errorf #f "this error shouldn't happen")))
         (pretty-print
           '(library ($l1-k) (export $l1-z) (import (scheme) ($l1-j))
-             (define $l1-z (list 'i-am-z $l1-x $l1-y)))))
+                    (define $l1-z (list 'i-am-z $l1-x $l1-y)))))
       'replace)
     (compile-file "testfile")
     #t)
@@ -7636,7 +8649,7 @@
 
   (begin
     (library ($l1-l) (export $l1-x) (import (scheme))
-      (define $l1-x 'i-am-$l1-l.$l1-x))
+             (define $l1-x 'i-am-$l1-l.$l1-x))
     #t)
   (eq?
     (let ()
@@ -7744,14 +8757,14 @@
       'replace)
     (for-each separate-compile '(a2 b2 c2 d2 a2))
     #t)
-  (error? ; expected different compilation instance
-          ; program complains about b2 rather than b2 about a2
-          ;   now that load-library reloads source when dependency changes
-          ;   would be nice if program were reloaded from source as well
+  (error?         ; expected different compilation instance
+                                        ; program complains about b2 rather than b2 about a2
+                                        ;   now that load-library reloads source when dependency changes
+                                        ;   would be nice if program were reloaded from source as well
     (load "testfile-d2.so"))
-  ; no longer fails now that load-library reloads source when dependency changes
+                                        ; no longer fails now that load-library reloads source when dependency changes
   #;(error? ; expected different compilation instance
-    (import (testfile-c2)))
+  (import (testfile-c2)))
   (begin
     (library ($l1-m) (export $l1-x) (import (scheme)) (define $l1-x 333))
     (library ($l1-n) (export $l1-x) (import (scheme)) (import ($l1-m)))
@@ -7777,37 +8790,37 @@
              (let ([t id])
                (if (eq? t z) (errorf 'from "~s undefined" 'id) t))))]))
     (library ($frappe) (export wire whip) (import (scheme))
-      (define wire 3)
-      (define-syntax whip (identifier-syntax egg))
-      (define egg 'whites))
+             (define wire 3)
+             (define-syntax whip (identifier-syntax egg))
+             (define egg 'whites))
     (equal?
       (list (cons ($from1 ($frappe) wire) ($from1 ($frappe) whip))
-            (cons ($from2 ($frappe) wire) ($from2 ($frappe) whip))
-            (cons ($from3 ($frappe) wire) ($from3 ($frappe) whip)))
+        (cons ($from2 ($frappe) wire) ($from2 ($frappe) whip))
+        (cons ($from3 ($frappe) wire) ($from3 ($frappe) whip)))
       '((3 . whites) (3 . whites) (3 . whites))))
   (begin
     (library ($q) (export m from) (import (scheme))
-      (module m (f) (define f "this is f"))
-      (define-syntax from
-        (syntax-rules () [(_ m id) (let () (import-only m) id)])))
+             (module m (f) (define f "this is f"))
+             (define-syntax from
+               (syntax-rules () [(_ m id) (let () (import-only m) id)])))
     (equal? (let () (import-only ($q)) (from m f)) "this is f"))
   (begin
     (library ($p) (export d f) (import (scheme))
-      (define-syntax d
-        (syntax-rules ()
-          ((_ e) (m (lambda () e)))))
-      (define m (lambda (x) x))
-      (define f (lambda (th) (th))))
+             (define-syntax d
+               (syntax-rules ()
+                 ((_ e) (m (lambda () e)))))
+             (define m (lambda (x) x))
+             (define f (lambda (th) (th))))
     (eqv? (let () (import-only ($p)) (f (d 2))) 2))
- ; this works for libraries because m is implicitly exported
+                                        ; this works for libraries because m is implicitly exported
   (eqv? (let () (import-only ($p)) (f (d 1/3))) 1/3)
-  (error? ; cons undefined
+  (error?                               ; cons undefined
     (let () (import-only ($p)) (f (d cons))))
-  (error? ; invalid syntax
+  (error?                               ; invalid syntax
     (library (a) (export x:eval) (import (add-prefix (rnrs eval) x))))
-  (error? ; invalid syntax
+  (error?                               ; invalid syntax
     (library (a) (export val) (import (drop-prefix (rnrs eval) x))))
-  (error? ; invalid syntax
+  (error?                               ; invalid syntax
     (library (a) (export meaning) (import (alias (rnrs eval) [eval meaning]))))
   (begin
     (define $l1-q1)
@@ -7817,36 +8830,36 @@
         [(_ name (export ex ...) (import im ...) body ...)
          (begin
            (library name (export ex ... q)
-             (import im ... (rename (only (rnrs) cons) (cons list)))
-             (define q list) body ...)
+                    (import im ... (rename (only (rnrs) cons) (cons list)))
+                    (define q list) body ...)
            (let () (import name) (set! $l1-q1 q)))]))
     ($l1-qlib ($l1-libfoo) (export q) (import (rnrs)) (define q list))
     (let () (import ($l1-libfoo)) (set! $l1-q2 q))
     (equal? (list $l1-q1 $l1-q2) (list cons list)))
- ; check for existence of chezscheme library
+                                        ; check for existence of chezscheme library
   (begin
     (library ($l1-r1) (export $l1-x) (import (chezscheme))
-      (define $l1-x (sort < '(1 3 2 0 5))))
+             (define $l1-x (sort < '(1 3 2 0 5))))
     (library ($l1-r2) (export $l1-y) (import (chezscheme) ($l1-r1))
-      (define $l1-y (cons $l1-x (void))))
+             (define $l1-y (cons $l1-x (void))))
     (equal? (let () (import ($l1-r2)) $l1-y) `((0 1 2 3 5) . ,(void))))
-  (error? ; invalid context for library form
+  (error?                           ; invalid context for library form
     (module (a) (library (a) (export) (import))))
-  (error? ; invalid syntax for library form
+  (error?                            ; invalid syntax for library form
     (module (a) (library a (import) (export x) (define x 3)) (import a) x))
-  (error? ; invalid context for top-level-program form
+  (error?                 ; invalid context for top-level-program form
     (module (a) (top-level-program (import))))
-  (error? ; invalid syntax for top-level-program form
+  (error?                  ; invalid syntax for top-level-program form
     (module (a) (top-level-program (display "hello"))))
-  (error? ; invalid context for library form
+  (error?                           ; invalid context for library form
     (lambda () (library (a) (export) (import))))
-  (error? ; invalid syntax for library form
+  (error?                            ; invalid syntax for library form
     (lambda () (library a (import) (export x) (define x 3)) (import a) x))
-  (error? ; invalid context for top-level-program form
+  (error?                 ; invalid context for top-level-program form
     (lambda () (top-level-program (import))))
-  (error? ; invalid syntax for top-level-program form
+  (error?                  ; invalid syntax for top-level-program form
     (lambda () (top-level-program (display "hello"))))
-  (error? ; defnie not defined
+  (error?                               ; defnie not defined
     (library ($l1-s) (export y) (import (rnrs)) (defnie x 3) (define y 4)))
 
   (begin
@@ -7857,17 +8870,17 @@
         (define x 0)
         (define set-x! (lambda () (set! x 1)))))
     #t)
-  (error? ; attempt to reference assigned hence unexported
+  (error?             ; attempt to reference assigned hence unexported
     (let () (import ($l1-s)) (import m) x))
-  (error? ; attempt to reference assigned hence unexported
+  (error?             ; attempt to reference assigned hence unexported
     (let () (import ($l1-s)) (import m) (set! x 2)))
-  (error? ; invalid version
+  (error?                               ; invalid version
     (let () (import-only (chezscheme csv7 (6))) record-field-mutator))
   (equal?
     (let () (import-only (chezscheme csv7)) record-field-mutator)
     csv7:record-field-mutator)
 
- ; test macros generating libraries
+                                        ; test macros generating libraries
   (begin
     (let-syntax ([make-A (syntax-rules ()
                            [(_) (library (A)
@@ -7876,7 +8889,7 @@
                                   (define $library-x 3))])])
       (make-A))
     #t)
-  (error? ; out-of-context library reference (A)
+  (error?                       ; out-of-context library reference (A)
     (equal? (let () (import (A)) $library-x) 3))
   (begin
     (let-syntax ([make-A (lambda (x)
@@ -7888,7 +8901,7 @@
                                         (define $library-x 3)))]))])
       (make-A))
     #t)
-  (error? ; unbound $library-x
+  (error?                               ; unbound $library-x
     (equal? (let () (import (A)) $library-x) 3))
   (begin
     (let-syntax ([make-A (lambda (x)
@@ -7910,7 +8923,7 @@
                                   (import (chezscheme))
                                   (define x 3))
                                 (let () (import (A))
-                                  (eqv? x 3)))])])
+                                     (eqv? x 3)))])])
     (make-A))
   (let-syntax ([make-A (syntax-rules ()
                          [(_) (begin
@@ -7931,15 +8944,15 @@
       (lambda ()
         (pretty-print
           '(library (testfile-a14) (export f) (import (chezscheme))
-             (define f (lambda (n) (if (fx= n 0) 1 (fx* n (f (fx- n 1))))))
-             (printf "invoked a\n"))))
+                    (define f (lambda (n) (if (fx= n 0) 1 (fx* n (f (fx- n 1))))))
+                    (printf "invoked a\n"))))
       'replace)
     (with-output-to-file "testfile-b14.ss"
       (lambda ()
         (pretty-print
           '(library (testfile-b14) (export g) (import (chezscheme) (testfile-a14))
-             (define g (lambda (n) (f n)))
-             (printf "invoked b\n"))))
+                    (define g (lambda (n) (f n)))
+                    (printf "invoked b\n"))))
       'replace)
     (with-output-to-file "testfile-c14.ss"
       (lambda ()
@@ -7951,48 +8964,48 @@
     (with-output-to-string
       (lambda () (load "testfile-c14.ss")))
     "invoked a\ninvoked b\n3628800\n")
-  ; test for proper propagation and non-propagation of constants across library boundaries
+                                        ; test for proper propagation and non-propagation of constants across library boundaries
   (begin
     (with-output-to-file "testfile-a15.ss"
       (lambda ()
         (pretty-print
           '(library (testfile-a15) (export a b c d e f g fa fb fc fd fe ff fg)
-             (import (chezscheme))
-             (define-record-type foo (nongenerative) (fields x))
-             (define a '())
-             (define b 'sym)
-             (define c 3/4)
-             (define d '(x . y))
-             (define e (record-type-descriptor foo))
-             (define f (make-foo 3))
-             (define g "hello!")
-             (define fa (lambda () a))
-             (define fb (lambda () b))
-             (define fc (lambda () c))
-             (define fd (lambda () d))
-             (define fe (lambda () e))
-             (define ff (lambda () f))
-             (define fg (lambda () g)))))
+                    (import (chezscheme))
+                    (define-record-type foo (nongenerative) (fields x))
+                    (define a '())
+                    (define b 'sym)
+                    (define c 3/4)
+                    (define d '(x . y))
+                    (define e (record-type-descriptor foo))
+                    (define f (make-foo 3))
+                    (define g "hello!")
+                    (define fa (lambda () a))
+                    (define fb (lambda () b))
+                    (define fc (lambda () c))
+                    (define fd (lambda () d))
+                    (define fe (lambda () e))
+                    (define ff (lambda () f))
+                    (define fg (lambda () g)))))
       'replace)
     (with-output-to-file "testfile-b15.ss"
       (lambda ()
         (pretty-print
           '(library (testfile-b15) (export a b c d e f g fa fb fc fd fe ff fg)
-             (import (chezscheme) (prefix (testfile-a15) %))
-             (define a %a)
-             (define b %b)
-             (define c %c)
-             (define d %d)
-             (define e %e)
-             (define f %f)
-             (define g %g)
-             (define fa (lambda () (%fa)))
-             (define fb (lambda () (%fb)))
-             (define fc (lambda () (%fc)))
-             (define fd (lambda () (%fd)))
-             (define fe (lambda () (%fe)))
-             (define ff (lambda () (%ff)))
-             (define fg (lambda () (%fg))))))
+                    (import (chezscheme) (prefix (testfile-a15) %))
+                    (define a %a)
+                    (define b %b)
+                    (define c %c)
+                    (define d %d)
+                    (define e %e)
+                    (define f %f)
+                    (define g %g)
+                    (define fa (lambda () (%fa)))
+                    (define fb (lambda () (%fb)))
+                    (define fc (lambda () (%fc)))
+                    (define fd (lambda () (%fd)))
+                    (define fe (lambda () (%fe)))
+                    (define ff (lambda () (%ff)))
+                    (define fg (lambda () (%fg))))))
       'replace)
     (with-output-to-file "testfile-c15.ss"
       (lambda ()
@@ -8011,10 +9024,10 @@
     (for-each separate-compile '(a15 b15 c15))
     #t)
   ((lambda (x ls) (and (member x ls) #t))
-    (with-output-to-string
-      (lambda () (load "testfile-c15.so")))
-    '("(#t #t #f #t #t #t #t #t #t #f #t #t #t #t)\n(#t #t #t #t #t #t #t #t #t #t #t #t #t #t)\n(#t #t #t #t #t #t #t #t #t #t #t #t #t #t)\n"
-      "(#t #t #t #t #t #t #t #t #t #t #t #t #t #t)\n(#t #t #t #t #t #t #t #t #t #t #t #t #t #t)\n(#t #t #t #t #t #t #t #t #t #t #t #t #t #t)\n"))
+   (with-output-to-string
+     (lambda () (load "testfile-c15.so")))
+   '("(#t #t #f #t #t #t #t #t #t #f #t #t #t #t)\n(#t #t #t #t #t #t #t #t #t #t #t #t #t #t)\n(#t #t #t #t #t #t #t #t #t #t #t #t #t #t)\n"
+     "(#t #t #t #t #t #t #t #t #t #t #t #t #t #t)\n(#t #t #t #t #t #t #t #t #t #t #t #t #t #t)\n(#t #t #t #t #t #t #t #t #t #t #t #t #t #t)\n"))
   (begin
     (library ($l3) (export f) (import (chezscheme)) (define (f x) x))
     #t)
@@ -8034,7 +9047,7 @@
     ;; (export import-spec ...) multiple imports case
     (library ($l4-C) (export) (import (chezscheme)) (export (import ($l4-A) ($l4-B))))
     (equal? '(1 2) (let () (import ($l4-C)) (list a b))))
- )
+  )
 
 (mat library2
   ; test to make sure that libraries needed by the transformers of local
@@ -9588,9 +10601,8 @@
       '(let ()
          (define-syntax ref-prop
            (lambda (x)
-             (lambda (r)
-               (syntax-case x ()
-                 [(_ id key) (r #'id #'key)]))))
+             (syntax-case x ()
+               [(_ id key) (property-value #'id #'key)])))
          (ref-prop q5 q5)))
     "ct\n3\n")
   (begin
@@ -9606,9 +10618,8 @@
       '(let ()
          (define-syntax ref-prop
            (lambda (x)
-             (lambda (r)
-               (syntax-case x ()
-                 [(_ id key) (r #'id #'key)]))))
+             (syntax-case x ()
+               [(_ id key) (property-value #'id #'key)])))
          (ref-prop q6 q6)))
     "rt\n4\n")
   (begin
@@ -9630,9 +10641,8 @@
       '(let ()
          (define-syntax ref-prop
            (lambda (x)
-             (lambda (r)
-               (syntax-case x ()
-                 [(_ id key) (r #'id #'key)]))))
+             (syntax-case x ()
+               [(_ id key) (property-value #'id #'key)])))
          (ref-prop q5 q5)))
     "ct\n33\n")
   (equal?
@@ -9640,9 +10650,8 @@
       '(let ()
          (define-syntax ref-prop
            (lambda (x)
-             (lambda (r)
-               (syntax-case x ()
-                 [(_ id key) (r #'id #'key)]))))
+             (syntax-case x ()
+               [(_ id key) (property-value #'id #'key)])))
          (ref-prop q6 q6)))
     "rt\n44\n")
   ; --------

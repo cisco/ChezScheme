@@ -116,6 +116,14 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Simpified lookup of property values (10.2.0)}
+
+The \scheme{property-value} procedure looks up the value of a property
+of an identifier.  This obviates the need to follow a specific
+transformer protocol to obtain a \scheme{lookup} procedure that
+returns property values and this lets macro helper functions look up
+property values independently.
+
 \subsection{Efficient in-place fxvector and flvector copying (10.2.0)}
 
 The \scheme{fxvector-copy!} and \scheme{flvector-copy!} functions

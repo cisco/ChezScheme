@@ -1636,6 +1636,7 @@
   (profile-load-data [sig [(pathname ...) -> (void)]] [flags true])
   (profile-release-counters [sig [() -> (void)]] [flags true])
   (property-list [sig [(symbol) -> (list)]] [flags discard true safeongoodargs])
+  (property-value [sig [(identifier identifier) (identifier identifier ptr) -> (ptr)]] [flags pure mifoldable discard])
   (put-bytevector-some [sig [(binary-output-port bytevector) (binary-output-port bytevector length) (binary-output-port bytevector length length) -> (uint)]] [flags true])
   (put-hash-table! [sig [(old-hash-table ptr ptr) -> (void)]] [flags true])
   (put-source-table [sig [(textual-output-port source-table) -> (void)]] [flags true])

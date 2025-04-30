@@ -998,7 +998,7 @@
 
 (define lookup-rho
   (lambda (r label)
-    (eq-hashtable-ref r label #f)))
+    (and r (eq-hashtable-ref r label #f))))
 
 (define displaced-lexical-binding (make-binding 'displaced-lexical #f))
 (define unexported-assigned-binding (make-binding 'displaced-lexical "assigned hence unexported library variable"))
@@ -1207,6 +1207,13 @@
   (case-lambda
     [() ($tc-field 'meta-level ($tc))]
     [(x) ($tc-field 'meta-level ($tc) x)]))
+
+(define expand-time-environment-key (list #f))
+(define-syntax with-expand-time-environment
+  (syntax-rules ()
+    [(_ r b) (with-continuation-mark expand-time-environment-key r b)]))
+(define (current-expand-time-environment)
+  (continuation-marks-first (current-continuation-marks) expand-time-environment-key))
 
 ; variant that builds lexical bindings
 (define make-lexical-label
@@ -3714,7 +3721,8 @@
                  " in output of macro"))
               (else x))))
     (rebuild-macro-output
-      (let ((out (p (source-wrap e (anti-mark w) ae))))
+      (let ((out (with-expand-time-environment r
+                   (p (source-wrap e (anti-mark w) ae)))))
         (if (procedure? out)
             (out (rec rho
                    (case-lambda
@@ -7375,6 +7383,35 @@
   (lambda (x)
     (unless ($compile-time-value? x) ($oops who "~s is not a compile-time value" x))
     ($compile-time-value-value x)))
+
+(set-who! property-value
+  (rec property-value
+    (case-lambda
+      [(id key-id default)
+       (define (identifier-error id message)
+         (raise (condition (make-who-condition who) (make-message-condition message)
+                  (make-source-condition id) (make-undefined-violation))))
+       (unless (identifier? id) ($oops who "first argument ~s is not an identifier" id))
+       (unless (identifier? key-id) ($oops who "second argument ~s is not an identifier" id))
+       (let ([r (current-expand-time-environment)])
+         (let-values ([(id-label/pl retry) (id->label/pl/retry id empty-wrap)])
+           (let ([key-label (id->label key-id empty-wrap)])
+             (unless id-label/pl (identifier-error id "no visible binding for property identifier"))
+             (unless key-label (identifier-error key-id "no visible binding for property key"))
+             (let loop ([id-label/pl id-label/pl] [retry retry])
+               (cond
+                 [(assq key-label (label/pl->pl id-label/pl)) =>
+                  (lambda (a)
+                    (let ([b (lookup* (cdr a) r)])
+                      (case (binding-type b)
+                        [(property) (binding-value b)]
+                        [else default])))]
+                 [else (let-values ([(new-id-label/pl retry) (retry)])
+                         (if (and new-id-label/pl
+                                  (eq? (label/pl->label new-id-label/pl) (label/pl->label id-label/pl)))
+                             (loop new-id-label/pl retry)
+                             default))])))))]
+      [(id key-id) (property-value id key-id #f)])))
 
 (set! $syntax->src
   (lambda (x)

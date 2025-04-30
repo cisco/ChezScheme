@@ -574,6 +574,9 @@ With two arguments, \var{id} and \var{key}, \var{lookup} returns the
 value of  \var{id}'s \var{key} property, or \scheme{#f} if \var{id}
 has no \var{key} property.
 
+However, in the case of properties, there is a second, usually easier
+way, to obtain property values, namely by calling the
+\scheme{property-value} procedure described below.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -709,6 +712,29 @@ Attaching a new property with the same name as an property already
 attached to a binding shadows the existing property with the new
 property.
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{property-value}{\categoryprocedure}{(property-value \var{identifier} \var{key-identifier})}
+\formdef{property-value}{\categoryprocedure}{(property-value \var{identifier} \var{key-identifier} \var{default})}
+\returns see below
+\listlibraries
+\endentryheader
+
+The \scheme{property-value} procedure returns the value of the
+\var{key-identifier} property of \var{identifier}.
+If \var{identifier} has no \var{key-identifier} property, \var{default}
+is returned.
+If omitted, \var{default} defaults to \scheme{#f}.
+As the right-hand side of a \scheme{define-property} form is evaluated
+at expand-time, note that invoking \scheme{property-value} at relative
+run-time within the same library or top-level program won't see the
+property.
+This is the reason why the \scheme{get-property} macro wrapper around
+\scheme{property-value} is used below.
+
+If \var{identifier} or \var{key-identifier} have no visible binding,
+an exception with condition type \scheme{&undefined} is raised.
+
 The following example defines a macro, \scheme{get-info}, that retrieves
 the \scheme{info} property of a binding, defines the variable \scheme{x},
 attaches an \scheme{info} property to the binding of \scheme{x}, retrieves
@@ -721,11 +747,10 @@ properties are shadowed as well as the outer binding of \scheme{x}.
 (define info)
 (define-syntax get-info
   (lambda (x)
-    (lambda (lookup)
-      (syntax-case x ()
-        [(_ q)
-         (let ([info-value (lookup #'q #'info)])
-           #`'#,(datum->syntax #'* info-value))]))))
+    (syntax-case x ()
+      [(_ q)
+       (let ([info-value (property-value #'q #'info)])
+         #`'#,(datum->syntax #'* info-value))])))
 (define x "x-value")
 (define-property x info "x-info")
 (get-info x) ;=> "x-info"
@@ -741,10 +766,9 @@ just that.
 \schemedisplay
 (define-syntax get-property
   (lambda (x)
-    (lambda (r)
-      (syntax-case x ()
-        [(_ id key)
-         #`'#,(datum->syntax #'* (r #'id #'key))]))))
+    (syntax-case x ()
+      [(_ id key)
+       #`'#,(datum->syntax #'* (property-value #'id #'key))])))
 (get-property x info) ;=> "x-info"
 \endschemedisplay
 
@@ -810,11 +834,10 @@ cannot be accessed or forged.
          (do-drt #'rname #'(fname ...) #f)]
         [(_ rname pname (fname ...))
          (for-all identifier? #'(rname pname fname ...))
-         (lambda (lookup)
-           (let ([prtd (lookup #'pname #'drt-key)])
-             (unless prtd
-               (syntax-error #'pname "unrecognized parent record type"))
-             (do-drt #'rname #'(fname ...) prtd)))]))))
+         (let ([prtd (property-value #'pname #'drt-key)])
+           (unless prtd
+             (syntax-error #'pname "unrecognized parent record type"))
+           (do-drt #'rname #'(fname ...) prtd)))])))
 \endschemedisplay
 
 \schemedisplay

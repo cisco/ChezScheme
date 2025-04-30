@@ -562,6 +562,27 @@
 (define $current-expand current-expand)
 (define current-expand (make-parameter #f))
 
+(meta-cond
+  [(top-level-bound? 'with-continuation-mark) (begin)]
+  [else
+    ;; The following stub is needed because the expander uses continuation
+    ;; marks to support the `property-value` procedure and older host
+    ;; Schemes do not support continuation marks. Bootstrapping the
+    ;; expander itself doesn't make use of `property-value` and, more
+    ;; generally, continuation marks, so these mock version suffice.
+    ;; Things have to be revisited once the Nanopass framework makes use
+    ;; of `property-value` (currently, the old, less convenient
+    ;; `lookup`-procedure protocol is used).
+    (define-syntax with-continuation-mark
+      (syntax-rules ()
+        [(_ k v b) b]))
+    (define (current-expand-time-environment) #f)
+    (define-primitive ($call-consuming-continuation-attachment default-val p)
+      (p #f))
+    (define-primitive ($call-setting-continuation-attachment marks thunk)
+      (thunk))
+    (define-primitive ($update-mark marks k v) marks)])
+
 ;; End of "primitives" here ^^ ----------------------------------------
 
 (define (noisy-load s)
