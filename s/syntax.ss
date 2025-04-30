@@ -998,7 +998,7 @@
 
 (define lookup-rho
   (lambda (r label)
-    (eq-hashtable-ref r label #f)))
+    (and r (eq-hashtable-ref r label #f))))
 
 (define displaced-lexical-binding (make-binding 'displaced-lexical #f))
 (define unexported-assigned-binding (make-binding 'displaced-lexical "assigned hence unexported library variable"))
@@ -7394,7 +7394,6 @@
        (unless (identifier? id) ($oops who "first argument ~s is not an identifier" id))
        (unless (identifier? key-id) ($oops who "second argument ~s is not an identifier" id))
        (let ([r (current-expand-time-environment)])
-         (unless r ($oops who "called outside the dynamic extent of a transformer call of the expander"))
          (let-values ([(id-label/pl retry) (id->label/pl/retry id empty-wrap)])
            (let ([key-label (id->label key-id empty-wrap)])
              (unless id-label/pl (identifier-error id "no visible binding for property identifier"))

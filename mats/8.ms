@@ -8352,6 +8352,38 @@
       (import (testfile-C))
       (list $testfile-A-x (get-property $testfile-A-x $testfile-A-prop-id)))
     '((a . b) (c . d)))
+
+ ; use of property value outside dynamic extent of transformer call
+  (eqv? (let ([x #f] [y #f])
+         (define-property x y #'(+ 2 9))
+         (meta define z (property-value #'x #'y))
+         (let-syntax ([m (lambda (stx) z)])
+           m))
+    11)
+  (eqv? (let ([x #f] [y #f])
+          (define-property x y #'(+ 2 9))
+          (define z (property-value #'x #'y 0))
+          z)
+    0)
+  (begin
+    (with-output-to-file "testfile-dp15.ss"
+      (lambda ()
+        (pretty-print
+          '(library (testfile-dp15)
+             (export id-with-prop1 id-with-prop2)
+             (import (scheme))
+             (define private-id)
+             (define-property private-id + 41)
+             (define id-with-prop1)
+             (define-property id-with-prop1 * 40)
+             (define id-with-prop2)
+             (define-property id-with-prop2 * (property-value #'private-id #'+)))))
+      'replace)
+    (for-each separate-compile '(dp15))
+    #t)
+  (begin (import (testfile-dp15)) #t)
+  (eqv? (property-value #'id-with-prop1 #'*) 40)
+  (eqv? (property-value #'id-with-prop2 #'*) 41)
 )
 
 (mat library1

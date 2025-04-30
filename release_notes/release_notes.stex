@@ -118,12 +118,11 @@ Online versions of both books can be found at
 
 \subsection{Simpified lookup of property values (10.2.0)}
 
-The \scheme{property-value} procedure, which can be used within the
-dynamic extent of the expander's call to a macro transformer, looks up
-the value of a property of an identifier in the macro's use
-environment.  This obviates the need to follow a specific transformer
-protocol to obtain a \scheme{lookup} that returns property values and
-lets macro helper functions look up property values independently.
+The \scheme{property-value} procedure looks up the value of a property
+of an identifier.  This obviates the need to follow a specific
+transformer protocol to obtain a \scheme{lookup} procedure that
+returns property values and this lets macro helper functions look up
+property values independently.
 
 \subsection{Efficient in-place fxvector and flvector copying (10.2.0)}
 

@@ -720,18 +720,20 @@ property.
 \listlibraries
 \endentryheader
 
-If \scheme{property-value} is not called within the dynamic extent of
-the expander's call to a macro transformer, an exception with
-condition type \scheme{&assertion} is raised.  Otherwise,
-\scheme{property-value} returns the value of the \var{key-identifier}
-property of \var{identifier} in the lexical environment of the macro
-use.  If \var{identifier} has no \var{key-identifier} property,
-\var{default} is returned.  If omitted, \var{default} defaults to
-\scheme{#f}.
+The \scheme{property-value} procedure returns the value of the
+\var{key-identifier} property of \var{identifier}.
+If \var{identifier} has no \var{key-identifier} property, \var{default}
+is returned.
+If omitted, \var{default} defaults to \scheme{#f}.
+As the right-hand side of a \scheme{define-property} form is evaluated
+at expand-time, note that invoking \scheme{property-value} at relative
+run-time within the same library or top-level program won't see the
+property.
+This is the reason why the \scheme{get-property} macro wrapper around
+\scheme{property-value} is used below.
 
-If \var{identifier} or \var{key-identifier} have no visible binding in
-the lexical environment of the macro use, an exception with condition
-type \scheme{&undefined} is raised.
+If \var{identifier} or \var{key-identifier} have no visible binding,
+an exception with condition type \scheme{&undefined} is raised.
 
 The following example defines a macro, \scheme{get-info}, that retrieves
 the \scheme{info} property of a binding, defines the variable \scheme{x},
