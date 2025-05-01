@@ -544,12 +544,12 @@
     (lambda (dir fn)
       (unless (string? dir) ($oops who "~s is not a string" dir))
       (unless (string? fn) ($oops who "~s is not a string" fn))
-      (format
-       (if (directory-separator?
-            (string-ref dir
-                        (fx- (string-length dir) 1)))
-           "~a~a"
-           (string-append "~a" (string (directory-separator)) "~a"))
-       dir fn)))
+      (cond
+        [(string=? dir "") fn]
+        [(directory-separator?
+           (string-ref dir
+                       (fx- (string-length dir) 1)))
+         (string-append dir fn)]
+        [else (string-append dir (string (directory-separator)) fn)])))
 )
 )

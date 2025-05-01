@@ -1731,7 +1731,7 @@
       (and (not (null? dir*))
            (or (source-port
                  (let ([dir (car dir*)])
-                   (if (or (string=? dir "") (string=? dir "."))
+                   (if (string=? dir ".")
                        name
                        (path-build dir name))))
                (search name (cdr dir*)))))

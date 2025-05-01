@@ -112,7 +112,7 @@
             (if (null? ls)
                 ($oops whoarg "file ~s not found in source directories" fn)
                 (let ([path (let ([dir (car ls)])
-                              (if (or (string=? dir "") (string=? dir "."))
+                              (if (string=? dir ".")
                                   fn
                                   (path-build dir fn)))])
                   (if (guard (c [#t #f]) (close-input-port (open-input-file path)) #t)
