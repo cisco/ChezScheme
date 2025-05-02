@@ -3332,7 +3332,8 @@
   (error? (path-last 'a/b/c))
   (error? (path-root 'a/b/c))
   (error? (path-extension 'a/b/c))
-  (error? (path-build 'a 'b))
+  (error? (path-build 'a "fn"))
+  (error? (path-build "dir" 'b))
 
   (eq? (path-absolute? "") #f)
   (eq? (path-absolute? "a") #f)
@@ -3410,19 +3411,10 @@
   (equal? (path-extension "c:..") "")
   (equal? (path-extension "c:") "")
 
-  (equal? (path-build "" "b.ss") "b.ss")
-  (if (windows?)
-      (equal? (path-build "." "b.ss") ".\\b.ss")
-      (equal? (path-build "." "b.ss") "./b.ss"))
-  (if (windows?)
-      (equal? (path-build ".\\" "b.ss") ".\\b.ss")
-      (equal? (path-build "./" "b.ss") "./b.ss"))
-  (if (windows?)
-      (equal? (path-build "foo" "b.ss") "foo\\b.ss")
-      (equal? (path-build "foo" "b.ss") "foo/b.ss"))
-  (if (windows?)
-      (equal? (path-build "quux\\" "b.ss") "quux\\b.ss")
-      (equal? (path-build "quux/" "b.ss") "quux/b.ss"))
+  (equal? (path-build "" "fn") "fn")
+  (equal? (path-build "dir" "fn") (format "dir~cfn" (directory-separator)))
+  (equal? (path-build (format "dir~c" (directory-separator)) "fn")
+          (format "dir~cfn" (directory-separator)))
 
  ; if this test fails, search for the asterisks in the printed table
   (let ([okay? #t])
