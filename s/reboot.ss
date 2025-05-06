@@ -145,7 +145,9 @@
  [else
   (define path-build
     (lambda (a b)
-      (let ([sep (if (eqv? (string-ref a (sub1 (string-length a))) #\/) "" "/")])
+      (let ([sep (if (or (string=? a "")
+                         (eqv? (string-ref a (sub1 (string-length a))) #\/))
+                     "" "/")])
         (string-append a sep b))))])
 
 (let ([machine.def (path-build xc-dir "machine.def")])

@@ -7257,6 +7257,8 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 6.mo:Expected error in mat pathprocs: "path-last: a/b/c is not a string".
 6.mo:Expected error in mat pathprocs: "path-root: a/b/c is not a string".
 6.mo:Expected error in mat pathprocs: "path-extension: a/b/c is not a string".
+6.mo:Expected error in mat pathprocs: "path-build: a is not a string".
+6.mo:Expected error in mat pathprocs: "path-build: b is not a string".
 6.mo:Expected error in mat process: "write-char: not permitted on closed port sanitized-port".
 6.mo:Expected error in mat process: "write-char: not permitted on closed port sanitized-port".
 6.mo:Expected error in mat process: "flush-output-port: not permitted on closed port sanitized-port".

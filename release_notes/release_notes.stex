@@ -2873,6 +2873,11 @@ An incorrect approach to finding the current executable's path on
 NetBSD meant that boot files could not be found relative to the
 executable.
 
+\subsection{Invalid memory access in \scheme{path-build} (10.2.0)}
+
+When the \scheme{dir-path} argument is the empty string, the \scheme{path-build}
+procedure now returns the \scheme{path} argument instead of performing an invalid memory access.
+
 \subsection{Incorrect assembly code for threaded ARMv5 and earlier (10.1.0)}
 
 A bug that generated incorrect assembly code in threaded mode for ARMv5 and earlier

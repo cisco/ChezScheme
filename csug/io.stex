@@ -3887,6 +3887,7 @@ The preferred directory separator is \scheme{#\\} for Windows and
 
 Combines \var{dir-path} and \var{path}, adding a directory separator
 between them if needed.
+If \var{dir-path} is the empty string, \var{path} is returned.
 
 %----------------------------------------------------------------------------
 \entryheader

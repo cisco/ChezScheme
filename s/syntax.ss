@@ -4787,7 +4787,7 @@
              e1 e2 ...)]))
       (define make-path
         (lambda (dir rpath ext)
-          (if (or (string=? dir "") (string=? dir "."))
+          (if (string=? dir ".")
               (format "~a~a" rpath ext)
               (path-build dir (format "~a~a" rpath ext)))))
       (let ([rpath (fold-left (lambda (dir elem) (path-build dir (symbol->string elem))) (symbol->string (car path)) (cdr path))])
