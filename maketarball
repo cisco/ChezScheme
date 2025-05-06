@@ -25,14 +25,14 @@ function cleanup() { rm -rf "$tmpdir"; }
 
 trap cleanup EXIT
 
-git archive --format=tar --prefix=csv10.2.0/ HEAD | (cd "$tmpdir"; tar -xf -)
+git archive --format=tar --prefix=csv10.3.0/ HEAD | (cd "$tmpdir"; tar -xf -)
 git submodule update --init --recursive
 git submodule --quiet foreach --recursive \
-  "git archive --format=tar --prefix=\"csv10.2.0/\$path/\" HEAD | (cd \"$tmpdir\"; tar -xf -)"
+  "git archive --format=tar --prefix=\"csv10.3.0/\$path/\" HEAD | (cd \"$tmpdir\"; tar -xf -)"
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
   mac="--no-mac-metadata"
 else  
   mac=""
 fi
-(cd "$tmpdir"; tar -c -z $mac -f "$srcdir/csv10.2.0.tar.gz" csv10.2.0)
+(cd "$tmpdir"; tar -c -z $mac -f "$srcdir/csv10.3.0.tar.gz" csv10.3.0)

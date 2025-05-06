@@ -1,4 +1,4 @@
-VERSION := 10.2.0
+VERSION := 10.3.0
 WIXEXTENSIONS := -ext WixUIExtension -ext WixBalExtension
 export MSYS_NO_PATHCONV=1
 
