@@ -47,7 +47,7 @@ procedure) is given in parentheses.
      \item x86, nonthreaded (i3osx) and threaded (ti3osx)
      \item x86\_64, nonthreaded (a6osx) and threaded (ta6osx)
      \item AArch64, nonthreaded (arm64osx) and threaded (tarm64osx)
-     \item PowerPC (32-bit) (ppc2osx) and threaded (tppc32osx)
+     \item PowerPC (32-bit) (ppc32osx) and threaded (tppc32osx)
      \end{itemizeC}
 \item Windows
      \begin{itemizeC}
