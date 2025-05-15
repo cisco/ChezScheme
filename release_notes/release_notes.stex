@@ -116,6 +116,11 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Unicode 16.0.0 support (10.3.0)}
+
+The character sets, character classes, and word-breaking algorithms for character, string,
+and Unicode-related bytevector operations have now been updated to Unicode 16.0.0.
+
 \subsection{Command-line options \scheme{--version} and \scheme{--help} write to stdout
 (10.2.0)}
 
