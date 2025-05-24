@@ -555,7 +555,8 @@
       [rational (cons 'exact-integer real-pred)]
       [integer integer-pred]
       [(uinteger sub-integer) (cons 'bottom integer-pred)]
-      [inexact-number inexact-pred]
+      [(cflonum inexact-number) inexact-pred]
+      [exact-real exact-real-pred]
       [exact-number exact-pred]
       [$inexactnum inexact-complex-pred]
       [$exactnum exact-complex-pred]
@@ -1448,6 +1449,7 @@
   (define maybe-flonum-pred (maybe flonum-pred))
   (define integer-pred (predicate-union flinteger-pred 'exact-integer))
   (define exact-pred (predicate-union exact*-pred 'exact-integer))
+  (define exact-real-pred (predicate-union ratnum-pred 'exact-integer))
   (define real-pred (predicate-union real*-pred 'exact-integer))
   (define number-pred (predicate-union number*-pred 'exact-integer))
   (define maybe-number-pred (maybe number-pred))
