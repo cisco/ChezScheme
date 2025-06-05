@@ -149,7 +149,7 @@ information on the supported options.
 For platforms without support for native-code compilation in Chez
 Scheme, use a machine specification like `-m=tpb64l`, which is a
 threaded, 64-bit, little-endian build. The "configure" script will
-still attept to infer compilation and linking flags for the kernel; if
+still attempt to infer compilation and linking flags for the kernel; if
 you need to give it a hint, you can use the `--os` flag with something
 like `--os=tXle`, which indicates a threaded configuration (due to the
 leading "t") on Linux (due to the trailing "le").
@@ -277,7 +277,7 @@ The makefile supports several targets:
    Use "auto" for <machine type> as a shorthand for an inferred
    machine type after configuring with `--pb`.
 
-   When using `zuo`, the `boot` and bootquick` targets take arguments
+   When using `zuo`, the `boot` and `bootquick` targets take arguments
    instead of using variables. So, the corresponding commands are
    `zuo . boot <machine-type>` and `zuo . bootquick <machine-type>`.
 
