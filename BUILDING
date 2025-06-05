@@ -36,7 +36,7 @@ Chez Scheme machine type, which can be used to build native
 machine types. You can also create initial boot files using
 an existing Chez Scheme build.
 
-In you're on Windows, see the WINDOWS VIA COMMAND PROMPT section later
+If you're on Windows, see the WINDOWS VIA COMMAND PROMPT section later
 in this file. Otherwise, carry on to CONFIGURING AND BUILDING.
 
 
@@ -149,7 +149,7 @@ information on the supported options.
 For platforms without support for native-code compilation in Chez
 Scheme, use a machine specification like `-m=tpb64l`, which is a
 threaded, 64-bit, little-endian build. The "configure" script will
-still attept to infer compilation and linking flags for the kernel; if
+still attempt to infer compilation and linking flags for the kernel; if
 you need to give it a hint, you can use the `--os` flag with something
 like `--os=tXle`, which indicates a threaded configuration (due to the
 leading "t") on Linux (due to the trailing "le").
@@ -277,7 +277,7 @@ The makefile supports several targets:
    Use "auto" for <machine type> as a shorthand for an inferred
    machine type after configuring with `--pb`.
 
-   When using `zuo`, the `boot` and bootquick` targets take arguments
+   When using `zuo`, the `boot` and `bootquick` targets take arguments
    instead of using variables. So, the corresponding commands are
    `zuo . boot <machine-type>` and `zuo . bootquick <machine-type>`.
 
@@ -383,15 +383,15 @@ The generated executables "scheme.exe" and "petite.exe" are in
 "<machine type>\bin\<machine type>", and each relies on generated boot
 files in "..\boot\<machine type>" relative to the executable. The
 executables are dynamically linked against the Microsoft Visual C++
-run-time library vcruntime140.dll. If you distribute the executables
+run-time library "vcruntime140.dll". If you distribute the executables
 to a different system, be sure to include the redistributable run-time
 library.
 
 The `build.bat` script creates and uses an `nmake`-compatible makefile
-to build `zuo.exe` as its first step and as its only step is `/config`
+to build `zuo.exe` as its first step and as its only step if `/config`
 is supplied. You can use `zuo` to drive targets described in DETAILS
-above, but you must Microsoft Visual Studio command-line tools set up
-already (perhaps using `c/vs.bat`).
+above, but you must have Microsoft Visual Studio command-line tools set
+up already (perhaps using `c/vs.bat`).
 
 By default, `build.bat` not only builds the "scheme.exe" executable,
 it also builds DLLs and libraries to support four linking
@@ -591,7 +591,7 @@ After `make` to build, use `make install` to gather cross-compiled
 components. Typically, `--temproot=<dir>` should be supplied as a
 configure argument along with `--cross`, in which case the
 installation is placed in a <dir> to be moved to the target platform.
-Alternatively, a destination directory be selected at the installation
+Alternatively, a destination directory can be selected at the installation
 step via `DESTDIR`:
 
  make install DESTDIR=/tmp/staging
