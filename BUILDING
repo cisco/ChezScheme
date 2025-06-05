@@ -388,10 +388,10 @@ to a different system, be sure to include the redistributable run-time
 library.
 
 The `build.bat` script creates and uses an `nmake`-compatible makefile
-to build `zuo.exe` as its first step and as its only step is `/config`
+to build `zuo.exe` as its first step and as its only step if `/config`
 is supplied. You can use `zuo` to drive targets described in DETAILS
-above, but you must Microsoft Visual Studio command-line tools set up
-already (perhaps using `c/vs.bat`).
+above, but you must have Microsoft Visual Studio command-line tools set
+up already (perhaps using `c/vs.bat`).
 
 By default, `build.bat` not only builds the "scheme.exe" executable,
 it also builds DLLs and libraries to support four linking
