@@ -591,7 +591,7 @@ After `make` to build, use `make install` to gather cross-compiled
 components. Typically, `--temproot=<dir>` should be supplied as a
 configure argument along with `--cross`, in which case the
 installation is placed in a <dir> to be moved to the target platform.
-Alternatively, a destination directory be selected at the installation
+Alternatively, a destination directory can be selected at the installation
 step via `DESTDIR`:
 
  make install DESTDIR=/tmp/staging
