@@ -383,7 +383,7 @@ The generated executables "scheme.exe" and "petite.exe" are in
 "<machine type>\bin\<machine type>", and each relies on generated boot
 files in "..\boot\<machine type>" relative to the executable. The
 executables are dynamically linked against the Microsoft Visual C++
-run-time library vcruntime140.dll. If you distribute the executables
+run-time library "vcruntime140.dll". If you distribute the executables
 to a different system, be sure to include the redistributable run-time
 library.
 
