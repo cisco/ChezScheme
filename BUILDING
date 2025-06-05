@@ -36,7 +36,7 @@ Chez Scheme machine type, which can be used to build native
 machine types. You can also create initial boot files using
 an existing Chez Scheme build.
 
-In you're on Windows, see the WINDOWS VIA COMMAND PROMPT section later
+If you're on Windows, see the WINDOWS VIA COMMAND PROMPT section later
 in this file. Otherwise, carry on to CONFIGURING AND BUILDING.
 
 
