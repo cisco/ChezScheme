@@ -196,6 +196,8 @@ not set, if the standard input or output files have been redirected, or
 if the --eedisable command-line option has been used.
 The history is saved across sessions, by default, in the file
 \*(lq$HOME/.chezscheme_history\*(rq.
+This default can be changed by setting the \*(lqCHEZSCHEME_HISTORY\*(rq
+environment variable.
 The --eehistory command-line option
 can be used to specify a different
 location for the history file or to disable the saving and restoring of
@@ -750,6 +752,11 @@ The environment variable
 (see above) may be set
 to a colon-separated (semi-colon under Windows) list of directories
 in which to search for boot files.
+
+The environment variable
+.B CHEZSCHEME_HISTORY \fR
+(see above) may be set
+to the location to use as the default history file location.
 .SH FILES
 .if 0 COMMENT: put the longest path from below in the tab computation:
 .ta \w'{InstallLibExamples}'u+.25i
