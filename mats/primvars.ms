@@ -410,6 +410,7 @@
               [(environment) *env '((a . b)) #f]
               [(eq-hashtable) *eq-hashtable *symbol-hashtable #f]
               [(exact-integer) (- (most-negative-fixnum) 1) 2.0 1/2 #f]
+              [(exact-real) 1/2 1+1i 2.0 #f]
               [(exact-uinteger) (+ (most-positive-fixnum) 1) -10 2.0 1/2 #f]
               [(exception-state) (current-exception-state) 0 #f]
               [(eof/char) #\a 0 #f]
@@ -527,7 +528,8 @@
               [(vector) '#(a) "a" #f]
               [(stencil-vector) (stencil-vector 7 1 2 3) "a" #f]
               [(who-condition) (make-who-condition 'me) (make-message-condition "hello") 'the-who #f]
-              [(who) 'who 17])
+              [($exactnum) 1+1i 1.0+1.0i 1 1.0 'a #f]
+              [($inexactnum) 1.0+1.0i 1+1i 1 1.0 'a #f])
             (meta-cond
               [(memq 'pthreads feature*)
                (declare-types

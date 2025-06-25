@@ -116,6 +116,11 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Type recovery improvements (10.3.0)}
+
+The type recovery pass has improved support for \scheme{cfl+} and
+similar functions.
+
 \subsection{Unicode 16.0.0 support (10.3.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,
