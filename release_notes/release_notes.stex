@@ -116,6 +116,13 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Support for setting the default history file location using the \scheme{CHEZSCHEME_HISTORY environment variable}}
+
+If the environment variable \scheme{CHEZSCHEME_HISTORY} is set during
+startup, and the \scheme{--eehistory} command-line option isn't used,
+the value of said environment variable will determine the history file
+location that will be used.
+
 \subsection{Type recovery improvements (10.3.0)}
 
 The type recovery pass has improved support for \scheme{cfl+} and

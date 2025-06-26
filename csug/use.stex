@@ -347,6 +347,8 @@ been redirected, or if the \scheme{--eedisable} command-line option
 (Section~\ref{SECTUSECOMMANDLINE}) has been used.
 The history is saved across sessions, by default, in the file
 ``.chezscheme\_history'' in the user's home directory.
+If the \scheme{CHEZSCHEME_HISTORY} environment variable is set during startup,
+its value becomes the default history file location.
 The \scheme{--eehistory} command-line option
 (Section~\ref{SECTUSECOMMANDLINE}) can be used to specify a different
 location for the history file or to disable the saving and restoring of
