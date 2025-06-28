@@ -435,6 +435,9 @@
     [(flonum? x) x]
     [else ($oops who "~s is not a real number" x)]))
 
+(define-library-entry ($number-oops who x)
+  ($oops who "~s is not a number" x))
+
 (let ()
   (define pair-oops
     (lambda (who x)

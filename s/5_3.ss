@@ -3253,7 +3253,7 @@
              (define (bad-vector)
                ($oops who "not a valid pseudo-random generator state vector ~s" v))
              (define (int->double i)
-               (unless (and (exact? i) (integer? i)) (bad-vector))
+               (unless (and (integer? i) (exact? i)) (bad-vector))
                (exact->inexact i))
              (unless (and (vector? v) (= 6 (vector-length v))) (bad-vector))
              (let ([x10 (int->double (vector-ref v 0))]
