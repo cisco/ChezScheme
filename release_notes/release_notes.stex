@@ -128,6 +128,12 @@ startup, and the \scheme{--eehistory} command-line option isn't used,
 the value of said environment variable will determine the history file
 location that will be used.
 
+\subsection{Inlined numeric predicates during compilation (10.4.0)}
+
+The compiler inlines more numeric predicates during the compilation,
+in particular \scheme{real?}, \scheme{rational?}, \scheme{exact?}
+and \scheme{inexact?}, .
+
 \subsection{Type recovery improvements (10.3.0)}
 
 The type recovery pass has improved support for \scheme{cfl+} and
