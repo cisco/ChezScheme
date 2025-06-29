@@ -116,7 +116,7 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Support for setting the default history file location using the \scheme{CHEZSCHEME_HISTORY environment variable}}
+\subsection{Support for setting the default history file location using the \scheme{CHEZSCHEME_HISTORY} environment variable}
 
 If the environment variable \scheme{CHEZSCHEME_HISTORY} is set during
 startup, and the \scheme{--eehistory} command-line option isn't used,
