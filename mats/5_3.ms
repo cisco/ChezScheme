@@ -2706,6 +2706,65 @@
                        (begin (set! ls (reverse ls)) 3))])
           (cons n ls)))
       '(8 c b a c b a))
+    (eqv? 0.0 (expt 0.0 (add1 (expt 2 10))))
+    (eqv? +inf.0 (expt 0.0 (- (add1 (expt 2 10)))))
+    (eqv? -0.0 (expt -0.0 (add1 (expt 2 10))))
+    (eqv? -inf.0 (expt -0.0 (- (add1 (expt 2 10)))))
+    (eqv? 0.0 (expt 0.0 (add1 (expt 2 55))))
+    (eqv? +inf.0 (expt 0.0 (- (add1 (expt 2 55)))))
+    (eqv? -0.0 (expt -0.0 (add1 (expt 2 55))))
+    (eqv? -inf.0 (expt -0.0 (- (add1 (expt 2 55)))))
+    (eqv? 0.0 (expt 0.0 (add1 (expt 2 155))))
+    (eqv? +inf.0 (expt 0.0 (- (add1 (expt 2 155)))))
+    (eqv? -0.0 (expt -0.0 (add1 (expt 2 155))))
+    (eqv? -inf.0 (expt -0.0 (- (add1 (expt 2 155)))))
+    (begin
+      (define ($flexpt~= a b)
+        ;; The accuracy of `expt` ultimately depends on the C
+        ;; library's `pow`, and platforms vary. The `fl~=` predicate
+        ;; reflects that variation for most purposes, but `pow` can
+        ;; var more. Enumerate a few platforms where we trust `pow` to
+        ;; be good, and increase the fuzz for other platforms.
+        (fl~= a b
+              (case (machine-type)
+                [(i3le ti3le a6le ta6le arm64osx tarm64osx)
+                 *fuzz*]
+                [else
+                 1e-5])))
+      #t)
+    ;; In the following tests, the expected value comes from taking
+    ;; the number represented the flonum first argument to `expt` and
+    ;; finding the flonum that most accurately represents the exact
+    ;; power of that number --- as computed by Brad Lucier's package
+    ;; for computable reals.
+    ($flexpt~= (expt 1.000000000000001 72057594037927936) 5.540622384393264e34)
+    ($flexpt~= (expt -1.000000000000001 72057594037927936) 5.540622384393264e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927937) 5.54062238439327e34)
+    ($flexpt~= (expt -1.000000000000001 72057594037927937) -5.54062238439327e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927938) 5.5406223843932765e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927939) 5.540622384393282e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927940) 5.5406223843932885e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927941) 5.540622384393295e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927942) 5.5406223843933005e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927943) 5.540622384393307e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927944) 5.540622384393313e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927945) 5.540622384393319e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927946) 5.540622384393325e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927947) 5.540622384393332e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927948) 5.540622384393337e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927949) 5.540622384393344e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927950) 5.54062238439335e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927951) 5.540622384393357e34)
+    ($flexpt~= (expt 1.000000000000001 72057594037927952) 5.540622384393362e34)
+    ($flexpt~= (expt .999999999999923 9113206036900117) 1.1282707411034352e-305)
+    ($flexpt~= (expt .999999999999923 9113206036900118) 1.1282707411033483e-305)
+    ($flexpt~= (expt .999999999999923 9113206036900119) 1.1282707411032614e-305)
+    ($flexpt~= (expt .999999999999923 9113206036900120) 1.1282707411031744e-305)
+    ($flexpt~= (expt .999999999999923 9113206036900121) 1.1282707411030875e-305)
+    ($flexpt~= (expt .999999999999923 9113206036900122) 1.1282707411030006e-305)
+    ($flexpt~= (expt .999999999999923 9113206036900123) 1.1282707411029136e-305)
+    ($flexpt~= (expt .999999999999923 9113206036900124) 1.1282707411028267e-305)
+    ($flexpt~= (expt .999999999999923 9113206036900125) 1.1282707411027398e-305)
  )
 
 (mat expt-mod

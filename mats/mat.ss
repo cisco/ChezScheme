@@ -416,15 +416,17 @@
                      (inexact (imag-part y)))))))
 
 (define fl~=
-   (lambda (x y)
-      (cond
-         [(and (fl>= (flabs x) 2.0) (fl>= (flabs y) 2.0))
-          (fl~= (fl/ x 2.0) (fl/ y 2.0))]
-         [(and (fl< 0.0 (flabs x) 1.0) (fl< 0.0 (flabs y) 1.0))
-          (fl~= (fl* x 2.0) (fl* y 2.0))]
-         [else (let ([d (flabs (fl- x y))])
-                  (or (fl<= d *fuzz*)
-                      (begin (printf "fl~~=: ~s~%" d) #f)))])))
+  (case-lambda
+   [(x y fuzz)
+    (cond
+      [(and (fl>= (flabs x) 2.0) (fl>= (flabs y) 2.0))
+       (fl~= (fl/ x 2.0) (fl/ y 2.0) fuzz)]
+      [(and (fl< 0.0 (flabs x) 1.0) (fl< 0.0 (flabs y) 1.0))
+       (fl~= (fl* x 2.0) (fl* y 2.0) fuzz)]
+      [else (let ([d (flabs (fl- x y))])
+              (or (fl<= d fuzz)
+                  (begin (printf "fl~~=: ~s~%" d) #f)))])]
+   [(x y) (fl~= x y *fuzz*)]))
 
 (define cfl~=
    (lambda (x y)
