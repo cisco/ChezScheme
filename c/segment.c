@@ -168,7 +168,11 @@ void *S_getmem(iptr bytes, IBOOL zerofill, IBOOL for_code) {
     if (zerofill) memset(addr, 0, bytes);
   } else {
     uptr n = S_pagesize - 1; iptr p_bytes = (iptr)(((uptr)bytes + n) & ~n);
+#ifdef __OpenBSD__
+    int perm = (PROT_WRITE | PROT_EXEC | PROT_READ);
+#else
     int perm = (for_code ? S_PROT_CODE : (PROT_WRITE | PROT_READ));
+#endif
     int flags = (MAP_PRIVATE | MAP_ANONYMOUS) | (for_code ? S_MAP_CODE : 0);
 #ifdef MAP_32BIT
     /* try for first 2GB of the memory space first of x86_64 so that we have a

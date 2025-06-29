@@ -142,7 +142,11 @@ void Sset_top_level_value(ptr x, ptr y) {
   if (enabled) DISABLECOUNT(tc) = FIX(UNFIX(DISABLECOUNT(tc)) - 1);
 }
 
-#include <setjmp.h>
+#ifdef __OpenBSD__
+#  include "/usr/include/setjmp.h"
+#else
+#  include <setjmp.h>
+#endif
 
 /* consider rewriting these to avoid multiple calls to get_thread_context */
 ptr Scall0(ptr cp) {

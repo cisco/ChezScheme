@@ -697,7 +697,11 @@ static void s_showalloc(IBOOL show_dump, const char *outfn) {
   tc_mutex_release();
 }
 
-#include <signal.h>
+#ifdef __OpenBSD__
+#  include "/usr/include/signal.h"
+#else
+#  include <signal.h>
+#endif
 #ifdef WIN32
 #include <io.h>
 #include <process.h>

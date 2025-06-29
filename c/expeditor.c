@@ -737,7 +737,11 @@ static void s_ee_set_color(int color_id, IBOOL background) {
 
 #else /* WIN32 */
 
-#include <limits.h>
+#ifdef __OpenBSD__
+#  include "/usr/include/limits.h"
+#else
+#  include <limits.h>
+#endif
 #ifdef DISABLE_CURSES
 # include "nocurses.h"
 #elif defined(SOLARIS)
@@ -753,7 +757,11 @@ static void s_ee_set_color(int color_id, IBOOL background) {
 # include <term.h>
 #endif
 #include <termios.h>
-#include <signal.h>
+#ifdef __OpenBSD__
+#  include "/usr/include/signal.h"
+#else
+#  include <signal.h>
+#endif
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <wchar.h>

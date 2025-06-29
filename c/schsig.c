@@ -15,7 +15,12 @@
  */
 
 #include "system.h"
-#include <setjmp.h>
+#ifdef __OpenBSD__
+#  include "/usr/include/setjmp.h"
+#  include "/usr/include/signal.h"	
+#else
+#  include <setjmp.h>
+#endif
 
 /* locally defined functions */
 static void split(ptr k, ptr *s);
