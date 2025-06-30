@@ -1706,7 +1706,49 @@
                  0)]
             [(eq? x 1) 1]
             [(eq? x 2) (if (< y 0) (/ (ash 1 (- y))) (ash 1 y))]
-            [(and (flonum? x) (exact-integer-fits-float? y)) ($flexpt x (inexact y))]
+            [(flonum? x)
+             ;; By Bradley Lucier (@gambiteer) for Gambit, relies
+             ;; on some special cases already handled by the time
+             ;; we get here:
+             (cond
+               [(exact-integer-fits-float? y) ($flexpt x (inexact y))]
+               ;; singular cases
+               [($nan? x) x]
+               [(flzero? x) (if (positive? y)
+                                (if (odd? y) x 0.)
+                                (if (odd? y) (fl/ x) +inf.0))]
+               [(fl= (flabs x) 1.) (if (odd? y) x 1.)]
+               ;; extremely large exponents
+               [(or (<= y (- (expt 2 63)))
+                    (<= (expt 2 63) y))
+                ;; Only extreme values (+/- 0, infty) are possible
+                ;; in IEEE double precision.
+                ;; for future reference
+                ;; (nextafter 1. +inf.0) => 1.0000000000000002
+                ;; (nextafter 1. +.0   ) =>  .9999999999999999
+                (if (eq? (fl< 1. (flabs x)) (positive? y))
+                    ;; result is an infinity
+                    (if (and (odd? y) (flnegative? x)) -inf.0 +inf.0)
+                    ;; result is a zero
+                    (if (and (odd? y) (flnegative? x)) -0. +0.))]
+               [else
+                (let* ((abs-big-y
+                        ;; remove the lowest 12 bits of (abs y)
+                        (bitwise-arithmetic-shift-left (bitwise-arithmetic-shift-right (abs y) 12) 12))
+                       (big-part-of-y
+                        (if (negative? y)
+                            (- abs-big-y)
+                            abs-big-y))
+                       (rest-of-y
+                        (- y big-part-of-y)))
+                  ;; y = big-part-of-y + rest-of-y, both terms on right are nonzero
+                  ;; because (abs y) <= 2^63 and it can't be converted exactly to a flonum,
+                  ;; so there are more than 53 upper bits of y.
+                  ;; big-part-of-y and rest-of-y can be converted to flonum without roundoff error.
+                  ;; y, big-part-of-y, and rest-of-y have the same sign, so the following
+                  ;; product is not an infinity times a zero.
+                  (fl* ($flexpt x (inexact big-part-of-y))
+                       ($flexpt x (inexact rest-of-y))))])]
             [(and ($inexactnum? x) (exact-integer-fits-float? y)) (exp (* y (log x)))]
             [(not (number? x)) (nonnumber-error 'expt x)]
             [(ratnum? x)
