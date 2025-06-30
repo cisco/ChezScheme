@@ -99,7 +99,9 @@ int main(int argc, const char *argv[]) {
   int exists_timestamp_mode = 0;
 #ifdef FEATURE_EXPEDITOR
   int expeditor_enable = 1;
-  const char *expeditor_history_file = "";  /* use "" for default location */
+  /* use "" for default location */
+  const char *expeditor_history_file = getenv("CHEZSCHEME_HISTORY");
+  if (!expeditor_history_file) expeditor_history_file = "";
 #endif /* FEATURE_EXPEDITOR */
 
   if (strcmp(Skernel_version(), VERSION) != 0) {

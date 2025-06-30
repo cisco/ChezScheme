@@ -116,10 +116,28 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Support for setting the default history file location using the \scheme{CHEZSCHEME_HISTORY} environment variable}
+
+If the environment variable \scheme{CHEZSCHEME_HISTORY} is set during
+startup, and the \scheme{--eehistory} command-line option isn't used,
+the value of said environment variable will determine the history file
+location that will be used.
+
+\subsection{Type recovery improvements (10.3.0)}
+
+The type recovery pass has improved support for \scheme{cfl+} and
+similar functions.
+
 \subsection{Unicode 16.0.0 support (10.3.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,
 and Unicode-related bytevector operations have now been updated to Unicode 16.0.0.
+
+\subsection{Improved \scheme{expt} on a flonum and a large exact power (10.3.0)}
+
+The \scheme{expt} function produces a more accurate result when its
+first argument is a flonum and its second argument is an exact integer
+that has no equivalent flonum representation.
 
 \subsection{Command-line options \scheme{--version} and \scheme{--help} write to stdout
 (10.2.0)}

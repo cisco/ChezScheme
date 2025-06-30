@@ -234,6 +234,21 @@
   (cptypes/once-equivalent-expansion?
     '(lambda (x) (when (fixnum? x) (zero? x) 7))
     '(lambda (x) (when (fixnum? x) 7)))
+  (cptypes/once-equivalent-expansion?
+    '(lambda (x) (display (+ x x)) (number? x))
+    '(lambda (x) (display (+ x x)) #t))
+  (cptypes/once-equivalent-expansion?
+    '(lambda (x) (display (fx+ x x)) (fixnum? x))
+    '(lambda (x) (display (fx+ x x)) #t))
+  (cptypes/once-equivalent-expansion?
+    '(lambda (x) (display (fl+ x x)) (flonum? x))
+    '(lambda (x) (display (fl+ x x)) #t))
+  (cptypes/once-equivalent-expansion?
+    '(lambda (x) (display (cfl+ x x)) (cflonum? x))
+    '(lambda (x) (display (cfl+ x x)) #t))
+  (not (cptypes/once-equivalent-expansion?
+        '(lambda (x) (display (cfl+ x x)) (flonum? x))
+        '(lambda (x) (display (cfl+ x x)) #f)))
 )
 
 (mat cptypes-type-if
@@ -645,6 +660,7 @@
   (test-chain* '(bignum? exact? number?)) ; exact? may raise an error
   (test-chain '((lambda (x) (eqv? x (expt 256 100))) bignum? integer? real? number?))
   (test-chain '((lambda (x) (eqv? 0.0 x)) flonum? real? number?))
+  (test-chain '((lambda (x) (eqv? 0.0 x)) flonum? cflonum? number?))
   (test-chain* '((lambda (x) (or (eqv? x 0.0) (eqv? x 3.14))) flonum? real? number?))
   (test-chain* '((lambda (x) (or (eq? x 0) (eqv? x 3.14))) real? number?))
   (test-chain '(gensym? symbol?))
