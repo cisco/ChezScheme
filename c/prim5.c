@@ -1467,11 +1467,10 @@ static double s_pow(double x, double y) {
 /* intel macosx delivers accurate results for integer inputs, e.g.,
  * 10.0^21.0, only with long double version of pow; it's not clear
  * whether that has been true for x86_64 as opposed to i386, but as
- * of macOS 10.15 (Catalina), pow seems ok for x86_64, while powl
- * is less accurate as of macOS 13; so, we're using powl only for i3osx */
+ * of macOS 10.15 (Catalina), pow seems ok for x86_64 */
 static double s_pow(double x, double y) { return powl(x, y); }
 #else /* i3fb/ti3fb/i3osx/ti3osx */
-static double s_pow(double x, double y) { return powl(x, y); }
+static double s_pow(double x, double y) { return pow(x, y); }
 #endif /* i3fb/ti3fb/i3osx/ti3osx */
 
 #ifdef __MINGW32__
