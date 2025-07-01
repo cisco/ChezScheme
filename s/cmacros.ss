@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x0a030001)
+(define-constant scheme-version #x0a030001) ; <-- TODO: update this
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2983,6 +2983,7 @@
      (bytevector-ieee-double-native-ref #f 2 #t #t)
      (bytevector-ieee-double-native-set! #f 2 #t #t)
      (real->flonum #f 2 #f #t)
+     ($number-oops #f 2 #t #t)
      (unsafe-port-eof? #f 1 #f #t)
      (unsafe-lookahead-u8 #f 1 #f #t)
      (unsafe-unget-u8 #f 2 #f #t)
