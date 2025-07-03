@@ -19,7 +19,7 @@
 ;; expected).
 ;;
 ;; When running a single test, you can specify a configuration variant
-;; for the test by suplying variable arguments alongside the target.
+;; for the test by supplying variable arguments alongside the target.
 ;; For example,
 ;;
 ;;   zuo . <test>.mo o=3

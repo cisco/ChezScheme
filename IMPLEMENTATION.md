@@ -214,7 +214,7 @@ You can make all ".mo" files with just `zuo` or `zuo . each` within
 your build's "*machine-type*/mats". You can provide configuration
 arguments, too, such as `zuo . o=3` to make all ".mo" files in unsafe
 mode. A ".mo" file is rebuilt if configuration arguments are different
-that from the previous run.
+from the previous run.
 
 ### Running Tests in One Configuration (with expected-error checking)
 

@@ -792,6 +792,38 @@ themselves are not copied.
 
 %----------------------------------------------------------------------------
 \entryheader
+\formdef{vector-copy!}{\categoryprocedure}{(vector-copy! \var{src} \var{src-start} \var{dst} \var{dst-start} \var{n})}
+\returns unspecified
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\var{src} and \var{dst} must be vectors.
+\var{src-start}, \var{dst-start}, and \var{n} must be exact nonnegative
+integers.
+The sum of \var{src-start} and \var{n} must not exceed the length of \var{src},
+and the sum of \var{dst-start} and \var{n} must not exceed the length of \var{dst}.
+
+\scheme{vector-copy!} overwrites the \var{n} elements of \var{dst}
+starting at \var{dst-start} with the \var{n} elements of \var{src}
+starting at \var{src-start}.
+This works even if \var{dst} is the same vector as \var{src} and the
+source and destination locations overlap.
+That is, the destination is filled with the elements that appeared at the
+source before the operation began.
+
+\schemedisplay
+(let ([src (vector 1 2 3)] [dest (vector 0 0 0)])
+  (vector-copy! src 1 dest 0 2)
+  dest) ;=> #(2 3 0)
+
+(let ([v (vector 1 2 3)])
+  (vector-copy! v 1 v 0 2)
+  v) ;=> #(2 3 3)
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
 \formdef{vector-append}{\categoryprocedure}{(vector-append \var{vector} \dots)}
 \returns a new vector
 \listlibraries
