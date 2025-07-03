@@ -1,5 +1,5 @@
-*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	Wed Mar 26 16:42:58 2025
---- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Wed Mar 26 16:47:08 2025
+*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	2025-07-03 12:18:51.007389699 +0800
+--- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	2025-07-03 12:24:36.608569681 +0800
 ***************
 *** 180,186 ****
   3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
@@ -4137,7 +4137,34 @@
   5_6.mo:Expected error in mat immutable-vector-set/copy: "immutable-vector-set/copy: -1 is not a valid index for #(a b c)".
   5_6.mo:Expected error in mat immutable-vector-set/copy: "immutable-vector-set/copy: 3 is not a valid index for #(a b c)".
 ***************
-*** 4346,4357 ****
+*** 4316,4327 ****
+  5_6.mo:Expected error in mat list->vector: "list->vector: (#\a #\b . #\c) is not a proper list".
+  5_6.mo:Expected error in mat list->vector: "list->vector: (#\a #\b #\c #\b #\c #\b ...) is circular".
+  5_6.mo:Expected error in mat vector->list: "vector->list: (a b c) is not a vector".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy!)".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy! $v2)".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy! $v2 3)".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy! $v2 3 $v1)".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy! $v2 3 $v1 1)".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy! $v2 3 $v1 1 2 ...)".
+  5_6.mo:Expected error in mat vector-copy!: "vector-copy!: 0 is not an vector".
+  5_6.mo:Expected error in mat vector-copy!: "vector-copy!: #vfx(1 2 3) is not an vector".
+  5_6.mo:Expected error in mat vector-copy!: "vector-copy!: invalid start value -1".
+--- 4316,4327 ----
+  5_6.mo:Expected error in mat list->vector: "list->vector: (#\a #\b . #\c) is not a proper list".
+  5_6.mo:Expected error in mat list->vector: "list->vector: (#\a #\b #\c #\b #\c #\b ...) is circular".
+  5_6.mo:Expected error in mat vector->list: "vector->list: (a b c) is not a vector".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect number of arguments 0 to #<procedure vector-copy!>".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect number of arguments 1 to #<procedure vector-copy!>".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect number of arguments 2 to #<procedure vector-copy!>".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect number of arguments 3 to #<procedure vector-copy!>".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect number of arguments 4 to #<procedure vector-copy!>".
+! 5_6.mo:Expected error in mat vector-copy!: "incorrect number of arguments 6 to #<procedure vector-copy!>".
+  5_6.mo:Expected error in mat vector-copy!: "vector-copy!: 0 is not an vector".
+  5_6.mo:Expected error in mat vector-copy!: "vector-copy!: #vfx(1 2 3) is not an vector".
+  5_6.mo:Expected error in mat vector-copy!: "vector-copy!: invalid start value -1".
+***************
+*** 4375,4386 ****
   5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: <-int> is not a fixnum".
   5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: a is not a fixnum".
   5_6.mo:Expected error in mat fxvector-copy: "fxvector-copy: (a b c) is not an fxvector".
@@ -4150,7 +4177,7 @@
   5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: 0 is not an fxvector".
   5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: #(1 2 3) is not an fxvector".
   5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: invalid start value -1".
---- 4346,4357 ----
+--- 4375,4386 ----
   5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: <-int> is not a fixnum".
   5_6.mo:Expected error in mat fxvector-set!: "fxvector-set!: a is not a fixnum".
   5_6.mo:Expected error in mat fxvector-copy: "fxvector-copy: (a b c) is not an fxvector".
@@ -4164,7 +4191,7 @@
   5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: #(1 2 3) is not an fxvector".
   5_6.mo:Expected error in mat fxvector-copy!: "fxvector-copy!: invalid start value -1".
 ***************
-*** 4410,4421 ****
+*** 4439,4450 ****
   5_6.mo:Expected error in mat flvector-set!: "flvector-set!: 1 is not a flonum".
   5_6.mo:Expected error in mat flvector-set!: "flvector-set!: a is not a flonum".
   5_6.mo:Expected error in mat flvector-copy: "flvector-copy: (a b c) is not an flvector".
@@ -4177,7 +4204,7 @@
   5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: 0 is not an flvector".
   5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: #(1 2 3) is not an flvector".
   5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: invalid start value -1".
---- 4410,4421 ----
+--- 4439,4450 ----
   5_6.mo:Expected error in mat flvector-set!: "flvector-set!: 1 is not a flonum".
   5_6.mo:Expected error in mat flvector-set!: "flvector-set!: a is not a flonum".
   5_6.mo:Expected error in mat flvector-copy: "flvector-copy: (a b c) is not an flvector".
@@ -4191,7 +4218,7 @@
   5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: #(1 2 3) is not an flvector".
   5_6.mo:Expected error in mat flvector-copy!: "flvector-copy!: invalid start value -1".
 ***************
-*** 4445,4453 ****
+*** 4474,4482 ****
   5_6.mo:Expected error in mat list->flvector: "list->flvector: (1.0 2.0 . 3.0) is not a proper list".
   5_6.mo:Expected error in mat list->flvector: "list->flvector: (1.0 2.0 3.0 2.0 3.0 2.0 ...) is circular".
   5_6.mo:Expected error in mat flvector->list: "flvector->list: (a b c) is not an flvector".
@@ -4201,7 +4228,7 @@
   5_6.mo:Expected error in mat vector-map: "vector-map: #() is not a procedure".
   5_6.mo:Expected error in mat vector-map: "vector-map: #() is not a procedure".
   5_6.mo:Expected error in mat vector-map: "vector-map: #() is not a procedure".
---- 4445,4453 ----
+--- 4474,4482 ----
   5_6.mo:Expected error in mat list->flvector: "list->flvector: (1.0 2.0 . 3.0) is not a proper list".
   5_6.mo:Expected error in mat list->flvector: "list->flvector: (1.0 2.0 3.0 2.0 3.0 2.0 ...) is circular".
   5_6.mo:Expected error in mat flvector->list: "flvector->list: (a b c) is not an flvector".
@@ -4212,7 +4239,7 @@
   5_6.mo:Expected error in mat vector-map: "vector-map: #() is not a procedure".
   5_6.mo:Expected error in mat vector-map: "vector-map: #() is not a procedure".
 ***************
-*** 4462,4470 ****
+*** 4491,4499 ****
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #() and #(x) differ".
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #(y) and #() differ".
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #(y) and #() differ".
@@ -4222,7 +4249,7 @@
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: #() is not a procedure".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: #() is not a procedure".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: #() is not a procedure".
---- 4462,4470 ----
+--- 4491,4499 ----
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #() and #(x) differ".
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #(y) and #() differ".
   5_6.mo:Expected error in mat vector-map: "vector-map: lengths of input vectors #(y) and #() differ".
@@ -4233,7 +4260,7 @@
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: #() is not a procedure".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: #() is not a procedure".
 ***************
-*** 4479,4496 ****
+*** 4508,4525 ****
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #() and #(x) differ".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #(y) and #() differ".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #(y) and #() differ".
@@ -4252,7 +4279,7 @@
   5_6.mo:Expected error in mat vector-sort!: "vector-sort!: 3 is not a mutable vector".
   5_6.mo:Expected error in mat vector-sort!: "vector-sort!: (1 2 3) is not a mutable vector".
   5_6.mo:Expected error in mat vector-sort!: "vector-sort!: #(a b c) is not a procedure".
---- 4479,4496 ----
+--- 4508,4525 ----
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #() and #(x) differ".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #(y) and #() differ".
   5_6.mo:Expected error in mat vector-for-each: "vector-for-each: lengths of input vectors #(y) and #() differ".
@@ -4272,7 +4299,7 @@
   5_6.mo:Expected error in mat vector-sort!: "vector-sort!: (1 2 3) is not a mutable vector".
   5_6.mo:Expected error in mat vector-sort!: "vector-sort!: #(a b c) is not a procedure".
 ***************
-*** 4499,4507 ****
+*** 4528,4536 ****
   5_6.mo:Expected error in mat vector->immutable-vector: "vector-set-fixnum!: #(1 2 3) is not a mutable vector".
   5_6.mo:Expected error in mat vector->immutable-vector: "vector-fill!: #(1 2 3) is not a mutable vector".
   5_6.mo:Expected error in mat vector->immutable-vector: "vector-sort!: #(1 2 3) is not a mutable vector".
@@ -4282,7 +4309,7 @@
   5_6.mo:Expected error in mat vector-cas!: "vector-cas!: 1 is not a mutable vector".
   5_6.mo:Expected error in mat vector-cas!: "vector-cas!: #(4 5 3) is not a mutable vector".
   5_6.mo:Expected error in mat vector-cas!: "vector-cas!: #(4 5 3) is not a valid index for #(4 5 3)".
---- 4499,4507 ----
+--- 4528,4536 ----
   5_6.mo:Expected error in mat vector->immutable-vector: "vector-set-fixnum!: #(1 2 3) is not a mutable vector".
   5_6.mo:Expected error in mat vector->immutable-vector: "vector-fill!: #(1 2 3) is not a mutable vector".
   5_6.mo:Expected error in mat vector->immutable-vector: "vector-sort!: #(1 2 3) is not a mutable vector".
@@ -4293,7 +4320,7 @@
   5_6.mo:Expected error in mat vector-cas!: "vector-cas!: #(4 5 3) is not a mutable vector".
   5_6.mo:Expected error in mat vector-cas!: "vector-cas!: #(4 5 3) is not a valid index for #(4 5 3)".
 ***************
-*** 4581,4588 ****
+*** 4610,4617 ****
   5_7.mo:Expected error in mat putprop-getprop: "getprop: 3 is not a symbol".
   5_7.mo:Expected error in mat putprop-getprop: "putprop: "hi" is not a symbol".
   5_7.mo:Expected error in mat putprop-getprop: "property-list: (a b c) is not a symbol".
@@ -4302,7 +4329,7 @@
   5_8.mo:Expected error in mat box-cas!: "box-cas!: 1 is not a mutable box".
   5_8.mo:Expected error in mat box-cas!: "box-cas!: #&1 is not a mutable box".
   6.mo:Expected error in mat port-operations: "open-input-file: failed for nonexistent file: no such file or directory".
---- 4581,4588 ----
+--- 4610,4617 ----
   5_7.mo:Expected error in mat putprop-getprop: "getprop: 3 is not a symbol".
   5_7.mo:Expected error in mat putprop-getprop: "putprop: "hi" is not a symbol".
   5_7.mo:Expected error in mat putprop-getprop: "property-list: (a b c) is not a symbol".
@@ -4312,7 +4339,7 @@
   5_8.mo:Expected error in mat box-cas!: "box-cas!: #&1 is not a mutable box".
   6.mo:Expected error in mat port-operations: "open-input-file: failed for nonexistent file: no such file or directory".
 ***************
-*** 4620,4641 ****
+*** 4649,4670 ****
   6.mo:Expected error in mat port-operations: "clear-output-port: not permitted on closed port #<output port testfile.ss>".
   6.mo:Expected error in mat port-operations: "current-output-port: a is not a textual output port".
   6.mo:Expected error in mat port-operations: "current-input-port: a is not a textual input port".
@@ -4335,7 +4362,7 @@
   6.mo:Expected error in mat port-operations1: "open-input-output-file: furball is not a string".
   6.mo:Expected error in mat port-operations1: "open-input-output-file: failed for /probably/not/a/good/path: no such file or directory".
   6.mo:Expected error in mat port-operations1: "open-input-output-file: invalid option compressed".
---- 4620,4641 ----
+--- 4649,4670 ----
   6.mo:Expected error in mat port-operations: "clear-output-port: not permitted on closed port #<output port testfile.ss>".
   6.mo:Expected error in mat port-operations: "current-output-port: a is not a textual output port".
   6.mo:Expected error in mat port-operations: "current-input-port: a is not a textual input port".
@@ -4359,7 +4386,7 @@
   6.mo:Expected error in mat port-operations1: "open-input-output-file: failed for /probably/not/a/good/path: no such file or directory".
   6.mo:Expected error in mat port-operations1: "open-input-output-file: invalid option compressed".
 ***************
-*** 4644,4650 ****
+*** 4673,4679 ****
   6.mo:Expected error in mat port-operations1: "truncate-file: all-the-way is not a valid length".
   6.mo:Expected error in mat port-operations1: "truncate-file: #<input port testfile.ss> is not an output port".
   6.mo:Expected error in mat port-operations1: "truncate-file: animal-crackers is not an output port".
@@ -4367,7 +4394,7 @@
   6.mo:Expected error in mat port-operations1: "truncate-file: not permitted on closed port #<input/output port testfile.ss>".
   6.mo:Expected error in mat port-operations1: "get-output-string: #<input port string> is not a string output port".
   6.mo:Expected error in mat port-operations1: "get-output-string: #<output port testfile.ss> is not a string output port".
---- 4644,4650 ----
+--- 4673,4679 ----
   6.mo:Expected error in mat port-operations1: "truncate-file: all-the-way is not a valid length".
   6.mo:Expected error in mat port-operations1: "truncate-file: #<input port testfile.ss> is not an output port".
   6.mo:Expected error in mat port-operations1: "truncate-file: animal-crackers is not an output port".
@@ -4376,7 +4403,7 @@
   6.mo:Expected error in mat port-operations1: "get-output-string: #<input port string> is not a string output port".
   6.mo:Expected error in mat port-operations1: "get-output-string: #<output port testfile.ss> is not a string output port".
 ***************
-*** 4661,4668 ****
+*** 4690,4697 ****
   6.mo:Expected error in mat string-port-file-position: "file-position: -1 is not a valid position".
   6.mo:Expected error in mat fresh-line: "fresh-line: 3 is not a textual output port".
   6.mo:Expected error in mat fresh-line: "fresh-line: #<input port string> is not a textual output port".
@@ -4385,7 +4412,7 @@
   6.mo:Expected error in mat pretty-print: "pretty-format: 3 is not a symbol".
   6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
   6.mo:Expected error in mat fasl: "separate-eval: Warning in fasl-write: fasl file content is compressed internally; compressing the file (#<binary output port testfile.ss>) is redundant and can slow fasl writing and reading significantly
---- 4661,4668 ----
+--- 4690,4697 ----
   6.mo:Expected error in mat string-port-file-position: "file-position: -1 is not a valid position".
   6.mo:Expected error in mat fresh-line: "fresh-line: 3 is not a textual output port".
   6.mo:Expected error in mat fresh-line: "fresh-line: #<input port string> is not a textual output port".
@@ -4395,7 +4422,7 @@
   6.mo:Expected error in mat pretty-print: "pretty-format: invalid format (bad 0 ... ... 0 format)".
   6.mo:Expected error in mat fasl: "separate-eval: Warning in fasl-write: fasl file content is compressed internally; compressing the file (#<binary output port testfile.ss>) is redundant and can slow fasl writing and reading significantly
 ***************
-*** 7292,7323 ****
+*** 7323,7354 ****
   io.mo:Expected error in mat port-operations: "put-u8: not permitted on closed port #<binary output port testfile.ss>".
   io.mo:Expected error in mat port-operations: "put-bytevector: not permitted on closed port #<binary output port testfile.ss>".
   io.mo:Expected error in mat port-operations: "flush-output-port: not permitted on closed port #<binary output port testfile.ss>".
@@ -4428,7 +4455,7 @@
   io.mo:Expected error in mat port-operations1: "open-file-input/output-port: failed for /probably/not/a/good/path: no such file or directory".
   io.mo:Expected error in mat port-operations1: "invalid file option uncompressed".
   io.mo:Expected error in mat port-operations1: "invalid file option truncate".
---- 7292,7323 ----
+--- 7323,7354 ----
   io.mo:Expected error in mat port-operations: "put-u8: not permitted on closed port #<binary output port testfile.ss>".
   io.mo:Expected error in mat port-operations: "put-bytevector: not permitted on closed port #<binary output port testfile.ss>".
   io.mo:Expected error in mat port-operations: "flush-output-port: not permitted on closed port #<binary output port testfile.ss>".
@@ -4462,7 +4489,7 @@
   io.mo:Expected error in mat port-operations1: "invalid file option uncompressed".
   io.mo:Expected error in mat port-operations1: "invalid file option truncate".
 ***************
-*** 7328,7334 ****
+*** 7359,7365 ****
   io.mo:Expected error in mat port-operations1: "set-port-length!: all-the-way is not a valid length".
   io.mo:Expected error in mat port-operations1: "truncate-port: #<binary input port testfile.ss> is not an output port".
   io.mo:Expected error in mat port-operations1: "truncate-port: animal-crackers is not an output port".
@@ -4470,7 +4497,7 @@
   io.mo:Expected error in mat port-operations1: "truncate-port: not permitted on closed port #<binary input/output port testfile.ss>".
   io.mo:Expected error in mat port-operations3: "file-port?: "not a port" is not a port".
   io.mo:Expected error in mat port-operations3: "port-file-descriptor: oops is not a port".
---- 7328,7334 ----
+--- 7359,7365 ----
   io.mo:Expected error in mat port-operations1: "set-port-length!: all-the-way is not a valid length".
   io.mo:Expected error in mat port-operations1: "truncate-port: #<binary input port testfile.ss> is not an output port".
   io.mo:Expected error in mat port-operations1: "truncate-port: animal-crackers is not an output port".
@@ -4479,7 +4506,7 @@
   io.mo:Expected error in mat port-operations3: "file-port?: "not a port" is not a port".
   io.mo:Expected error in mat port-operations3: "port-file-descriptor: oops is not a port".
 ***************
-*** 7526,7550 ****
+*** 7557,7581 ****
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: #vu8(1 2 3) is not a valid size for #<binary output port bytevector>".
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: -1 is not a valid size for #<binary output port bytevector>".
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: 6 is not a valid size for #<binary output port bytevector>".
@@ -4505,7 +4532,7 @@
   io.mo:Expected error in mat make-codec-buffer: "make-codec-buffer: shoe is not a procedure".
   io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure bad1> did not return a mutable bytevector of length at least four".
   io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure bad2> did not return a mutable bytevector of length at least four".
---- 7526,7550 ----
+--- 7557,7581 ----
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: #vu8(1 2 3) is not a valid size for #<binary output port bytevector>".
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: -1 is not a valid size for #<binary output port bytevector>".
   io.mo:Expected error in mat low-level-port-operations: "set-binary-port-output-size!: 6 is not a valid size for #<binary output port bytevector>".
@@ -4532,7 +4559,7 @@
   io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure bad1> did not return a mutable bytevector of length at least four".
   io.mo:Expected error in mat make-codec-buffer: "transcoded-port: make-codec-buffer #<procedure bad2> did not return a mutable bytevector of length at least four".
 ***************
-*** 7569,7584 ****
+*** 7600,7615 ****
   io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
   io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".
   io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
@@ -4549,7 +4576,7 @@
   io.mo:Expected error in mat custom-binary-ports: "unget-u8: cannot unget 255 on #<binary input port foo>".
   io.mo:Expected error in mat custom-binary-ports: "put-u8: #<binary input port foo> is not a binary output port".
   io.mo:Expected error in mat custom-binary-ports: "port-length: #<binary input port foo> does not support operation".
---- 7569,7584 ----
+--- 7600,7615 ----
   io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
   io.mo:Expected error in mat compression: "port-file-compressed!: #<output port string> is not a file port".
   io.mo:Expected error in mat compression: "port-file-compressed!: cannot compress input/output port #<binary input/output port testfile.ss>".
@@ -4567,7 +4594,7 @@
   io.mo:Expected error in mat custom-binary-ports: "put-u8: #<binary input port foo> is not a binary output port".
   io.mo:Expected error in mat custom-binary-ports: "port-length: #<binary input port foo> does not support operation".
 ***************
-*** 7650,7671 ****
+*** 7681,7702 ****
   io.mo:Expected error in mat current-ports: "console-output-port: #<input port string> is not a textual output port".
   io.mo:Expected error in mat current-ports: "console-error-port: #<input port string> is not a textual output port".
   io.mo:Expected error in mat current-transcoder: "current-transcoder: #<output port string> is not a transcoder".
@@ -4590,7 +4617,7 @@
   io.mo:Expected error in mat utf-16-codec: "utf-16-codec: invalid endianness #f".
   io.mo:Expected error in mat to-fold-or-not-to-fold: "get-datum: invalid character name #\newLine at char 0 of #<input port string>".
   io.mo:Expected error in mat to-fold-or-not-to-fold: "get-datum: invalid character name #\newLine at char 15 of #<input port string>".
---- 7650,7671 ----
+--- 7681,7702 ----
   io.mo:Expected error in mat current-ports: "console-output-port: #<input port string> is not a textual output port".
   io.mo:Expected error in mat current-ports: "console-error-port: #<input port string> is not a textual output port".
   io.mo:Expected error in mat current-transcoder: "current-transcoder: #<output port string> is not a transcoder".
@@ -4614,7 +4641,7 @@
   io.mo:Expected error in mat to-fold-or-not-to-fold: "get-datum: invalid character name #\newLine at char 0 of #<input port string>".
   io.mo:Expected error in mat to-fold-or-not-to-fold: "get-datum: invalid character name #\newLine at char 15 of #<input port string>".
 ***************
-*** 7841,7847 ****
+*** 7872,7878 ****
   7.mo:Expected error in mat eval-when: "invalid syntax visit-x".
   7.mo:Expected error in mat eval-when: "invalid syntax revisit-x".
   7.mo:Expected error in mat compile-whole-program: "compile-whole-program: failed for nosuchfile.wpo: no such file or directory".
@@ -4622,7 +4649,7 @@
   7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception in environment: attempt to import invisible library (testfile-wpo-lib)
   7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-a4) not found
   7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-c4) not found
---- 7841,7847 ----
+--- 7872,7878 ----
   7.mo:Expected error in mat eval-when: "invalid syntax visit-x".
   7.mo:Expected error in mat eval-when: "invalid syntax revisit-x".
   7.mo:Expected error in mat compile-whole-program: "compile-whole-program: failed for nosuchfile.wpo: no such file or directory".
@@ -4631,7 +4658,7 @@
   7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-a4) not found
   7.mo:Expected error in mat compile-whole-program: "separate-eval: Exception: library (testfile-wpo-c4) not found
 ***************
-*** 7907,7933 ****
+*** 7938,7964 ****
   7.mo:Expected error in mat concatenate-object-files: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-cof1A)
   7.mo:Expected error in mat concatenate-object-files: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-cof1B)
   7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: "hello" is not a symbol".
@@ -4659,7 +4686,7 @@
   7.mo:Expected error in mat top-level-value-functions: "define-top-level-value: hello is not an environment".
   7.mo:Expected error in mat top-level-value-functions: "define-top-level-value: #<environment *scheme*> is not a symbol".
   7.mo:Expected error in mat top-level-value-functions: "variable i-am-not-bound-i-hope is not bound".
---- 7907,7933 ----
+--- 7938,7964 ----
   7.mo:Expected error in mat concatenate-object-files: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-cof1A)
   7.mo:Expected error in mat concatenate-object-files: "separate-eval: Exception in verify-loadability: cannot find object file for library (testfile-cof1B)
   7.mo:Expected error in mat top-level-value-functions: "top-level-bound?: "hello" is not a symbol".
@@ -4688,26 +4715,24 @@
   7.mo:Expected error in mat top-level-value-functions: "define-top-level-value: #<environment *scheme*> is not a symbol".
   7.mo:Expected error in mat top-level-value-functions: "variable i-am-not-bound-i-hope is not bound".
 ***************
-*** 8268,8275 ****
+*** 8299,8305 ****
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure>".
-- record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure constructor>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar> as foo".
-  record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
---- 8268,8275 ----
+--- 8299,8305 ----
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 1 to #<procedure>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 3 to #<procedure>".
+! record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
-+ record.mo:Expected error in mat r6rs-records-procedural: "incorrect number of arguments 4 to #<procedure constructor>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: record constructor descriptor #<record constructor descriptor> is not for parent of record type #<record type grand-child>".
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-type-descriptor: cannot extend sealed record type #<record type bar> as foo".
-  record.mo:Expected error in mat r6rs-records-syntactic: "invalid syntax point".
 ***************
-*** 8359,8478 ****
+*** 8390,8509 ****
   hash.mo:Expected error in mat old-hash-table: "hash-table-for-each: ((a . b)) is not an eq hashtable".
   hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments 2 to #<procedure>".
   hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments 2 to #<procedure>".
@@ -4828,7 +4853,7 @@
   hash.mo:Expected error in mat hashtable-arguments: "hashtable-ephemeron?: (hash . table) is not a hashtable".
   hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value "oops" for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value 3.5 for any".
---- 8359,8478 ----
+--- 8390,8509 ----
   hash.mo:Expected error in mat old-hash-table: "hash-table-for-each: ((a . b)) is not an eq hashtable".
   hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments 2 to #<procedure>".
   hash.mo:Expected error in mat old-hash-table: "incorrect number of arguments 2 to #<procedure>".
@@ -4950,7 +4975,7 @@
   hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value "oops" for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-ref: invalid hash-function #<procedure> return value 3.5 for any".
 ***************
-*** 8495,8623 ****
+*** 8526,8654 ****
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value "oops" for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value 3.5 for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value 1+2i for any".
@@ -5080,7 +5105,7 @@
   hash.mo:Expected error in mat eqv-hashtable-arguments: "make-ephemeron-eqv-hashtable: invalid size argument -1".
   hash.mo:Expected error in mat eqv-hashtable-arguments: "make-ephemeron-eqv-hashtable: invalid size argument #t".
   hash.mo:Expected error in mat eqv-hashtable-arguments: "make-ephemeron-eqv-hashtable: invalid size argument #f".
---- 8495,8623 ----
+--- 8526,8654 ----
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value "oops" for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value 3.5 for any".
   hash.mo:Expected error in mat hash-return-value: "hashtable-delete!: invalid hash-function #<procedure> return value 1+2i for any".
@@ -5211,7 +5236,7 @@
   hash.mo:Expected error in mat eqv-hashtable-arguments: "make-ephemeron-eqv-hashtable: invalid size argument #t".
   hash.mo:Expected error in mat eqv-hashtable-arguments: "make-ephemeron-eqv-hashtable: invalid size argument #f".
 ***************
-*** 8625,8656 ****
+*** 8656,8687 ****
   hash.mo:Expected error in mat generic-hashtable: "hashtable-delete!: #<hashtable> is not mutable".
   hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".
   hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".
@@ -5244,7 +5269,7 @@
   hash.mo:Expected error in mat hash-functions: "string-ci-hash: hello is not a string".
   hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<eqv hashtable>".
   hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<hashtable>".
---- 8625,8656 ----
+--- 8656,8687 ----
   hash.mo:Expected error in mat generic-hashtable: "hashtable-delete!: #<hashtable> is not mutable".
   hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".
   hash.mo:Expected error in mat generic-hashtable: "hashtable-update!: #<hashtable> is not mutable".
@@ -5278,7 +5303,7 @@
   hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<eqv hashtable>".
   hash.mo:Expected error in mat fasl-other-hashtable: "fasl-write: invalid fasl object #<hashtable>".
 ***************
-*** 8768,8775 ****
+*** 8799,8806 ****
   8.mo:Expected error in mat with-syntax: "invalid syntax a".
   8.mo:Expected error in mat with-syntax: "duplicate pattern variable x in (x x)".
   8.mo:Expected error in mat with-syntax: "duplicate pattern variable x in (x x)".
@@ -5287,7 +5312,7 @@
   8.mo:Expected error in mat generate-temporaries: "generate-temporaries: improper list structure (a b . c)".
   8.mo:Expected error in mat generate-temporaries: "generate-temporaries: cyclic list structure (a b c b c b ...)".
   8.mo:Expected error in mat syntax->list: "syntax->list: invalid argument #<syntax a>".
---- 8768,8775 ----
+--- 8799,8806 ----
   8.mo:Expected error in mat with-syntax: "invalid syntax a".
   8.mo:Expected error in mat with-syntax: "duplicate pattern variable x in (x x)".
   8.mo:Expected error in mat with-syntax: "duplicate pattern variable x in (x x)".
@@ -5297,7 +5322,7 @@
   8.mo:Expected error in mat generate-temporaries: "generate-temporaries: cyclic list structure (a b c b c b ...)".
   8.mo:Expected error in mat syntax->list: "syntax->list: invalid argument #<syntax a>".
 ***************
-*** 9386,9401 ****
+*** 9417,9432 ****
   8.mo:Expected error in mat rnrs-eval: "attempt to assign unbound identifier foo".
   8.mo:Expected error in mat rnrs-eval: "invalid definition in immutable environment (define cons (quote #<procedure vector>))".
   8.mo:Expected error in mat top-level-syntax-functions: "top-level-syntax: "hello" is not a symbol".
@@ -5314,7 +5339,7 @@
   8.mo:Expected error in mat top-level-syntax-functions: "define-top-level-syntax: hello is not an environment".
   8.mo:Expected error in mat top-level-syntax-functions: "define-top-level-syntax: #<environment *scheme*> is not a symbol".
   8.mo:Expected error in mat top-level-syntax-functions: "define-top-level-syntax: cannot modify immutable environment #<environment *scheme*>".
---- 9386,9401 ----
+--- 9417,9432 ----
   8.mo:Expected error in mat rnrs-eval: "attempt to assign unbound identifier foo".
   8.mo:Expected error in mat rnrs-eval: "invalid definition in immutable environment (define cons (quote #<procedure vector>))".
   8.mo:Expected error in mat top-level-syntax-functions: "top-level-syntax: "hello" is not a symbol".
@@ -5332,7 +5357,7 @@
   8.mo:Expected error in mat top-level-syntax-functions: "define-top-level-syntax: #<environment *scheme*> is not a symbol".
   8.mo:Expected error in mat top-level-syntax-functions: "define-top-level-syntax: cannot modify immutable environment #<environment *scheme*>".
 ***************
-*** 9494,9516 ****
+*** 9525,9547 ****
   fx.mo:Expected error in mat fx=?: "fx=?: (a) is not a fixnum".
   fx.mo:Expected error in mat fx=?: "fx=?: <int> is not a fixnum".
   fx.mo:Expected error in mat fx=?: "fx=?: <-int> is not a fixnum".
@@ -5356,7 +5381,7 @@
   fx.mo:Expected error in mat $fxu<: "incorrect number of arguments 1 to #<procedure $fxu<>".
   fx.mo:Expected error in mat $fxu<: "incorrect number of arguments 3 to #<procedure $fxu<>".
   fx.mo:Expected error in mat $fxu<: "$fxu<: <-int> is not a fixnum".
---- 9494,9516 ----
+--- 9525,9547 ----
   fx.mo:Expected error in mat fx=?: "fx=?: (a) is not a fixnum".
   fx.mo:Expected error in mat fx=?: "fx=?: <int> is not a fixnum".
   fx.mo:Expected error in mat fx=?: "fx=?: <-int> is not a fixnum".
@@ -5381,7 +5406,7 @@
   fx.mo:Expected error in mat $fxu<: "incorrect number of arguments 3 to #<procedure $fxu<>".
   fx.mo:Expected error in mat $fxu<: "$fxu<: <-int> is not a fixnum".
 ***************
-*** 9552,9564 ****
+*** 9583,9595 ****
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -5395,7 +5420,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
---- 9552,9564 ----
+--- 9583,9595 ----
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -5410,7 +5435,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
 ***************
-*** 9613,9625 ****
+*** 9644,9656 ****
   fx.mo:Expected error in mat fx1+: "fx1+: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx1+: "fx1+: <int> is not a fixnum".
   fx.mo:Expected error in mat fx1+: "fx1+: a is not a fixnum".
@@ -5424,7 +5449,7 @@
   fx.mo:Expected error in mat fxmax: "fxmax: a is not a fixnum".
   fx.mo:Expected error in mat fxmax: "fxmax: <int> is not a fixnum".
   fx.mo:Expected error in mat fxmax: "fxmax: <-int> is not a fixnum".
---- 9613,9625 ----
+--- 9644,9656 ----
   fx.mo:Expected error in mat fx1+: "fx1+: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx1+: "fx1+: <int> is not a fixnum".
   fx.mo:Expected error in mat fx1+: "fx1+: a is not a fixnum".
@@ -5439,7 +5464,7 @@
   fx.mo:Expected error in mat fxmax: "fxmax: <int> is not a fixnum".
   fx.mo:Expected error in mat fxmax: "fxmax: <-int> is not a fixnum".
 ***************
-*** 9725,9734 ****
+*** 9756,9765 ****
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <int> and 10".
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments -4097 and <int>".
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <-int> and 1".
@@ -5450,7 +5475,7 @@
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: 35.0 is not a fixnum".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: 5.0 is not a valid start index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: 8.0 is not a valid end index".
---- 9725,9734 ----
+--- 9756,9765 ----
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <int> and 10".
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments -4097 and <int>".
   fx.mo:Expected error in mat fxarithmetic-shift: "fxarithmetic-shift: fixnum overflow with arguments <-int> and 1".
@@ -5462,7 +5487,7 @@
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: 5.0 is not a valid start index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: 8.0 is not a valid end index".
 ***************
-*** 9742,9775 ****
+*** 9773,9806 ****
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid end index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid start index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid end index".
@@ -5497,7 +5522,7 @@
   fx.mo:Expected error in mat fxif: "fxif: a is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: 3.4 is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: (a) is not a fixnum".
---- 9742,9775 ----
+--- 9773,9806 ----
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid end index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid start index".
   fx.mo:Expected error in mat fxbit-field: "fxbit-field: <int> is not a valid end index".
@@ -5533,7 +5558,7 @@
   fx.mo:Expected error in mat fxif: "fxif: 3.4 is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: (a) is not a fixnum".
 ***************
-*** 9779,9822 ****
+*** 9810,9853 ****
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
@@ -5578,7 +5603,7 @@
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: 3.4 is not a fixnum".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: "3" is not a fixnum".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: <int> is not a fixnum".
---- 9779,9822 ----
+--- 9810,9853 ----
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
   fx.mo:Expected error in mat fxif: "fxif: <-int> is not a fixnum".
@@ -5624,7 +5649,7 @@
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: "3" is not a fixnum".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: <int> is not a fixnum".
 ***************
-*** 9825,9835 ****
+*** 9856,9866 ****
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index -1".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index <int>".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index <int>".
@@ -5636,7 +5661,7 @@
   fx.mo:Expected error in mat fxcopy-bit-field: "fxcopy-bit-field: "3" is not a fixnum".
   fx.mo:Expected error in mat fxcopy-bit-field: "fxcopy-bit-field: 3.4 is not a valid start index".
   fx.mo:Expected error in mat fxcopy-bit-field: "fxcopy-bit-field: 3/4 is not a valid end index".
---- 9825,9835 ----
+--- 9856,9866 ----
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index -1".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index <int>".
   fx.mo:Expected error in mat fxcopy-bit: "fxcopy-bit: invalid bit index <int>".
@@ -5649,7 +5674,7 @@
   fx.mo:Expected error in mat fxcopy-bit-field: "fxcopy-bit-field: 3.4 is not a valid start index".
   fx.mo:Expected error in mat fxcopy-bit-field: "fxcopy-bit-field: 3/4 is not a valid end index".
 ***************
-*** 9889,9898 ****
+*** 9920,9929 ****
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: (a) is not a fixnum".
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: undefined for 0".
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: undefined for 0".
@@ -5660,7 +5685,7 @@
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: 1.0 is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: 3.0 is not a fixnum".
---- 9889,9898 ----
+--- 9920,9929 ----
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: (a) is not a fixnum".
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: undefined for 0".
   fx.mo:Expected error in mat fxdiv0-and-mod0: "fxmod0: undefined for 0".
@@ -5672,7 +5697,7 @@
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: 3.0 is not a fixnum".
 ***************
-*** 9908,9917 ****
+*** 9939,9948 ****
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
@@ -5683,7 +5708,7 @@
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: 1.0 is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: 3.0 is not a fixnum".
---- 9908,9917 ----
+--- 9939,9948 ----
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx+/carry: "fx+/carry: <-int> is not a fixnum".
@@ -5695,7 +5720,7 @@
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: 3.0 is not a fixnum".
 ***************
-*** 9927,9936 ****
+*** 9958,9967 ****
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
@@ -5706,7 +5731,7 @@
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: 1.0 is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: 3.0 is not a fixnum".
---- 9927,9936 ----
+--- 9958,9967 ----
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/carry: "fx-/carry: <-int> is not a fixnum".
@@ -5718,7 +5743,7 @@
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: 2.0 is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: 3.0 is not a fixnum".
 ***************
-*** 9946,9956 ****
+*** 9977,9987 ****
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
@@ -5730,7 +5755,7 @@
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: a is not a fixnum".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid start index 0.0".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index 2.0".
---- 9946,9956 ----
+--- 9977,9987 ----
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*/carry: "fx*/carry: <-int> is not a fixnum".
@@ -5743,7 +5768,7 @@
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid start index 0.0".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index 2.0".
 ***************
-*** 9973,9982 ****
+*** 10004,10013 ****
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: count 1 is greater than difference between end index 5 and start index 5".
@@ -5754,7 +5779,7 @@
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: a is not a fixnum".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid start index 0.0".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index 2.0".
---- 9973,9982 ----
+--- 10004,10013 ----
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxrotate-bit-field: "fxrotate-bit-field: count 1 is greater than difference between end index 5 and start index 5".
@@ -5766,7 +5791,7 @@
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid start index 0.0".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index 2.0".
 ***************
-*** 9992,10009 ****
+*** 10023,10040 ****
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index <-int>".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: start index 7 is greater than end index 5".
@@ -5785,7 +5810,7 @@
   fl.mo:Expected error in mat fl=: "fl=: (a) is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: a is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: a is not a flonum".
---- 9992,10009 ----
+--- 10023,10040 ----
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index <int>".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: invalid end index <-int>".
   fx.mo:Expected error in mat fxreverse-bit-field: "fxreverse-bit-field: start index 7 is greater than end index 5".
@@ -5805,7 +5830,7 @@
   fl.mo:Expected error in mat fl=: "fl=: a is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: a is not a flonum".
 ***************
-*** 10011,10017 ****
+*** 10042,10048 ****
   fl.mo:Expected error in mat fl=: "fl=: 3 is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: 7/2 is not a flonum".
@@ -5813,7 +5838,7 @@
   fl.mo:Expected error in mat fl<: "fl<: (a) is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: a is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: a is not a flonum".
---- 10011,10017 ----
+--- 10042,10048 ----
   fl.mo:Expected error in mat fl=: "fl=: 3 is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl=: "fl=: 7/2 is not a flonum".
@@ -5822,7 +5847,7 @@
   fl.mo:Expected error in mat fl<: "fl<: a is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: a is not a flonum".
 ***************
-*** 10019,10025 ****
+*** 10050,10056 ****
   fl.mo:Expected error in mat fl<: "fl<: 3 is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: 7/2 is not a flonum".
@@ -5830,7 +5855,7 @@
   fl.mo:Expected error in mat fl>: "fl>: (a) is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: a is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: a is not a flonum".
---- 10019,10025 ----
+--- 10050,10056 ----
   fl.mo:Expected error in mat fl<: "fl<: 3 is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl<: "fl<: 7/2 is not a flonum".
@@ -5839,7 +5864,7 @@
   fl.mo:Expected error in mat fl>: "fl>: a is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: a is not a flonum".
 ***************
-*** 10027,10033 ****
+*** 10058,10064 ****
   fl.mo:Expected error in mat fl>: "fl>: 3 is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: 7/2 is not a flonum".
@@ -5847,7 +5872,7 @@
   fl.mo:Expected error in mat fl<=: "fl<=: (a) is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: a is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: a is not a flonum".
---- 10027,10033 ----
+--- 10058,10064 ----
   fl.mo:Expected error in mat fl>: "fl>: 3 is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl>: "fl>: 7/2 is not a flonum".
@@ -5856,7 +5881,7 @@
   fl.mo:Expected error in mat fl<=: "fl<=: a is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: a is not a flonum".
 ***************
-*** 10035,10041 ****
+*** 10066,10072 ****
   fl.mo:Expected error in mat fl<=: "fl<=: 3 is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: 7/2 is not a flonum".
@@ -5864,7 +5889,7 @@
   fl.mo:Expected error in mat fl>=: "fl>=: (a) is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: a is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: a is not a flonum".
---- 10035,10041 ----
+--- 10066,10072 ----
   fl.mo:Expected error in mat fl<=: "fl<=: 3 is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl<=: "fl<=: 7/2 is not a flonum".
@@ -5873,7 +5898,7 @@
   fl.mo:Expected error in mat fl>=: "fl>=: a is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: a is not a flonum".
 ***************
-*** 10043,10082 ****
+*** 10074,10113 ****
   fl.mo:Expected error in mat fl>=: "fl>=: 3 is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
@@ -5914,7 +5939,7 @@
   fl.mo:Expected error in mat fl>=?: "fl>=?: a is not a flonum".
   fl.mo:Expected error in mat fl>=?: "fl>=?: a is not a flonum".
   fl.mo:Expected error in mat fl>=?: "fl>=?: 3 is not a flonum".
---- 10043,10082 ----
+--- 10074,10113 ----
   fl.mo:Expected error in mat fl>=: "fl>=: 3 is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
   fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
@@ -5956,7 +5981,7 @@
   fl.mo:Expected error in mat fl>=?: "fl>=?: a is not a flonum".
   fl.mo:Expected error in mat fl>=?: "fl>=?: 3 is not a flonum".
 ***************
-*** 10086,10092 ****
+*** 10117,10123 ****
   fl.mo:Expected error in mat fl+: "fl+: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl+: "fl+: 1 is not a flonum".
   fl.mo:Expected error in mat fl+: "fl+: 2/3 is not a flonum".
@@ -5964,7 +5989,7 @@
   fl.mo:Expected error in mat fl-: "fl-: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl-: "fl-: 1 is not a flonum".
   fl.mo:Expected error in mat fl-: "fl-: a is not a flonum".
---- 10086,10092 ----
+--- 10117,10123 ----
   fl.mo:Expected error in mat fl+: "fl+: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl+: "fl+: 1 is not a flonum".
   fl.mo:Expected error in mat fl+: "fl+: 2/3 is not a flonum".
@@ -5973,7 +5998,7 @@
   fl.mo:Expected error in mat fl-: "fl-: 1 is not a flonum".
   fl.mo:Expected error in mat fl-: "fl-: a is not a flonum".
 ***************
-*** 10096,10185 ****
+*** 10127,10216 ****
   fl.mo:Expected error in mat fl*: "fl*: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 1 is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 2/3 is not a flonum".
@@ -6064,7 +6089,7 @@
   fl.mo:Expected error in mat flsingle: "flsingle: a is not a flonum".
   fl.mo:Expected error in mat flsingle: "flsingle: 3 is not a flonum".
   fl.mo:Expected error in mat flsingle: "flsingle: 2.0+1.0i is not a flonum".
---- 10096,10185 ----
+--- 10127,10216 ----
   fl.mo:Expected error in mat fl*: "fl*: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 1 is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 2/3 is not a flonum".
@@ -6156,7 +6181,7 @@
   fl.mo:Expected error in mat flsingle: "flsingle: 3 is not a flonum".
   fl.mo:Expected error in mat flsingle: "flsingle: 2.0+1.0i is not a flonum".
 ***************
-*** 10198,10233 ****
+*** 10229,10264 ****
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3/4 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: hi is not a flonum".
@@ -6193,7 +6218,7 @@
   fl.mo:Expected error in mat fleven?: "fleven?: a is not a flonum".
   fl.mo:Expected error in mat fleven?: "fleven?: 3 is not a flonum".
   fl.mo:Expected error in mat fleven?: "fleven?: 3.2 is not an integer".
---- 10198,10233 ----
+--- 10229,10264 ----
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3/4 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: hi is not a flonum".
@@ -6231,7 +6256,7 @@
   fl.mo:Expected error in mat fleven?: "fleven?: 3 is not a flonum".
   fl.mo:Expected error in mat fleven?: "fleven?: 3.2 is not an integer".
 ***************
-*** 10235,10242 ****
+*** 10266,10273 ****
   fl.mo:Expected error in mat fleven?: "fleven?: 1+1i is not a flonum".
   fl.mo:Expected error in mat fleven?: "fleven?: +inf.0 is not an integer".
   fl.mo:Expected error in mat fleven?: "fleven?: +nan.0 is not an integer".
@@ -6240,7 +6265,7 @@
   fl.mo:Expected error in mat flodd?: "flodd?: a is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: 3 is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: 3.2 is not an integer".
---- 10235,10242 ----
+--- 10266,10273 ----
   fl.mo:Expected error in mat fleven?: "fleven?: 1+1i is not a flonum".
   fl.mo:Expected error in mat fleven?: "fleven?: +inf.0 is not an integer".
   fl.mo:Expected error in mat fleven?: "fleven?: +nan.0 is not an integer".
@@ -6250,7 +6275,7 @@
   fl.mo:Expected error in mat flodd?: "flodd?: 3 is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: 3.2 is not an integer".
 ***************
-*** 10244,10250 ****
+*** 10275,10281 ****
   fl.mo:Expected error in mat flodd?: "flodd?: 3+1i is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: +inf.0 is not an integer".
   fl.mo:Expected error in mat flodd?: "flodd?: +nan.0 is not an integer".
@@ -6258,7 +6283,7 @@
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
---- 10244,10250 ----
+--- 10275,10281 ----
   fl.mo:Expected error in mat flodd?: "flodd?: 3+1i is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: +inf.0 is not an integer".
   fl.mo:Expected error in mat flodd?: "flodd?: +nan.0 is not an integer".
@@ -6267,7 +6292,7 @@
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
 ***************
-*** 10252,10258 ****
+*** 10283,10289 ****
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0+1i is not a flonum".
@@ -6275,7 +6300,7 @@
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 3 is not a flonum".
---- 10252,10258 ----
+--- 10283,10289 ----
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0+1i is not a flonum".
@@ -6284,7 +6309,7 @@
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 3 is not a flonum".
 ***************
-*** 10260,10273 ****
+*** 10291,10304 ****
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0+1i is not a flonum".
@@ -6299,7 +6324,7 @@
   fl.mo:Expected error in mat fldenominator: "fldenominator: a is not a flonum".
   fl.mo:Expected error in mat fldenominator: "fldenominator: 3 is not a flonum".
   fl.mo:Expected error in mat fldenominator: "fldenominator: 0+1i is not a flonum".
---- 10260,10273 ----
+--- 10291,10304 ----
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0+1i is not a flonum".
@@ -6315,7 +6340,7 @@
   fl.mo:Expected error in mat fldenominator: "fldenominator: 3 is not a flonum".
   fl.mo:Expected error in mat fldenominator: "fldenominator: 0+1i is not a flonum".
 ***************
-*** 10296,10304 ****
+*** 10327,10335 ****
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: 17 is not a flonum".
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: a is not a flonum".
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: (a) is not a flonum".
@@ -6325,7 +6350,7 @@
   fl.mo:Expected error in mat flbit-field: "flbit-field: 0 is not a flonum".
   fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index -1".
   fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index 1".
---- 10296,10304 ----
+--- 10327,10335 ----
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: 17 is not a flonum".
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: a is not a flonum".
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: (a) is not a flonum".
@@ -6336,7 +6361,7 @@
   fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index -1".
   fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index 1".
 ***************
-*** 10324,10330 ****
+*** 10355,10361 ****
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
@@ -6344,7 +6369,7 @@
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
---- 10324,10330 ----
+--- 10355,10361 ----
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
@@ -6353,7 +6378,7 @@
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
 ***************
-*** 10334,10347 ****
+*** 10365,10378 ****
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
@@ -6368,7 +6393,7 @@
   foreign.mo:Expected error in mat load-shared-object: "load-shared-object: invalid path 3".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
---- 10334,10347 ----
+--- 10365,10378 ----
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
@@ -6384,7 +6409,7 @@
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 ***************
-*** 10376,10383 ****
+*** 10407,10414 ****
   foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle abcde".
   foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
@@ -6393,7 +6418,7 @@
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
   foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
---- 10376,10383 ----
+--- 10407,10414 ----
   foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument foo".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle abcde".
   foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
@@ -6403,7 +6428,7 @@
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
   foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
 ***************
-*** 10905,10917 ****
+*** 10936,10948 ****
   unix.mo:Expected error in mat file-operations: "file-access-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-change-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-modification-time: failed for "testlink": no such file or directory".
@@ -6417,7 +6442,7 @@
   windows.mo:Expected error in mat registry: "get-registry: pooh is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
---- 10905,10917 ----
+--- 10936,10948 ----
   unix.mo:Expected error in mat file-operations: "file-access-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-change-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-modification-time: failed for "testlink": no such file or directory".
@@ -6432,7 +6457,7 @@
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
 ***************
-*** 10939,11010 ****
+*** 10970,11041 ****
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for -inf.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for +nan.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat fllp: "fllp: 3 is not a flonum".
@@ -6505,7 +6530,7 @@
   date.mo:Expected error in mat time: "time>=?: 3 is not a time record".
   date.mo:Expected error in mat time: "time>=?: #<procedure car> is not a time record".
   date.mo:Expected error in mat time: "time>=?: types of <time> and <time> differ".
---- 10939,11010 ----
+--- 10970,11041 ----
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for -inf.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for +nan.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat fllp: "fllp: 3 is not a flonum".
@@ -6579,7 +6604,7 @@
   date.mo:Expected error in mat time: "time>=?: #<procedure car> is not a time record".
   date.mo:Expected error in mat time: "time>=?: types of <time> and <time> differ".
 ***************
-*** 11012,11025 ****
+*** 11043,11056 ****
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
@@ -6594,7 +6619,7 @@
   date.mo:Expected error in mat date: "make-date: invalid nanosecond -1".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
---- 11012,11025 ----
+--- 11043,11056 ----
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
@@ -6610,7 +6635,7 @@
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
 ***************
-*** 11045,11105 ****
+*** 11076,11136 ****
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".
@@ -6672,7 +6697,7 @@
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset -90000".
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat conversions/sleep: "date->time-utc: <time> is not a date record".
---- 11045,11105 ----
+--- 11076,11136 ----
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".
