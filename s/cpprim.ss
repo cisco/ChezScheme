@@ -411,6 +411,13 @@
       (syntax-rules ()
         [(_ multiple-ref? (b ...) e)
          ($bind dirty-store-binder multiple-ref? ptr (b ...) e)]))
+    (define-syntax bind-type-object-type ; NB: caller must bind expr
+      (syntax-rules ()
+        [(_ ([id expr]) body)
+         (build-and
+          (%type-check mask-typed-object type-typed-object ,expr)
+          (bind #t ([id (%mref ,expr ,(constant typed-object-type-disp))])
+            body))]))
     (define lift-fp-unboxed
       (lambda (k)
         (lambda (e)
@@ -532,10 +539,7 @@
             ;; by counter-productive by introducing too many branches
             (build-simple-or
              (%type-check mask-flonum type-flonum ,e1)
-             (build-and
-              (%type-check mask-typed-object type-typed-object ,e1)
-              (%type-check mask-other-number type-other-number
-                ,(%mref ,e1 ,(constant bignum-type-disp)))))
+             (%typed-object-check mask-other-number type-other-number ,e1))
             (build-libcall #f src sexpr eqv? e1 e2))))))
     (define make-build-eqv?
       (lambda (src sexpr)
@@ -3111,18 +3115,20 @@
                  (build-and
                    (%type-check mask-flonum type-flonum ,e)
                    `(call ,(make-info-call src sexpr #f #f #f) #f ,(lookup-primref 3 'flfinite?) ,e))
-                 (build-simple-or
-                   (%typed-object-check mask-bignum type-bignum ,e)
-                   (%typed-object-check mask-ratnum type-ratnum ,e)))))])
+                 (bind-type-object-type ([t e])
+                   (build-simple-or
+                     (%type-check mask-bignum type-bignum ,t)
+                     (%type-check mask-ratnum type-ratnum ,t))))))])
     (define-inline 2 real?
       [(e) (bind #t (e)
              (build-simple-or
                (%type-check mask-fixnum type-fixnum ,e)
                (build-simple-or
                  (%type-check mask-flonum type-flonum ,e)
-                 (build-simple-or
-                   (%typed-object-check mask-bignum type-bignum ,e)
-                   (%typed-object-check mask-ratnum type-ratnum ,e)))))])
+                 (bind-type-object-type ([t e])
+                   (build-simple-or
+                     (%type-check mask-bignum type-bignum ,t)
+                     (%type-check mask-ratnum type-ratnum ,t))))))])
     (define-inline 2 inexact?
       [(e) (bind #t (e)
              (build-and
@@ -3132,12 +3138,8 @@
                  (build-simple-or
                    (%typed-object-check mask-inexactnum type-inexactnum ,e)
                    (build-and
-                     (build-not
-                       (build-and
-                         (%type-check mask-typed-object type-typed-object ,e)
-                         (%type-check mask-other-number type-other-number
-                           ,(%mref ,e ,(constant bignum-type-disp)))))
-                     (build-libcall #t src sexpr $number-oops `(quote inexact?) e))))))])
+                     (build-not (%typed-object-check mask-other-number type-other-number ,e))
+                     (build-libcall #t src sexpr inexact? e))))))])
     (define-inline 2 exact?
       [(e) (bind #t (e)
              (build-simple-or
@@ -3147,11 +3149,8 @@
                  (build-and
                    (build-not (%typed-object-check mask-inexactnum type-inexactnum ,e))
                    (build-simple-or
-                     (build-and
-                       (%type-check mask-typed-object type-typed-object ,e)
-                       (%type-check mask-other-number type-other-number
-                         ,(%mref ,e ,(constant bignum-type-disp))))
-                     (build-libcall #t src sexpr $number-oops `(quote exact?) e))))))])
+                    (%typed-object-check mask-other-number type-other-number ,e)
+                    (build-libcall #t src sexpr exact? e))))))])
     (define-inline 3 inexact?
       [(e) (bind #t (e)
              (build-simple-or
@@ -3170,10 +3169,7 @@
               (%type-check mask-fixnum type-fixnum ,e)
               (build-simple-or
                 (%type-check mask-flonum type-flonum ,e)
-                (build-and
-                  (%type-check mask-typed-object type-typed-object ,e)
-                  (%type-check mask-other-number type-other-number
-                    ,(%mref ,e ,(constant bignum-type-disp)))))))))
+                (%typed-object-check mask-other-number type-other-number ,e))))))
       (define-inline 2 number?
         [(e) (build-number? e)])
       (define-inline 2 complex?
