@@ -326,10 +326,13 @@ Notes:
              (loop rev-rbefore* (cons v rev-rvar*) (cons (car e*) rev-re*) (cons (build-ref v) rev-rref*)
                    (cdr e*) (cdr r*)))])))
 
-    (define (build-let var* e* body)
-      (if (null? var*)
-          body
-          `(call ,(make-preinfo-call) ,(build-lambda var* body) ,e* ...)))
+    (define (build-let ctxt e* r* body-k)
+      (let-values ([(before* var* val* e*) (prepare-let e* r*)])
+        (let ([body (body-k e*)])
+          (make-seq ctxt (make-1seq* 'effect before*)
+            (if (null? var*)
+              body
+              `(call ,(make-preinfo-call) ,(build-lambda var* body) ,val* ...))))))
 
     (define build-lambda
       (case-lambda
@@ -351,6 +354,14 @@ Notes:
            (nanopass-case (Lsrc Expr) v
              [(ref ,maybe-src ,x) (and (not (prelex-assigned x)) x)]
              [else #f])))
+
+    (define (filter/head+rest pred? l)
+      ; (filter/head+rest odd? '(1 3 2 5 4 6))
+      ; ==> (values '(1 3) '(2 5 4 6))
+      (let loop ([l l] [rev-head '()])
+        (if (or (null? l) (not (pred? (car l))))
+            (values (reverse rev-head) l)
+            (loop (cdr l) (cons (car l) rev-head)))))
   )
 
   (module (pred-env-empty pred-env-bottom
@@ -1006,47 +1017,31 @@ Notes:
       )
 
       (let ()
-        (define (countmap f l*)
-          (fold-left (lambda (x l) (if (f l) (+ 1 x) x)) 0 l*))
-
         (define-syntax define-specialize/bitwise
           (syntax-rules ()
-            [(_ lev prim fxprim retfnexpr)
+            [(_ lev prim fxprim retfnexpr?)
              (define-specialize lev prim
                ; Arity is checked before calling this handle.
-               [e* (let ([retfn (lambda (r*) (if (retfnexpr r*) 'fixnum 'exact-integer))]
-                         [r* (get-type e*)])
-                     (cond
-                       [(ormap (lambda (r) (predicate-disjoint? r 'fixnum)) r*)
-                        ; some of the arguments can be bignums
-                        (values `(call ,preinfo ,pr ,e* (... ...))
-                                (retfn r*) ntypes #f #f)]
-                       [else
-                        (let ([count (countmap (lambda (r) (not (predicate-implies? r 'fixnum))) r*)])
-                          (cond
-                            [(fx= count 0)
-                             (let ([fxpr (lookup-primref 3 'fxprim)])
-                               (values `(call ,preinfo ,fxpr ,e* (... ...))
-                                       'fixnum ntypes #f #f))]
-                            [(fx> count 1)
-                             (values `(call ,preinfo ,pr ,e* (... ...))
-                                     (retfn r*) ntypes #f #f)]
-                            [else
-                             (let ([fxpr (lookup-primref 3 'fxprim)])
-                               (let-values ([(before* var* e* ref*) (prepare-let e* r*)])
-                                 (let ([test (let loop ([r* r*] [ref* ref*])
-                                               ; find the one that may not be a fixnum
-                                               (cond
-                                                 [(predicate-implies? (car r*) 'fixnum)
-                                                  (loop (cdr r*) (cdr ref*))]
-                                                 [else
-                                                  `(call ,(make-preinfo-call) ,(lookup-primref 2 'fixnum?) ,(car ref*))]))])
-                                   (values (make-seq ctxt (make-1seq* 'effect before*)
-                                                          (build-let var* e*
-                                                                     `(if ,test
-                                                                          (call ,(make-preinfo-call) ,fxpr ,ref* (... ...))
-                                                                          (call ,preinfo ,pr ,ref* (... ...)))))
-                                           (retfn r*) ntypes #f #f))))]))]))])]))
+               [e* (let*-values ([(r*) (get-type e*)]
+                                 [(r-head* r-rest*)  (filter/head+rest (lambda (r) (predicate-implies? r 'fixnum)) r*)]
+                                 [(all-fixnum) (null? r-rest*)]
+                                 [(ret) (if (or all-fixnum (retfnexpr? r*))
+                                            'fixnum
+                                            'exact-integer)])
+                     (values (cond
+                               [(or all-fixnum
+                                    (predicate-disjoint? (car r-rest*) 'fixnum) ; this arguments may be a bignum
+                                    (not (andmap (lambda (r) (predicate-implies? r 'fixnum)) (cdr r-rest*))))
+                                (let ([pr (if all-fixnum (lookup-primref 3 'fxprim) pr)])
+                                  `(call ,preinfo ,pr ,e* (... ...)))]
+                               [else
+                                (build-let ctxt e* r*
+                                  (lambda (e*)
+                                    (let ([bad-e (list-ref e* (length r-head*))])
+                                          `(if (call ,(make-preinfo-call) ,(lookup-primref 2 'fixnum?) ,bad-e)
+                                               (call ,(make-preinfo-call) ,(lookup-primref 3 'fxprim) ,e* (... ...))
+                                               (call ,preinfo ,pr ,e* (... ...))))))])
+                             ret ntypes #f #f))])]))
 
         (define-specialize/bitwise 2 bitwise-and
                                      fxand
@@ -1172,13 +1167,13 @@ Notes:
         [(n) (let ([r (get-type n)])
                (cond
                  [(predicate-implies? r 'fixnum)
-                  (let-values ([(before* var* n* ref*) (prepare-let (list n) (list r))])
-                    (values (make-seq ctxt (make-1seq* 'effect before*)
-                                           (build-let var* n*
-                                                      `(if (call ,(make-preinfo-call) ,(lookup-primref 3 'fx=)  ,(car ref*) (quote ,(constant most-negative-fixnum)))
-                                                           ,(make-seq ctxt `(pariah) `(quote ,(- (constant most-negative-fixnum))))
-                                                           (call ,preinfo ,(lookup-primref 3 'fxabs) ,(car ref*)))))
-                           'exact-integer ntypes #f #f))]
+                  (values (build-let ctxt (list n) (list r)
+                            (lambda (n*)
+                              (let ([n (car n*)])
+                                `(if (call ,(make-preinfo-call) ,(lookup-primref 3 'fx=)  ,n (quote ,(constant most-negative-fixnum)))
+                                     ,(make-seq ctxt `(pariah) `(quote ,(- (constant most-negative-fixnum))))
+                                     (call ,preinfo ,(lookup-primref 3 'fxabs) ,n)))))
+                          'exact-integer ntypes #f #f)]
                  [(predicate-implies? r 'bignum)
                   (values `(call ,preinfo ,pr ,n)
                           'bignum ntypes #f #f)]
