@@ -26,7 +26,7 @@
        (with-implicit (k $type-check quasiquote)
          #'($type-check (constant mask) (constant type) `expr))])))
 
-(define-syntax %typed-object-check ; NB: caller must bind e
+(define-syntax %typed-object-check ; NB: caller must bind expr
   (lambda (x)
     (syntax-case x ()
       [(k mask type expr)
