@@ -1847,6 +1847,7 @@
   (vector-append [sig [(vector ...) -> (vector)]] [flags alloc safeongoodargs cp02])
   (vector-cas! [sig [(nonempty-vector sub-index ptr ptr) -> (boolean)]] [flags cptypes2])
   (vector-copy [sig [(vector) -> (vector)] [(vector sub-length sub-length) -> (vector)]] [flags alloc cp02])
+  (vector-copy! [sig [(vector sub-length vector sub-length sub-length) -> (void)]] [flags])
   (vector->immutable-vector [sig [(vector) -> (immutable-vector)]] [flags alloc cp02 safeongoodargs])
   (vector->pseudo-random-generator [sig [(nonempty-vector) -> (pseudo-random-generator)]] [flags])
   (vector->pseudo-random-generator! [sig [(pseudo-random-generator nonempty-vector) -> (void)]] [flags])

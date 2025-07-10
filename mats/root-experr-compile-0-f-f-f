@@ -4316,6 +4316,35 @@ cp0.mo:Expected error in mat expand/optimize-output: "expand/optimize-output: #<
 5_6.mo:Expected error in mat list->vector: "list->vector: (#\a #\b . #\c) is not a proper list".
 5_6.mo:Expected error in mat list->vector: "list->vector: (#\a #\b #\c #\b #\c #\b ...) is circular".
 5_6.mo:Expected error in mat vector->list: "vector->list: (a b c) is not a vector".
+5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy!)".
+5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy! $v2)".
+5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy! $v2 3)".
+5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy! $v2 3 $v1)".
+5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy! $v2 3 $v1 1)".
+5_6.mo:Expected error in mat vector-copy!: "incorrect argument count in call (vector-copy! $v2 3 $v1 1 2 ...)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: 0 is not an vector".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: #vfx(1 2 3) is not an vector".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: invalid start value -1".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: invalid start value -1".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: invalid start value a".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: invalid start value 0.0".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: invalid start value <int>".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: invalid start value <int>".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: invalid count -1".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: invalid count <int>".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: invalid count a".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 0 + count 5 is beyond the end of #(1 2 3 4)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 0 + count 5 is beyond the end of #(1 2 3 4)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 1 + count 4 is beyond the end of #(1 2 3 4)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 1 + count 4 is beyond the end of #(1 2 3 4)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 2 + count 3 is beyond the end of #(1 2 3 4)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 2 + count 3 is beyond the end of #(1 2 3 4)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 3 + count 2 is beyond the end of #(1 2 3 4)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 3 + count 2 is beyond the end of #(1 2 3 4)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 4 + count 1 is beyond the end of #(1 2 3 4)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 4 + count 1 is beyond the end of #(1 2 3 4)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 0 + count 500 is beyond the end of #(255 254 253 252 251 250 ...)".
+5_6.mo:Expected error in mat vector-copy!: "vector-copy!: index 500 + count 0 is beyond the end of #(255 254 253 252 251 250 ...)".
 5_6.mo:Expected error in mat fxvector: "fxvector: <int> is not a fixnum".
 5_6.mo:Expected error in mat fxvector: "fxvector: <-int> is not a fixnum".
 5_6.mo:Expected error in mat fxvector: "fxvector: a is not a fixnum".

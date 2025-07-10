@@ -116,6 +116,11 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{In-place vector copying (10.3.0)}
+
+The \scheme{vector-copy!} procedure copies a subsequence
+from one vector to another, just like \scheme{fxvector-copy!} and others.
+
 \subsection{Support for setting the default history file location using the \scheme{CHEZSCHEME_HISTORY} environment variable}
 
 If the environment variable \scheme{CHEZSCHEME_HISTORY} is set during
