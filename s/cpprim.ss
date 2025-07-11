@@ -414,10 +414,8 @@
     (define-syntax bind-type-object-type ; NB: caller must bind expr
       (syntax-rules ()
         [(_ ([id expr]) body)
-         (build-and
-          (%type-check mask-typed-object type-typed-object ,expr)
-          (bind #t ([id (%mref ,expr ,(constant typed-object-type-disp))])
-            body))]))
+         (bind #t ([id (%mref ,expr ,(constant typed-object-type-disp))])
+           body)]))
     (define lift-fp-unboxed
       (lambda (k)
         (lambda (e)
@@ -3115,20 +3113,24 @@
                  (build-and
                    (%type-check mask-flonum type-flonum ,e)
                    `(call ,(make-info-call src sexpr #f #f #f) #f ,(lookup-primref 3 'flfinite?) ,e))
-                 (bind-type-object-type ([t e])
-                   (build-simple-or
-                     (%type-check mask-bignum type-bignum ,t)
-                     (%type-check mask-ratnum type-ratnum ,t))))))])
+                 (build-and
+                   (%type-check mask-typed-object type-typed-object ,e)
+                   (bind-type-object-type ([t e])
+                     (build-simple-or
+                       (%type-check mask-bignum type-bignum ,t)
+                       (%type-check mask-ratnum type-ratnum ,t)))))))])
     (define-inline 2 real?
       [(e) (bind #t (e)
              (build-simple-or
                (%type-check mask-fixnum type-fixnum ,e)
                (build-simple-or
                  (%type-check mask-flonum type-flonum ,e)
+               (build-and
+                 (%type-check mask-typed-object type-typed-object ,e)
                  (bind-type-object-type ([t e])
                    (build-simple-or
                      (%type-check mask-bignum type-bignum ,t)
-                     (%type-check mask-ratnum type-ratnum ,t))))))])
+                     (%type-check mask-ratnum type-ratnum ,t)))))))])
     (define-inline 2 inexact?
       [(e) (bind #t (e)
              (build-and
