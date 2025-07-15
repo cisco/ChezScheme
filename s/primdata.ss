@@ -223,7 +223,7 @@
   (div0 [sig [(real real) -> (real)]] [flags arith-op mifoldable discard])
   (mod0 [sig [(real real) -> (real)]] [flags arith-op mifoldable discard])
   (gcd [sig [(integer ...) -> (integer)]] [flags arith-op mifoldable discard ieee r5rs])
-  (lcm [sig [(integer ...) -> (integer)]] [flags arith-op mifoldable discard ieee r5rs])
+  (lcm [sig [(integer ...) -> (real)]] [flags arith-op mifoldable discard ieee r5rs]) ; uinteger or +inf.0
   (numerator [sig [(rational) -> (integer)]] [flags arith-op mifoldable discard ieee r5rs])
   (denominator [sig [(rational) -> (integer)]] [flags arith-op mifoldable discard ieee r5rs])
   (floor [sig [(real) -> (real)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
