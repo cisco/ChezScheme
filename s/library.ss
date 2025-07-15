@@ -295,6 +295,9 @@
     ;; for consistency with error before library entry was introduced:
     (lambda (who x i)
       ($oops who "invalid index ~s for bytevector ~s" i x)))
+  (define number-oops
+    (lambda (who x)
+      ($oops who "~s is not a number" x)))
 
   (define stencil-vector-oops
     (lambda (who x)
@@ -426,6 +429,9 @@
   (define-library-entry (char>? x y) (char-oops 'char>? (if (char? x) y x)))
   (define-library-entry (char<=? x y) (char-oops 'char<=? (if (char? x) y x)))
   (define-library-entry (char>=? x y) (char-oops 'char>=? (if (char? x) y x)))
+
+  (define-library-entry (exact? x) (number-oops 'exact? x))
+  (define-library-entry (inexact? x) (number-oops 'inexact? x))
 )
 
 (define-library-entry (real->flonum x who)
@@ -434,6 +440,7 @@
     [(or (bignum? x) (ratnum? x)) (inexact x)]
     [(flonum? x) x]
     [else ($oops who "~s is not a real number" x)]))
+
 
 (let ()
   (define pair-oops

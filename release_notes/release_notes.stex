@@ -121,12 +121,18 @@ Online versions of both books can be found at
 The \scheme{vector-copy!} procedure copies a subsequence
 from one vector to another, just like \scheme{fxvector-copy!} and others.
 
-\subsection{Support for setting the default history file location using the \scheme{CHEZSCHEME_HISTORY} environment variable}
+\subsection{New \scheme{CHEZSCHEME_HISTORY} environment variable (10.3.0)}
 
 If the environment variable \scheme{CHEZSCHEME_HISTORY} is set during
 startup, and the \scheme{--eehistory} command-line option isn't used,
 the value of said environment variable will determine the history file
 location that will be used.
+
+\subsection{Inlined numeric predicates during compilation (10.3.0)}
+
+The compiler inlines more numeric predicates during the compilation,
+in particular \scheme{real?}, \scheme{rational?}, \scheme{exact?}
+and \scheme{inexact?}, .
 
 \subsection{Type recovery improvements (10.3.0)}
 

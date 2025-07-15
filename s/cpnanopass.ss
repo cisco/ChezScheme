@@ -2496,10 +2496,11 @@
                    (build-fixnum? (cons x1 x*))]
                   [else `(if ,(build-fixnum? x*) ,(Expr e) (quote #f))]))))
           (define process-paired-predicate
-            (lambda (info1 pr1 pr2 x-arg)
-              (let ([pr1 (primref-name pr1)] [pr2 (primref-name pr2)])
+            (lambda (info1 prim1 prim2 x-arg)
+              (let ([pr1 (primref-name prim1)] [pr2 (primref-name prim2)])
                 (cond
-                  [(and (eq? pr1 'integer?) (eq? pr2 'exact?))
+                  [(or (and (eq? pr1 'integer?) (eq? pr2 'exact?))
+                       (and (eq? pr1 'exact?) (fx>= (primref-level prim1) 3) (eq? pr2 'integer?)))
                    `(if ,(%primcall #f #f fixnum? ,x-arg) (quote #t) ,(%primcall #f #f bignum? ,x-arg))]
                   [(and (eq? pr1 'port?) (eq? pr2 'binary-port?))
                    (%typed-object-check mask-binary-port type-binary-port ,x-arg)]
