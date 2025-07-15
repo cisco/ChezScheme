@@ -2592,6 +2592,14 @@
     (eqv? (lcm 10.0 0.0 0.0 0.0) 0.0)
     (eqv? (lcm 0.0 6.0 7.0 10.0) 0.0)
     (eqv? (lcm 10.0 6.0 7.0 0.0) 0.0)
+    (eqv? (lcm 3E307 5E307) +inf.0)
+    (eqv? (lcm #e3E999 1.0) +inf.0)
+    (begin
+      ;; make sure the optimizer doesn't assume an integer result
+      (define ($lcm-result x) (if (integer? (lcm x 1.0)) 'int 'non-int))
+      #t)
+    (eq? ($lcm-result 5) 'int)
+    (eq? ($lcm-result #e3E999) 'non-int)
  )
 
 (mat expt
