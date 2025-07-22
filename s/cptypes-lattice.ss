@@ -66,6 +66,11 @@
    real-pred
    number-pred
    flzero-pred
+   flinteger-pred
+   exact-real-pred
+   exact-pred
+   inexact-pred
+   integer-pred
    $fixmediate-pred
    $list-pred ; immutable lists
    list-pair-pred
