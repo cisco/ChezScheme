@@ -832,10 +832,6 @@
    (lambda (x y)
       ($fx+? x y)))
 
-(define $fxx+
-   (lambda (x y)
-      ($fxx+ x y)))
-
 (define $fx-?
    (lambda (x y)
       ($fx-? x y)))
