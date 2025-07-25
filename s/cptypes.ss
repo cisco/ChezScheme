@@ -738,7 +738,8 @@ Notes:
           ; TODO: extend the type system to include rtd
           [else #f]))
 
-      ; Similar to the define-inline in other passes, but the result can't be #f.
+      ; Similar to the define-inline in other passes, the result can be #f or (void)
+      ; to use the default values.
       ; The arguments have already been analyzed, and the type of the result
       ; is available with the macro (get-type <arg>).
       ; If the primitive is unsafe, (get-type <arg>) is the intersection of the
@@ -770,7 +771,7 @@ Notes:
                   [body
                     (let loop ([clauses #'(clause ...)])
                       (if (null? clauses)
-                          #'(unhandled preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
+                          #'#f
                           (with-syntax ((rest (loop (cdr clauses))))
                             (syntax-case (car clauses) ()
                               [((x ...) b1 b2 ...)
@@ -819,7 +820,7 @@ Notes:
                          (warningf #f "undeclared ~s handler for ~s~%" sym-key sym-name))))
                    (datum (prim ...)))
                  #'(begin
-                     (let ([handler (lambda (preinfo pr e* ret r* ctxt ntypes oldtypes plxc unhandled)
+                     (let ([handler (lambda (preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
                                       (let ([level (if (all-set? (prim-mask unsafe) (primref-flags pr)) 3 2)]    
                                             [prim-name 'prim]
                                             [count (length e*)])
@@ -850,7 +851,7 @@ Notes:
                   [body
                     (let loop ([clauses #'(clause ...)])
                       (if (null? clauses)
-                          #'(unhandled preinfo pr e* ctxt oldtypes plxc)
+                          #'#f
                           (with-syntax ((rest (loop (cdr clauses))))
                             (syntax-case (car clauses) ()
                               [((x ...) b1 b2 ...)
@@ -887,7 +888,7 @@ Notes:
                          (warningf #f "undeclared ~s handler for ~s~%" sym-key sym-name))))
                    (datum (prim ...)))
                  #'(begin
-                     (let ([handler (lambda (preinfo pr e* ctxt oldtypes plxc unhandled)
+                     (let ([handler (lambda (preinfo pr e* ctxt oldtypes plxc)
                                       (let ([level (if (all-set? (prim-mask unsafe) (primref-flags pr)) 3 2)]    
                                             [prim-name 'prim]
                                             [count (length e*)])
@@ -1002,10 +1003,7 @@ Notes:
                         (let ([pr (lookup-primref 3 'flprim)])
                           (values `(call ,preinfo ,pr ,e* (... ...))
                                   (if boolean? boolean-pred flonum-pred)
-                                  ntypes #f #f))]
-                       [else
-                        (values `(call ,preinfo ,pr ,e* (... ...))
-                                ret ntypes #f #f)]))])]))
+                                  ntypes #f #f))]))])]))
 
         (define-specialize/fxfl 2 (< r6rs:<) fx< fl<)
         (define-specialize/fxfl 2 (<= r6rs:<=) fx<= fl<=)
@@ -1058,10 +1056,6 @@ Notes:
         (define-specialize/bitwise 2 bitwise-xor fxxor (lambda (r*) #f))
         (define-specialize/bitwise 2 bitwise-not fxnot (lambda (r*) #f))
       )
-  ;(test-use-unsafe-fxbinary 'bitwise-and 'unsafe-fxand)
-  ;(test-use-unsafe-fxbinary 'bitwise-ior 'unsafe-fxior)
-  ;(test-use-unsafe-fxbinary 'bitwise-xor 'unsafe-fxxor)
-  ;(test-use-unsafe-fxunary 'bitwise-not 'unsafe-fxnot)
 
       (define-specialize 2 list
         [() (values null-rec null-rec ntypes #f #f)] ; should have been reduced by cp0
@@ -1158,10 +1152,7 @@ Notes:
                             flonum-pred ntypes #f #f))]
                  [(predicate-implies? r real-pred)
                   (values `(call ,preinfo ,pr ,n)
-                          real-pred ntypes #f #f)]
-                 [else
-                  (values `(call ,preinfo ,pr ,n)
-                          ret ntypes #f #f)]))])
+                          real-pred ntypes #f #f)]))])
 
       (define-specialize 2 abs
         [(n) (let ([r (get-type n)])
@@ -1182,9 +1173,7 @@ Notes:
                           'exact-integer ntypes #f #f)]
                  [(predicate-implies? r flonum-pred)
                   (values `(call ,preinfo ,(lookup-primref 3 'flabs) ,n)
-                          flonum-pred ntypes #f #f)]
-                 [else
-                  (values `(call ,preinfo ,pr ,n) ret ntypes #f #f)]))])
+                          flonum-pred ntypes #f #f)]))])
 
       (define-specialize 2 zero?
         [(n) (let ([r (get-type n)])
@@ -1209,9 +1198,7 @@ Notes:
                           ret
                           ntypes
                           (pred-env-add/ref ntypes n flzero-pred plxc)
-                          (pred-env-add/ref ntypes n flzero-pred plxc))]
-                 [else
-                  (values `(call ,preinfo ,pr ,n) ret ntypes #f #f)]))])
+                          (pred-env-add/ref ntypes n flzero-pred plxc))]))])
 
       (define-specialize 2 fxzero?
         [(n) (values `(call ,preinfo ,pr ,n)
@@ -1431,11 +1418,16 @@ Notes:
                              ($sgetprop prim-name 'cptypes2x #f)))])
       (if handler
           (call-with-values
-            (lambda () (handler preinfo pr e* ctxt oldtypes plxc fold-primref/next))
+            (lambda () (handler preinfo pr e* ctxt oldtypes plxc))
             (case-lambda
               [(ir2 ret2 types2 t-types2 f-types2)
                (values ir2 ret2 types2 t-types2 f-types2)]
-              [else ($oops 'fold-primref "result of inline handler can't be #f")]))
+              [(v)
+               (if (or (not v) (eq? v (void)))
+                   (fold-primref/next preinfo pr e* ctxt oldtypes plxc)
+                   ($oops 'fold-primref "wrong result of handler of  ~s" prim-name))]
+              [else
+               ($oops 'fold-primref "wrong result of handler of ~s" prim-name)]))
           (fold-primref/next preinfo pr e* ctxt oldtypes plxc))))
 
   (define (fold-primref/next preinfo pr e* ctxt oldtypes plxc)
@@ -1496,11 +1488,16 @@ Notes:
                                 ($sgetprop prim-name 'cptypes2 #f)))])
          (if handler
              (call-with-values
-               (lambda () (handler preinfo pr e* ret r* ctxt ntypes oldtypes plxc fold-primref/default))
+               (lambda () (handler preinfo pr e* ret r* ctxt ntypes oldtypes plxc))
                (case-lambda
                  [(ir2 ret2 types2 t-types2 f-types2)
                   (values ir2 ret2 types2 t-types2 f-types2)]
-                 [else ($oops 'fold-primref "result of inline handler can't be #f")]))
+                 [(v)
+                  (if (or (not v) (eq? v (void)))
+                      (fold-primref/default preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
+                      ($oops 'fold-primref "wrong result of handler of ~s" prim-name))]
+                 [else
+                  ($oops 'fold-primref "wrong result of handler of ~s" prim-name)]))
              (fold-primref/default preinfo pr e* ret r* ctxt ntypes oldtypes plxc)))]))
 
   (define (fold-primref/default preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
