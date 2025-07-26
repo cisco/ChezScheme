@@ -418,11 +418,14 @@
               [(fasl-strip-options) (fasl-strip-options inspector-source) (file-options compressed) #f]
               [(file-options) (file-options compressed) 1/2 #f]
               [(fixnum) -1 'q (+ (most-positive-fixnum) 1) (- (most-negative-fixnum) 1) #f]
+              [(flinteger) 0.0 0 0.5 0.0+1.0i 'a #f]
               [(flonum) 0.0 0 0.0+1.0i 'a #f]
+              [(flvector) '#vfl(0.0) "a" #f]
+              [(flzero) 0.0 0 "a" #f]
               [(ftype-pointer) *ftype-pointer 0 *time #f]
               [(sub-ftype-pointer) no-good]
               [(fxvector) '#vfx(0) "a" #f]
-              [(flvector) '#vfl(0.0) "a" #f]
+              [(fxzero) 0 0.0 "a" #f]
               [(gensym) *genny 'sym #f]
               [(guardian) (make-guardian) values "oops" #f]
               [(hashtable) *eq-hashtable '((a . b)) #f]
@@ -528,6 +531,7 @@
               [(vector) '#(a) "a" #f]
               [(stencil-vector) (stencil-vector 7 1 2 3) "a" #f]
               [(who-condition) (make-who-condition 'me) (make-message-condition "hello") 'the-who #f]
+              [(zero) 0 1 1.0 "a" #f]
               [($exactnum) 1+1i 1.0+1.0i 1 1.0 'a #f]
               [($inexactnum) 1.0+1.0i 1+1i 1 1.0 'a #f])
             (meta-cond

@@ -1175,6 +1175,11 @@ Notes:
                   (values `(call ,preinfo ,(lookup-primref 3 'flabs) ,n)
                           flonum-pred ntypes #f #f)]))])
 
+      (define-specialize 2 integer?
+        [(n) (let ([r (get-type n)])
+               (when (predicate-implies? r flonum-pred)
+                 (fold-call/primref/shallow preinfo (lookup-primref 3 'flinteger?) (list n) ret (list r) ctxt ntypes oldtypes plxc)))])
+
       (define-specialize 2 zero?
         [(n) (let ([r (get-type n)])
                (cond
@@ -1379,34 +1384,16 @@ Notes:
 
   (with-output-language (Lsrc Expr)
   
-  (define (fold-predicate preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
-    (if (and (eq? (primref-name pr) 'integer?)
-             (predicate-implies? (car r*) flonum-pred))
-        (do-fold-predicate preinfo (lookup-primref 3 'flinteger?) e* ret r* ctxt ntypes oldtypes plxc)
-        (do-fold-predicate preinfo pr e* ret r* ctxt ntypes oldtypes plxc)))
-
-  (define (do-fold-predicate preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
-    (let ([e (car e*)]
-          [r (predicate-intersect (car r*)
-                                  (primref->argument-predicate pr 0 1 #t))])
-      (cond
-        [(predicate-implies? r (primref->predicate pr #f))
-         (values (make-seq ctxt `(call ,preinfo ,pr ,e) true-rec)
-                 true-rec ntypes #f #f)]
-        [(predicate-disjoint? r (primref->predicate pr #t))
-         (values (make-seq ctxt `(call ,preinfo ,pr ,e) false-rec)
-                 false-rec ntypes #f #f)]
-        [else
-         (values `(call ,preinfo ,pr ,e)
-                 ret
-                 ntypes
-                 (and (eq? ctxt 'test)
-                      (pred-env-add/ref ntypes e (primref->predicate pr #t) plxc))
-                 (and (eq? ctxt 'test)
-                      (pred-env-add/not/ref ntypes e (primref->predicate pr #f) plxc)))])))
-
+  ; Main entry point to analyze a call to a primitive
+  ; recursively analyze the expressions in e*
   (define (fold-call/primref preinfo pr e* ctxt oldtypes plxc)
     (fold-primref/unrestricted preinfo pr e* ctxt oldtypes plxc))
+
+  ; Good reentry point after a reduction changes the primitive,
+  ; to apply the special cases and handlers of the new primivive.
+  ; This does not call the hanldlers defined usind define-specialize/unrestricted
+  (define (fold-call/primref/shallow preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
+    (fold-primref/try-unsafe preinfo pr e* ret r* ctxt ntypes oldtypes plxc))
 
   (define (fold-primref/unrestricted preinfo pr e* ctxt oldtypes plxc)
     (let* ([flags (primref-flags pr)]
@@ -1424,84 +1411,104 @@ Notes:
                (values ir2 ret2 types2 t-types2 f-types2)]
               [(v)
                (if (or (not v) (eq? v (void)))
-                   (fold-primref/next preinfo pr e* ctxt oldtypes plxc)
+                   (fold-primref/expand preinfo pr e* ctxt oldtypes plxc)
                    ($oops 'fold-primref "wrong result of handler of  ~s" prim-name))]
               [else
                ($oops 'fold-primref "wrong result of handler of ~s" prim-name)]))
-          (fold-primref/next preinfo pr e* ctxt oldtypes plxc))))
+          (fold-primref/expand preinfo pr e* ctxt oldtypes plxc))))
 
-  (define (fold-primref/next preinfo pr e* ctxt oldtypes plxc)
-    (let-values ([(t e* r* t* t-t* f-t*)
+  (define (fold-primref/expand preinfo pr e* ctxt oldtypes plxc)
+    (let-values ([(ntypes e* r* t* t-t* f-t*)
                   (map-Expr/delayed e* oldtypes plxc)])
       (cond
         [(ormap (lambda (e r) (and (predicate-implies? r 'bottom) e)) e* r*)
          => (lambda (e) (unwrapped-error ctxt e))]
-        [(eq? t pred-env-bottom)
+        [(eq? ntypes pred-env-bottom)
          (let ([e* (map ensure-single-value e* r*)])
            (values (make-seq ctxt (make-seq* 'effect e*) void-rec)
                    'bottom pred-env-bottom #f #f))]
-        [else
-         (let* ([unsafe (all-set? (prim-mask unsafe) (primref-flags pr))]
-                [len (length e*)]
-                [ret (primref->result-predicate pr len)]
-                [err (or (predicate-implies? ret 'bottom)
-                         (not (arity-okay? (primref-arity pr) len)))]
-                [to-unsafe (and (not unsafe)
-                                (all-set? (prim-mask safeongoodargs) (primref-flags pr)))])
-           (let-values ([(err nr* t to-unsafe)
-                         (let loop ([e* e*] [r* r*] [n 0] [rev-nr* '()] [t t] [err err] [to-unsafe to-unsafe])
-                           (if (null? e*)
-                               (values err (reverse rev-nr*) t to-unsafe)
-                               (let* ([r (car r*)]
-                                      [pred (primref->argument-predicate pr n len #t)]
-                                      [pred* (primref->argument-predicate pr n len #f)]
-                                      [nr (predicate-intersect r pred)])
-                                 (loop (cdr e*)
-                                       (cdr r*)
-                                       (fx+ n 1)
-                                       (cons nr rev-nr*)
-                                       (pred-env-add/ref t (car e*) pred plxc)
-                                       (or err (predicate-implies? nr 'bottom))
-                                       (and to-unsafe (predicate-implies? r pred*))))))])
-             (cond
-               [(or err (eq? t pred-env-bottom))
-                (fold-primref/default preinfo pr e* 'bottom r* ctxt pred-env-bottom oldtypes plxc)]
-               [else
-                (let ([ret (if err 'bottom ret)]
-                      [pr (if to-unsafe
-                              (primref->unsafe-primref pr)
-                              pr)]
-                      [nr* (if unsafe nr* r*)])
-                  (fold-primref/normal preinfo pr e* ret nr* ctxt t oldtypes plxc))])))])))
+         [else
+          (let ([ret (primref->result-predicate pr (length e*))])
+            (fold-primref/try-unsafe preinfo pr e* ret r* ctxt ntypes oldtypes plxc))])))
 
-  (define (fold-primref/normal preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
+  (define (fold-primref/try-unsafe preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
+    (let* ([unsafe (all-set? (prim-mask unsafe) (primref-flags pr))]
+           [len (length e*)]
+           [err (or (predicate-implies? ret 'bottom)
+                    (not (arity-okay? (primref-arity pr) len)))]
+           [to-unsafe (and (not unsafe)
+                           (all-set? (prim-mask safeongoodargs) (primref-flags pr)))])
+      (let-values ([(err nr* ntypes to-unsafe)
+                    (let loop ([e* e*] [r* r*] [n 0] [rev-nr* '()] [ntypes ntypes] [err err] [to-unsafe to-unsafe])
+                      (if (null? e*)
+                          (values err (reverse rev-nr*) ntypes to-unsafe)
+                          (let* ([r (car r*)]
+                                 [pred (primref->argument-predicate pr n len #t)]
+                                 [pred* (primref->argument-predicate pr n len #f)]
+                                 [nr (predicate-intersect r pred)])
+                            (loop (cdr e*)
+                                  (cdr r*)
+                                  (fx+ n 1)
+                                  (cons nr rev-nr*)
+                                  (pred-env-add/ref ntypes (car e*) pred plxc)
+                                  (or err (predicate-implies? nr 'bottom))
+                                  (and to-unsafe (predicate-implies? r pred*))))))])
+        (cond
+          [(or err (eq? ntypes pred-env-bottom))
+           (fold-primref/default preinfo pr e* 'bottom r* ctxt pred-env-bottom #f #f oldtypes plxc)]
+          [else
+           (let ([pr (if to-unsafe
+                         (primref->unsafe-primref pr)
+                         pr)]
+                 [r* (if unsafe nr* r*)])
+             (fold-primref/try-predicate preinfo pr e* ret r* ctxt ntypes oldtypes plxc))]))))
+
+  (define (fold-primref/try-predicate preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
     (cond
-      [(and (fx= (length e*) 1) (primref->predicate pr #t))
-       (fold-predicate preinfo pr e* ret r* ctxt ntypes oldtypes plxc)]
+      [(not (and (fx= (length e*) 1) (primref->predicate pr #t)))
+       (fold-primref/normal preinfo pr e* ret r* ctxt ntypes #f #f oldtypes plxc)]
       [else
-       (let* ([flags (primref-flags pr)]
-              [prim-name (primref-name pr)]
-              [handler (or (and (all-set? (prim-mask unsafe) flags)
-                                (all-set? (prim-mask cptypes3) flags)
-                                ($sgetprop prim-name 'cptypes3 #f))
-                           (and (all-set? (prim-mask cptypes2) flags)
-                                ($sgetprop prim-name 'cptypes2 #f)))])
-         (if handler
-             (call-with-values
-               (lambda () (handler preinfo pr e* ret r* ctxt ntypes oldtypes plxc))
-               (case-lambda
-                 [(ir2 ret2 types2 t-types2 f-types2)
-                  (values ir2 ret2 types2 t-types2 f-types2)]
-                 [(v)
-                  (if (or (not v) (eq? v (void)))
-                      (fold-primref/default preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
-                      ($oops 'fold-primref "wrong result of handler of ~s" prim-name))]
-                 [else
-                  ($oops 'fold-primref "wrong result of handler of ~s" prim-name)]))
-             (fold-primref/default preinfo pr e* ret r* ctxt ntypes oldtypes plxc)))]))
+       (let ([e (car e*)]
+             [r (predicate-intersect (car r*)
+                                     (primref->argument-predicate pr 0 1 #t))])
+         (cond
+           [(predicate-implies? r (primref->predicate pr #f))
+            (values (make-seq ctxt `(call ,preinfo ,pr ,e) true-rec)
+                    true-rec ntypes #f #f)]
+           [(predicate-disjoint? r (primref->predicate pr #t))
+            (values (make-seq ctxt `(call ,preinfo ,pr ,e) false-rec)
+                    false-rec ntypes #f #f)]
+           [else
+            (let ([ttypes (and (eq? ctxt 'test)
+                               (pred-env-add/ref ntypes e (primref->predicate pr #t) plxc))]
+                  [ftypes (and (eq? ctxt 'test)
+                               (pred-env-add/not/ref ntypes e (primref->predicate pr #f) plxc))])
+              (fold-primref/normal preinfo pr e* ret r* ctxt ntypes ttypes ftypes oldtypes plxc))]))]))
 
-  (define (fold-primref/default preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
-    (values `(call ,preinfo ,pr ,e* ...) ret ntypes #f #f))
+  (define (fold-primref/normal preinfo pr e* ret r* ctxt ntypes ttypes ftypes oldtypes plxc)
+    (let* ([flags (primref-flags pr)]
+           [prim-name (primref-name pr)]
+           [handler (or (and (all-set? (prim-mask unsafe) flags)
+                             (all-set? (prim-mask cptypes3) flags)
+                             ($sgetprop prim-name 'cptypes3 #f))
+                        (and (all-set? (prim-mask cptypes2) flags)
+                             ($sgetprop prim-name 'cptypes2 #f)))])
+      (if handler
+          (call-with-values
+            (lambda () (handler preinfo pr e* ret r* ctxt ntypes oldtypes plxc))
+            (case-lambda
+              [(ir2 ret2 types2 t-types2 f-types2)
+               (values ir2 ret2 types2 t-types2 f-types2)]
+              [(v)
+               (if (or (not v) (eq? v (void)))
+                   (fold-primref/default preinfo pr e* ret r* ctxt ntypes ttypes ftypes oldtypes plxc)
+                   ($oops 'fold-primref "wrong result of handler of ~s" prim-name))]
+              [else
+               ($oops 'fold-primref "wrong result of handler of ~s" prim-name)]))
+          (fold-primref/default preinfo pr e* ret r* ctxt ntypes ttypes ftypes oldtypes plxc))))
+
+  (define (fold-primref/default preinfo pr e* ret r* ctxt ntypes ttypes ftypes oldtypes plxc)
+    (values `(call ,preinfo ,pr ,e* ...) ret ntypes ttypes ftypes))
 
   (define (fold-call/lambda preinfo e0 e* ctxt oldtypes plxc)
     (define (finish preinfo preinfo2 x* interface body e* r* ntypes)
