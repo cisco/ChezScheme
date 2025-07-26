@@ -910,6 +910,15 @@
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (fixnum? x) (fxzero? x)))
     '(lambda (x) (when (fixnum? x) (#3%fxzero? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (if (zero? x) (zero? x) (zero? x)))
+    '(lambda (x) (if (zero? x) #t #f)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (if (flzero? x) (or (eqv? x -0.0) (eqv? x 0.0)) (or (eqv? x -0.0) (eqv? x 0.0))))
+    '(lambda (x) (if (flzero? x) #t #f)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x) (if (or (eqv? x -0.0) (eqv? x 0.0)) (flzero? x) (flzero? x))))
+    '(lambda (x) (when (flonum? x) (if (or (eqv? x -0.0) (eqv? x 0.0)) #t #f))))
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (when (number? x) (#2%odd? x)))
          '(lambda (x) (when (number? x) (#3%odd? x)))))
