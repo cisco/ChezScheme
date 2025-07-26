@@ -138,7 +138,7 @@ and \scheme{inexact?}, .
 
 The type recovery pass has improved support for \scheme{cfl+} and
 similar functions. Also improve the support of predicates, in
-particular integer?, rational? and similar predicates.
+particular integer?, zero? and similar predicates.
 
 \subsection{Unicode 16.0.0 support (10.3.0)}
 

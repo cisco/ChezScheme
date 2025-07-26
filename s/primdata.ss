@@ -45,7 +45,7 @@
   (fx=? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])    ; restricted to 2+ arguments
   (fx>? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])    ; restricted to 2+ arguments
   (fx>=? [sig [(fixnum fixnum fixnum ...) -> (boolean)]] [flags pure cp02 safeongoodargs])   ; restricted to 2+ arguments
-  (fxzero? [sig [(fixnum) -> (boolean)]] [pred fxzero] [flags pure cp02 safeongoodargs cptypes2])
+  (fxzero? [sig [(fixnum) -> (boolean)]] [pred fxzero] [flags pure cp02 safeongoodargs])
   (fxnegative? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
   (fxpositive? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
   (fxeven? [sig [(fixnum) -> (boolean)]] [flags pure cp02 safeongoodargs])
@@ -97,7 +97,7 @@
   (fl>? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments])  ; restricted to 2+ arguments
   (fl>=? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments]) ; restricted to 2+ arguments
   (flinteger? [sig [(flonum) -> (boolean)]] [pred flinteger] [flags pure mifoldable discard safeongoodargs])
-  (flzero? [sig [(flonum) -> (boolean)]] [pred flzero] [flags pure mifoldable discard safeongoodargs cptypes2])
+  (flzero? [sig [(flonum) -> (boolean)]] [pred flzero] [flags pure mifoldable discard safeongoodargs])
   (flpositive? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
   (flnegative? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard safeongoodargs])
   (flodd? [sig [(flonum) -> (boolean)]] [flags pure mifoldable discard])

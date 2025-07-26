@@ -994,10 +994,10 @@ Notes:
                ; Arity is checked before calling this handle.
                [e* (let ([r* (get-type e*)])
                      (cond
-                       [(andmap (lambda (r) (predicate-implies? r 'fixnum)) r*)
+                       [(andmap (lambda (r) (predicate-implies? r fixnum-pred)) r*)
                         (let ([pr (lookup-primref 3 'fxprim)])
                           (values `(call ,preinfo ,pr ,e* (... ...))
-                                  (if boolean? boolean-pred 'fixnum)
+                                  (if boolean? boolean-pred fixnum-pred)
                                   ntypes #f #f))]
                        [(andmap (lambda (r) (predicate-implies? r flonum-pred)) r*)
                         (let ([pr (lookup-primref 3 'flprim)])
@@ -1021,15 +1021,15 @@ Notes:
              (define-specialize lev prim
                ; Arity is checked before calling this handle.
                [e* (let*-values ([(r*) (get-type e*)]
-                                 [(r-head* r-rest*)  (filter/head+rest (lambda (r) (predicate-implies? r 'fixnum)) r*)]
+                                 [(r-head* r-rest*)  (filter/head+rest (lambda (r) (predicate-implies? r fixnum-pred)) r*)]
                                  [(all-fixnum) (null? r-rest*)]
                                  [(ret) (if (or all-fixnum (retfnexpr? r*))
-                                            'fixnum
-                                            'exact-integer)])
+                                            fixnum-pred
+                                            exact-integer-pred)])
                      (values (cond
                                [(or all-fixnum
-                                    (predicate-disjoint? (car r-rest*) 'fixnum) ; this arguments may be a bignum
-                                    (not (andmap (lambda (r) (predicate-implies? r 'fixnum)) (cdr r-rest*))))
+                                    (predicate-disjoint? (car r-rest*) fixnum-pred) ; this arguments may be a bignum
+                                    (not (andmap (lambda (r) (predicate-implies? r fixnum-pred)) (cdr r-rest*))))
                                 (let ([pr (if all-fixnum (lookup-primref 3 'fxprim) pr)])
                                   `(call ,preinfo ,pr ,e* (... ...)))]
                                [else
@@ -1139,13 +1139,13 @@ Notes:
       (define-specialize 2 (add1 sub1 1+ 1- -1+)
         [(n) (let ([r (get-type n)])
                (cond
-                 [(predicate-implies? r 'fixnum)
+                 [(predicate-implies? r fixnum-pred)
                   (let ([delta (if (memq prim-name '(add1 1+)) 1 -1)])
                     (values `(call ,preinfo ,(lookup-primref 3 '$fxx+) ,n (quote ,delta))
-                            'exact-integer ntypes #f #f))]
-                 [(predicate-implies? r 'exact-integer)
+                            exact-integer-pred ntypes #f #f))]
+                 [(predicate-implies? r exact-integer-pred)
                   (values `(call ,preinfo ,pr ,n)
-                          'exact-integer ntypes #f #f)]
+                          exact-integer-pred ntypes #f #f)]
                  [(predicate-implies? r flonum-pred)
                   (let ([flprim-name (if (memq prim-name '(add1 1+)) 'fl+ 'fl-)])
                     (values `(call ,preinfo ,(lookup-primref 3 flprim-name) ,n (quote 1.0))
@@ -1157,20 +1157,20 @@ Notes:
       (define-specialize 2 abs
         [(n) (let ([r (get-type n)])
                (cond
-                 [(predicate-implies? r 'fixnum)
+                 [(predicate-implies? r fixnum-pred)
                   (values (build-let ctxt (list n) (list r)
                             (lambda (n*)
                               (let ([n (car n*)])
                                 `(if (call ,(make-preinfo-call) ,(lookup-primref 3 'fx=)  ,n (quote ,(constant most-negative-fixnum)))
                                      ,(make-seq ctxt `(pariah) `(quote ,(- (constant most-negative-fixnum))))
                                      (call ,preinfo ,(lookup-primref 3 'fxabs) ,n)))))
-                          'exact-integer ntypes #f #f)]
-                 [(predicate-implies? r 'bignum)
+                          exact-integer-pred ntypes #f #f)]
+                 [(predicate-implies? r bignum-pred)
                   (values `(call ,preinfo ,pr ,n)
-                          'bignum ntypes #f #f)]
-                 [(predicate-implies? r 'exact-integer)
+                          bignum-pred ntypes #f #f)]
+                 [(predicate-implies? r exact-integer-pred)
                   (values `(call ,preinfo ,pr ,n)
-                          'exact-integer ntypes #f #f)]
+                          exact-integer-pred ntypes #f #f)]
                  [(predicate-implies? r flonum-pred)
                   (values `(call ,preinfo ,(lookup-primref 3 'flabs) ,n)
                           flonum-pred ntypes #f #f)]))])
@@ -1194,41 +1194,18 @@ Notes:
       (define-specialize 2 zero?
         [(n) (let ([r (get-type n)])
                (cond
-                 [(predicate-implies? r 'bignum)
-                  (values (make-seq ctxt n false-rec)
-                          false-rec ntypes #f #f)]
-                 [(predicate-implies? r 'fixnum)
-                  (values `(call ,preinfo ,(lookup-primref 3 'fxzero?) ,n)
-                          ret
-                          ntypes
-                          (pred-env-add/ref ntypes n `(quote 0) plxc)
-                          #f)]
-                 [(predicate-implies? r 'exact-integer)
-                  (values `(call ,preinfo ,(lookup-primref 3 'eq?) ,n (quote 0))
-                          ret
-                          ntypes
-                          (pred-env-add/ref ntypes n `(quote 0) plxc)
-                          (pred-env-add/not/ref ntypes n `(quote 0) plxc))]
+                 [(predicate-implies? r fixnum-pred)
+                  (fold-call/primref/shallow preinfo (lookup-primref 3 'fxzero?)
+                                             (list n) ret (list r)
+                                             ctxt ntypes oldtypes plxc)]
+                 [(predicate-implies? r exact-integer-pred)
+                  (fold-call/primref/shallow preinfo (lookup-primref 3 'eq?)
+                                             (list n `(quote 0)) ret (list r `(quote 0))
+                                             ctxt ntypes oldtypes plxc)]
                  [(predicate-implies? r flonum-pred)
-                  (values `(call ,preinfo ,(lookup-primref 3 'flzero?) ,n)
-                          ret
-                          ntypes
-                          (pred-env-add/ref ntypes n flzero-pred plxc)
-                          (pred-env-add/ref ntypes n flzero-pred plxc))]))])
-
-      (define-specialize 2 fxzero?
-        [(n) (values `(call ,preinfo ,pr ,n)
-                     ret
-                     ntypes
-                     (pred-env-add/ref ntypes n `(quote 0) plxc)
-                     (pred-env-add/not/ref ntypes n `(quote 0) plxc))])
-
-      (define-specialize 2 flzero?
-        [(n) (values `(call ,preinfo ,pr ,n)
-                     ret
-                     ntypes
-                     (pred-env-add/ref ntypes n flzero-pred plxc)
-                     (pred-env-add/not/ref ntypes n flzero-pred plxc))])
+                  (fold-call/primref/shallow preinfo (lookup-primref 3 'flzero?)
+                                             (list n) ret (list r)
+                                             ctxt ntypes oldtypes plxc)]))])
 
       (define-specialize 2 atan
         [(n) (let ([r (get-type n)])
