@@ -608,6 +608,12 @@
 (define (test-chain*/preamble l)
   (test-chain/preamble/self preamble #f l))
 
+(define (test-all-imply l* p)
+  (andmap (lambda (l) (test-chain (list l p))) l*))
+
+(define (test-all-imply* l* p)
+  (andmap (lambda (l) (test-chain* (list l p))) l*))
+
 (define (test-disjoint/preamble/self preamble check-self? l)
   (let loop ([l l])
     (if (null? l)
@@ -663,6 +669,8 @@
   (test-chain '((lambda (x) (eqv? 0.0 x)) flonum? cflonum? number?))
   (test-chain* '((lambda (x) (or (eqv? x 0.0) (eqv? x 3.14))) flonum? real? number?))
   (test-chain* '((lambda (x) (or (eq? x 0) (eqv? x 3.14))) real? number?))
+  (test-chain* '(fixnum? rational? real?))
+  (test-chain* '(flzero? rational? real?))
   (test-chain '(gensym? symbol?))
   (test-chain '((lambda (x) (eq? x 'banana)) symbol?))
   (test-chain '(not boolean?))
@@ -683,6 +691,8 @@
   (test-disjoint '(integer? ratnum?))
   (test-disjoint '((lambda (x) (eq? x 'banana)) (lambda (x) (eq? x 'apple))))
   (test-disjoint* '(list? record? vector?))
+  (test-all-imply* '(rational? finite?) 'real?)
+  (test-all-imply* '(infinite? nan? flfinite? flinfinite? flnan?) 'flonum?)
 )
 
 ; use a gensym to make expansions equivalent
@@ -918,6 +928,15 @@
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (flonum? x) (#2%integer? x)))
     '(lambda (x) (when (flonum? x) (#3%flinteger? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x) (#2%rational? x)))
+    '(lambda (x) (when (flonum? x) (#3%flfinite? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x) (#2%finite? x)))
+    '(lambda (x) (when (real? x) (#3%finite? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x) (#2%finite? x)))
+    '(lambda (x) (when (flonum? x) (#3%flfinite? x))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (fixnum? x)
                    (add1 x)))

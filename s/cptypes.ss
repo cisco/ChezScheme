@@ -1175,10 +1175,21 @@ Notes:
                   (values `(call ,preinfo ,(lookup-primref 3 'flabs) ,n)
                           flonum-pred ntypes #f #f)]))])
 
-      (define-specialize 2 integer?
-        [(n) (let ([r (get-type n)])
-               (when (predicate-implies? r flonum-pred)
-                 (fold-call/primref/shallow preinfo (lookup-primref 3 'flinteger?) (list n) ret (list r) ctxt ntypes oldtypes plxc)))])
+      (let ()
+        (define-syntax define-specialize/fl
+          (syntax-rules ()
+            [(_ lev prim flprim)
+             (define-specialize lev prim
+               [(n) (let ([r (get-type n)])
+                      (when (predicate-implies? r flonum-pred)
+                        (fold-call/primref/shallow preinfo (lookup-primref 3 'flprim) (list n) ret (list r) ctxt ntypes oldtypes plxc)))])]))
+
+        (define-specialize/fl 2 integer? flinteger?)
+        (define-specialize/fl 2 rational? flfinite?)
+        (define-specialize/fl 2 finite? flfinite?)
+        (define-specialize/fl 2 infinite? flinfinite?)
+        (define-specialize/fl 2 nan? flnan?)
+      )
 
       (define-specialize 2 zero?
         [(n) (let ([r (get-type n)])

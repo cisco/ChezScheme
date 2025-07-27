@@ -259,7 +259,7 @@
            build-pred-multiplet
            multiplet-pred-mask multiplet-pred
            number*-pred real*-pred ratnum-pred
-           flonum-pred flinteger-pred flzero-pred
+           flonum-pred flonum*-pred flinteger-pred flzero-pred
            exact*-pred inexact-pred
            exact-complex-pred inexact-complex-pred
            char-pred
@@ -333,6 +333,7 @@
     (define real*-pred (make-pred-multiplet real*-pred-mask))
     (define ratnum-pred (make-pred-multiplet ratnum-mask))
     (define flonum-pred (make-pred-multiplet flonum-pred-mask))
+    (define flonum*-pred (make-pred-multiplet flonum*-mask))
     (define flinteger-pred (make-pred-multiplet flinteger-pred-mask))
     (define flzero-pred (make-pred-multiplet flzero-mask))
     (define exact*-pred (make-pred-multiplet exact*-pred-mask))
@@ -552,16 +553,18 @@
       [maybe-flonum maybe-flonum-pred]
       [real real-pred]
       [sub-real (cons 'bottom real-pred)]
-      [rational (cons 'exact-integer real-pred)]
+      [rational (cons (predicate-union exact-real-pred flinteger-pred)
+                      real-pred)]
+      [flrational (cons flinteger-pred flonum-pred)]
+      [(infinite nan) (cons 'bottom flonum*-pred)]
       [integer integer-pred]
       [(uinteger sub-integer) (cons 'bottom integer-pred)]
+      [flinteger flinteger-pred]
       [(cflonum inexact-number) inexact-pred]
       [exact-real exact-real-pred]
       [exact-number exact-pred]
       [$inexactnum inexact-complex-pred]
       [$exactnum exact-complex-pred]
-      [integer integer-pred]
-      [flinteger flinteger-pred]
       [number number-pred]
       [sub-number (cons 'bottom number-pred)]
       [maybe-number maybe-number-pred]
