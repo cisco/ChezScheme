@@ -227,9 +227,14 @@ Notes:
          #t]
         [else #f]))
 
+    (define (result-expr e)
+      (nanopass-case (Lsrc Expr) e
+        [(seq ,e1 ,e2) e2]
+        [else e]))
+
     (define make-seq
       ; ensures that the right subtree of the output seq is not a seq if the
-      ; last argument is similarly constrained, to facilitate result-exp
+      ; last argument is similarly constrained, to facilitate result-expr
       (case-lambda
         [(ctxt e1 e2)
          (make-seq/no-drop ctxt (drop e1) e2)]
@@ -313,13 +318,21 @@ Notes:
         (cond
           [(and (null? e*) (null? r*))
            (values (reverse rev-rbefore*) (reverse rev-rvar*) (reverse rev-re*) (reverse rev-rref*))]
-          [(check-constant-is? (car r*))
+          [; a contant in r* may be eqv? but not eq? to the value
+           ; so filter numbers that are non fixnum in both platforms
+           (check-constant-is? (car r*) (lambda (x) (or (not (number? x))
+                                                        (and (fixnum? x)
+                                                             (target-fixnum? x)))))
            (loop (cons (car e*) rev-rbefore*) rev-rvar* rev-re* (cons (car r*) rev-rref*)
                  (cdr e*) (cdr r*))]
-          [(try-ref->prelex/not-assigned (car e*))
+          [; an explicit number in e* is safe to copy
+           (check-constant-is? (result-expr (car e*)) okay-to-copy?)
+           (loop (cons (car e*) rev-rbefore*) rev-rvar* rev-re* (cons (result-expr (car e*)) rev-rref*)
+                 (cdr e*) (cdr r*))]
+          [(try-ref->prelex/not-assigned (result-expr (car e*)))
            => (lambda (v)
                 (set-prelex-multiply-referenced! v #t) ; just in case it was singly referenced
-                (loop rev-rbefore* rev-rvar* rev-re* (cons (car e*) rev-rref*)
+                (loop (cons (car e*) rev-rbefore*) rev-rvar* rev-re* (cons (result-expr (car e*)) rev-rref*)
                       (cdr e*) (cdr r*)))]
           [else
            (let ([v (make-temp-prelex #t)])

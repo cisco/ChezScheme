@@ -1606,6 +1606,18 @@
                        (if (#2%fixnum? y) ;the specialization uses #2%fixnum?
                            (fxand x y)
                            (bitwise-and x y))))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (bitwise-and (begin (newline) 7) x))
+    '(lambda (x) (newline) ; ensure side effects are not duplicated
+                 (if (#2%fixnum? x) ;the specialization uses #2%fixnum?
+                     (fxand 7 x)
+                     (bitwise-and 7 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (bitwise-and 7 (begin (newline) x)))
+    '(lambda (x) (newline) ; ensure side effects are not duplicated
+                 (if (#2%fixnum? x) ;the specialization uses #2%fixnum?
+                     (fxand 7 x)
+                     (bitwise-and 7 x))))
 )
 
 (mat cptypes-unreachable
