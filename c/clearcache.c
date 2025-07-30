@@ -45,6 +45,7 @@ void S_doflush(uptr start, uptr end) {
 #ifdef S_TARGET_OS_IPHONE
   sys_icache_invalidate((void *)start, (char *)end-(char *)start);
 #else
+  extern void __clear_cache(void*, void*);
   __clear_cache((char *)start, (char *)end);
 # if defined(__clang__) && defined(__aarch64__) && !defined(__APPLE__)
   /* Seem to need an extra combination of barriers here to make up for
