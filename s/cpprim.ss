@@ -1750,12 +1750,16 @@
                         ,t))
                 (goto ,Lfalse))))])
     (define-inline 3 $fxx+
+      [() `(immediate ,(fix 0))]
+      [(e) (ensure-single-valued e)]
       [(e1 e2)
        (bind #t (e1 e2)
          (bind #f ([t (%inline +/ovfl ,e1 ,e2)])
            `(if (inline ,(make-info-condition-code 'overflow #f #t) ,%condition-code)
                 ,(build-libcall #t src sexpr + e1 e2)
-                ,t)))])
+                ,t)))]
+      [e* #f])
+
     (let ()
       (define (go src sexpr e1 e2)
         (let ([Llib (make-local-label 'Llib)])
