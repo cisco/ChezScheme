@@ -326,7 +326,7 @@ Notes:
            (loop (cons (car e*) rev-rbefore*) rev-rvar* rev-re* (cons (car r*) rev-rref*)
                  (cdr e*) (cdr r*))]
           [; an explicit number in e* is safe to copy
-           (check-constant-is? (result-expr (car e*)))
+           (check-constant-is? (result-expr (car e*)) okay-to-copy?)
            (loop (cons (car e*) rev-rbefore*) rev-rvar* rev-re* (cons (result-expr (car e*)) rev-rref*)
                  (cdr e*) (cdr r*))]
           [(try-ref->prelex/not-assigned (result-expr (car e*)))
