@@ -305,7 +305,11 @@
     (lambda (x) (run-outer x)))
 
   (define (do-load who fn situation for-import? importer ksrc)
-    (let ([ip ($open-file-input-port who fn)])
+    (let ([ip (let ([ip ($open-file-input-port who fn)])
+          (if (port-has-set-port-position!? ip)
+            (let ([data (get-bytevector-all ip)])
+              (open-bytevector-input-port data))
+            ip))])
       (on-reset (close-port ip)
         (let ([fp (let ([start-pos (port-position ip)])
                     (if (and (eqv? (get-u8 ip) (char->integer #\#))
