@@ -1187,7 +1187,7 @@ Notes:
         (define (predicate-implies-exact? r) (predicate-implies? r exact-pred))
         (define (predicate-implies-inexact? r) (predicate-implies? r inexact-pred))
 
-        (define (predicate-close/plus r*)
+        (define (predicate-close/plus r* prim)
           (cond
             [(andmap predicate-implies-exact? r*)
              (if (andmap predicate-implies-real? r*)
@@ -1211,7 +1211,8 @@ Notes:
         [x* ; x* has at least 2 arguments
             (let* ([r* (get-type x*)]
                    [ret (predicate-close/plus
-                          (map (lambda (r) (predicate-intersect r number-pred)) r*))]
+                          (map (lambda (r) (predicate-intersect r number-pred)) r*)
+                          pr)]
                    [ir (and (andmap predicate-implies-real? r*)
                             (cond
                               [(andmap predicate-implies-fixnum? r*)
@@ -1241,6 +1242,48 @@ Notes:
                                  [else
                                   `(call ,preinfo ,(lookup-primref 3 'fl+)
                                                   ,(map real-expr->flonum-expr/- x* r*) ...)])]
+                              [else
+                               #f]))])
+              (values (or ir `(call ,preinfo ,pr ,x* ...)) ret ntypes #f #f))])
+
+      (define-specialize 2 -
+        [(x) (values `(call ,preinfo ,pr ,x)
+                     (predicate-intersect (get-type x) number-pred) ntypes #f #f)]
+        [x* ; x* has at least 2 arguments
+            (let* ([r* (get-type x*)]
+                   [ret (predicate-close/plus
+                          (map (lambda (r) (predicate-intersect r number-pred)) r*)
+                          pr)]
+                   [ir (and (andmap predicate-implies-real? r*)
+                            (cond
+                              [(andmap predicate-implies-fixnum? r*)
+                               `(call ,preinfo ,(lookup-primref 3 '$fxx-) ,x* ...)]
+                              [(or ; check if the first argument is a flonum
+                                   (predicate-implies-flonum? (car r*))
+                                   (cond
+                                     [(enable-arithmetic-left-associative)
+                                      ; if they can't be reordered, check that the second
+                                      ; is a flonum
+                                      (predicate-implies-flonum? (cadr r*))]
+                                     [else
+                                      ; otherwise, checkt that all are flonums,
+                                      ; in case they are reordered
+                                      (andmap predicate-implies-flonum? (cdr r*))]))
+                               (cond
+                                 [(or (and (predicate-disjoint? (car r*) `(quote -0.0))
+                                           (predicate-disjoint? (car r*) `(quote 0)))
+                                      (ormap (lambda (r) (and (predicate-disjoint? r `(quote 0.0))
+                                                              (predicate-disjoint? r `(quote 0))))
+                                             (cdr r*)))
+                                  ; The only way to get a result -0.0 is when the first
+                                  ; argument is -0.0 and the rest are 0.0, or any of them is 0
+                                  ; because the rounding mode is never FE_DOWNWARD
+                                  `(call ,preinfo ,(lookup-primref 3 'fl-)
+                                                  ,(map real-expr->flonum-expr x* r*) ...)]
+                                 [else
+                                  `(call ,preinfo ,(lookup-primref 3 'fl-)
+                                                  ,(real-expr->flonum-expr/- (car x*) (car r*))
+                                                  ,(map real-expr->flonum-expr (cdr x*) (cdr r*)) ...)])]
                               [else
                                #f]))])
               (values (or ir `(call ,preinfo ,pr ,x* ...)) ret ntypes #f #f))])
