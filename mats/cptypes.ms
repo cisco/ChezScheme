@@ -998,7 +998,7 @@
     '(lambda (x) (when (fixnum? x)
                    (sub1 x)))
     '(lambda (x) (when (fixnum? x)
-                   (#3%$fxx+ x -1))))
+                   (#3%$fxx- x 1))))
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (when (fixnum? x)
                         (fixnum? (sub1 x))))
@@ -1018,7 +1018,7 @@
     '(lambda (x) (when (fixnum? x)
                    (1- x)))
     '(lambda (x) (when (fixnum? x)
-                   (#3%$fxx+ x -1))))
+                   (#3%$fxx- x 1))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (flonum? x)
                    (1- x)))
@@ -1028,7 +1028,7 @@
     '(lambda (x) (when (fixnum? x)
                    (-1+ x)))
     '(lambda (x) (when (fixnum? x)
-                   (#3%$fxx+ x -1))))
+                   (#3%$fxx- x 1))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (flonum? x)
                    (-1+ x)))
@@ -1044,9 +1044,9 @@
                    (abs x)))
     '(lambda (x) (when (fixnum? x)
                    (let ([t x])
-                     (if (#3%fx= t (most-negative-fixnum))
-                         (pariah (- (most-negative-fixnum)))
-                         (#3%fxabs t))))))
+                     (if (#3%fx>= t 0)
+                         t
+                         (#3%$fxx- t))))))
   (cptypes-equivalent-expansion? ; unexpected, but correct
     '(lambda (x) (when (bignum? x)
                    (bignum? (abs x))))

@@ -3095,6 +3095,7 @@
         ; to 0, but (/ 0 n) is only 0 if divisor turns out not to be 0.
         (partial-folder minus - - 0)
         (partial-folder minus fx- - 0)
+        (partial-folder minus $fxx- - 0)
         (r6rs-fixnum-partial-folder minus r6rs:fx- fx- - 0)
         (r6rs-fixnum-partial-folder minus fx-/wraparound fx-/wraparound - 0)
         (partial-folder minus fl- fl- -0.0)

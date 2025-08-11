@@ -1759,6 +1759,20 @@
                 ,(build-libcall #t src sexpr + e1 e2)
                 ,t)))]
       [e* #f])
+    (define-inline 3 $fxx-
+      [(e)
+       (bind #t (e)
+         (bind #f ([t (%inline -/ovfl (immediate ,(fix 0)) ,e)])
+           `(if (inline ,(make-info-condition-code 'overflow #f #t) ,%condition-code)
+                ,(build-libcall #t src sexpr - `(immediate ,(fix 0)) e)
+                ,t)))]
+      [(e1 e2)
+       (bind #t (e1 e2)
+         (bind #f ([t (%inline -/ovfl ,e1 ,e2)])
+           `(if (inline ,(make-info-condition-code 'overflow #f #t) ,%condition-code)
+                ,(build-libcall #t src sexpr - e1 e2)
+                ,t)))]
+      [(e1 . e*) #f])
 
     (let ()
       (define (go src sexpr e1 e2)

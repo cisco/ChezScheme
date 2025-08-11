@@ -1250,8 +1250,8 @@ Notes:
         [(n) (let ([r (get-type n)])
                (cond
                  [(predicate-implies? r fixnum-pred)
-                  (let ([delta (if (memq prim-name '(add1 1+)) 1 -1)])
-                    (values `(call ,preinfo ,(lookup-primref 3 '$fxx+) ,n (quote ,delta))
+                  (let ([fxprim-name (if (memq prim-name '(add1 1+)) '$fxx+ '$fxx-)])
+                    (values `(call ,preinfo ,(lookup-primref 3 fxprim-name) ,n (quote 1))
                             exact-integer-pred ntypes #f #f))]
                  [(predicate-implies? r exact-integer-pred)
                   (values `(call ,preinfo ,pr ,n)
@@ -1271,9 +1271,9 @@ Notes:
                   (values (build-let ctxt (list n) (list r)
                             (lambda (n*)
                               (let ([n (car n*)])
-                                `(if (call ,(make-preinfo-call) ,(lookup-primref 3 'fx=)  ,n (quote ,(constant most-negative-fixnum)))
-                                     ,(make-seq ctxt `(pariah) `(quote ,(- (constant most-negative-fixnum))))
-                                     (call ,preinfo ,(lookup-primref 3 'fxabs) ,n)))))
+                                `(if (call ,(make-preinfo-call) ,(lookup-primref 3 'fx>=)  ,n (quote 0))
+                                     ,n
+                                     (call ,preinfo ,(lookup-primref 3 '$fxx-) ,n)))))
                           exact-integer-pred ntypes #f #f)]
                  [(predicate-implies? r bignum-pred)
                   (values `(call ,preinfo ,pr ,n)
