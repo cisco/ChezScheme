@@ -1492,6 +1492,14 @@
    (lambda (p v)
       (#2%set-cdr! p v)))
 
+(define car-cas!
+  (lambda (p old-v new-v)
+    (#2%car-cas! p old-v new-v)))
+
+(define cdr-cas!
+  (lambda (p old-v new-v)
+    (#2%cdr-cas! p old-v new-v)))
+
 (define box (lambda (x) (box x)))
 
 (define box-immutable (lambda (x) (box-immutable x)))

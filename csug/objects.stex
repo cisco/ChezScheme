@@ -346,6 +346,38 @@ indiscriminately.
 \endschemedisplay
 
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{car-cas!}{\categoryprocedure}{(car-cas! \var{pair} \var{old-obj} \var{new-obj})}
+\formdef{cdr-cas!}{\categoryprocedure}{(cdr-cas! \var{pair} \var{old-obj} \var{new-obj})}
+\returns \scheme{#t} if \var{pair} is changed, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{car-cas!} and \scheme{cdr-cas!}  atomically change the content of \var{pair},
+either its \scheme{car} or \scheme{cdr} respectively, to \var{new-obj}
+if the replaced content is \scheme{eq?} to \var{old-obj}.
+If the content of \var{pair} that would be replaced is not \scheme{eq?} to \var{old-obj}, then
+\var{pair} is unchanged.
+
+On an architecture with a weak memory model, \scheme{car-cas!} and \scheme{cdr-cas!} can
+spuriously fail, leaving \var{pair} unchanged and returning
+\scheme{#f} even if the current value in \var{pair} is \var{old-obj}.
+On success, no memory ordering is implied, which means that
+\scheme{memory-order-acquire} and/or \scheme{memory-order-release} may be
+needed to complete an intended synchronization.
+
+\schemedisplay
+(define p (cons 'old-a 'old-d))
+(car-cas! p 'old-a 'new-a) ;=> #t, assuming no spurious failure
+(car p) ;=> 'new-a
+(cdr-cas! p 'old-d 'new-d) ;=> #t, assuming no spurious failure
+(cdr p) ;=> 'new-d
+(car-cas! p 'other 'wrong) ;=> #f
+(car p) ;=> 'new-a
+\endschemedisplay
+
 
 \section{Characters}
 

@@ -1138,7 +1138,9 @@ Notes:
         (define-set-immediate set-box! (b val))
         (define-set-immediate box-cas! (b old new) boolean-pred)
         (define-set-immediate set-car! (p val))
-        (define-set-immediate set-cdr! (p val)))
+        (define-set-immediate set-cdr! (p val))
+        (define-set-immediate car-cas! (p old new) boolean-pred)
+        (define-set-immediate cdr-cas! (p old new) boolean-pred))
 
       (define-specialize 2 (record? $sealed-record? record-instance? $sealed-record-instance?)
         [(val rtd) (let* ([alt-if-record (case (primref-name pr)

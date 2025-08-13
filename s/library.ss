@@ -451,6 +451,8 @@
   (define-library-entry (cdr x) (pair-oops 'cdr x))
   (define-library-entry (set-car! x y) (pair-oops 'set-car! x))
   (define-library-entry (set-cdr! x y) (pair-oops 'set-cdr! x))
+  (define-library-entry (car-cas! x y z) (pair-oops 'car-cas! x))
+  (define-library-entry (cdr-cas! x y z) (pair-oops 'cdr-cas! x))
 )
 
 (let ()

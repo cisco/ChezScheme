@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x0a030003)
+(define-constant scheme-version #x0a030004)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2890,6 +2890,8 @@
      (eqv? #f 2 #f #t)
      (set-car! #f 2 #t #t)
      (set-cdr! #f 2 #t #t)
+     (car-cas! #f 3 #t #t)
+     (cdr-cas! #f 3 #t #t)
      (caar #f 1 #t #t)
      (cadr #f 1 #t #t)
      (cdar #f 1 #t #t)

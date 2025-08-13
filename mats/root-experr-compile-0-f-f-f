@@ -699,6 +699,8 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_2.mo:Expected error in mat cdr: "cdr: 3 is not a pair".
 5_2.mo:Expected error in mat set-car!: "set-car!: a is not a pair".
 5_2.mo:Expected error in mat set-cdr!: "set-cdr!: a is not a pair".
+5_2.mo:Expected error in mat car-cas!: "car-cas!: a is not a pair".
+5_2.mo:Expected error in mat cdr-cas!: "cdr-cas!: a is not a pair".
 5_2.mo:Expected error in mat c....r-errors: "caar: incorrect list structure (a . b)".
 5_2.mo:Expected error in mat c....r-errors: "cadr: incorrect list structure (a . b)".
 5_2.mo:Expected error in mat c....r-errors: "cdar: incorrect list structure (a . b)".
