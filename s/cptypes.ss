@@ -355,6 +355,49 @@ Notes:
              [(ref ,maybe-src ,x) (and (not (prelex-assigned x)) x)]
              [else #f])))
 
+    (define (real-expr->flonum-expr x r)
+      ; Transform 0 into 0.0 as usual
+      ; Assume (predicate-implies r real-pred)
+      (cond
+        [(and (Lsrc? r)
+              (nanopass-case (Lsrc Expr) r
+                [(quote ,d) d]
+                [else #f])) =>
+         (lambda (d) (make-1seq 'value x `(quote ,(real->flonum d))))]
+        [(predicate-implies? r flonum-pred)
+         x]
+        [else
+         (let ([->flonum-name (if (predicate-implies? r fixnum-pred)
+                                  'fixnum->flonum
+                                  'real->flonum)])
+         `(call ,(make-preinfo-call) ,(lookup-primref 3 ->flonum-name) ,x))]))
+
+    (define (real-expr->flonum-expr/- x r)
+      ; Transform 0 into -0.0 instead of 0.0
+      ; Assume (predicate-implies r real-pred)
+      (cond
+        [(and (Lsrc? r)
+              (nanopass-case (Lsrc Expr) r
+                [(quote ,d) d]
+                [else #f])) =>
+         (lambda (d) (make-1seq 'value x `(quote ,(if (eqv? d 0) -0.0 (real->flonum d)))))]
+        [(predicate-implies? r flonum-pred)
+         x]
+        [else
+         (let ([->flonum-name (if (predicate-implies? r fixnum-pred)
+                                  'fixnum->flonum
+                                  'real->flonum)])
+           (cond
+             [(predicate-disjoint? r `(quote 0))
+              `(call ,(make-preinfo-call) ,(lookup-primref 3 ->flonum-name) ,x)] 
+             [else
+              (build-let 'value (list x) (list r)
+                (lambda (x*)
+                  (let ([x (car x*)])
+                    `(if (call ,(make-preinfo-call) ,(lookup-primref 3 'eqv?) ,x (quote 0))
+                         (quote -0.0)
+                         (call ,(make-preinfo-call) ,(lookup-primref 3 ->flonum-name) ,x)))))]))]))
+
     (define (filter/head+rest pred? l)
       ; (filter/head+rest odd? '(1 3 2 5 4 6))
       ; ==> (values '(1 3) '(2 5 4 6))
@@ -1135,13 +1178,123 @@ Notes:
                                   (and (eq? ctxt 'test)
                                        (pred-env-add/ref ntypes val (rtd->record-predicate rtd #t) plxc))
                                   #f)]))])
+      
+      (let ()
+        (define (predicate-implies-real? r) (predicate-implies? r real-pred))
+        (define (predicate-implies-fixnum? r) (predicate-implies? r fixnum-pred))
+        (define (predicate-implies-integer? r) (predicate-implies? r integer-pred))
+        (define (predicate-implies-flonum? r) (predicate-implies? r flonum-pred))
+        (define (predicate-implies-exact? r) (predicate-implies? r exact-pred))
+        (define (predicate-implies-inexact? r) (predicate-implies? r inexact-pred))
+
+        (define (predicate-close/plus r* prim)
+          (cond
+            [(andmap predicate-implies-exact? r*)
+             (if (andmap predicate-implies-real? r*)
+                 (if (andmap predicate-implies-integer? r*)
+                     exact-integer-pred
+                     exact-real-pred)
+                 exact-pred)]
+            [(ormap predicate-implies-inexact? r*)
+             (if (andmap predicate-implies-real? r*)
+                 flonum-pred
+                 inexact-pred)]
+            [else
+             (if (andmap predicate-implies-real? r*)
+                 real-pred
+                 number-pred)]))
+
+      (define-specialize 2 +
+        [() (values `(quote 0) `(quote 0) ntypes #f #f)]
+        [(x) (values `(call ,preinfo ,pr ,x)
+                     (predicate-intersect (get-type x) number-pred) ntypes #f #f)]
+        [x* ; x* has at least 2 arguments
+            (let* ([r* (get-type x*)]
+                   [ret (predicate-close/plus
+                          (map (lambda (r) (predicate-intersect r number-pred)) r*)
+                          pr)]
+                   [ir (and (andmap predicate-implies-real? r*)
+                            (cond
+                              [(andmap predicate-implies-fixnum? r*)
+                               `(call ,preinfo ,(lookup-primref 3 '$fxx+) ,x* ...)]
+                              [(cond
+                                 [(enable-arithmetic-left-associative)
+                                  ; if they can't be reordered, check that at least 
+                                  ; one of the first two is a flonum
+                                  (or (predicate-implies-flonum? (car r*))
+                                      (predicate-implies-flonum? (cadr r*)))]
+                                 [else
+                                  ; otherwise, checkt that all or all but one are flonums,
+                                  ; in case they are reordered
+                                  (let-values ([(head* rest*)
+                                                (filter/head+rest predicate-implies-flonum? r*)])
+                                    (or (null? rest*)
+                                        (andmap predicate-implies-flonum? (cdr rest*))))])
+                               (cond
+                                 [(ormap (lambda (r) (and (predicate-disjoint? r `(quote -0.0))
+                                                          (predicate-disjoint? r `(quote 0))))
+                                         r*)
+                                  ; If one argument is neither 0 or -0.0 it's possible
+                                  ; to replace 0 with 0.0 instead of -0.0
+                                  ; because the rounding mode is never FE_DOWNWARD
+                                  `(call ,preinfo ,(lookup-primref 3 'fl+)
+                                                  ,(map real-expr->flonum-expr x* r*) ...)]
+                                 [else
+                                  `(call ,preinfo ,(lookup-primref 3 'fl+)
+                                                  ,(map real-expr->flonum-expr/- x* r*) ...)])]
+                              [else
+                               #f]))])
+              (values (or ir `(call ,preinfo ,pr ,x* ...)) ret ntypes #f #f))])
+
+      (define-specialize 2 -
+        [(x) (values `(call ,preinfo ,pr ,x)
+                     (predicate-intersect (get-type x) number-pred) ntypes #f #f)]
+        [x* ; x* has at least 2 arguments
+            (let* ([r* (get-type x*)]
+                   [ret (predicate-close/plus
+                          (map (lambda (r) (predicate-intersect r number-pred)) r*)
+                          pr)]
+                   [ir (and (andmap predicate-implies-real? r*)
+                            (cond
+                              [(andmap predicate-implies-fixnum? r*)
+                               `(call ,preinfo ,(lookup-primref 3 '$fxx-) ,x* ...)]
+                              [(or ; check if the first argument is a flonum
+                                   (predicate-implies-flonum? (car r*))
+                                   (cond
+                                     [(enable-arithmetic-left-associative)
+                                      ; if they can't be reordered, check that the second
+                                      ; is a flonum
+                                      (predicate-implies-flonum? (cadr r*))]
+                                     [else
+                                      ; otherwise, checkt that all are flonums,
+                                      ; in case they are reordered
+                                      (andmap predicate-implies-flonum? (cdr r*))]))
+                               (cond
+                                 [(or (and (predicate-disjoint? (car r*) `(quote -0.0))
+                                           (predicate-disjoint? (car r*) `(quote 0)))
+                                      (ormap (lambda (r) (and (predicate-disjoint? r `(quote 0.0))
+                                                              (predicate-disjoint? r `(quote 0))))
+                                             (cdr r*)))
+                                  ; The only way to get a result -0.0 is when the first
+                                  ; argument is -0.0 and the rest are 0.0, or any of them is 0
+                                  ; because the rounding mode is never FE_DOWNWARD
+                                  `(call ,preinfo ,(lookup-primref 3 'fl-)
+                                                  ,(map real-expr->flonum-expr x* r*) ...)]
+                                 [else
+                                  `(call ,preinfo ,(lookup-primref 3 'fl-)
+                                                  ,(real-expr->flonum-expr/- (car x*) (car r*))
+                                                  ,(map real-expr->flonum-expr (cdr x*) (cdr r*)) ...)])]
+                              [else
+                               #f]))])
+              (values (or ir `(call ,preinfo ,pr ,x* ...)) ret ntypes #f #f))])
+      )
 
       (define-specialize 2 (add1 sub1 1+ 1- -1+)
         [(n) (let ([r (get-type n)])
                (cond
                  [(predicate-implies? r fixnum-pred)
-                  (let ([delta (if (memq prim-name '(add1 1+)) 1 -1)])
-                    (values `(call ,preinfo ,(lookup-primref 3 '$fxx+) ,n (quote ,delta))
+                  (let ([fxprim-name (if (memq prim-name '(add1 1+)) '$fxx+ '$fxx-)])
+                    (values `(call ,preinfo ,(lookup-primref 3 fxprim-name) ,n (quote 1))
                             exact-integer-pred ntypes #f #f))]
                  [(predicate-implies? r exact-integer-pred)
                   (values `(call ,preinfo ,pr ,n)
@@ -1161,9 +1314,9 @@ Notes:
                   (values (build-let ctxt (list n) (list r)
                             (lambda (n*)
                               (let ([n (car n*)])
-                                `(if (call ,(make-preinfo-call) ,(lookup-primref 3 'fx=)  ,n (quote ,(constant most-negative-fixnum)))
-                                     ,(make-seq ctxt `(pariah) `(quote ,(- (constant most-negative-fixnum))))
-                                     (call ,preinfo ,(lookup-primref 3 'fxabs) ,n)))))
+                                `(if (call ,(make-preinfo-call) ,(lookup-primref 3 'fx>=)  ,n (quote 0))
+                                     ,n
+                                     (call ,preinfo ,(lookup-primref 3 '$fxx-) ,n)))))
                           exact-integer-pred ntypes #f #f)]
                  [(predicate-implies? r bignum-pred)
                   (values `(call ,preinfo ,pr ,n)
