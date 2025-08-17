@@ -152,6 +152,12 @@ The \scheme{expt} function produces a more accurate result when its
 first argument is a flonum and its second argument is an exact integer
 that has no equivalent flonum representation.
 
+\subsection{Atomic compare-and-set for pairs (10.3.0)}
+
+The new procedures \scheme{car-cas!} and \scheme{cdr-cas!}
+atomically update a pair, analogous to \scheme{box-cas!}
+on a box.
+
 \subsection{Command-line options \scheme{--version} and \scheme{--help} write to stdout
 (10.2.0)}
 

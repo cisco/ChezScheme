@@ -3198,6 +3198,14 @@
       [(e1 e2) (build-dirty-store e1 (constant pair-car-disp) e2)])
     (define-inline 3 set-cdr!
       [(e1 e2) (build-dirty-store e1 (constant pair-cdr-disp) e2)])
+    (define-inline 3 car-cas!
+      [(e1 e2 e3)
+       (bind #t (e2)
+         (build-dirty-store e1 %zero (constant pair-car-disp) e3 (make-build-cas e2) build-cas-seq))])
+    (define-inline 3 cdr-cas!
+      [(e1 e2 e3)
+       (bind #t (e2)
+         (build-dirty-store e1 %zero (constant pair-cdr-disp) e3 (make-build-cas e2) build-cas-seq))])
     (define-inline 3 set-box!
       [(e1 e2) (build-dirty-store e1 (constant box-ref-disp) e2)])
     (define-inline 3 box-cas!
@@ -3242,6 +3250,20 @@
            `(if ,(%type-check mask-pair type-pair ,e-pair)
                 ,(build-dirty-store e-pair (constant pair-cdr-disp) e-new)
                 ,(build-libcall #t src sexpr set-cdr! e-pair e-new))))])
+    (define-inline 2 car-cas!
+      [(e-pair e-old e-new)
+       (bind #t (e-pair e-old)
+         (dirty-store-bind #t (e-new)
+           `(if ,(%type-check mask-pair type-pair ,e-pair)
+                ,(build-dirty-store e-pair %zero (constant pair-car-disp) e-new (make-build-cas e-old) build-cas-seq)
+                ,(build-libcall #t src sexpr car-cas! e-pair e-old e-new))))])
+    (define-inline 2 cdr-cas!
+      [(e-pair e-old e-new)
+       (bind #t (e-pair e-old)
+         (dirty-store-bind #t (e-new)
+           `(if ,(%type-check mask-pair type-pair ,e-pair)
+                ,(build-dirty-store e-pair %zero (constant pair-cdr-disp) e-new (make-build-cas e-old) build-cas-seq)
+                ,(build-libcall #t src sexpr cdr-cas! e-pair e-old e-new))))])
     (define-inline 3 $set-symbol-hash!
       ; no need for dirty store---e2 should be a fixnum
       [(e1 e2) `(set! ,(%mref ,e1 ,(constant symbol-hash-disp)) ,e2)])

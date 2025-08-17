@@ -1213,7 +1213,9 @@
   (call-in-continuation [sig [(ptr procedure) -> (ptr ...)] [(ptr continuation-marks procedure) -> (ptr ...)]] [flags])
   (call-with-input-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])      ; has options argument
   (call-with-output-file [sig [(pathname procedure) (pathname procedure sub-ptr) -> (ptr ...)]] [flags ieee r5rs])     ; has options argument
-  (call-with-immediate-continuation-mark [sig [(ptr ptr procedure) -> (ptr ...)] [(ptr procedure) -> (ptr ...)]] [flags])
+  (call-with-immediate-continuation-mark [sig [(ptr ptr procedure) -> (ptr ...)] [(ptr procedure) -> (ptr ...)]] [flags])  
+  (car-cas! [sig [((ptr . ptr) ptr ptr) -> (boolean)]] [flags cptypes2])
+  (cdr-cas! [sig [((ptr . ptr) ptr ptr) -> (boolean)]] [flags cptypes2])
   (cfl* [sig [(cflonum ...) -> (cflonum)]] [flags arith-op partial-folder safeongoodargs])
   (cfl+ [sig [(cflonum ...) -> (cflonum)]] [flags arith-op partial-folder safeongoodargs])
   (cfl- [sig [(cflonum cflonum ...) -> (cflonum)]] [flags arith-op partial-folder safeongoodargs])
