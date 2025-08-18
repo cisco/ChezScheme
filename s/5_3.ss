@@ -3433,7 +3433,7 @@
     (let ()
       (define (fxextract n start end)
         (fxand (fxsrl n start)
-               (fx- (fxsll 1 (fx- end start)) 1)))
+               (fx-/wraparound (fxsll/wraparound 1 (fx- end start)) 1)))
       (cond
         [(fx<= end (constant positive-fixnum-bits))
          (fxextract (flbit-field x 0 (constant positive-fixnum-bits)) start end)]
