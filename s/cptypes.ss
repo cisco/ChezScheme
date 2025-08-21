@@ -1032,30 +1032,28 @@ Notes:
         (define-syntax define-specialize/fxfl
           (syntax-rules ()
             [(_ lev prim fxprim flprim)
-             (define-specialize/fxfl lev prim fxprim flprim #t)]
-            [(_ lev prim fxprim flprim boolean?)
+             (define-specialize/fxfl lev prim fxprim flprim #f)]
+            [(_ lev prim fxprim flprim ret)
              (define-specialize lev prim
                ; Arity is checked before calling this handle.
-               [e* (let ([r* (get-type e*)])
-                     (cond
-                       [(andmap (lambda (r) (predicate-implies? r fixnum-pred)) r*)
-                        (let ([pr (lookup-primref 3 'fxprim)])
-                          (values `(call ,preinfo ,pr ,e* (... ...))
-                                  (if boolean? boolean-pred fixnum-pred)
-                                  ntypes #f #f))]
-                       [(andmap (lambda (r) (predicate-implies? r flonum-pred)) r*)
-                        (let ([pr (lookup-primref 3 'flprim)])
-                          (values `(call ,preinfo ,pr ,e* (... ...))
-                                  (if boolean? boolean-pred flonum-pred)
-                                  ntypes #f #f))]))])]))
+               [e* (let* ([r* (get-type e*)]
+                          [pr (cond
+                                [(andmap (lambda (r) (predicate-implies? r fixnum-pred)) r*)
+                                 (lookup-primref 3 'fxprim)]
+                                [(andmap (lambda (r) (predicate-implies? r flonum-pred)) r*)
+                                 (lookup-primref 3 'flprim)]
+                                [else #f])])
+                     (when pr
+                       (fold-call/primref/shallow preinfo pr e* ret r* ctxt ntypes oldtypes plxc)))])]))
 
         (define-specialize/fxfl 2 (< r6rs:<) fx< fl<)
         (define-specialize/fxfl 2 (<= r6rs:<=) fx<= fl<=)
         (define-specialize/fxfl 2 (= r6rs:=) fx= fl=)
         (define-specialize/fxfl 2 (> r6rs:>) fx> fl>)
         (define-specialize/fxfl 2 (>= r6rs:>=) fx>= fl>=)
-        (define-specialize/fxfl 2 min fxmin flmin #f)
-        (define-specialize/fxfl 2 max fxmax flmax #f)
+        (define-specialize/fxfl 2 min fxmin flmin)
+        (define-specialize/fxfl 2 max fxmax flmax)
+        (define-specialize/fxfl 2 real->flonum fixnum->flonum fl+)
       )
 
       (let ()
@@ -1347,6 +1345,61 @@ Notes:
         (define-specialize/fl 2 nan? flnan?)
       )
 
+      (define-specialize 2 $real->flonum
+        [(n w) (let ([rn (get-type n)]
+                     [rw (get-type w)])
+                 (when (predicate-implies? rw maybe-symbol-pred)
+                   (let ([pr (cond
+                               [(predicate-implies? rn fixnum-pred)
+                                (lookup-primref 3 'fixnum->flonum)]
+                               [(predicate-implies? rn flonum-pred)
+                                (lookup-primref 3 'fl+)]
+                               [else #f])])
+                     (when pr
+                       (let-values ([(ir ret ntypes ttypes ftypes)
+                                     (fold-call/primref/shallow preinfo pr (list n) ret (list rn) ctxt ntypes oldtypes plxc)])
+                         (values (make-seq ctxt w ir)
+                                 ret ntypes ttypes ftypes))))))])
+
+      (define-specialize 2 (inexact exact->inexact)
+        [(n) (let ([r (get-type n)])
+               (let ([pr (cond
+                           [(predicate-implies? r real-pred)
+                            (lookup-primref 3 'real->flonum)]
+                           [(predicate-implies? r inexact-pred)
+                            (lookup-primref 3 '$value)]
+                           [else #f])])
+                 (when pr
+                   (fold-call/primref/shallow preinfo pr (list n) ret (list r) ctxt ntypes oldtypes plxc))))])
+
+      (define-specialize 2 (exact inexact->exact)
+        [(n) (let* ([r (get-type n)]
+                    [pr ; exact is not safeongoodargs
+                        (if (and (fx= level 2)
+                                 (predicate-implies? r subset-of-complex-rational-pred))
+                            (primref->unsafe-primref pr)
+                            pr)])
+               (cond
+                [(predicate-implies? r exact-pred)
+                 (fold-call/primref/shallow preinfo (lookup-primref 3 '$value) (list n) ret (list r) ctxt ntypes oldtypes plxc)]
+                [else
+                 (let ([r (predicate-intersect r number-pred)])
+                   (cond
+                     [(predicate-implies? r zero-pred)
+                      (wrap/result ctxt `(call ,preinfo ,pr ,n) `(quote 0) ntypes)]
+                     [(predicate-implies? r real-pred)
+                      (values `(call ,preinfo ,pr ,n) exact-real-pred ntypes #f #f)]
+                     [else
+                      (values `(call ,preinfo ,pr ,n) ret ntypes #f #f)]))]))])
+
+      (define-specialize 2 ($value values)
+        ; try to change $value to fl+, to allow flonum unboxing
+        [(n) (let ([r (get-type n)])
+               (if (predicate-implies? r flonum-pred)
+                  (values `(call ,preinfo ,(lookup-primref 3 'fl+) ,n)
+                          r ntypes #f #f)
+                  (values `(call ,preinfo ,pr ,n) (or r ptr-pred) ntypes #f #f)))])
+
       (define-specialize 2 zero?
         [(n) (let ([r (get-type n)])
                (cond
@@ -1537,7 +1590,7 @@ Notes:
   ; to apply the special cases and handlers of the new primivive.
   ; This does not call the hanldlers defined usind define-specialize/unrestricted
   (define (fold-call/primref/shallow preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
-    (fold-primref/try-unsafe preinfo pr e* ret r* ctxt ntypes oldtypes plxc))
+    (fold-primref/add-ret preinfo pr e* ret r* ctxt ntypes oldtypes plxc))
 
   (define (fold-primref/unrestricted preinfo pr e* ctxt oldtypes plxc)
     (let* ([flags (primref-flags pr)]
@@ -1572,8 +1625,11 @@ Notes:
            (values (make-seq ctxt (make-seq* 'effect e*) void-rec)
                    'bottom pred-env-bottom #f #f))]
          [else
-          (let ([ret (primref->result-predicate pr (length e*))])
-            (fold-primref/try-unsafe preinfo pr e* ret r* ctxt ntypes oldtypes plxc))])))
+          (fold-primref/add-ret preinfo pr e* #f r* ctxt ntypes oldtypes plxc)])))
+
+  (define (fold-primref/add-ret preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
+    (let ([ret (predicate-intersect ret (primref->result-predicate pr (length e*)))])
+      (fold-primref/try-unsafe preinfo pr e* ret r* ctxt ntypes oldtypes plxc)))
 
   (define (fold-primref/try-unsafe preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
     (let* ([unsafe (all-set? (prim-mask unsafe) (primref-flags pr))]

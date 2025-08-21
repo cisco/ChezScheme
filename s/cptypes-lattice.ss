@@ -68,12 +68,15 @@
    flonum-pred
    real-pred
    number-pred
+   zero-pred
    flzero-pred
    flinteger-pred
    exact-real-pred
    exact-pred
    inexact-pred
    integer-pred
+   subset-of-rational-pred
+   subset-of-complex-rational-pred
    $fixmediate-pred
    $list-pred ; immutable lists
    list-pair-pred
@@ -579,8 +582,7 @@
       [maybe-flonum maybe-flonum-pred]
       [real real-pred]
       [sub-real (cons 'bottom real-pred)]
-      [rational (cons (predicate-union exact-real-pred flinteger-pred)
-                      real-pred)]
+      [rational (cons subset-of-rational-pred real-pred)]
       [flrational (cons flinteger-pred flonum-pred)]
       [(infinite nan) (cons 'bottom flonum**-pred)]
       [integer integer-pred]
@@ -1493,6 +1495,8 @@
   (define maybe-number-pred (maybe number-pred))
   (define zero-pred (predicate-union (predicate-union flzero-pred inexact-complex-zero-pred)
                                      fxzero-rec))
+  (define subset-of-rational-pred (predicate-union exact-real-pred flinteger-pred))
+  (define subset-of-complex-rational-pred (predicate-union subset-of-rational-pred inexact-complex-zero-pred))
   (define maybe-symbol-pred (maybe symbol-pred))
   (define maybe-procedure-pred (maybe 'procedure))
   (define vector-pred (predicate-union null-vector-pred vector*-pred))

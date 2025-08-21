@@ -437,7 +437,7 @@
 (define-library-entry (real->flonum x who)
   (cond
     [(fixnum? x) (fixnum->flonum x)]
-    [(or (bignum? x) (ratnum? x)) (inexact x)]
+    [(or (bignum? x) (ratnum? x)) (#2%$real->flonum x who)]
     [(flonum? x) x]
     [else ($oops who "~s is not a real number" x)]))
 
