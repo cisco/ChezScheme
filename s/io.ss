@@ -310,6 +310,9 @@ implementation notes:
   (define $get-fd-pos
     (foreign-procedure "(cs)get_fd_pos"
       (scheme-object boolean) scheme-object))
+  (define $fd-can-set-position
+    (foreign-procedure "(cs)fd_can_set_position"
+      (scheme-object) scheme-object))
   (define $get-fd-nonblocking
     (foreign-procedure "(cs)get_fd_non_blocking"
       (scheme-object boolean) scheme-object))
@@ -3258,6 +3261,13 @@ implementation notes:
            (if maybe-transcoder
                (transcoded-port binary-port maybe-transcoder)
                binary-port))]))
+
+    (set-who! $fd-input-port-can-set-position?
+      (lambda (ip)
+        (let ([r ($fd-can-set-position ($port-info ip))])
+          (if (boolean? r)
+              r
+              (port-oops who ip r)))))
 
     (let ()
       (define s-process (foreign-procedure "(cs)s_process" (string boolean) scheme-object))
