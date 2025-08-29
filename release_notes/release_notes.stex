@@ -2868,6 +2868,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Exit with failure on error from boot file (10.3.0)}
+
+When an error is encountered within a boot file---either raised
+explicitly by the boot file's code or due to certain kinds of problems
+with a boot file's content---then exit with a non-0 code (meaning
+failure) instead of a 0 exit code.
+
 \subsection{Respect constraint on \scheme{make-record-constructor-descriptor} (10.2.0)}
 
 The source optimizer (cp0) overlooked the constraint that, when forming a
