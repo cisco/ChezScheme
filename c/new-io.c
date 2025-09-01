@@ -703,6 +703,20 @@ ptr S_set_fd_pos(ptr file, ptr pos, IBOOL gzflag) {
   }
 }
 
+ptr S_fd_can_set_pos(ptr file) {
+  OFF_T offset = LSEEK(GET_FD(file), 0, SEEK_CUR);
+
+  if (offset != -1) {
+    if (LSEEK(GET_FD(file), offset, SEEK_SET) == offset)
+      return Strue;
+  }
+
+  if (errno == ESPIPE)
+    return Sfalse;
+
+  return S_strerror(errno);
+}
+
 ptr S_get_fd_non_blocking(WIN32_UNUSED ptr file, WIN32_UNUSED IBOOL gzflag) {
 #ifdef WIN32
   return Sfalse;

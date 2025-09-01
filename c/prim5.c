@@ -1828,6 +1828,7 @@ void S_prim5_init(void) {
     Sforeign_symbol("(cs)put_byte", (void*)S_put_byte);
     Sforeign_symbol("(cs)get_fd_pos", (void*)S_get_fd_pos);
     Sforeign_symbol("(cs)set_fd_pos", (void*)S_set_fd_pos);
+    Sforeign_symbol("(cs)fd_can_set_position", (void*)S_fd_can_set_pos);
     Sforeign_symbol("(cs)get_fd_non_blocking", (void*)S_get_fd_non_blocking);
     Sforeign_symbol("(cs)set_fd_non_blocking", (void*)S_set_fd_non_blocking);
     Sforeign_symbol("(cs)get_fd_length", (void*)S_get_fd_length);

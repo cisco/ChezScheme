@@ -2016,6 +2016,7 @@
   ($fasl-table [flags single-valued])
   ($fasl-to-vfasl [flags single-valued])
   ($fasl-wrf-graph [flags single-valued])
+  ($fd-input-port-can-set-position? [flags single-valued])
   ($filter-conv [flags single-valued])
   ($filter-foreign-type [flags single-valued])
   ($fixed-path? [sig [(string) -> (boolean)]] [flags pure safeongoodargs])
