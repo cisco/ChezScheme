@@ -664,7 +664,7 @@
 
   (set! reset-handler
     ($make-thread-parameter
-      (lambda () (c-exit 0))
+      (lambda () (c-exit -1)) ; error during load of boot file uses this handler
       (lambda (v)
         (unless (procedure? v)
           ($oops 'reset-handler "~s is not a procedure" v))

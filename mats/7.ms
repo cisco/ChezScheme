@@ -1068,12 +1068,17 @@
            (lambda ()
              (pretty-print '(display "hello 5\n")))
            '(replace))
+         (with-output-to-file "testfile-6.ss"
+           (lambda ()
+             (pretty-print '(error 'boot "fail")))
+           '(replace))
          (parameterize ([optimize-level 2])
            (compile-script "testfile-1")
            (compile-script "testfile-2")
            (compile-file "testfile-3")
            (compile-file "testfile-4")
-           (compile-file "testfile-5")))
+           (compile-file "testfile-5")
+           (compile-file "testfile-6")))
        (void))
   (equal?
     (begin
@@ -1180,6 +1185,14 @@
           (unless (eof-object? err) (error 'bootfile-test2 err))
           out)))
     "#<code>\n"))
+  ;; make sure an error from a boot file exits with a non-0 exit code
+  (not (equal?
+        (begin
+          (parameterize ([optimize-level 2])
+            (make-boot-file "testfile.boot" '("petite")
+                            "testfile-6.so"))
+          (system (format "~a -b ./testfile.boot -q" (patch-exec-path *scheme*))))
+        0))
 )
 
 (mat hostop
