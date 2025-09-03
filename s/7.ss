@@ -305,7 +305,12 @@
     (lambda (x) (run-outer x)))
 
   (define (do-load who fn situation for-import? importer ksrc)
-    (let ([ip ($open-file-input-port who fn)])
+    (let* ([file-ip ($open-file-input-port who fn)]
+           [ip (if ($fd-input-port-can-set-position? file-ip)
+                   file-ip
+                   (let ([bv-ip (open-bytevector-input-port (get-bytevector-all file-ip))])
+                     (close-port file-ip)
+                     bv-ip))])
       (on-reset (close-port ip)
         (let ([fp (let ([start-pos (port-position ip)])
                     (if (and (eqv? (get-u8 ip) (char->integer #\#))
@@ -659,7 +664,7 @@
 
   (set! reset-handler
     ($make-thread-parameter
-      (lambda () (c-exit 0))
+      (lambda () (c-exit -1)) ; error during load of boot file uses this handler
       (lambda (v)
         (unless (procedure? v)
           ($oops 'reset-handler "~s is not a procedure" v))

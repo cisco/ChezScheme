@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x0a030001)
+(define-constant scheme-version #x0a030004)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2890,6 +2890,8 @@
      (eqv? #f 2 #f #t)
      (set-car! #f 2 #t #t)
      (set-cdr! #f 2 #t #t)
+     (car-cas! #f 3 #t #t)
+     (cdr-cas! #f 3 #t #t)
      (caar #f 1 #t #t)
      (cadr #f 1 #t #t)
      (cdar #f 1 #t #t)
@@ -2983,6 +2985,8 @@
      (bytevector-ieee-double-native-ref #f 2 #t #t)
      (bytevector-ieee-double-native-set! #f 2 #t #t)
      (real->flonum #f 2 #f #t)
+     (exact? #f 1 #t #t)
+     (inexact? #f 1 #t #t)
      (unsafe-port-eof? #f 1 #f #t)
      (unsafe-lookahead-u8 #f 1 #f #t)
      (unsafe-unget-u8 #f 2 #f #t)

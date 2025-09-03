@@ -266,6 +266,7 @@ extern ptr S_put_byte(ptr file, INT byte, IBOOL gzflag);
 
 extern ptr S_get_fd_pos(ptr file, IBOOL gzflag);
 extern ptr S_set_fd_pos(ptr file, ptr pos, IBOOL gzflag);
+extern ptr S_fd_can_set_pos(ptr file);
 extern ptr S_get_fd_non_blocking(ptr file, IBOOL gzflag);
 extern ptr S_set_fd_non_blocking(ptr file, IBOOL x, IBOOL gzflag);
 extern ptr S_get_fd_length(ptr file, IBOOL gzflag);

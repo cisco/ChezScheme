@@ -346,6 +346,38 @@ indiscriminately.
 \endschemedisplay
 
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{car-cas!}{\categoryprocedure}{(car-cas! \var{pair} \var{old-obj} \var{new-obj})}
+\formdef{cdr-cas!}{\categoryprocedure}{(cdr-cas! \var{pair} \var{old-obj} \var{new-obj})}
+\returns \scheme{#t} if \var{pair} is changed, \scheme{#f} otherwise
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{car-cas!} and \scheme{cdr-cas!}  atomically change the content of \var{pair},
+either its \scheme{car} or \scheme{cdr} respectively, to \var{new-obj}
+if the replaced content is \scheme{eq?} to \var{old-obj}.
+If the content of \var{pair} that would be replaced is not \scheme{eq?} to \var{old-obj}, then
+\var{pair} is unchanged.
+
+On an architecture with a weak memory model, \scheme{car-cas!} and \scheme{cdr-cas!} can
+spuriously fail, leaving \var{pair} unchanged and returning
+\scheme{#f} even if the current value in \var{pair} is \var{old-obj}.
+On success, no memory ordering is implied, which means that
+\scheme{memory-order-acquire} and/or \scheme{memory-order-release} may be
+needed to complete an intended synchronization.
+
+\schemedisplay
+(define p (cons 'old-a 'old-d))
+(car-cas! p 'old-a 'new-a) ;=> #t, assuming no spurious failure
+(car p) ;=> 'new-a
+(cdr-cas! p 'old-d 'new-d) ;=> #t, assuming no spurious failure
+(cdr p) ;=> 'new-d
+(car-cas! p 'other 'wrong) ;=> #f
+(car p) ;=> 'new-a
+\endschemedisplay
+
 
 \section{Characters}
 
@@ -788,6 +820,38 @@ themselves are not copied.
 
 (let ([v '#(a b c)])
   (eq? v (vector-copy v))) ;=> #f
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{vector-copy!}{\categoryprocedure}{(vector-copy! \var{src} \var{src-start} \var{dst} \var{dst-start} \var{n})}
+\returns unspecified
+\listlibraries
+\endnoskipentryheader
+
+\noindent
+\var{src} and \var{dst} must be vectors.
+\var{src-start}, \var{dst-start}, and \var{n} must be exact nonnegative
+integers.
+The sum of \var{src-start} and \var{n} must not exceed the length of \var{src},
+and the sum of \var{dst-start} and \var{n} must not exceed the length of \var{dst}.
+
+\scheme{vector-copy!} overwrites the \var{n} elements of \var{dst}
+starting at \var{dst-start} with the \var{n} elements of \var{src}
+starting at \var{src-start}.
+This works even if \var{dst} is the same vector as \var{src} and the
+source and destination locations overlap.
+That is, the destination is filled with the elements that appeared at the
+source before the operation began.
+
+\schemedisplay
+(let ([src (vector 1 2 3)] [dest (vector 0 0 0)])
+  (vector-copy! src 1 dest 0 2)
+  dest) ;=> #(2 3 0)
+
+(let ([v (vector 1 2 3)])
+  (vector-copy! v 1 v 0 2)
+  v) ;=> #(2 3 3)
 \endschemedisplay
 
 %----------------------------------------------------------------------------

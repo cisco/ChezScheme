@@ -3253,7 +3253,7 @@
              (define (bad-vector)
                ($oops who "not a valid pseudo-random generator state vector ~s" v))
              (define (int->double i)
-               (unless (and (exact? i) (integer? i)) (bad-vector))
+               (unless (and (integer? i) (exact? i)) (bad-vector))
                (exact->inexact i))
              (unless (and (vector? v) (= 6 (vector-length v))) (bad-vector))
              (let ([x10 (int->double (vector-ref v 0))]
@@ -3433,7 +3433,7 @@
     (let ()
       (define (fxextract n start end)
         (fxand (fxsrl n start)
-               (fx- (fxsll 1 (fx- end start)) 1)))
+               (fx-/wraparound (fxsll/wraparound 1 (fx- end start)) 1)))
       (cond
         [(fx<= end (constant positive-fixnum-bits))
          (fxextract (flbit-field x 0 (constant positive-fixnum-bits)) start end)]

@@ -116,17 +116,30 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Support for setting the default history file location using the \scheme{CHEZSCHEME_HISTORY} environment variable}
+\subsection{In-place vector copying (10.3.0)}
+
+The \scheme{vector-copy!} procedure copies a subsequence
+from one vector to another, just like \scheme{fxvector-copy!} and others.
+
+\subsection{New \scheme{CHEZSCHEME_HISTORY} environment variable (10.3.0)}
 
 If the environment variable \scheme{CHEZSCHEME_HISTORY} is set during
 startup, and the \scheme{--eehistory} command-line option isn't used,
 the value of said environment variable will determine the history file
 location that will be used.
 
+\subsection{Inlined numeric predicates during compilation (10.3.0)}
+
+The compiler inlines more numeric predicates during the compilation,
+in particular \scheme{real?}, \scheme{rational?}, \scheme{exact?}
+and \scheme{inexact?}, .
+
 \subsection{Type recovery improvements (10.3.0)}
 
 The type recovery pass has improved support for \scheme{cfl+} and
-similar functions.
+similar functions. Also improve the support of predicates, in
+particular integer?, zero? and similar predicates.
+Also, add suport for \scheme{+} abd \scheme{-}.
 
 \subsection{Unicode 16.0.0 support (10.3.0)}
 
@@ -138,6 +151,12 @@ and Unicode-related bytevector operations have now been updated to Unicode 16.0.
 The \scheme{expt} function produces a more accurate result when its
 first argument is a flonum and its second argument is an exact integer
 that has no equivalent flonum representation.
+
+\subsection{Atomic compare-and-set for pairs (10.3.0)}
+
+The new procedures \scheme{car-cas!} and \scheme{cdr-cas!}
+atomically update a pair, analogous to \scheme{box-cas!}
+on a box.
 
 \subsection{Command-line options \scheme{--version} and \scheme{--help} write to stdout
 (10.2.0)}
@@ -2848,6 +2867,13 @@ in fasl files does not generally make sense.
 
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
+
+\subsection{Exit with failure on error from boot file (10.3.0)}
+
+When an error is encountered within a boot file---either raised
+explicitly by the boot file's code or due to certain kinds of problems
+with a boot file's content---then exit with a non-0 code (meaning
+failure) instead of a 0 exit code.
 
 \subsection{Respect constraint on \scheme{make-record-constructor-descriptor} (10.2.0)}
 

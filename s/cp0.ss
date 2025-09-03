@@ -3077,6 +3077,7 @@
         ; the multiply case.  maybe shouldn't bother with nans anyway.
         (partial-folder plus + + 0 generic-nan?)
         (partial-folder plus fx+ + 0 (lambda (x) #f) 3)
+        (partial-folder plus $fxx+ + 0 (lambda (x) #f))
         (r6rs-fixnum-partial-folder plus r6rs:fx+ fx+ + 0 (lambda (x) #f) 3)
         (r6rs-fixnum-partial-folder plus fx+/wraparound fx+/wraparound + 0 (lambda (x) #f) 3)
         (partial-folder plus fl+ fl+ -0.0 fl-nan? #f obviously-fl?)
@@ -3094,6 +3095,7 @@
         ; to 0, but (/ 0 n) is only 0 if divisor turns out not to be 0.
         (partial-folder minus - - 0)
         (partial-folder minus fx- - 0)
+        (partial-folder minus $fxx- - 0)
         (r6rs-fixnum-partial-folder minus r6rs:fx- fx- - 0)
         (r6rs-fixnum-partial-folder minus fx-/wraparound fx-/wraparound - 0)
         (partial-folder minus fl- fl- -0.0)

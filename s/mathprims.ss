@@ -524,10 +524,49 @@
        (#3%$fxu< x y)))
 
    (set! $fxx+
-     (lambda (x y)
-       (unless (fixnum? x) (fxargerr '$fxx+ x))
-       (unless (fixnum? y) (fxargerr '$fxx+ y))
-       (#3%$fxx+ x y)))
+     (case-lambda
+       [(x1 x2)
+        (unless (fixnum? x1) (fxargerr '$fxx+ x1))
+        (unless (fixnum? x2) (fxargerr '$fxx+ x2))
+        (#3%$fxx+ x1 x2)]
+       [(x1 x2 x3)
+        (unless (fixnum? x1) (fxargerr '$fxx+ x1))
+        (unless (fixnum? x2) (fxargerr '$fxx+ x2))
+        (unless (fixnum? x3) (fxargerr '$fxx+ x3))
+         (#3%+ (#3%$fxx+ x1 x2) x3)]
+       [(x1 x2 x3 . rest)
+        (unless (fixnum? x1) (fxargerr '$fxx+ x1))
+        (unless (fixnum? x2) (fxargerr '$fxx+ x2))
+        (let loop ([x1 (#3%$fxx+ x1 x2)] [x3 x3] [rest rest])
+          (unless (fixnum? x3) (fxargerr '$fxx+ x3))
+            (let ([x (#3%+ x1 x3)])
+               (if (null? rest) x (loop x (car rest) (cdr rest)))))]
+       [(x1)
+        (unless (fixnum? x1) (fxargerr '$fxx+ x1))
+        x1]
+       [() 0]))
+
+   (set! $fxx-
+     (case-lambda
+       [(x1 x2)
+        (unless (fixnum? x1) (fxargerr '$fxx- x1))
+        (unless (fixnum? x2) (fxargerr '$fxx- x2))
+        (#3%$fxx- x1 x2)]
+       [(x1 x2 x3)
+        (unless (fixnum? x1) (fxargerr '$fxx- x1))
+        (unless (fixnum? x2) (fxargerr '$fxx- x2))
+        (unless (fixnum? x3) (fxargerr '$fxx- x3))
+         (#3%- (#3%$fxx- x1 x2) x3)]
+       [(x1 x2 x3 . rest)
+        (unless (fixnum? x1) (fxargerr '$fxx- x1))
+        (unless (fixnum? x2) (fxargerr '$fxx- x2))
+        (let loop ([x1 (#3%$fxx- x1 x2)] [x3 x3] [rest rest])
+          (unless (fixnum? x3) (fxargerr '$fxx- x3))
+            (let ([x (#3%- x1 x3)])
+               (if (null? rest) x (loop x (car rest) (cdr rest)))))]
+       [(x1)
+        (unless (fixnum? x1) (fxargerr '$fxx- x1))
+        (#3%$fxx- x1)]))
 
    (define-addop fxlogand)
    (define-addop fxlogior)

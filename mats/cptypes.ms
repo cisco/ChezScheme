@@ -59,6 +59,23 @@
                      #;[optimize-level (max (optimize-level) 2)])
         (expand/optimize y)))]))
 
+(define-syntax cptypes/first-equivalent-expansion?
+  ; When run-cp0 is call, use first #3%$cptypes and
+  ; then twice the cp0 function provided.
+  ; This checks that cptypes.ss doesn't mess up unusual combinations
+  ; that are reduced by cp0.
+  (syntax-rules ()
+    [(_ x y)
+     (equivalent-expansion?
+      (parameterize ([run-cp0 (lambda (cp0 c) (cp0 (cp0 (#3%$cptypes c))))]
+                     [#%$suppress-primitive-inlining #f]
+                     #;[optimize-level (max (optimize-level) 2)])
+        (expand/optimize x))
+      (parameterize ([run-cp0 (lambda (cp0 c) (cp0 (cp0 (#3%$cptypes c))))]
+                     [#%$suppress-primitive-inlining #f]
+                     #;[optimize-level (max (optimize-level) 2)])
+        (expand/optimize y)))]))
+
 (mat cptypes-handcoded
   (cptypes-equivalent-expansion?
     '(vector? (vector))  ;actually reduced by folding, not cptypes 
@@ -608,6 +625,12 @@
 (define (test-chain*/preamble l)
   (test-chain/preamble/self preamble #f l))
 
+(define (test-all-imply l* p)
+  (andmap (lambda (l) (test-chain (list l p))) l*))
+
+(define (test-all-imply* l* p)
+  (andmap (lambda (l) (test-chain* (list l p))) l*))
+
 (define (test-disjoint/preamble/self preamble check-self? l)
   (let loop ([l l])
     (if (null? l)
@@ -658,11 +681,14 @@
   (test-chain* '(fixnum? integer? real?))
   (test-chain* '(fixnum? exact? number?)) ; exact? may raise an error
   (test-chain* '(bignum? exact? number?)) ; exact? may raise an error
+  (test-chain '(fixnum? (lambda (x) (and (integer? x) (exact? x))) (lambda (x) (and (number? x) (exact? x))) number?))
   (test-chain '((lambda (x) (eqv? x (expt 256 100))) bignum? integer? real? number?))
   (test-chain '((lambda (x) (eqv? 0.0 x)) flonum? real? number?))
   (test-chain '((lambda (x) (eqv? 0.0 x)) flonum? cflonum? number?))
   (test-chain* '((lambda (x) (or (eqv? x 0.0) (eqv? x 3.14))) flonum? real? number?))
   (test-chain* '((lambda (x) (or (eq? x 0) (eqv? x 3.14))) real? number?))
+  (test-chain* '(fixnum? rational? real?))
+  (test-chain* '(flzero? rational? real?))
   (test-chain '(gensym? symbol?))
   (test-chain '((lambda (x) (eq? x 'banana)) symbol?))
   (test-chain '(not boolean?))
@@ -683,6 +709,8 @@
   (test-disjoint '(integer? ratnum?))
   (test-disjoint '((lambda (x) (eq? x 'banana)) (lambda (x) (eq? x 'apple))))
   (test-disjoint* '(list? record? vector?))
+  (test-all-imply* '(rational? finite?) 'real?)
+  (test-all-imply* '(infinite? nan? flfinite? flinfinite? flnan?) 'flonum?)
 )
 
 ; use a gensym to make expansions equivalent
@@ -900,6 +928,15 @@
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (fixnum? x) (fxzero? x)))
     '(lambda (x) (when (fixnum? x) (#3%fxzero? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (if (zero? x) (zero? x) (zero? x)))
+    '(lambda (x) (if (zero? x) #t #f)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (if (flzero? x) (or (eqv? x -0.0) (eqv? x 0.0)) (or (eqv? x -0.0) (eqv? x 0.0))))
+    '(lambda (x) (if (flzero? x) #t #f)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x) (if (or (eqv? x -0.0) (eqv? x 0.0)) (flzero? x) (flzero? x))))
+    '(lambda (x) (when (flonum? x) (if (or (eqv? x -0.0) (eqv? x 0.0)) #t #f))))
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (when (number? x) (#2%odd? x)))
          '(lambda (x) (when (number? x) (#3%odd? x)))))
@@ -909,6 +946,24 @@
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (#2%exact? x))
          '(lambda (x) (#3%exact? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x) (integer? x)))
+    '(lambda (x) (when (fixnum? x) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (null? x) (integer? x)))
+    '(lambda (x) (when (null? x) #f)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x) (#2%integer? x)))
+    '(lambda (x) (when (flonum? x) (#3%flinteger? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x) (#2%rational? x)))
+    '(lambda (x) (when (flonum? x) (#3%flfinite? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x) (#2%finite? x)))
+    '(lambda (x) (when (real? x) (#3%finite? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x) (#2%finite? x)))
+    '(lambda (x) (when (flonum? x) (#3%flfinite? x))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (fixnum? x)
                    (add1 x)))
@@ -943,7 +998,7 @@
     '(lambda (x) (when (fixnum? x)
                    (sub1 x)))
     '(lambda (x) (when (fixnum? x)
-                   (#3%$fxx+ x -1))))
+                   (#3%$fxx- x 1))))
   (not (cptypes-equivalent-expansion?
          '(lambda (x) (when (fixnum? x)
                         (fixnum? (sub1 x))))
@@ -963,7 +1018,7 @@
     '(lambda (x) (when (fixnum? x)
                    (1- x)))
     '(lambda (x) (when (fixnum? x)
-                   (#3%$fxx+ x -1))))
+                   (#3%$fxx- x 1))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (flonum? x)
                    (1- x)))
@@ -973,7 +1028,7 @@
     '(lambda (x) (when (fixnum? x)
                    (-1+ x)))
     '(lambda (x) (when (fixnum? x)
-                   (#3%$fxx+ x -1))))
+                   (#3%$fxx- x 1))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (flonum? x)
                    (-1+ x)))
@@ -989,9 +1044,9 @@
                    (abs x)))
     '(lambda (x) (when (fixnum? x)
                    (let ([t x])
-                     (if (#3%fx= t (most-negative-fixnum))
-                         (pariah (- (most-negative-fixnum)))
-                         (#3%fxabs t))))))
+                     (if (#3%fx>= t 0)
+                         t
+                         (#3%$fxx- t))))))
   (cptypes-equivalent-expansion? ; unexpected, but correct
     '(lambda (x) (when (bignum? x)
                    (bignum? (abs x))))
@@ -1004,6 +1059,279 @@
                    (#3%flabs x))))
   (test-closed1 '(add1 1+ sub1 1- -1+ abs)
                 '(flonum? real? (lambda (x) (and (integer? x) (exact? x)))))
+)
+
+(mat cptypes-plus
+  (test-closed1 '(+ (lambda (x) (+ x 1)) (lambda (x) (+ x x)))
+                '(flonum? real? (lambda (x) (and (integer? x) (exact? x))) (lambda (x) (and (number? x) (exact? x)))))
+  (not (cptypes-equivalent-expansion? ; integer? is not closed
+         '(lambda (x) (when (integer? x) (integer? (+ x x))))
+         '(lambda (x) (when (integer? x) (+ x x) #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y))
+                     (+ x y)))
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y))
+                     (#3%$fxx+ x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (flonum? x) (flonum? y))
+                     (+ x y)))
+    '(lambda (x y) (when (and (flonum? x) (flonum? y))
+                     (#3%fl+ x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (number? x) (number? y))
+                     (+ x y)))
+    '(lambda (x y) (when (and (number? x) (number? y))
+                     (#3%+ x y))))
+  ; in cp0, partial-folder reverses (+ x 1) to (+ 1 x)
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (+ 1 x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%$fxx+ 1 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (+ 1 x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl+ 1.0 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x)
+                   (+ 1 x)))
+    '(lambda (x) (when (number? x)
+                   (#3%+ 1 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (+ 1.0 x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%fl+ 1.0 (fixnum->flonum x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (+ -0.0 x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%fl+ -0.0 (if (#3%eqv? x 0) -0.0 (fixnum->flonum x))))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (bignum? x)
+                   (+ -0.0 x)))
+    '(lambda (x) (when (bignum? x)
+                   (#3%fl+ -0.0 (real->flonum x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (+ 1.0 x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl+ 1.0 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x)
+                   (+ 1.0 x)))
+    '(lambda (x) (when (number? x)
+                   (#3%+ 1.0 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (+ 1 x x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%$fxx+ 1 x x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (+ 1 x x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl+ 1.0 x x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x)
+                   (+ 1 x x)))
+    '(lambda (x) (when (number? x)
+                   (#3%+ 1 x x))))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (+))
+    '(lambda (x) 0))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (+ 0))
+    '(lambda (x) 0))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (+ 0 0))
+    '(lambda (x) 0))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (+ 0 0.0))
+    '(lambda (x) 0.0))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (+ 0 -0.0))
+    '(lambda (x) -0.0))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (+ 0.0 -0.0))
+    '(lambda (x) 0.0))
+)
+
+(mat cptypes-minus
+  (test-closed1 '(- (lambda (x) (- x 1)) (lambda (x) (- 1 x)) (lambda (x) (- x x)))
+                '(flonum? real? (lambda (x) (and (integer? x) (exact? x))) (lambda (x) (and (number? x) (exact? x)))))
+  (not (cptypes-equivalent-expansion? ; integer? is not closed
+         '(lambda (x y) (when (and (integer? x) (integer? y)) (integer? (- x y))))
+         '(lambda (x y) (when (and (integer? x) (integer? y)) (- x y) #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y))
+                     (- x y)))
+    '(lambda (x y) (when (and (fixnum? x) (fixnum? y))
+                     (#3%$fxx- x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (flonum? x) (flonum? y))
+                     (- x y)))
+    '(lambda (x y) (when (and (flonum? x) (flonum? y))
+                     (#3%fl- x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x y) (when (and (number? x) (number? y))
+                     (- x y)))
+    '(lambda (x y) (when (and (number? x) (number? y))
+                     (#3%- x y))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (- 1 x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%$fxx- 1 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (- 1 x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl- 1.0 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x)
+                   (- 1 x)))
+    '(lambda (x) (when (number? x)
+                   (#3%- 1 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (- x 1)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%$fxx- x 1))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (- x 1)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl- x 1.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x)
+                   (- x 1)))
+    '(lambda (x) (when (number? x)
+                   (#3%- x 1))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (- 1.0 x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%fl- 1.0 (fixnum->flonum x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (- x 1.0)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%fl- (fixnum->flonum x) 1.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (- -0.0 x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%fl- -0.0 (fixnum->flonum x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (bignum? x)
+                   (- -0.0 x)))
+    '(lambda (x) (when (bignum? x)
+                   (#3%fl- -0.0 (real->flonum x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (- x -0.0)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%fl- (fixnum->flonum x) -0.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (bignum? x)
+                   (- x -0.0)))
+    '(lambda (x) (when (bignum? x)
+                   (#3%fl- (real->flonum x) -0.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (- 0.0 x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%fl- 0.0 (fixnum->flonum x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (bignum? x)
+                   (- 0.0 x)))
+    '(lambda (x) (when (bignum? x)
+                   (#3%fl- 0.0 (real->flonum x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (- x 0.0)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%fl- (if (#3%eqv? x 0) -0.0 (fixnum->flonum x)) 0.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (bignum? x)
+                   (- x 0.0)))
+    '(lambda (x) (when (bignum? x)
+                   (#3%fl- (real->flonum x) 0.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (- 1.0 x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl- 1.0 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x)
+                   (- 1.0 x)))
+    '(lambda (x) (when (number? x)
+                   (#3%- 1.0 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (- x 1.0)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl- x 1.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x)
+                   (- x 1.0)))
+    '(lambda (x) (when (number? x)
+                   (#3%- x 1.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x)
+                   (- x 1.0)))
+    '(lambda (x) (when (number? x)
+                   (#3%- x 1.0))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (- 1 x x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%$fxx- 1 x x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (- 1 x x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl- 1.0 x x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x)
+                   (- 1 x x)))
+    '(lambda (x) (when (number? x)
+                   (#3%- 1 x x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (- x 1 x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%$fxx- x 1 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (- x 1 x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl- x 1.0 x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x)
+                   (- x 1 x)))
+    '(lambda (x) (when (number? x)
+                   (#3%- x 1 x))))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (- 0))
+    '(lambda (x) 0))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (- 0 0))
+    '(lambda (x) 0))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (- 0 0.0))
+    '(lambda (x) -0.0))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (- 0 -0.0))
+    '(lambda (x) 0.0))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (- 0.0 -0.0))
+    '(lambda (x) 0.0))
+  (cptypes/first-equivalent-expansion?
+    '(lambda (x) (- -0.0 0.0))
+    '(lambda (x) -0.0))
 )
 
 (mat cptypes-rest-argument
