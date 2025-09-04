@@ -179,6 +179,8 @@
                              ls)])
            (syntax (= (let ([x (foreign-procedure name (p ...) double-float)])
                         (x v ...))
+                      (let ([x (foreign-procedure __atomic name (p ...) double-float)])
+                        (x v ...))
                       (+ v ...)))))))))
 
 (define foreign1.so (let ([p (find-source "foreign1.so")])
@@ -322,12 +324,23 @@
    (error? (begin (foreign-procedure 'foo () scheme-object) 'q))
    (error? (if (foreign-procedure 'foo () scheme-object) 'q 'q))
 
+   (error? (lambda () (foreign-procedure __bad_conv "foo" () scheme-object)))
+   (error? (lambda () (foreign-procedure __atomic __collect_safe "foo" () scheme-object)))
+
    (eq? 'foo ((foreign-procedure "idiptr" (scheme-object) scheme-object) 'foo))
+
+   (procedure? (foreign-procedure __atomic "idiptr" (scheme-object) scheme-object))
+   (error? (foreign-procedure __atomic "i do not exist" (scheme-object) scheme-object))
+   (eq? 'foo ((foreign-procedure __atomic "idiptr" (scheme-object) scheme-object) 'foo))
 
    (parameterize ([current-eval interpret])
        (eq? 'foo ((foreign-procedure "idiptr" (scheme-object) scheme-object) 'foo)))
 
    (not (eq? 'foo ((foreign-procedure "idiptr" (scheme-object) void) 'foo)))
+   (not (eq? 'foo ((foreign-procedure __atomic "idiptr" (scheme-object) void) 'foo)))
+
+   (parameterize ([current-eval interpret])
+       (eq? 'foo ((foreign-procedure __atomic "idiptr" (scheme-object) scheme-object) 'foo)))
 
    (begin (define idint32 (foreign-procedure "id" (integer-32) integer-32))
           (procedure? idint32))
@@ -347,6 +360,25 @@
    (error? (idint32 #x-8000000080000000))
    (error? (idint32 #f))
    (error? (idint32 "hi"))
+
+   (begin (define idint32-a (foreign-procedure __atomic "id" (integer-32) integer-32))
+          (procedure? idint32-a))
+   (eqv? (idint32-a 0) 0)
+   (eqv? (idint32-a #x7fffffff) #x7fffffff)
+   (eqv? (idint32-a -1) -1)
+   (eqv? (idint32-a #x-7fffffff) #x-7fffffff)
+   (eqv? (idint32-a #x-80000000) #x-80000000)
+   (eqv? (idint32-a #x80000000) (+ #x-100000000 #x80000000))
+   (eqv? (idint32-a #x80000001) (+ #x-100000000 #x80000001))
+   (eqv? (idint32-a #xffffffff) (+ #x-100000000 #xffffffff))
+   (error? (idint32-a #x100000000))
+   (error? (idint32-a #x100000001))
+   (error? (idint32-a #xfffffffffffffffffffffffffffff))
+   (error? (idint32-a #x8000000080000000))
+   (error? (idint32-a #x-80000001))
+   (error? (idint32-a #x-8000000080000000))
+   (error? (idint32-a #f))
+   (error? (idint32-a "hi"))
 
    (begin (define iduns32 (foreign-procedure "id" (unsigned-32) unsigned-32))
           (procedure? iduns32))
@@ -372,6 +404,9 @@
    (eqv? #xffffffff ((foreign-procedure "id" (integer-32) unsigned-32) -1))
    (eqv? -1 ((foreign-procedure "id" (unsigned-32) integer-32) #xffffffff))
 
+   (eqv? #xffffffff ((foreign-procedure __atomic "id" (integer-32) unsigned-32) -1))
+   (eqv? -1 ((foreign-procedure __atomic "id" (unsigned-32) integer-32) #xffffffff))
+
    (begin (define idfix (foreign-procedure "idiptr" (fixnum) fixnum))
           (procedure? idfix))
    (eqv? 0 (idfix 0))
@@ -395,6 +430,11 @@
    (error? (foreign-procedure "id" () chare))
    (error? (foreign-procedure "id" (void) char))
 
+   (error? (foreign-procedure __atomic "id" (booleen) char))
+   (error? (foreign-procedure __atomic "id" (integer-32 integer-34) char))
+   (error? (foreign-procedure __atomic "id" () chare))
+   (error? (foreign-procedure __atomic "id" (void) char))
+
    ((foreign-procedure "id" (boolean) boolean) #t)
    (not ((foreign-procedure "id" (boolean) boolean) #f))
    ((foreign-procedure "id" (boolean) boolean) 0)
@@ -403,6 +443,12 @@
    (= 0 ((foreign-procedure "id" (boolean) integer-32) #f))
    (not ((foreign-procedure "id" (integer-32) boolean) 0))
    ((foreign-procedure "id" (integer-32) boolean) 1)
+
+   (= 1 ((foreign-procedure __atomic "id" (boolean) integer-32) #t))
+   (= 1 ((foreign-procedure __atomic "id" (boolean) integer-32) 0))
+   (= 0 ((foreign-procedure __atomic "id" (boolean) integer-32) #f))
+   (not ((foreign-procedure __atomic "id" (integer-32) boolean) 0))
+   ((foreign-procedure __atomic "id" (integer-32) boolean) 1)
 
    (char=? #\a ((foreign-procedure "id" (char) char) #\a))
    (= 0 ((foreign-procedure "id" (char) integer-32) #\nul))
@@ -436,6 +482,12 @@
          (= 0 ((foreign-procedure (if (windows?) "windows_strcmp" "strcmp") (u8* string) integer-32) bv s)))))
    (error? ((foreign-procedure "id" (string) void) 'foo))
 
+   (let ([id1 (foreign-procedure __atomic "idiptr" (string) string)]
+         [id2 (foreign-procedure __atomic "idiptr" (string) iptr)]
+         [id3 (foreign-procedure __atomic "idiptr" (iptr) string)])
+      (and (eq? (id1 #f) #f) (eq? (id2 #f) 0) (eq? (id3 0) #f)))
+   (error? ((foreign-procedure __atomic "id" (string) void) 'foo))
+
    (= ((foreign-procedure "idid" (integer-32) integer-32) #xc7c7c7) #xc7c7c7)
    (= ((foreign-procedure "ididid" (integer-32) integer-32) #x7c7c7c7c)
       #x7c7c7c7c)
@@ -443,6 +495,10 @@
    (= ((foreign-procedure "id" (unsigned-32) unsigned-32) #x80000000)
       #x80000000)
    (= ((foreign-procedure "id" (unsigned-32) integer-32) #x80000000)
+      #x-80000000)
+   (= ((foreign-procedure __atomic "id" (unsigned-32) unsigned-32) #x80000000)
+      #x80000000)
+   (= ((foreign-procedure __atomic "id" (unsigned-32) integer-32) #x80000000)
       #x-80000000)
 
    (error? (foreign-procedure 'abcde (integer-32) integer-32))
@@ -460,6 +516,10 @@
    (= 1.1 ((foreign-procedure "float_id" (double-float) double-float) 1.1))
    (error? ((foreign-procedure "float_id" (double-float) void) 0))
 
+   (= 0.0 ((foreign-procedure __atomic "float_id" (double-float) double-float) 0.0))
+   (= 1.1 ((foreign-procedure __atomic "float_id" (double-float) double-float) 1.1))
+   (error? ((foreign-procedure __atomic "float_id" (double-float) void) 0))
+
    (let ([fid (foreign-procedure "float_id" (double-float) double-float)])
      (let f ((n 10000))
        (or (= n 0)
@@ -475,8 +535,23 @@
           integer-32)
        29 31 37 41 43 47 49 53 59 61))
 
+   (= (+ (*  1 29) (*  2 31) (*  3 37) (*  5 41) (*  7 43)
+         (* 11 47) (* 13 49) (* 17 53) (* 19 59) (* 23 61))
+      ((foreign-procedure __atomic "testten"
+          (integer-32 integer-32 integer-32 integer-32 integer-32
+           integer-32 integer-32 integer-32 integer-32 integer-32)
+          integer-32)
+       29 31 37 41 43 47 49 53 59 61))
+
    (= (+ 1.1 2.2 3.3 4.4 5.5 6.6 7.7 8.8)
       ((foreign-procedure "flsum8"
+          (double-float double-float double-float double-float
+           double-float double-float double-float double-float)
+          double-float)
+       1.1 2.2 3.3 4.4 5.5 6.6 7.7 8.8))
+
+   (= (+ 1.1 2.2 3.3 4.4 5.5 6.6 7.7 8.8)
+      ((foreign-procedure __atomic "flsum8"
           (double-float double-float double-float double-float
            double-float double-float double-float double-float)
           double-float)
@@ -2720,7 +2795,7 @@
       x)
     43)
   (equal?
-    (let ()
+    (let ([keeps '()])
      ; foreign_callable example adapted from foreign.stex
       (define cb-init
         (foreign-procedure "cb_init" () void))
@@ -2732,6 +2807,7 @@
       (define callback
         (lambda (p)
           (let ([code (foreign-callable p (char) void)])
+            (set! keeps (cons code keeps))
             (foreign-callable-entry-point code))))
       (let ()
         (define ouch
@@ -2750,6 +2826,7 @@
   
         (parameterize ([current-output-port (open-output-string)])
           (event-loop "abcde")
+          (keep-live keeps)
           (get-output-string (current-output-port)))))
     (format "Ouch! Hit by 'a'~%Rats! Received 'c'~%Ouch! Hit by 'e'~%"))
    ; make sure foreign-procedure's code-object is properly locked when

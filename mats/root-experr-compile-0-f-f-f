@@ -10382,6 +10382,9 @@ foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry
 foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
 foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
 foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
+foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure convention __bad_conv".
+foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __collect_safe".
+foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <int>".
 foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <int>".
 foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument 83076749736557242056487941267521535".
@@ -10390,6 +10393,14 @@ foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-pr
 foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <-int>".
 foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument #f".
 foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument "hi"".
+foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <int>".
+foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <int>".
+foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument 83076749736557242056487941267521535".
+foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <int>".
+foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <-int>".
+foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <-int>".
+foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument #f".
+foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument "hi"".
 foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <int>".
 foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <int>".
 foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <-int>".
@@ -10405,9 +10416,15 @@ foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure a
 foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
 foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
 foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier void".
+foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier booleen".
+foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
+foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
+foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier void".
 foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument 0".
 foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument foo".
+foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument foo".
 foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle abcde".
+foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
 foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
 foreign.mo:Expected error in mat foreign-sizeof: "incorrect argument count in call (foreign-sizeof)".
 foreign.mo:Expected error in mat foreign-sizeof: "incorrect argument count in call (foreign-sizeof (quote int) (quote int))".
