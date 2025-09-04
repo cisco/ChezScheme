@@ -118,6 +118,7 @@ Notes:
                  [(call ,preinfo1 (case-lambda ,preinfo2 (clause (,x* ...) ,interface ,body)) ,e*  ...) ; let-like expressions
                   (guard (fx= interface (length e*)))
                   (sv? body fuel)]
+                 [(call ,preinfo (foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type) ,e* ...) #t]
                  [(letrec ((,x* ,e*) ...) ,body)
                   (sv? body fuel)]
                  [(letrec* ((,x* ,e*) ...) ,body)
@@ -1383,7 +1384,7 @@ Notes:
                             (pred-env-add/ref (pred-env-add/ref ntypes
                                                                 x real-pred plxc)
                                               y real-pred plxc)
-                             #f #f)]))])
+                            #f #f)]))])
 
       (define-specialize 2 char-name
         [(n) (let ([r (get-type n)]
@@ -1993,6 +1994,22 @@ Notes:
          (values `(case-lambda ,preinfo ,cl* ...) 'procedure types #f #f))]
       [(call ,preinfo (case-lambda ,preinfo2 ,cl* ...) ,e*  ...)
        (fold-call/lambda preinfo `(case-lambda ,preinfo2 ,cl* ...) e* ctxt types plxc)]
+      [(call ,preinfo (foreign (,conv* ...) ,name ,[e 'value types plxc -> e ret types t-types f-types] (,arg-type* ...) ,result-type)
+             ,e* ...)
+       (let-values ([(e* types)
+                     (let loop ([e* e*] [e*-accum '()] [types types])
+                       (cond
+                         [(null? e*) (values (reverse e*-accum) types)]
+                         [else
+                          (let-values ([(e ret types t-type f-tyoes) (Expr (car e*) 'value types plxc)])
+                            (loop (cdr e*) (cons e e*-accum) types))]))])
+         (let ([ret (nanopass-case (Ltype Type) result-type
+                      [(fp-fixnum) fixnum-pred]
+                      [(fp-double-float) flonum-pred]
+                      [(fp-single-float) flonum-pred]
+                      [else #f])])
+           (values `(call ,preinfo (foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type) ,e* ...)
+                   ret types #f #f)))]
       [(call ,preinfo ,e0 ,e*  ...)
        (fold-call/other preinfo e0 e* ctxt types plxc)]
       [(letrec ((,x* ,e*) ...) ,body)
