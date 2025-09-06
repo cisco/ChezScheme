@@ -680,6 +680,9 @@ static void closure_callback(UNUSED ffi_cif *cif, void *ret, void **args, void *
   memcpy(&PBREGS(tc, 0), caller_saved, sizeof(caller_saved));
 
   if (!ret_is_arg) {
+    /* in case GC moved `types` (but `vec` is immobile) */
+    types = Svector_ref(vec, 1);
+
     /* move result to "arena" */
     type = Svector_ref(types, RET_TYPE_INDEX);
 
