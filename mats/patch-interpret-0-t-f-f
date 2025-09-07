@@ -1,5 +1,5 @@
-*** output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Tue Aug 12 19:53:31 2025
---- output-interpret-0-t-f-f-experr/errors-interpret-0-t-f-f	Tue Aug 12 19:55:04 2025
+*** output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Thu Sep  4 07:43:17 2025
+--- output-interpret-0-t-f-f-experr/errors-interpret-0-t-f-f	Thu Sep  4 07:44:48 2025
 ***************
 *** 24,31 ****
   primvars.mo:Expected error testing (call-in-continuation 1.0+2.0i (quote #f) values): Exception in call-in-continuation: 1.0+2.0i is not a continuation
@@ -256,10 +256,10 @@
   record.mo:Expected error in mat record25: "invalid value 13.0 for foreign type unsigned-long-long".
   record.mo:Expected error in mat record25: "invalid value 3.0 for foreign type int".
 ***************
-*** 10382,10406 ****
-  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
-  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
-  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
+*** 10385,10417 ****
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure convention __bad_conv".
+  foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __collect_safe".
+  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 ! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <int>".
 ! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <int>".
 ! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument 83076749736557242056487941267521535".
@@ -268,6 +268,14 @@
 ! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <-int>".
 ! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument #f".
 ! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument "hi"".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument 83076749736557242056487941267521535".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument #f".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument "hi"".
 ! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <int>".
 ! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <int>".
 ! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <-int>".
@@ -282,10 +290,18 @@
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier booleen".
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
---- 10382,10406 ----
-  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
-  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
-  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
+--- 10385,10417 ----
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure convention __bad_conv".
+  foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __collect_safe".
+  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
+! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument 83076749736557242056487941267521535".
+! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument #f".
+! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument "hi"".
 ! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument <int>".
 ! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument <int>".
 ! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument 83076749736557242056487941267521535".
@@ -309,7 +325,7 @@
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
 ***************
-*** 10413,10444 ****
+*** 10430,10461 ****
   foreign.mo:Expected error in mat foreign-sizeof: "incorrect number of arguments 2 to #<procedure foreign-sizeof>".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
@@ -342,7 +358,7 @@
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
---- 10413,10444 ----
+--- 10430,10461 ----
   foreign.mo:Expected error in mat foreign-sizeof: "incorrect number of arguments 2 to #<procedure foreign-sizeof>".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
@@ -376,7 +392,7 @@
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
 ***************
-*** 10446,10471 ****
+*** 10463,10488 ****
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
@@ -403,7 +419,7 @@
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
---- 10446,10471 ----
+--- 10463,10488 ----
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
   foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
@@ -431,7 +447,7 @@
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
 ***************
-*** 10477,10511 ****
+*** 10494,10528 ****
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
@@ -467,7 +483,7 @@
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
---- 10477,10511 ----
+--- 10494,10528 ----
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
   foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
@@ -504,7 +520,7 @@
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
   foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
 ***************
-*** 10550,10558 ****
+*** 10567,10575 ****
   foreign.mo:Expected error in mat foreign-ftype: "foreign-entry: 1000000 is not a string".
   foreign.mo:Expected error in mat foreign-ftype: "foreign-entry: no entry for "i am not defined"".
   foreign.mo:Expected error in mat foreign-ftype: "unexpected function ftype name outside pointer field A".
@@ -514,7 +530,7 @@
   foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
   foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
   foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
---- 10550,10558 ----
+--- 10567,10575 ----
   foreign.mo:Expected error in mat foreign-ftype: "foreign-entry: 1000000 is not a string".
   foreign.mo:Expected error in mat foreign-ftype: "foreign-entry: no entry for "i am not defined"".
   foreign.mo:Expected error in mat foreign-ftype: "unexpected function ftype name outside pointer field A".
@@ -525,7 +541,7 @@
   foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
   foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
 ***************
-*** 11141,11150 ****
+*** 11158,11167 ****
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
@@ -536,7 +552,7 @@
   oop.mo:Expected error in mat oop: "m1: not applicable to 17".
   oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
   oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
---- 11141,11150 ----
+--- 11158,11167 ----
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".

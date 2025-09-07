@@ -2594,6 +2594,8 @@
            (set! ,%sp ,(%inline + ,%sp (immediate 32)))))
         e))
 
+    (include "ffi-help.ss")
+
     (define asm-foreign-call
       (with-output-language (L13 Effect)
         (letrec ([load-double-stack
@@ -2951,15 +2953,21 @@
                    [result-size (classified-size result-type)]
                    [fill-result-here? (result-fits-in-registers? result-classes)]
                    [result-reg* (get-result-regs fill-result-here? result-type result-classes)]
-                   [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)])
+                   [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
+                   [varargs-after (extract-varargs-after-conv conv*)])
               (with-values (do-args (if fill-result-here? (cdr arg-type*) arg-type*))
                 (lambda (frame-size nfp locs live* fp-live*)
                   (with-values (add-save-fill-target fill-result-here? frame-size locs)
                     (lambda (frame-size locs)
                       (returnem frame-size locs
-                        (lambda (t0 not-varargs?)
+                        (lambda (t0 atomic?)
                           (let* ([t (if adjust-active? %deact t0)] ; need a register if `adjust-active?`
                                  [kill* (add-caller-save-registers result-reg*)]
+                                 [set-varargs-reg?
+                                  ;; System V ABI varargs functions require count of fp regs used in %al register.
+                                  ;; To avoid breaking old programs that don't specify varargs precisely, assume
+                                  ;; we don't know if a non-atomic callee may be a varargs function, so we always set it.
+                                  (not (and atomic? (not varargs-after)))]
                                  [c-call
                                   (add-deactivate adjust-active? t0 (append fp-live* live*)
                                    result-reg*
@@ -2969,13 +2977,11 @@
                                        (inline ,(make-info-kill*-live* kill* (append fp-live* live*)) ,%c-call ,t)
                                        (set! ,%sp ,(%inline + ,%sp (immediate 32))))
                                      (%seq
-                                      ,(if not-varargs?
-                                           `(nop)
-                                           ;; System V ABI varargs functions require count of fp regs used in %al register.
-                                           ;; since we don't know if the callee is a varargs function, we always set it.
-                                           `(set! ,%rax (immediate ,nfp)))
+                                      ,(if set-varargs-reg?
+                                           `(set! ,%rax (immediate ,nfp))
+                                           `(nop))
                                       ,(let ([live* (append fp-live* live*)])
-                                         `(inline ,(make-info-kill*-live* kill* (if not-varargs? live* (cons %rax live*))) ,%c-call ,t)))))])
+                                         `(inline ,(make-info-kill*-live* kill* (if set-varargs-reg? (cons %rax live*) live*)) ,%c-call ,t)))))])
                             (cond
                              [fill-result-here?
                               (add-fill-result c-call (fx- frame-size (constant ptr-bytes)) result-classes result-size)]
