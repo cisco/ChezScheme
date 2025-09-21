@@ -909,6 +909,7 @@
 (define-symbol-flags* ([libraries] [flags primitive proc]) ; variable parameters
   (abort-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (base-exception-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
+  (black-box [sig [(ptr) -> (ptr)]] [flags])
   (break-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (case-sensitive [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (cd [sig [() -> (pathname)] [(pathname) -> (void)]] [flags])

@@ -2872,6 +2872,10 @@
   (lambda (x)
     (#2%keep-live x)))
 
+(define black-box
+  (lambda (x)
+    (#2%black-box x)))
+
 (when-feature windows
 (let ()
   (define mbtwc

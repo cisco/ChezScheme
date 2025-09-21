@@ -1558,6 +1558,9 @@
            (%inline eq? ,e1 ,e2))])
     (define-inline 2 keep-live
       [(e) (%seq ,(%inline keep-live ,e) ,(%constant svoid))])
+    (define-inline 2 black-box
+      [(e) (bind #t (e)
+             (%seq ,(%inline keep-live ,e) ,e))])
     (let ()
       (define (zgo src sexpr e e1 e2 r6rs?)
         (build-simple-or
