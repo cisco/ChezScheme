@@ -220,7 +220,8 @@ Windows: \scheme{__stdcall}, \scheme{__cdecl}, and \scheme{__com} (32-bit only).
 Since \scheme{__cdecl} is the default, specifying \scheme{__cdecl} is
 equivalent to specifying \scheme{#f} or no convention.
 Additionally, \var{conv} can be \scheme{__collect_safe} to indicate that garbage
-collection is allowed concurrently with a call of the foreign procedure, or it
+collection is allowed concurrently with a call of the foreign procedure, it can be
+\scheme{__atomic} to indicate that the foreign function never calls back to Scheme, or it
 can be \scheme{__varargs} or \scheme{(__varargs_after \var{n})} to indicate
 that the procedure uses a convention that works with a variable number of arguments
 after the first \var{n} (which may differ from the convention used for the
@@ -285,6 +286,11 @@ If a foreign procedure that is called with \scheme{__collect_safe} can
 invoke callables, then each callable should also be declared with
 \scheme{__collect_safe} so that the callable reactivates the thread.
 
+Use \scheme{__atomic} to declare that the foreign procedure never
+calls back to Scheme, such as through a foreign callable, which may
+allow a more efficient implementation of calls to the foreign
+function. The \scheme{__atomic} and \scheme{__collect_safe}
+declarations cannot be used at the same time.
 
 Complete type checking and conversion is performed on the parameters
 to a foreign procedure.
@@ -1171,7 +1177,7 @@ correct.
 
 Each \var{conv} adjusts the calling convention to be used.
 \scheme{foreign-callable} supports the same conventions as
-\scheme{foreign-procedure} with the exception of \scheme{__com}.
+\scheme{foreign-procedure} except for \scheme{__com} and \scheme{__atomic}.
 The \scheme{__collect_safe} convention for a callable activates a
 calling thread if the thread is not already activated, and
 the thread's activation state is reverted when the callable

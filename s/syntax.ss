@@ -9004,6 +9004,7 @@
                          (cond
                            [(not c) (values #f #f)]
                            [(eq? c '__collect_safe) (values 'adjust-active #f)]
+                           [(eq? c '__atomic) (values 'atomic #f)]
                            [(eq? c '__varargs)
                             (check-arg-count 1 orig-c)
                             (values (cons 'varargs 1) #f)]
@@ -9034,6 +9035,10 @@
                        (and (pair? c) (ormap pair? accum)))
                (syntax-error orig-c (format "redundant ~s convention" who)))
              (when (and select? selected)
+               (syntax-error orig-c (format "conflicting ~s convention" who)))
+             (when (and (eq? c 'atomic) (member 'adjust-active keep-accum))
+               (syntax-error orig-c (format "conflicting ~s convention" who)))
+             (when (and (eq? c 'adjust-active) (member 'atomic keep-accum))
                (syntax-error orig-c (format "conflicting ~s convention" who)))
              (loop (cdr conv*) (if select? c selected) (cons c accum)
                    (if c
@@ -9241,14 +9246,17 @@
                                    #`[]
                                    #`[(unless (record? &-result '#,(cdr result-type)) (err ($moi) &-result))]))]
                          [else #'([] [] [])])])
-          #`(let ([p ($foreign-procedure conv* foreign-name ?foreign-addr (extra-arg ... arg ... ...) result)]
+          #`(let ([foreign-addr ?foreign-addr]
                   #,@(if unsafe?
                          #'()
                          #'([err (lambda (who x)
                                    ($oops (or who foreign-name)
-                                     "invalid foreign-procedure argument ~s"
-                                     x))])))
-              (lambda (extra ... t ...) extra-check ... check ... ... (result-filter (p extra ... actual ... ...)))))))))
+                                          "invalid foreign-procedure argument ~s"
+                                          x))])))
+              (let ([p ($foreign-procedure conv* foreign-name foreign-addr (extra-arg ... arg ... ...) result)])
+                (lambda (extra ... t ...)
+                  extra-check ... check ... ...
+                  (result-filter (p extra ... actual ... ...))))))))))
 
 (define-syntax foreign-procedure
   (lambda (x)

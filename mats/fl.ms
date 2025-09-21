@@ -1147,23 +1147,24 @@
   (begin
     (define-syntax check-loop-allocation
       (syntax-rules ()
-        [(_ proc) ; proc should allocate only its result flonum
+        [(_ proc val-example) ; proc should allocate only its result flonum
          (or (eq? (current-eval) interpret)
              (#%$suppress-primitive-inlining)
              (let ([before (+ (bytes-allocated) (bytes-deallocated))]
                    [N 100000])
                (and
                 (box?
-                 (let loop ([i N] [bx (box 0.0)])
+                 (let loop ([i N] [bx (box val-example)])
                    (if (zero? i)
                        bx
                        (loop (sub1 i) (let ([v (unbox bx)])
                                         (box (proc v)))))))
                 (let ([allocated (- (+ (bytes-allocated) (bytes-deallocated)) before)]
-                      [expected (* N (+ (compute-size 1.0)
+                      [expected (* N (+ (compute-size val-example)
                                         (compute-size (box #f))))])
                   (printf "~s ~s\n" allocated expected)
-                  (<= expected allocated (* 1.2 expected))))))]))
+                  (<= expected allocated (* 1.2 expected))))))]
+        [(_ proc) (check-loop-allocation proc 1.0)]))
     #t)
 
   (check-loop-allocation (lambda (v) (fl+ v v)))
@@ -1239,6 +1240,13 @@
                                          (fl+ v 1.0)
                                          (fl- v 1.0))))
 
+  (or (and (not (enable-cp0))
+           (not (= 3 (optimize-level))))
+      (check-loop-allocation (lambda (v)
+                               (fl-make-rectangular (fl- (cfl-real-part v) 1.0)
+                                                    (fl+ 1.0 (cfl-imag-part v))))
+                             1.0-3.0i))
+
   (check-loop-allocation (lambda (v)
                            ;; The two single-argument `fl+`s here should work as
                            ;; a hint for unboxing in the loop
@@ -1274,6 +1282,45 @@
                                                (set-pseudo-random-generator-x11! s v)
                                                (set-pseudo-random-generator-x12! s v)
                                                (pseudo-random-generator-x20 s)))))))
+
+  (let ()
+    (define-ftype V2d
+      (struct (x double) (y double)))
+    (define v2d (make-ftype-pointer V2d (foreign-alloc (ftype-sizeof V2d))))
+    (check-loop-allocation (lambda (v)
+                             (fl+ (ftype-ref V2d (x) v2d)
+                                  (ftype-ref V2d (y) v2d)))))
+
+  (let ()
+    (define-ftype V2d
+      (struct (x double) (y double)))
+    (define v2d (make-ftype-pointer V2d (foreign-alloc (ftype-sizeof V2d))))
+    (check-loop-allocation (lambda (v)
+                             (ftype-set! V2d (x) v2d v)
+                             (ftype-set! V2d (y) v2d v)
+	                     (fl- v))))
+
+  (let ()
+    (define-ftype V2f
+      (struct (x float) (y float)))
+    (define v2f (make-ftype-pointer V2f (foreign-alloc (ftype-sizeof V2f))))
+    (check-loop-allocation (lambda (v)
+                             (ftype-set! V2f (x) v2f v)
+	                     (ftype-set! V2f (y) v2f v)
+                             (fl- v))))
+
+  (let ()
+    (define-ftype V2f
+      (struct (x float) (y float)))
+    (define v2f (make-ftype-pointer V2f (foreign-alloc (ftype-sizeof V2f))))
+    (check-loop-allocation (lambda (v)
+                             (fl+ (ftype-ref V2f (x) v2f)
+	                          (ftype-ref V2f (y) v2f)))))
+
+  (or (not (enable-cp0))
+      (let ([my-flsin (foreign-procedure __atomic "(cs)sin" (double) double)])
+        (check-loop-allocation (lambda (v)
+                                 (my-flsin (my-flsin v))))))
 
   (begin
     (define many-compare
