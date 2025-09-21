@@ -622,7 +622,8 @@
 (define-syntax retry-for-spurious
   (let ([mt (symbol->string (machine-type))])
     (if (or (memq (substring mt 0 2) '("a6" "i3"))
-            (memq (substring mt 0 3) '("ta6" "ti3")))
+            (and (> (string-length mt) 2)
+                 (memq (substring mt 0 3) '("ta6" "ti3"))))
         ;; no retry loop needed on x86
         (lambda (stx)
           (syntax-case stx ()

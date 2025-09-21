@@ -551,7 +551,17 @@
       [(op (x ur) (y ur) (w signed16) (old ur) (new ur))
        (addr-reg x y w (lambda (u)
                          ;; signals on successful swap
-                         `(asm ,info ,asm-cas! ,u ,old ,new)))]))
+                         `(asm ,info ,asm-cas! ,u ,old ,new)))]
+      [(op (x ur) (y ur) (w ur) (old ur) (new ur))
+       (let ([zero-imm (with-output-language (L15d Triv) `(immediate 0))])
+         (cond
+           [(eq? y %zero)
+            (addr-reg x w zero-imm (lambda (u) `(asm ,info ,asm-cas! ,u ,old ,new)))]
+           [else
+            (let ([u0 (make-tmp 'u)])
+              (seq
+               `(set! ,(make-live-info) ,u0 (asm ,null-info ,(asm-add #f) ,y ,w))
+               (addr-reg x u0 zero-imm (lambda (u) `(asm ,info ,asm-cas! ,u ,old ,new)))))]))]))
 
   (define-instruction effect (store-store-fence)
     [(op)

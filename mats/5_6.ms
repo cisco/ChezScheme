@@ -2118,6 +2118,11 @@
   (error? (vector-cas! vec1 (expt 2 26) 2 3)) ; out of range
   (error? (vector-cas! vec1 (expt 2 40) 2 3)) ; out of range
 
+  ;; large immediate index without write barrier
+  (let ([vec (make-vector (expt 2 17))])
+    (and (retry-for-spurious (vector-cas! vec (sub1 (expt 2 17)) 0 42))
+         (eq? (vector-ref vec (sub1 (expt 2 17))) 42)))
+
   ;; make sure `vector-cas!` works with GC generations:
   (begin
     (collect 0)
