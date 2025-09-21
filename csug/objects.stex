@@ -1370,7 +1370,7 @@ the length of \var{flvector}.
 
 \schemedisplay
 (let ([v (flvector 1.0 2.0 3.0 4.0 5.0)])
-  (flvector-set! v 2 (fx- (flvector-ref v 2)))
+  (flvector-set! v 2 (fl- (flvector-ref v 2)))
   v) ;=> #vfl(1.0 2.0 -3.0 4.0 5.0)
 \endschemedisplay
 
@@ -1424,7 +1424,7 @@ the length of \var{flvector}.
 
 (let ([v #vfl(1.0 2.0 3.0 4.0 5.0)])
   (let ([ls (flvector->list v)])
-    (list->flvector (map fx* ls ls)))) ;=> #vfl(1.0 4.0 9.0 16.0 25.0)
+    (list->flvector (map fl* ls ls)))) ;=> #vfl(1.0 4.0 9.0 16.0 25.0)
 \endschemedisplay
 
 %----------------------------------------------------------------------------
@@ -1468,7 +1468,7 @@ That is, the destination is filled with the flonums that appeared at the
 source before the operation began.
 
 \schemedisplay
-(let ([src (flvector 1.0 2.0 3.0)] [dest (fxvector 0.0 0.0 0.0)])
+(let ([src (flvector 1.0 2.0 3.0)] [dest (flvector 0.0 0.0 0.0)])
   (flvector-copy! src 1 dest 0 2)
   dest) ;=> #vfl(2.0 3.0 0.0)
 
