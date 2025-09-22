@@ -5411,7 +5411,43 @@
                         ,(build-libcall #t src sexpr $real->flonum `(quote real->flonum) e-x)))))])
       (define-inline 3 $real->flonum
         [(who x) (build-$real->flonum src sexpr who x)])
+      (define-inline 2 inexact
+        [(e-x)
+         (if (known-flonum-result? e-x)
+             e-x
+             (bind #t (e-x)
+               `(if ,(%type-check mask-fixnum type-fixnum ,e-x)
+                    ,(build-fixnum->flonum e-x values)
+                    (if ,(build-simple-or
+                          (%type-check mask-flonum type-flonum ,e-x)
+                          (%typed-object-check mask-inexactnum type-inexactnum ,e-x))
+                        ,e-x
+                        ,(build-libcall #t src sexpr inexact e-x)))))])
+      (define-inline 2 exact->inexact
+        [(e-x)
+         (if (known-flonum-result? e-x)
+             e-x
+             (bind #t (e-x)
+               `(if ,(%type-check mask-fixnum type-fixnum ,e-x)
+                    ,(build-fixnum->flonum e-x values)
+                    (if ,(build-simple-or
+                          (%type-check mask-flonum type-flonum ,e-x)
+                          (%typed-object-check mask-inexactnum type-inexactnum ,e-x))
+                        ,e-x
+                        ,(build-libcall #t src sexpr exact->inexact e-x)))))])
     )
+      (define-inline 2 exact
+        [(e-x)
+         (bind #t (e-x)
+           `(if ,(%type-check mask-fixnum type-fixnum ,e-x)
+                ,e-x
+                ,(build-libcall #t src sexpr exact e-x)))])
+      (define-inline 2 inexact->exact
+        [(e-x)
+         (bind #t (e-x)
+           `(if ,(%type-check mask-fixnum type-fixnum ,e-x)
+                ,e-x
+                ,(build-libcall #t src sexpr inexact->exact e-x)))])
     (define-inline 2 $record
       [(tag . args) (build-$record tag args)])
     (define-inline 3 $object-address

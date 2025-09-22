@@ -441,6 +441,34 @@
       [(fixnum? x) (fixnum->flonum x)]
       [(or (bignum? x) (ratnum? x)) (#2%$real->flonum who x)]
       [else (real-oops who x)]))
+
+  (define-library-entry (inexact x)
+    (cond
+      [(or (bignum? x) (ratnum? x)) (#2%$real->flonum 'inexact x)]
+      [($exactnum? x) (fl-make-rectangular
+                        (#2%$real->flonum 'inexact ($exactnum-real-part x))
+                        (#2%$real->flonum 'inexact ($exactnum-imag-part x)))]
+      [else (number-oops 'inexact x)]))
+
+  (define-library-entry (exact->inexact x)
+    (cond
+      [(or (bignum? x) (ratnum? x)) (#2%$real->flonum 'exact->inexact x)]
+      [($exactnum? x) (fl-make-rectangular
+                        (#2%$real->flonum 'exact->inexact ($exactnum-real-part x))
+                        (#2%$real->flonum 'exact->inexact ($exactnum-imag-part x)))]
+      [else (number-oops 'exact->inexact x)]))
+
+  (define-library-entry (exact x)
+    (cond
+      [(or (flonum? x) ($inexactnum? x)) (#2%$exact 'exact x)]
+      [(or (bignum? x) (ratnum? x) ($exactnum? x)) x]
+      [else (number-oops 'exact x)]))
+
+  (define-library-entry (inexact->exact x)
+    (cond
+      [(or (flonum? x) ($inexactnum? x)) x (#2%$exact 'inexact->exact x)]
+      [(or (bignum? x) (ratnum? x) ($exactnum? x)) x]
+      [else (number-oops 'inexact->exact x)]))
 )
 
 (let ()

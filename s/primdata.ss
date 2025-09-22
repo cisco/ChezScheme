@@ -1999,6 +1999,7 @@
   ($event-and-resume [flags])
   ($event-and-resume* [flags])
   ($event-trap-check [flags])
+  ($exact [sig [(maybe-who number) -> (exact-number)]] [flags arith-op mifoldable discard]) ; no safeongoodargs because it fails with +inf.0
   ($exactnum? [sig [(ptr) -> (boolean)]] [pred $exactnum] [flags pure unrestricted mifoldable])
   ($exactnum-imag-part [sig [($exactnum) -> (exact-real)]] [flags arith-op mifoldable discard safeongoodargs])
   ($exactnum-real-part [sig [($exactnum) -> (exact-real)]] [flags arith-op mifoldable discard safeongoodargs])

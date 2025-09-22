@@ -1474,6 +1474,7 @@
         [else (nonnumber-error who z)])))
   (set-who! exact (lambda (z) (convert-to-exact who z)))
   (set-who! inexact->exact (lambda (z) (convert-to-exact who z)))
+  (set-who! $exact (lambda (who z) (convert-to-exact who z)))
 )
 
 (set! rationalize

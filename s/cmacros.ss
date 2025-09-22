@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x0a040001)
+(define-constant scheme-version #x0a040002)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -2985,6 +2985,10 @@
      (bytevector-ieee-double-native-ref #f 2 #t #t)
      (bytevector-ieee-double-native-set! #f 2 #t #t)
      ($real->flonum #f 2 #f #t)
+     (inexact #f 1 #f #t)
+     (exact->inexact #f 1 #f #t)
+     (exact #f 1 #f #t)
+     (inexact->exact #f 1 #f #t)
      (exact? #f 1 #t #t)
      (inexact? #f 1 #t #t)
      (unsafe-port-eof? #f 1 #f #t)
