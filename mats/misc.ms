@@ -4242,16 +4242,16 @@
       ;;; set-cdr! as it does not appear that frequently in tests.ss
       ;;;
       ;;;  before
-      ;;;      +--+--+    +--+--+    +--+--+         +--+--+    +--+--+    +--+--+
-      ;;;      | 1|------>| 2|------>| 3|------> ... | 6|------>| 7|------>| 8|#f|
-      ;;;      +--+--+    +--+--+    +--+--+         +--+--+    +--+--+    +--+--+
+      ;;;      +--+--+    +--+--+    +--+--+         +--+--+    +--+--+    +--+----+
+      ;;;      | 1|------>| 2|------>| 3|------> ... | 6|------>| 7|------>| 8| #f |
+      ;;;      +--+--+    +--+--+    +--+--+         +--+--+    +--+--+    +--+----+
       ;;;       ^^
       ;;;       yx
       ;;;
       ;;;  after
-      ;;;      +--+--+    +--+--+         +--+--+    +--+--+    +--+--+    +--+--+
-      ;;;      | 4|------>| 5|------> ... | 8|------>| 1|------>| 2|------>| 3|#f|
-      ;;;      +--+--+    +--+--+         +--+--+    +--+--+    +--+--+    +--+--+
+      ;;;      +--+--+    +--+--+         +--+--+    +--+--+    +--+--+    +--+----+
+      ;;;      | 4|------>| 5|------> ... | 8|------>| 1|------>| 2|------>| 3| #f |
+      ;;;      +--+--+    +--+--+         +--+--+    +--+--+    +--+--+    +--+----+
       ;;;       ^                                     ^
       ;;;       x                                     y
       (let ([x (cons 1 (cons 2 (cons 3 (cons 4 (cons 5 (cons 6 (cons 7 (cons 8 '()))))))))])
@@ -5522,4 +5522,65 @@
    (if (fx= (optimize-level) 3)
        '(lambda (x) (#3%fx+ 2 (#3%fx+ 1 x)))
        '(lambda (x) (#2%fx+ 2 (#3%fx+ 1 x)))))
+  )
+
+(mat black-box
+  (begin
+    ;; detect whether `expt` work is done by counting allocation
+    (define-syntax does-the-work-at-run-time?
+      (syntax-rules ()
+        [(_ opt? e)
+         (equal?
+          opt?
+          (let ([SLOP 100])
+            (with-interrupts-disabled
+             (let ([before (bytes-allocated)])
+               e
+               (let ([after (bytes-allocated)])
+                 (> after (+ before SLOP)))))))]))
+    #t)
+
+  (does-the-work-at-run-time?
+   (or (not (enable-cp0))
+       (#%$suppress-primitive-inlining))
+   (let ([to-power 100])
+     (let loop ([i 1000])
+       (unless (zero? i)
+         ;; call to `expt` is likely optimized away entirely, since there's
+         ;; no effect and the result is unused:
+         (expt 2 to-power)
+         (loop (sub1 i))))))
+
+  (does-the-work-at-run-time?
+   (or (not (enable-cp0))
+       (#%$suppress-primitive-inlining))
+   (let ([to-power 100])
+     (let loop ([i 1000])
+       (unless (zero? i)
+         ;; likely optimized to just returning a folded constant, instead of
+         ;; calling `expt` each iteration:
+         (black-box (expt 2 to-power))
+         (loop (sub1 i))))))
+
+  (does-the-work-at-run-time?
+   (not (and (enable-cp0)
+             (not (#%$suppress-primitive-inlining))
+             (eqv? 3 (optimize-level))))
+   (let ([to-power (black-box 100)])
+     (let loop ([i 1000])
+       (unless (zero? i)
+         ;; in safe mode, likely calls `expt`, because `to-power` is not known
+         ;; to be a number, but likely optimized away with `(optimize-level 3)`:
+         (expt 2 to-power)
+         (loop (sub1 i))))))
+
+  (does-the-work-at-run-time?
+   #t
+   (let ([to-power (black-box 100)])
+   (let loop ([i 1000])
+     (unless (zero? i)
+       ;; arithmetic really performed every iteration, since `to-power` value
+       ;; is assumed unknown, and `expt` result is assumed to be used
+       (black-box (expt 2 to-power))
+       (loop (sub1 i))))))
   )

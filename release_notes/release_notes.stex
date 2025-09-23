@@ -173,6 +173,19 @@ The new procedures \scheme{car-cas!} and \scheme{cdr-cas!}
 atomically update a pair, analogous to \scheme{box-cas!}
 on a box.
 
+\subsection{Black-box procedure (10.3.0)}
+
+The new procedure \scheme{black-box} simply returns its argument, but
+optimization passes make no assumptions about how \scheme{black-box}
+uses its argument, whether \scheme{black-box} has side effects,
+or what \scheme{black-box} returns beyond the fact that it is a
+single value.
+
+The intended use of \scheme{black-box} is for benchmarking and testing
+tasks that need to simulate an arbitrary consumption context for a
+computation, but without otherwise adding overhead to the computation
+by adding a non-inlined function call or other obfuscating work.
+
 \subsection{Command-line options \scheme{--version} and \scheme{--help} write to stdout
 (10.2.0)}
 
