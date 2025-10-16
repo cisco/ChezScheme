@@ -1951,60 +1951,33 @@
       ; opnd has already been visited
       (lambda (maybe-src id opnd ctxt sc wd name moi)
         (let ((rhs (result-exp (operand-value opnd))))
+          (define (copy-e e)
+            (residualize-ref maybe-src
+              (nanopass-case (Lsrc Expr) e
+                [(ref ,maybe-src ,x)
+                 (guard (not (prelex-was-assigned x))
+                        ;; protect against (letrec ([x x]) ---)
+                        (not (eq? x id)))
+                 (when (prelex-was-multiply-referenced id)
+                   (set-prelex-was-multiply-referenced! x #t))
+                 x]
+                [else id])
+              sc))
           (nanopass-case (Lsrc Expr) rhs
             [(quote ,d) rhs]
             [(record-type ,rtd ,e)
-             `(record-type ,rtd
-                ,(residualize-ref maybe-src
-                   (nanopass-case (Lsrc Expr) e
-                     [(ref ,maybe-src ,x)
-                      (guard (not (prelex-was-assigned x))
-                        ; protect against (letrec ([x x]) ---)
-                        (not (eq? x id)))
-                      (when (prelex-was-multiply-referenced id)
-                        (set-prelex-was-multiply-referenced! x #t))
-                      x]
-                     [else id])
-                   sc))]
+             `(record-type ,rtd ,(copy-e e))]
             [(record-cd ,rcd ,rtd-expr ,e)
-             `(record-cd ,rcd ,rtd-expr
-                ,(residualize-ref maybe-src
-                   (nanopass-case (Lsrc Expr) e
-                     [(ref ,maybe-src ,x)
-                      (guard (not (prelex-was-assigned x))
-                        ; protect against (letrec ([x x]) ---)
-                        (not (eq? x id)))
-                      (when (prelex-was-multiply-referenced id)
-                        (set-prelex-was-multiply-referenced! x #t))
-                      x]
-                     [else id])
-                   sc))]
+             `(record-cd ,rcd ,rtd-expr ,(copy-e e))]
             [(immutable-list (,e* ...) ,e)
-             `(immutable-list (,e* ...)
-                ,(residualize-ref maybe-src
-                   (nanopass-case (Lsrc Expr) e
-                     [(ref ,maybe-src ,x)
-                      (guard (not (prelex-was-assigned x))
-                        ; protect against (letrec ([x x]) ---)
-                        (not (eq? x id)))
-                      (when (prelex-was-multiply-referenced id)
-                        (set-prelex-was-multiply-referenced! x #t))
-                      x]
-                     [else id])
-                   sc))]
+             `(immutable-list (,e* ...) ,(copy-e e))]
             [(immutable-vector (,e* ...) ,e)
-             `(immutable-vector (,e* ...)
-                ,(residualize-ref maybe-src
-                   (nanopass-case (Lsrc Expr) e
-                     [(ref ,maybe-src ,x)
-                      (guard (not (prelex-was-assigned x))
-                        ; protect against (letrec ([x x]) ---)
-                        (not (eq? x id)))
-                      (when (prelex-was-multiply-referenced id)
-                        (set-prelex-was-multiply-referenced! x #t))
-                      x]
-                     [else id])
-                   sc))]
+             `(immutable-vector (,e* ...) ,(copy-e e))]
+            [(foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type)
+             ;; use site of an atomic foreign procedure is always a call, so it's
+             ;; always worth inlining to expose the atomic call
+             (guard (memq 'atomic conv*))
+             `(foreign (,conv* ...) ,name ,(copy-e e) (,arg-type* ...) ,result-type)]
             [(ref ,maybe-src1 ,x)
              (cond
                [(and (not (prelex-was-assigned x))
@@ -3071,6 +3044,11 @@
             (nanopass-case (Lsrc Expr) e
               [(quote ,d) (flonum? d)]
               [(call ,preinfo ,pr ,e* ...) (eq? 'flonum ($sgetprop (primref-name pr) '*result-type* #f))]
+              [(call ,preinfo (foreign (,conv* ...) ,name ,e (,arg-type* ...) ,result-type) ,e* ...)
+               (nanopass-case (Ltype Type) result-type
+                 [(fp-double-float) #t]
+                 [(fp-single-float) #t]
+                 [else #f])]
               [else #f])))
 
         ; handling nans here using the support for handling exact zero in
