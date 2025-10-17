@@ -8,50 +8,50 @@ jobs:
       matrix:
         config:
           - machine: tpb
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             configure: --pb --threads --enable-libffi
             test: test-some-fast
           - machine: a6osx
-            os: macos-13
+            os: macos-15-intel
           - machine: ta6osx
-            os: macos-13
+            os: macos-15-intel
           - machine: arm64osx
-            os: macos-14
+            os: macos-15
           - machine: tarm64osx
-            os: macos-14
+            os: macos-15
           - machine: i3le
-            os: ubuntu-22.04
+            os: ubuntu-24.04
           - machine: ti3le
-            os: ubuntu-22.04
+            os: ubuntu-24.04
           - machine: a6le
-            os: ubuntu-22.04
+            os: ubuntu-24.04
           - machine: ta6le
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             configure: CFLAGS+=-std=gnu89
           - machine: ta6le
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             variant: reboot
             configure: -m=ta6le --force
             make: re.boot SCHEME="chezscheme"
             test: test-some-fast
           - machine: i3nt
-            os: windows-2022
+            os: windows-2025
             toolchain: vs
           - machine: ti3nt
-            os: windows-2022
+            os: windows-2025
             toolchain: vs
           - machine: a6nt
-            os: windows-2022
+            os: windows-2025
             toolchain: vs
           - machine: ta6nt
-            os: windows-2022
+            os: windows-2025
             toolchain: vs
           - machine: ta6nt
-            os: windows-2022
+            os: windows-2025
             toolchain: gcc
             configure: CFLAGS+=-std=gnu89
           - machine: ta6le
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             test: test-more
             variant: more
     runs-on: ${{ matrix.config.os }}
@@ -79,7 +79,12 @@ jobs:
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install gcc-multilib lib32ncurses5-dev
+          sudo apt-get install gcc-multilib lib32ncurses-dev
+      - name: Setup X11 client-side libraries on Linux
+        if: ${{ endsWith(matrix.config.machine, 'le') }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install libx11-dev
       - name: Setup existing Chez Scheme for reboot
         if: ${{ startsWith(matrix.config.make, 're.boot') }}
         run: |
