@@ -1002,7 +1002,7 @@ case "${flagsmuni}" in
         ;;
     *fb|*ob)
         mdcflags="-fPIC -shared"
-        mdinclude="-I/usr/local/include -I/usr/X11R6/include"
+        mdinclude="-I/usr/include -I/usr/local/include -I/usr/X11R6/include"
         ;;
     *nb)
         mdcflags="-fPIC -shared"
