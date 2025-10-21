@@ -1607,6 +1607,24 @@ Notes:
                  [r* (if unsafe nr* r*)])
              (fold-primref/try-predicate preinfo pr e* ret r* ctxt ntypes oldtypes plxc))]))))
 
+  (define (wrap/result ctxt ir qret ntypes)
+    ; Assume cret is a quoted constant, that can be used as result in the expression
+    ; and also as the the predicate in ret.
+    (let ([ir (cond
+                [(and (eq? ctxt 'value)
+                      (>= (debug-level) 2)
+                      (nanopass-case (Lsrc Expr) ir
+                        [(call ,preinfo ,pr ,e* ...)
+                         (let ([flags (primref-flags pr)])
+                           (and (not (all-set? (prim-mask unsafe) flags))
+                                (not (all-set? (prim-mask unrestricted) flags))))]
+                        [else #t]))
+                 ; TODO: improve this when the 'value and 'tail context are split
+                 ir]
+                [else
+                 (make-seq ctxt ir qret)])])
+       (values ir qret ntypes #f #f)))
+
   (define (fold-primref/try-predicate preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
     (cond
       [(not (and (fx= (length e*) 1) (primref->predicate pr #t)))
@@ -1617,11 +1635,9 @@ Notes:
                                      (primref->argument-predicate pr 0 1 #t))])
          (cond
            [(predicate-implies? r (primref->predicate pr #f))
-            (values (make-seq ctxt `(call ,preinfo ,pr ,e) true-rec)
-                    true-rec ntypes #f #f)]
+            (wrap/result ctxt `(call ,preinfo ,pr ,e) true-rec ntypes)]
            [(predicate-disjoint? r (primref->predicate pr #t))
-            (values (make-seq ctxt `(call ,preinfo ,pr ,e) false-rec)
-                    false-rec ntypes #f #f)]
+            (wrap/result ctxt `(call ,preinfo ,pr ,e) false-rec ntypes)]
            [else
             (let ([ttypes (and (eq? ctxt 'test)
                                (pred-env-add/ref ntypes e (primref->predicate pr #t) plxc))]
