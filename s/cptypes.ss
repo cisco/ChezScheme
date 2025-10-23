@@ -19,7 +19,7 @@ Notes:
  - (cptypes ir ctxt types) -> (values ir ret types t-types f-types)
    + arguments
      ir: expression to be optimized
-     ctxt: 'effect 'test 'value
+     ctxt: 'effect 'test 'value 'tail
      types: an immutable dictionary (currently an intmap).
             The dictionary connects the counter of a prelex with the types
             discovered previously.
@@ -753,10 +753,10 @@ Notes:
                          ;; here because we know an error will be raised); we need to keep
                          ;; those non-tail:
                          (single-valued? e))
-                    ;; A 'test or 'effect context cannot have an active attachment,
+                    ;; A 'test, 'effect or 'value context cannot have an active attachment,
                     ;; and they are non-tail with respect to the enclosing function,
                     ;; so ok to have `e` immediately:
-                    (not (eq? 'value ctxt)))
+                    (not (eq? 'tail ctxt)))
                 ;; => It's ok to potentially move `e` into tail position
                 ;; from a continuation-marks perspective. Although an
                 ;; error may trigger a handler that has continuation-mark
@@ -1478,8 +1478,8 @@ Notes:
                          types2 t-types2 f-types2))])))
 
         (define-specialize/unrestricted 2 $call-setting-continuation-attachment
-          ;; body is in 'value context, because called with a mark
-          [(e1 e2) (handle-call-attachment preinfo pr e1 e2 ctxt oldtypes plxc 'value)])
+          ;; body is in 'tail context, because called with a mark
+          [(e1 e2) (handle-call-attachment preinfo pr e1 e2 ctxt oldtypes plxc 'tail)])
 
         (define-specialize/unrestricted 2 $call-getting-continuation-attachment
           [(e1 e2) (handle-call-attachment preinfo pr e1 e2 ctxt oldtypes plxc ctxt)])
@@ -1611,7 +1611,9 @@ Notes:
     ; Assume cret is a quoted constant, that can be used as result in the expression
     ; and also as the the predicate in ret.
     (let ([ir (cond
-                [(and (eq? ctxt 'value)
+                [(eq? ctxt 'effect)
+                 ir]
+                [(and (eq? ctxt 'tail)
                       (>= (debug-level) 2)
                       (nanopass-case (Lsrc Expr) ir
                         [(call ,preinfo ,pr ,e* ...)
@@ -1619,7 +1621,6 @@ Notes:
                            (and (not (all-set? (prim-mask unsafe) flags))
                                 (not (all-set? (prim-mask unrestricted) flags))))]
                         [else #t]))
-                 ; TODO: improve this when the 'value and 'tail context are split
                  ir]
                 [else
                  (make-seq ctxt ir qret)])])
@@ -1733,7 +1734,7 @@ Notes:
     (let*-values ([(ntypes e* r* t* t-t* f-t*)
                    (map-Expr/delayed e* oldtypes plxc)]
                   [(e0 ret0 types0 t-types0 f-types0 e0-bottom?)
-                   (Expr/call e0 'value ntypes oldtypes plxc)])
+                   (Expr/call e0 'tail ntypes oldtypes plxc)])
       (cond
         [(or (and e0-bottom? e0)
              (ormap (lambda (e r) (and (predicate-implies? r 'bottom) e)) e* r*))
@@ -1942,7 +1943,7 @@ Notes:
                  (values (if (unsafe-unreachable? e2)
                              (make-seq ctxt e1 e3)
                              (if (or (< (debug-level) 2)
-                                     (not (eq? ctxt 'value)))
+                                     (not (eq? ctxt 'tail)))
                                  (make-seq ctxt `(if ,e1 ,e2 ,void-rec) e3)
                                  ;; If `debug-level` >= 2, may need to keep in tail position
                                  ir))
@@ -1951,7 +1952,7 @@ Notes:
                  (values (if (unsafe-unreachable? e3)
                              (make-seq ctxt e1 e2)
                              (if (or (< (debug-level) 2)
-                                     (not (eq? ctxt 'value)))
+                                     (not (eq? ctxt 'tail)))
                                  (make-seq ctxt `(if ,e1 ,void-rec ,e3) e2)
                                  ;; As above:
                                  ir))
@@ -2002,7 +2003,7 @@ Notes:
                         (nanopass-case (Lsrc CaseLambdaClause) cl
                           [(clause (,x* ...) ,interface ,body)
                            (let-values ([(body ret types t-types f-types)
-                                         (Expr body 'value types plxc)])
+                                         (Expr body 'tail types plxc)]) ;use 'tail context just in case
                              (for-each (lambda (x) (prelex-operand-set! x #f)) x*)
                              (with-output-language (Lsrc CaseLambdaClause)
                                `(clause (,x* ...) ,interface ,body)))]))
@@ -2123,7 +2124,7 @@ Notes:
   ; external version of cptypes: Lsrc -> Lsrc 
   (define (Scptypes ir)
     (let-values ([(ir ret types t-types f-types)
-                  (Expr ir 'value pred-env-empty (box 0))])
+                  (Expr ir 'tail pred-env-empty (box 0))])
       ir))
 
     (set! $cptypes Scptypes)

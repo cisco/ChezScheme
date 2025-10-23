@@ -905,10 +905,11 @@
 
 (mat cptypes-predicates
   ; don't remove (exact? x) from tail position if it may raise an error
-  (not (parameterize ([debug-level 2])
-         (cptypes-equivalent-expansion?
-           '(lambda (x) (when (or (fixnum? x) (list? x)) (#2%exact? x)))
-           '(lambda (x) (when (or (fixnum? x) (list? x)) (#2%exact? x) #t)))))
+  (parameterize ([debug-level 2])
+    (not
+     (cptypes-equivalent-expansion?
+       '(lambda (x) (when (or (fixnum? x) (list? x)) (#2%exact? x)))
+       '(lambda (x) (when (or (fixnum? x) (list? x)) (#2%exact? x) #t)))))
   (parameterize ([debug-level 2])
     (cptypes-equivalent-expansion?
       '(lambda (x) (when (or (fixnum? x) (list? x)) (#3%exact? x)))
