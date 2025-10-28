@@ -2,7 +2,7 @@
 
 \thisversion{Version 10.3.0}
 \thatversion{Version 8.4}
-\pubmonth{May}
+\pubmonth{October}
 \pubyear{2025}
 
 \iflatex
@@ -123,23 +123,19 @@ from one vector to another, just like \scheme{fxvector-copy!} and others.
 
 \subsection{New \scheme{CHEZSCHEME_HISTORY} environment variable (10.3.0)}
 
-If the environment variable \scheme{CHEZSCHEME_HISTORY} is set during
-startup, and the \scheme{--eehistory} command-line option isn't used,
-the value of said environment variable will determine the history file
-location that will be used.
+If the environment variable \scheme{CHEZSCHEME_HISTORY} is set during startup, and the
+\scheme{--eehistory} command-line option isn't used, the value of said environment
+variable will determine the history file location.
 
 \subsection{Inlined numeric predicates during compilation (10.3.0)}
 
-The compiler inlines more numeric predicates during the compilation,
-in particular \scheme{real?}, \scheme{rational?}, \scheme{exact?}
-and \scheme{inexact?}, .
+The compiler now inlines more numeric predicates, in particular \scheme{real?},
+\scheme{rational?}, \scheme{exact?}, and \scheme{inexact?}.
 
 \subsection{Type recovery improvements (10.3.0)}
 
-The type recovery pass has improved support for \scheme{cfl+} and
-similar functions. Also improve the support of predicates, in
-particular integer?, zero? and similar predicates.
-Also, add suport for \scheme{+} abd \scheme{-}.
+The type recovery pass has improved support for \scheme{cfl+} and similar functions,
+\scheme{integer?}, \scheme{zero?}, and similar predicates, and \scheme{+} and \scheme{-}.
 
 \subsection{Unicode 16.0.0 support (10.3.0)}
 
@@ -148,43 +144,40 @@ and Unicode-related bytevector operations have now been updated to Unicode 16.0.
 
 \subsection{Improved \scheme{expt} on a flonum and a large exact power (10.3.0)}
 
-The \scheme{expt} function produces a more accurate result when its
-first argument is a flonum and its second argument is an exact integer
-that has no equivalent flonum representation.
+The \scheme{expt} function produces a more accurate result when its first argument is a
+flonum and its second argument is an exact integer that has no equivalent flonum
+representation.
 
 \subsection{Atomic foreign-procedure calls (10.3.0)}
 
-A new \scheme{__atomic} foreign-procedure convention indicates that
-the foreign function will not call back to Scheme, such as through a
-foreign callable. Calls to atomic foreign functions may be compiled to
-a more efficient form, particularly if the function accepts or returns
-flonums that may be unboxed (in the sense of Section~\ref{sec:unbox-floats}).
+A new \scheme{__atomic} foreign-procedure convention indicates that the foreign function
+will not call back into Scheme, such as through a foreign callable. Calls to atomic
+foreign functions may be compiled to a more efficient form, particularly if the function
+accepts or returns flonums that may be unboxed (in the sense of
+Section~\ref{sec:unbox-floats}).
 
 \subsection{Improved flonum unboxing for \scheme{fptr-ref} and \scheme{fptr-set!} (10.3.0)}
 
-Unboxing optimizations (in the sense of
-Section~\ref{sec:unbox-floats}) are more consistently applied for
-\scheme{fptr-ref} and \scheme{fptr-set!} on \scheme{double} and
+Unboxing optimizations (in the sense of Section~\ref{sec:unbox-floats}) are more
+consistently applied for \scheme{fptr-ref} and \scheme{fptr-set!} on \scheme{double} and
 \scheme{float} fields.
 
 \subsection{Atomic compare-and-set for pairs (10.3.0)}
 
-The new procedures \scheme{car-cas!} and \scheme{cdr-cas!}
-atomically update a pair, analogous to \scheme{box-cas!}
-on a box.
+The new procedures \scheme{car-cas!} and \scheme{cdr-cas!} atomically update a pair,
+analogous to \scheme{box-cas!} on a box.
 
 \subsection{Black-box procedure (10.3.0)}
 
-The new procedure \scheme{black-box} simply returns its argument, but
-optimization passes make no assumptions about how \scheme{black-box}
-uses its argument, whether \scheme{black-box} has side effects,
-or what \scheme{black-box} returns beyond the fact that it is a
-single value.
+The new procedure \scheme{black-box} simply returns its argument, but optimization passes
+make no assumptions about how \scheme{black-box} uses its argument, whether
+\scheme{black-box} has side effects, or what \scheme{black-box} returns beyond the fact
+that it is a single value.
 
-The intended use of \scheme{black-box} is for benchmarking and testing
-tasks that need to simulate an arbitrary consumption context for a
-computation, but without otherwise adding overhead to the computation
-by adding a non-inlined function call or other obfuscating work.
+The intended use of \scheme{black-box} is for benchmarking and testing tasks that need to
+simulate an arbitrary consumption context for a computation, but without otherwise adding
+overhead to the computation by adding a non-inlined function call or other obfuscating
+work.
 
 \subsection{Command-line options \scheme{--version} and \scheme{--help} write to stdout
 (10.2.0)}

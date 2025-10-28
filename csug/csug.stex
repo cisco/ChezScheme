@@ -27,7 +27,7 @@
 ;; is the same as the documented version. If it's a release version,
 ;; then the date is fixed to the release date. Otherwise, use
 ;; the date when the document is built.
-(define latest-release-date "May 2025")
+(define latest-release-date "October 2025")
 (printf "\\def\\CSVersion{~a}\n" (scheme-version #t))
 (cond
   [(not (scheme-pre-release))
