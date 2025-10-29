@@ -3,7 +3,7 @@
 .if t .ds c caf\o'\'e'
 .if n .ds c cafe
 .ds ]W 
-.TH SCHEME 1 "Chez Scheme Version 10.3.0 October 2025"
+.TH SCHEME 1 "Chez Scheme Version 10.4.0 October 2025"
 .SH NAME
 {InstallSchemeName} - Chez Scheme
 .br
