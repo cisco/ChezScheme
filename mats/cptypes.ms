@@ -903,6 +903,25 @@
                            (loop (cdr p?*))))))
                (loop (cdr f*)))))))
 
+(mat cptypes-predicates
+  ; don't remove (exact? x) from tail position if it may raise an error
+  (parameterize ([debug-level 2])
+    (not
+     (cptypes-equivalent-expansion?
+       '(lambda (x) (when (or (fixnum? x) (list? x)) (#2%exact? x)))
+       '(lambda (x) (when (or (fixnum? x) (list? x)) (#2%exact? x) #t)))))
+  (parameterize ([debug-level 2])
+    (cptypes-equivalent-expansion?
+      '(lambda (x) (when (or (fixnum? x) (list? x)) (#3%exact? x)))
+      '(lambda (x) (when (or (fixnum? x) (list? x)) (#3%exact? x) #t))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (fixnum? x) (list? x)) (list (exact? x))))
+    '(lambda (x) (when (or (fixnum? x) (list? x)) (list (begin (exact? x) #t)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (fixnum? x) (list? x)) (if (exact? x) 1 2)))
+    '(lambda (x) (when (or (fixnum? x) (list? x)) (exact? x) 1)))
+)
+
 (mat cptypes-unsafe
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (pair? x) (car x)))

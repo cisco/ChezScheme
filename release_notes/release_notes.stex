@@ -137,6 +137,9 @@ The compiler now inlines more numeric predicates, in particular \scheme{real?},
 The type recovery pass has improved support for \scheme{cfl+} and similar functions,
 \scheme{integer?}, \scheme{zero?}, and similar predicates, and \scheme{+} and \scheme{-}.
 
+Avoid moving predicates from tail position when they may raise
+an error, in spite the result in known in case of a success.
+
 \subsection{Unicode 16.0.0 support (10.3.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,
