@@ -1346,8 +1346,8 @@ Notes:
       )
 
       (define-specialize 2 $real->flonum
-        [(n w) (let ([rn (get-type n)]
-                     [rw (get-type w)])
+        [(w n) (let ([rw (get-type w)]
+                     [rn (get-type n)])
                  (when (predicate-implies? rw maybe-symbol-pred)
                    (let ([pr (cond
                                [(predicate-implies? rn fixnum-pred)

@@ -1446,7 +1446,7 @@
   (set-who! exact->inexact (lambda (z) (convert-to-inexact z who))))
 
 (set! $real->flonum
-  (lambda (z who)
+  (lambda (who z)
     (type-case z
       [(fixnum?) (fixnum->flonum z)]
       [(bignum? ratnum?) (float z)]
@@ -1455,7 +1455,7 @@
 
 (let ()
   (define convert-to-exact
-    (lambda (z who)
+    (lambda (who z)
       (type-case z
         [(flonum?)
          (when (exceptional-flonum? z)
@@ -1468,12 +1468,12 @@
                  (* mantissa (ash 1 exponent)))))]
         [($inexactnum?)
          (make-rectangular
-           (convert-to-exact ($inexactnum-real-part z) who)
-           (convert-to-exact ($inexactnum-imag-part z) who))]
+           (convert-to-exact who ($inexactnum-real-part z))
+           (convert-to-exact who ($inexactnum-imag-part z)))]
         [(fixnum? bignum? ratnum? $exactnum?) z]
         [else (nonnumber-error who z)])))
-  (set-who! exact (lambda (z) (convert-to-exact z who)))
-  (set-who! inexact->exact (lambda (z) (convert-to-exact z who)))
+  (set-who! exact (lambda (z) (convert-to-exact who z)))
+  (set-who! inexact->exact (lambda (z) (convert-to-exact who z)))
 )
 
 (set! rationalize
