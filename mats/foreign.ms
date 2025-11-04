@@ -1693,7 +1693,7 @@
       (foreign-procedure "ufoo64a" (unsigned-64 unsigned-64 unsigned-64 unsigned-64 unsigned-64 unsigned-64 unsigned-64)
         unsigned-64))
     (define ufoo64b
-      (foreign-procedure "ufoo64b" (integer-32 unsigned-64 unsigned-64 unsigned-64 unsigned-64 unsigned-64 unsigned-64 unsigned-64)
+      (foreign-procedure "ufoo64b" (unsigned-32 unsigned-64 unsigned-64 unsigned-64 unsigned-64 unsigned-64 unsigned-64 unsigned-64)
         unsigned-64))
     (define test-ufoo
       (lambda (foo x a b c d e f g)
