@@ -116,6 +116,11 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Type recovery improvements (10.4.0)}
+
+The compiler now avoids moving predicates from tail position when they may raise an error,
+even if the result is known in case of a success.
+
 \subsection{In-place vector copying (10.3.0)}
 
 The \scheme{vector-copy!} procedure copies a subsequence
