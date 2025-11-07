@@ -145,6 +145,12 @@ ffi_type *decode_type(alloc_state *alloc, ptr type, ffi_abi abi, IBOOL *all_floa
         type = Scdr(type);
       }
 
+# ifdef __s390x__
+      /* s390x: unions containing only floats are not treated the
+         same as structs containing only floats */
+      union_all_float = 0;
+# endif
+
       if (!union_all_float)
         *all_float = 0;
 
