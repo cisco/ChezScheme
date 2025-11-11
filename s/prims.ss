@@ -407,25 +407,33 @@
       [(n x)
        (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
          ($oops who "~s is not a valid vector length" n))
-       ($make-immobile-vector n x)]
+       (let ([v ($make-immobile-vector n x)])
+         ($use-trap-fuel n)
+         v)]
       [(n)
        (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
          ($oops who "~s is not a valid vector length" n))
-       ($make-immobile-vector n 0)])))
+       (let ([v ($make-immobile-vector n 0)])
+         ($use-trap-fuel n)
+         v)])))
 
 (define-who make-reference-bytevector
   (let ([$make-reference-bytevector (foreign-procedure "(cs)s_make_reference_bytevector" (uptr) ptr)])
     (lambda (n)
       (unless (and (fixnum? n) (not ($fxu< (constant maximum-bytevector-length) n)))
         ($oops who "~s is not a valid bytevector length" n))
-      ($make-reference-bytevector n))))
+      (let ([v ($make-reference-bytevector n)])
+        ($use-trap-fuel n)
+        v))))
 
 (define-who make-immobile-reference-bytevector
   (let ([$make-immobile-reference-bytevector (foreign-procedure "(cs)s_make_immobile_reference_bytevector" (uptr) ptr)])
     (lambda (n)
       (unless (and (fixnum? n) (not ($fxu< (constant maximum-bytevector-length) n)))
         ($oops who "~s is not a valid bytevector length" n))
-      ($make-immobile-reference-bytevector n))))
+      (let ([v ($make-immobile-reference-bytevector n)])
+        ($use-trap-fuel n)
+        v))))
 
 (define $make-eqhash-vector
   (case-lambda
@@ -2446,15 +2454,25 @@
 (define $foreign-char? (lambda (x) (#3%$foreign-char? x)))
 (define $foreign-wchar? (lambda (x) (#3%$foreign-wchar? x)))
 
+(define $use-trap-fuel
+  (lambda (n)
+    ($use-trap-fuel n)))
+
 (define $byte-copy!
-  (foreign-procedure "(cs)byte-copy"
-    (scheme-object fixnum scheme-object fixnum fixnum)
-    void))
+  (let ([byte-copy! (foreign-procedure __atomic "(cs)byte-copy"
+                      (scheme-object fixnum scheme-object fixnum fixnum)
+                      void)])
+    (lambda (src srcoff dst dstoff cnt)
+      (byte-copy! src srcoff dst dstoff cnt)
+      ($use-trap-fuel cnt))))
 
 (define $ptr-copy!
-  (foreign-procedure "(cs)ptr-copy"
-    (scheme-object fixnum scheme-object fixnum fixnum)
-    void))
+  (let ([ptr-copy! (foreign-procedure __atomic "(cs)ptr-copy"
+                     (scheme-object fixnum scheme-object fixnum fixnum)
+                     void)])
+    (lambda (src srcoff dst dstoff cnt)
+      (ptr-copy! src srcoff dst dstoff cnt)
+      ($use-trap-fuel cnt))))
 
 (define-who ($sealed-record? x rtd)
   (unless (record-type-descriptor? rtd)
