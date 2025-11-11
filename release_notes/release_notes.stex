@@ -2897,6 +2897,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Corrections and refinements to error reporting (10.4.0)}
+
+Changed \scheme{>} and \scheme{>=} when applied to two non-real
+arguments to report the first argument as wrong, instead of the second
+(even though there is no general guarantee about which argument is
+reported in errors).
+
 \subsection{Exit with failure on error from boot file (10.3.0)}
 
 When an error is encountered within a boot file---either raised
