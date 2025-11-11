@@ -6195,8 +6195,8 @@ evaluating module init
    (>= (bytes-deallocated) 0)
    (let ([b (bytes-deallocated)] [c (collections)])
      (with-interrupts-disabled ; ensure allocated list stays in generation 0 until printed
-      (let ([x (make-list 10 'a)])
-        (pretty-print x))
+      (let ([x (make-list 10000 'a)])
+        (pretty-print (list-tail x 9990)))
       (collect))
      (and (> (collections) c) (or (eq? (current-eval) interpret)
                                   (> (bytes-deallocated) b))))

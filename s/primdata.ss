@@ -2514,6 +2514,7 @@
   ($unknown-undefined-violation [flags abort-op])
   ($update-mark [flags pure discard unrestricted single-valued alloc])
   ($untrace [flags single-valued])
+  ($use-trap-fuel [flags single-valued])
   ($unwrap-ftype-pointer [flags single-valued])
   ($value [sig [(ptr) -> (ptr)]] [flags pure unrestricted discard cp02])
   ($vector-ref-check? [sig [(ptr ptr) -> (boolean)]] [flags unrestricted pure])
