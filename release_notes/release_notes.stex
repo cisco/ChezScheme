@@ -116,6 +116,25 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Interrupts and Large-Vector Operations (10.4.0)}
+
+Vector and string operations such as \scheme{make-vector},
+\scheme{make-bytevector}, \scheme{make-string},
+\scheme{string-append}, and \scheme{vector-append}---whose run times
+depend on the length of the vector, bytevector, or string---were
+treated for the purposes of scheduling interrupt checking as
+essentially constant-time operations. As a result, garbage collections
+and timer expirations could be too infrequent. These operations still
+will not be interrupted during their execution, but they are treated
+as taking time proportional to their work for the purpose of
+scheduling interrupts.
+
+List operations such as \scheme{length}, \scheme{list-ref},
+\scheme{list-tail}, \scheme{append}, \scheme{reverse}, \scheme{assq},
+and \scheme{memq} suffer from the same problem only in unsafe mode.
+Direct use of these procedures in unsafe mode continues to be treated
+as essentialy constant-time.
+
 \subsection{Type recovery improvements (10.4.0)}
 
 The compiler now avoids moving predicates from tail position when they may raise an error,

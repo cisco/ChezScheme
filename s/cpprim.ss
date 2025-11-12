@@ -758,6 +758,13 @@
       (lambda (e)
         (%lea ,e (fx+ (constant inexactnum-imag-disp)
                    (fx- (constant type-flonum) (constant typemod))))))
+    (define build-use-trap-fuel
+      (lambda (amt)
+        (let ([fuel (make-tmp 'fuel 'uptr)])
+          `(let ([,fuel ,(%inline - ,(ref-reg %trap) ,amt)])
+             (if ,(%inline > ,fuel (immediate 0))
+                 (set! ,(ref-reg %trap) ,fuel)
+                 ,(build-libcall #f #f #f event))))))
     (define make-build-fill
       (lambda (elt-bytes data-disp)
         (define ptr-bytes (constant ptr-bytes))
@@ -843,7 +850,9 @@
                           (set! ,(%mref ,e-vec ,(fx+ data-disp n)) ,e-fill)
                           ,(if (fx= n 0) e-vec (f n)))))))]
             [else
-             (let ([Ltop (make-local-label 'Ltop)] [t (make-assigned-tmp 't 'uptr)])
+             (let ([Ltop (make-local-label 'Ltop)]
+                   [t (make-assigned-tmp 't 'uptr)]
+                   [orig-t (make-tmp 'orig-t 'uptr)])
                (bind #t ([e-fill (super-size e-fill)])
                  `(let ([,t ,(if (fx>= elt-bytes ptr-bytes)
                                  e-bytes
@@ -856,13 +865,16 @@
                                           ,e-bytes
                                           (immediate ,(fx- ptr-bytes 1)))
                                        (immediate ,(fx- ptr-bytes)))]))])
-                    (label ,Ltop
-                      (if ,(%inline eq? ,t (immediate 0))
-                          ,e-vec
-                          ,(%seq
-                             (set! ,t ,(%inline - ,t (immediate ,ptr-bytes)))
-                             (set! ,(%mref ,e-vec ,t ,data-disp) ,e-fill)
-                             (goto ,Ltop)))))))]))))
+                    (let ([,orig-t ,t])
+                      (label ,Ltop
+                        (if ,(%inline eq? ,t (immediate 0))
+                            (seq
+                             ,(build-use-trap-fuel orig-t)
+                             ,e-vec)
+                            ,(%seq
+                              (set! ,t ,(%inline - ,t (immediate ,ptr-bytes)))
+                              (set! ,(%mref ,e-vec ,t ,data-disp) ,e-fill)
+                              (goto ,Ltop))))))))]))))
 
     ;; NOTE: integer->ptr and unsigned->ptr DO NOT handle 64-bit integers on a 32-bit machine.
     ;; this is okay for $object-ref and $object-set!, which do not support moving 64-bit values
@@ -6852,7 +6864,9 @@
                                               (constant type-bytevector))))
                            ,(if maybe-e-fill
                                 (build-bytevector-fill t `(immediate ,n) maybe-e-fill)
-                                t)))))
+                                `(seq
+                                  ,(build-use-trap-fuel `(immediate ,(fxsrl n (constant ptr-bytes))))
+                                  ,t))))))
                 (bind #t (e-length)
                   (let ([t-bytes (make-tmp 'tbytes 'uptr)] [t-vec (make-tmp 'tvec)])
                     `(if ,(%inline eq? ,e-length (immediate 0))
@@ -6872,7 +6886,9 @@
                                     (constant bytevector-length-offset)))
                                ,(if maybe-e-fill
                                     (build-bytevector-fill t-vec t-bytes maybe-e-fill)
-                                    t-vec))))))))))
+                                    `(seq
+                                      ,(build-use-trap-fuel (build-unfix t-bytes))
+                                      ,t-vec)))))))))))
         (let ()
           (define valid-length?
             (lambda (e-length)
@@ -7403,7 +7419,9 @@
                                                    (constant type-string))))
                              ,(if maybe-e-fill
                                   (build-string-fill t `(immediate ,bytes) maybe-e-fill)
-                                  t))))))
+                                  (%seq
+                                   ,(build-use-trap-fuel `(immediate ,(fxsll bytes (constant ptr-bytes))))
+                                   ,t)))))))
                 (bind #t (e-length)
                   (let ([t-bytes (make-tmp 'tsize 'uptr)] [t-str (make-tmp 'tstr)])
                     `(if ,(%inline eq? ,e-length (immediate 0))
@@ -7425,7 +7443,9 @@
                                     (constant string-length-offset)))
                                ,(if maybe-e-fill
                                     (build-string-fill t-str t-bytes maybe-e-fill)
-                                    t-str))))))))))
+                                    (%seq
+                                     ,(build-use-trap-fuel (build-unfix t-bytes))
+                                     ,t-str)))))))))))
         (define default-fill `(immediate ,(ptr->imm #\nul)))
         (define-inline 3 $make-uninitialized-string
           [(e-length) (do-make-string e-length #f)])
@@ -7656,7 +7676,9 @@
                      (label ,Ltop
                        (if ,(%inline eq? ,t ,e-len)
                            ,(cond
-                             [(not e-elem) vec]
+                             [(not e-elem) (%seq
+                                            ,(build-use-trap-fuel (build-unfix e-len))
+                                            ,vec)]
                              [(nanopass-case (L7 Expr) n-elem
                                 [(immediate ,imm) (guard (eqv? imm (fix 1))) #t]
                                 [(quote ,d) (guard (eqv? d 1)) #t]
@@ -7664,6 +7686,7 @@
                               (let ([idx (if prefix-elem? `(immediate 0) e-len)])
                                 (%seq
                                  (set! ,(%mref ,vec ,idx ,(constant vector-data-disp)) ,e-elem)
+                                 ,(build-use-trap-fuel (build-unfix idx))
                                  ,vec))]
                              [else
                               (let ([Lfill (make-local-label 'Lfill)]
@@ -7675,7 +7698,9 @@
                                  (set! ,t (immediate 0))
                                  (label ,Lfill
                                    (if ,(%inline eq? ,t ,n-elem)
-                                       ,vec
+                                       (seq
+                                        ,(build-use-trap-fuel (build-unfix idx))
+                                        ,vec)
                                        ,(%seq
                                          (set! ,(%mref ,vec ,idx ,(constant vector-data-disp)) ,e-elem)
                                          (set! ,t ,(%inline + ,t (immediate ,(constant ptr-bytes))))
@@ -7700,15 +7725,18 @@
             (lambda (type e-vec e-idx e-val)
               (let ([Ltop (make-local-label 'Ltop)]
                     [vec (make-tmp 'vec 'ptr)]
-                    [t (make-assigned-tmp 't 'uptr)])
+                    [t (make-assigned-tmp 't 'uptr)]
+                    [orig-t (make-tmp 'orig-t 'uptr)])
                 (bind #t (e-vec e-idx)
                   (bind #f (e-val)
                     `(let ([,t ,(extract-vector-length e-vec)])
-                       (let ([,vec ,(do-make-vector type t #f)])
+                       (let ([,vec ,(do-make-vector type t #f)]
+                             [,orig-t ,t])
                          (label ,Ltop
                            (if ,(%inline eq? ,t (immediate 0))
                                ,(%seq
                                  (set! ,(%mref ,vec ,e-idx ,(constant vector-data-disp)) ,e-val)
+                                 ,(build-use-trap-fuel (build-unfix orig-t))
                                  ,vec)
                                ,(%seq
                                  (set! ,t ,(%inline - ,t (immediate ,(constant ptr-bytes))))
@@ -7717,7 +7745,7 @@
                                  (goto ,Ltop)))))))))))
           (define build-vector-append
             (lambda (type e-vecs)
-              (let loop ([e-vecs e-vecs] [len `(immediate 0)])
+              (let loop ([e-vecs e-vecs] [len `(immediate 0)] [use-fuel? #t])
                 (cond
                   [(null? e-vecs)
                    (do-make-vector type len #f)]
@@ -7730,14 +7758,18 @@
                      (bind #t (e-vec)
                        `(let ([,t ,len]
                               [,e-len ,(extract-vector-length e-vec)])
-                          (let ([,d-vec ,(loop (cdr e-vecs) (%inline + ,t ,e-len))])
+                          (let ([,d-vec ,(loop (cdr e-vecs) (%inline + ,t ,e-len) #f)])
                             (label ,Ltop
                                    (if ,(%inline eq? ,e-len (immediate 0))
-                                       ,d-vec
+                                       ,(if use-fuel?
+                                            `(seq
+                                              ,(build-use-trap-fuel (extract-vector-length d-vec))
+                                              ,d-vec)
+                                            d-vec)
                                        ,(%seq
                                          (set! ,e-len ,(%inline - ,e-len (immediate ,(constant ptr-bytes))))
                                          (set! ,(%mref ,d-vec ,(%inline + ,t ,e-len) ,(constant vector-data-disp))
-                                               ,(%mref ,e-vec ,e-len ,(constant vector-data-disp)))
+                                             ,(%mref ,e-vec ,e-len ,(constant vector-data-disp)))
                                          (goto ,Ltop))))))))]))))
           (define (okay-make-vector? pr e1)
             (and (eq? (primref-name pr) 'make-vector)
@@ -8402,6 +8434,8 @@
                   ,t)))])
     (define-inline 3 $get-timer
       [() (build-fix (ref-reg %trap))])
+    (define-inline 3 $use-trap-fuel
+      [(n) (build-use-trap-fuel n)])
     (constant-case architecture
       [(pb) (void)]
       [else
