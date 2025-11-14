@@ -1030,6 +1030,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat <: "<: 3.4+0.0i is not a real number".
 5_3.mo:Expected error in mat <: "<: 3.4+0.0i is not a real number".
 5_3.mo:Expected error in mat <: "<: 3.4+0.0i is not a real number".
+5_3.mo:Expected error in mat <: "<: 1.0+0.0i is not a real number".
 5_3.mo:Expected error in mat <: "<: 2.0+1.0i is not a real number".
 5_3.mo:Expected error in mat <: "<: 2+1i is not a real number".
 5_3.mo:Expected error in mat <: "<: 3+1i is not a real number".
@@ -1050,6 +1051,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat <=: "<=: 3.4+0.0i is not a real number".
 5_3.mo:Expected error in mat <=: "<=: 3.4+0.0i is not a real number".
 5_3.mo:Expected error in mat <=: "<=: 3.4+0.0i is not a real number".
+5_3.mo:Expected error in mat <=: "<=: 1.0+0.0i is not a real number".
 5_3.mo:Expected error in mat <=: "<=: 2.0+1.0i is not a real number".
 5_3.mo:Expected error in mat <=: "<=: 2+1i is not a real number".
 5_3.mo:Expected error in mat <=: "<=: 3+1i is not a real number".
@@ -1070,6 +1072,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat >: ">: 3.4+0.0i is not a real number".
 5_3.mo:Expected error in mat >: ">: 3.4+0.0i is not a real number".
 5_3.mo:Expected error in mat >: ">: 3.4+0.0i is not a real number".
+5_3.mo:Expected error in mat >: ">: 1.0+0.0i is not a real number".
 5_3.mo:Expected error in mat >: ">: 2.0+1.0i is not a real number".
 5_3.mo:Expected error in mat >: ">: 2+1i is not a real number".
 5_3.mo:Expected error in mat >: ">: 3+1i is not a real number".
@@ -1090,6 +1093,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat >=: ">=: 3.4+0.0i is not a real number".
 5_3.mo:Expected error in mat >=: ">=: 3.4+0.0i is not a real number".
 5_3.mo:Expected error in mat >=: ">=: 3.4+0.0i is not a real number".
+5_3.mo:Expected error in mat >=: ">=: 1.0+0.0i is not a real number".
 5_3.mo:Expected error in mat >=: ">=: 2.0+1.0i is not a real number".
 5_3.mo:Expected error in mat >=: ">=: 2+1i is not a real number".
 5_3.mo:Expected error in mat >=: ">=: 3+1i is not a real number".
@@ -1111,6 +1115,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat r6rs:<: "<: a is not a real number".
 5_3.mo:Expected error in mat r6rs:<: "<: a is not a real number".
 5_3.mo:Expected error in mat r6rs:<: "<: a is not a real number".
+5_3.mo:Expected error in mat r6rs:<: "<: 1.0+0.0i is not a real number".
 5_3.mo:Expected error in mat r6rs:<: "<: 2.0+1.0i is not a real number".
 5_3.mo:Expected error in mat r6rs:<: "<: 2+1i is not a real number".
 5_3.mo:Expected error in mat r6rs:<: "<: 3+1i is not a real number".
@@ -1123,6 +1128,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat r6rs:<=: "<=: a is not a real number".
 5_3.mo:Expected error in mat r6rs:<=: "<=: a is not a real number".
 5_3.mo:Expected error in mat r6rs:<=: "<=: a is not a real number".
+5_3.mo:Expected error in mat r6rs:<=: "<=: 1.0+0.0i is not a real number".
 5_3.mo:Expected error in mat r6rs:<=: "<=: 2.0+1.0i is not a real number".
 5_3.mo:Expected error in mat r6rs:<=: "<=: 2+1i is not a real number".
 5_3.mo:Expected error in mat r6rs:<=: "<=: 3+1i is not a real number".
@@ -1135,6 +1141,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat r6rs:>: ">: a is not a real number".
 5_3.mo:Expected error in mat r6rs:>: ">: a is not a real number".
 5_3.mo:Expected error in mat r6rs:>: ">: a is not a real number".
+5_3.mo:Expected error in mat r6rs:>: ">: 1.0+0.0i is not a real number".
 5_3.mo:Expected error in mat r6rs:>: ">: 2.0+1.0i is not a real number".
 5_3.mo:Expected error in mat r6rs:>: ">: 2+1i is not a real number".
 5_3.mo:Expected error in mat r6rs:>: ">: 3+1i is not a real number".
@@ -1147,6 +1154,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat r6rs:>=: ">=: a is not a real number".
 5_3.mo:Expected error in mat r6rs:>=: ">=: a is not a real number".
 5_3.mo:Expected error in mat r6rs:>=: ">=: a is not a real number".
+5_3.mo:Expected error in mat r6rs:>=: ">=: 1.0+0.0i is not a real number".
 5_3.mo:Expected error in mat r6rs:>=: ">=: 2.0+1.0i is not a real number".
 5_3.mo:Expected error in mat r6rs:>=: ">=: 2+1i is not a real number".
 5_3.mo:Expected error in mat r6rs:>=: ">=: 3+1i is not a real number".

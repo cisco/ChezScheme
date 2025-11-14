@@ -2379,7 +2379,12 @@
              [(fixnum?) (if (fixnum-floatable-wlop? y) (fl< x (fixnum->flonum y)) (exact-inexact-compare? > y x))]
              [(bignum? ratnum?) (exact-inexact-compare? > y x)]
              [else (nonreal-error who y)])]
-         [else (nonreal-error who x)])))
+         [else (when (and (eq? who '>)
+                          ;; arguments were reversed; call in other order to
+                          ;; check original first argument first
+                          (not (real? y)))
+                 (nonreal-error who y))
+               (nonreal-error who x)])))
 
 (set! $<=
    (lambda (who x y)
@@ -2415,7 +2420,12 @@
              [(fixnum?) (if (fixnum-floatable-wlop? y) (fl<= x (fixnum->flonum y)) (exact-inexact-compare? >= y x))]
              [(bignum? ratnum?) (exact-inexact-compare? >= y x)]
              [else (nonreal-error who y)])]
-         [else (nonreal-error who x)])))
+         [else (when (and (eq? who '>=)
+                          ;; arguments were reversed; call in other order to
+                          ;; check original first argument first
+                          (not (real? y)))
+                 (nonreal-error who y))
+               (nonreal-error who x)])))
 
 (set! $+
   (lambda (who x y)
