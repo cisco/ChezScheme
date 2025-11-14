@@ -5705,7 +5705,9 @@
                          (jump ,%ref-ret (,%ac0)))
                        ; TODO: would be nice to avoid second cmpl here
                        (if ,(%inline < ,%ac0 (immediate 0))
-                           (seq (pariah) (goto ,Ldoargerr))
+                           ,(%seq (pariah)
+                                  (set! ,%ac0 (immediate 0)) ; restore supplied argument count
+                                  (goto ,Ldoargerr))
                            ,(%seq
                               (set! ,%ac0 ,(%inline sll ,%ac0 ,(%constant pair-shift)))
                               (set! ,%xp (alloc ,(make-info-alloc (constant type-pair) #f #f) ,%ac0))
