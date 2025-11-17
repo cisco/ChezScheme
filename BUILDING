@@ -25,7 +25,7 @@ On Unix variants:
 
 On Windows:
 
- * Microsoft Visual Studio 2022, 2019, 2017, or 2015
+ * Microsoft Visual Studio 2026, 2022, 2019, or 2017
 
 
 GETTING STARTED
@@ -370,10 +370,8 @@ where <machine type> is one of the following:
  * ti3nt     (32-bit Intel threaded)
  * i3nt      (32-bit Intel non-threaded)
 
-If you're using Visual Studio 2022 or 2019, install "Desktop
-development with C++" on the "Workloads" tabs and the "C++ 20[xx]
-Redistributable MSMs" on the "Individual components" tab under the
-"Compilers, build tools, and runtimes" section. The `build.bat` script
+If you're using Visual Studio 2026, 2022 or 2019, install "Desktop
+development with C++" on the "Workloads" tab. The `build.bat` script
 will use `c\vs.bat` to find and set up Microsoft Visual Studio
 command-line tools automatically for <machine type>; supply `/keepvs`
 if you have set up command-line tools already so that `c\vs.bat`
