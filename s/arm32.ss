@@ -245,7 +245,12 @@
                     ;; offset not aligned or out of range
                     (let ([u (make-tmp 'umov)])
                       (seq
-                       (build-set! ,u (asm ,null-info ,(asm-add #f) ,x0 (immediate ,imm)))
+                       (if (funky12 imm)
+                           (build-set! ,u (asm ,null-info ,(asm-add #f) ,x0 (immediate ,imm)))
+                           (let ([tmp (make-tmp 'tmp)])
+                             (seq
+                              (build-set! ,tmp (immediate ,imm))
+                              (build-set! ,u (asm ,null-info ,(asm-add #f) ,x0 ,tmp)))))
                        (if (eq? x1 %zero)
                            (return u %zero 0)
                            (seq

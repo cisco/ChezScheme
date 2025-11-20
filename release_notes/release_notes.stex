@@ -164,10 +164,10 @@ foreign functions may be compiled to a more efficient form, particularly if the 
 accepts or returns flonums that may be unboxed (in the sense of
 Section~\ref{sec:unbox-floats}).
 
-\subsection{Improved flonum unboxing for \scheme{fptr-ref} and \scheme{fptr-set!} (10.3.0)}
+\subsection{Improved flonum unboxing for \scheme{ftype-ref} and \scheme{ftype-set!} (10.3.0)}
 
 Unboxing optimizations (in the sense of Section~\ref{sec:unbox-floats}) are more
-consistently applied for \scheme{fptr-ref} and \scheme{fptr-set!} on \scheme{double} and
+consistently applied for \scheme{ftype-ref} and \scheme{ftype-set!} on \scheme{double} and
 \scheme{float} fields.
 
 \subsection{Atomic compare-and-set for pairs (10.3.0)}
@@ -2897,6 +2897,7 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+
 \subsection{Corrections and refinements to error reporting (10.4.0)}
 
 Repaired the error message for applying \scheme{list*} or
@@ -2907,6 +2908,12 @@ Changed \scheme{>} and \scheme{>=} when applied to two non-real
 arguments to report the first argument as wrong, instead of the second
 (even though there is no general guarantee about which argument is
 reported in errors).
+
+\subsection{Fix 32-bit Arm floating-point dereference offset (10.4.0)}
+
+When an offset to a floating-point field or array element is unaligned
+or large enough and does not fit into a 12-bit encoding used for
+immediate offsets, compilation could fail.
 
 \subsection{Exit with failure on error from boot file (10.3.0)}
 
