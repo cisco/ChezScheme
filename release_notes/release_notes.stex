@@ -2897,6 +2897,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Corrections and refinements to error reporting (10.4.0)}
+
+Repaired the error message for applying \scheme{list*} or
+\scheme{cons*} to zero arguments so that it reports \scheme{0} instead
+of \scheme{-1} as the argument count.
+
 \subsection{Exit with failure on error from boot file (10.3.0)}
 
 When an error is encountered within a boot file---either raised
