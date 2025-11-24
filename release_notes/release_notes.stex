@@ -2894,7 +2894,6 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-
 \subsection{Corrections and refinements to error reporting (10.4.0)}
 
 A bug in the error message produced when \scheme{list*} and \scheme{cons*} are called with
@@ -2904,11 +2903,11 @@ When \scheme{>} and \scheme{>=} are applied to two non-real arguments, the first
 is now reported as incorrect instead of the second. In general, when two or more arguments
 are invalid, there is no guarantee about which one is reported invalid.
 
-\subsection{Fix 32-bit Arm floating-point dereference offset (10.4.0)}
+\subsection{Fix 32-bit ARM floating-point dereference offset (10.4.0)}
 
-When an offset to a floating-point field or array element is unaligned
-or large enough and does not fit into a 12-bit encoding used for
-immediate offsets, compilation could fail.
+A bug that affects compilation on 32-bit ARM systems has been fixed. The bug was triggered
+when an offset to a floating-point field or array element was unaligned or too large to
+fit into the 12-bit encoding used for immediate offsets.
 
 \subsection{Exit with failure on error from boot file (10.3.0)}
 
