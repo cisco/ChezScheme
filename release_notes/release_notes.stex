@@ -142,9 +142,6 @@ The compiler now inlines more numeric predicates, in particular \scheme{real?},
 The type recovery pass has improved support for \scheme{cfl+} and similar functions,
 \scheme{integer?}, \scheme{zero?}, and similar predicates, and \scheme{+} and \scheme{-}.
 
-Avoid moving predicates from tail position when they may raise
-an error, in spite the result in known in case of a success.
-
 \subsection{Unicode 16.0.0 support (10.3.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,
@@ -2899,14 +2896,12 @@ in fasl files does not generally make sense.
 
 \subsection{Corrections and refinements to error reporting (10.4.0)}
 
-Repaired the error message for applying \scheme{list*} or
-\scheme{cons*} to zero arguments so that it reports \scheme{0} instead
-of \scheme{-1} as the argument count.
+A bug in the error message produced when \scheme{list*} and \scheme{cons*} are called with
+zero arguments has been fixed.
 
-Changed \scheme{>} and \scheme{>=} when applied to two non-real
-arguments to report the first argument as wrong, instead of the second
-(even though there is no general guarantee about which argument is
-reported in errors).
+When \scheme{>} and \scheme{>=} are applied to two non-real arguments, the first argument
+is now reported as incorrect instead of the second. In general, when two or more arguments
+are invalid, there is no guarantee about which one is reported invalid.
 
 \subsection{Exit with failure on error from boot file (10.3.0)}
 
