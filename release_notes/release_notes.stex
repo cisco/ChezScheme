@@ -161,10 +161,10 @@ foreign functions may be compiled to a more efficient form, particularly if the 
 accepts or returns flonums that may be unboxed (in the sense of
 Section~\ref{sec:unbox-floats}).
 
-\subsection{Improved flonum unboxing for \scheme{fptr-ref} and \scheme{fptr-set!} (10.3.0)}
+\subsection{Improved flonum unboxing for \scheme{ftype-ref} and \scheme{ftype-set!} (10.3.0)}
 
 Unboxing optimizations (in the sense of Section~\ref{sec:unbox-floats}) are more
-consistently applied for \scheme{fptr-ref} and \scheme{fptr-set!} on \scheme{double} and
+consistently applied for \scheme{ftype-ref} and \scheme{ftype-set!} on \scheme{double} and
 \scheme{float} fields.
 
 \subsection{Atomic compare-and-set for pairs (10.3.0)}
@@ -2902,6 +2902,12 @@ zero arguments has been fixed.
 When \scheme{>} and \scheme{>=} are applied to two non-real arguments, the first argument
 is now reported as incorrect instead of the second. In general, when two or more arguments
 are invalid, there is no guarantee about which one is reported invalid.
+
+\subsection{Fix 32-bit ARM floating-point dereference offset (10.4.0)}
+
+A bug that affects compilation on 32-bit ARM systems has been fixed. The bug was triggered
+when an offset to a floating-point field or array element was unaligned or too large to
+fit into the 12-bit encoding used for immediate offsets.
 
 \subsection{Exit with failure on error from boot file (10.3.0)}
 

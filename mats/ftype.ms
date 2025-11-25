@@ -1397,6 +1397,19 @@
    (define-syntax unsigned-16 (make-compile-time-value "Non-interfering binding"))
    (let ([fptr (make-ftype-pointer unsigned-16 0)])
      (= (ftype-pointer-address fptr) 0)))
+
+  ;; regression test for arm32 backend and distant offset to floating-point field
+  (let ()
+    (define-ftype T
+      (struct
+          [a (array 6368 int)] ; offset derived from 6368 is not funky12
+          [n double]))
+    (define (f x y)
+      (ftype-set! T (n) x y))
+    (let ([p (make-ftype-pointer T (foreign-alloc (ftype-sizeof T)))])
+      (f p 1.0)
+      (equal? (ftype-ref T (n) p) 1.0)))
+
 )
 
 (mat ftype-pointer-address-optimizations
