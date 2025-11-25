@@ -2117,6 +2117,8 @@
 (define-constant default-heap-reserve-ratio 1.0)
 (define-constant default-max-nonstatic-generation 4)
 
+(define-constant fuel-word-count-shift 2)
+
 (constant-case address-bits
   [(32)
    (constant-case segment-table-levels

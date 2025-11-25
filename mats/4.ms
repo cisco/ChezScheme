@@ -4181,6 +4181,133 @@
       (eqv?
         (test6B/counter 125 (lambda () (spin n)))
         n)))
+
+  ;; check that some operations that end up calling `memmove`/`memcpy`
+  ;; use a suitable amount of fuel
+  (begin
+    (define (check-uses-fuel make copy!)
+      (and (eq? (let ([vec (make 1024)])
+                  ((make-engine (lambda ()
+                                  (copy! vec 512)
+                                  'done))
+                   4096
+                   (lambda (fuel v) v)
+                   (lambda (e) 'not-done)))
+                'done)
+           (eq? (let ([vec (make 8192)])
+                  ((make-engine (lambda ()
+                                  (copy! vec 4096)
+                                  'done))
+                   128
+                   (lambda (fuel v) v)
+                   (lambda (e) 'not-done)))
+                'not-done)))
+    #t)
+  (check-uses-fuel make-bytevector
+                   (lambda (src amt)
+                     (bytevector-copy! src 0 src amt amt)))
+  (check-uses-fuel make-bytevector
+                   (lambda (src amt)
+                     (bytevector-copy src)))
+  (check-uses-fuel make-bytevector
+                   (lambda (src amt)
+                     (make-bytevector amt 0)))
+  (check-uses-fuel make-bytevector
+                   (lambda (src amt)
+                     (make-bytevector amt)))
+  (check-uses-fuel make-bytevector
+                   (lambda (src amt)
+                     (make-reference-bytevector amt)))
+  (check-uses-fuel make-bytevector
+                   (lambda (src amt)
+                     (make-immobile-reference-bytevector amt)))
+  (check-uses-fuel make-bytevector
+                   (lambda (src amt)
+                     (bytevector-fill! src 1)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (vector-copy! src 0 src amt amt)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (vector-copy src)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (vector-append src src)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (immutable-vector-append src src)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (vector-set/copy src 0 1)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (immutable-vector-set/copy src 0 1)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (make-vector amt 0)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (make-immobile-vector amt)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (make-immobile-vector amt 0)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (vector-fill! src 1)))
+  (check-uses-fuel make-flvector
+                   (lambda (src amt)
+                     (flvector-copy! src 0 src amt amt)))
+  (check-uses-fuel make-flvector
+                   (lambda (src amt)
+                     (flvector-copy src)))
+  (check-uses-fuel make-flvector
+                   (lambda (src amt)
+                     (make-flvector amt)))
+  (check-uses-fuel make-fxvector
+                   (lambda (src amt)
+                     (fxvector-copy! src 0 src amt amt)))
+  (check-uses-fuel make-fxvector
+                   (lambda (src amt)
+                     (fxvector-copy src)))
+  (check-uses-fuel make-fxvector
+                   (lambda (src amt)
+                     (make-fxvector amt)))
+  (check-uses-fuel make-string
+                   (lambda (src amt)
+                     (string-append src src)))
+  (check-uses-fuel make-string
+                   (lambda (src amt)
+                     (make-string amt)))
+  (check-uses-fuel make-string
+                   (lambda (src amt)
+                     (make-string amt #\x)))
+  (check-uses-fuel make-string
+                   (lambda (src amt)
+                     (string-fill! src #\x)))
+
+  ;; list operations are not obligated to use fuel in unsafe mode
+  (check-uses-fuel make-list
+                   (lambda (src amt)
+                     (#2%length src)))
+  (check-uses-fuel make-list
+                   (lambda (src amt)
+                     (#2%list-tail src amt)))
+  (check-uses-fuel make-list
+                   (lambda (src amt)
+                     (#2%list-ref src amt)))
+  (check-uses-fuel make-list
+                   (lambda (src amt)
+                     (#2%memq 'not-there src)))
+  (check-uses-fuel (lambda (n) (make-list n '(here)))
+                   (lambda (src amt)
+                     (#2%assq 'not-there src)))
+  (check-uses-fuel make-list
+                   (lambda (src amt)
+                     (#2%append src src)))
+  (check-uses-fuel make-list
+                   (lambda (src amt)
+                     (#2%reverse src)))
+
 )
 
 ;;; section 4-8:
