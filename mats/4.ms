@@ -4202,6 +4202,23 @@
                    (lambda (fuel v) v)
                    (lambda (e) 'not-done)))
                 'not-done)))
+    (define (fill-hashtable! ht n)
+      (let loop ([i 0])
+        (unless (= i n)
+          (hashtable-set! ht (gensym) i)
+          (loop (add1 i)))))
+    (define (make-filled-hashtable n)
+      (let ([ht (make-hashtable equal-hash equal?)])
+        (fill-hashtable! ht n)
+        ht))
+    (define (make-filled-symbol-hashtable n)
+      (let ([ht (make-hashtable symbol-hash symbol=?)])
+        (fill-hashtable! ht n)
+        ht))
+    (define (make-filled-eq-hashtable n)
+      (let ([ht (make-eq-hashtable)])
+        (fill-hashtable! ht n)
+        ht))
     #t)
   (check-uses-fuel make-bytevector
                    (lambda (src amt)
@@ -4233,6 +4250,12 @@
   (check-uses-fuel make-vector
                    (lambda (src amt)
                      (vector-append src src)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (vector-map (lambda (x) x) src)))
+  (check-uses-fuel make-vector
+                   (lambda (src amt)
+                     (vector-map (lambda (x y) x) src src)))
   (check-uses-fuel make-vector
                    (lambda (src amt)
                      (immutable-vector-append src src)))
@@ -4284,6 +4307,30 @@
   (check-uses-fuel make-string
                    (lambda (src amt)
                      (string-fill! src #\x)))
+  (check-uses-fuel make-filled-hashtable
+                   (lambda (src amt)
+                     (hashtable-copy src)))
+  (check-uses-fuel make-filled-symbol-hashtable
+                   (lambda (src amt)
+                     (hashtable-copy src)))
+  (check-uses-fuel make-filled-eq-hashtable
+                   (lambda (src amt)
+                     (hashtable-copy src)))
+  (check-uses-fuel make-filled-eq-hashtable
+                   (lambda (src amt)
+                     (hashtable-keys src)))
+  (check-uses-fuel make-filled-eq-hashtable
+                   (lambda (src amt)
+                     (hashtable-values src)))
+  (check-uses-fuel make-filled-eq-hashtable
+                   (lambda (src amt)
+                     (hashtable-entries src)))
+  (check-uses-fuel make-filled-eq-hashtable
+                   (lambda (src amt)
+                     (hashtable-cells src)))
+  (check-uses-fuel make-filled-eq-hashtable
+                   (lambda (src amt)
+                     (hashtable-clear! src)))
 
   ;; list operations are not obligated to use fuel in unsafe mode
   (check-uses-fuel make-list
