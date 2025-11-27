@@ -1701,7 +1701,7 @@
 
     (define adjust!
       (lambda (h vec1 n2)
-        (let ([vec2 (make-vector n2 '())]
+        (let ([vec2 ($make-vector/no-interrupt-trap n2 '())]
               [mask2 (fx- n2 1)])
           (vector-for-each
             (lambda (b)

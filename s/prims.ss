@@ -401,6 +401,17 @@
          ($oops who "~s is not a valid vector length" n))
        (make-vector n)]))
 
+(define-who $make-vector/no-interrupt-trap
+   (case-lambda
+      [(n x)
+       (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
+         ($oops who "~s is not a valid vector length" n))
+       ($make-vector/no-interrupt-trap n x)]
+      [(n)
+       (unless (and (fixnum? n) (not ($fxu< (constant maximum-vector-length) n)))
+         ($oops who "~s is not a valid vector length" n))
+       ($make-vector/no-interrupt-trap n)]))
+
 (define-who make-immobile-vector
   (let ([$make-immobile-vector (foreign-procedure "(cs)make_immobile_vector" (uptr ptr) ptr)])
    (case-lambda
