@@ -710,10 +710,33 @@
                  x** interface* body*) ...))]
         [(case-lambda ,preinfo ,cl* ...)
          (sorry! who "found unreachable clause" ir)])
+      ;; OperativeExpr: handle Kernel-style $vau operatives
+      ;; Convert operatives to case-lambda with env-x prepended to parameters
+      ;; This allows operatives to compile using the existing lambda infrastructure
+      ;; The operative calling convention (unevaluated args) is handled at syntax level
+      (OperativeExpr : Expr (ir x) -> CaseLambdaExpr ()
+        [(operative ,preinfo ,env-x (clause (,x* ...) ,interface ,body))
+         ;; Convert operative to case-lambda: prepend env-x to parameter list
+         ;; New interface = original interface + 1 (for env parameter)
+         (let* ([all-x* (cons env-x x*)]
+                [new-interface (if (fx< interface 0)
+                                   (fx- interface 1)  ; variadic: make more negative
+                                   (fx+ interface 1))] ; fixed: add 1
+                [info (make-info-lambda (preinfo-src preinfo) (preinfo-sexpr preinfo) #f (list new-interface)
+                        (preinfo-operative-name preinfo) (preinfo-operative-flags preinfo))])
+           (when x (uvar-info-lambda-set! x info))
+           (with-uvars (all-uvar* all-x*)
+             `(case-lambda ,info
+                ,(in-context CaseLambdaClause
+                   `(clause (,all-uvar* ...) ,new-interface ,(Expr body))))))]
+        [(operative ,preinfo ,env-x ,cl)
+         (sorry! who "malformed operative clause" ir)])
       (Expr : Expr (ir) -> Expr ()
         [(ref ,maybe-src ,x) (extract-uvar x)]
         [(set! ,maybe-src ,x ,[e]) `(set! ,(extract-uvar x) ,e)]
         [(case-lambda ,preinfo ,cl* ...) (CaseLambdaExpr ir #f)]
+        ;; Convert operative to case-lambda (operative becomes a regular procedure)
+        [(operative ,preinfo ,env-x ,cl) (OperativeExpr ir #f)]
         [(letrec ([,x* ,e*] ...) ,body)
          (with-uvars (uvar* x*)
            (let ([e* (map CaseLambdaExpr e* uvar*)])

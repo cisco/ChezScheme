@@ -448,6 +448,8 @@
     (CaseLambdaExpr (le)
       (case-lambda info cl ...)                             => (case-lambda cl ...)
     )
+    ;; Note: Operatives ($vau) are converted to case-lambda in cpnanopass pass
+    ;; The operative form exists in Lsrc but not in L1 and beyond
     (CaseLambdaClause (cl)
       (clause (x* ...) interface body)
     ))

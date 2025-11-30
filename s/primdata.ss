@@ -184,6 +184,7 @@
   (eq? [sig [(ptr ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard cp02 cptypes2 ieee r5rs])
   (equal? [sig [(ptr ptr) -> (boolean)]] [flags unrestricted mifoldable discard cp02 ieee r5rs])
   (procedure? [sig [(ptr) -> (boolean)]] [pred procedure] [flags pure unrestricted mifoldable discard ieee r5rs cp02])
+  (operative? [sig [(ptr) -> (boolean)]] [pred operative] [flags pure unrestricted mifoldable discard])
   (number? [sig [(ptr) -> (boolean)]] [pred number] [flags pure unrestricted mifoldable discard ieee r5rs])
   (complex? [sig [(ptr) -> (boolean)]] [pred number] [flags pure unrestricted mifoldable discard ieee r5rs]) ; same as number?
   (real? [sig [(ptr) -> (boolean)]] [pred real] [flags pure unrestricted mifoldable discard ieee r5rs])
@@ -983,6 +984,7 @@
   (import-notify [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (in-place-minimum-generation [sig [() -> (ufixnum)] [(sub-ufixnum) -> (void)]] [flags])
   (interaction-environment [sig [() -> (environment)] [(environment) -> (void)]] [flags ieee r5rs])
+  (environment-current [sig [() -> (environment)]] [flags])
   (internal-defines-as-letrec* [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (invoke-library [sig [(ptr) -> (void)]] [flags true])
   (keep-live [sig [(ptr) -> (void)]] [flags])

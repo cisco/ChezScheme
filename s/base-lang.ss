@@ -19,6 +19,7 @@
          make-preinfo-lambda preinfo-lambda-name preinfo-lambda-flags preinfo-lambda-libspec
          make-preinfo-call preinfo-call? preinfo-call-flags preinfo-call-check?
          preinfo-call-can-inline? preinfo-call-no-return? preinfo-call-single-valued?
+         preinfo-operative? make-preinfo-operative preinfo-operative-name preinfo-operative-flags
          prelex? make-prelex prelex-name prelex-name-set! prelex-flags prelex-flags-set!
          prelex-source prelex-operand prelex-operand-set! prelex-uname make-prelex*
          target-fixnum? target-fixnum-power-of-two target-bignum?)
@@ -163,6 +164,22 @@
           [(src sexpr libspec name) ((pargs->new src sexpr) libspec name 0)]
           [(src sexpr libspec name flags) ((pargs->new src sexpr) libspec name flags)]))))
 
+  ;; preinfo-operative: metadata for $vau operative expressions
+  ;; Similar to preinfo-lambda but for operatives (Kernel-style fexprs)
+  (define-record-type preinfo-operative
+    (nongenerative #{preinfo-operative k3rn3l0p3r4t1v3-0})
+    (parent preinfo)
+    (sealed #t)
+    (fields name flags)  ; name for debugging, flags for future use
+    (protocol
+      (lambda (pargs->new)
+        (case-lambda
+          [() ((pargs->new) #f 0)]
+          [(src) ((pargs->new src) #f 0)]
+          [(src sexpr) ((pargs->new src sexpr) #f 0)]
+          [(src sexpr name) ((pargs->new src sexpr) name 0)]
+          [(src sexpr name flags) ((pargs->new src sexpr) name flags)]))))
+
   (define-record-type preinfo-call
     (nongenerative #{preinfo-call e23pkvo5btgapnzomqgegm-8})
     (parent preinfo)
@@ -246,6 +263,7 @@
       (set! maybe-src x e)                                  => (set! x e)
       (pariah)
       (case-lambda preinfo cl ...)                          => (case-lambda cl ...)
+      (operative preinfo x cl)                              => (operative x cl)  ; x is env-param
       (letrec ([x* e*] ...) body)
       (letrec* ([x* e*] ...) body)
       (call preinfo e0 e1 ...)                              => (e0 e1 ...)

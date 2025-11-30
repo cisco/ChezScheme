@@ -1572,6 +1572,35 @@
 
 (define procedure? (lambda (x) (procedure? x)))
 
+;; operative?: test if x is a Kernel-style operative ($vau)
+;; Note: In the current implementation, operatives are compiled as regular procedures
+;; A full implementation would require runtime type tagging
+;; For now, this always returns #f; use $vau and check at the syntax level
+(define operative? (lambda (x) #f))
+
+;; wrap: convert an operative to an applicative (Kernel terminology)
+;; In Kernel, wrap creates an applicative that evaluates its arguments
+;; before passing them to the underlying operative
+;; Note: Placeholder implementation - full implementation requires operative tagging
+(define-who wrap
+  (lambda (operative)
+    (unless (procedure? operative)
+      ($oops who "~s is not a procedure" operative))
+    ;; Create an applicative that calls the operative with current environment
+    (lambda args
+      (apply operative (environment-current) args))))
+
+;; unwrap: extract the underlying operative from an applicative (Kernel terminology)
+;; Note: Placeholder implementation - requires operative/applicative distinction
+(define-who unwrap
+  (lambda (applicative)
+    (unless (procedure? applicative)
+      ($oops who "~s is not a procedure" applicative))
+    ;; In the full implementation, this would extract the operative
+    ;; For now, return a procedure that ignores the environment
+    (lambda (env . args)
+      (apply applicative args))))
+
 (define flonum? (lambda (x) (flonum? x)))
 
 (define char? (lambda (x) (char? x)))

@@ -524,7 +524,17 @@
                              [(clause (,x* ...) ,interface ,body) interface]))
                       clauses))
             ($oops #f "libspec interface mismatch ~s" libspec))
-          `(case-lambda ,(make-preinfo-lambda (ae->src ae) #f libspec (symbol->string (libspec-name libspec))) ,clauses ...))))))
+          `(case-lambda ,(make-preinfo-lambda (ae->src ae) #f libspec (symbol->string (libspec-name libspec))) ,clauses ...)))))
+
+  ;; build-operative: construct an operative (Kernel-style $vau)
+  ;; ae: annotation/source, env-var: the prelex for environment parameter
+  ;; vars: formal parameters, exp: body expression
+  (define build-operative
+    (lambda (ae env-var vars exp)
+      (build-profile ae
+        `(operative ,(make-preinfo-operative (ae->src ae))
+           ,env-var
+           ,(build-clause vars exp))))))
 
 (define build-call
   (lambda (ae e e*)
@@ -4479,6 +4489,49 @@
                      body)))))))
       (_ (syntax-error e)))))
 
+;; chi-vau-clause: parse a $vau clause with environment parameter
+;; Returns (values formal-vars body env-var)
+;; e: source form for errors, c: clause syntax, r: compile-time env
+;; w: wrap, env-param-id: identifier for environment parameter
+(define chi-vau-clause
+  (lambda (e c r w env-param-id)
+    (syntax-case c ()
+      ;; Proper list of formals: ($vau (a b c) env body ...)
+      (((id ...) e1 e2 ...)
+       (let ([formal-ids (syntax (id ...))])
+         (let ([all-ids (cons env-param-id formal-ids)])
+           (if (not (valid-bound-ids? all-ids))
+               (syntax-error e "invalid parameter list in $vau")
+               (let* ([env-var (gen-var env-param-id)]
+                      [formal-vars (map gen-var formal-ids)]
+                      [all-vars (cons env-var formal-vars)])
+                 (let ([labels (map make-lexical-label all-vars)])
+                   (let ([body (chi-body (syntax (e1 e2 ...))
+                                 e r (make-binding-wrap all-ids labels w))])
+                     (map kill-local-label! labels)
+                     (values formal-vars body env-var))))))))
+      ;; Dotted list or single id: ($vau args env body ...) or ($vau (a . rest) env body ...)
+      ((ids e1 e2 ...)
+       (let ([old-ids (lambda-var-list (syntax ids))])
+         (let ([all-ids (cons env-param-id old-ids)])
+           (if (not (valid-bound-ids? all-ids))
+               (syntax-error e "invalid parameter list in $vau")
+               (let* ([env-var (gen-var env-param-id)]
+                      [formal-vars (map gen-var old-ids)]
+                      [all-vars (cons env-var formal-vars)])
+                 (let ([labels (map make-lexical-label all-vars)])
+                   (let ([body (chi-body (syntax (e1 e2 ...))
+                                 e r (make-binding-wrap all-ids labels w))])
+                     (map kill-local-label! labels)
+                     (values
+                       (let f ([ls1 (cdr formal-vars)] [ls2 (car formal-vars)])
+                         (if (null? ls1)
+                             ls2
+                             (f (cdr ls1) (cons (car ls1) ls2))))
+                       body
+                       env-var))))))))
+      (_ (syntax-error e "invalid $vau syntax")))))
+
 (define chi-local-syntax
   (lambda (rec? defn? e r w ae)
     (define (go ids vals body*)
@@ -6266,6 +6319,31 @@
          (map (lambda (c) (with-values (chi-lambda-clause (source-wrap e w ae) c r w) list))
               (syntax (c1 ...))))))))
 
+;; $vau: Kernel-style operative (fexpr)
+;; Syntax: ($vau formals env-param body ...)
+;; - formals: parameter list (proper, dotted, or single id)
+;; - env-param: identifier bound to the dynamic environment
+;; - body: one or more expressions
+;; The operative receives unevaluated operands and the caller's environment
+(global-extend 'core '$vau
+  (lambda (e r w ae)
+    (syntax-case e ()
+      ((_ formals env-param e1 e2 ...)
+       (id? #'env-param)
+       (let-values ([(vars body env-var)
+                     (chi-vau-clause (source-wrap e w ae)
+                                     #'(formals e1 e2 ...)
+                                     r w #'env-param)])
+         (build-operative ae env-var vars body)))
+      ((_ formals env-param)
+       (syntax-error (source-wrap e w ae) "missing body in"))
+      ((_ formals)
+       (syntax-error (source-wrap e w ae) "missing environment parameter in"))
+      ((_)
+       (syntax-error (source-wrap e w ae) "missing formals in"))
+      (_
+       (syntax-error (source-wrap e w ae))))))
+
 (let ()
   (define letrec-transformer
     (lambda (build)
@@ -7176,6 +7254,16 @@
       (unless (environment? x)
         ($oops 'interaction-environment "~s is not an environment" x))
       x)))
+
+;; environment-current: return the current dynamic environment
+;; This is used by operatives ($vau) to access the caller's environment
+;; Note: Full implementation requires runtime support. This version
+;; returns the interaction-environment as a baseline implementation.
+;; The compiler passes will inject the actual dynamic environment
+;; when calling operatives.
+(set! environment-current
+  (lambda ()
+    (interaction-environment)))
 
 (set! environment
   (lambda import-spec*
