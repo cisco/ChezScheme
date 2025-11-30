@@ -922,6 +922,77 @@
     (error? (if (define x 3) x x))
  )
 
+(mat interleaved-definitions
+  ; parameter defaults to #f
+  (not (allow-interleaved-definitions))
+
+  ; basic interleaved definition test
+  (begin (allow-interleaved-definitions #t) (allow-interleaved-definitions))
+
+  (eqv?
+    (let ()
+      (define x 1)
+      (set! x (+ x 1))  ; expression between definitions
+      (define y x)
+      (+ x y))
+    4)
+
+  ; multiple expressions between definitions
+  (equal?
+    (let ()
+      (define a 10)
+      (set! a (+ a 1))
+      (define b a)
+      (set! b (+ b 1))
+      (define c b)
+      (list a b c))
+    '(11 12 12))
+
+  ; works with lambda
+  (eqv?
+    ((lambda ()
+       (define x 5)
+       (set! x (* x 2))
+       (define y x)
+       y))
+    10)
+
+  ; ensure proper sequencing (letrec* semantics)
+  (equal?
+    (let ()
+      (define x 1)
+      (set! x (+ x 1))  ; x = 2
+      (define y x)      ; y = 2
+      (set! y (+ y 1))  ; y = 3
+      (define z y)      ; z = 3
+      (list x y z))
+    '(2 3 3))
+
+  ; body ending with definition (no trailing expression)
+  (eqv?
+    (let ()
+      (define x 1)
+      (set! x (+ x 1))
+      (define y x))
+    (void))
+
+  ; expressions using defined values
+  (equal?
+    (let ()
+      (define x 1)
+      (define y 2)
+      (list x y)
+      (define z (+ x y))
+      z)
+    3)
+
+  ; restore default
+  (begin (allow-interleaved-definitions #f) #t)
+
+  ; verify still errors when disabled
+  (error? (let () 0 (define x 3) x))
+)
+
 (mat define-values
   (begin (define-values ($dv-x $dv-y) (values 'a 'b)) #t)
   (eq? $dv-x 'a)

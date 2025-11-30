@@ -3769,7 +3769,10 @@
                     (fluid-let ([require-invoke (library-collector #t)]
                                 [require-visit (library-collector #f)])
                       (chi-internal ribcage outer-form body r #f '()))])
-        (when (null? exprs) (syntax-error outer-form "no expressions in body"))
+        ; when interleaved definitions are allowed, exprs may be empty
+        ; (all expressions become dummy bindings), which is ok if we have vars
+        (when (and (null? exprs) (or (not (allow-interleaved-definitions)) (null? vars)))
+          (syntax-error outer-form "no expressions in body"))
         (let ([vals (chi-frobs (reverse vals) r)]
               [exprs (chi-frobs (append inits exprs) r)])
          ; verify exports are defined only after processing rhs, init, and
@@ -3777,9 +3780,15 @@
          ; other errors that might explain why exports are actually missing
           (chexports)
           (for-each kill-local-label! label*)
-          (build-body no-source
-            (reverse vars) vals
-            (build-sequence no-source exprs)))))))
+          ; when interleaved definitions are allowed and exprs is empty,
+          ; use (void) as the body expression
+          (if (null? exprs)
+              (build-letrec* no-source
+                (reverse vars) vals
+                (build-void))
+              (build-body no-source
+                (reverse vars) vals
+                (build-sequence no-source exprs))))))))
 
 (define chi-internal
   ;; In processing the forms of the body, we create a new, empty wrap.
@@ -3989,13 +3998,21 @@
                    (syntax-error orig "invalid context for library form"))]
                 [else ; found a non-definition
                  (when meta-seen? (syntax-error (source-wrap e w ae) "invalid meta definition"))
-                 (let f ([body (cons (make-frob (source-wrap e w ae) meta?) (cdr body))])
-                   (if (or (null? body) (not (frob-meta? (car body))))
-                       (return body vars vals inits expspec** iexport* chexports label*)
-                       (begin
-                        ; expand meta inits for effect only
-                         (top-level-eval-hook (meta-chi-frob (car body) r))
-                         (f (cdr body)))))])))))))
+                 (if (allow-interleaved-definitions)
+                     ; continue parsing, tracking the interleaved expression as a dummy binding
+                     (let ([e (source-wrap e w ae)])
+                       (parse (cdr body)
+                         (cons (build-lexical-var no-source 't) vars)
+                         (cons (make-frob #`(begin #,e (void)) meta?) vals)
+                         inits expspec** iexport* chexports #f label*))
+                     ; original behavior: stop at first non-definition
+                     (let f ([body (cons (make-frob (source-wrap e w ae) meta?) (cdr body))])
+                       (if (or (null? body) (not (frob-meta? (car body))))
+                           (return body vars vals inits expspec** iexport* chexports label*)
+                           (begin
+                            ; expand meta inits for effect only
+                             (top-level-eval-hook (meta-chi-frob (car body) r))
+                             (f (cdr body))))))])))))))
 
 (define parse-library
   (lambda (e w ae body-wrap)

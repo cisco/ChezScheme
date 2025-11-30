@@ -908,6 +908,7 @@
 
 (define-symbol-flags* ([libraries] [flags primitive proc]) ; variable parameters
   (abort-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
+  (allow-interleaved-definitions [sig [() -> (boolean)] [(ptr) -> (void)]] [flags unrestricted])
   (base-exception-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (black-box [sig [(ptr) -> (ptr)]] [flags])
   (break-handler [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
