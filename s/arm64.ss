@@ -2967,6 +2967,7 @@
                    [arg-stack-bytes (align 16 (compute-stack-argument-space arg-cat*))]
                    [indirect-stack-bytes (align 16 (compute-stack-indirect-space arg-cat*))]
                    [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
+                   [collect-errno? (memq 'collect-errno conv*)]
                    [locs (do-args arg-type* arg-cat* arg-stack-bytes)]
                    [live* (get-registers arg-cat* 'all)]
                    [live* (if (and ftd-result? (not fill-result-here?))
@@ -2994,10 +2995,30 @@
                    (cons (lambda (rhs) `(set! ,%r8 ,rhs)) locs)]
                   [else locs]))
                (lambda (t0 not-varargs?)
-                 (add-fill-result result-cat result-type (fx+ arg-stack-bytes indirect-stack-bytes) fill-result-here?
-                                  (add-deactivate adjust-active? t0 live* result-reg*
-                                                  (lambda (t0)
-                                                    `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0)))))
+                 (let ([base-call
+                        (add-fill-result result-cat result-type (fx+ arg-stack-bytes indirect-stack-bytes) fill-result-here?
+                                         (add-deactivate adjust-active? t0 live* result-reg*
+                                                         (lambda (t0)
+                                                           `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0))))])
+                   (if collect-errno?
+                       ;; Add errno capture after the C call
+                       ;; Save return value on stack, call errno-location, load errno, store in tc, restore return value
+                       (%seq
+                        ,base-call
+                        ;; Save return value on stack (use pre-indexed store)
+                        (set! ,%sp ,(%inline - ,%sp (immediate 16)))
+                        (set! ,(%mref ,%sp 0) ,%Cretval)
+                        ;; Call errno-location (returns int*)
+                        (inline ,(make-info-kill*-live* (list %r0 %r1 %r2 %r3 %r4 %r5 %r6 %r7 %r8 %r9 %r12 %r13 %r14 %r15 %lr) '())
+                                ,%c-call ,(lookup-c-entry errno-location))
+                        ;; Load errno value (32-bit signed int) from returned pointer
+                        (set! ,%r0 (inline ,(make-info-load 'integer-32 #f) ,%load ,%r0 ,%zero (immediate 0)))
+                        ;; Store in tc->saved-errno
+                        (set! ,(%tc-ref saved-errno) ,%r0)
+                        ;; Restore original return value from stack
+                        (set! ,%Cretval ,(%mref ,%sp 0))
+                        (set! ,%sp ,(%inline + ,%sp (immediate 16))))
+                       base-call)))
                (nanopass-case (Ltype Type) result-type
                  [(fp-double-float)
                   (lambda (lvalue) ; unboxed

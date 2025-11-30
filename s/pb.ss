@@ -1613,6 +1613,9 @@
         (memq 'adjust-active (info-foreign-conv* info))
         #f))
 
+    (define (collect-errno? info)
+      (memq 'collect-errno (info-foreign-conv* info)))
+
     (define (make-type-desc-literal info args-enc res-enc)
       (let ([result-as-arg? (is-result-as-arg? info)]
             [varargs-after (ormap (lambda (conv)
@@ -1902,39 +1905,73 @@
                                                   (and (pair? conv) (eq? (car conv) 'varargs) (cdr conv)))
                                                 (info-foreign-conv* info)))
                                     (get-prototype (cons result-type arg-type*)))])
-                (cond
-                  [prototype
-                   (let-values ([(locs arg-live*) (do-args/reg arg-type*)]
-                                [(get-result result-live*) (do-result/reg result-type)])
-                     (values
-                      (lambda () `(nop))
-                      (reverse locs)
-                      (lambda (t0 atomic?)
-                        (let ([info (make-info-kill*-live* (add-caller-save-registers result-live*) arg-live*)])
-                          `(inline ,info ,%c-call ,t0 (immediate ,prototype))))
-                      get-result
-                      (lambda () `(nop))))]
-                  [else
-                   (let-values ([(locs args-enc) (do-types/arena arg-type* #t #t)]
-                                [(res-locs res-enc) (do-types/arena (list result-type) #f #t)])
-                     (values
-                      (lambda () `(nop))
-                      locs
-                      (lambda (t0 atomic?)
-                        (let ([call `(seq
-                                      (set! ,%Carg1 (literal ,(make-type-desc-literal info args-enc res-enc)))
-                                      (inline ,null-info ,%c-stack-call ,t0 ,%Carg1))])
-                          (cond
-                            [atomic?
-                             ;; libffi-based call may need to allocate, but `%ap` has not
-                             ;; been moved to `tc` for an atomic call, so move to and from `tc` here
-                             (%seq
-                              (set! ,(%mref ,%tc ,%zero ,(reg-tc-disp %ap)) ,%ap)
-                              ,call
-                              (set! ,%ap ,(%mref ,%tc ,%zero ,(reg-tc-disp %ap))))]
-                            [call])))
-                      (car res-locs)
-                      (lambda () `(nop))))])))))))
+                (let ([errno-capture?  (collect-errno? info)])
+                  (cond
+                    [prototype
+                     (let-values ([(locs arg-live*) (do-args/reg arg-type*)]
+                                  [(get-result result-live*) (do-result/reg result-type)])
+                       (values
+                        (lambda () `(nop))
+                        (reverse locs)
+                        (lambda (t0 atomic?)
+                          (let* ([call-info (make-info-kill*-live* (add-caller-save-registers result-live*) arg-live*)]
+                                 [base-call `(inline ,call-info ,%c-call ,t0 (immediate ,prototype))])
+                            (if errno-capture?
+                                ;; Add errno capture after the C call
+                                (%seq
+                                 ,base-call
+                                 ;; Save return value to tc scratch slot
+                                 (set! ,(%mref ,%tc ,%zero ,(constant tc-ac0-disp)) ,%Cretval)
+                                 ;; Call errno-location (returns int*)
+                                 (inline ,(make-info-kill*-live* (add-caller-save-registers (list %Cretval)) '())
+                                         ,%c-call ,(lookup-c-entry errno-location) (immediate ,(get-prototype '(uptr))))
+                                 ;; Load errno value (32-bit signed int) from returned pointer
+                                 (set! ,%Cretval (inline ,(make-info-load 'integer-32 #f) ,%load ,%Cretval ,%zero (immediate 0)))
+                                 ;; Store in tc->saved-errno
+                                 (set! ,(%tc-ref saved-errno) ,%Cretval)
+                                 ;; Restore original return value
+                                 (set! ,%Cretval ,(%mref ,%tc ,%zero ,(constant tc-ac0-disp))))
+                                base-call)))
+                        get-result
+                        (lambda () `(nop))))]
+                    [else
+                     (let-values ([(locs args-enc) (do-types/arena arg-type* #t #t)]
+                                  [(res-locs res-enc) (do-types/arena (list result-type) #f #t)])
+                       (values
+                        (lambda () `(nop))
+                        locs
+                        (lambda (t0 atomic?)
+                          (let* ([call `(seq
+                                         (set! ,%Carg1 (literal ,(make-type-desc-literal info args-enc res-enc)))
+                                         (inline ,null-info ,%c-stack-call ,t0 ,%Carg1))]
+                                 [base-call
+                                  (cond
+                                    [atomic?
+                                     ;; libffi-based call may need to allocate, but `%ap` has not
+                                     ;; been moved to `tc` for an atomic call, so move to and from `tc` here
+                                     (%seq
+                                      (set! ,(%mref ,%tc ,%zero ,(reg-tc-disp %ap)) ,%ap)
+                                      ,call
+                                      (set! ,%ap ,(%mref ,%tc ,%zero ,(reg-tc-disp %ap))))]
+                                    [else call])])
+                            (if errno-capture?
+                                ;; Add errno capture after the C call
+                                (%seq
+                                 ,base-call
+                                 ;; Save return value to tc scratch slot
+                                 (set! ,(%mref ,%tc ,%zero ,(constant tc-ac0-disp)) ,%Cretval)
+                                 ;; Call errno-location (returns int*)
+                                 (inline ,(make-info-kill*-live* (add-caller-save-registers (list %Cretval)) '())
+                                         ,%c-call ,(lookup-c-entry errno-location) (immediate ,(get-prototype '(uptr))))
+                                 ;; Load errno value (32-bit signed int) from returned pointer
+                                 (set! ,%Cretval (inline ,(make-info-load 'integer-32 #f) ,%load ,%Cretval ,%zero (immediate 0)))
+                                 ;; Store in tc->saved-errno
+                                 (set! ,(%tc-ref saved-errno) ,%Cretval)
+                                 ;; Restore original return value
+                                 (set! ,%Cretval ,(%mref ,%tc ,%zero ,(constant tc-ac0-disp))))
+                                base-call)))
+                        (car res-locs)
+                        (lambda () `(nop)))))])))))))
 
     (define-who asm-foreign-callable
       (with-output-language (L13 Effect)

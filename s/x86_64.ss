@@ -2959,33 +2959,74 @@
                 (lambda (frame-size nfp locs live* fp-live*)
                   (with-values (add-save-fill-target fill-result-here? frame-size locs)
                     (lambda (frame-size locs)
-                      (returnem frame-size locs
-                        (lambda (t0 atomic?)
-                          (let* ([t (if adjust-active? %deact t0)] ; need a register if `adjust-active?`
-                                 [kill* (add-caller-save-registers result-reg*)]
-                                 [set-varargs-reg?
-                                  ;; System V ABI varargs functions require count of fp regs used in %al register.
-                                  ;; To avoid breaking old programs that don't specify varargs precisely, assume
-                                  ;; we don't know if a non-atomic callee may be a varargs function, so we always set it.
-                                  (not (and atomic? (not varargs-after)))]
-                                 [c-call
-                                  (add-deactivate adjust-active? t0 (append fp-live* live*)
-                                   result-reg*
-                                   (if-feature windows
-                                     (%seq
-                                       (set! ,%sp ,(%inline - ,%sp (immediate 32)))
-                                       (inline ,(make-info-kill*-live* kill* (append fp-live* live*)) ,%c-call ,t)
-                                       (set! ,%sp ,(%inline + ,%sp (immediate 32))))
-                                     (%seq
-                                      ,(if set-varargs-reg?
-                                           `(set! ,%rax (immediate ,nfp))
-                                           `(nop))
-                                      ,(let ([live* (append fp-live* live*)])
-                                         `(inline ,(make-info-kill*-live* kill* (if set-varargs-reg? (cons %rax live*) live*)) ,%c-call ,t)))))])
-                            (cond
-                             [fill-result-here?
-                              (add-fill-result c-call (fx- frame-size (constant ptr-bytes)) result-classes result-size)]
-                             [else c-call])))
+                      (let ([collect-errno? (memq 'collect-errno conv*)])
+                        (returnem frame-size locs
+                          (lambda (t0 atomic?)
+                            (let* ([t (if adjust-active? %deact t0)] ; need a register if `adjust-active?`
+                                   [kill* (add-caller-save-registers result-reg*)]
+                                   [set-varargs-reg?
+                                    ;; System V ABI varargs functions require count of fp regs used in %al register.
+                                    ;; To avoid breaking old programs that don't specify varargs precisely, assume
+                                    ;; we don't know if a non-atomic callee may be a varargs function, so we always set it.
+                                    (not (and atomic? (not varargs-after)))]
+                                   [c-call
+                                    (add-deactivate adjust-active? t0 (append fp-live* live*)
+                                     result-reg*
+                                     (if-feature windows
+                                       (%seq
+                                         (set! ,%sp ,(%inline - ,%sp (immediate 32)))
+                                         (inline ,(make-info-kill*-live* kill* (append fp-live* live*)) ,%c-call ,t)
+                                         (set! ,%sp ,(%inline + ,%sp (immediate 32))))
+                                       (%seq
+                                        ,(if set-varargs-reg?
+                                             `(set! ,%rax (immediate ,nfp))
+                                             `(nop))
+                                        ,(let ([live* (append fp-live* live*)])
+                                           `(inline ,(make-info-kill*-live* kill* (if set-varargs-reg? (cons %rax live*) live*)) ,%c-call ,t)))))]
+                                   ;; If collect-errno?, add errno capture after the C call
+                                   [c-call
+                                    (if collect-errno?
+                                        ;; Save result, call errno-location, load errno, store in tc, restore result
+                                        ;; Use stack to save return value (push/pop rax)
+                                        (if-feature windows
+                                          (%seq
+                                           ,c-call
+                                           ;; Save return value on stack
+                                           (set! ,%sp ,(%inline - ,%sp (immediate 8)))
+                                           (set! ,(%mref ,%sp 0) ,%rax)
+                                           ;; Call errno-location (returns int*) - Windows needs shadow space
+                                           (set! ,%sp ,(%inline - ,%sp (immediate 32)))
+                                           (inline ,(make-info-kill*-live* (list %rax %rcx %rdx %r8 %r9 %r10 %r11) '())
+                                                   ,%c-call ,(lookup-c-entry errno-location))
+                                           (set! ,%sp ,(%inline + ,%sp (immediate 32)))
+                                           ;; Load errno value (32-bit signed int) from returned pointer
+                                           (set! ,%rax (inline ,(make-info-load 'integer-32 #f) ,%load ,%rax ,%zero (immediate 0)))
+                                           ;; Store in tc->saved-errno
+                                           (set! ,(%tc-ref saved-errno) ,%rax)
+                                           ;; Restore original return value from stack
+                                           (set! ,%rax ,(%mref ,%sp 0))
+                                           (set! ,%sp ,(%inline + ,%sp (immediate 8))))
+                                          (%seq
+                                           ,c-call
+                                           ;; Save return value on stack
+                                           (set! ,%sp ,(%inline - ,%sp (immediate 8)))
+                                           (set! ,(%mref ,%sp 0) ,%rax)
+                                           ;; Call errno-location (returns int*) - no varargs for errno-location
+                                           (set! ,%rax (immediate 0))
+                                           (inline ,(make-info-kill*-live* (list %rax %rcx %rdx %rsi %rdi %r8 %r9 %r10 %r11) '())
+                                                   ,%c-call ,(lookup-c-entry errno-location))
+                                           ;; Load errno value (32-bit signed int) from returned pointer
+                                           (set! ,%rax (inline ,(make-info-load 'integer-32 #f) ,%load ,%rax ,%zero (immediate 0)))
+                                           ;; Store in tc->saved-errno
+                                           (set! ,(%tc-ref saved-errno) ,%rax)
+                                           ;; Restore original return value from stack
+                                           (set! ,%rax ,(%mref ,%sp 0))
+                                           (set! ,%sp ,(%inline + ,%sp (immediate 8)))))
+                                        c-call)])
+                              (cond
+                               [fill-result-here?
+                                (add-fill-result c-call (fx- frame-size (constant ptr-bytes)) result-classes result-size)]
+                               [else c-call]))))
                         (nanopass-case (Ltype Type) result-type
                           [(fp-double-float)
                            (lambda (lvalue) ; unboxed

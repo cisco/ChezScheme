@@ -3596,6 +3596,12 @@
       (define-tc-parameter default-record-hash-procedure default-record-hash-procedure)
       )
 
+    ; $saved-errno: read errno captured by __collect_errno foreign calls
+    (define-inline 2 $saved-errno
+      [() (%tc-ref saved-errno)])
+    (define-inline 3 $saved-errno
+      [() (%tc-ref saved-errno)])
+
     (let ()
       (define (make-wrapper-closure-alloc e-proc e-arity-mask e-data libspec)
         (bind #t ([c (%constant-alloc type-closure (fx* (if e-data 4 3) (constant ptr-bytes)))])

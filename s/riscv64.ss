@@ -2177,7 +2177,8 @@
                                        (not pass-result-ptr?))
                                   (cdr arg-type*)
                                   arg-type*)]
-                   [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)])
+                   [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
+                   [collect-errno? (memq 'collect-errno conv*)])
               (with-values (do-args arg-type* (extract-varargs-after-conv conv*))
                 (lambda (locs live* frame-size)
                   (returnem (if (and ftd-result?
@@ -2194,13 +2195,32 @@
                               (let* ([cat (categorize-result result-type)]
                                      [result-reg* (if pass-result-ptr?
                                                       '()
-                                                      (cat-regs cat))])
-                                (add-fill-result
-                                 (and ftd-result? (not pass-result-ptr?)) cat frame-size
-                                 (add-deactivate
-                                  adjust-active? t0 live* result-reg*
-                                  (lambda (t0)
-                                    `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0))))))
+                                                      (cat-regs cat))]
+                                     [base-call
+                                      (add-fill-result
+                                       (and ftd-result? (not pass-result-ptr?)) cat frame-size
+                                       (add-deactivate
+                                        adjust-active? t0 live* result-reg*
+                                        (lambda (t0)
+                                          `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0))))])
+                                (if collect-errno?
+                                    ;; Add errno capture after the C call
+                                    (%seq
+                                     ,base-call
+                                     ;; Save return value on stack
+                                     (set! ,%sp ,(%inline - ,%sp (immediate 16)))
+                                     (set! ,(%mref ,%sp 0) ,%Cretval)
+                                     ;; Call errno-location (returns int*)
+                                     (inline ,(make-info-kill*-live* (list %Cretval %Carg2 %Carg3 %Carg4 %Carg5 %Carg6 %Carg7 %Carg8 %ra) '())
+                                             ,%c-call ,(lookup-c-entry errno-location))
+                                     ;; Load errno value (32-bit signed int) from returned pointer
+                                     (set! ,%Cretval (inline ,(make-info-load 'integer-32 #f) ,%load ,%Cretval ,%zero (immediate 0)))
+                                     ;; Store in tc->saved-errno
+                                     (set! ,(%tc-ref saved-errno) ,%Cretval)
+                                     ;; Restore original return value from stack
+                                     (set! ,%Cretval ,(%mref ,%sp 0))
+                                     (set! ,%sp ,(%inline + ,%sp (immediate 16))))
+                                    base-call)))
                             (nanopass-case (Ltype Type) result-type
                               [(fp-double-float)
                                (lambda (lvalue) ; unboxed

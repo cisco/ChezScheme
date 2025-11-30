@@ -1994,6 +1994,7 @@
   ($eq-hashtable-values [flags true discard])
   ($errno [flags single-valued])
   ($errno->string [flags single-valued])
+  ($saved-errno [sig [() -> (fixnum)] flags single-valued])
   ($error-handling-mode? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($event [flags single-valued])
   ($event-and-resume [flags])

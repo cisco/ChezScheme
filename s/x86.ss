@@ -2427,6 +2427,7 @@
                   (lambda (t0 not-varargs?)
                     (let* ([fill-result-here? (fill-result-pointer-from-registers? result-type)]
                            [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
+                           [collect-errno? (memq 'collect-errno conv*)]
                            [t (if adjust-active? %edx t0)] ; need a register if `adjust-active?`
                            [live* (add-caller-save-registers (reg-list %eax %edx))]
                            [call
@@ -2444,7 +2445,26 @@
                                     (set! ,%eax ,(%inline + ,%eax ,t))
                                     (inline ,(make-info-kill*-live* live* '()) ,%c-call ,(%mref ,%eax 0)))]
                                   [else
-                                   `(inline ,(make-info-kill*-live* live* '()) ,%c-call ,t)])))])
+                                   `(inline ,(make-info-kill*-live* live* '()) ,%c-call ,t)])))]
+                           ;; Add errno capture if collect-errno?
+                           [call
+                            (if collect-errno?
+                                (%seq
+                                 ,call
+                                 ;; Save return value on stack
+                                 (set! ,%sp ,(%inline - ,%sp (immediate 4)))
+                                 (set! ,(%mref ,%sp 0) ,%eax)
+                                 ;; Call errno-location (returns int*)
+                                 (inline ,(make-info-kill*-live* (list %eax %ecx %edx) '())
+                                         ,%c-call ,(lookup-c-entry errno-location))
+                                 ;; Load errno value (32-bit signed int) from returned pointer
+                                 (set! ,%eax (inline ,(make-info-load 'integer-32 #f) ,%load ,%eax ,%zero (immediate 0)))
+                                 ;; Store in tc->saved-errno
+                                 (set! ,(%tc-ref saved-errno) ,%eax)
+                                 ;; Restore original return value from stack
+                                 (set! ,%eax ,(%mref ,%sp 0))
+                                 (set! ,%sp ,(%inline + ,%sp (immediate 4))))
+                                call)])
                       (cond
                        [fill-result-here?
                         (let* ([ftd (nanopass-case (Ltype Type) result-type

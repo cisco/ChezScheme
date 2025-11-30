@@ -1657,6 +1657,7 @@
    [uptr pb-regs (constant pb-reg-count)] ; "pb.c" assumes that `pb-regs` through `pb-call-arena` are together
    [double pb-fpregs (constant pb-fpreg-count)]
    [uptr pb-call-arena (constant pb-call-arena-size)]
+   [iptr saved-errno] ; errno captured from __collect_errno foreign calls
    [xptr gc-data]))
 
 (define tc-field-list
@@ -3166,7 +3167,8 @@
      flsqrt
      null-immutable-vector
      null-immutable-bytevector
-     null-immutable-string))
+     null-immutable-string
+     errno-location))
 )
 
 

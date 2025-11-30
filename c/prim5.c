@@ -29,6 +29,7 @@
 
 /* locally defined functions */
 static INT s_errno(void);
+static void *s_errno_location(void);
 static IBOOL s_addr_in_heap(uptr x);
 static IBOOL s_ptr_in_heap(ptr x);
 static ptr s_generation(ptr x);
@@ -169,6 +170,24 @@ ptr S_strerror(INT errnum) {
 
 static INT s_errno(void) {
   return errno;
+}
+
+/* Returns pointer to function that returns int* pointing to errno.
+   Used by __collect_errno foreign procedure convention. */
+static void *s_errno_location(void) {
+#ifdef WIN32
+  /* Windows: _errno() returns int* */
+  extern int* _errno(void);
+  return (void *)_errno;
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+  /* macOS/BSD: __error() returns int* */
+  extern int* __error(void);
+  return (void *)__error;
+#else
+  /* Linux and others: __errno_location() returns int* */
+  extern int* __errno_location(void);
+  return (void *)__errno_location;
+#endif
 }
 
 static IBOOL s_addr_in_heap(uptr x) {
@@ -1973,6 +1992,7 @@ void S_prim5_init(void) {
     S_install_c_entry(CENTRY_fllog2, proc2ptr(s_log2));
     S_install_c_entry(CENTRY_flexpt, proc2ptr(s_pow));
     S_install_c_entry(CENTRY_flsqrt, proc2ptr(s_sqrt));
+    S_install_c_entry(CENTRY_errno_location, s_errno_location());
 
     S_check_c_entry_vector();
 }

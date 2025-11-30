@@ -92,6 +92,7 @@
                       [(i3nt-stdcall) '__stdcall]
                       [(i3nt-com) '__com]
                       [(adjust-active) '__collect_safe]
+                      [(collect-errno) '__collect_errno]
                       [(varargs) '__varargs]
                       [else #f]))
                   x*)))

@@ -2854,7 +2854,8 @@
                  [arg-type* (info-foreign-arg-type* info)]
                  [result-type (info-foreign-result-type info)]
                  [fill-result-here? (indirect-result-that-fits-in-registers? result-type)]
-                 [adjust-active? (if-feature pthreads (memq 'adjust-active (info-foreign-conv* info)) #f)])
+                 [adjust-active? (if-feature pthreads (memq 'adjust-active (info-foreign-conv* info)) #f)]
+                 [collect-errno? (memq 'collect-errno (info-foreign-conv* info))])
             (with-values (do-args (if fill-result-here? (cdr arg-type*) (indirect-result-to-pointer result-type arg-type*))
                                   varargs?)
               (lambda (orig-frame-size locs live* fp-live-count)
@@ -2890,13 +2891,32 @@
                                                  ,(%inline set-cr-bit (immediate 6))
                                                  ,e)
                                                e)]))
-                         (let ([kill* (add-caller-save-registers result-live*)])
-                           (make-call
-                            (cond
-                             [adjust-active?
-                              (add-deactivate t0 deactivate-save-offset live* fp-live-count result-live* result-fp-live-count
-                                              (add-crset `(inline ,(make-info-kill*-live* kill* live*) ,%c-call ,%deact)))]
-                             [else (add-crset `(inline ,(make-info-kill*-live* kill* live*) ,%c-call ,t0))]))))
+                         (let* ([kill* (add-caller-save-registers result-live*)]
+                                [base-call
+                                 (make-call
+                                  (cond
+                                   [adjust-active?
+                                    (add-deactivate t0 deactivate-save-offset live* fp-live-count result-live* result-fp-live-count
+                                                    (add-crset `(inline ,(make-info-kill*-live* kill* live*) ,%c-call ,%deact)))]
+                                   [else (add-crset `(inline ,(make-info-kill*-live* kill* live*) ,%c-call ,t0))]))])
+                           (if collect-errno?
+                               ;; Add errno capture after the C call
+                               (%seq
+                                ,base-call
+                                ;; Save return value on stack
+                                (%inline store-with-update ,%Csp ,%Csp (immediate -16))
+                                (set! ,(%mref ,%Csp 8) ,%Cretval)
+                                ;; Call errno-location (returns int*)
+                                (inline ,(make-info-kill*-live* (list %Cretval %Carg2 %Carg3 %Carg4 %Carg5 %Carg6 %Carg7 %Carg8 %lr) '())
+                                        ,%c-call ,(lookup-c-entry errno-location))
+                                ;; Load errno value (32-bit signed int) from returned pointer
+                                (set! ,%Cretval (inline ,(make-info-load 'integer-32 #f) ,%load ,%Cretval ,%zero (immediate 0)))
+                                ;; Store in tc->saved-errno
+                                (set! ,(%tc-ref saved-errno) ,%Cretval)
+                                ;; Restore original return value from stack
+                                (set! ,%Cretval ,(%mref ,%Csp 8))
+                                (set! ,%Csp ,(%inline + ,%Csp (immediate 16))))
+                               base-call)))
                        (nanopass-case (Ltype Type) result-type
                          [(fp-double-float)
                           (lambda (lvalue) ; unboxed
