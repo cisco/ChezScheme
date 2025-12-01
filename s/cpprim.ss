@@ -858,7 +858,8 @@
                      [else (super-size-expr e-fill)])]
                   [(immediate ,imm) (super-size-imm imm)]
                   [else (super-size-expr e-fill)]))))
-        (lambda (e-vec e-bytes e-fill)
+        (define build-fill
+         (lambda (e-vec e-bytes e-fill interrupt-trap?)
           ; NB: caller must bind e-vec and e-fill
           (safe-assert (no-need-to-bind? #t e-vec))
           (safe-assert (no-need-to-bind? #f e-fill))
@@ -895,17 +896,22 @@
                     (let ([,orig-t ,t]) ; will be unused if `t` is immediate
                       (label ,Ltop
                         (if ,(%inline eq? ,t (immediate 0))
-                            (seq
-                             ,(nanopass-case (L7 Expr) len
-                                [(immediate ,imm)
-                                 (build-use-trap-fuel len)]
-                                [else
-                                 (build-use-trap-fuel orig-t)])
-                             ,e-vec)
+                            ,(if interrupt-trap?
+                                 `(seq
+                                   ,(nanopass-case (L7 Expr) len
+                                      [(immediate ,imm)
+                                       (build-use-trap-fuel len)]
+                                      [else
+                                       (build-use-trap-fuel orig-t)])
+                                   ,e-vec)
+                                 e-vec)
                             ,(%seq
                               (set! ,t ,(%inline - ,t (immediate ,ptr-bytes)))
                               (set! ,(%mref ,e-vec ,t ,data-disp) ,e-fill)
-                              (goto ,Ltop))))))))]))))
+                              (goto ,Ltop))))))))])))
+        (case-lambda
+         [(e-vec e-bytes e-fill) (build-fill e-vec e-bytes e-fill #t)]
+         [(e-vec e-bytes e-fill interrupt-trap?) (build-fill e-vec e-bytes e-fill interrupt-trap?)])))
 
     ;; NOTE: integer->ptr and unsigned->ptr DO NOT handle 64-bit integers on a 32-bit machine.
     ;; this is okay for $object-ref and $object-set!, which do not support moving 64-bit values
@@ -7649,7 +7655,9 @@
       (meta-assert (= (constant log2-ptr-bytes) (constant fixnum-offset)))
       (let ()
         (define do-make-vector
-          (lambda (type e-length e-fill)
+          (case-lambda
+           [(type e-length e-fill) (do-make-vector type e-length e-fill #t)]
+           [(type e-length e-fill interrupt-trap?)
             ; NB: caller must bind e-fill, if not #f
             (safe-assert (or (not e-fill) (no-need-to-bind? #f e-fill)))
             (if (constant? (lambda (x) (and (fixnum? x) (fx<= 0 x 10000))) e-length)
@@ -7664,7 +7672,7 @@
                                (immediate ,(+ (fx* n (constant vector-length-factor))
                                               type)))
                              ,(if e-fill
-                                  (build-vector-fill t `(immediate ,bytes) e-fill)
+                                  (build-vector-fill t `(immediate ,bytes) e-fill interrupt-trap?)
                                   t))))))
                 (bind #t (e-length) ; fixnum length doubles as byte count
                   (let ([t-vec (make-tmp 'tvec)])
@@ -7683,12 +7691,15 @@
                                   (constant fixnum-offset)
                                   (constant vector-length-offset)))
                              ,(if e-fill
-                                  (build-vector-fill t-vec e-length e-fill)
-                                  t-vec)))))))))
+                                  (build-vector-fill t-vec e-length e-fill interrupt-trap?)
+                                  t-vec)))))))]))
         (define default-fill `(immediate ,(fix 0)))
         (define-inline 3 make-vector
           [(e-length) (do-make-vector (constant type-vector) e-length default-fill)]
           [(e-length e-fill) (bind #t (e-fill) (do-make-vector (constant type-vector) e-length e-fill))])
+        (define-inline 3 $make-vector/no-interrupt-trap
+          [(e-length) (do-make-vector (constant type-vector) e-length default-fill #f)]
+          [(e-length e-fill) (bind #t (e-fill) (do-make-vector (constant type-vector) e-length e-fill #f))])
         (let ()
           (define (extract-vector-length vec)
             (extract-length (%mref ,vec ,(constant vector-type-disp)) (constant vector-length-offset)))

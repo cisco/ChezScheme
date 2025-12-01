@@ -930,6 +930,24 @@
     (eq-hashtable-ephemeron? $ht 3))
   (error? ; not a hashtable
     (eq-hashtable-ephemeron? '(hash . table)))
+
+  ; make sure a trap interrupt does not break `hashtable-keys`
+  (let loop ([i 1000])
+    (cond
+      [(= i 0) #t]
+      [else
+       (let ([ht (make-weak-eq-hashtable)])
+         (let loop ([i 1000])
+           (unless (= i 0)
+             (hashtable-set! ht (gensym) i)
+             (loop (sub1 i))))
+         (let ([vec (hashtable-keys ht)])
+           (let loop ([i 0])
+             (unless (= i (vector-length vec))
+               (unless (symbol? (vector-ref vec i))
+                 (error 'keys "not a symbol: ~s" (vector-ref vec i)))
+               (loop (add1 i))))))
+       (loop (sub1 i))]))
 )
 
 (mat symbol-hashtable-arguments
