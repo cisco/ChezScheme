@@ -2986,7 +2986,7 @@
      (bytevector=? #f 2 #f #f)
      (bytevector-ieee-double-native-ref #f 2 #t #t)
      (bytevector-ieee-double-native-set! #f 2 #t #t)
-     (real->flonum #f 2 #f #t)
+     ($real->flonum #f 2 #f #t)
      (exact? #f 1 #t #t)
      (inexact? #f 1 #t #t)
      (unsafe-port-eof? #f 1 #f #t)

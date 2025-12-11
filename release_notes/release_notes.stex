@@ -140,6 +140,9 @@ as essentialy constant-time.
 The compiler now avoids moving predicates from tail position when they may raise an error,
 even if the result is known in case of a success.
 
+The type recovery pass has improved support for \scheme{exact}, \scheme{inexact},
+and similar functions.
+
 \subsection{In-place vector copying (10.3.0)}
 
 The \scheme{vector-copy!} procedure copies a subsequence

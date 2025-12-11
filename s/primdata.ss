@@ -90,7 +90,7 @@
 
 (define-symbol-flags* ([libraries (rnrs) (rnrs arithmetic flonums)] [flags primitive proc])
   (flonum? [sig [(ptr) -> (boolean)]] [pred flonum] [flags pure unrestricted mifoldable discard])
-  (real->flonum [sig [(real) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs])
+  (real->flonum [sig [(real) -> (flonum)]] [flags arith-op mifoldable discard safeongoodargs cptypes2])
   (fl=? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments])  ; restricted to 2+ arguments
   (fl<? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments])  ; restricted to 2+ arguments
   (fl<=? [sig [(flonum flonum flonum ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs unboxed-arguments]) ; restricted to 2+ arguments
@@ -194,8 +194,8 @@
   (integer-valued? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable discard])
   (exact? [sig [(number) -> (boolean)]] [pred exact-number] [flags pure mifoldable discard safeongoodargs ieee r5rs])
   (inexact? [sig [(number) -> (boolean)]] [pred inexact-number] [flags pure mifoldable discard safeongoodargs ieee r5rs])
-  (inexact [sig [(number) -> (inexact-number)]] [flags arith-op mifoldable discard safeongoodargs])
-  (exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard]) ; no safeongoodargs because it fails with +inf.0
+  (inexact [sig [(number) -> (inexact-number)]] [flags arith-op mifoldable discard safeongoodargs cptypes2])
+  (exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard cptypes2]) ; no safeongoodargs because it fails with +inf.0
   ((r6rs: <) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs cptypes2])         ; restricted to 2+ arguments
   ((r6rs: <=) [sig [(real real real ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs cptypes2])        ; restricted to 2+ arguments
   ((r6rs: =) [sig [(number number number ...) -> (boolean)]] [flags pure mifoldable discard safeongoodargs ieee r5rs cptypes2])   ; restricted to 2+ arguments
@@ -340,7 +340,7 @@
   (apply [sig [(procedure ptr ... list) -> (ptr ...)]] [flags cp02 cptypes2x ieee r5rs])
   (call-with-current-continuation [sig [(procedure) -> (ptr ...)]] [flags ieee r5rs cp02])
   (call/cc [sig [(procedure) -> (ptr ...)]] [flags cp02])
-  (values [sig [(ptr ...) -> (ptr ...)]] [flags unrestricted discard cp02 ieee r5rs])
+  (values [sig [(ptr ...) -> (ptr ...)]] [flags unrestricted discard cp02 cptypes2 ieee r5rs])
   (call-with-values [sig [(procedure procedure) -> (ptr ...)]] [flags cp02 cptypes2x ieee r5rs])
   ((r6rs: dynamic-wind) [sig [(procedure procedure procedure) -> (ptr ...)]] [flags cptypes2x ieee r5rs])      ; restricted to 3 arguments
 )
@@ -729,8 +729,8 @@
 )
 
 (define-symbol-flags* ([libraries (rnrs r5rs)] [flags primitive proc])
-  (exact->inexact [sig [(number) -> (inexact-number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs])
-  (inexact->exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard ieee r5rs]) ; no safeongoodargs because it fails with +inf.0
+  (exact->inexact [sig [(number) -> (inexact-number)]] [flags arith-op mifoldable discard safeongoodargs ieee r5rs cptypes2])
+  (inexact->exact [sig [(number) -> (exact-number)]] [flags arith-op mifoldable discard ieee r5rs cptypes2]) ; no safeongoodargs because it fails with +inf.0
   (quotient [sig [(integer integer) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (remainder [sig [(integer integer) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
   (modulo [sig [(integer integer) -> (number)]] [flags arith-op mifoldable discard ieee r5rs])
@@ -2384,7 +2384,7 @@
   ($raw-terminated-cond [feature pthreads] [flags single-valued])
   ($read-performance-monitoring-counter [flags single-valued])
   ($read-time-stamp-counter [flags single-valued])
-  ($real->flonum [sig [(real maybe-who) -> (flonum)]] [flags single-valued arith-op mifoldable discard])
+  ($real->flonum [sig [(maybe-who real) -> (flonum)]] [flags single-valued arith-op mifoldable discard cptypes2])
   ($real-sym-name [flags single-valued])
   ($recompile-condition? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($recompile-importer-path [flags single-valued])
@@ -2517,7 +2517,7 @@
   ($untrace [flags single-valued])
   ($use-trap-fuel [flags single-valued])
   ($unwrap-ftype-pointer [flags single-valued])
-  ($value [sig [(ptr) -> (ptr)]] [flags pure unrestricted discard cp02])
+  ($value [sig [(ptr) -> (ptr)]] [flags pure unrestricted discard cp02 cptypes2])
   ($vector-ref-check? [sig [(ptr ptr) -> (boolean)]] [flags unrestricted pure])
   ($vector-set!-check? [sig [(ptr ptr) -> (boolean)]] [flags unrestricted discard])
   ($vector-set-immutable! [sig [(nonempty-vector) -> (void)]] [flags true])
