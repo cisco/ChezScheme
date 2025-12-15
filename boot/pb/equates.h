@@ -304,6 +304,7 @@ typedef uint64_t U64;
 #define forward_marker (ptr)0x3E
 #define forward_marker_disp 0x0
 #define ftype_guardian_rep (ptr)0x56
+#define fuel_word_count_shift 0x2
 #define fxvector_data_disp 0x9
 #define fxvector_length_factor 0x10
 #define fxvector_length_offset 0x4
