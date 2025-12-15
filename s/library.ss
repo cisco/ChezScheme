@@ -295,6 +295,9 @@
     ;; for consistency with error before library entry was introduced:
     (lambda (who x i)
       ($oops who "invalid index ~s for bytevector ~s" i x)))
+  (define real-oops
+    (lambda (who x)
+      ($oops who "~s is not a real number" x)))
   (define number-oops
     (lambda (who x)
       ($oops who "~s is not a number" x)))
@@ -337,7 +340,7 @@
         (if (mutable-vector? v)
             (index-oops 'vector-set-fixnum! v i)
             (mutable-vector-oops 'vector-set-fixnum! v))
-        ($oops 'vector-set-fixnum! "~s is not a fixnum" x)))
+        (fixnum-oops 'vector-set-fixnum! x)))
 
   (define-library-entry (vector-length v)
     (vector-oops 'vector-length v))
@@ -432,15 +435,13 @@
 
   (define-library-entry (exact? x) (number-oops 'exact? x))
   (define-library-entry (inexact? x) (number-oops 'inexact? x))
+
+  (define-library-entry ($real->flonum who x)
+    (cond
+      [(fixnum? x) (fixnum->flonum x)]
+      [(or (bignum? x) (ratnum? x)) (#2%$real->flonum who x)]
+      [else (real-oops who x)]))
 )
-
-(define-library-entry (real->flonum x who)
-  (cond
-    [(fixnum? x) (fixnum->flonum x)]
-    [(or (bignum? x) (ratnum? x)) (inexact x)]
-    [(flonum? x) x]
-    [else ($oops who "~s is not a real number" x)]))
-
 
 (let ()
   (define pair-oops

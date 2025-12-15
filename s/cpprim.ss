@@ -742,14 +742,14 @@
                              (set! ,(%mref ,t ,offset) ,(car args))
                              ,(f (cdr args) (fx+ offset (constant ptr-bytes)))))))))))))
     (define build-$real->flonum
-      (lambda (src sexpr x who)
+      (lambda (src sexpr who x)
         (if (known-flonum-result? x)
             x
-            (bind #t (x)
-              (bind #f (who)
+            (bind #f (who)
+              (bind #t (x)
                 `(if ,(%type-check mask-flonum type-flonum ,x)
                      ,x
-                     ,(build-libcall #t src sexpr real->flonum x who)))))))
+                     ,(build-libcall #t src sexpr $real->flonum who x)))))))
     (define build-$inexactnum-real-part
       (lambda (e)
         (%lea ,e (fx+ (constant inexactnum-real-disp)
@@ -5457,9 +5457,10 @@
                     ,(build-fixnum->flonum e-x values)
                     (if ,(%type-check mask-flonum type-flonum ,e-x)
                         ,e-x
-                        ,(build-libcall #t src sexpr real->flonum e-x `(quote real->flonum))))))]))
-    (define-inline 3 $real->flonum
-      [(x who) (build-$real->flonum src sexpr x who)])
+                        ,(build-libcall #t src sexpr $real->flonum `(quote real->flonum) e-x)))))])
+      (define-inline 3 $real->flonum
+        [(who x) (build-$real->flonum src sexpr who x)])
+    )
     (define-inline 2 $record
       [(tag . args) (build-$record tag args)])
     (define-inline 3 $object-address
@@ -7189,7 +7190,7 @@
                     (let-values ([(e-index imm-offset) (bv-index-offset e-offset)])
                       (bind #f (e-bv e-index)
                         (build-object-set! 'type e-bv e-index imm-offset
-                          (build-$real->flonum src sexpr e-val `(quote name)))))])])))
+                          (build-$real->flonum src sexpr `(quote name) e-val))))])])))
 
         (define-bv-native-ieee-set!-inline bytevector-ieee-single-native-set! single-float)
         (define-bv-native-ieee-set!-inline bytevector-ieee-double-native-set! double-float)
@@ -7317,8 +7318,7 @@
                          (let-values ([(e-index imm-offset) (bv-index-offset e-offset)])
                            (bind #f (e-bv e-index)
                              (build-object-set! 'type e-bv e-index imm-offset
-                               (build-$real->flonum src sexpr e-value
-                                 `(quote name))))))])])))
+                               (build-$real->flonum src sexpr `(quote name) e-value)))))])])))
 
         (define-bv-ieee-set!-inline bytevector-ieee-single-set! single-float 3)
         (define-bv-ieee-set!-inline bytevector-ieee-double-set! double-float 7))

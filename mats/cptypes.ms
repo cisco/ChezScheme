@@ -678,9 +678,9 @@
 (mat cptypes-type-implies?
   (test-chain '((lambda (x) (eq? x 0)) fixnum? (lambda (x) (and (integer? x) (exact? x))) real? number?))
   (test-chain* '((lambda (x) (or (eq? x 0) (eq? x 10))) fixnum? (lambda (x) (and (integer? x) (exact? x))) real? number?))
-  (test-chain* '(fixnum? integer? real?))
-  (test-chain* '(fixnum? exact? number?)) ; exact? may raise an error
-  (test-chain* '(bignum? exact? number?)) ; exact? may raise an error
+  (test-chain '(fixnum? integer? real?))
+  (test-chain '(fixnum? exact? number?))
+  (test-chain '(bignum? exact? number?))
   (test-chain '(fixnum? (lambda (x) (and (integer? x) (exact? x))) (lambda (x) (and (number? x) (exact? x))) number?))
   (test-chain '((lambda (x) (eqv? x (expt 256 100))) bignum? integer? real? number?))
   (test-chain '((lambda (x) (eqv? 0.0 x)) flonum? real? number?))
@@ -1078,6 +1078,74 @@
                    (#3%flabs x))))
   (test-closed1 '(add1 1+ sub1 1- -1+ abs)
                 '(flonum? real? (lambda (x) (and (integer? x) (exact? x)))))
+)
+
+(mat cptypes-in/exact
+  (test-closed1 '(inexact exact)
+                '(real?))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (inexact x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%fixnum->flonum x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (inexact x)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl+ x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x)
+                   (inexact x)))
+    '(lambda (x) (when (real? x)
+                   (#3%real->flonum x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (inexact? x)
+                   (inexact x)))
+    '(lambda (x) (when (inexact? x)
+                   x)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x)
+                   (real->flonum x)))
+    '(lambda (x) (when (fixnum? x)
+                   (#3%fixnum->flonum x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (bignum? x)
+                   (real->flonum x)))
+    '(lambda (x) (when (bignum? x)
+                   (#3%$real->flonum 'real->flonum x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (and (ineger? x) (exact? x))
+                   (real->flonum x)))
+    '(lambda (x) (when (and (ineger? x) (exact? x))
+                   (if (#2%fixnum? x) ;the specialization uses #2%fixnum?
+                       (#3%fixnum->flonum x)
+                       (#3%$real->flonum 'real->flonum x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (zero? x) (integer? x)) ; a subset of complex-rational? that is representable
+                   (exact x)))
+    '(lambda (x) (when (or (zero? x) (integer? x))
+                   (#3%exact x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (exact? x)
+                   (exact x)))
+    '(lambda (x) (when (exact? x)
+                   x)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x)
+                   (exact x)))
+    '(lambda (x) (when (real? x)
+                   (if (#2%flonum? x) ;the specialization uses #2%fixnum?
+                       (exact x)
+                       x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (zero? x)
+                   (exact x)))
+    '(lambda (x) (when (zero? x)
+                   0)))
+  (cptypes/first-equivalent-expansion?
+    ; try to change $value to fl+, to allow flonum unboxing
+    '(lambda (t x) (when (flonum? x) (#3%$value (if t x 1.0))))
+    '(lambda (t x) (when (flonum? x) (#3%fl+ (if t x 1.0)))))
 )
 
 (mat cptypes-plus
