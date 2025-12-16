@@ -82,6 +82,7 @@ procedure) is given in parentheses.
 \item GNU Hurd
      \begin{itemizeC}
      \item x86, nonthreaded (i3gnu) and threaded (ti3gnu)
+     \item x86\_64, nonthreaded (a6gnu) and threaded (ta6gnu)
      \end{itemizeC}
 \item OpenSolaris
      \begin{itemizeC}
