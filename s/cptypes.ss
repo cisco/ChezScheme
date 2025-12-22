@@ -1284,7 +1284,10 @@ Notes:
 
       (define-specialize 2 -
         [(x) (values `(call ,preinfo ,pr ,x)
-                     (predicate-intersect (get-type x) number-pred) ntypes #f #f)]
+                     (predicate-close/plus (list `(quote 0)
+                                                 (predicate-intersect (get-type x) number-pred))
+                                           pr)
+                     ntypes #f #f)]
         [x* ; x* has at least 2 arguments
             (let* ([r* (get-type x*)]
                    [ret (predicate-close/plus
