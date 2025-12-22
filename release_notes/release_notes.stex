@@ -143,6 +143,8 @@ even if the result is known in case of a success.
 The type recovery pass has improved support for \scheme{exact}, \scheme{inexact},
 and similar functions.
 
+A bug that incorrectly determined the type of \scheme{(- x)} has been fixed.
+
 \subsection{In-place vector copying (10.3.0)}
 
 The \scheme{vector-copy!} procedure copies a subsequence
