@@ -119,7 +119,7 @@ Online versions of both books can be found at
 
 \subsection{Add machine type a6gnu (10.4.0)}
 
-GNU/Hurd on x86_64 is now supported as machine type a6gnu.
+GNU/Hurd on x86\_64 is now supported as machine type a6gnu.
 
 \subsection{Interrupts and Large-Vector Operations (10.4.0)}
 
