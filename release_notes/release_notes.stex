@@ -117,6 +117,10 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Add new machine type "a6gnu" (10.4.0)}
+
+Add new machine type "a6gnu" for GNU/Hurd on x86_64.
+
 \subsection{Interrupts and Large-Vector Operations (10.4.0)}
 
 Vector and string operations such as \scheme{make-vector},
