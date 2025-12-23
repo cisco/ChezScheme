@@ -82,6 +82,7 @@ procedure) is given in parentheses.
 \item GNU Hurd
      \begin{itemizeC}
      \item x86, nonthreaded (i3gnu) and threaded (ti3gnu)
+     \item x86\_64, nonthreaded (a6gnu) and threaded (ta6gnu)
      \end{itemizeC}
 \item OpenSolaris
      \begin{itemizeC}
@@ -115,6 +116,10 @@ Online versions of both books can be found at
 
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
+
+\subsection{Add machine type a6gnu (10.4.0)}
+
+GNU/Hurd on x86\_64 is now supported as machine type a6gnu.
 
 \subsection{Interrupts and Large-Vector Operations (10.4.0)}
 

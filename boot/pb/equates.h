@@ -357,6 +357,7 @@ typedef uint64_t U64;
 #define long_long_bits 0x40
 #define machine_type 0x1
 #define machine_type_a6fb 0x25
+#define machine_type_a6gnu 0x57
 #define machine_type_a6ios 0x21
 #define machine_type_a6le 0x23
 #define machine_type_a6nb 0x29
@@ -364,7 +365,7 @@ typedef uint64_t U64;
 #define machine_type_a6ob 0x27
 #define machine_type_a6osx 0x1F
 #define machine_type_a6s2 0x2B
-#define machine_type_alist ((0 . any) (1 . pb) (2 . tpb) (3 . pb32l) (4 . tpb32l) (5 . pb32b) (6 . tpb32b) (7 . pb64l) (8 . tpb64l) (9 . pb64b) (10 . tpb64b) (11 . i3nt) (12 . ti3nt) (13 . i3osx) (14 . ti3osx) (15 . i3le) (16 . ti3le) (17 . i3fb) (18 . ti3fb) (19 . i3ob) (20 . ti3ob) (21 . i3nb) (22 . ti3nb) (23 . i3s2) (24 . ti3s2) (25 . i3qnx) (26 . ti3qnx) (27 . i3gnu) (28 . ti3gnu) (29 . a6nt) (30 . ta6nt) (31 . a6osx) (32 . ta6osx) (33 . a6ios) (34 . ta6ios) (35 . a6le) (36 . ta6le) (37 . a6fb) (38 . ta6fb) (39 . a6ob) (40 . ta6ob) (41 . a6nb) (42 . ta6nb) (43 . a6s2) (44 . ta6s2) (45 . ppc32osx) (46 . tppc32osx) (47 . ppc32le) (48 . tppc32le) (49 . ppc32fb) (50 . tppc32fb) (51 . ppc32ob) (52 . tppc32ob) (53 . ppc32nb) (54 . tppc32nb) (55 . arm32le) (56 . tarm32le) (57 . arm32fb) (58 . tarm32fb) (59 . arm32ob) (60 . tarm32ob) (61 . arm32nb) (62 . tarm32nb) (63 . arm64nt) (64 . tarm64nt) (65 . arm64osx) (66 . tarm64osx) (67 . arm64ios) (68 . tarm64ios) (69 . arm64le) (70 . tarm64le) (71 . arm64fb) (72 . tarm64fb) (73 . arm64ob) (74 . tarm64ob) (75 . arm64nb) (76 . tarm64nb) (77 . rv64le) (78 . trv64le) (79 . rv64fb) (80 . trv64fb) (81 . rv64ob) (82 . trv64ob) (83 . rv64nb) (84 . trv64nb) (85 . la64le) (86 . tla64le))
+#define machine_type_alist ((0 . any) (1 . pb) (2 . tpb) (3 . pb32l) (4 . tpb32l) (5 . pb32b) (6 . tpb32b) (7 . pb64l) (8 . tpb64l) (9 . pb64b) (10 . tpb64b) (11 . i3nt) (12 . ti3nt) (13 . i3osx) (14 . ti3osx) (15 . i3le) (16 . ti3le) (17 . i3fb) (18 . ti3fb) (19 . i3ob) (20 . ti3ob) (21 . i3nb) (22 . ti3nb) (23 . i3s2) (24 . ti3s2) (25 . i3qnx) (26 . ti3qnx) (27 . i3gnu) (28 . ti3gnu) (29 . a6nt) (30 . ta6nt) (31 . a6osx) (32 . ta6osx) (33 . a6ios) (34 . ta6ios) (35 . a6le) (36 . ta6le) (37 . a6fb) (38 . ta6fb) (39 . a6ob) (40 . ta6ob) (41 . a6nb) (42 . ta6nb) (43 . a6s2) (44 . ta6s2) (45 . ppc32osx) (46 . tppc32osx) (47 . ppc32le) (48 . tppc32le) (49 . ppc32fb) (50 . tppc32fb) (51 . ppc32ob) (52 . tppc32ob) (53 . ppc32nb) (54 . tppc32nb) (55 . arm32le) (56 . tarm32le) (57 . arm32fb) (58 . tarm32fb) (59 . arm32ob) (60 . tarm32ob) (61 . arm32nb) (62 . tarm32nb) (63 . arm64nt) (64 . tarm64nt) (65 . arm64osx) (66 . tarm64osx) (67 . arm64ios) (68 . tarm64ios) (69 . arm64le) (70 . tarm64le) (71 . arm64fb) (72 . tarm64fb) (73 . arm64ob) (74 . tarm64ob) (75 . arm64nb) (76 . tarm64nb) (77 . rv64le) (78 . trv64le) (79 . rv64fb) (80 . trv64fb) (81 . rv64ob) (82 . trv64ob) (83 . rv64nb) (84 . trv64nb) (85 . la64le) (86 . tla64le) (87 . a6gnu) (88 . ta6gnu))
 #define machine_type_any 0x0
 #define machine_type_arm32fb 0x39
 #define machine_type_arm32le 0x37
@@ -387,7 +388,7 @@ typedef uint64_t U64;
 #define machine_type_i3qnx 0x19
 #define machine_type_i3s2 0x17
 #define machine_type_la64le 0x55
-#define machine_type_limit 0x57
+#define machine_type_limit 0x59
 #define machine_type_name pb
 #define machine_type_pb 0x1
 #define machine_type_pb32b 0x5
@@ -404,6 +405,7 @@ typedef uint64_t U64;
 #define machine_type_rv64nb 0x53
 #define machine_type_rv64ob 0x51
 #define machine_type_ta6fb 0x26
+#define machine_type_ta6gnu 0x58
 #define machine_type_ta6ios 0x22
 #define machine_type_ta6le 0x24
 #define machine_type_ta6nb 0x2A

@@ -389,6 +389,7 @@
   i3s2      ti3s2
   i3qnx     ti3qnx
   i3gnu     ti3gnu
+  a6gnu     ta6gnu
   a6nt      ta6nt
   a6osx     ta6osx
   a6ios     ta6ios
