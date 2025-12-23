@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x0a040001)
+(define-constant scheme-version #x0a040002)
 
 (define-syntax define-machine-types
   (lambda (x)
