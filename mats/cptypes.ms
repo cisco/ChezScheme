@@ -1251,6 +1251,9 @@
   (not (cptypes-equivalent-expansion? ; integer? is not closed
          '(lambda (x y) (when (and (integer? x) (integer? y)) (integer? (- x y))))
          '(lambda (x y) (when (and (integer? x) (integer? y)) (- x y) #t))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x y) (when (fixnum? x) (fixnum? (- x))))
+         '(lambda (x y) (when (fixnum? x) #t))))
   (cptypes-equivalent-expansion?
     '(lambda (x y) (when (and (fixnum? x) (fixnum? y))
                      (- x y)))
