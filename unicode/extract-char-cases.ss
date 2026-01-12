@@ -42,17 +42,18 @@
           (mutable fcstr)
           (immutable decomp-canon)
           (immutable decomp-compat)
-          (mutable grapheme-cluster-break))
+          (mutable grapheme-cluster-break)
+          (mutable indic-conjunct-break))
   (protocol
     (lambda (new)
       (lambda (ucchar lcchar tcchar decomp-canon decomp-compat)
         (new ucchar lcchar tcchar 0 ucchar lcchar tcchar 0
-             decomp-canon decomp-compat 0)))))
+             decomp-canon decomp-compat 0 0)))))
 
 (define (find-cdrec idx ls)
   (cond
     [(assq idx ls) => cdr]
-    [else (error 'find-cdrec "~s is missing" idx)]))
+    [else (errorf 'find-cdrec "~s is missing" idx)]))
 
 (define data-case
   (lambda (fields)
@@ -144,26 +145,37 @@
                                        LV
                                        LVT))
 
-(define (insert-graphemebreak-data! ls data)
+(define (find-prop-index str props)
+  (let loop ([i 0] [ls props] [s (string->symbol str)])
+    (cond
+     [(null? ls) (errorf #f "invalid property name: ~a" s)]
+     [(eq? s (car ls)) i]
+     [else (loop (fx+ i 1) (cdr ls) s)])))
+
+(define (insert-grapheme-cluster-break-data! ls data)
   (for-each
-    (lambda (fields)
-      (let-values ([(lo hi) (hex-range->nums (car fields))])
-        (let loop ([n lo])
-          (unless (> n hi)
-            (unless (assq n ls)
-              (let ([cdrec (make-chardata 0 0 0 0 0)])
-                (set! ls (cons (cons n cdrec) ls))))
-            (let ([cdrec (find-cdrec n ls)])
-              (chardata-grapheme-cluster-break-set!
-               cdrec
-               (let ([s (string->symbol (list-ref fields 1))])
-                 (let loop ([i 0] [props grapheme-cluster-break-props])
-                   (if (eq? s (car props))
-                       i
-                       (loop (add1 i) (cdr props)))))))
-            (loop (add1 n))))))
-    data)
+   (lambda (fields)
+     (let ([val (find-prop-index (list-ref fields 1) grapheme-cluster-break-props)])
+       (for-each-hex-in-range (car fields)
+         (lambda (i)
+           (unless (assq i ls)
+             (let ([cdrec (make-chardata 0 0 0 0 0)])
+               (set! ls (cons (cons i cdrec) ls))))
+           (chardata-grapheme-cluster-break-set! (find-cdrec i ls) val)))))
+   data)
   ls)
+
+(define indic-conjunct-break-props '(None Consonant Extend Linker))
+
+(define (insert-indic-conjunct-break-data! ls data)
+  (for-each
+   (lambda (fields)
+     (when (equal? (list-ref fields 1) "InCB")
+       (let ([val (find-prop-index (list-ref fields 2) indic-conjunct-break-props)])
+         (for-each-hex-in-range (car fields)
+           (lambda (i)
+             (chardata-indic-conjunct-break-set! (find-cdrec i ls) val))))))
+   data))
 
 (define verify-identity!
   (lambda (n cdrec)
@@ -178,7 +190,7 @@
                     (chardata-fcstr cdrec)
                     (chardata-decomp-canon cdrec)
                     (chardata-decomp-compat cdrec))
-      (error 'verify-identity "failed for ~x, ~s" n cdrec))))
+      (errorf 'verify-identity "failed for ~x, ~s" n cdrec))))
 
 (define build-uncommonized-table
   (lambda (acc ls)
@@ -187,7 +199,7 @@
         (lambda (x)
           (let ([n (car x)] [cdrec (cdr x)])
             (unless (< n code-point-limit)
-              (error 'build-table
+              (errorf 'build-table
                 "code point value ~s is at or above declared limit ~s"
                 n code-point-limit))
             (if (>= n table-limit)
@@ -231,7 +243,9 @@
 (let ([ls (map data-case (get-unicode-data "UNIDATA/UnicodeData.txt"))])
   (insert-foldcase-data! ls (get-unicode-data "UNIDATA/CaseFolding.txt"))
   (insert-specialcase-data! ls (get-unicode-data "UNIDATA/SpecialCasing.txt"))
-  (let* ([ls (insert-graphemebreak-data! ls (get-unicode-data "UNIDATA/GraphemeBreakProperty.txt"))])
+  (let ([ls (insert-grapheme-cluster-break-data! ls
+              (get-unicode-data "UNIDATA/GraphemeBreakProperty.txt"))])
+    (insert-indic-conjunct-break-data! ls (get-unicode-data "UNIDATA/DerivedCoreProperties.txt"))
    ; insert final sigma flag for char-downcase conversion
     (chardata-lcstr-set! (find-cdrec #x3a3 ls) 'sigma)
     (with-output-to-file* "unicode-char-cases.ss"
@@ -242,6 +256,7 @@
                     $str-upcase $str-downcase $str-titlecase $str-foldcase
                     $str-decomp-canon $str-decomp-compat
                     $char-grapheme-cluster-break $char-grapheme-break-property
+                    $char-indic-conjunct-break
                     $composition-pairs
                     ,@grapheme-cluster-break-props grapheme-cluster-break-property-count)
              (define char-upcase-table ',(build-table chardata-ucchar ls))
@@ -255,6 +270,7 @@
              (define decomp-canon-table ',(build-table chardata-decomp-canon ls))
              (define decomp-compat-table ',(build-table chardata-decomp-compat ls))
              (define grapheme-cluster-break-table ',(build-table chardata-grapheme-cluster-break ls))
+             (define indic-conjunct-break-table ',(build-table chardata-indic-conjunct-break ls))
              ,@(let loop ([i 0] [props grapheme-cluster-break-props])
                  (if (null? props)
                      '()
@@ -297,8 +313,12 @@
              (define ($str-decomp-canon c) (strop decomp-canon-table c))
              (define ($str-decomp-compat c) (strop decomp-compat-table c))
              (define ($char-grapheme-cluster-break c) (intop grapheme-cluster-break-table c))
-             (define ($char-grapheme-break-property c) (vector-ref ',(list->vector grapheme-cluster-break-props)
-                                                                   (intop grapheme-cluster-break-table c)))
+             (define ($char-grapheme-break-property c)
+               (vector-ref ',(list->vector grapheme-cluster-break-props)
+                 ($char-grapheme-cluster-break c)))
+             (define ($char-indic-conjunct-break c)
+               (vector-ref ',(list->vector indic-conjunct-break-props)
+                 (intop indic-conjunct-break-table c)))
              (define ($composition-pairs)
                ',(get-composition-pairs
                    (build-uncommonized-table chardata-decomp-canon ls))))))))))

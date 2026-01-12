@@ -31,27 +31,6 @@
 (define (string-suffix? str suffix)
   (let ([n (string-length str)] [m (string-length suffix)])
     (and (fx>= n m) (string=? (substring str (fx- n m) n) suffix))))
-       
-(define (extract-range str)
-  (define (find-char c s)
-    (let f ([i 0] [n (string-length s)])
-      (cond
-        [(= i n) #f]
-        [(char=? (string-ref s i) c) i]
-        [else (f (+ i 1) n)])))
-  (cond
-    [(find-char #\. str) =>
-     (lambda (i)
-       (cons
-         (hex->num (substring str 0 i))
-         (hex->num (substring str (+ i 2) (string-length str)))))]
-    [else (let ([n (hex->num str)]) (cons n n))]))
-
-; fixnum field laid out as follows:
-;   bits 0-5: category number
-;   bits 6-9: wordbreak property
-;   bits 10-17: combining class
-;   bits 18-29: case/type property bits
 
 (define-syntax define-bitfields
   (lambda (x)
@@ -73,7 +52,7 @@
                  #`((define name #,(fxsll 1 bit)) #,@def*))]
               [(enumeration name id ...)
                (and (identifier? #'name) (for-all identifier? #'(id ...)))
-               (let ([width (bitwise-length (length #'(id ...)))])
+               (let ([width (bitwise-length (- (length #'(id ...)) 1))])
                  (with-syntax ([name-shift (construct-name #'name #'name "-shift")]
                                [name-mask (construct-name #'name #'name "-mask")])
                    (extract (cdr fld*) (+ bit width)
@@ -258,43 +237,34 @@
   ;;; field0: the character index, numeric
   ;;; field1: the word-break property
   (for-each
-    (lambda (x)
-      (let ([range (extract-range (list-ref x 0))])
-        (let f ([i (car range)] [j (cdr range)])
-          (unless (> i j)
-            (let ([prop (getprop i)])
-              (unless (fx= (fxand (fxsrl prop wbproperty-shift) wbproperty-mask) 0)
-                (errorf #f "multiple word break properties found for ~x" i))
-              (setprop i (fxior prop (name->wbprop (list-ref x 1))))
-              (f (+ i 1) j))))))
-    (get-unicode-data "UNIDATA/WordBreakProperty.txt"))
+   (lambda (x)
+     (for-each-hex-in-range (list-ref x 0)
+       (lambda (i)
+         (let ([prop (getprop i)])
+           (unless (fx= (fxand (fxsrl prop wbproperty-shift) wbproperty-mask) 0)
+             (errorf #f "multiple word break properties found for ~x" i))
+           (setprop i (fxior prop (name->wbprop (list-ref x 1))))))))
+   (get-unicode-data "UNIDATA/WordBreakProperty.txt"))
   ;;; interesting parts of each element in PropList.txt are:
   ;;; field0: range of character indices
   ;;; field1: property name
   (for-each
-    (lambda (x)
-      (let ([range (extract-range (list-ref x 0))]
-            [name (list-ref x 1)])
-        (cond
-          [(assoc name proplist-properties) =>
-           (lambda (a) 
-             (let ([n (cadr a)])
-               (let f ([i (car range)] [j (cdr range)])
-                 (unless (> i j) 
-                   (setprop i (fxlogor (getprop i) n))
-                   (f (+ i 1) j)))))])))
-    (get-unicode-data "UNIDATA/PropList.txt"))
+   (lambda (x)
+     (cond
+      [(assoc (list-ref x 1) proplist-properties) =>
+       (lambda (a)
+         (let ([n (cadr a)])
+           (for-each-hex-in-range (list-ref x 0)
+             (lambda (i)
+               (setprop i (fxlogor (getprop i) n))))))]))
+   (get-unicode-data "UNIDATA/PropList.txt"))
   (for-each
-    (lambda (x)
-      (let ([range (extract-range (list-ref x 0))]
-            [name (list-ref x 1)])
-        (cond
-          [(equal? name "Extended_Pictographic")
-           (let f ([i (car range)] [j (cdr range)])
-             (unless (> i j) 
-               (setprop i (fxlogor (getprop i) extended-pictographic-property))
-               (f (+ i 1) j)))])))
-    (get-unicode-data "UNIDATA/emoji-data.txt"))
+   (lambda (x)
+     (when (equal? (list-ref x 1) "Extended_Pictographic")
+       (for-each-hex-in-range (list-ref x 0)
+         (lambda (i)
+           (setprop i (fxlogor (getprop i) extended-pictographic-property))))))
+   (get-unicode-data "UNIDATA/emoji-data.txt"))
   ;;; clear constituent property for first 128 characters
   (do ([i 0 (fx+ i 1)])
       ((fx= i 128))
