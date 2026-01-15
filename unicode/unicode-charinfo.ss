@@ -3592,8 +3592,8 @@
        Sc Sk So Zs Zl Zp Cc Cf Cs Co Cn))
   (define table-ref
     (lambda (tbl i)
-      (let ([#21=#{g3 ovep8kt8r8vao2fzdy2lxncud-4} (* 64 64)])
-        (let ([#22=#{g4 ovep8kt8r8vao2fzdy2lxncud-5} (* 64)])
+      (let ([#21=#{g3 i20q2zsvrn5n6rim7egncfqjl-4} (* 64 64)])
+        (let ([#22=#{g4 i20q2zsvrn5n6rim7egncfqjl-5} (* 64)])
           (vector-ref
             (vector-ref
               (vector-ref tbl (fxdiv i #21#))

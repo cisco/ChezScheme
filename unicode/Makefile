@@ -18,7 +18,8 @@ unicode-char-cases.ss: \
  UNIDATA/UnicodeData.txt\
  UNIDATA/CaseFolding.txt\
  UNIDATA/SpecialCasing.txt\
- UNIDATA/GraphemeBreakProperty.txt
+ UNIDATA/GraphemeBreakProperty.txt \
+ UNIDATA/DerivedCoreProperties.txt
 
 unicode-charinfo.ss: \
  UNIDATA/UnicodeData.txt\

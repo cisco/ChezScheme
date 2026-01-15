@@ -262,7 +262,7 @@
     (define-char-op $subsequent? $char-subsequent?)
     (define-char-op char-extended-pictographic? $char-extended-pictographic?)
     (define-char-op char-grapheme-break-property $char-grapheme-break-property)
-    (define-char-op char-indic-conjunct-break $char-indic-conjunct-break)
+    (define-char-op char-indic-conjunct-break $char-indic-conjunct-break-property)
   )
 
   (let ()
@@ -861,175 +861,11 @@
   )
 
   (let ()
-    ;; We encode the state of finding cluster boundaries as a fixnum:
-    ;; - Low bits are the previous character's grapheme-break property plus one
-    ;; - Two bits for the GB9c Indic_Conjunct_Break match state:
-    ;;   - 0: nothing
-    ;;   - 1: Consonant Extend*
-    ;;   - 2: Consonant Extend* Linker (Extend|Linker)*
-    ;; - Two bits for the GB11 Extended_Pictographic match state:
-    ;;   - 0: nothing
-    ;;   - 1: Extended_Pictographic Extend*
-    ;;   - 2: Extended_Pictographic Extend* ZWJ
-    ;;
-    ;; A 0 state is treated as a previous property that doesn't match anything
-    ;; (and that's why we add one to the previous character's property
-    ;; otherwise).
-    ;;
-    ;; Use 0 for the state for the start of a sequence.
-    ;;
-    ;; The result of taking a step is two values:
-    ;;   * a boolean indicating whether a cluster end was found
-    ;;   * a new state
-    ;;
-    ;; The result state is 0 only if the character sent in is consumed
-    ;; as part of a cluster (in which case the first result will be #t).
-    ;; Otherwise, a true first result indicates that a boundary was
-    ;; found just before the provided character (and the provided character's
-    ;; grapheme end is still pending).
-    ;;
-    ;; So, if you get to the end of a string with a non-0 state, then
-    ;; "flush" the state by consuming that last grapheme cluster.
-
-    (define grapheme-cluster-break-bits (bitwise-length grapheme-cluster-break-property-count))
-
-    (define GB9c-none 0)
-    (define GB9c-one 1)
-    (define GB9c-two 2)
-
-    (define GB11-none 0)
-    (define GB11-one 1)
-    (define GB11-two 2)
-
-    (define (encode-state prop GB9c-state GB11-state)
-      (fxior (fx+ prop 1)
-        (fxsll GB9c-state grapheme-cluster-break-bits)
-        (fxsll GB11-state (fx+ grapheme-cluster-break-bits 2))))
-
-    (define (decode-state state)
-      (values
-       (fx- (fxand state (fx- (fxsll 1 grapheme-cluster-break-bits) 1)) 1)
-       (fxand (fxsrl state grapheme-cluster-break-bits) #b11)
-       (fxsrl state (fx+ grapheme-cluster-break-bits 2))))
-
-    (define initial-state 0)
-
-    (define (grapheme-next-state GB9c-state GB11-state prop incb-type extended-pictographic?)
-      (encode-state
-       prop
-       (cond
-        [(fx= GB9c-state GB9c-none)
-         (case incb-type
-           [(Consonant) GB9c-one]
-           [else GB9c-none])]
-        [(fx= GB9c-state GB9c-one) ; Consonant Extend*
-         (case incb-type
-           [(Linker) GB9c-two]
-           [(None) GB9c-none]
-           [else GB9c-one])]
-        [else ; Consonant Extend* Linker (Extend|Linker)*
-         (case incb-type
-           [(Consonant) GB9c-one]
-           [(None) GB9c-none]
-           [else GB9c-two])])
-       (cond
-        [(fx= GB11-state GB11-none)
-         (cond
-          [extended-pictographic? GB11-one]
-          [else GB11-none])]
-        [(fx= GB11-state GB11-one) ; Extended_Pictographic Extend*
-         (cond
-          [(fx= prop ZWJ) GB11-two]
-          [(fx= prop Extend) GB11-one]
-          [extended-pictographic? GB11-one]
-          [else GB11-none])]
-        [else                     ; Extended_Pictographic Extend* ZWJ
-         (cond
-          [extended-pictographic? GB11-one]
-          [else GB11-none])])))
-
     (define (grapheme-step ch state)
-      (let-values ([(prev GB9c-state GB11-state) (decode-state state)])
-        (let ([prop ($char-grapheme-cluster-break ch)]
-              [incb-type ($char-indic-conjunct-break ch)]
-              [extended-pictographic? ($char-extended-pictographic? ch)])
-          (define-syntax next-state
-            (syntax-rules ()
-              [(_)
-               (grapheme-next-state GB9c-state GB11-state prop incb-type extended-pictographic?)]))
-
-          ;; These are the rules from UAX #29.
-          ;; GB1 and GB2 are implicit and external to this stepping function.
-          (cond
-           ;; some of GB999 as common case;
-           ;; a variant of this is inlined in unsafe mode
-           [(and (fx= prev Other)
-                 (fx= prop Other)
-                 (eq? incb-type 'None)
-                 (not extended-pictographic?))
-            (values #t (encode-state Other GB9c-none GB11-none))]
-           ;; some of GB3 and some of GB4
-           [(fx= prev CR)
-            (if (fx= prop LF)
-                (values #t initial-state)
-                (values #t (next-state)))]
-           ;; some of GB3 and some of GB5
-           [(fx= prop CR)
-            (values (fx> state 0) (next-state))]
-           ;; rest of GB4
-           [(or (fx= prev Control)
-                (fx= prev LF))
-            (values #t (next-state))]
-           ;; rest of GB5
-           [(or (fx= prop Control)
-                (fx= prop LF))
-            (values #t (if (fx= state 0)
-                           initial-state
-                           (next-state)))]
-           ;; GB6
-           [(and (fx= prev L)
-                 (or (fx= prop L)
-                     (fx= prop V)
-                     (fx= prop LV)
-                     (fx= prop LVT)))
-            (values #f (next-state))]
-           ;; GB7
-           [(and (or (fx= prev LV)
-                     (fx= prev V))
-                 (or (fx= prop V)
-                     (fx= prop T)))
-            (values #f (next-state))]
-           ;; GB8
-           [(and (or (fx= prev LVT)
-                     (fx= prev T))
-                 (fx= prop T))
-            (values #f (next-state))]
-           ;; GB9
-           [(or (fx= prop Extend)
-                (fx= prop ZWJ))
-            (values #f (next-state))]
-           ;; GB9a
-           [(fx= prop SpacingMark)
-            (values #f (next-state))]
-           ;; GB9b
-           [(fx= prev Prepend)
-            (values #f (next-state))]
-           ;; GB9c
-           [(and (fx= GB9c-state GB9c-two)
-                 (eq? incb-type 'Consonant))
-            (values #f (next-state))]
-           ;; GB11
-           [(and (fx= GB11-state GB11-two)
-                 extended-pictographic?)
-            (values #f (next-state))]
-           ;; GB12 and GB13
-           [(fx= prev Regional_Indicator)
-            (if (fx= prop Regional_Indicator)
-                (values #f (encode-state Other GB9c-none GB11-none))
-                (values #t (next-state)))]
-           ;; GB999
-           [else
-            (values (fx> state 0) (next-state))]))))
+      (let ([next ($char-grapheme-step-lookup ($char-grapheme-break ch) state)])
+        (values (fx= (fxand next grapheme-break-step-terminated-bit)
+                     grapheme-break-step-terminated-bit)
+                (fxsrl next grapheme-break-step-state-shift))))
 
     (define (grapheme-span s start end)
       (cond
@@ -1060,7 +896,7 @@
     (set! $char-grapheme-step grapheme-step)
 
     (set! $char-grapheme-other-state
-          (lambda () (fx+ Other 1)))
+          (lambda () grapheme-other-state))
 
     (set-who! char-grapheme-step
       (lambda (ch state)
