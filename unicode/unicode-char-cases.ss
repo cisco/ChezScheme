@@ -1,9 +1,9 @@
 (module ($char-upcase $char-downcase $char-titlecase $char-foldcase
          $str-upcase $str-downcase $str-titlecase $str-foldcase
          $str-decomp-canon $str-decomp-compat $char-grapheme-break
-         $char-grapheme-break-property $char-indic-break-property
-         $char-grapheme-step-lookup $composition-pairs
-         grapheme-break-step-terminated-bit
+         $char-grapheme-break-property $char-extended-pictographic?
+         $char-indic-break-property $char-grapheme-step-lookup
+         $composition-pairs grapheme-break-step-terminated-bit
          grapheme-break-step-state-shift grapheme-other-state)
   (define char-upcase-table
     '#(#(#0=#(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
@@ -2839,7 +2839,7 @@
        #32# #32# #32# #32# #32# #32# #32# #32# #32# #32# #32# #32#
        #32# #32# #32# #32# #32# #32# #32# #32# #32# #32# #32# #32#
        #32#))
-  (define grapheme-and-indic-break-table
+  (define grapheme-indic-break-table
     '#(#(#(3 3 3 3 3 3 3 3 3 3 2 3 3 1 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
            3 3 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
            0 0 0 0 0)
@@ -3850,8 +3850,8 @@
   (define code-point-limit 1114112)
   (define table-ref
     (lambda (tbl i)
-      (let ([#1529=#{g3 jxe2c5987izalwa4tjqb1fnkv-4} (* 64 64)])
-        (let ([#1530=#{g4 jxe2c5987izalwa4tjqb1fnkv-5} (* 64)])
+      (let ([#1529=#{g3 kuur2n0must6k1itmovbgne39-4} (* 64 64)])
+        (let ([#1530=#{g4 kuur2n0must6k1itmovbgne39-5} (* 64)])
           (vector-ref
             (vector-ref
               (vector-ref tbl (fxdiv i #1529#))
@@ -3888,12 +3888,14 @@
   (define ($str-decomp-compat c)
     (strop decomp-compat-table c))
   (define ($char-grapheme-break c)
-    (intop grapheme-and-indic-break-table c))
+    (intop grapheme-break-table c))
   (define ($char-grapheme-break-property c)
     (vector-ref
       '#(Other CR LF Control Extend ZWJ Regional_Indicator Prepend
          SpacingMark L V T LV LVT)
       (fxand ($char-grapheme-break c) 15)))
+  (define ($char-extended-pictographic? c)
+    (fxlogtest ($char-grapheme-break c) 16))
   (define ($char-indic-break-property c)
     (vector-ref
       '#(None Consonant Extend Linker)

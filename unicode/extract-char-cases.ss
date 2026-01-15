@@ -500,6 +500,7 @@
                     $str-decomp-canon $str-decomp-compat
                     $char-grapheme-break
                     $char-grapheme-break-property
+                    $char-extended-pictographic?
                     $char-indic-break-property
                     $char-grapheme-step-lookup
                     $composition-pairs
@@ -516,7 +517,7 @@
              (define string-foldcase-table ',(build-table chardata-fcstr ls))
              (define decomp-canon-table ',(build-table chardata-decomp-canon ls))
              (define decomp-compat-table ',(build-table chardata-decomp-compat ls))
-             (define grapheme-and-indic-break-table ',(build-table chardata-grapheme-break ls))
+             (define grapheme-indic-break-table ',(build-table chardata-grapheme-break ls))
              (define grapheme-step-table ',(build-table values step-table))
 
              (define grapheme-break-step-terminated-bit ,grapheme-break-step-terminated-bit)
@@ -557,10 +558,12 @@
              (define ($str-foldcase c) (strop string-foldcase-table c))
              (define ($str-decomp-canon c) (strop decomp-canon-table c))
              (define ($str-decomp-compat c) (strop decomp-compat-table c))
-             (define ($char-grapheme-break c) (intop grapheme-and-indic-break-table c))
+             (define ($char-grapheme-break c) (intop grapheme-break-table c))
              (define ($char-grapheme-break-property c)
                (vector-ref ',(list->vector grapheme-cluster-break-props)
                  (fxand ($char-grapheme-break c) ,grapheme-cluster-break-mask)))
+             (define ($char-extended-pictographic? c)
+               (fxlogtest ($char-grapheme-break c) ,extended-pictographic-bit))
              (define ($char-indic-break-property c)
                (vector-ref ',(list->vector indic-conjunct-break-props)
                  (fxsrl ($char-grapheme-break c) ,indic-conjunct-break-shift)))
