@@ -2839,7 +2839,7 @@
        #32# #32# #32# #32# #32# #32# #32# #32# #32# #32# #32# #32#
        #32# #32# #32# #32# #32# #32# #32# #32# #32# #32# #32# #32#
        #32#))
-  (define grapheme-indic-break-table
+  (define grapheme-break-table
     '#(#(#(3 3 3 3 3 3 3 3 3 3 2 3 3 1 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
            3 3 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
            0 0 0 0 0)
@@ -3850,8 +3850,8 @@
   (define code-point-limit 1114112)
   (define table-ref
     (lambda (tbl i)
-      (let ([#1529=#{g3 kuur2n0must6k1itmovbgne39-4} (* 64 64)])
-        (let ([#1530=#{g4 kuur2n0must6k1itmovbgne39-5} (* 64)])
+      (let ([#1529=#{g3 bl0finby470b56duk0aj72nr7-4} (* 64 64)])
+        (let ([#1530=#{g4 bl0finby470b56duk0aj72nr7-5} (* 64)])
           (vector-ref
             (vector-ref
               (vector-ref tbl (fxdiv i #1529#))

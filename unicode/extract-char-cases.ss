@@ -129,35 +129,41 @@
       (lambda (fields) (= 0 (string-length (list-ref fields 4))))
       data)))
 
-(define grapheme-cluster-break-props '(Other
-                                       CR
-                                       LF
-                                       Control
-                                       Extend
-                                       ZWJ
-                                       Regional_Indicator
-                                       Prepend
-                                       SpacingMark
-                                       L
-                                       V
-                                       T
-                                       LV
-                                       LVT))
+(define grapheme-cluster-break-props
+  '#(Other
+     CR
+     LF
+     Control
+     Extend
+     ZWJ
+     Regional_Indicator
+     Prepend
+     SpacingMark
+     L
+     V
+     T
+     LV
+     LVT))
 
-(define indic-conjunct-break-props '(None
-                                     Consonant
-                                     Extend
-                                     Linker))
+(define indic-conjunct-break-props
+  '#(None
+     Consonant
+     Extend
+     Linker))
 
-;; encoding for per-character information needed by `char-grapheme-step`
-(define extended-pictographic-shift (integer-length (sub1 (length grapheme-cluster-break-props))))
-(define extended-pictographic-bit (fxsll 1 extended-pictographic-shift))
-(define indic-conjunct-break-shift (add1 extended-pictographic-shift))
-(define grapheme-cluster-break-mask (sub1 (fxsll 1 (sub1 indic-conjunct-break-shift))))
+;; fixnum encoding of per-character grapheme-break property:
+;; - low bits: grapheme-cluster-break property
+;; - 1 bit: extended-pictographic property
+;; - high bits: indic-conjunct-break property
+(define grapheme-cluster-break-size (bitwise-length (sub1 (vector-length grapheme-cluster-break-props))))
+(define grapheme-cluster-break-mask (sub1 (fxsll 1 grapheme-cluster-break-size)))
+(define extended-pictographic-bit (fxsll 1 grapheme-cluster-break-size))
+(define indic-conjunct-break-shift (add1 grapheme-cluster-break-size))
+(define indic-conjunct-break-size (bitwise-length (sub1 (vector-length indic-conjunct-break-props))))
 
 ;; extends per-character information with current state, forming the full input
 ;; to the `char-grapheme-step` table lookup
-(define grapheme-break-state-shift (+ indic-conjunct-break-shift (integer-length (sub1 (length indic-conjunct-break-props)))))
+(define grapheme-break-state-shift (+ indic-conjunct-break-shift indic-conjunct-break-size))
 
 ;; encoding of `char-grapheme-step` table result
 (define grapheme-break-step-terminated-bit 1)
@@ -172,11 +178,18 @@
                 indic-conjunct-break-shift)))
 
 (define (find-prop-index str props)
-  (let loop ([i 0] [ls props] [s (string->symbol str)])
+  (let loop ([i 0] [n (vector-length props)] [s (string->symbol str)])
     (cond
-     [(null? ls) (errorf #f "invalid property name: ~a" s)]
-     [(eq? s (car ls)) i]
-     [else (loop (fx+ i 1) (cdr ls) s)])))
+     [(fx= i n) (errorf #f "invalid property name: ~a" s)]
+     [(eq? s (vector-ref props i)) i]
+     [else (loop (fx+ i 1) n s)])))
+
+(define-syntax insert-cdrec-if-absent
+  (syntax-rules ()
+    [(_ i ls)
+     (unless (assq i ls)
+       (let ([cdrec (make-chardata 0 0 0 0 0)])
+         (set! ls (cons (cons i cdrec) ls))))]))
 
 (define (insert-grapheme-cluster-break-data! ls data)
   (for-each
@@ -184,10 +197,19 @@
      (let ([val (find-prop-index (list-ref fields 1) grapheme-cluster-break-props)])
        (for-each-hex-in-range (car fields)
          (lambda (i)
-           (unless (assq i ls)
-             (let ([cdrec (make-chardata 0 0 0 0 0)])
-               (set! ls (cons (cons i cdrec) ls))))
+           (insert-cdrec-if-absent i ls)
            (chardata-grapheme-cluster-break-set! (find-cdrec i ls) val)))))
+   data)
+  ls)
+
+(define (insert-extended-pictographic-data! ls data)
+  (for-each
+   (lambda (fields)
+     (when (equal? (list-ref fields 1) "Extended_Pictographic")
+       (for-each-hex-in-range (car fields)
+         (lambda (i)
+           (insert-cdrec-if-absent i ls)
+           (chardata-extended-pictographic?-set! (find-cdrec i ls) #t)))))
    data)
   ls)
 
@@ -198,24 +220,10 @@
        (let ([val (find-prop-index (list-ref fields 2) indic-conjunct-break-props)])
          (for-each-hex-in-range (car fields)
            (lambda (i)
+             (insert-cdrec-if-absent i ls)
              (chardata-indic-conjunct-break-set! (find-cdrec i ls) val))))))
-   data))
-
-;; although extended-pictographic information is also available via the table
-;; created by "extract-info.ss",  we need it here for the `char-grapheme-step` tables
-(define (insert-extended-pictographic-data! ls data)
-  (for-each
-   (lambda (x)
-     (when (equal? (list-ref x 1) "Extended_Pictographic")
-       (for-each-hex-in-range (list-ref x 0)
-         (lambda (i)
-           (unless (assq i ls)
-             (let ([cdrec (make-chardata 0 0 0 0 0)])
-               (set! ls (cons (cons i cdrec) ls))))
-           (chardata-extended-pictographic?-set! (find-cdrec i ls) #t)))))
    data)
   ls)
-
 
 (define (build-grapheme-step-table ls)
   ;; We encode the state of finding cluster boundaries as a fixnum:
@@ -247,7 +255,8 @@
   ;;
   ;; So, if you get to the end of a string with a non-0 state, then
   ;; "flush" the state by consuming that last grapheme cluster.
-  (define grapheme-cluster-break-bits (bitwise-length (length grapheme-cluster-break-props)))
+
+  (define grapheme-cluster-break-bits (bitwise-length (vector-length grapheme-cluster-break-props)))
 
   (define GB9c-none 0)
   (define GB9c-one 1)
@@ -260,13 +269,13 @@
   (define Other (find-prop-index "Other" grapheme-cluster-break-props))
 
   (define (encode-state prop-n GB9c-state GB11-state)
-    (fxior (fx+ prop-n 1)
+    (fxior (add1 prop-n)
            (fxsll GB9c-state grapheme-cluster-break-bits)
            (fxsll GB11-state (fx+ grapheme-cluster-break-bits 2))))
 
   (define (decode-state state)
     (values
-     (fx- (fxand state (fx- (fxsll 1 grapheme-cluster-break-bits) 1)) 1)
+     (sub1 (fxand state (sub1 (fxsll 1 grapheme-cluster-break-bits))))
      (fxand (fxsrl state grapheme-cluster-break-bits) #b11)
      (fxsrl state (fx+ grapheme-cluster-break-bits 2))))
 
@@ -276,46 +285,46 @@
     (encode-state
      prop-n
      (cond
-       [(fx= GB9c-state GB9c-none)
-        (cond
-          [(eq? incb-type 'Consonant) GB9c-one]
-          [else GB9c-none])]
-       [(fx= GB9c-state GB9c-one) ; Consonant Extend*
-        (cond
-          [(eq? incb-type 'Linker) GB9c-two]
-          [(eq? incb-type 'None) GB9c-none]
-          [else GB9c-one])]
-       [else ; Consonant Extend* Linker (Extend|Linker)*
-        (cond
-          [(eq? incb-type 'Consonant) GB9c-one]
-          [(eq? incb-type 'None) GB9c-none]
-          [else GB9c-two])])
+      [(fx= GB9c-state GB9c-none)
+       (cond
+        [(eq? incb-type 'Consonant) GB9c-one]
+        [else GB9c-none])]
+      [(fx= GB9c-state GB9c-one)        ; Consonant Extend*
+       (cond
+        [(eq? incb-type 'Linker) GB9c-two]
+        [(eq? incb-type 'None) GB9c-none]
+        [else GB9c-one])]
+      [else                             ; Consonant Extend* Linker (Extend|Linker)*
+       (cond
+        [(eq? incb-type 'Consonant) GB9c-one]
+        [(eq? incb-type 'None) GB9c-none]
+        [else GB9c-two])])
      (cond
-       [(fx= GB11-state GB11-none)
-        (cond
-          [extended-pictographic? GB11-one]
-          [else GB11-none])]
-       [(fx= GB11-state GB11-one) ; Extended_Pictographic Extend*
-        (cond
-          [(eq? prop 'ZWJ) GB11-two]
-          [(eq? prop 'Extend) GB11-one]
-          [extended-pictographic? GB11-one]
-          [else GB11-none])]
-       [else                     ; Extended_Pictographic Extend* ZWJ
-        (cond
-          [extended-pictographic? GB11-one]
-          [else GB11-none])])))
+      [(fx= GB11-state GB11-none)
+       (cond
+        [extended-pictographic? GB11-one]
+        [else GB11-none])]
+      [(fx= GB11-state GB11-one)        ; Extended_Pictographic Extend*
+       (cond
+        [(eq? prop 'ZWJ) GB11-two]
+        [(eq? prop 'Extend) GB11-one]
+        [extended-pictographic? GB11-one]
+        [else GB11-none])]
+      [else                             ; Extended_Pictographic Extend* ZWJ
+       (cond
+        [extended-pictographic? GB11-one]
+        [else GB11-none])])))
 
   (define (grapheme-step cd state)
     (let-values ([(prev-n GB9c-state GB11-state) (decode-state state)])
       (let* ([br (chardata-grapheme-break cd)]
              [prop-n (fxand br grapheme-cluster-break-mask)]
-             [prev (and (>= prev-n 0)
-                        (list-ref grapheme-cluster-break-props prev-n))]
-             [prop (list-ref grapheme-cluster-break-props prop-n)]
-             [extended-pictographic? (fx= extended-pictographic-bit (fxand extended-pictographic-bit br))]
+             [prev (and (fx>= prev-n 0)
+                        (vector-ref grapheme-cluster-break-props prev-n))]
+             [prop (vector-ref grapheme-cluster-break-props prop-n)]
+             [extended-pictographic? (fxlogtest br extended-pictographic-bit)]
              [incb-type-n (fxsrl br indic-conjunct-break-shift)]
-             [incb-type (list-ref indic-conjunct-break-props incb-type-n)])
+             [incb-type (vector-ref indic-conjunct-break-props incb-type-n)])
 
         (define (next-state)
           (grapheme-next-state GB9c-state GB11-state prop prop-n incb-type extended-pictographic?))
@@ -323,75 +332,75 @@
         ;; These are the rules from UAX #29.
         ;; GB1 and GB2 are implicit and external to this stepping function.
         (cond
-          ;; some of GB999 as common case;
-          ;; a variant of this is inlined in unsafe mode
-          [(and (eq? prev 'Other)
-                (eq? prop 'Other)
-                (eq? incb-type 'None)
-                (not extended-pictographic?))
-           (values #t (encode-state Other GB9c-none GB11-none))]
-          ;; some of GB3 and some of GB4
-          [(eq? prev 'CR)
-           (if (eq? prop 'LF)
-               (values #t initial-state)
-               (values #t (next-state)))]
-          ;; some of GB3 and some of GB5
-          [(eq? prop 'CR)
-           (values (fx> state 0) (next-state))]
-          ;; rest of GB4
-          [(or (eq? prev 'Control)
-               (eq? prev 'LF))
-           (values #t (next-state))]
-          ;; rest of GB5
-          [(or (eq? prop 'Control)
-               (eq? prop 'LF))
-           (values #t (if (fx= state 0)
-                          initial-state
-                          (next-state)))]
-          ;; GB6
-          [(and (eq? prev 'L)
-                (or (eq? prop 'L)
-                    (eq? prop 'V)
-                    (eq? prop 'LV)
-                    (eq? prop 'LVT)))
-           (values #f (next-state))]
-          ;; GB7
-          [(and (or (eq? prev 'LV)
-                    (eq? prev 'V))
-                (or (eq? prop 'V)
-                    (eq? prop 'T)))
-           (values #f (next-state))]
-          ;; GB8
-          [(and (or (eq? prev 'LVT)
-                    (eq? prev 'T))
-                (eq? prop 'T))
-           (values #f (next-state))]
-          ;; GB9
-          [(or (eq? prop 'Extend)
-               (eq? prop 'ZWJ))
-           (values #f (next-state))]
-          ;; GB9a
-          [(eq? prop 'SpacingMark)
-           (values #f (next-state))]
-          ;; GB9b
-          [(eq? prev 'Prepend)
-           (values #f (next-state))]
-          ;; GB9c
-          [(and (fx= GB9c-state GB9c-two)
-                (eq? incb-type 'Consonant))
-           (values #f (next-state))]
-          ;; GB11
-          [(and (fx= GB11-state GB11-two)
-                extended-pictographic?)
-           (values #f (next-state))]
-          ;; GB12 and GB13
-          [(eq? prev 'Regional_Indicator)
-           (if (eq? prop 'Regional_Indicator)
-               (values #f (encode-state Other GB9c-none GB11-none))
-               (values #t (next-state)))]
-          ;; GB999
-          [else
-           (values (fx> state 0) (next-state))]))))
+         ;; some of GB999 as common case;
+         ;; a variant of this is inlined in unsafe mode
+         [(and (eq? prev 'Other)
+               (eq? prop 'Other)
+               (eq? incb-type 'None)
+               (not extended-pictographic?))
+          (values #t (encode-state Other GB9c-none GB11-none))]
+         ;; some of GB3 and some of GB4
+         [(eq? prev 'CR)
+          (if (eq? prop 'LF)
+              (values #t initial-state)
+              (values #t (next-state)))]
+         ;; some of GB3 and some of GB5
+         [(eq? prop 'CR)
+          (values (fx> state 0) (next-state))]
+         ;; rest of GB4
+         [(or (eq? prev 'Control)
+              (eq? prev 'LF))
+          (values #t (next-state))]
+         ;; rest of GB5
+         [(or (eq? prop 'Control)
+              (eq? prop 'LF))
+          (values #t (if (fx= state 0)
+                         initial-state
+                         (next-state)))]
+         ;; GB6
+         [(and (eq? prev 'L)
+               (or (eq? prop 'L)
+                   (eq? prop 'V)
+                   (eq? prop 'LV)
+                   (eq? prop 'LVT)))
+          (values #f (next-state))]
+         ;; GB7
+         [(and (or (eq? prev 'LV)
+                   (eq? prev 'V))
+               (or (eq? prop 'V)
+                   (eq? prop 'T)))
+          (values #f (next-state))]
+         ;; GB8
+         [(and (or (eq? prev 'LVT)
+                   (eq? prev 'T))
+               (eq? prop 'T))
+          (values #f (next-state))]
+         ;; GB9
+         [(or (eq? prop 'Extend)
+              (eq? prop 'ZWJ))
+          (values #f (next-state))]
+         ;; GB9a
+         [(eq? prop 'SpacingMark)
+          (values #f (next-state))]
+         ;; GB9b
+         [(eq? prev 'Prepend)
+          (values #f (next-state))]
+         ;; GB9c
+         [(and (fx= GB9c-state GB9c-two)
+               (eq? incb-type 'Consonant))
+          (values #f (next-state))]
+         ;; GB11
+         [(and (fx= GB11-state GB11-two)
+               extended-pictographic?)
+          (values #f (next-state))]
+         ;; GB12 and GB13
+         [(eq? prev 'Regional_Indicator)
+          (if (eq? prop 'Regional_Indicator)
+              (values #f (encode-state Other GB9c-none GB11-none))
+              (values #t (next-state)))]
+         ;; GB999
+         [else
+          (values (fx> state 0) (next-state))]))))
 
   (define (build-input state br)
     (fxior br
@@ -402,23 +411,25 @@
     (hashtable-set! states 0 0)
     (let loop ()
       (define added? #f)
-      (for-each (lambda (x)
-                  (define cd (cdr x))
-                  (vector-for-each (lambda (state)
-                                     (let-values ([(terminated? new-state) (grapheme-step cd state)])
-                                       (unless (hashtable-ref states new-state #f)
-                                         (set! added? #t)
-                                         (hashtable-set! states new-state new-state))
-                                       (hashtable-set! transitions
-                                                       (build-input state (chardata-grapheme-break cd))
-                                                       (fxior (fxsll new-state grapheme-break-step-state-shift)
-                                                              (if terminated? grapheme-break-step-terminated-bit 0)))))
-                                   (hashtable-keys states)))
-                ls)
+      (for-each
+       (lambda (x)
+         (define cd (cdr x))
+         (vector-for-each
+          (lambda (state)
+            (let-values ([(terminated? new-state) (grapheme-step cd state)])
+              (unless (hashtable-ref states new-state #f)
+                (set! added? #t)
+                (hashtable-set! states new-state new-state))
+              (hashtable-set! transitions
+                (build-input state (chardata-grapheme-break cd))
+                (fxior (fxsll new-state grapheme-break-step-state-shift)
+                  (if terminated? grapheme-break-step-terminated-bit 0)))))
+          (hashtable-keys states)))
+       ls)
       (when added?
         (loop)))
     (values (vector->list (hashtable-cells transitions))
-            (encode-state Other GB9c-none GB11-none))))
+      (encode-state Other GB9c-none GB11-none))))
 
 (define (verify-identity! n cdrec)
   (define (zeros? . args) (andmap (lambda (x) (eqv? x 0)) args))
@@ -484,93 +495,94 @@
   (insert-foldcase-data! ls (get-unicode-data "UNIDATA/CaseFolding.txt"))
   (insert-specialcase-data! ls (get-unicode-data "UNIDATA/SpecialCasing.txt"))
   (let* ([ls (insert-grapheme-cluster-break-data! ls
-              (get-unicode-data "UNIDATA/GraphemeBreakProperty.txt"))]
+               (get-unicode-data "UNIDATA/GraphemeBreakProperty.txt"))]
          [ls (insert-extended-pictographic-data! ls
-               (get-unicode-data "UNIDATA/emoji-data.txt"))])
-    (insert-indic-conjunct-break-data! ls (get-unicode-data "UNIDATA/DerivedCoreProperties.txt"))
-   ; insert final sigma flag for char-downcase conversion
+               (get-unicode-data "UNIDATA/emoji-data.txt"))]
+         [ls (insert-indic-conjunct-break-data! ls
+               (get-unicode-data "UNIDATA/DerivedCoreProperties.txt"))])
+    ;; insert final sigma flag for char-downcase conversion
     (chardata-lcstr-set! (find-cdrec #x3a3 ls) 'sigma)
     (let-values ([(step-table grapheme-other-state) (build-grapheme-step-table ls)])
-     (with-output-to-file* "unicode-char-cases.ss"
-      (lambda ()
-       (parameterize ([print-graph #t] [print-vector-length #f] [print-unicode #f])
-        (pretty-print
-          `(module ($char-upcase $char-downcase $char-titlecase $char-foldcase
-                    $str-upcase $str-downcase $str-titlecase $str-foldcase
-                    $str-decomp-canon $str-decomp-compat
-                    $char-grapheme-break
-                    $char-grapheme-break-property
-                    $char-extended-pictographic?
-                    $char-indic-break-property
-                    $char-grapheme-step-lookup
-                    $composition-pairs
-                    grapheme-break-step-terminated-bit
-                    grapheme-break-step-state-shift
-                    grapheme-other-state)
-             (define char-upcase-table ',(build-table chardata-ucchar ls))
-             (define char-downcase-table ',(build-table chardata-lcchar ls))
-             (define char-titlecase-table ',(build-table chardata-tcchar ls))
-             (define char-foldcase-table ',(build-table chardata-fcchar ls))
-             (define string-upcase-table ',(build-table chardata-ucstr ls))
-             (define string-downcase-table ',(build-table chardata-lcstr ls))
-             (define string-titlecase-table ',(build-table chardata-tcstr ls))
-             (define string-foldcase-table ',(build-table chardata-fcstr ls))
-             (define decomp-canon-table ',(build-table chardata-decomp-canon ls))
-             (define decomp-compat-table ',(build-table chardata-decomp-compat ls))
-             (define grapheme-indic-break-table ',(build-table chardata-grapheme-break ls))
-             (define grapheme-step-table ',(build-table values step-table))
+      (with-output-to-file* "unicode-char-cases.ss"
+        (lambda ()
+          (parameterize ([print-graph #t] [print-vector-length #f] [print-unicode #f])
+            (pretty-print
+             `(module ($char-upcase $char-downcase $char-titlecase $char-foldcase
+                        $str-upcase $str-downcase $str-titlecase $str-foldcase
+                        $str-decomp-canon $str-decomp-compat
+                        $char-grapheme-break
+                        $char-grapheme-break-property
+                        $char-extended-pictographic?
+                        $char-indic-break-property
+                        $char-grapheme-step-lookup
+                        $composition-pairs
+                        grapheme-break-step-terminated-bit
+                        grapheme-break-step-state-shift
+                        grapheme-other-state)
+                (define char-upcase-table ',(build-table chardata-ucchar ls))
+                (define char-downcase-table ',(build-table chardata-lcchar ls))
+                (define char-titlecase-table ',(build-table chardata-tcchar ls))
+                (define char-foldcase-table ',(build-table chardata-fcchar ls))
+                (define string-upcase-table ',(build-table chardata-ucstr ls))
+                (define string-downcase-table ',(build-table chardata-lcstr ls))
+                (define string-titlecase-table ',(build-table chardata-tcstr ls))
+                (define string-foldcase-table ',(build-table chardata-fcstr ls))
+                (define decomp-canon-table ',(build-table chardata-decomp-canon ls))
+                (define decomp-compat-table ',(build-table chardata-decomp-compat ls))
+                (define grapheme-break-table ',(build-table chardata-grapheme-break ls))
+                (define grapheme-step-table ',(build-table values step-table))
 
-             (define grapheme-break-step-terminated-bit ,grapheme-break-step-terminated-bit)
-             (define grapheme-break-step-state-shift ,grapheme-break-step-state-shift)
-             (define grapheme-other-state ,grapheme-other-state)
+                (define grapheme-break-step-terminated-bit ,grapheme-break-step-terminated-bit)
+                (define grapheme-break-step-state-shift ,grapheme-break-step-state-shift)
+                (define grapheme-other-state ,grapheme-other-state)
 
-             (define table-limit ,table-limit)
-             (define code-point-limit ,code-point-limit)
-             (define table-ref ,table-ref-code)
-             (define (charop tbl c)
-               (let ([n (char->integer c)])
-                 (if (and (fx< table-limit code-point-limit)
-                          (fx>= n table-limit))
-                     c
-                     (integer->char (fx+ (table-ref tbl n) n)))))
-             (define (strop tbl c)
-               (let ([n (char->integer c)])
-                 (if (and (fx< table-limit code-point-limit)
-                          (fx>= n table-limit))
-                     c
-                     (let ([x (table-ref tbl n)])
-                       (if (fixnum? x)
-                           (integer->char (fx+ x n))
-                           x)))))
-             (define (intop tbl c)
-               (let ([n (char->integer c)])
-                 (if (and (fx< table-limit code-point-limit)
-                          (fx>= n table-limit))
-                     0
-                     (table-ref tbl n))))
-             (define ($char-upcase c) (charop char-upcase-table c))
-             (define ($char-downcase c) (charop char-downcase-table c))
-             (define ($char-titlecase c) (charop char-titlecase-table c))
-             (define ($char-foldcase c) (charop char-foldcase-table c))
-             (define ($str-upcase c) (strop string-upcase-table c))
-             (define ($str-downcase c) (strop string-downcase-table c))
-             (define ($str-titlecase c) (strop string-titlecase-table c))
-             (define ($str-foldcase c) (strop string-foldcase-table c))
-             (define ($str-decomp-canon c) (strop decomp-canon-table c))
-             (define ($str-decomp-compat c) (strop decomp-compat-table c))
-             (define ($char-grapheme-break c) (intop grapheme-break-table c))
-             (define ($char-grapheme-break-property c)
-               (vector-ref ',(list->vector grapheme-cluster-break-props)
-                 (fxand ($char-grapheme-break c) ,grapheme-cluster-break-mask)))
-             (define ($char-extended-pictographic? c)
-               (fxlogtest ($char-grapheme-break c) ,extended-pictographic-bit))
-             (define ($char-indic-break-property c)
-               (vector-ref ',(list->vector indic-conjunct-break-props)
-                 (fxsrl ($char-grapheme-break c) ,indic-conjunct-break-shift)))
-             (define ($char-grapheme-step-lookup br state)
-               (table-ref grapheme-step-table (fxior br (fxsll state ,grapheme-break-state-shift))))
-             (define ($composition-pairs)
-               ',(get-composition-pairs
-                   (build-uncommonized-table chardata-decomp-canon ls)))))))))))
+                (define table-limit ,table-limit)
+                (define code-point-limit ,code-point-limit)
+                (define table-ref ,table-ref-code)
+                (define (charop tbl c)
+                  (let ([n (char->integer c)])
+                    (if (and (fx< table-limit code-point-limit)
+                             (fx>= n table-limit))
+                        c
+                        (integer->char (fx+ (table-ref tbl n) n)))))
+                (define (strop tbl c)
+                  (let ([n (char->integer c)])
+                    (if (and (fx< table-limit code-point-limit)
+                             (fx>= n table-limit))
+                        c
+                        (let ([x (table-ref tbl n)])
+                          (if (fixnum? x)
+                              (integer->char (fx+ x n))
+                              x)))))
+                (define (intop tbl c)
+                  (let ([n (char->integer c)])
+                    (if (and (fx< table-limit code-point-limit)
+                             (fx>= n table-limit))
+                        0
+                        (table-ref tbl n))))
+                (define ($char-upcase c) (charop char-upcase-table c))
+                (define ($char-downcase c) (charop char-downcase-table c))
+                (define ($char-titlecase c) (charop char-titlecase-table c))
+                (define ($char-foldcase c) (charop char-foldcase-table c))
+                (define ($str-upcase c) (strop string-upcase-table c))
+                (define ($str-downcase c) (strop string-downcase-table c))
+                (define ($str-titlecase c) (strop string-titlecase-table c))
+                (define ($str-foldcase c) (strop string-foldcase-table c))
+                (define ($str-decomp-canon c) (strop decomp-canon-table c))
+                (define ($str-decomp-compat c) (strop decomp-compat-table c))
+                (define ($char-grapheme-break c) (intop grapheme-break-table c))
+                (define ($char-grapheme-break-property c)
+                  (vector-ref ',grapheme-cluster-break-props
+                    (fxand ($char-grapheme-break c) ,grapheme-cluster-break-mask)))
+                (define ($char-extended-pictographic? c)
+                  (fxlogtest ($char-grapheme-break c) ,extended-pictographic-bit))
+                (define ($char-indic-break-property c)
+                  (vector-ref ',indic-conjunct-break-props
+                    (fxsrl ($char-grapheme-break c) ,indic-conjunct-break-shift)))
+                (define ($char-grapheme-step-lookup br state)
+                  (table-ref grapheme-step-table (fxior br (fxsll state ,grapheme-break-state-shift))))
+                (define ($composition-pairs)
+                  ',(get-composition-pairs
+                     (build-uncommonized-table chardata-decomp-canon ls)))))))))))
 
 (printf "unicode-char-cases.ss cache size: ~a\n" (sizeof cache))

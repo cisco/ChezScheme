@@ -123,7 +123,7 @@ The character sets, character classes, and word-breaking algorithms for characte
 and Unicode-related bytevector operations have now been updated to Unicode 17.0.0.
 
 The \scheme{char-indic-break-property} function was added to support decoding grapheme
-clusters.
+clusters with Indic conjuncts.
 
 \subsection{Add machine type a6gnu (10.4.0)}
 
@@ -2930,6 +2930,11 @@ in fasl files does not generally make sense.
 
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
+
+\subsection{Unicode Indic\_Conjunct\_Break support (10.4.0)}
+
+The grapheme cluster break algorithm neglected to consider the Indic\_Conjunct\_Break
+property available since Unicode 15.
 
 \subsection{Corrections and refinements to error reporting (10.4.0)}
 
