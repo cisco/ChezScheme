@@ -1,23 +1,23 @@
 ;;; Copyright (C) 2008  Abdulaziz Ghuloum, R. Kent Dybvig
 ;;; Copyright (C) 2006,2007  Abdulaziz Ghuloum
-;;; 
+;;;
 ;;; Permission is hereby granted, free of charge, to any person obtaining a
 ;;; copy of this software and associated documentation files (the "Software"),
 ;;; to deal in the Software without restriction, including without limitation
 ;;; the rights to use, copy, modify, merge, publish, distribute, sublicense,
 ;;; and/or sell copies of the Software, and to permit persons to whom the
 ;;; Software is furnished to do so, subject to the following conditions:
-;;; 
+;;;
 ;;; The above copyright notice and this permission notice shall be included in
 ;;; all copies or substantial portions of the Software.
-;;; 
+;;;
 ;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 ;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 ;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
 ;;; THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 ;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 ;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-;;; DEALINGS IN THE SOFTWARE. 
+;;; DEALINGS IN THE SOFTWARE.
 
 (import (scheme) (unicode-data))
 
@@ -25,7 +25,6 @@
 (include "extract-common.ss")
 
 (define code-point-limit #x110000) ; as of Unicode 5.1
-#;(define table-limit #x30000)
 (define table-limit code-point-limit)
 (define-table (make-table table-ref table-set! table-ref-code)
   (make-vector vector-ref vector-set!)
@@ -56,16 +55,15 @@
     [(assq idx ls) => cdr]
     [else (errorf 'find-cdrec "~s is missing" idx)]))
 
-(define data-case
-  (lambda (fields)
-    (let ([n (hex->num (car fields))]
-          [uc (list-ref fields 12)]
-          [lc (list-ref fields 13)]
-          [tc (list-ref fields 14)])
-      (define (f x) (if (string=? x "") 0 (- (hex->num x) n)))
-      (cons n (make-chardata (f uc) (f lc) (f tc)
-                (parse-decomp n (list-ref fields 5) #f)
-                (parse-decomp n (list-ref fields 5) #t))))))
+(define (data-case fields)
+  (let ([n (hex->num (car fields))]
+        [uc (list-ref fields 12)]
+        [lc (list-ref fields 13)]
+        [tc (list-ref fields 14)])
+    (define (f x) (if (string=? x "") 0 (- (hex->num x) n)))
+    (cons n (make-chardata (f uc) (f lc) (f tc)
+              (parse-decomp n (list-ref fields 5) #f)
+              (parse-decomp n (list-ref fields 5) #t)))))
 
 (define (split str)
   (remove ""
@@ -73,7 +71,7 @@
       (cond
         [(= i n) (list (substring str 0 n))]
         [(char=? (string-ref str i) #\space)
-         (cons (substring str 0 i) 
+         (cons (substring str 0 i)
                (split (substring str (+ i 1) n)))]
         [else (f (add1 i) n)]))))
 
@@ -103,7 +101,7 @@
       [else (c*->off (map hex->num ls) n)])))
 
 (define (insert-foldcase-data! ls data)
-  (for-each 
+  (for-each
     (lambda (fields)
       (let ([n (hex->num (car fields))])
         (let ([cdrec (find-cdrec n ls)]
@@ -111,7 +109,7 @@
           (chardata-fcchar-set! cdrec offset)
           (chardata-fcstr-set! cdrec offset))))
     (filter (lambda (fields) (member (cadr fields) '("C" "S"))) data))
-  (for-each 
+  (for-each
     (lambda (fields)
       (let ([n (hex->num (car fields))])
         (chardata-fcstr-set!
@@ -422,43 +420,40 @@
     (values (vector->list (hashtable-cells transitions))
             (encode-state Other GB9c-none GB11-none))))
 
-(define verify-identity!
-  (lambda (n cdrec)
-    (define (zeros? . args) (andmap (lambda (x) (eqv? x 0)) args))
-    (unless (zeros? (chardata-ucchar cdrec)
-                    (chardata-lcchar cdrec)
-                    (chardata-tcchar cdrec)
-                    (chardata-fcchar cdrec)
-                    (chardata-ucstr cdrec)
-                    (chardata-lcstr cdrec)
-                    (chardata-tcstr cdrec)
-                    (chardata-fcstr cdrec)
-                    (chardata-decomp-canon cdrec)
-                    (chardata-decomp-compat cdrec))
-      (errorf 'verify-identity "failed for ~x, ~s" n cdrec))))
+(define (verify-identity! n cdrec)
+  (define (zeros? . args) (andmap (lambda (x) (eqv? x 0)) args))
+  (unless (zeros? (chardata-ucchar cdrec)
+            (chardata-lcchar cdrec)
+            (chardata-tcchar cdrec)
+            (chardata-fcchar cdrec)
+            (chardata-ucstr cdrec)
+            (chardata-lcstr cdrec)
+            (chardata-tcstr cdrec)
+            (chardata-fcstr cdrec)
+            (chardata-decomp-canon cdrec)
+            (chardata-decomp-compat cdrec))
+    (errorf 'verify-identity "failed for ~x, ~s" n cdrec)))
 
-(define build-uncommonized-table
-  (lambda (acc ls)
-    (let ([table (make-table 0)])
-      (for-each 
-        (lambda (x)
-          (let ([n (car x)] [cdrec (cdr x)])
-            (unless (< n code-point-limit)
-              (errorf 'build-table
-                "code point value ~s is at or above declared limit ~s"
-                n code-point-limit))
-            (if (>= n table-limit)
-                (verify-identity! n cdrec)
-                (table-set! table n (acc cdrec)))))
-        ls)
-      table)))
+(define (build-uncommonized-table acc ls)
+  (let ([table (make-table 0)])
+    (for-each
+     (lambda (x)
+       (let ([n (car x)] [cdrec (cdr x)])
+         (unless (< n code-point-limit)
+           (errorf 'build-table
+             "code point value ~s is at or above declared limit ~s"
+             n code-point-limit))
+         (if (>= n table-limit)
+             (verify-identity! n cdrec)
+             (table-set! table n (acc cdrec)))))
+     ls)
+    table))
 
-(define build-table
-  (lambda (acc ls)
-    (commonize* (build-uncommonized-table acc ls))))
+(define (build-table acc ls)
+  (commonize* (build-uncommonized-table acc ls)))
 
 (define (get-composition-pairs decomp-canon-table)
-  (define ($str-decomp-canon c) 
+  (define ($str-decomp-canon c)
     (define (strop tbl c)
       (let ([n (char->integer c)])
         (if (and (fx< table-limit code-point-limit)
@@ -469,7 +464,7 @@
                   (integer->char (fx+ x n))
                   x)))))
     (strop decomp-canon-table c))
-  (let ([exclusions 
+  (let ([exclusions
          (map hex->num
            (map car (get-unicode-data
                       "UNIDATA/CompositionExclusions.txt")))]
@@ -505,7 +500,7 @@
                     $str-decomp-canon $str-decomp-compat
                     $char-grapheme-break
                     $char-grapheme-break-property
-                    $char-indic-conjunct-break-property
+                    $char-indic-break-property
                     $char-grapheme-step-lookup
                     $composition-pairs
                     grapheme-break-step-terminated-bit
@@ -566,7 +561,7 @@
              (define ($char-grapheme-break-property c)
                (vector-ref ',(list->vector grapheme-cluster-break-props)
                  (fxand ($char-grapheme-break c) ,grapheme-cluster-break-mask)))
-             (define ($char-indic-conjunct-break-property c)
+             (define ($char-indic-break-property c)
                (vector-ref ',(list->vector indic-conjunct-break-props)
                  (fxsrl ($char-grapheme-break c) ,indic-conjunct-break-shift)))
              (define ($char-grapheme-step-lookup br state)
@@ -575,4 +570,4 @@
                ',(get-composition-pairs
                    (build-uncommonized-table chardata-decomp-canon ls)))))))))))
 
-(printf "Happy Happy Joy Joy ~a\n" (sizeof cache))
+(printf "unicode-char-cases.ss cache size: ~a\n" (sizeof cache))

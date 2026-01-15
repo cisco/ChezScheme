@@ -262,7 +262,7 @@
     (define-char-op $subsequent? $char-subsequent?)
     (define-char-op char-extended-pictographic? $char-extended-pictographic?)
     (define-char-op char-grapheme-break-property $char-grapheme-break-property)
-    (define-char-op char-indic-conjunct-break $char-indic-conjunct-break-property)
+    (define-char-op char-indic-break-property $char-indic-break-property)
   )
 
   (let ()

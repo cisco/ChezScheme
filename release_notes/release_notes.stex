@@ -122,7 +122,7 @@ Online versions of both books can be found at
 The character sets, character classes, and word-breaking algorithms for character, string,
 and Unicode-related bytevector operations have now been updated to Unicode 17.0.0.
 
-The \scheme{char-indic-conjunct-break} function was added to support decoding grapheme
+The \scheme{char-indic-break-property} function was added to support decoding grapheme
 clusters.
 
 \subsection{Add machine type a6gnu (10.4.0)}

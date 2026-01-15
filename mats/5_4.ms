@@ -560,14 +560,14 @@
     (not (char-extended-pictographic? #\x1F11F))
  )
 
-(mat char-indic-conjunct-break
-    (error? (char-indic-conjunct-break))
-    (error? (char-indic-conjunct-break #\a #\b))
-    (error? (char-indic-conjunct-break 'a))
-    (eq? 'None (char-indic-conjunct-break #\space))
-    (eq? 'Consonant (char-indic-conjunct-break #\x915))
-    (eq? 'Extend (char-indic-conjunct-break #\x93A))
-    (eq? 'Linker (char-indic-conjunct-break #\x94D)))
+(mat char-indic-break-property
+    (error? (char-indic-break-property))
+    (error? (char-indic-break-property #\a #\b))
+    (error? (char-indic-break-property 'a))
+    (eq? 'None (char-indic-break-property #\space))
+    (eq? 'Consonant (char-indic-break-property #\x915))
+    (eq? 'Extend (char-indic-break-property #\x93A))
+    (eq? 'Linker (char-indic-break-property #\x94D)))
 
 (mat char-upcase
     (error? (char-upcase))

@@ -1,23 +1,23 @@
 ;;; Copyright (C) 2008  Abdulaziz Ghuloum, R. Kent Dybvig
 ;;; Copyright (C) 2006,2007  Abdulaziz Ghuloum
-;;; 
+;;;
 ;;; Permission is hereby granted, free of charge, to any person obtaining a
 ;;; copy of this software and associated documentation files (the "Software"),
 ;;; to deal in the Software without restriction, including without limitation
 ;;; the rights to use, copy, modify, merge, publish, distribute, sublicense,
 ;;; and/or sell copies of the Software, and to permit persons to whom the
 ;;; Software is furnished to do so, subject to the following conditions:
-;;; 
+;;;
 ;;; The above copyright notice and this permission notice shall be included in
 ;;; all copies or substantial portions of the Software.
-;;; 
+;;;
 ;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 ;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 ;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
 ;;; THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 ;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 ;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-;;; DEALINGS IN THE SOFTWARE. 
+;;; DEALINGS IN THE SOFTWARE.
 
 (import (scheme) (unicode-data))
 
@@ -108,9 +108,9 @@
 ;;; Uppercase = Lu + Other_Uppercase
 ;;; Lowercase = Ll + Other_Lowercase
 ;;; Titlecase = Lt
-;;; Alphabetic = Lu + Ll + Lt + Lm + Lo + Nl + Other_Alphabetic 
+;;; Alphabetic = Lu + Ll + Lt + Lm + Lo + Nl + Other_Alphabetic
 ;;; Numeric = ???
-;;; White_Space = 
+;;; White_Space =
 
 ;;; cased property:
 ;;;   D135: A character C is defined to be cased if and only if C has the
@@ -271,7 +271,7 @@
     (setprop i (fxand (getprop i) (fxnot constituent-property))))
   (commonize* tbl)
   (with-output-to-file* "unicode-charinfo.ss"
-    (lambda () 
+    (lambda ()
       (parameterize ([print-graph #t] [print-vector-length #f])
         (pretty-print
           `(module ($char-constituent? $char-subsequent? $char-upper-case? $char-lower-case? $char-title-case? $char-alphabetic?
@@ -386,4 +386,4 @@
                    `(combining-class ,($char-combining-class c))
                    ($char-category c))))))))))
 
-(printf "Happy Happy Joy Joy ~s\n" (sizeof cache))
+(printf "unicode-charinfo.ss cache size: ~a\n" (sizeof cache))

@@ -1,8 +1,7 @@
 (module ($char-upcase $char-downcase $char-titlecase $char-foldcase
          $str-upcase $str-downcase $str-titlecase $str-foldcase
          $str-decomp-canon $str-decomp-compat $char-grapheme-break
-         $char-grapheme-break-property
-         $char-indic-conjunct-break-property
+         $char-grapheme-break-property $char-indic-break-property
          $char-grapheme-step-lookup $composition-pairs
          grapheme-break-step-terminated-bit
          grapheme-break-step-state-shift grapheme-other-state)
@@ -3851,8 +3850,8 @@
   (define code-point-limit 1114112)
   (define table-ref
     (lambda (tbl i)
-      (let ([#1529=#{g3 i9c62mi8pnpmtjpf0f97rrv4x-4} (* 64 64)])
-        (let ([#1530=#{g4 i9c62mi8pnpmtjpf0f97rrv4x-5} (* 64)])
+      (let ([#1529=#{g3 jxe2c5987izalwa4tjqb1fnkv-4} (* 64 64)])
+        (let ([#1530=#{g4 jxe2c5987izalwa4tjqb1fnkv-5} (* 64)])
           (vector-ref
             (vector-ref
               (vector-ref tbl (fxdiv i #1529#))
@@ -3895,7 +3894,7 @@
       '#(Other CR LF Control Extend ZWJ Regional_Indicator Prepend
          SpacingMark L V T LV LVT)
       (fxand ($char-grapheme-break c) 15)))
-  (define ($char-indic-conjunct-break-property c)
+  (define ($char-indic-break-property c)
     (vector-ref
       '#(None Consonant Extend Linker)
       (fxsrl ($char-grapheme-break c) 5)))
