@@ -1,2 +1,4 @@
 To download the latest Unicode files and rebuild unicode-char-cases.ss and
 unicode-charinfo.ss, run 'make'.
+
+Then update the report function and its uses in mats/5_4.ms.

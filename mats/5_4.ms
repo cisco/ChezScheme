@@ -1336,7 +1336,7 @@
       (if (not (= n (length chars)))
           (begin (display " but expected ")
                  (write n)
-                 (display " in Unicode 16.0.0")))
+                 (display " in Unicode 17.0.0")))
       (newline)
       0)
     (define-syntax test
@@ -1524,11 +1524,11 @@
         => 0)
 
   (test alphabetic?
-        (report (filter-all-chars char-alphabetic?) 137765)
+        (report (filter-all-chars char-alphabetic?) 147421)
         => 0)
 
   (test numeric?
-        (report (filter-all-chars char-numeric?) 1839)
+        (report (filter-all-chars char-numeric?) 1940)
         => 0)
 
   (test whitespace?
@@ -1536,11 +1536,11 @@
         => 0)
 
   (test upper-case?
-        (report (filter-all-chars char-upper-case?) 1951)
+        (report (filter-all-chars char-upper-case?) 2006)
         => 0)
 
   (test lower-case?
-        (report (filter-all-chars char-lower-case?) 2544)
+        (report (filter-all-chars char-lower-case?) 2595)
         => 0)
 
   (test title-case?
