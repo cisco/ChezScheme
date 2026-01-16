@@ -863,9 +863,8 @@
   (let ()
     (define (grapheme-step ch state)
       (let ([next ($char-grapheme-step-lookup ($char-grapheme-break ch) state)])
-        (values (fx= (fxand next grapheme-break-step-terminated-bit)
-                     grapheme-break-step-terminated-bit)
-                (fxsrl next grapheme-break-step-state-shift))))
+        (values (fxlogtest next grapheme-break-step-terminated-bit)
+          (fxsrl next grapheme-break-step-state-shift))))
 
     (define (grapheme-span s start end)
       (cond
