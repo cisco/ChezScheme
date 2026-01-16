@@ -257,6 +257,7 @@
   ;; "flush" the state by consuming that last grapheme cluster.
 
   (define grapheme-cluster-break-bits (bitwise-length (vector-length grapheme-cluster-break-props)))
+  (define state-mask (sub1 (fxsll 1 (fx+ grapheme-cluster-break-bits 4))))
 
   (define GB9c-none 0)
   (define GB9c-one 1)
@@ -429,7 +430,8 @@
       (when added?
         (loop)))
     (values (vector->list (hashtable-cells transitions))
-      (encode-state Other GB9c-none GB11-none))))
+      (encode-state Other GB9c-none GB11-none)
+      state-mask)))
 
 (define (verify-identity! n cdrec)
   (define (zeros? . args) (andmap (lambda (x) (eqv? x 0)) args))
@@ -502,7 +504,7 @@
                (get-unicode-data "UNIDATA/DerivedCoreProperties.txt"))])
     ;; insert final sigma flag for char-downcase conversion
     (chardata-lcstr-set! (find-cdrec #x3a3 ls) 'sigma)
-    (let-values ([(step-table grapheme-other-state) (build-grapheme-step-table ls)])
+    (let-values ([(step-table grapheme-other-state state-mask) (build-grapheme-step-table ls)])
       (with-output-to-file* "unicode-char-cases.ss"
         (lambda ()
           (parameterize ([print-graph #t] [print-vector-length #f] [print-unicode #f])
@@ -580,7 +582,8 @@
                   (vector-ref ',indic-conjunct-break-props
                     (fxsrl ($char-grapheme-break c) ,indic-conjunct-break-shift)))
                 (define ($char-grapheme-step-lookup br state)
-                  (table-ref grapheme-step-table (fxior br (fxsll state ,grapheme-break-state-shift))))
+                  (table-ref grapheme-step-table
+                    (fxior br (fxsll (fxand state ,state-mask) ,grapheme-break-state-shift))))
                 (define ($composition-pairs)
                   ',(get-composition-pairs
                      (build-uncommonized-table chardata-decomp-canon ls)))))))))))

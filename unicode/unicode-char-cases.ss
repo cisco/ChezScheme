@@ -3850,8 +3850,8 @@
   (define code-point-limit 1114112)
   (define table-ref
     (lambda (tbl i)
-      (let ([#1529=#{g3 bl0finby470b56duk0aj72nr7-4} (* 64 64)])
-        (let ([#1530=#{g4 bl0finby470b56duk0aj72nr7-5} (* 64)])
+      (let ([#1529=#{g3 bo41712c6qayaau80drq60sz-4} (* 64 64)])
+        (let ([#1530=#{g4 bo41712c6qayaau80drq60sz-5} (* 64)])
           (vector-ref
             (vector-ref
               (vector-ref tbl (fxdiv i #1529#))
@@ -3901,7 +3901,9 @@
       '#(None Consonant Extend Linker)
       (fxsrl ($char-grapheme-break c) 5)))
   (define ($char-grapheme-step-lookup br state)
-    (table-ref grapheme-step-table (fxior br (fxsll state 7))))
+    (table-ref
+      grapheme-step-table
+      (fxior br (fxsll (fxand state 255) 7))))
   (define ($composition-pairs)
     '(#(#1237# #1236# #1235# #1234# #1233# #1232# #1231# #1230#
         #1229# #1228# #1227# #1225# #1224# #1223# #1222# #1221#
