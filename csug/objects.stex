@@ -535,6 +535,24 @@ the implementation of \scheme{char-grapheme-step}.
 (char-extended-pictographic? #\xA9) ;=> #t
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{char-indic-break-property}{\categoryprocedure}{(char-indic-break-property \var{char})}
+\returns a symbol
+\listlibraries
+\endentryheader
+
+\noindent
+\scheme{char-indic-break-property} reports the Unicode
+Indic\_Conjunct\_Break property of \var{char}, one of \scheme{None},
+\scheme{Consonant}, \scheme{Extend}, or \scheme{Linker}. This function
+is used in the implementation of \scheme{char-grapheme-step}.
+
+\schemedisplay
+(char-indic-break-property #\a)    ;=> None
+(char-indic-break-property #\x915) ;=> Consonant
+\endschemedisplay
+
 
 \section{Strings}
 

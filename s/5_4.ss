@@ -1,12 +1,12 @@
 ;;; 5_4.ss
 ;;; Copyright 1984-2017 Cisco Systems, Inc.
-;;; 
+;;;
 ;;; Licensed under the Apache License, Version 2.0 (the "License");
 ;;; you may not use this file except in compliance with the License.
 ;;; You may obtain a copy of the License at
-;;; 
+;;;
 ;;; http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing, software
 ;;; distributed under the License is distributed on an "AS IS" BASIS,
 ;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -204,24 +204,24 @@
 
 ;;; Copyright (C) 2008  Abdulaziz Ghuloum, R. Kent Dybvig
 ;;; Copyright (C) 2006,2007  Abdulaziz Ghuloum
-;;; 
+;;;
 ;;; Permission is hereby granted, free of charge, to any person obtaining a
 ;;; copy of this software and associated documentation files (the "Software"),
 ;;; to deal in the Software without restriction, including without limitation
 ;;; the rights to use, copy, modify, merge, publish, distribute, sublicense,
 ;;; and/or sell copies of the Software, and to permit persons to whom the
 ;;; Software is furnished to do so, subject to the following conditions:
-;;; 
+;;;
 ;;; The above copyright notice and this permission notice shall be included in
 ;;; all copies or substantial portions of the Software.
-;;; 
+;;;
 ;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 ;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 ;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
 ;;; THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 ;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 ;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-;;; DEALINGS IN THE SOFTWARE. 
+;;; DEALINGS IN THE SOFTWARE.
 
 (let ()
   (include "unicode-char-cases.ss")
@@ -243,7 +243,7 @@
         [(_ name unsafe-op)
          (set-who! name
            (lambda (c)
-             (if (char? c) 
+             (if (char? c)
                  (unsafe-op c)
                  ($oops who "~s is not a character" c))))]))
 
@@ -262,6 +262,7 @@
     (define-char-op $subsequent? $char-subsequent?)
     (define-char-op char-extended-pictographic? $char-extended-pictographic?)
     (define-char-op char-grapheme-break-property $char-grapheme-break-property)
+    (define-char-op char-indic-break-property $char-indic-break-property)
   )
 
   (let ()
@@ -327,11 +328,11 @@
   )
 
   (let ()
-    (define (handle-special str ac) 
+    (define (handle-special str ac)
       (define (chars ac n)
         (cond
           [(null? ac) n]
-          [else 
+          [else
            (chars (cdr ac)
              (let f ([p (cdar ac)] [n n])
                (cond
@@ -340,18 +341,18 @@
       (define (extend src ac src-len dst-len)
         (let f ([str str] [dst (make-string dst-len)] [i 0] [j 0] [ac (reverse ac)] [sigma* '()])
           (cond
-            [(null? ac) 
+            [(null? ac)
              (string-copy! str i dst j (fx- src-len i))
              (do-sigmas dst sigma*)]
             [else
              (let ([idx (caar ac)] [c* (cdar ac)] [ac (cdr ac)])
                (let ([cnt (fx- idx i)])
                  (string-copy! str i dst j cnt)
-                 (let g ([str str]       [dst dst] 
-                         [i (fx+ i cnt)] [j (fx+ j cnt)] 
-                         [ac ac]         [c* c*]) 
+                 (let g ([str str]       [dst dst]
+                         [i (fx+ i cnt)] [j (fx+ j cnt)]
+                         [ac ac]         [c* c*])
                    (cond
-                     [(pair? c*) 
+                     [(pair? c*)
                       (string-set! dst j (car c*))
                       (g str dst i (fx+ j 1) ac (cdr c*))]
                      [(char? c*)
@@ -383,8 +384,8 @@
       (let ([n (string-length str)])
         (let f ([str str] [dst (make-string n)] [i 0] [n n] [ac '()])
           (cond
-            [(fx= i n) 
-             (if (null? ac) 
+            [(fx= i n)
+             (if (null? ac)
                  dst
                  (handle-special dst ac))]
             [else
@@ -394,7 +395,7 @@
                   (string-set! dst i c/ls)
                   (f str dst (fx+ i 1) n ac)]
                  [else
-                  (f str dst (fx+ i 1) n 
+                  (f str dst (fx+ i 1) n
                      (cons (cons i c/ls) ac))]))]))))
 
     (set-who! string-upcase
@@ -681,7 +682,7 @@
     (string-relop (string-ci>? x1 x2) (string-ci-less? x2 x1))
     (string-relop (string-ci<=? x1 x2) (not (string-ci-less? x2 x1)))
     (string-relop (string-ci>=? x1 x2) (not (string-ci-less? x1 x2)))
- 
+
     (r6rs:string-relop (string=? x1 x2) (string-equal? x1 x2))
     (r6rs:string-relop (string<? x1 x2) (string-less? x1 x2))
     (r6rs:string-relop (string>? x1 x2) (string-less? x2 x1))
@@ -803,7 +804,7 @@
                   (set! ac (cons c ac))
                   (let ([c1 (string-ref s i)])
                     (cond
-                      [(and (and (char<=? hangul-lbase c) 
+                      [(and (and (char<=? hangul-lbase c)
                                  (char<=? c hangul-llimit))
                             (and (char<=? hangul-vbase c1)
                                  (char<=? c1 hangul-vlimit)))
@@ -860,151 +861,41 @@
   )
 
   (let ()
-    (define Extended_Pictographic (fx+ grapheme-cluster-break-property-count 1))
-    (define grapheme-cluster-break-bits (integer-length (fx+ grapheme-cluster-break-property-count 1)))
+    (define (grapheme-step ch state)
+      (let ([next ($char-grapheme-step-lookup ($char-grapheme-break ch) state)])
+        (values (fxlogtest next grapheme-break-step-terminated-bit)
+          (fxsrl next grapheme-break-step-state-shift))))
 
-    ;; We encode the state of finding cluster boundaries as a fixnum,
-    ;; where the low bits are the previous character's grapheme-break
-    ;; property plus one, and the high bits are the state for
-    ;; Extended_Pictographic matching. A 0 state is treated as a
-    ;; previous property that doesn't match anything (and that's why
-    ;; we add one to the previous character's property otherwise).
-    ;; Use 0 for the state for the start of a sequence.
-    ;;
-    ;; The result of taking a step is two values:
-    ;;   * a boolean indicating whether an cluster end was found
-    ;;   * a new state
-    ;; The result state is 0 only if the character sent in is consumed
-    ;; as part of a cluster (in which case the first result will be #t).
-    ;; Otherwise, a true first result indicates that a boundary was
-    ;; found just before the provided character (and the provided character's
-    ;; grapheme end is still pending).
-    ;;
-    ;; So, if you get to the end of a string with a non-0 state, then
-    ;; "flush" the state by consuming that last grapheme cluster.
-    (define grapheme-step
-      (lambda (ch state)
-        (let ([prev (fx- (fxand state (fx- (fxsll 1 grapheme-cluster-break-bits) 1)) 1)]
-              [ext-pict (fxsrl state grapheme-cluster-break-bits)]
-              [prop ($char-grapheme-cluster-break ch)])
-          (define (init-state) 0)
-          (define (prop-state)
-            ;; when we know that `($char-extended-pictographic? ch)` is false
-            (safe-assert (not ($char-extended-pictographic? ch)))
-            (fx+ prop 1))
-          (define (next-state)
-            (fxior (fx+ prop 1)
-                   (if ($char-extended-pictographic? ch)
-                       (fxsll Extended_Pictographic grapheme-cluster-break-bits)
-                       0)))
-          ;; These are the rules from UAX 29.
-          ;; GB1 and GB2 are implicit and external to this stepping function.
+    (define (grapheme-span s start end)
+      (cond
+       [(fx= start end) 0]
+       [else
+        (let-values ([(consumed? state) (char-grapheme-step (string-ref s start) 0)])
           (cond
-            ;; some of GB999 as common case;
-            ;; a variant of this is inlined in unsafe mode
-            [(and (fx= prev Other)
-                  (fx= prop Other)
-                  (not ($char-extended-pictographic? ch)))
-             (values #t (fx+ Other 1))]
-            ;; some of GB3 and some of GB4
-            [(fx= prev CR) 
-             (if (fx= prop LF)
-                 (values #t (init-state))
-                 (values #t (next-state)))]
-            ;; some of GB3 and some of GB5
-            [(fx= prop CR)
-             (values (fx> state 0) (prop-state))]
-            ;; rest of GB4 
-            [(or (fx= prev Control)
-                 (fx= prev LF))
-             (values #t (next-state))]
-            ;; rest of GB5
-            [(or (fx= prop Control)
-                 (fx= prop LF))
-             (values #t (if (fx= state 0)
-                            (init-state)
-                            (prop-state)))]
-            ;; GB6
-            [(and (fx= prev L)
-                  (or (fx= prop L)
-                      (fx= prop V)
-                      (fx= prop LV)
-                      (fx= prop LVT)))
-             (values #f (prop-state))]
-            ;; GB7
-            [(and (or (fx= prev LV)
-                      (fx= prev V))
-                  (or (fx= prop V)
-                      (fx= prop T)))
-             (values #f (prop-state))]
-            ;; GB8
-            [(and (or (fx= prev LVT)
-                      (fx= prev T))
-                  (fx= prop T))
-             (values #f (prop-state))]
-            ;; GB9
-            [(or (fx= prop Extend)
-                 (fx= prop ZWJ))
-             (values #f
-                     (cond
-                       [(or (fx= ext-pict Extended_Pictographic)
-                            (fx= ext-pict Extend))
-                        (fxior (fx+ prop 1)
-                               (fxsll prop grapheme-cluster-break-bits))]
-                       [else (fx+ prop 1)]))]
-            ;; GB9a
-            [(fx= prop SpacingMark)
-             (values #f (prop-state))]
-            ;; GB9b
-            [(fx= prev Prepend)
-             (values #f (next-state))]
-            ;; GB11
-            [(and (fx= ext-pict ZWJ)
-                  ($char-extended-pictographic? ch))
-             (values #f (fxior (fx+ prop 1)
-                               (fxsll Extended_Pictographic
-                                      grapheme-cluster-break-bits)))]
-            ;; GB12 and GB13
-            [(fx= prev Regional_Indicator)
-             (if (fx= prop Regional_Indicator)
-                 (values #f (fx+ Other 1))
-                 (values #t (next-state)))]
-            ;; GB999
-            [else
-             (values (fx> state 0) (next-state))]))))
-
-    (define grapheme-span
-      (lambda (s start end)
-        (cond
-          [(fx= start end) 0]
-          [else
-           (let-values ([(consumed? state) (char-grapheme-step (string-ref s start) 0)])
-             (cond
-               [consumed? 1]
+           [consumed? 1]
+           [else
+            (let loop ([i (fx+ start 1)] [state state])
+              (cond
+               [(fx= i end) (fx- i start)]
                [else
-                (let loop ([i (fx+ start 1)] [state state])
-                  (cond
-                    [(fx= i end) (fx- i start)]
-                    [else
-                     (let-values ([(consumed? state) (char-grapheme-step (string-ref s i) state)])
-                       (if consumed?
-                           (if (fx= state 0)
-                               (fx- (fx+ i 1) start) ; CRLF, consumed both
-                               (fx- i start))
-                           (loop (fx+ i 1) state)))]))]))])))
+                (let-values ([(consumed? state) (char-grapheme-step (string-ref s i) state)])
+                  (if consumed?
+                      (if (fx= state 0)
+                          (fx- (fx+ i 1) start) ; CRLF, consumed both
+                          (fx- i start))
+                      (loop (fx+ i 1) state)))]))]))]))
 
-    (define grapheme-count
-      (lambda (s start end count)
-        (cond
-          [(fx= start end) count]
-          [else
-           (let ([len (grapheme-span s start end)])
-             (grapheme-count s (fx+ start len) end (fx+ count 1)))])))
+    (define (grapheme-count s start end count)
+      (cond
+       [(fx= start end) count]
+       [else
+        (let ([len (grapheme-span s start end)])
+          (grapheme-count s (fx+ start len) end (fx+ count 1)))]))
 
     (set! $char-grapheme-step grapheme-step)
 
     (set! $char-grapheme-other-state
-          (lambda () (fx+ Other 1)))
+          (lambda () grapheme-other-state))
 
     (set-who! char-grapheme-step
       (lambda (ch state)

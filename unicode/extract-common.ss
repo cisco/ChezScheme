@@ -145,3 +145,9 @@
        (values (string->number (substring x 0 i) 16)
                (string->number (substring x (+ i 2) (string-length x)) 16))]
       [else (loop (add1 i))])))
+
+(define (for-each-hex-in-range str f)
+  (let-values ([(first last) (hex-range->nums str)])
+    (do ([i first (fx+ i 1)])
+        ((fx> i last))
+      (f i))))

@@ -14,14 +14,15 @@ unicode-charinfo.ss: extract-info.ss extract-common.ss unicode-data.ss
 	echo | $(Scheme) -q extract-info.ss
 
 unicode-char-cases.ss: \
- UNIDATA/CompositionExclusions.txt\
- UNIDATA/UnicodeData.txt\
  UNIDATA/CaseFolding.txt\
+ UNIDATA/CompositionExclusions.txt\
+ UNIDATA/DerivedCoreProperties.txt\
+ UNIDATA/emoji-data.txt\
+ UNIDATA/GraphemeBreakProperty.txt\
  UNIDATA/SpecialCasing.txt\
- UNIDATA/GraphemeBreakProperty.txt
+ UNIDATA/UnicodeData.txt
 
 unicode-charinfo.ss: \
  UNIDATA/UnicodeData.txt\
  UNIDATA/WordBreakProperty.txt\
- UNIDATA/PropList.txt\
- UNIDATA/emoji-data.txt
+ UNIDATA/PropList.txt

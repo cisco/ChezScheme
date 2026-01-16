@@ -1,23 +1,23 @@
 ;;; Copyright (C) 2008  Abdulaziz Ghuloum, R. Kent Dybvig
 ;;; Copyright (C) 2006,2007  Abdulaziz Ghuloum
-;;; 
+;;;
 ;;; Permission is hereby granted, free of charge, to any person obtaining a
 ;;; copy of this software and associated documentation files (the "Software"),
 ;;; to deal in the Software without restriction, including without limitation
 ;;; the rights to use, copy, modify, merge, publish, distribute, sublicense,
 ;;; and/or sell copies of the Software, and to permit persons to whom the
 ;;; Software is furnished to do so, subject to the following conditions:
-;;; 
+;;;
 ;;; The above copyright notice and this permission notice shall be included in
 ;;; all copies or substantial portions of the Software.
-;;; 
+;;;
 ;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 ;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 ;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
 ;;; THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 ;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 ;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-;;; DEALINGS IN THE SOFTWARE. 
+;;; DEALINGS IN THE SOFTWARE.
 
 (import (scheme) (unicode-data))
 
@@ -31,27 +31,6 @@
 (define (string-suffix? str suffix)
   (let ([n (string-length str)] [m (string-length suffix)])
     (and (fx>= n m) (string=? (substring str (fx- n m) n) suffix))))
-       
-(define (extract-range str)
-  (define (find-char c s)
-    (let f ([i 0] [n (string-length s)])
-      (cond
-        [(= i n) #f]
-        [(char=? (string-ref s i) c) i]
-        [else (f (+ i 1) n)])))
-  (cond
-    [(find-char #\. str) =>
-     (lambda (i)
-       (cons
-         (hex->num (substring str 0 i))
-         (hex->num (substring str (+ i 2) (string-length str)))))]
-    [else (let ([n (hex->num str)]) (cons n n))]))
-
-; fixnum field laid out as follows:
-;   bits 0-5: category number
-;   bits 6-9: wordbreak property
-;   bits 10-17: combining class
-;   bits 18-29: case/type property bits
 
 (define-syntax define-bitfields
   (lambda (x)
@@ -73,7 +52,7 @@
                  #`((define name #,(fxsll 1 bit)) #,@def*))]
               [(enumeration name id ...)
                (and (identifier? #'name) (for-all identifier? #'(id ...)))
-               (let ([width (bitwise-length (length #'(id ...)))])
+               (let ([width (bitwise-length (- (length #'(id ...)) 1))])
                  (with-syntax ([name-shift (construct-name #'name #'name "-shift")]
                                [name-mask (construct-name #'name #'name "-mask")])
                    (extract (cdr fld*) (+ bit width)
@@ -106,7 +85,6 @@
   (flag alphabetic-property)
   (flag numeric-property)
   (flag whitespace-property)
-  (flag extended-pictographic-property)
   (enumeration category Lu-cat Ll-cat Lt-cat Lm-cat Lo-cat
     Mn-cat Mc-cat Me-cat Nd-cat Nl-cat No-cat Pc-cat Pd-cat
     Ps-cat Pe-cat Pi-cat Pf-cat Po-cat Sm-cat Sc-cat Sk-cat
@@ -129,9 +107,9 @@
 ;;; Uppercase = Lu + Other_Uppercase
 ;;; Lowercase = Ll + Other_Lowercase
 ;;; Titlecase = Lt
-;;; Alphabetic = Lu + Ll + Lt + Lm + Lo + Nl + Other_Alphabetic 
+;;; Alphabetic = Lu + Ll + Lt + Lm + Lo + Nl + Other_Alphabetic
 ;;; Numeric = ???
-;;; White_Space = 
+;;; White_Space =
 
 ;;; cased property:
 ;;;   D135: A character C is defined to be cased if and only if C has the
@@ -258,55 +236,38 @@
   ;;; field0: the character index, numeric
   ;;; field1: the word-break property
   (for-each
-    (lambda (x)
-      (let ([range (extract-range (list-ref x 0))])
-        (let f ([i (car range)] [j (cdr range)])
-          (unless (> i j)
-            (let ([prop (getprop i)])
-              (unless (fx= (fxand (fxsrl prop wbproperty-shift) wbproperty-mask) 0)
-                (errorf #f "multiple word break properties found for ~x" i))
-              (setprop i (fxior prop (name->wbprop (list-ref x 1))))
-              (f (+ i 1) j))))))
-    (get-unicode-data "UNIDATA/WordBreakProperty.txt"))
+   (lambda (x)
+     (for-each-hex-in-range (list-ref x 0)
+       (lambda (i)
+         (let ([prop (getprop i)])
+           (unless (fx= (fxand (fxsrl prop wbproperty-shift) wbproperty-mask) 0)
+             (errorf #f "multiple word break properties found for ~x" i))
+           (setprop i (fxior prop (name->wbprop (list-ref x 1))))))))
+   (get-unicode-data "UNIDATA/WordBreakProperty.txt"))
   ;;; interesting parts of each element in PropList.txt are:
   ;;; field0: range of character indices
   ;;; field1: property name
   (for-each
-    (lambda (x)
-      (let ([range (extract-range (list-ref x 0))]
-            [name (list-ref x 1)])
-        (cond
-          [(assoc name proplist-properties) =>
-           (lambda (a) 
-             (let ([n (cadr a)])
-               (let f ([i (car range)] [j (cdr range)])
-                 (unless (> i j) 
-                   (setprop i (fxlogor (getprop i) n))
-                   (f (+ i 1) j)))))])))
-    (get-unicode-data "UNIDATA/PropList.txt"))
-  (for-each
-    (lambda (x)
-      (let ([range (extract-range (list-ref x 0))]
-            [name (list-ref x 1)])
-        (cond
-          [(equal? name "Extended_Pictographic")
-           (let f ([i (car range)] [j (cdr range)])
-             (unless (> i j) 
-               (setprop i (fxlogor (getprop i) extended-pictographic-property))
-               (f (+ i 1) j)))])))
-    (get-unicode-data "UNIDATA/emoji-data.txt"))
+   (lambda (x)
+     (cond
+      [(assoc (list-ref x 1) proplist-properties) =>
+       (lambda (a)
+         (let ([n (cadr a)])
+           (for-each-hex-in-range (list-ref x 0)
+             (lambda (i)
+               (setprop i (fxlogor (getprop i) n))))))]))
+   (get-unicode-data "UNIDATA/PropList.txt"))
   ;;; clear constituent property for first 128 characters
   (do ([i 0 (fx+ i 1)])
       ((fx= i 128))
     (setprop i (fxand (getprop i) (fxnot constituent-property))))
   (commonize* tbl)
   (with-output-to-file* "unicode-charinfo.ss"
-    (lambda () 
+    (lambda ()
       (parameterize ([print-graph #t] [print-vector-length #f])
         (pretty-print
           `(module ($char-constituent? $char-subsequent? $char-upper-case? $char-lower-case? $char-title-case? $char-alphabetic?
                     $char-numeric? $char-whitespace? $char-cased? $char-case-ignorable? $char-category
-                    $char-extended-pictographic?
                     $wb-aletter? $wb-numeric? $wb-katakana? $wb-extend? $wb-format? $wb-midnum? $wb-midletter?
                     $wb-midnumlet? $wb-extendnumlet? $char-combining-class $char-dump
                     ; UNICODE 7.0.0
@@ -343,9 +304,6 @@
              (define $char-whitespace?
                (lambda (c)
                  (fxlogtest (getprop (char->integer c)) ,whitespace-property)))
-             (define $char-extended-pictographic?
-               (lambda (c)
-                 (fxlogtest (getprop (char->integer c)) ,extended-pictographic-property)))
              (define $char-cased?
                (lambda (c)
                  (fxlogtest (getprop (char->integer c)) ,cased-property)))
@@ -416,4 +374,4 @@
                    `(combining-class ,($char-combining-class c))
                    ($char-category c))))))))))
 
-(printf "Happy Happy Joy Joy ~s\n" (sizeof cache))
+(printf "unicode-charinfo.ss cache size: ~a\n" (sizeof cache))

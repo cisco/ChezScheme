@@ -2088,6 +2088,9 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_4.mo:Expected error in mat char-extended-pictographic?: "incorrect argument count in call (char-extended-pictographic?)".
 5_4.mo:Expected error in mat char-extended-pictographic?: "incorrect argument count in call (char-extended-pictographic? #\a #\b)".
 5_4.mo:Expected error in mat char-extended-pictographic?: "char-extended-pictographic?: a is not a character".
+5_4.mo:Expected error in mat char-indic-break-property: "incorrect argument count in call (char-indic-break-property)".
+5_4.mo:Expected error in mat char-indic-break-property: "incorrect argument count in call (char-indic-break-property #\a #\b)".
+5_4.mo:Expected error in mat char-indic-break-property: "char-indic-break-property: a is not a character".
 5_4.mo:Expected error in mat char-upcase: "incorrect argument count in call (char-upcase)".
 5_4.mo:Expected error in mat char-upcase: "incorrect argument count in call (char-upcase #\a #\b)".
 5_4.mo:Expected error in mat char-upcase: "char-upcase: a is not a character".
