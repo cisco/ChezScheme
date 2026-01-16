@@ -407,28 +407,22 @@
     (fxior br
            (fxsll state grapheme-break-state-shift)))
 
-  (let ([states (make-eqv-hashtable)]
+  (let ([seen (make-eqv-hashtable)]
         [transitions (make-eqv-hashtable)])
-    (hashtable-set! states 0 0)
-    (let loop ()
-      (define added? #f)
-      (for-each
-       (lambda (x)
-         (define cd (cdr x))
-         (vector-for-each
-          (lambda (state)
-            (let-values ([(terminated? new-state) (grapheme-step cd state)])
-              (unless (hashtable-ref states new-state #f)
-                (set! added? #t)
-                (hashtable-set! states new-state new-state))
-              (hashtable-set! transitions
-                (build-input state (chardata-grapheme-break cd))
-                (fxior (fxsll new-state grapheme-break-step-state-shift)
-                  (if terminated? grapheme-break-step-terminated-bit 0)))))
-          (hashtable-keys states)))
-       ls)
-      (when added?
-        (loop)))
+    (define (visit state)
+      (unless (hashtable-ref seen state #f)
+        (hashtable-set! seen state 0)
+        (for-each
+         (lambda (x)
+           (let ([cd (cdr x)])
+             (let-values ([(terminated? new-state) (grapheme-step cd state)])
+               (hashtable-set! transitions
+                 (build-input state (chardata-grapheme-break cd))
+                 (fxior (fxsll new-state grapheme-break-step-state-shift)
+                   (if terminated? grapheme-break-step-terminated-bit 0)))
+               (visit new-state))))
+         ls)))
+    (visit 0)
     (values (vector->list (hashtable-cells transitions))
       (encode-state Other GB9c-none GB11-none)
       state-mask)))
