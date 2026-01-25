@@ -2249,13 +2249,15 @@
         [(fixnum?)
          (when (fx= y 0) (domain-error who y))
          (cond
-           [(or (fx= y 1) (fx= y -1)) (unless (integer? x) (noninteger-error who x)) 0]
+           [(or (fx= y 1) (fx= y -1))
+            (unless (integer? x) (noninteger-error who x))
+            (if (flonum? x) 0.0 0)]
            [else
              (type-case x
                [(fixnum?) (fxremainder x y)]
                [(bignum?) (intremainder x y)]
                [else
-                 (unless (integer? x) (noninteger-error who x))
+                (unless (integer? x) (noninteger-error who x))
                  (f x y)])])]
         [(bignum?)
          (type-case x
@@ -2267,7 +2269,13 @@
           (unless (integer? y) (noninteger-error who y))
           (unless (integer? x) (noninteger-error who x))
           (when (= y 0) (domain-error who y))
-          (f x y)]))))
+          (cond
+            [(and (flonum? y) (not (flonum? x)))
+             (if (eqv? x 0)
+                 0
+                 (inexact (remainder x (exact y))))]
+            [else
+             (f x y)])]))))
 
 (set-who! even?
    (lambda (x)

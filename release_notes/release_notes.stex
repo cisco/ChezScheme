@@ -2947,6 +2947,19 @@ When \scheme{>} and \scheme{>=} are applied to two non-real arguments, the first
 is now reported as incorrect instead of the second. In general, when two or more arguments
 are invalid, there is no guarantee about which one is reported invalid.
 
+\subsection{Fix \scheme{remainder} and \scheme{modulo} for inexact/exact mixtures (10.4.0)}
+
+When \scheme{remainder} and \scheme{modulo} receive an inexact first
+argument and exact \scheme{1} or \scheme{-1} as a second argument, the
+result is now inexact \scheme{0.0} instead of exact \scheme{0}.
+
+When \scheme{remainder} and \scheme{modulo} receive an exact first
+argument and an inexact second argument, the computation is now
+performed as exact and then converted to inexact, instead of
+converting the first argument to inexact. The new approach ensures
+that the result is an inexact integer, and not sometimes
+\scheme{+nan.0}.
+
 \subsection{Fix 32-bit ARM floating-point dereference offset (10.4.0)}
 
 A bug that affects compilation on 32-bit ARM systems has been fixed. The bug was triggered
