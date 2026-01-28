@@ -466,6 +466,15 @@
   (cptypes/once-equivalent-expansion?
     '(lambda (x y) (when (and (flonum? x) (flonum? y)) (flonum? (max x y))))
     '(lambda (x y) (when (and (flonum? x) (flonum? y)) (#3%flmax x y) #t)))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (fixnum? x) (even? x)))
+    '(lambda (x) (when (fixnum? x) (#3%fxeven? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x) (even? x)))
+    '(lambda (x) (when (flonum? x) (#3%fleven? x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x) (rational-valued? x)))
+    '(lambda (x) (when (real? x) (#3%rational? x))))
 )
 
 (mat cptype-directly-applied-case-lambda
@@ -675,20 +684,53 @@
 (define (test-disjoint*/preamble preamble l)
   (test-disjoint/preamble/self preamble #f l))
 
-(mat cptypes-type-implies?
+(mat cptypes-type-implies/numbers?
   (test-chain '((lambda (x) (eq? x 0)) fixnum? (lambda (x) (and (integer? x) (exact? x))) real? number?))
   (test-chain* '((lambda (x) (or (eq? x 0) (eq? x 10))) fixnum? (lambda (x) (and (integer? x) (exact? x))) real? number?))
-  (test-chain '(fixnum? integer? real?))
-  (test-chain '(fixnum? exact? number?))
-  (test-chain '(bignum? exact? number?))
+  (test-all-imply '(fixnum? bignum?) 'integer?)
+  (test-all-imply '(fixnum? bignum? ratnum?) 'exact?)
+  (test-chain '(integer? #;rational? real? number?))
+  (test-chain* '(integer? rational? real? number?))
+  (test-chain '(exact? number?))
+  (test-all-imply* '(rational? finite?) 'real?)
   (test-chain '(fixnum? (lambda (x) (and (integer? x) (exact? x))) (lambda (x) (and (number? x) (exact? x))) number?))
   (test-chain '((lambda (x) (eqv? x (expt 256 100))) bignum? integer? real? number?))
   (test-chain '((lambda (x) (eqv? 0.0 x)) flonum? real? number?))
   (test-chain '((lambda (x) (eqv? 0.0 x)) flonum? cflonum? number?))
   (test-chain* '((lambda (x) (or (eqv? x 0.0) (eqv? x 3.14))) flonum? real? number?))
   (test-chain* '((lambda (x) (or (eq? x 0) (eqv? x 3.14))) real? number?))
-  (test-chain* '(fixnum? rational? real?))
-  (test-chain* '(flzero? rational? real?))
+  (test-disjoint '((lambda (x) (eq? x 0)) (lambda (x) (eq? x 1)) flonum?))
+  (test-disjoint '((lambda (x) (eqv? x 0.0)) (lambda (x) (eqv? x 1.0)) fixnum?))
+  (test-disjoint '(exact? inexact?))
+  (test-disjoint '(integer? ratnum?))
+  (test-all-imply* '(infinite? nan? flfinite? flinfinite? flnan?) 'flonum?)
+  (test-chain* '((lambda (x) (eqv? x 0)) fxeven? #;even? integer?))
+  (test-chain* '((lambda (x) (and (flonum? x) (zero? x))) fleven? #;even? integer?))
+  (test-chain* '((lambda (x) (eqv? x 1)) fxodd? #;odd? integer?))
+  (test-chain* '(#;(lambda (x) (eqv? x 1.0)) flodd? #;odd? integer?))
+  (test-all-imply* '(fxzero? fxeven? fxodd?
+                     fxpositive? fxnegative? fxnonpositive? fxnonnegative?)
+                   'fixnum?)
+  (test-all-imply* '(flzero? fleven? flodd?)
+                   'flinteger?)
+  (test-all-imply* '(flpositive? flnegative? flnonpositive? flnonnegative?)
+                   'flonum?)
+  (test-all-imply* '((lambda(x) (and (real? x) (zero? x))) even? odd?)
+                   'integer?)
+  (test-all-imply* '(positive? negative? nonpositive? nonnegative?)
+                   'real?)
+  (not (test-chain* '(positive? rational?)))
+  (not (test-chain* '(negative? rational?)))
+  (not (test-chain* '(nonpositive? rational?)))
+  (not (test-chain* '(nonnegative? rational?)))
+  ; #3%flinteger? assumes the argument is a flonum, so integer? implies #3%flinteger?
+  (test-chain* '(#2%flinteger? integer?))
+  (test-chain* '(real? real-valued? number?))
+  (test-chain* '(#;rational? rational-valued? number?))
+  (test-chain* '(integer? integer-valued? number?))
+)
+
+(mat cptypes-type-implies?
   (test-chain '(gensym? symbol?))
   (test-chain '((lambda (x) (eq? x 'banana)) symbol?))
   (test-chain '(not boolean?))
@@ -703,14 +745,8 @@
   (test-disjoint '(pair? box? real? gensym? not))
   (test-disjoint '(pair? box? fixnum? flonum? (lambda (x) (eq? x #t))))
   (test-disjoint '(pair? box? fixnum? flonum? (lambda (x) (eq? #t x))))
-  (test-disjoint '((lambda (x) (eq? x 0)) (lambda (x) (eq? x 1)) flonum?))
-  (test-disjoint '((lambda (x) (eqv? x 0.0)) (lambda (x) (eqv? x 1.0)) fixnum?))
-  (test-disjoint '(exact? inexact?))
-  (test-disjoint '(integer? ratnum?))
   (test-disjoint '((lambda (x) (eq? x 'banana)) (lambda (x) (eq? x 'apple))))
   (test-disjoint* '(list? record? vector?))
-  (test-all-imply* '(rational? finite?) 'real?)
-  (test-all-imply* '(infinite? nan? flfinite? flinfinite? flnan?) 'flonum?)
 )
 
 ; use a gensym to make expansions equivalent

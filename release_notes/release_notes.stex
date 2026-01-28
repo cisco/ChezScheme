@@ -154,7 +154,9 @@ The compiler now avoids moving predicates from tail position when they may raise
 even if the result is known in case of a success.
 
 The type recovery pass has improved support for \scheme{exact}, \scheme{inexact},
-and similar functions.
+and similar functions. It also has partial support for more numeric predicates
+including \scheme{even?}, \scheme{odd?}, \scheme{positive?}, \scheme{negative?}
+and \scheme{real-valued?}.
 
 A bug that incorrectly determined the type of \scheme{(- x)} has been fixed.
 

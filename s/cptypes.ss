@@ -1068,8 +1068,6 @@ Notes:
         (define-syntax define-specialize/fxfl
           (syntax-rules ()
             [(_ lev prim fxprim flprim)
-             (define-specialize/fxfl lev prim fxprim flprim #f)]
-            [(_ lev prim fxprim flprim ret)
              (define-specialize lev prim
                ; Arity is checked before calling this handle.
                [e* (let* ([r* (get-type e*)]
@@ -1080,7 +1078,7 @@ Notes:
                                  (lookup-primref 3 'flprim)]
                                 [else #f])])
                      (when pr
-                       (fold-call/primref/shallow preinfo pr e* ret r* ctxt ntypes oldtypes plxc)))])]))
+                       (fold-call/primref/shallow preinfo pr e* #f r* ctxt ntypes oldtypes plxc)))])]))
 
         (define-specialize/fxfl 2 (< r6rs:<) fx< fl<)
         (define-specialize/fxfl 2 (<= r6rs:<=) fx<= fl<=)
@@ -1089,6 +1087,27 @@ Notes:
         (define-specialize/fxfl 2 (>= r6rs:>=) fx>= fl>=)
         (define-specialize/fxfl 2 min fxmin flmin)
         (define-specialize/fxfl 2 max fxmax flmax)
+        (define-specialize/fxfl 2 even? fxeven? fleven?)
+        (define-specialize/fxfl 2 odd? fxodd? flodd?)
+        (define-specialize/fxfl 2 positive? fxpositive? flpositive?)
+        (define-specialize/fxfl 2 negative? fxnegative? flnegative?)
+        (define-specialize/fxfl 2 nonpositive? fxnonpositive? flnonpositive?)
+        (define-specialize/fxfl 2 nonnegative? fxnonnegative? flnonnegative?)
+      )
+
+      (let ()
+        (define-syntax define-specialize/real
+          (syntax-rules ()
+            [(_ lev prim realprim)
+             (define-specialize lev prim
+               ; Arity is checked before calling this handle.
+               [e* (let ([r* (get-type e*)])
+                     (when (andmap (lambda (r) (predicate-implies? r real-pred)) r*)
+                       (fold-call/primref/shallow preinfo (lookup-primref 3 'realprim) e* #f r* ctxt ntypes oldtypes plxc)))])]))
+
+        #;(define-specialize/real 2 real-valued? real?) ; it's not necesary
+        (define-specialize/real 2 rational-valued? rational?)
+        (define-specialize/real 2 integer-valued? integer?)
       )
 
       (let ()
