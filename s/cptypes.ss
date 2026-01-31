@@ -1409,6 +1409,199 @@ Notes:
                           flonum-pred ntypes #f #f)]))])
 
       (let ()
+        (define (tfx-good-divisor? x)
+          (and (target-fixnum? x)
+               (not (eqv? x 0))
+               (not (eqv? x -1))))
+
+        (define-syntax define-specialize/div
+          (syntax-rules ()
+            [(_ lev prim fxprim flprim)
+             (define-specialize lev prim
+               ; only errors in the case (div[0] <exact-number> 0)
+               [(x y) (let ([rx (get-type x)]
+                            [ry (get-type y)])
+                        (cond
+                          [(and (predicate-implies? rx fixnum-pred)
+                                (check-constant-is? ry tfx-good-divisor?))
+                           (values `(call ,preinfo ,(lookup-primref 3 'fxprim) ,x ,y)
+                                   fixnum-pred ntypes #f #f)]
+                          [(and (predicate-implies? rx real-pred)
+                                (predicate-implies? ry real-pred))
+                           (cond
+                             [(or (predicate-implies? rx flonum-pred)
+                                  (predicate-implies? ry flonum-pred))
+                              (values `(call ,preinfo ,(lookup-primref 3 'flprim)
+                                                      ,(real-expr->flonum-expr x rx plxc)
+                                                      ,(real-expr->flonum-expr y ry plxc))
+                                      flonum-pred ntypes #f #f)]
+                             [(and (fx= level 2)
+                                   (predicate-disjoint? ry `(quote 0)))
+                              (values `(call ,preinfo ,(lookup-primref 3 'prim) ,x ,y)
+                                      ret ntypes #f #f)])]))])]))
+
+        (define-syntax define-specialize/mod
+          (syntax-rules ()
+            [(_ lev prim fxprim flprim)
+             (define-specialize lev prim
+               ; only errors in the case (mod[0] <exact-number> 0)
+               [(x y) (let ([rx (get-type x)]
+                            [ry (get-type y)])
+                        (cond
+                          [(and (predicate-implies? rx fixnum-pred)
+                                (predicate-implies? ry fixnum*-pred))
+                           (values `(call ,preinfo ,(lookup-primref 3 'fxprim) ,x ,y)
+                                   fixnum-pred ntypes #f #f)]
+                          [(and (predicate-implies? rx real-pred)
+                                (predicate-implies? ry real-pred))
+                           (cond
+                             [(or (predicate-implies? rx flonum-pred)
+                                  (predicate-implies? ry flonum-pred))
+                              (values `(call ,preinfo ,(lookup-primref 3 'flprim)
+                                                      ,(real-expr->flonum-expr x rx plxc)
+                                                      ,(real-expr->flonum-expr y ry plxc))
+                                      flonum-pred ntypes #f #f)]
+                             [(and (fx= level 2)
+                                   (predicate-disjoint? ry `(quote 0)))
+                              (values `(call ,preinfo ,(lookup-primref 3 'prim) ,x ,y)
+                                      ret ntypes #f #f)])]))])]))
+
+        (define-syntax define-specialize/div-and-mod
+          (syntax-rules ()
+            [(_ lev prim fxprim flprim)
+             (define-specialize lev prim
+               ; only errors in the case (div[0]-and-mod <exact-number> 0)
+               [(x y) (let ([rx (get-type x)]
+                            [ry (get-type y)])
+                        (cond
+                          [(and (predicate-implies? rx fixnum-pred)
+                                (check-constant-is? ry tfx-good-divisor?))
+                           (values `(call ,preinfo ,(lookup-primref 3 'fxprim) ,x ,y)
+                                   ret ntypes #f #f)] ; multiple value
+                          [(and (predicate-implies? rx real-pred)
+                                (predicate-implies? ry real-pred))
+                           (cond
+                             [(or (predicate-implies? rx flonum-pred)
+                                  (predicate-implies? ry flonum-pred))
+                              (values `(call ,preinfo ,(lookup-primref 3 'flprim)
+                                                      ,(real-expr->flonum-expr x rx plxc)
+                                                      ,(real-expr->flonum-expr y ry plxc))
+                                      ret ntypes #f #f)] ; multiple value
+                             [(and (fx= level 2)
+                                   (predicate-disjoint? ry `(quote 0)))
+                              (values `(call ,preinfo ,(lookup-primref 3 'prim) ,x ,y)
+                                      ret ntypes #f #f)])]))])]))
+
+        (define-syntax define-specialize/remainder
+          (syntax-rules ()
+            [(_ lev prim fxprim)
+             (define-specialize lev prim
+               [(x y) (let ([rx (get-type x)]
+                            [ry (get-type y)])
+                        (cond
+                          [(and (predicate-implies? rx fixnum-pred)
+                                (predicate-implies? ry fixnum*-pred))
+                           (values `(call ,preinfo ,(lookup-primref 3 'fxprim) ,x ,y)
+                                   fixnum-pred ntypes #f #f)]
+                          [(and (fx= level 2)
+                                (predicate-implies? rx integer-pred)
+                                (predicate-implies? ry integer*-pred))
+                           (values `(call ,preinfo ,(lookup-primref 3 'prim) ,x ,y)
+                                   ret ntypes #f #f)]
+                          [else
+                           (values `(call ,preinfo ,pr ,x ,y)
+                                   ret (pred-env-add/ref ntypes y integer*-pred plxc) #f #f)]))])]))
+        
+        (define-specialize/div 2 div fxdiv fldiv)
+        (define-specialize/div 2 div0 fxdiv0 fldiv0)
+        (define-specialize/mod 2 mod fxmod flmod)
+        (define-specialize/mod 2 mod0 fxmod0 flmod0)
+        (define-specialize/div-and-mod 2 div-and-mod fxdiv-and-mod fldiv-and-mod)
+        (define-specialize/div-and-mod 2 div0-and-mod0 fxdiv0-and-mod0 fldiv0-and-mod0)
+
+        (define-specialize 2 (fxdiv fxdiv0 fxdiv-and-mod fxdiv0-and-mod0)
+          [(x y) (let ([rx (get-type x)]
+                       [ry (get-type y)]
+                       [ntypes (pred-env-add/not/ref ntypes y `(quote 0) plxc)])
+                    (cond
+                      [(and (fx= level 2)
+                            (predicate-implies? rx fixnum-pred)
+                            (check-constant-is? ry tfx-good-divisor?))
+                       (values `(call ,preinfo ,(primref->unsafe-primref pr) ,x ,y)
+                               ret ntypes #f #f)]
+                      [else
+                       (values `(call ,preinfo ,pr ,x ,y) ret ntypes #f #f)]))])
+
+        (define-specialize 2 (fxmod fxmod0)
+          [(x y) (let ([rx (get-type x)]
+                       [ry (get-type y)])
+                    (cond
+                      [(and (fx= level 2)
+                            (predicate-implies? rx fixnum-pred)
+                            (predicate-implies? ry fixnum*-pred))
+                       (values `(call ,preinfo ,(primref->unsafe-primref pr) ,x ,y)
+                               ret ntypes #f #f)]
+                      [else
+                       (values `(call ,preinfo ,pr ,x ,y)
+                               ret (pred-env-add/not/ref ntypes y `(quote 0) plxc) #f #f)]))])
+
+        (define-specialize 2 quotient
+          [(x y) (let ([rx (get-type x)]
+                       [ry (get-type y)]
+                       [ntypes (pred-env-add/ref ntypes y integer*-pred plxc)])
+                   (cond
+                     [(and (predicate-implies? rx fixnum-pred)
+                           (check-constant-is? ry tfx-good-divisor?))
+                      (values `(call ,preinfo ,(lookup-primref 3 'fxquotient) ,x ,y)
+                              fixnum-pred ntypes #f #f)]
+                     [(and (fx= level 2)
+                           (predicate-implies? rx integer-pred)
+                           (predicate-implies? ry integer*-pred))
+                      (values `(call ,preinfo ,(lookup-primref 3 'quotient) ,x ,y)
+                              ret ntypes #f #f)]
+                     [else
+                      (values `(call ,preinfo ,pr ,x ,y) ret ntypes #f #f)]))])
+
+        (define-specialize 2 (fxquotient fx/)
+          [(x) (let ([rx (get-type x)]
+                     [ntypes (pred-env-add/not/ref ntypes x `(quote 0) plxc)])
+                 (cond
+                   [(and (fx= level 2)
+                         (check-constant-is? rx tfx-good-divisor?))
+                    (values `(call ,preinfo ,(primref->unsafe-primref pr) ,x)
+                            ret ntypes #f #f)]
+                   [else
+                    (values `(call ,preinfo ,pr ,x) ret ntypes #f #f)]))]
+          [(x . y*) (let ([rx (get-type x)]
+                          [ry* (get-type y*)]
+                          [ntypes (fold-left (lambda (t y) (pred-env-add/not/ref t y `(quote 0) plxc)) ntypes y*)])
+                      (cond
+                        [(and (fx= level 2)
+                              (predicate-implies? rx fixnum-pred)
+                              (andmap (lambda (ry) (check-constant-is? ry tfx-good-divisor?)) ry*))
+                         (values `(call ,preinfo ,(primref->unsafe-primref pr) ,x ,y* ...)
+                                 ret ntypes #f #f)]
+                        [else
+                         (values `(call ,preinfo ,pr ,x ,y* ...) ret ntypes #f #f)]))])
+
+        (define-specialize/remainder 2 remainder fxremainder)
+        (define-specialize/remainder 2 modulo fxmodulo)
+
+        (define-specialize 2 (fxremainder fxmodulo)
+          [(x y) (let ([rx (get-type x)]
+                       [ry (get-type y)])
+                   (cond
+                     [(and (fx= level 2)
+                           (predicate-implies? rx fixnum-pred)
+                           (predicate-implies? ry fixnum*-pred))
+                      (values `(call ,preinfo ,(primref->unsafe-primref pr) ,x ,y)
+                              ret ntypes #f #f)]
+                     [else
+                      (values `(call ,preinfo ,pr ,x ,y)
+                              ret (pred-env-add/not/ref ntypes y `(quote 0) plxc) #f #f)]))])
+      )
+
+      (let ()
         (define-syntax define-specialize/fl
           (syntax-rules ()
             [(_ lev prim flprim)

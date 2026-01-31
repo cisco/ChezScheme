@@ -164,6 +164,9 @@ The compiler avoids transforming an expression like \scheme{(+ -inf.0 x)}, where
 \scheme{x} is known to be real, into \scheme{(fl+ -inf.0 (real->flonum x))}
 in case \scheme{x} is a bignum that would be converted into \scheme{+inf.0}.
 
+The type recovery pass has support for \scheme{quotient}, \{remainder},
+\scheme{div}, \{mod} and similar primitives.
+
 \subsection{In-place vector copying (10.3.0)}
 
 The \scheme{vector-copy!} procedure copies a subsequence

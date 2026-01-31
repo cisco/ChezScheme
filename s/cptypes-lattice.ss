@@ -63,6 +63,7 @@
    symbol-pred
    maybe-symbol-pred
    fixnum-pred
+   fixnum*-pred    ; fixnums except 0
    bignum-pred
    exact-integer-pred
    flonum-pred
@@ -75,6 +76,7 @@
    exact-pred
    inexact-pred
    integer-pred
+   integer*-pred   ; integers except 0, 0.0 and -0.0
    subset-of-rational-pred
    subset-of-complex-rational-pred
    $fixmediate-pred
