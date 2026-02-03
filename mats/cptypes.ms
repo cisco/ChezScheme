@@ -1236,6 +1236,21 @@
                    (+ -0.0 x)))
     '(lambda (x) (when (bignum? x)
                    (#3%fl+ -0.0 (real->flonum x)))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x y) (when (and (flonum? x) (real? y))
+                          (+ x y)))
+         '(lambda (x y) (when (and (flonum? x) (real? y))
+                          (#3%fl+ x (real->flonum y))))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x y) (when (and (flonum? x) (real? y))
+                          (+ x y)))
+         '(lambda (x y) (when (and (flonum? x) (real? y))
+                          (#3%fl+ x (if (#3%eqv? y 0) -0.0 (real->flonum y)))))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (flonum? x)
+                   (+ x 1/2)))
+    '(lambda (x) (when (flonum? x)
+                   (#3%fl+ x 0.5))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (flonum? x)
                    (+ 1.0 x)))
@@ -1410,6 +1425,16 @@
                    (- x 1.0)))
     '(lambda (x) (when (number? x)
                    (#3%- x 1.0))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x y) (when (and (flonum? x) (real? y))
+                          (- x y)))
+         '(lambda (x y) (when (and (flonum? x) (real? y))
+                          (#3%fl- x (real->flonum y))))))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x y) (when (and (flonum? x) (real? y))
+                          (- x y)))
+         '(lambda (x y) (when (and (flonum? x) (real? y))
+                          (#3%fl- x (if (#3%eqv? y 0) -0.0 (real->flonum y)))))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (fixnum? x)
                    (- 1 x x)))

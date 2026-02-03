@@ -1241,6 +1241,22 @@ Notes:
         (define (predicate-implies-flonum? r) (predicate-implies? r flonum-pred))
         (define (predicate-implies-exact? r) (predicate-implies? r exact-pred))
         (define (predicate-implies-inexact? r) (predicate-implies? r inexact-pred))
+        (define fixnum-or-flonum-pred (predicate-union fixnum-pred flonum-pred))
+        (define (predicate-implies-fixnum-or-flonum? r) (predicate-implies? r fixnum-or-flonum-pred))
+
+        (define (predicate-implies-good->flonum? r)
+          ; ensure real->flonum will not transform it from finite to +/-inf.0
+          ; so it's possible to add/substract it to a flonum
+          (or (predicate-implies-fixnum-or-flonum? r)
+              (check-constant-is? r (lambda (d) (and (real? d)
+                                                (rational? (real->flonum d)))))))
+
+        (define (predicate-implies-flrational/nan? r)
+          ; identify only a subset, for now
+          (or (predicate-implies? r flinteger-pred)
+              (check-constant-is? r (lambda (d) (and (flonum? d)
+                                                     (or (rational? d)
+                                                         (nan? d)))))))
 
         (define (predicate-close/plus r* prim)
           (cond
@@ -1272,19 +1288,22 @@ Notes:
                             (cond
                               [(andmap predicate-implies-fixnum? r*)
                                `(call ,preinfo ,(lookup-primref 3 '$fxx+) ,x* ...)]
-                              [(cond
-                                 [(enable-arithmetic-left-associative)
-                                  ; if they can't be reordered, check that at least 
-                                  ; one of the first two is a flonum
-                                  (or (predicate-implies-flonum? (car r*))
-                                      (predicate-implies-flonum? (cadr r*)))]
-                                 [else
-                                  ; otherwise, checkt that all or all but one are flonums,
-                                  ; in case they are reordered
-                                  (let-values ([(head* rest*)
-                                                (filter/head+rest predicate-implies-flonum? r*)])
-                                    (or (null? rest*)
-                                        (andmap predicate-implies-flonum? (cdr rest*))))])
+                              [(or (and (cond
+                                          [(enable-arithmetic-left-associative)
+                                           ; if they can't be reordered, check that at least
+                                           ; one of the first two is a flonum
+                                           (or (predicate-implies-flonum? (car r*))
+                                               (predicate-implies-flonum? (cadr r*)))]
+                                          [else
+                                           ; otherwise, checkt that all or all but one are flonums,
+                                           ; in case they are reordered
+                                           (let-values ([(head* rest*)
+                                                         (filter/head+rest predicate-implies-flonum? r*)])
+                                             (or (null? rest*)
+                                                (andmap predicate-implies-flonum? (cdr rest*))))])
+                                        (andmap predicate-implies-good->flonum? r*))
+                                   (and (fx= (length r*) 2)
+                                        (ormap predicate-implies-flrational/nan? r*)))
                                (cond
                                  [(ormap (lambda (r) (and (predicate-disjoint? r `(quote -0.0))
                                                           (predicate-disjoint? r `(quote 0))))
@@ -1316,17 +1335,20 @@ Notes:
                             (cond
                               [(andmap predicate-implies-fixnum? r*)
                                `(call ,preinfo ,(lookup-primref 3 '$fxx-) ,x* ...)]
-                              [(or ; check if the first argument is a flonum
-                                   (predicate-implies-flonum? (car r*))
-                                   (cond
-                                     [(enable-arithmetic-left-associative)
-                                      ; if they can't be reordered, check that the second
-                                      ; is a flonum
-                                      (predicate-implies-flonum? (cadr r*))]
-                                     [else
-                                      ; otherwise, checkt that all are flonums,
-                                      ; in case they are reordered
-                                      (andmap predicate-implies-flonum? (cdr r*))]))
+                              [(or (and (or ; check if the first argument is a flonum
+                                            (predicate-implies-flonum? (car r*))
+                                            (cond
+                                              [(enable-arithmetic-left-associative)
+                                               ; if they can't be reordered, check that the second
+                                               ; is a flonum
+                                               (predicate-implies-flonum? (cadr r*))]
+                                              [else
+                                               ; otherwise, checkt that all are flonums,
+                                               ; in case they are reordered
+                                               (andmap predicate-implies-flonum? (cdr r*))]))
+                                        (andmap predicate-implies-good->flonum? r*))
+                                   (and (fx= (length r*) 2)
+                                        (ormap predicate-implies-flrational/nan? r*)))
                                (cond
                                  [(or (and (predicate-disjoint? (car r*) `(quote -0.0))
                                            (predicate-disjoint? (car r*) `(quote 0)))

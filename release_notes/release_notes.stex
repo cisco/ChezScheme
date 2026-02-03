@@ -160,6 +160,10 @@ and \scheme{real-valued?}.
 
 A bug that incorrectly determined the type of \scheme{(- x)} has been fixed.
 
+The compiler avoids transforming an expression like \scheme{(+ -inf.0 x)}, where
+\scheme{x} is known to be real, into \scheme{(fl+ -inf.0 (real->flonum x))}
+in case \scheme{x} is a bignum that would be converted into \scheme{+inf.0}.
+
 \subsection{In-place vector copying (10.3.0)}
 
 The \scheme{vector-copy!} procedure copies a subsequence
