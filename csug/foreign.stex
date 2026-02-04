@@ -221,8 +221,10 @@ Since \scheme{__cdecl} is the default, specifying \scheme{__cdecl} is
 equivalent to specifying \scheme{#f} or no convention.
 Additionally, \var{conv} can be \scheme{__collect_safe} to indicate that garbage
 collection is allowed concurrently with a call of the foreign procedure, it can be
-\scheme{__atomic} to indicate that the foreign function never calls back to Scheme, or it
-can be \scheme{__varargs} or \scheme{(__varargs_after \var{n})} to indicate
+\scheme{__atomic} to indicate that the foreign procedure never calls back to Scheme,
+it can be \scheme{__errno} or \scheme{__get_last_error} (Windows only) to
+get an error value as an additional result when the foreign procedure is called,
+or it can be \scheme{__varargs} or \scheme{(__varargs_after \var{n})} to indicate
 that the procedure uses a convention that works with a variable number of arguments
 after the first \var{n} (which may differ from the convention used for the
 fixed-argument variant on some platforms and conventions).
@@ -282,7 +284,7 @@ problem:
 \endschemedisplay
 
 \noindent
-If a foreign procedure that is called with \scheme{__collect_safe} can
+If a foreign procedure with \scheme{__collect_safe} can
 invoke callables, then each callable should also be declared with
 \scheme{__collect_safe} so that the callable reactivates the thread.
 
@@ -291,6 +293,15 @@ calls back to Scheme, such as through a foreign callable, which may
 allow a more efficient implementation of calls to the foreign
 function. The \scheme{__atomic} and \scheme{__collect_safe}
 declarations cannot be used at the same time.
+
+Use \scheme{__errno} to make calling a foreign procedure return two
+values instead of one: the foreign procedure's direct result and the
+value of the C library's \scheme{errno} immediately after the foreign
+procedure returns (and before that value can change for the current
+thread). On Windows, see \scheme{current-errno-source} for more
+information about \scheme{errno}, or use \scheme{__get_last_error}
+instead of \scheme{__errno} to get a result from \scheme{GetLastError}
+instead of \scheme{errno}.
 
 Complete type checking and conversion is performed on the parameters
 to a foreign procedure.
@@ -1177,7 +1188,8 @@ correct.
 
 Each \var{conv} adjusts the calling convention to be used.
 \scheme{foreign-callable} supports the same conventions as
-\scheme{foreign-procedure} except for \scheme{__com} and \scheme{__atomic}.
+\scheme{foreign-procedure} except for \scheme{__com}, \scheme{__atomic},
+\scheme{__errno}, or \scheme{__get_last_error} (which are ignored).
 The \scheme{__collect_safe} convention for a callable activates a
 calling thread if the thread is not already activated, and
 the thread's activation state is reverted when the callable
@@ -3143,6 +3155,41 @@ one might have\index{\scheme{foreign-entry?}}:
 (foreign-entry? "=foo") ;=> #t
 \endschemedisplay
 
+\section{Foreign Error Results\label{SECTFOREIGNERRNO}}
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{current-errno-source}{\categorythreadparameter}{current-errno-source}
+\listlibraries
+\endentryheader
+
+\scheme{current-errno-source} can be \scheme{#f} on any host operating
+systems. On Windows, the symbols \scheme{msvcrt} and \scheme{ucrt} are
+also allowed.
+
+The global C variable \scheme{errno} can be linked in different ways
+on Windows, and it is possible that the \scheme{errno} linkage for the
+Chez Scheme executable differs from the linkage of a dynamically
+loaded library. When a foreign procedure with convention
+\scheme{__errno} is called, then the value of
+\scheme{current-errno-source} determines which \scheme{errno} is used:
+
+\begin{itemize}
+
+\item \scheme{#f}: \scheme{errno} is used as linked to the Chez Scheme
+execuatble.
+
+\item \scheme{msvcrt}: \scheme{errno} is accessed from
+\scheme{"msvcrt.dll"} dynamically.
+
+\item \scheme{ucrt}: \scheme{errno} is accessed from
+\scheme{"api-ms-win-crt-runtime-l1-1-1.0.dll"} dynamically.
+
+\end{itemize}
+
+If a dynamic library is linked statically to the C library, then none
+of these options will work, and the dynamic library must provide a
+specific way of accessing error results.
 
 \section{C Library Routines\label{SECTFOREIGNCLIB}}
 

@@ -22,6 +22,7 @@
 #else
 #include "scheme.h"
 #endif
+#include <errno.h>
 
 EXPORT int id(int x) {
    return x;
@@ -133,5 +134,18 @@ EXPORT void *windows_malloc(long n) {
 
 EXPORT void windows_free(void *x) {
   free(x);
+}
+#endif
+
+EXPORT int set_errno_value(int x) {
+   errno = x;
+   return x + 1;
+}
+
+#ifdef _WIN32
+#include <windows.h>
+EXPORT int set_last_error_value(int x) {
+  SetLastError(x);
+  return x + 1;
 }
 #endif

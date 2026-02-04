@@ -1032,6 +1032,8 @@
       (Expr : Expr (ir) -> Expr ()
         [(call ,info1 ,mdcl (foreign ,info ,[e]) ,[e*] ...)
          (guard (memq 'atomic (info-foreign-conv* info)))
+         (safe-assert (not (or (memq 'save-errno (info-foreign-conv* info))
+                               (memq 'save-last-error (info-foreign-conv* info)))))
          ;; convert atomic calls directly to `foreign-call`
          `(foreign-call ,info ,e ,e* ...)]
         [(foreign ,info ,[e])
@@ -4681,7 +4683,7 @@
               [else (lookup-c-entry Scall-one-result)]))
           (define build-foreign-call
             (with-output-language (L13 Effect)
-              (lambda (info t0 t1* maybe-lvalue new-frame?)
+              (lambda (info t0 t1* maybe-lvalue maybe-errno-lvalue new-frame?)
                 (let ([atomic? (memq 'atomic (info-foreign-conv* info))]) ;; 'atomic => no callables, varargs is precise
                   (safe-assert (or atomic? (not new-frame?)))
                   (let ([arg-type* (info-foreign-arg-type* info)]
@@ -4704,7 +4706,7 @@
                                   (in) ; save just the required registers, e.g., %sfp
                                   (out %ac0 %ac1 %cp %xp %yp %ts %td scheme-args extra-regs)
                                   (fold-left (lambda (e t1 arg-type c-arg) `(seq ,(Scheme->C arg-type c-arg t1 #t unboxed?) ,e))
-                                    (ccall t0 atomic?) t1* arg-type* c-args))
+                                    (ccall t0 atomic? maybe-errno-lvalue) t1* arg-type* c-args))
                                ,(let ([e (deallocate)])
                                   (if maybe-lvalue
                                       (nanopass-case (Ltype Type) result-type
@@ -5487,9 +5489,11 @@
                  (restore-local-saves ,newframe-info)
                  (set! ,lvalue ,retval)))))]
         [(foreign-call ,info ,[t0] ,[t1*] ...)
-         (build-foreign-call info t0 t1* #f #t)]
+         (safe-assert (memq 'atomic (info-foreign-conv* info)))
+         (build-foreign-call info t0 t1* #f #f #t)]
         [(set! ,[lvalue] (foreign-call ,info ,[t0] ,[t1*] ...))
-         (build-foreign-call info t0 t1* lvalue #t)]
+         (safe-assert (memq 'atomic (info-foreign-conv* info)))
+         (build-foreign-call info t0 t1* lvalue #f #t)]
         [(set! ,[lvalue] (attachment-get ,reified? ,[t?]))
          (cond
           [(not t?)
@@ -5653,10 +5657,18 @@
         [(mvcall ,info ,mdcl ,t0? ,t1* ... (,t* ...))
          (build-tail-call info mdcl t0? t1* t*)]
         [(foreign-call ,info ,[t0] ,[t1*] ...)
-         `(seq
-            ; CAUTION: fv0 must hold return address when we call into C
-            ,(build-foreign-call info t0 t1* %ac0 #f)
-            (jump ,(get-ret-fv) (,%ac0)))]
+         ;; CAUTION: if not atomic, fv0 must hold return address when we call into C
+         (cond
+           [(or (memq 'save-errno (info-foreign-conv* info))
+                (memq 'save-last-error (info-foreign-conv* info)))
+            (let ([tmp (make-tmp 'errno)])
+              `(seq
+                ,(build-foreign-call info t0 t1* %ac0 tmp #f)
+                ,(build-mv-return (list %ac0 tmp))))]
+           [else
+            `(seq
+              ,(build-foreign-call info t0 t1* %ac0 #f #f)
+              (jump ,(get-ret-fv) (,%ac0)))])]
         [,rhs (do-return ,(Rhs ir))]
         [(values ,info ,[t]) (do-return ,t)]
         [(values ,info ,t* ...) (build-mv-return t*)]))

@@ -389,6 +389,10 @@ extern void S_schsig_init(void);
 #include <math.h>
 extern INT matherr(struct exception *x);
 #endif /* DEFINE_MATHERR */
+extern ptr S_save_errno(void);
+#ifdef WIN32
+extern ptr S_save_last_error(void);
+#endif
 
 /* segment.c */
 extern void S_segment_init(void);

@@ -2232,6 +2232,7 @@
   (define-tc-parameter subset-mode (lambda (mode) (memq mode '(#f system))) "a valid subset mode" #f)
   (define-tc-parameter default-record-equal-procedure (lambda (x) (or (eq? x #f) (procedure? x))) "a procedure or #f" #f)
   (define-tc-parameter default-record-hash-procedure (lambda (x) (or (eq? x #f) (procedure? x))) "a procedure or #f" #f)
+  (define-tc-parameter current-errno-source (lambda (x) (memq x (if-feature windows '(#f msvcrt ucrt) '(#f)))) "a valid errno source")
 )
 
 (define-who compile-profile

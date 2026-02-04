@@ -125,11 +125,21 @@ and Unicode-related bytevector operations have now been updated to Unicode 17.0.
 The \scheme{char-indic-break-property} function was added to support decoding grapheme
 clusters with Indic conjuncts.
 
+\subsection{Error results from foreign procedures (10.4.0)}
+
+The new \scheme{__errno} foreign-procedure convention makes each call
+return two values: the foreign procedure's direct result and the value
+of \scheme{errno} just after the foreign procedure returns. On
+Windows, the \scheme{current-errno-source} parameter selects the
+runtime C library whose \scheme{errno} is consulted, or use
+\scheme{__get_last-error} instead of \scheme{__errno} to get a result
+from \scheme{GetLastError} instead of \scheme{errno}.
+
 \subsection{Add machine type a6gnu (10.4.0)}
 
 GNU/Hurd on x86\_64 is now supported as machine type a6gnu.
 
-\subsection{Interrupts and Large-Vector Operations (10.4.0)}
+\subsection{Interrupts and large-vector operations (10.4.0)}
 
 Vector and string operations such as \scheme{make-vector},
 \scheme{make-bytevector}, \scheme{make-string},
