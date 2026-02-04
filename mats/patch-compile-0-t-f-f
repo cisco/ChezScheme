@@ -1,5 +1,5 @@
-*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	Wed Jan 14 14:33:20 2026
---- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Wed Jan 14 14:33:27 2026
+*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	Wed Feb  4 08:08:05 2026
+--- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Wed Feb  4 08:12:19 2026
 ***************
 *** 180,186 ****
   3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
@@ -6397,7 +6397,7 @@
   cfl.mo:Expected error in mat cfl=: "cfl=: a is not a cflonum".
 ! cfl.mo:Expected error in mat cfl=: "incorrect argument count in call (cfl=)".
   foreign.mo:Expected error in mat load-shared-object: "load-shared-object: invalid path 3".
-  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure convention __get_last_error".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 --- 10382,10395 ----
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
@@ -6412,7 +6412,7 @@
   cfl.mo:Expected error in mat cfl=: "cfl=: a is not a cflonum".
 ! cfl.mo:Expected error in mat cfl=: "incorrect number of arguments 0 to #<procedure cfl=>".
   foreign.mo:Expected error in mat load-shared-object: "load-shared-object: invalid path 3".
-  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure convention __get_last_error".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 ***************
 *** 10441,10448 ****

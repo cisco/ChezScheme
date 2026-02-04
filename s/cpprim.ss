@@ -3600,6 +3600,7 @@
       (define-tc-parameter $current-handler-stack handler-stack)
       (define-tc-parameter default-record-equal-procedure default-record-equal-procedure)
       (define-tc-parameter default-record-hash-procedure default-record-hash-procedure)
+      (define-tc-parameter current-errno-source current-errno-source)
       )
 
     (let ()

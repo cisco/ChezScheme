@@ -938,6 +938,7 @@
   (cp0-outer-unroll-limit [sig [() -> (ufixnum)] [(ufixnum) -> (void)]] [flags])
   (cp0-score-limit [sig [() -> (ufixnum)] [(ufixnum) -> (void)]] [flags])
   (current-directory [sig [() -> (pathname)] [(pathname) -> (void)]] [flags])
+  (current-errno-source [sig [() -> (ptr)] [(ptr) -> (void)]] [flags])
   (current-error-port [sig [() -> (textual-output-port)] [(textual-output-port) -> (void)]] [flags])  ; not restricted to 1 argument
   (current-eval [sig [() -> (procedure)] [(procedure) -> (void)]] [flags])
   (current-exception-state [sig [() -> (exception-state)] [(exception-state) -> (void)]] [flags])

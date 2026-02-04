@@ -597,6 +597,14 @@
          `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
          `(asm ,info ,asm-unactivate-thread ,u)))])
 
+  (define-instruction value (save-errno)
+    [(op (z ur))
+     (safe-assert (eq? z %Cretval))
+     (let ([u (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+         `(set! ,(make-live-info) ,z (asm ,info ,asm-save-errno ,u))))])
+
   (define-instruction value (asmlibcall)
     [(op (z ur)) 
      (let ([u (make-tmp 'u)])
@@ -774,6 +782,7 @@
                      asm-isync
                      ; threaded version specific
                      asm-get-tc asm-activate-thread asm-deactivate-thread asm-unactivate-thread
+                     asm-save-errno
                      ; machine dependent exports
                      asm-kill)
 
@@ -1967,6 +1976,11 @@
       (lambda (code* tmp . ignore)
         (asm-helper-call code* target #f tmp))))
 
+  (define asm-save-errno
+    (let ([target `(ppc32-call 0 (entry ,(lookup-c-entry save-errno)))])
+      (lambda (code* dest tmp . ignore) ; dest is ignored, since it is always Cretval
+        (asm-helper-call code* target #f tmp))))
+
   (define-who asm-return-address
     (lambda (dest l incr-offset next-addr)
       (make-rachunk dest l incr-offset next-addr
@@ -2832,20 +2846,42 @@
                       (inline ,(make-info-load 'integer-32 #f) ,%store ,tmp ,%zero (immediate 0) ,%Cretval-high)
                       (inline ,(make-info-load 'integer-32 #f) ,%store ,tmp ,%zero (immediate 4) ,%Cretval-low))]
                     [else (sorry! who "unexpected result size")])])))))
-        (define (add-deactivate t0 offset live* fp-live-count result-live* result-fp-live-count e)
+        (define (add-deactivate/errno adjust-active? save-errno? maybe-errno-lvalue errno-save-offset
+                                      t0 offset live* fp-live-count result-live* result-fp-live-count
+                                      e)
           (let ([save-and-restore
-                 (lambda (regs fp-count fp-regs e)
+                 (lambda (regs fp-count fp-regs offset e)
                    (cond
                     [(and (null? regs) (fx= 0 fp-count)) e]
                     [else
                      (pop-registers regs fp-count fp-regs offset
                                     (push-registers regs fp-count fp-regs offset
                                                     e))]))])
-            (%seq
-             (set! ,%deact ,t0)
-             ,(save-and-restore (cons %deact live*) fp-live-count (fp-parameter-regs) (%inline deactivate-thread))
-             ,e
-             ,(save-and-restore result-live* result-fp-live-count (fp-result-regs) `(set! ,%Cretval ,(%inline activate-thread))))))
+            (cond
+              [adjust-active? ; maybe also `save-errno?`
+               (%seq
+                (set! ,%deact ,t0)
+                ,(save-and-restore (cons %deact live*) fp-live-count (fp-parameter-regs) offset
+                                   (%inline deactivate-thread))
+                ,e
+                ,(save-and-restore result-live* result-fp-live-count (fp-result-regs) offset
+                                   (let ([e `(set! ,%Cretval ,(%inline activate-thread))])
+                                     (cond
+                                       [save-errno?
+                                        (%seq
+                                         (set! ,%Cretval ,(%inline save-errno))
+                                         ,(save-and-restore (list %Cretval) 0 0 errno-save-offset
+                                                            e)
+                                         (set! ,maybe-errno-lvalue ,%Cretval))]
+                                       [else e]))))]
+              [else
+               (%seq
+                (set! ,%deact ,t0)
+                ,e
+                ,(save-and-restore result-live* result-fp-live-count (fp-result-regs) offset
+                                   (%seq
+                                    (set! ,%Cretval ,(%inline save-errno))
+                                    (set! ,maybe-errno-lvalue ,%Cretval))))])))
         (lambda (info)
           (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
           (let* ([varargs? (not (memq 'atomic (info-foreign-conv* info)))] ; pessimistic for Mac OS
@@ -2854,7 +2890,8 @@
                  [arg-type* (info-foreign-arg-type* info)]
                  [result-type (info-foreign-result-type info)]
                  [fill-result-here? (indirect-result-that-fits-in-registers? result-type)]
-                 [adjust-active? (if-feature pthreads (memq 'adjust-active (info-foreign-conv* info)) #f)])
+                 [adjust-active? (if-feature pthreads (memq 'adjust-active (info-foreign-conv* info)) #f)]
+                 [save-errno? (memq 'save-errno (info-foreign-conv* info))])
             (with-values (do-args (if fill-result-here? (cdr arg-type*) (indirect-result-to-pointer result-type arg-type*))
                                   varargs?)
               (lambda (orig-frame-size locs live* fp-live-count)
@@ -2862,12 +2899,16 @@
                   (let-values ([(result-live* result-fp-live-count make-call)
                                 (plan-result result-type fill-result-here? fill-stash-offset)])
                     (let* ([base-frame-size (fx+ orig-frame-size (if fill-result-here? 4 0))]
-                           [deactivate-save-offset (if (and adjust-active?
+                           [errno-save-offset base-frame-size]
+                           [base+errno-frame-size (if (and adjust-active? save-errno?)
+                                                      (fx+ base-frame-size 4)
+                                                      base-frame-size)]
+                           [deactivate-save-offset (if (and (or adjust-active? save-errno?)
                                                             (or (fx> fp-live-count 0)
                                                                 (fx> result-fp-live-count 0)))
-                                                       (align 8 base-frame-size) ; for `double` save
-                                                       base-frame-size)]
-                           [frame-size (align 16 (if adjust-active?
+                                                       (align 8 base+errno-frame-size) ; for `double` save
+                                                       base+errno-frame-size)]
+                           [frame-size (align 16 (if (or adjust-active? save-errno?)
                                                      (fx+ deactivate-save-offset
                                                           (fx* (fxmax fp-live-count result-fp-live-count) 8)
                                                           (fx* (fxmax (add1 (length live*)) (length result-live*)) 4))
@@ -2880,7 +2921,7 @@
                            ;; stash extra argument on the stack to be retrieved after call and filled with the result:
                            (cons (load-int-stack fill-stash-offset) locs)]
                           [else locs]))
-                       (lambda (t0 not-varargs?)
+                       (lambda (t0 not-varargs? maybe-errno-lvalue)
                          (define (add-crset e)
                            (constant-case machine-type-name
                                           [(ppc32osx tppc32osx) e]
@@ -2893,9 +2934,11 @@
                          (let ([kill* (add-caller-save-registers result-live*)])
                            (make-call
                             (cond
-                             [adjust-active?
-                              (add-deactivate t0 deactivate-save-offset live* fp-live-count result-live* result-fp-live-count
-                                              (add-crset `(inline ,(make-info-kill*-live* kill* live*) ,%c-call ,%deact)))]
+                             [(or adjust-active? save-errno?)
+                              (add-deactivate/errno
+                               adjust-active? save-errno? maybe-errno-lvalue errno-save-offset
+                               t0 deactivate-save-offset live* fp-live-count result-live* result-fp-live-count
+                               (add-crset `(inline ,(make-info-kill*-live* kill* live*) ,%c-call ,%deact)))]
                              [else (add-crset `(inline ,(make-info-kill*-live* kill* live*) ,%c-call ,t0))]))))
                        (nanopass-case (Ltype Type) result-type
                          [(fp-double-float)

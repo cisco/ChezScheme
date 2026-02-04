@@ -317,6 +317,16 @@
 
 (mat foreign-procedure
    (procedure? (foreign-procedure "idiptr" (scheme-object) scheme-object))
+   (procedure? (foreign-procedure __errno "idiptr" (scheme-object) scheme-object))
+   (procedure? (meta-cond
+                [(windows?)
+                 (foreign-procedure __get_last_error "idiptr" (scheme-object) scheme-object)]
+                [else void]))
+   (error? (meta-cond
+            [(windows?)
+             (error #f "invalid foreign-procedure convention __get_last_error")]
+            [else
+             (lambda () (foreign-procedure __get_last_error "idiptr" (scheme-object) scheme-object))]))
    (error? (foreign-procedure "i do not exist" (scheme-object) scheme-object))
    (error? (begin (foreign-procedure "i do not exist" () scheme-object) 'q))
    (error? (if (foreign-procedure "i do not exist" () scheme-object) 'q 'q))
@@ -325,7 +335,14 @@
    (error? (if (foreign-procedure 'foo () scheme-object) 'q 'q))
 
    (error? (lambda () (foreign-procedure __bad_conv "foo" () scheme-object)))
+   (error? (lambda () (foreign-procedure __collect_safe __atomic "foo" () scheme-object)))
    (error? (lambda () (foreign-procedure __atomic __collect_safe "foo" () scheme-object)))
+   (error? (meta-cond
+            [(windows?) (lambda () (foreign-procedure __errno __get_last_error "foo" () scheme-object))]
+            [else (error #f "conflicting foreign-procedure convention __get_last_error")]))
+   (error? (meta-cond
+            [(windows?) (lambda () (foreign-procedure __get_last_error __errno "foo" () scheme-object))]
+            [else (error #f "conflicting foreign-procedure convention __errno")]))
 
    (eq? 'foo ((foreign-procedure "idiptr" (scheme-object) scheme-object) 'foo))
 
@@ -3363,7 +3380,7 @@
     (define-ftype i64 integer-64)
     (define-syntax check*
       (syntax-rules ()
-        [(_ (conv ...) T s [vi ...] [T-ref ...] [T-set! ...])
+        [(_ foreign-procedure (conv ...) T s [vi ...] [T-ref ...] [T-set! ...])
          (let ()
            (define-ftype callback (function conv ... ((& T)) double))
            (define-ftype callback-two (function conv ... ((& T) (& T)) double))
@@ -3469,11 +3486,34 @@
                        (begin
                          (free_at_boundary (ftype-pointer-address a))
                          #t)))))]))
+    (define-syntax foreign-procedure/discard-errno
+      (lambda (stx)
+        (syntax-case stx ()
+          [(_ a ...)
+           #'(let ([f (foreign-procedure a ...)])
+               (lambda args
+                 (call-with-values
+                  (lambda () (apply f args))
+                  (lambda (v errno)
+                    (unless (and (integer? errno) (exact? errno)) (errorf 'foreign "not a valid errno result ~s" errno))
+                    v))))])))
+    ;; used to get broad coverage, on average, without inflating test times too much
+    (define-syntax randomly
+      (lambda (stx)
+        (syntax-case stx ()
+          [(_ e)
+           (if (< (random 1.0) 0.1)
+               #'e
+               #'#t)])))
     (define-syntax check*t
       (syntax-rules ()
         [(_ arg ...)
-         (and (check* () arg ...)
-              (check* (__collect_safe) arg ...))]))
+         (and (check* foreign-procedure () arg ...)
+              (check* foreign-procedure (__collect_safe) arg ...)
+              (randomly
+               (check* foreign-procedure/discard-errno (__errno) arg ...))
+              (randomly
+               (check* foreign-procedure/discard-errno (__collect_safe __errno) arg ...)))]))
     (define-syntax check-n
       (syntax-rules ()
         [(_ [ni ti vi] ...)
@@ -3812,6 +3852,35 @@
            (begin
              (unlock-object callable)
              (< (maximum-memory-bytes) (* 1.2 old-max)))))))
+  )
+
+(mat save-errno
+  (begin
+    (define set-errno-value
+      (foreign-procedure __errno "set_errno_value" (int) int))
+    (define set-errno-value/collect-safe
+      (foreign-procedure __errno __collect_safe "set_errno_value" (int) int))
+    (define set-last-error-value
+      (meta-cond
+       [(windows?)
+        (foreign-procedure __get_last_error "set_last_error_value" (int) int)]
+       [else
+        set-errno-value]))
+    (define set-last-error-value/collect-safe
+      (meta-cond
+       [(windows?)
+        (foreign-procedure __get_last_error __collect_safe "set_last_error_value" (int) int)]
+       [else
+        set-errno-value/collect-safe]))
+    #t)
+  (equal? (call-with-values (lambda () (set-errno-value 123)) list)
+          (list 124 123))
+  (equal? (call-with-values (lambda () (set-errno-value/collect-safe 125)) list)
+          (list 126 125))
+  (equal? (call-with-values (lambda () (set-last-error-value 127)) list)
+          (list 128 127))
+  (equal? (call-with-values (lambda () (set-last-error-value/collect-safe 129)) list)
+          (list 130 129))
 )
 
 (machine-case

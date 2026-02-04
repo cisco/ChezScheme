@@ -535,6 +535,22 @@
          `(set! ,(make-live-info) ,ulr (asm ,null-info ,asm-kill))
          `(asm ,info ,asm-unactivate-thread ,x ,ulr)))])
 
+  (define-instruction value save-errno
+    [(op (z ur))
+     (safe-assert (eq? z %Cretval))
+     (let ([ulr (make-precolored-unspillable 'ulr %lr)])
+       (seq
+         `(set! ,(make-live-info) ,ulr (asm ,null-info ,asm-kill))
+         `(set! ,(make-live-info) ,z (asm ,info ,asm-save-errno ,ulr))))])
+
+  (define-instruction value save-last-error
+    [(op (z ur))
+     (safe-assert (eq? z %Cretval))
+     (let ([ulr (make-precolored-unspillable 'ulr %lr)])
+       (seq
+         `(set! ,(make-live-info) ,ulr (asm ,null-info ,asm-kill))
+         `(set! ,(make-live-info) ,z (asm ,info ,asm-save-last-error ,ulr))))])
+
   (define-instruction value (asmlibcall)
     [(op (z ur))
      (if (info-asmlib-save-ra? info)
@@ -725,6 +741,7 @@
                      ; threaded version specific
                      asm-get-tc
                      asm-activate-thread asm-deactivate-thread asm-unactivate-thread
+                     asm-save-errno asm-save-last-error
                      ; machine dependent exports
                      asm-kill)
 
@@ -2171,7 +2188,7 @@
 
   (define asm-activate-thread
     (let ([target `(arm64-call 0 (entry ,(lookup-c-entry activate-thread)))])
-      (lambda (code* dest . ignore)
+      (lambda (code* dest . ignore) ; dest is Cretval
         (asm-helper-call code* target #t))))
 
   (define asm-deactivate-thread
@@ -2182,6 +2199,16 @@
   (define asm-unactivate-thread
     (let ([target `(arm64-call 0 (entry ,(lookup-c-entry unactivate-thread)))])
       (lambda (code* arg-reg . ignore)
+        (asm-helper-call code* target #f))))
+
+  (define asm-save-errno
+    (let ([target `(arm64-call 0 (entry ,(lookup-c-entry save-errno)))])
+      (lambda (code* dest . ignore) ; dest is Cretval
+        (asm-helper-call code* target #f))))
+
+  (define asm-save-last-error
+    (let ([target `(arm64-call 0 (entry ,(lookup-c-entry save-last-error)))])
+      (lambda (code* dest . ignore) ; dest is Cretval
         (asm-helper-call code* target #f))))
 
   (define-who asm-return-address
@@ -2937,16 +2964,34 @@
                       [else
                        ;; anything else
                        e]))]
-                 [add-deactivate
-                  (lambda (adjust-active? t0 live* result-live* k)
+                 [add-deactivate/errno
+                  (lambda (adjust-active? save-last-error? maybe-errno-lvalue t0 live* result-live* k)
                     (cond
-                     [adjust-active?
-                      (%seq
-                       (set! ,%ac0 ,t0)
-                       ,(save-and-restore live* (%inline deactivate-thread))
-                       ,(k %ac0)
-                       ,(save-and-restore result-live* `(set! ,%Cretval ,(%inline activate-thread))))]
-                     [else (k t0)]))])
+                      [adjust-active?
+                       (%seq
+                        (set! ,%ac0 ,t0)
+                        ,(save-and-restore live* (%inline deactivate-thread))
+                        ,(k %ac0)
+                        ,(save-and-restore result-live* (let ([e `(set! ,%Cretval ,(%inline activate-thread))])
+                                                          (cond
+                                                            [maybe-errno-lvalue
+                                                             (%seq
+                                                              (set! ,%Cretval ,(if save-last-error?
+                                                                                   (%inline save-last-error)
+                                                                                   (%inline save-errno)))
+                                                              ,(save-and-restore (list %Cretval) e)
+                                                              (set! ,maybe-errno-lvalue ,%Cretval))]
+                                                            [else e]))))]
+                      [maybe-errno-lvalue
+                       (%seq
+                        ,(k t0)
+                        ,(save-and-restore result-live*
+                                           (%seq
+                                            (set! ,%Cretval ,(if save-last-error?
+                                                                 (%inline save-last-error)
+                                                                 (%inline save-errno)))
+                                            (set! ,maybe-errno-lvalue ,%Cretval))))]
+                      [else (k t0)]))])
           (lambda (info)
             (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
             (let* ([arg-type* (info-foreign-arg-type* info)]
@@ -2967,6 +3012,7 @@
                    [arg-stack-bytes (align 16 (compute-stack-argument-space arg-cat*))]
                    [indirect-stack-bytes (align 16 (compute-stack-indirect-space arg-cat*))]
                    [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
+                   [save-last-error? (if-feature windows (memq 'save-last-error conv*) #f)]
                    [locs (do-args arg-type* arg-cat* arg-stack-bytes)]
                    [live* (get-registers arg-cat* 'all)]
                    [live* (if (and ftd-result? (not fill-result-here?))
@@ -2993,11 +3039,13 @@
                    ;; callee expects pointer to fill for return in %r8:
                    (cons (lambda (rhs) `(set! ,%r8 ,rhs)) locs)]
                   [else locs]))
-               (lambda (t0 not-varargs?)
+               (lambda (t0 not-varargs? maybe-errno-lvalue)
                  (add-fill-result result-cat result-type (fx+ arg-stack-bytes indirect-stack-bytes) fill-result-here?
-                                  (add-deactivate adjust-active? t0 live* result-reg*
-                                                  (lambda (t0)
-                                                    `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0)))))
+                                  (add-deactivate/errno
+                                   adjust-active? save-last-error? maybe-errno-lvalue
+                                   t0 live* result-reg*
+                                   (lambda (t0)
+                                     `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0)))))
                (nanopass-case (Ltype Type) result-type
                  [(fp-double-float)
                   (lambda (lvalue) ; unboxed
