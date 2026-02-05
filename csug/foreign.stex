@@ -3177,7 +3177,7 @@ loaded library. When a foreign procedure with convention
 \begin{itemize}
 
 \item \scheme{#f}: \scheme{errno} is used as linked to the Chez Scheme
-execuatble.
+executable.
 
 \item \scheme{msvcrt}: \scheme{errno} is accessed from
 \scheme{"msvcrt.dll"} dynamically.
