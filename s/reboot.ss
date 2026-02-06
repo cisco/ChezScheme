@@ -415,6 +415,7 @@
 (define-primitive $ftd-pair? (lambda (x) (and (pair? x) (#%$ftd? (car x)))))
 (define-primitive $fptd? #%$ftd?)
 (define-primitive $filter-foreign-type #%$filter-foreign-type)
+(define-primitive $ftype-pointer? #%$ftype-pointer?)
 
 (define-primitive $make-fmt->expr #%$make-fmt->expr)
 (define-primitive $parse-format-string (lambda args #f))

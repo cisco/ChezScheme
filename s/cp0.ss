@@ -2433,6 +2433,24 @@
                      (residualize-seq '() (list who e) ctxt)
                      true-rec)]))
 
+      (let ()
+        (define null-fptr-constant?
+          (lambda (e1)
+            (cp0-constant? (lambda (d)
+                             (and ($ftype-pointer? d)
+                                  (eqv? 0 (ftype-pointer-address d))))
+                           e1)))
+        (define-inline 2 ftype-pointer-address
+          [(e) (let ([xval (value-visit-operand! e)])
+                 (nanopass-case (Lsrc Expr) (result-exp xval)
+                   [(call ,preinfo ,pr ,e1 ,e2 ,e3)
+                    (guard (and (eq? (primref-name pr) '$fptr-&ref)
+                                (all-set? (prim-mask unsafe) (primref-flags pr))
+                                (null-fptr-constant? e1)))
+                    (residualize-seq '() (list e) ctxt)
+                    e2]
+                   [else #f]))]))
+
       (define-inline 2 (memq memv member assq assv assoc)
         [(x ls)
          (and (cp0-constant? null? (result-exp (value-visit-operand! ls)))

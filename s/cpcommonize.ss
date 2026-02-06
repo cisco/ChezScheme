@@ -200,9 +200,9 @@
                (nanopass-case (Ltype Type) ty2
                  [(fp-single-float) #t]
                  [else #f])]
-              [(fp-fptd ,fptd1)
+              [(fp-ftd ,ftd1)
                (nanopass-case (Ltype Type) ty2
-                 [(fp-fptd ,fptd2) (eq? fptd1 fptd2)]
+                 [(fp-ftd ,ftd2) (eq? ftd1 ftd2)]
                  [else #f])]
               [(fp-ftd& ,ftd1 ,fptd1)
                (nanopass-case (Ltype Type) ty2

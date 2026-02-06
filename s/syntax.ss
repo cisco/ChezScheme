@@ -664,7 +664,7 @@
               [(void) (and void-okay? `(fp-void))]
               [else
                (cond
-                [($fptd? x) `(fp-fptd ,x)]
+                [($ftd? x) `(fp-ftd ,x)]
                 [($ftd-pair? x) `(fp-ftd& ,(car x) ,(cdr x))]
                 [else #f])])
             ($oops #f "invalid ~a ~a specifier ~s" who what x)))))
@@ -8959,7 +8959,7 @@
             [(big) 'utf-32be]
             [(unknown) 'utf-32])])]
       [else
-       (and (or ($fptd? type) ($ftd-pair? type))
+       (and (or ($ftd? type) ($ftd-pair? type))
             type)])))
 
 (define $fp-type->pred
@@ -9201,9 +9201,9 @@
                                     (check-floats-allowed pos)
                                     #f]
                                    [else #f])
-                                 (if (or ($fptd? type) ($ftd-pair? type))
-                                     (let ([ftd (if ($fptd? type) type (cdr type))])
-                                       #`(#,(if unsafe? #'() #`((unless (record? x '#,ftd) (err ($moi) x))))
+                                 (if (or ($ftd? type) ($ftd-pair? type))
+                                     (let ([ftd (if ($ftd? type) type (cdr type))])
+                                       #`(#,(if unsafe? #'() #`((unless (record? x '#,($ftd->predicate-rtd ftd)) (err ($moi) x))))
                                           (x)
                                           (#,type)))
                                      (with-syntax ([pred (datum->syntax #'foreign-procedure ($fp-type->pred type))]
@@ -9262,7 +9262,7 @@
                              [#,(cdr result-type)]
                              #,(if unsafe?
                                    #`[]
-                                   #`[(unless (record? &-result '#,(cdr result-type)) (err ($moi) &-result))]))]
+                                   #`[(unless (record? &-result '#,($ftd->predicate-rtd (cdr result-type))) (err ($moi) &-result))]))]
                          [else #'([] [] [])])])
           (let ([wrap-result
                  (with-syntax ([result-filter
@@ -9564,10 +9564,11 @@
                              [] [])]
                          [else
                           (cond
-                            [($fptd? result-type)
-                             (with-syntax ([type (datum->syntax #'foreign-callable result-type)])
+                            [($ftd? result-type)
+                             (with-syntax ([pred-type (datum->syntax #'foreign-callable ($ftd->predicate-rtd result-type))]
+                                           [type (datum->syntax #'foreign-callable result-type)])
                                #`((lambda (x)
-                                    #,@(if unsafe? #'() #'((unless (record? x 'type) (err x))))
+                                    #,@(if unsafe? #'() #'((unless (record? x 'pred-type) (err x))))
                                     x)
                                   type
                                   [] []))]

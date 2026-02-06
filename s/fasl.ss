@@ -42,6 +42,7 @@
 (define rtd-name (csv7:record-field-accessor #!base-rtd 'name))
 (define rtd-uid (csv7:record-field-accessor #!base-rtd 'uid))
 (define rtd-flags (csv7:record-field-accessor #!base-rtd 'flags))
+(define rtd-pm (csv7:record-field-accessor #!base-rtd 'pm))
 
 (define-record-type table
   (fields (mutable count) (immutable hash)
@@ -115,6 +116,12 @@
     (let ([rtd ($record-type-descriptor x)])
       (bld rtd t a? d)
       (let ([flds (rtd-flds rtd)])
+        (when (eq? #t (rtd-pm rtd)) ; => created by `make-ftype-scheme-object-pointer`
+          (let ([v (ftype-scheme-object-pointer-object x)])
+            (unless (fixmediate? v)
+              ($oops 'fasl-write
+                     "cannot fasl ftype-scheme-object-pointer containing a non-fixnum, non-immediate value ~s"
+                     v))))
         (if (fixnum? flds)
             (let loop ([i 0])
               (unless (fx= i flds)
@@ -535,7 +542,8 @@
              ($oops 'fasl "mismatch ~s ~s" x self)))
          (unless (eq-hashtable-ref (table-hash t) x #f)
            ($oops 'fasl "not in table!?"))
-         (if (and a? (fxlogtest a? (constant fasl-omit-rtds)))
+         (if (and a? (fxlogtest a? (constant fasl-omit-rtds))
+                  (or (not ($ftd? x)) (fx= ($generation x) (constant static-generation))))
              (put-uptr p 0) ; => must be registered already at load time
              (wrf-fields (maybe-remake-rtd x t) p t a?))]
         [else
