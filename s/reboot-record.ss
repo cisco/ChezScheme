@@ -1,4 +1,4 @@
-;; Needs to implements the same record API as the current Chez Scheme
+;; Needs to implement the same record API as the current Chez Scheme
 ;; implementation. It doesn't have to be too fast, so it can just use
 ;; vectors and extra wrappers. Use `define-record-type/orig` here to
 ;; get the host Scheme's `define-record-type`, and otherwise use `#%`
@@ -423,7 +423,11 @@
        (lambda (v)
          (cond
            [(re:rtd? v)
-            (error 'csv7:record-field-accessor "need more rtd support ~s ~s" v idx)]
+            (cond
+              [(< idx (re:rtd-count new-base-rtd))
+               ((base-rtd-accessor idx) v)]
+              [else
+               (list-ref (re:rtd-extras v) (- idx (re:rtd-count new-base-rtd)))])]
            [(re:record? v)
             (vector-ref (re:record-vec v) idx)]
            [else
@@ -512,7 +516,7 @@
             [(< i (re:rtd-count new-base-rtd))
              ((base-rtd-accessor i) v)]
             [else
-             (error '$object-ref "not yet supported for base-rtd subtypes")])]
+             (list-ref (re:rtd-extras v) (- i (re:rtd-count new-base-rtd)))])]
          [(re:record? v) (vector-ref (re:record-vec v) i)]
          [else
           (check-allowed-host-record v)

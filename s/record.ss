@@ -635,7 +635,6 @@
                        (and (not (fixnum? flds1)) (not (fixnum? flds2))
                             (fx= (length flds1) (length flds2))
                             (andmap same-field? flds1 flds2)))))
-              ; following assumes extras match
                (let ()
                  (define (squawk what) ($oops who "incompatible record type ~s - ~a" name what))
                  (unless (eq? ($record-type-descriptor rtd) base-rtd) (squawk "different base rtd"))
@@ -646,7 +645,12 @@
                      (squawk "different pointer mask")))
                  (unless (= (rtd-mpm rtd) mpm) (squawk "different mutability"))
                  (unless (fx= (rtd-flags rtd) flags) (squawk "different flags"))
-                 (unless (eq? (rtd-size rtd) size) (squawk "different size")))
+                 (unless (eq? (rtd-size rtd) size) (squawk "different size"))
+                 (let f ([i (fx- (fxsrl (constant size-record-type) (constant log2-ptr-bytes)) 1)] [extras extras])
+                   (unless (null? extras)
+                     ;; fasl loading is more picky than `equal?`; it allows enough to accomodate "ftype.ss"
+                     (unless (equal? ($record-ref rtd i) (car extras)) (squawk "different extra"))
+                     (f (fx+ i 1) (cdr extras)))))
                rtd)]
             [else
              (let* ([len (if (not parent) 1 (vector-length (rtd-ancestry parent)))]

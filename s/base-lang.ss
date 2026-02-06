@@ -190,11 +190,10 @@
 
   ; language of foreign types
   (define-language Ltype 
-    (nongenerative-id #{Ltype czp82kxwe75y4e77-1})
+    (nongenerative-id #{Ltype czp82kxwe75y4e77-2})
     (terminals
       (exact-integer (bits))
-      ($ftd (ftd))
-      ($fptd (fptd)))
+      ($ftd (ftd fptd)))
     (Type (t)
       (fp-integer bits)
       (fp-unsigned bits)
@@ -206,8 +205,8 @@
       (fp-fixnum)
       (fp-double-float)
       (fp-single-float)
-      (fp-fptd fptd)       ; `fptd` is rtd for a pointer record
-      (fp-ftd& ftd fptd))) ; `ftd` describes passed value; `fptd` is rtd for a pointer record
+      (fp-ftd ftd)          ; `ftd` is rtd for a pointer record
+      (fp-ftd& ftd1 ftd2))) ; `ftd1` describes passed value; `ftd2` is for a pointer record
 
   (define arity?
     (lambda (x)

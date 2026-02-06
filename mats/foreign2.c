@@ -567,3 +567,19 @@ EXPORT double many_doubles_and_float_and_three_floats(double a, double b, double
 EXPORT double many_doubles_and_three_floats_and_three_floats(double a, double b, double c, double d, double e, double f, double g, double h, three_floats i, three_floats j) {
   return a + b + c + d + e + f + g + h + i.a + i.b + i.c + j.a + j.b + j.c;
 }
+
+typedef struct {
+  int a;
+  unsigned int b;
+  int c;
+} int_uint_int;
+
+EXPORT int_uint_int get_int_uint_int(int a, unsigned int b, int c){
+  int_uint_int iui = { a + 1, b * 2, c - 1 };
+  return iui;
+}
+
+EXPORT int call_with_int_uint_int(int (*f)(int_uint_int), int a, unsigned int b, int c){
+  int_uint_int iui = { a + 1, b * 2, c - 1 };
+  return f(iui);
+}
