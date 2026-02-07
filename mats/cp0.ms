@@ -722,6 +722,8 @@
         '(let ([g x]) (#3%write 'hi) (#3%fx+ 28 g))
         '(let ([g x]) (#2%write 'hi) (#2%fx+ 28 g))))
   (test-cp0-expansion
+    ; may be interesting to test how cptypes adds a no-return flag
+    ; but test-cp0-expansion does not check the prim-info flags
     '(apply fx+ 3 x 4 '(5 7 9.0))
     (if (eqv? (optimize-level) 3)
         '(#3%fx+ 19 x 9.0)

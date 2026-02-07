@@ -1758,12 +1758,13 @@ Notes:
   (define (fold-primref/try-unsafe preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
     (let* ([unsafe (all-set? (prim-mask unsafe) (primref-flags pr))]
            [len (length e*)]
-           [err (or (predicate-implies? ret 'bottom)
-                    (not (arity-okay? (primref-arity pr) len)))]
+           [err/obvious (or (predicate-implies? ret 'bottom)
+                            (not (arity-okay? (primref-arity pr) len))
+                            (preinfo-call-no-return? preinfo))]
            [to-unsafe (and (not unsafe)
                            (all-set? (prim-mask safeongoodargs) (primref-flags pr)))])
-      (let-values ([(err nr* ntypes to-unsafe)
-                    (let loop ([e* e*] [r* r*] [n 0] [rev-nr* '()] [ntypes ntypes] [err err] [to-unsafe to-unsafe])
+      (let-values ([(err/cptypes nr* ntypes to-unsafe)
+                    (let loop ([e* e*] [r* r*] [n 0] [rev-nr* '()] [ntypes ntypes] [err err/obvious] [to-unsafe to-unsafe])
                       (if (null? e*)
                           (values err (reverse rev-nr*) ntypes to-unsafe)
                           (let* ([r (car r*)]
@@ -1778,8 +1779,13 @@ Notes:
                                   (or err (predicate-implies? nr 'bottom))
                                   (and to-unsafe (predicate-implies? r pred*))))))])
         (cond
-          [(or err (eq? ntypes pred-env-bottom))
-           (fold-primref/default preinfo pr e* 'bottom r* ctxt pred-env-bottom #f #f oldtypes plxc)]
+          [err/obvious
+           (values `(call ,preinfo ,pr ,e* ...) 'bottom pred-env-bottom #f #f)]
+          [(or err/cptypes (eq? ntypes pred-env-bottom))
+           (let ([preinfo (make-preinfo-call (preinfo-src preinfo)
+                                             (preinfo-sexpr preinfo)
+                                             (preinfo-call-mask unchecked no-inline no-return single-valued))])
+             (values `(call ,preinfo ,pr ,e* ...) 'bottom pred-env-bottom #f #f))]
           [else
            (let ([pr (if to-unsafe
                          (primref->unsafe-primref pr)
