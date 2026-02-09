@@ -154,15 +154,11 @@ The compiler now avoids moving predicates from tail position when they may raise
 even if the result is known in case of a success.
 
 The type recovery pass has improved support for \scheme{exact}, \scheme{inexact},
-and similar functions. It also has partial support for more numeric predicates
+and similar functions; improved support for \scheme{quotient},
+\scheme{remainder}, \scheme{div}, \scheme{mod}, and similar functions;
+and partial support for more numeric predicates,
 including \scheme{even?}, \scheme{odd?}, \scheme{positive?}, \scheme{negative?}
 and \scheme{real-valued?}.
-
-A bug that incorrectly determined the type of \scheme{(- x)} has been fixed.
-
-The compiler avoids transforming an expression like \scheme{(+ -inf.0 x)}, where
-\scheme{x} is known to be real, into \scheme{(fl+ -inf.0 (real->flonum x))}
-in case \scheme{x} is a bignum that would be converted into \scheme{+inf.0}.
 
 \subsection{In-place vector copying (10.3.0)}
 
@@ -2963,6 +2959,14 @@ performed as exact and then converted to inexact, instead of
 converting the first argument to inexact. The new approach ensures
 that the result is an inexact integer, and not sometimes
 \scheme{+nan.0}.
+
+\subsection{Type recovery repairs (10.4.0)}
+
+A bug that incorrectly determined the type of \scheme{(- x)} has been fixed.
+
+The compiler avoids transforming an expression like \scheme{(+ -inf.0 x)}, where
+\scheme{x} is known to be real, into \scheme{(fl+ -inf.0 (real->flonum x))}
+in case \scheme{x} is a bignum that would be converted into \scheme{+inf.0}.
 
 \subsection{Fix 32-bit ARM floating-point dereference offset (10.4.0)}
 

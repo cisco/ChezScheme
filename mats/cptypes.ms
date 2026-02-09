@@ -2257,3 +2257,228 @@
   (equivalent-expansion? #vfl(+nan.0) #vfl(+nan.0))
   (not (equivalent-expansion? #vfl(0.0) #vfl(-0.0)))
 )
+
+(mat cptypes-quotient
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (quotient x 2)))
+   '(lambda (x) (when (fixnum? x) (#3%fxquotient x 2))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (quotient x 3)))
+   '(lambda (x) (when (fixnum? x) (#3%fxquotient x 3))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (quotient x 0)))
+        '(lambda (x) (when (fixnum? x) (#3%fxquotient x 0)))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (quotient x -1)))
+        '(lambda (x) (when (fixnum? x) (#3%fxquotient x -1)))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (#2%quotient x y) (zero? y))
+   '(lambda (x y) (#2%quotient x y) #f))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (quotient x y) (zero? x))
+        '(lambda (x y) (quotient x y) #f)))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (when (and (integer? x) (integer? y) (not (zero? y))) (quotient x y)))
+   '(lambda (x y) (when (and (integer? x) (integer? y) (not (zero? y))) (#3%quotient x y))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (fxquotient x 2)))
+   '(lambda (x) (when (fixnum? x) (#3%fxquotient x 2))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (fxquotient x 3)))
+   '(lambda (x) (when (fixnum? x) (#3%fxquotient x 3))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (#2%fxquotient x 0)))
+        '(lambda (x) (when (fixnum? x) (#3%fxquotient x 0)))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (#2%fxquotient x -1)))
+        '(lambda (x) (when (fixnum? x) (#3%fxquotient x -1)))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (#2%fxquotient x y) (zero? y))
+   '(lambda (x y) (#2%fxquotient x y) #f))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (fxquotient x y) (zero? x))
+        '(lambda (x y) (fxquotient x y) #f)))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (fxquotient x 2 2)))
+   '(lambda (x) (when (fixnum? x) (#3%fxquotient x 2 2))))
+)
+
+(mat cptypes-div
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (div x 2)))
+   '(lambda (x) (when (fixnum? x) (#3%fxdiv x 2))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (div x 3)))
+   '(lambda (x) (when (fixnum? x) (#3%fxdiv x 3))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (div x 0)))
+        '(lambda (x) (when (fixnum? x) (#3%fxdiv x 0)))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (div x -1)))
+        '(lambda (x) (when (fixnum? x) (#3%fxdiv x -1)))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (#2%div x y) (zero? y))
+        '(lambda (x y) (#2%div x y) #f)))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (div x y) (zero? x))
+        '(lambda (x y) (div x y) #f)))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (when (and (real? x) (real? y) (not (fxzero? y))) (div x y)))
+   '(lambda (x y) (when (and (real? x) (real? y) (not (fxzero? y))) (#3%div x y))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (when (and (flonum? x) (flonum? y)) (div x y)))
+   '(lambda (x y) (when (and (flonum? x) (flonum? y)) (#3%fldiv x y))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (fxdiv x 2)))
+   '(lambda (x) (when (fixnum? x) (#3%fxdiv x 2))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (fxdiv x 3)))
+   '(lambda (x) (when (fixnum? x) (#3%fxdiv x 3))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (#2%fxdiv x 0)))
+        '(lambda (x) (when (fixnum? x) (#3%fxdiv x 0)))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (#2%fxdiv x -1)))
+        '(lambda (x) (when (fixnum? x) (#3%fxdiv x -1)))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (#2%fxdiv x y) (zero? y))
+   '(lambda (x y) (#2%fxdiv x y) #f))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (fxdiv x y) (zero? x))
+        '(lambda (x y) (fxdiv x y) #f)))
+)
+
+(mat cptypes-remainder
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (remainder x 2)))
+   '(lambda (x) (when (fixnum? x) (#3%fxremainder x 2))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (remainder x 3)))
+   '(lambda (x) (when (fixnum? x) (#3%fxremainder x 3))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (remainder x 0)))
+        '(lambda (x) (when (fixnum? x) (#3%fxremainder x 0)))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (remainder x -1)))
+   '(lambda (x) (when (fixnum? x) (#3%fxremainder x -1))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (#2%remainder x y) (zero? y))
+   '(lambda (x y) (#2%remainder x y) #f))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (remainder x y) (zero? x))
+        '(lambda (x y) (remainder x y) #f)))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (when (and (integer? x) (integer? y) (not (zero? y))) (remainder x y)))
+   '(lambda (x y) (when (and (integer? x) (integer? y) (not (zero? y))) (#3%remainder x y))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (fxremainder x 2)))
+   '(lambda (x) (when (fixnum? x) (#3%fxremainder x 2))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (fxremainder x 3)))
+   '(lambda (x) (when (fixnum? x) (#3%fxremainder x 3))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (#2%fxremainder x 0)))
+        '(lambda (x) (when (fixnum? x) (#3%fxremainder x 0)))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (#2%fxremainder x -1)))
+   '(lambda (x) (when (fixnum? x) (#3%fxremainder x -1))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (#2%fxremainder x y) (zero? y))
+   '(lambda (x y) (#2%fxremainder x y) #f))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (fxremainder x y) (zero? x))
+        '(lambda (x y) (fxremainder x y) #f)))
+)
+
+(mat cptypes-mod
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (mod x 2)))
+   '(lambda (x) (when (fixnum? x) (#3%fxmod x 2))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (mod x 3)))
+   '(lambda (x) (when (fixnum? x) (#3%fxmod x 3))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (mod x 0)))
+        '(lambda (x) (when (fixnum? x) (#3%fxmod x 0)))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (mod x -1)))
+   '(lambda (x) (when (fixnum? x) (#3%fxmod x -1))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (#2%mod x y) (zero? y))
+        '(lambda (x y) (#2%mod x y) #f)))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (mod x y) (zero? x))
+        '(lambda (x y) (mod x y) #f)))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (when (and (real? x) (real? y) (not (fxzero? y))) (mod x y)))
+   '(lambda (x y) (when (and (real? x) (real? y) (not (fxzero? y))) (#3%mod x y))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (when (and (flonum? x) (flonum? y)) (mod x y)))
+   '(lambda (x y) (when (and (flonum? x) (flonum? y)) (#3%flmod x y))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (fxmod x 2)))
+   '(lambda (x) (when (fixnum? x) (#3%fxmod x 2))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (fxmod x 3)))
+   '(lambda (x) (when (fixnum? x) (#3%fxmod x 3))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (#2%fxmod x 0)))
+        '(lambda (x) (when (fixnum? x) (#3%fxmod x 0)))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (#2%fxmod x -1)))
+   '(lambda (x) (when (fixnum? x) (#3%fxmod x -1))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (#2%fxmod x y) (zero? y))
+   '(lambda (x y) (#2%fxmod x y) #f))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (fxmod x y) (zero? x))
+        '(lambda (x y) (fxmod x y) #f)))
+)
+
+(mat cptypes-div-and-mod
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (div-and-mod x 2)))
+   '(lambda (x) (when (fixnum? x) (#3%fxdiv-and-mod x 2))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (div-and-mod x 3)))
+   '(lambda (x) (when (fixnum? x) (#3%fxdiv-and-mod x 3))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (div-and-mod x 0)))
+        '(lambda (x) (when (fixnum? x) (#3%fxdiv-and-mod x 0)))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (div-and-mod x -1)))
+        '(lambda (x) (when (fixnum? x) (#3%fxdiv-and-mod x -1)))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (fixnum? (div-and-mod x 2))))
+        '(lambda (x) (when (fixnum? x) (fxdiv-and-mod x 2) #t))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (#2%div-and-mod x y) (zero? y))
+        '(lambda (x y) (#2%div-and-mod x y) #f)))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (div-and-mod x y) (zero? x))
+        '(lambda (x y) (div-and-mod x y) #f)))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (when (and (real? x) (real? y) (not (fxzero? y))) (div-and-mod x y)))
+   '(lambda (x y) (when (and (real? x) (real? y) (not (fxzero? y))) (#3%div-and-mod x y))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (when (and (flonum? x) (flonum? y)) (div-and-mod x y)))
+   '(lambda (x y) (when (and (flonum? x) (flonum? y)) (#3%fldiv-and-mod x y))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (fxdiv-and-mod x 2)))
+   '(lambda (x) (when (fixnum? x) (#3%fxdiv-and-mod x 2))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x) (when (fixnum? x) (fxdiv-and-mod x 3)))
+   '(lambda (x) (when (fixnum? x) (#3%fxdiv-and-mod x 3))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (#2%fxdiv-and-mod x 0)))
+        '(lambda (x) (when (fixnum? x) (#3%fxdiv-and-mod x 0)))))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x) (when (fixnum? x) (#2%fxdiv-and-mod x -1)))
+        '(lambda (x) (when (fixnum? x) (#3%fxdiv-and-mod x -1)))))
+  (cptypes-equivalent-expansion?
+   '(lambda (x y) (#2%fxdiv-and-mod x y) (zero? y))
+   '(lambda (x y) (#2%fxdiv-and-mod x y) #f))
+  (not (cptypes-equivalent-expansion?
+        '(lambda (x y) (fxdiv-and-mod x y) (zero? x))
+        '(lambda (x y) (fxdiv-and-mod x y) #f)))
+)
