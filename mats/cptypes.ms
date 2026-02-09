@@ -2257,3 +2257,23 @@
   (equivalent-expansion? #vfl(+nan.0) #vfl(+nan.0))
   (not (equivalent-expansion? #vfl(0.0) #vfl(-0.0)))
 )
+
+(mat cptypes-no-return
+  ; Ensure that cptypes and cp0 cooperate using no-return.
+  ; In particular this is like a begin0 form
+  ; where cptypes detects one of the branches will fail
+  ; and then cp0 can detect the first lambda is single-valued
+  ; and can reduce the begin0 to a let.
+  ; ---
+  ; Note that (#3%div-and-mod "2" m) is a paradox,
+  ; it probably means that t must be #t,
+  ; but I'm not using this indirect deduction of the value of t.
+  (cptypes-equivalent-expansion?
+    '(lambda (t m)
+       (call-with-values
+         (lambda () (if t (random) (div-and-mod "2" m)))
+         (lambda (x) (list x x x))))
+    '(lambda (t m)
+       (let ([x (if t (random) (div-and-mod "2" m))])
+         (list x x x))))
+)
