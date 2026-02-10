@@ -125,15 +125,20 @@ and Unicode-related bytevector operations have now been updated to Unicode 17.0.
 The \scheme{char-indic-break-property} function was added to support decoding grapheme
 clusters with Indic conjuncts.
 
-\subsection{Error results from foreign procedures (10.4.0)}
+\subsection{Foreign procedure conventions \scheme{__errno} and \scheme{__alloc} (10.4.0)}
 
 The new \scheme{__errno} foreign-procedure convention makes each call
 return two values: the foreign procedure's direct result and the value
 of \scheme{errno} just after the foreign procedure returns. On
 Windows, the \scheme{current-errno-source} parameter selects the
-runtime C library whose \scheme{errno} is consulted, or use
-\scheme{__get_last-error} instead of \scheme{__errno} to get a result
+runtime C library whose \scheme{errno} is consulted, or instead of
+\scheme{__errno} use \scheme{__get_last-error} to get a result
 from \scheme{GetLastError} instead of \scheme{errno}.
+
+The new \scheme{__alloc} foreign-procedure convention modifies a preceding
+\scheme{__atomic} to allow a foreign procedure to call back into
+Scheme's C librarry routines to allocate Scheme values, such as
+allocating a string or pair.
 
 \subsection{Add machine type a6gnu (10.4.0)}
 

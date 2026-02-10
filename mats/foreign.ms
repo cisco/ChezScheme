@@ -343,12 +343,14 @@
    (error? (meta-cond
             [(windows?) (lambda () (foreign-procedure __get_last_error __errno "foo" () scheme-object))]
             [else (error #f "conflicting foreign-procedure convention __errno")]))
+   (error? (lambda () (foreign-procedure __alloc "foo" () scheme-object)))
 
    (eq? 'foo ((foreign-procedure "idiptr" (scheme-object) scheme-object) 'foo))
 
    (procedure? (foreign-procedure __atomic "idiptr" (scheme-object) scheme-object))
    (error? (foreign-procedure __atomic "i do not exist" (scheme-object) scheme-object))
    (eq? 'foo ((foreign-procedure __atomic "idiptr" (scheme-object) scheme-object) 'foo))
+   (eq? 'foo ((foreign-procedure __atomic __alloc "idiptr" (scheme-object) scheme-object) 'foo))
 
    (parameterize ([current-eval interpret])
        (eq? 'foo ((foreign-procedure "idiptr" (scheme-object) scheme-object) 'foo)))
@@ -756,6 +758,7 @@
     (define rt-int (foreign-procedure "rt_int" (iptr) ptr))
     (define rt-int32 (foreign-procedure "rt_int32" (integer-32) ptr))
     (define rt-int64 (foreign-procedure "rt_int64" (integer-64) ptr))
+    (define rt-int64/atomic (foreign-procedure __atomic __alloc "rt_int64" (integer-64) ptr))
     (define rt-uint (foreign-procedure "rt_uint" (uptr) ptr))
     (define rt-uint32 (foreign-procedure "rt_uint32" (unsigned-32) ptr))
     (define rt-uint64 (foreign-procedure "rt_uint64" (unsigned-64) ptr))
@@ -797,6 +800,12 @@
   (check #f (rt-int64 (- (ash 1 63))))
   (let ([n (+ -1 (ash 1 63))])
     (check n (rt-int64 n)))
+  (let loop ([i 1000])
+     (or (fx= i 0)
+         (and (check #f (rt-int64/atomic (ash 1 63)))
+              (loop (sub1 i)))))
+  (let ([n (+ -1 (ash 1 63))])
+    (check n (rt-int64/atomic n)))
 
   (check 0 (rt-uint 0))
   (check #f (rt-uint -1))
