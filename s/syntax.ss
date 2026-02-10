@@ -9017,6 +9017,7 @@
                                  (memq ($target-machine) '(i3nt ti3nt a6nt ta6nt arm64nt tarm64nt)))
                             (values 'save-last-error #f)]
                            [(eq? c '__atomic) (values 'atomic #f)]
+                           [(eq? c '__alloc) (values 'alloc #f)]
                            [(eq? c '__varargs)
                             (check-arg-count 1 orig-c)
                             (values (cons 'varargs 1) #f)]
@@ -9052,6 +9053,9 @@
                        (and (eq? c 'save-errno) (memq 'save-last-error keep-accum))
                        (and (eq? c 'save-last-error) (memq 'save-errno keep-accum)))
                (syntax-error orig-c (format "conflicting ~s convention" who)))
+             (when (and (eq? c 'alloc)
+                        (not (memq 'atomic keep-accum)))
+               (syntax-error orig-c (format "missing __atomic before ~s convention" who)))
              (loop (cdr conv*) (if select? c selected) (cons c accum)
                    (if c
                        (cons c keep-accum)

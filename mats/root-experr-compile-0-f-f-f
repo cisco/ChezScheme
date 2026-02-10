@@ -10403,6 +10403,7 @@ foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedu
 foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __collect_safe".
 foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __get_last_error".
 foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __errno".
+foreign.mo:Expected error in mat foreign-procedure: "missing __atomic before foreign-procedure convention __alloc".
 foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <int>".
 foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <int>".

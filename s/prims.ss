@@ -49,13 +49,13 @@
     scheme-object))
 
 (define $flonum->fixnum
-  (foreign-procedure "(cs)s_fltofx"
+  (foreign-procedure __atomic "(cs)s_fltofx"
     (scheme-object)
     scheme-object))
 
 ; must be compiled w/generate-interrupt-trap #f for library eq-hashtable operations
 (define weak-cons
-  (foreign-procedure "(cs)s_weak_cons"
+  (foreign-procedure __atomic __alloc "(cs)s_weak_cons"
     (scheme-object scheme-object)
     scheme-object))
 
@@ -66,7 +66,7 @@
     [else (lambda (p) (weak-pair? p))]))
 
 (define ephemeron-cons
-  (foreign-procedure "(cs)s_ephemeron_cons"
+  (foreign-procedure __atomic __alloc "(cs)s_ephemeron_cons"
     (scheme-object scheme-object)
     scheme-object))
 
@@ -1823,11 +1823,11 @@
    [(w) ($current-handler-stack w)]))
 
 (define lock-object
-  (foreign-procedure "(cs)lock_object" (scheme-object) void))
+  (foreign-procedure __atomic __alloc "(cs)lock_object" (scheme-object) void))
 (define unlock-object
-  (foreign-procedure "(cs)unlock_object" (scheme-object) void))
+  (foreign-procedure __atomic __alloc "(cs)unlock_object" (scheme-object) void))
 (define locked-object?
-  (foreign-procedure "(cs)locked_objectp" (scheme-object) boolean))
+  (foreign-procedure __atomic __alloc "(cs)locked_objectp" (scheme-object) boolean))
 
 (define-who $install-guardian
   (lambda (obj rep tconc)
@@ -1844,7 +1844,7 @@
     (#3%guardian? g)))
 
 (define-who unregister-guardian
-  (let ([fp (foreign-procedure "(cs)unregister_guardian" (scheme-object) scheme-object)])
+  (let ([fp (foreign-procedure __atomic __alloc "(cs)unregister_guardian" (scheme-object) scheme-object)])
     (define probable-tconc? ; full tconc? could be expensive ...
       (lambda (x)
         (and (pair? x) (pair? (car x)) (pair? (cdr x)))))
@@ -1872,10 +1872,10 @@
 (define $make-ftype-guardian (lambda (ftd) (#2%$make-ftype-guardian ftd)))
 
 (define $address-in-heap?
-  (foreign-procedure "(cs)s_addr_in_heap" (uptr) boolean))
+  (foreign-procedure __atomic "(cs)s_addr_in_heap" (uptr) boolean))
 
 (define $object-in-heap?
-  (foreign-procedure "(cs)s_ptr_in_heap" (ptr) boolean))
+  (foreign-procedure __atomic "(cs)s_ptr_in_heap" (ptr) boolean))
 
 (define $event (lambda () ($event)))
 
@@ -2307,14 +2307,14 @@
    (define-who $seginfo-space
      (lambda (x) ($oops who "unsupported for pb")))
    (define-who $generation
-     (foreign-procedure "(cs)generation" (scheme-object) scheme-object))
+     (foreign-procedure __atomic "(cs)generation" (scheme-object) scheme-object))
    (define-who $list-bits-ref
-     (let ([list_bits_ref (foreign-procedure "(cs)list_bits_ref" (ptr) ptr)])
+     (let ([list_bits_ref (foreign-procedure __atomic "(cs)list_bits_ref" (ptr) ptr)])
        (lambda (x)
          (unless (pair? x) ($oops who "~s is not a pair" x))
          (list_bits_ref x))))
    (define-who $list-bits-set!
-     (foreign-procedure "(cs)list_bits_set" (ptr iptr) void))]
+     (foreign-procedure __atomic __alloc "(cs)list_bits_set" (ptr iptr) void))]
   [else
    (define $generation
      (lambda (x)
@@ -2336,7 +2336,7 @@
        (unless (pair? x) ($oops who "~s is not a pair" x))
        ($list-bits-ref x)))
    (define-who $list-bits-set!
-     (foreign-procedure "(cs)list_bits_set" (ptr iptr) void))])
+     (foreign-procedure __atomic __alloc "(cs)list_bits_set" (ptr iptr) void))])
 
 (let ()
   (define $phantom-bytevector-adjust!
@@ -2381,42 +2381,42 @@
 (define ($fxaddress x) (#3%$fxaddress x))
 
 (define $logand
-  (foreign-procedure "(cs)logand"
+  (foreign-procedure __atomic __alloc "(cs)logand"
     (scheme-object scheme-object)
     scheme-object))
 
 (define $logor
-  (foreign-procedure "(cs)logor"
+  (foreign-procedure __atomic __alloc "(cs)logor"
     (scheme-object scheme-object)
     scheme-object))
 
 (define $logxor
-  (foreign-procedure "(cs)logxor"
+  (foreign-procedure __atomic __alloc "(cs)logxor"
     (scheme-object scheme-object)
     scheme-object))
 
 (define $lognot
-  (foreign-procedure "(cs)lognot"
+  (foreign-procedure __atomic __alloc "(cs)lognot"
     (scheme-object)
     scheme-object))
 
 (define $logbit?
-  (foreign-procedure "(cs)logbitp"
+  (foreign-procedure __atomic __alloc "(cs)logbitp"
     (scheme-object scheme-object)
     scheme-object))
 
 (define $logbit0
-  (foreign-procedure "(cs)logbit0"
+  (foreign-procedure __atomic __alloc "(cs)logbit0"
     (scheme-object scheme-object)
     scheme-object))
 
 (define $logbit1
-  (foreign-procedure "(cs)logbit1"
+  (foreign-procedure __atomic __alloc "(cs)logbit1"
     (scheme-object scheme-object)
     scheme-object))
 
 (define $logtest
-  (foreign-procedure "(cs)logtest"
+  (foreign-procedure __atomic "(cs)logtest"
     (scheme-object scheme-object)
     scheme-object))
 
@@ -2887,7 +2887,7 @@
 
 (define $errno->string (foreign-procedure "(cs)s_strerror" (int) scheme-object))
 
-(define $errno (foreign-procedure "(cs)s_errno" () int))
+(define $errno (foreign-procedure __atomic "(cs)s_errno" () int))
 
 (define interactive? (foreign-procedure "(cs)s_interactivep" () boolean))
 

@@ -150,7 +150,7 @@
             (parameterize ([print-radix 10])
               (format "~a~a" prefix count))))))
   (define $strings->gensym
-    (foreign-procedure "(cs)s_strings_to_gensym"
+    (foreign-procedure __atomic __alloc "(cs)s_strings_to_gensym"
       (scheme-object scheme-object)
       scheme-object))
   (set! $gensym->pretty-name

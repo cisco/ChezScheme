@@ -4684,13 +4684,21 @@
           (define build-foreign-call
             (with-output-language (L13 Effect)
               (lambda (info t0 t1* maybe-lvalue maybe-errno-lvalue new-frame?)
-                (let ([atomic? (memq 'atomic (info-foreign-conv* info))]) ;; 'atomic => no callables, varargs is precise
+                (let* ([atomic? (memq 'atomic (info-foreign-conv* info))] ;; 'atomic => no callables, varargs is precise
+                       [alloc? (and atomic? (memq 'alloc (info-foreign-conv* info)))])
                   (safe-assert (or atomic? (not new-frame?)))
                   (let ([arg-type* (info-foreign-arg-type* info)]
                         [result-type (info-foreign-result-type info)]
                         [unboxed? (info-foreign-unboxed? info)]
                         [save-reg? (if atomic?
-                                       (lambda (reg) (not (reg-callee-save? reg)))
+                                       (lambda (reg) (or (not (reg-callee-save? reg))
+                                                         (and alloc?
+                                                              (or (meta-cond
+                                                                   [(real-register? '%ap) (eq? reg %ap)]
+                                                                   [else #f])
+                                                                  (meta-cond
+                                                                   [(real-register? '%trap) (eq? reg %trap)]
+                                                                   [else #f])))))
                                        (lambda (reg) #t))])
                     (let ([e (let-values ([(allocate c-args ccall c-res deallocate) (asm-foreign-call info)])
                               ; NB. allocate must save tc if not callee-save, and ccall
@@ -4702,7 +4710,7 @@
                                     ;; cp must hold our closure or our code object.  we choose code object
                                     `(set! ,(%tc-ref cp) (label-ref ,le-label 0)))
                                ,(with-saved-scheme-state
-                                 save-reg?
+                                  save-reg?
                                   (in) ; save just the required registers, e.g., %sfp
                                   (out %ac0 %ac1 %cp %xp %yp %ts %td scheme-args extra-regs)
                                   (fold-left (lambda (e t1 arg-type c-arg) `(seq ,(Scheme->C arg-type c-arg t1 #t unboxed?) ,e))
