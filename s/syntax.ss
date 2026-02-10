@@ -9004,7 +9004,7 @@
                                ;; implying single-valued
                                (remq 'atomic keep-accum)
                                keep-accum)])
-           (datum->syntax #'filter-conv keep-accum))]
+           keep-accum)]
         [else
          (let* ([orig-c (car conv*)]
                 [c (syntax->datum orig-c)])
@@ -9018,6 +9018,7 @@
                             (values 'save-last-error #f)]
                            [(eq? c '__atomic) (values 'atomic #f)]
                            [(eq? c '__alloc) (values 'alloc #f)]
+                           [(eq? c '__disable_interrupts) (values 'disable-interrupts #f)]
                            [(eq? c '__varargs)
                             (check-arg-count 1 orig-c)
                             (values (cons 'varargs 1) #f)]
@@ -9063,16 +9064,17 @@
 
 (define $make-foreign-procedure
   (lambda (who conv* foreign-name ?foreign-addr type* result-type)
-    (let ([unsafe? (= (optimize-level) 3)])
+    (let ([unsafe? (= (optimize-level) 3)]
+          [disable-interrupts? (memq 'disable-interrupts conv*)])
       (define (check-strings-allowed)
-        (when (memq 'adjust-active (syntax->datum conv*))
+        (when (memq 'adjust-active conv*)
           ($oops who "string argument not allowed with __collect_safe procedure")))
       (define (check-floats-allowed pos)
         (let ([va-n (ormap (lambda (conv) (and (pair? conv) (eq? (car conv) 'varargs) (cdr conv)))
-                           (syntax->datum conv*))])
+                           conv*)])
           (when (and va-n (>= pos va-n))
             ($oops who "single-float varargs argument not allowed"))))
-      (with-syntax ([conv* conv*]
+      (with-syntax ([(conv ...) (datum->syntax #'conv conv*)]
                     [foreign-name foreign-name]
                     [?foreign-addr ?foreign-addr]
                     [(t ...) (generate-temporaries type*)])
@@ -9263,17 +9265,22 @@
                                    #`[(unless (record? &-result '#,(cdr result-type)) (err ($moi) &-result))]))]
                          [else #'([] [] [])])])
           (let ([wrap-result
-                 (syntax-case #'result-filter (begin)
-                   [begin (lambda (call) call)]
-                   [_
-                    (let ([conv* (syntax->datum #'conv*)])
+                 (with-syntax ([result-filter
+                                (if disable-interrupts?
+                                    #'(lambda (v)
+                                        (enable-interrupts)
+                                        (result-filter v))
+                                    #'result-filter)])
+                   (syntax-case #'result-filter (begin)
+                     [begin (lambda (call) call)]
+                     [_
                       (cond
                         [(or (memq 'save-errno conv*) (memq 'save-last-error conv*))
                          (lambda (call)
                            #`(let-values ([(v errno) #,call])
                                (values (result-filter v) errno)))]
                         [else
-                         (lambda (call) #`(result-filter #,call))]))])])
+                         (lambda (call) #`(result-filter #,call))])]))])
             #`(let ([foreign-addr ?foreign-addr]
                     #,@(if unsafe?
                            #'()
@@ -9281,9 +9288,10 @@
                                      ($oops (or who foreign-name)
                                             "invalid foreign-procedure argument ~s"
                                             x))])))
-                (let ([p ($foreign-procedure conv* foreign-name foreign-addr (extra-arg ... arg ... ...) result)])
+                (let ([p ($foreign-procedure (conv ...) foreign-name foreign-addr (extra-arg ... arg ... ...) result)])
                   (lambda (extra ... t ...)
                     extra-check ... check ... ...
+                    #,@(if disable-interrupts? (list #'(disable-interrupts)) '())
                     #,(wrap-result #`(p extra ... actual ... ...)))))))))))
 
 (define-syntax foreign-procedure
@@ -9308,17 +9316,17 @@
     (for-each (lambda (c)
                 (when (eq? (syntax->datum c) 'i3nt-com)
                   ($oops who "unsupported convention ~s" c)))
-              (syntax->list conv*))
+              conv*)
     (let ([unsafe? (= (optimize-level) 3)])
       (define (check-strings-allowed)
-        (when (memq 'adjust-active (syntax->datum conv*))
+        (when (memq 'adjust-active conv*)
           ($oops who "string result not allowed with __collect_safe callable")))
       (define (check-floats-allowed pos)
         (let ([va-n (ormap (lambda (conv) (and (pair? conv) (eq? (car conv) 'varargs) (cdr conv)))
-                           (syntax->datum conv*))])
+                           conv*)])
           (when (and va-n (>= pos va-n))
             ($oops who "single-float argument not allowed for __varargs procedure"))))
-      (with-syntax ([conv* conv*] [?proc ?proc])
+      (with-syntax ([(conv ...) (datum->syntax #'conv conv*)] [?proc ?proc])
         (with-syntax ([((actual (t ...) (arg ...)) ...)
                        (map
                         (lambda (type pos)
@@ -9584,7 +9592,7 @@
                                   [] []))])])])
           ; use a gensym to avoid giving the procedure a confusing name
           (with-syntax ([p (datum->syntax #'foreign-callable (gensym))])
-            #`($foreign-callable conv*
+            #`($foreign-callable (conv ...)
                 (let ([p ?proc])
                   (define (err x)
                     ($oops 'foreign-callable
@@ -9592,6 +9600,8 @@
                       x p))
                   #,@(if unsafe? #'() #'((unless (procedure? p) ($oops 'foreign-callable "~s is not a procedure" p))))
                   (lambda (extra ... t ... ...)
+                    ;; note: interrupt disabling is handled in cpnanopass, because it needs
+                    ;; to be close enough to the back end to apply even for interpret mode
                     ($event-trap-check) ; ensure eventual `($event)` in the case of many short callbacks
                     (result-filter (p extra ... actual ...))))
                 (extra-arg ... arg ... ...)
