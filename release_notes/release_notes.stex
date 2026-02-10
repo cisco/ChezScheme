@@ -125,7 +125,7 @@ and Unicode-related bytevector operations have now been updated to Unicode 17.0.
 The \scheme{char-indic-break-property} function was added to support decoding grapheme
 clusters with Indic conjuncts.
 
-\subsection{Foreign procedure conventions \scheme{__errno} and \scheme{__alloc} (10.4.0)}
+\subsection{Foreign procedure \scheme{__errno}, \scheme{__alloc}, and \scheme{__disable_interrupts} (10.4.0)}
 
 The new \scheme{__errno} foreign-procedure convention makes each call
 return two values: the foreign procedure's direct result and the value
@@ -139,6 +139,16 @@ The new \scheme{__alloc} foreign-procedure convention modifies a preceding
 \scheme{__atomic} to allow a foreign procedure to call back into
 Scheme's C librarry routines to allocate Scheme values, such as
 allocating a string or pair.
+
+The new \scheme{__disable_interrupts} convention disables interupts
+during a foreign call or during the invocation of a foreign callable.
+A foreign call could be wrapped just as well with
+\scheme{with-interrupts-disabled}, and the
+\scheme{__disable_interrupts} convention is intended more for foreign
+callables. For a callable, interrupts are disabled just before the
+first point that a callable would otherwise allow interrupt handling,
+and interrupts after reenabled after the last point where the callable
+would otherwise allow interrupt handling.
 
 \subsection{Add machine type a6gnu (10.4.0)}
 

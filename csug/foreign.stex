@@ -223,6 +223,7 @@ Additionally, \var{conv} can be \scheme{__collect_safe} to indicate that garbage
 collection is allowed concurrently with a call of the foreign procedure,
 \scheme{__atomic} to indicate that the foreign procedure never calls back to Scheme or its C library routines,
 \scheme{__alloc} to modify a preceding \scheme{__atomic} to allow allocation via Scheme's C library routines,
+\scheme{__disable_interrupts} to disable Scheme interrupts during the call,
 \scheme{__errno} or \scheme{__get_last_error} (Windows only) to
 get an error value as an additional result when the foreign procedure is called,
 or \scheme{__varargs} or \scheme{(__varargs_after \var{n})} to indicate
@@ -298,6 +299,14 @@ such as allocating a string or pair.
 Using \scheme{__atomic} may allow a more efficient implementation of calls to the foreign
 function. The \scheme{__atomic} and \scheme{__collect_safe}
 declarations cannot be used at the same time.
+
+Use \scheme{__disable_interrupts} to add a
+\scheme{(disable-interrupts)} call just before a call to the foreign
+procedure and a \scheme{(enable-interrupts)} call just afterward. The
+\scheme{__disable_interrupts} convention is intended more for use with
+foreign callables, where it is less readily implemented by using
+\scheme{with-interrupts-disabled} or by calling
+\scheme{disable-interrupts} and \scheme{enable-interrupts}.
 
 Use \scheme{__errno} to make calling a foreign procedure return two
 values instead of one: the foreign procedure's direct result and the
@@ -1201,7 +1210,13 @@ the thread's activation state is reverted when the callable
 returns. If a calling thread is not currently registered with
 the Scheme system, then reverting the thread's activation state implies
 destroying the thread's registration (see \scheme{Sdestroy_thread}).
-
+The \scheme{__disable_interrupts} convention for a callable disables
+interrupts (in the same sense as \scheme{disable-interrupts}) before the first point
+that a callable would otherwise allow interrupt handling, and it
+reenables interrupts after the last point where the callable would
+otherwise allow interrupt handling; the \var{proc-exp} is free to
+enable interrupts at a point where it is ready to allow them, in
+which case it should disable interrupts again before returning.
 
 The value produced by \scheme{foreign-callable} is a Scheme code object,
 which contains some header information as well as code that performs

@@ -149,3 +149,17 @@ EXPORT int set_last_error_value(int x) {
   return x + 1;
 }
 #endif
+
+static int in_callback = 0;
+
+EXPORT int call_for_interrupt_test(int (*f)(int), int v) {
+  int result;
+  in_callback = 1;
+  result = f(v);
+  in_callback = 0;
+  return result;
+}
+
+EXPORT int is_in_callback_for_interrupt_test() {
+  return in_callback;
+}

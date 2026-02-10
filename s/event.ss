@@ -13,6 +13,9 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
+(eval-when (compile)
+   (generate-interrupt-trap #f))
+
 (let ()
 (define stop-event-timer
    (lambda ()
@@ -54,15 +57,20 @@
           ($tc-field 'disable-count ($tc) disable-count)
           disable-count)))))
 
-(set! enable-interrupts
-  (lambda ()
+(let ()
+  (define (enable can-event?)
     (let ([ticks (stop-event-timer)])
       (let ([disable-count (fx- ($tc-field 'disable-count ($tc)) 1)])
         (case disable-count
           [(-1) ($set-timer ticks) 0]
           [(0) ($tc-field 'disable-count ($tc) 0)
-               (start-event-timer)
+               (if can-event?
+                   (start-event-timer)
+                   ($set-timer 1)) ; trigger event on next trap check
                0]
           [else ($tc-field 'disable-count ($tc) disable-count)
-                disable-count])))))
+                disable-count]))))
+
+  (set! enable-interrupts (lambda () (enable #t)))
+  (set! $enable-interrupts/no-event (lambda () (enable #f))))
 )

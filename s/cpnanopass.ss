@@ -1053,7 +1053,25 @@
          (%primcall #f #f $instantiate-code-object
            (fcallable ,info)
            (quote 0) ; hard-wiring "cookie" to 0
-           ,e)]))
+           ,(if (memq 'disable-interrupts (info-foreign-conv* info))
+                ;; need to build a wrapper procedure that does not have interrupt traps,
+                ;; so we can disable interrupts early enough and reenabled them late enough
+                (let* ([p (make-tmp 'proc)]
+                       [r (make-tmp 'result)]
+                       [interface (length (info-foreign-arg-type* info))]
+                       [x* (map (lambda (x) (make-tmp 'x)) (info-foreign-arg-type* info))]
+                       [lambda-info (make-info-lambda #f #f #f (list interface) #f (constant code-flag-no-interrupt-trap))])
+                   `(let ([,p ,e])
+                      (case-lambda ,lambda-info
+                        (clause (,x* ...) ,interface
+                          (seq
+                           (call ,(make-info-call #f #f #f #f #f) #f ,(lookup-primref 2 'disable-interrupts))
+                           (let ([,r (call ,(make-info-call #f #f #f #f #f) #f ,p ,x* ...)])
+                             (seq
+                              (call ,(make-info-call #f #f #f #f #f) #f ,(lookup-primref 2 '$enable-interrupts/no-event))
+                              ,r)))))))
+                ;; no extra wrapper needed
+                e))]))
 
     (define-pass np-recognize-loops : L4.75 (ir) -> L4.875 ()
       ; TODO: also recognize andmap/for-all, ormap/exists, for-each
@@ -3102,29 +3120,33 @@
         [(raw ,[e #f -> e oc tc]) (values `(raw ,e) oc tc)]
         [(seq ,[e0 #f -> e0 oc0 tc0] ,[e1 oc1 tc1])
          (values `(seq ,e0 ,e1) (combine-seq oc0 oc1) (combine-seq tc0 tc1))])
-      (CaseLambdaClause : CaseLambdaClause (ir force-overflow?) -> CaseLambdaClause ()
+      (CaseLambdaClause : CaseLambdaClause (ir force-overflow? no-trap-check?) -> CaseLambdaClause ()
         [(clause (,x* ...) ,mcp ,interface ,body)
          (safe-assert (not repeat?)) ; should always be initialized and/or reset to #f
-         `(clause (,x* ...) ,mcp ,interface
-            ,(or (let f ()
-                   (let-values ([(body oc tc) (Expr body #t)])
-                     (if repeat?
-                         (begin (set! repeat? #f) (f))
-                         (strip-redundant-overflow-and-trap
-                           (let ([body (if (eq? tc 'yes) (add-trap-check #t body) body)])
-                             (if (or force-overflow? (eq? oc 'yes))
-                                 `(overflow-check ,body)
-                                 body))))))
-                 ; punting badly here under assumption that we currently can't even generate
-                 ; misbehaved gotos, i.e., paths ending in a goto that don't do an overflow
-                 ; or trap check where the target label expects it to have been done.  if we
-                 ; ever violate this assumption on a regular basis, might want to revisit and
-                 ; do something better.
-                 ; ... test punt case by commenting out above for all but library.ss
-                 `(overflow-check (trap-check #f ,(insert-loop-traps body)))))])
+         (fluid-let ([request-trap-check (if no-trap-check? 'no request-trap-check)])
+           `(clause (,x* ...) ,mcp ,interface
+              ,(or (let f ()
+                     (let-values ([(body oc tc) (Expr body #t)])
+                       (if repeat?
+                           (begin (set! repeat? #f) (f))
+                           (strip-redundant-overflow-and-trap
+                             (let ([body (if (eq? tc 'yes) (add-trap-check #t body) body)])
+                               (if (or force-overflow? (eq? oc 'yes))
+                                   `(overflow-check ,body)
+                                   body))))))
+                   ; punting badly here under assumption that we currently can't even generate
+                   ; misbehaved gotos, i.e., paths ending in a goto that don't do an overflow
+                   ; or trap check where the target label expects it to have been done.  if we
+                   ; ever violate this assumption on a regular basis, might want to revisit and
+                   ; do something better.
+                   ; ... test punt case by commenting out above for all but library.ss
+                   `(overflow-check (trap-check #f ,(insert-loop-traps body))))))])
       (CaseLambdaExpr : CaseLambdaExpr (ir) -> CaseLambdaExpr ()
         [(case-lambda ,info ,[cl* (let ([libspec (info-lambda-libspec info)])
-                                    (and libspec (libspec-does-not-expect-headroom? libspec))) -> cl*] ...)
+                                    (and libspec (libspec-does-not-expect-headroom? libspec)))
+                                  (fx= (bitwise-and (info-lambda-flags info) (constant code-flag-no-interrupt-trap))
+                                       (constant code-flag-no-interrupt-trap))
+                                  -> cl*] ...)
          `(case-lambda ,info ,cl* ...)]))
 
     (define-pass np-rebind-on-ruined-path : L9.5 (ir) -> L9.5 ()

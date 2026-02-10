@@ -3892,6 +3892,62 @@
           (list 130 129))
 )
 
+(mat disable-interrupts
+  (begin
+    (define (check-foreign-call-interrupt-disable disable-on-call? disable-on-callback?)
+      (let ([old-timer-handler (timer-interrupt-handler)]
+            [old-collect-handler (collect-request-handler)])
+        (define-ftype int->int (function (int) int))
+        (define-ftype int->int* (function __disable_interrupts (int) int))
+        (define hit 0)
+        (define call (if disable-on-callback?
+                         (foreign-procedure "call_for_interrupt_test" ((* int->int*) int) int)
+                         (foreign-procedure "call_for_interrupt_test" ((* int->int) int) int)))
+        (define call* (if disable-on-callback?
+                          (foreign-procedure __disable_interrupts "call_for_interrupt_test" ((* int->int*) int) int)
+                          (foreign-procedure __disable_interrupts "call_for_interrupt_test" ((* int->int) int) int)))
+        (define in? (foreign-procedure "is_in_callback_for_interrupt_test" () boolean))
+
+        (define (callback x)
+          (+ 1 (string-length (make-string x))))
+
+        (define callback-ptr (if disable-on-callback?
+                                 (make-ftype-pointer int->int* callback)
+                                 (make-ftype-pointer int->int callback)))
+
+        (timer-interrupt-handler (lambda ()
+                                   (set! hit (add1 hit))
+                                   (when (in?) (error 'timeout "inside!"))
+                                   (set-timer (add1 (random 100)))))
+        (collect-request-handler (lambda ()
+                                   (when (in?) (error 'timeout "inside for GC!"))
+                                   (old-collect-handler)))
+
+        (set-timer (add1 (random 100)))
+        (let loop ([i 10000])
+          (unless (zero? i)
+            (unless (eqv? (+ i 1)
+                          (if disable-on-call?
+                              (call* callback-ptr i)
+                              (call callback-ptr i)))
+              (error 'call "bad result"))
+            (loop (sub1 i))))
+
+        (set-timer 0)
+        (timer-interrupt-handler old-timer-handler)
+        (collect-request-handler old-collect-handler)
+
+        (unlock-object
+         (foreign-callable-code-object
+          (ftype-pointer-address callback-ptr)))
+
+        (positive? hit)))
+    #t)
+  (check-foreign-call-interrupt-disable #t #f)
+  (check-foreign-call-interrupt-disable #f #t)
+  (check-foreign-call-interrupt-disable #t #t)
+)
+
 (machine-case
   [(i3nt ti3nt)
    (mat i3nt-stdcall-collect-safe
