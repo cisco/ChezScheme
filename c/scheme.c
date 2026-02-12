@@ -365,6 +365,11 @@ static void idiot_checks(void) {
     oops = 1;
   }
 
+  if (most_positive_fixnum >= (iptr)maximum_bignum_length * (iptr)bigit_bits) {
+    fprintf(stderr, "most_positive_fixnum >= maximum_bignum_length * bigit_bits\n");
+    oops = 1;
+  }
+
   if (oops) S_abnormal_exit();
 }
 
