@@ -2933,6 +2933,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Uncatchable out-of-memory with \scheme{expt}, \scheme{ash}, \scheme{logbit0}, and \scheme{logbit1} (10.4.0)}
+
+Calls to \scheme{expt}, \scheme{ash}, \scheme{logbit0}, and
+\scheme{logbit1} that would produce results too large to represent now
+raise catchable exceptions rather than exhausting memory and aborting
+the process.
+
 \subsection{Unicode Indic\_Conjunct\_Break support (10.4.0)}
 
 The grapheme cluster break algorithm neglected to consider the Indic\_Conjunct\_Break

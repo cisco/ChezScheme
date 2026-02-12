@@ -1410,6 +1410,10 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and +nan.0+3.0i".
 5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and 0+3i".
 5_3.mo:Expected error in mat expt: "expt: undefined for values 0 and -1/2".
+5_3.mo:Expected error in mat expt: "expt: out of memory".
+5_3.mo:Expected error in mat expt: "expt: out of memory".
+5_3.mo:Expected error in mat expt: "expt: out of memory".
+5_3.mo:Expected error in mat expt: "expt: out of memory".
 5_3.mo:Expected error in mat expt-mod: "incorrect argument count in call (expt-mod)".
 5_3.mo:Expected error in mat expt-mod: "incorrect argument count in call (expt-mod 5)".
 5_3.mo:Expected error in mat expt-mod: "incorrect argument count in call (expt-mod 4 5)".
