@@ -1103,12 +1103,18 @@
          [(fixnum?)
           (let ([max-fx-shift (- (constant fixnum-bits) 1)])
             (if (fx> n max-fx-shift)
-                (integer-ash x n)
+                (cond
+                  [(fx= x 0) 0]
+                  [(fx> (fxsrl n 5) (constant maximum-bignum-length)) ($oops who "out of memory")]
+                  [else (integer-ash x n)])
                 (let ([m (fxsll/wraparound x n)])
                   (if (fx= (fxsra m n) x)
                       m
                       (integer-ash x n)))))]
-         [(bignum?) (integer-ash x n)]
+         [(bignum?)
+          (if (fx> (fxsrl n 5) (constant maximum-bignum-length))
+              ($oops who "out of memory")
+              (integer-ash x n))]
          [else (nonexact-integer-error who x)])]
       [(bignum?)
        (unless ($bigpositive? n) ($oops who "~s is not a nonnegative exact integer" n))
@@ -1714,7 +1720,12 @@
                  ($impoops 'expt "undefined for values ~s and ~s" x y)
                  0)]
             [(eq? x 1) 1]
-            [(eq? x 2) (if (< y 0) (/ (ash 1 (- y))) (ash 1 y))]
+            [(eq? x -1) (if (odd? y) -1 1)]
+            [(eq? x 2)
+             (let ([abs-y (if (< y 0) (- y) y)])
+               (when (> abs-y (* (constant maximum-bignum-length) (constant bigit-bits)))
+                 ($oops 'expt "out of memory"))
+               (if (< y 0) (/ (ash 1 (- y))) (ash 1 y)))]
             [(flonum? x)
              ;; By Bradley Lucier (@gambiteer) for Gambit, relies
              ;; on some special cases already handled by the time
@@ -1765,6 +1776,10 @@
                  (let ([y (- y)])
                    (/ (expt (denominator x) y) (expt (numerator x) y)))
                  (/ (expt (numerator x) y) (expt (denominator x) y)))]
+            [(and (or (fixnum? x) (bignum? x))
+                  (> (* (if (< y 0) (- y) y) (integer-length x))
+                     (* (constant maximum-bignum-length) (constant bigit-bits))))
+             ($oops 'expt "out of memory")]
             [else
              (let ()
                (define (f x n)
@@ -2971,12 +2986,18 @@
                       (fxsra x max-fx-shift)
                       (fxsra x (fx- n)))
                   (if (fx> n max-fx-shift)
-                      (integer-ash x n)
+                      (cond
+                        [(fx= x 0) 0]
+                        [(fx> (fxsrl n 5) (constant maximum-bignum-length)) ($oops who "out of memory")]
+                        [else (integer-ash x n)])
                       (let ([m (fxsll/wraparound x n)])
                         (if (fx= (fxsra m n) x)
                             m
                             (integer-ash x n))))))]
-           [(bignum?) (integer-ash x n)]
+           [(bignum?)
+            (if (fx> (fxsrl n 5) (constant maximum-bignum-length))
+                ($oops who "out of memory")
+                (integer-ash x n))]
            [else (nonexact-integer-error who x)])]
         [(bignum?)
          (type-case x

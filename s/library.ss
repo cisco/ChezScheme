@@ -984,7 +984,10 @@
           [(fixnum? k)
            (if (fx< k 0)
                (invalidindexoops 'logbit0 k)
-               ($logbit0 k n))]
+               (if (and (fx> (fxsrl k 5) (constant maximum-bignum-length))
+                        (if (fixnum? n) (fxnegative? n) (not ($bigpositive? n))))
+                   ($oops 'logbit0 "out of memory")
+                   ($logbit0 k n)))]
           [(bignum? k)
            (if (< k 0)
                (invalidindexoops 'logbit0 k)
@@ -999,7 +1002,10 @@
           [(fixnum? k)
            (if (fx< k 0)
                (invalidindexoops 'logbit1 k)
-               ($logbit1 k n))]
+               (if (and (fx> (fxsrl k 5) (constant maximum-bignum-length))
+                        (if (fixnum? n) (fxnonnegative? n) ($bigpositive? n)))
+                   ($oops 'logbit1 "out of memory")
+                   ($logbit1 k n)))]
           [(bignum? k)
            (if (< k 0)
                (invalidindexoops 'logbit1 k)
