@@ -226,6 +226,7 @@ static iptr stringin(ptr *pstrbuf, iptr start, faslFile f);
 static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f);
 static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr size);
 static IBOOL rtd_equiv(ptr x, ptr y);
+static IBOOL rtd_extras_equiv(ptr x, ptr y);
 static IBOOL equalp(ptr x, ptr y);
 #ifdef PORTABLE_BYTECODE
 static void pb_set_abs(void *address, uptr item);
@@ -1396,7 +1397,17 @@ static IBOOL rtd_equiv(ptr x, ptr y) {
          equalp(RECORDDESCMPM(x), RECORDDESCMPM(y)) &&
          equalp(RECORDDESCFLDS(x), RECORDDESCFLDS(y)) &&
          RECORDDESCSIZE(x) == RECORDDESCSIZE(y) &&
-         RECORDDESCFLAGS(x) == RECORDDESCFLAGS(y);
+         RECORDDESCFLAGS(x) == RECORDDESCFLAGS(y) &&
+         ((RECORDDESCSIZE(RECORDINSTTYPE(x)) == FIX(size_record_type))
+          || rtd_extras_equiv(x, y));
+}
+
+static IBOOL rtd_extras_equiv(ptr x, ptr y) {
+  iptr count = (UNFIX(RECORDDESCSIZE(RECORDINSTTYPE(x))) >> log2_ptr_bytes) - 1;
+  iptr i;
+  for (i = (size_record_type >> log2_ptr_bytes) - 1; i < count; i++)
+    if (!equalp(RECORDINSTIT(x, i), RECORDINSTIT(y, i))) return 0;
+  return 1;
 }
 
 #ifdef HPUX

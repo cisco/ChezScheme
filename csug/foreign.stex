@@ -678,14 +678,9 @@ content at the foreign pointer's address instead of as the
 address. For example, if \var{ftype-name} identifies a \scheme{struct} type,
 then \scheme{(& \var{ftype-name})} passes a struct argument instead of
 a struct-pointer argument. The \var{ftype-name} cannot refer to an array type.
-The variant \scheme{(& \var{ftype-name} ftype-pointer)} is the same,
-except that the Scheme-side representation can be any foreign pointer
-type, not necessarily one specific to \var{ftype-name}.
-The variant \scheme{(& \var{ftype-name} ftype-scheme-object-pointer)}
-is also the same, except that Scheme-side representation must be a
-foreign object pointer to a Scheme object like one created by
-\scheme{make-ftype-scheme-object-pointer}.
-
+The variant \scheme{(& \var{ftype-name} \var{ftype-name})} is the same,
+except that the Scheme-side representation corresponds to the second
+\var{ftype-name}, which can be any pointer type.
 
 \medskip\noindent
 The result types are similar to the parameter types with the addition of a
@@ -999,15 +994,9 @@ all other arguments to receive the result. An unspecified Scheme object
 is returned when the foreign procedure is called, since the result
 is instead written into storage referenced by the extra argument.
 The \var{ftype-name} cannot refer to an array type.
-The variant \scheme{(& \var{ftype-name} ftype-pointer)} is the same,
+The variant \scheme{(& \var{ftype-name} \var{ftype-name})} is the same,
 except that the foreign pointer passed as an extra initial argument
-can be any foreign pointer type, not necessarily one specific to
-\var{ftype-name}.
-The variant \scheme{(& \var{ftype-name} ftype-scheme-object-pointer)}
-is also the same, except that the foreign pointer passed as an extra
-initial argument must be a foreign object pointer to a Scheme object
-like one created by \scheme{make-ftype-scheme-object-pointer}.
-
+corresponds to the second \var{ftype-name}, which can be any pointer type.
 
 
 \medskip\noindent
@@ -1170,6 +1159,9 @@ A \scheme{(& \var{ftype})} result type for a callable causes the Scheme
 procedure to receive an extra \scheme{(& \var{ftype})} argument before
 all others; the Scheme procedure should write a result into the extra
 argument, and the direct result of the Scheme procedure is ignored.
+A \scheme{(& \var{ftype-name} \var{ftype-name})} argument or result is the same,
+except that the Scheme-side representation corresponds to the second
+\var{ftype-name}, which can be any pointer type.
 Type checking is performed for result values but not argument values,
 since the parameter
 values are provided by the foreign code and must be assumed to be
@@ -1615,7 +1607,8 @@ of \scheme{foreign-ref} above.
 %----------------------------------------------------------------------------
 \entryheader\label{defn:define-ftype}
 \formdef{define-ftype}{\categorysyntax}{(define-ftype \var{ftype-name} \var{ftype})}
-\formdef{define-ftype}{\categorysyntax}{(define-ftype (\var{ftype-name} \var{ftype}) \dots)}
+\formdef{define-ftype}{\categorysyntax}{(define-ftype \var{ftype-name} \var{ftype} (nongenerative \var{uid}))}
+\formdef{define-ftype}{\categorysyntax}{(define-ftype (\var{ftype-name} \var{ftype} \var{maybe-uid-clause}) \dots)}
 \returns unspecified
 \listlibraries
 \endentryheader
@@ -1630,6 +1623,9 @@ to the foreign type represented \var{ftype} or the foreign types
 represented by \scheme{\var{ftype} \dots}.
 Each \var{ftype-name} can be used to access foreign objects with the
 declared shape, and each can be used in the formation of other ftypes.
+When multiple \var{ftype-name}s are provided, each \var{maybe-uid-clause}
+is either empty or of the form \scheme{(nongenerative \var{uid})}.
+Each \var{uid} must be a gensym.
 
 An \var{ftype} must take one of the following forms:
 
@@ -1757,7 +1753,7 @@ Each \var{ftype-name} in an \var{ftype} must either
 (b) be defined by the current \scheme{define-ftype},
 (c) be a base-type name, i.e., one of the type names supported by
 \scheme{foreign-ref} and \scheme{foreign-set!}, or
-(d) \scheme{ftype-pointer} or \scheme{ftype-scheme-object-pointer},
+(d) be \scheme{ftype-pointer} or \scheme{ftype-scheme-object-pointer},
 which indicate a generic ftype pointer or an ftype pointer for a Scheme
 object, respectively.
 In case (b), any reference within one \var{ftype} to the
@@ -1830,7 +1826,7 @@ inserted.
 
 Multiple-byte scalar values are stored in memory using the
 target machine's native ``endianness,'' e.g., \scheme{little}
-on X86 and X86\_64-based platforms and \scheme{big} on
+on x86 and x86\_64-based platforms and \scheme{big} on
 Sparc-based platforms.
 Big-endian or little-endian representation can be forced via
 the \scheme{endian} ftype with a \scheme{big} or \scheme{little}
@@ -1856,13 +1852,23 @@ virtual machine), a bit field must be specified explicitly
 as \scheme{big} or \scheme{little} endian by an enclosing
 declaration.
 
-Two ftypes are considered equivalent only if defined by the
-same \scheme{ftype} binding.
-If two ftype definitions look identical but appear in two
+When \var{ftype} is an immediate \var{ftype-name} or an
+\var{ftype-name} wrapped only by \scheme{packed}, \scheme{unpacked},
+or \scheme{endian}, and when the \var{ftype-name} is not one of the
+generic pointer ftypes \scheme{ftype-pointer} or \scheme{ftype-scheme-object-pointer},
+then the defined \var{ftype-name} is an
+alias for the \var{ftype}. Otherwise, a ftype definition is syntactically
+generative in the same way as using \scheme{(nongenerative)} with
+\scheme{define-record-type}: two ftypes are equivalent only if defined by the
+same \scheme{ftype} binding. In that case,
+if two ftype definitions look identical but appear in two
 parts of the same program, the ftypes are not identical,
 and attempts to access one using the name of the other via
 the operators described below will fail with a run-time
-exception.
+exception. When a \var{uid} is provided via \scheme{(nongenerative \var{uid})},
+then the defined ftype is equivalent to any other binding with the
+same \var{uid}. A definition with a \var{uid} is rejected if it is
+incompatible with a previous definition using the same \var{uid}.
 
 Array bounds must always be constant.
 If an array's length cannot be known until run time, the array

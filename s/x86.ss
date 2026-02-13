@@ -2302,7 +2302,7 @@
                            (cons (load-content n ($ftd-size ftd)) locs)
                            (fx+ n (fxlogand (fx+ ($ftd-size ftd) 3) -4))
                            #f)]
-                        [(fp-fptd ,fptd)
+                        [(fp-ftd ,ftd)
                          (cond
                           [(and result-type
                                 (fill-result-pointer-from-registers? result-type))

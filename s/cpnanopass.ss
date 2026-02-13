@@ -4515,7 +4515,7 @@
                   [(fp-unsigned ,bits) (ptr->integer bits t toC)]
                   [(fp-double-float) (build-float)]
                   [(fp-single-float) (build-float)]
-                  [(fp-fptd ,fptd) (build-fptr-ref)]
+                  [(fp-ftd ,ftd) (build-fptr-ref)]
                   [(fp-ftd& ,ftd ,fptd)
                    (let ([x (make-tmp 't)])
                      (%seq
@@ -4600,14 +4600,14 @@
                                          ,(e1 `(goto ,Lbig))
                                          (seq (label ,Lbig) ,e2)))))
                               (e1 e2))))))
-                (define (alloc-fptr fptd)
-                  (let ([object? ($fptd-object? fptd)])
+                (define (alloc-fptr ftd)
+                  (let ([object? ($ftd-object? ftd)])
                     (let ([mk
                            (%seq
                             (set! ,%xp
                                   ,(%constant-alloc type-typed-object (fx* (constant ptr-bytes) (if object? 3 2)) #f))
                             (set! ,(%mref ,%xp ,(constant record-type-disp))
-                                  (literal ,(make-info-literal #f 'object fptd 0)))
+                                  (literal ,(make-info-literal #f 'object ftd 0)))
                             (set! ,(%mref ,%xp ,(constant record-data-disp)) ,%ac0)
                             ,(if object?
                                  `(set! ,(%mref ,%xp ,(fx+ (constant record-data-disp) (constant ptr-bytes)))
@@ -4666,10 +4666,10 @@
                       ,(unsigned->ptr bits lvalue))]
                   [(fp-double-float) (receive-fp)]
                   [(fp-single-float) (receive-fp)]
-                  [(fp-fptd ,fptd)
+                  [(fp-ftd ,ftd)
                    (%seq
                     ,(fromC %ac0) ; C integer return might be wiped out by alloc
-                    ,(alloc-fptr fptd))]
+                    ,(alloc-fptr ftd))]
                   [(fp-ftd& ,ftd ,fptd)
                    (%seq
                     ,(fromC %ac0)

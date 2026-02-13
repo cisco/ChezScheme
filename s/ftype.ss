@@ -250,9 +250,9 @@ ftype operators:
             ;; object like a bytevector; requires GC cooperation that is
             ;; triggered by the `#t` alt-pm protocol (last argument below)
             ($make-record-type #!base-rtd rtd
-               '#{ftype-scheme-object-pointer a9pth58056u34h517jsrqv-22}
+               '#{ftype-scheme-object-pointer a9pth58056u34h517jsrqv-23}
                '((immutable uptr offset))
-               #t
+               #f
                #f
                #t)])
       (make-compile-time-value
@@ -287,13 +287,6 @@ ftype operators:
   (define ftd-stype (record-accessor rtd/ftd 0))
   (define ftd-size (record-accessor rtd/ftd 1))
   (define ftd-alignment (record-accessor rtd/ftd 2))
-  (define fptd? (lambda (x)
-                  ;; rtds that make sense in `ftd-pointer` instances
-                  ;; and as foreign function arguments/results; that is,
-                  ;; either a pointer to a known foreign type or a
-                  ;; generic pointer
-                  (or (ftd? x) (eq? x rtd/fptr) (eq? x rtd/object-fptr))))
-  (define fptd-object? (lambda (x) (eq? x rtd/object-fptr)))
   (define-syntax define-ftd-record-type
     (lambda (x)
       (define construct-name
@@ -354,7 +347,9 @@ ftype operators:
                    (lambda (x) #`'#,rtd)))
                (define constructor-name
                  (lambda (parent uid stype size alignment field-name ...)
-                   ($make-record-type rtd parent (or uid #,(symbol->string (datum record-name))) '() #f #f #f stype size alignment field-name ...)))
+                   ($make-record-type rtd parent (or uid #,(symbol->string (datum record-name)))
+                                      '() #f #f (eq? parent rtd/object-fptr)
+                                      stype size alignment field-name ...)))
                (define #,(construct-name #'record-name "ftd-" #'record-name "?")
                  (record-predicate rtd))
                #,@(ftd-accessors #'record-name #'(field ...))))])))
@@ -364,9 +359,11 @@ ftype operators:
   (define-ftd-record-type union #{rtd/ftd-union a9pth58056u34h517jsrqv-4} field*)
   (define-ftd-record-type array #{rtd/ftd-array a9pth58056u34h517jsrqv-5} length ftd)
   (define-ftd-record-type pointer #{rtd/ftd-pointer a9pth58056u34h517jsrqv-35} (mutable fptd))
+  (define-ftd-record-type generic-pointer #{rtd/ftd-generic-pointer a9pth58056u34h517jsrqv-38} object? maybe-predicate-rtd)
   (define-ftd-record-type bits #{rtd/ftd-ibits a9pth58056u34h517jsrqv-19} eness field*)
   (define-ftd-record-type function #{rtd/ftd-function a9pth58056u34h517jsrqv-11} conv* arg-type* result-type)
-  (module (pointer-size alignment pointer-alignment native-base-ftds swap-base-ftds big-base-ftds little-base-ftds)
+  (module (pointer-size alignment pointer-alignment native-base-ftds swap-base-ftds big-base-ftds little-base-ftds
+                        pointer-ftd scheme-object-pointer-ftd)
     (define alignment
       (lambda (max-alignment size)
         (gcd max-alignment size)))
@@ -419,7 +416,18 @@ ftype operators:
     (define native-base-ftds (map (mfb 'native) base-types))
     (define swap-base-ftds (map (mfb 'swapped) base-types))
     (define big-base-ftds (map (mfb 'big) base-types))
-    (define little-base-ftds (map (mfb 'little) base-types)))
+    (define little-base-ftds (map (mfb 'little) base-types))
+    (define pointer-ftd
+      (make-ftd-generic-pointer rtd/fptr '#{generic bo0c6ah4lf2bbo8mgrq6cglsy-0} 'ftype-pointer pointer-size pointer-alignment
+                                #f rtd/fptr))
+    (define scheme-object-pointer-ftd
+      (make-ftd-generic-pointer rtd/object-fptr '#{obj-generic bo0c6ah4lf2bbo8mgrq6cglsy-1} 'ftype-pointer pointer-size pointer-alignment
+                                #t rtd/object-fptr)))
+  (define ftd->predicate-rtd
+    (lambda (ftd)
+      (cond
+        [(ftd-generic-pointer? ftd) (or (ftd-generic-pointer-maybe-predicate-rtd ftd) ftd)]
+        [else ftd])))
   (define expand-field-names
     (lambda (x*)
       (let f ([x* x*] [seen* '()])
@@ -442,15 +450,14 @@ ftype operators:
          [(find (let ([x (syntax->datum ftype)])
                   (lambda (ftd) (eq? (ftd-base-type ftd) x)))
                 native-base-ftds)]
-         [(eq? (syntax->datum ftype) 'ftype-pointer)
-          (make-ftd-pointer rtd/fptr #f 'void pointer-size pointer-alignment rtd/fptr)]
-         [(eq? (syntax->datum ftype) 'ftype-scheme-object-pointer)
-          (make-ftd-pointer rtd/fptr #f 'void pointer-size pointer-alignment rtd/object-fptr)]
+         [(eq? (syntax->datum ftype) 'ftype-pointer) pointer-ftd]
+         [(eq? (syntax->datum ftype) 'ftype-scheme-object-pointer) scheme-object-pointer-ftd]
          [else (and error? (syntax-error ftype "unrecognized ftype name"))])]))
   (define expand-ftype
     (case-lambda
-      [(r defid ftype) (expand-ftype r '() defid ftype)]
-      [(r def-alist defid ftype)
+      [(r defid ftype) (expand-ftype r '() defid ftype #f)]
+      [(r def-alist defid ftype) (expand-ftype r def-alist defid ftype #f)]
+      [(r def-alist defid ftype uid)
        (define (check-size ftd)
          (unless (ftd-function? ftd)
            (let ([size (ftd-size ftd)])
@@ -458,7 +465,7 @@ ftype operators:
                (syntax-error ftype "non-fixnum overall size for ftype"))))
          ftd)
        (check-size
-         (let f/flags ([ftype ftype] [defid defid] [stype (syntax->datum ftype)] [packed? #f] [eness 'native] [funok? #t])
+         (let f/flags ([ftype ftype] [defid defid] [stype (syntax->datum ftype)] [packed? #f] [eness 'native] [funok? #t] [uid uid])
            (define (pad n k) (if packed? n (logand (+ n (- k 1)) (- k))))
            (define (native-ftds)
              (case eness
@@ -467,7 +474,10 @@ ftype operators:
                [(big) big-base-ftds]
                [(little) little-base-ftds]
                [else (error 'eness "unexpected ~s" eness)]))
-           (let f ([ftype ftype] [defid defid] [stype stype] [funok? funok?])
+           (let f ([ftype ftype] [defid defid] [stype stype] [funok? funok?] [uid uid])
+             (define (disallow-uid uid)
+               (when uid
+                 (syntax-error defid "nongenerative disallowed for alias")))
              (if (identifier? ftype)
                  (cond
                    [(assp (lambda (x) (bound-identifier=? ftype x)) def-alist) =>
@@ -485,32 +495,41 @@ ftype operators:
                         (unless funok?
                           (when (ftd-function? ftd)
                             (syntax-error ftype "unexpected function ftype name outside pointer field")))
+                        (disallow-uid uid)
                         ftd))]
                    [(let ([maybe-ftd (r ftype)]) (and maybe-ftd (ftd? maybe-ftd) maybe-ftd)) =>
                     (lambda (ftd)
                       (unless funok?
                         (when (ftd-function? ftd)
                           (syntax-error ftype "unexpected function ftype name outside pointer field")))
+                      (disallow-uid uid)
                       ftd)]
                    [(find (let ([x (syntax->datum ftype)])
                             (lambda (ftd) (eq? (ftd-base-type ftd) x)))
-                          (native-ftds))]
+                          (native-ftds))
+                    => (lambda (ftd)
+                         (disallow-uid uid)
+                         ftd)]
                    [(eq? (syntax->datum ftype) 'ftype-pointer)
-                    (make-ftd-pointer rtd/fptr #f 'void pointer-size pointer-alignment rtd/fptr)]
+                    (if uid
+                        (make-ftd-generic-pointer rtd/fptr uid 'ftype-pointer pointer-size pointer-alignment #f #f)
+                        pointer-ftd)]
                    [(eq? (syntax->datum ftype) 'ftype-scheme-object-pointer)
-                    (make-ftd-pointer rtd/fptr #f 'void pointer-size pointer-alignment rtd/object-fptr)]
+                    (if uid
+                        (make-ftd-generic-pointer rtd/object-fptr uid 'ftype-pointer pointer-size pointer-alignment #t #f)
+                        scheme-object-pointer-ftd)]
                    [else (syntax-error ftype "unrecognized ftype name")])
                  (syntax-case ftype ()
                    [(struct-kwd (field-name ftype) ...)
                     (eq? (datum struct-kwd) 'struct)
                     (let loop ([id* (expand-field-names #'(field-name ...))]
-                               [ftd* (map (lambda (ftype stype) (f ftype #f stype #f))
+                               [ftd* (map (lambda (ftype stype) (f ftype #f stype #f #f))
                                           #'(ftype ...) (datum (ftype ...)))]
                                [offset 0] [alignment 1] [field* '()])
                       (if (null? id*)
                           (let ([field* (reverse field*)])
                             (make-ftd-struct (if (null? field*) rtd/fptr (caddar field*))
-                              (and defid (symbol->string (syntax->datum defid)))
+                              (or uid (and defid (symbol->string (syntax->datum defid))))
                               stype (pad offset alignment) alignment field*))
                           (let ([ftd (car ftd*)])
                             (let ([offset (pad offset (ftd-alignment ftd))])
@@ -521,11 +540,11 @@ ftype operators:
                    [(union-kwd (field-name ftype) ...)
                     (eq? (datum union-kwd) 'union)
                     (let ([id* (expand-field-names #'(field-name ...))]
-                          [ftd* (map (lambda (ftype stype) (f ftype #f stype #f))
+                          [ftd* (map (lambda (ftype stype) (f ftype #f stype #f #f))
                                      #'(ftype ...) (datum (ftype ...)))])
                       (let ([alignment (apply max 1 (map ftd-alignment ftd*))])
                         (make-ftd-union rtd/fptr
-                          (and defid (symbol->string (syntax->datum defid)))
+                          (or uid (and defid (symbol->string (syntax->datum defid))))
                           stype
                           (pad (apply max 0 (map $ftd-size ftd*)) alignment)
                           alignment
@@ -535,9 +554,9 @@ ftype operators:
                     (let ([n (datum ?n)])
                       (unless (and (integer? n) (exact? n) (>= n 0))
                         (syntax-error #'?n "invalid array size"))
-                      (let ([ftd (f #'ftype #f (datum ftype) #f)])
+                      (let ([ftd (f #'ftype #f (datum ftype) #f #f)])
                         (make-ftd-array ftd
-                          (and defid (symbol->string (syntax->datum defid)))
+                          (or uid (and defid (symbol->string (syntax->datum defid))))
                           stype
                           (* n ($ftd-size ftd)) ; use `$ftd-size` for PPC Mac OS
                           (ftd-alignment ftd)
@@ -581,7 +600,7 @@ ftype operators:
                           (syntax-error ftype "bit counts do not add up to 8, 16, 32, or 64"))
                            (let ([offset (fxsrl bit-size 3)])
                              (make-ftd-bits rtd/fptr
-                               (and defid (symbol->string (syntax->datum defid)))
+                               (or uid (and defid (symbol->string (syntax->datum defid))))
                                stype offset (alignment (constant max-integer-alignment) offset)
                                eness field*))))]
                    [(*-kwd ftype)
@@ -592,19 +611,19 @@ ftype operators:
                        (lambda (a)
                          (if (ftd? (cdr a))
                              (make-ftd-pointer rtd/fptr
-                               (and defid (symbol->string (syntax->datum defid)))
+                               (or uid (and defid (symbol->string (syntax->datum defid))))
                                stype pointer-size pointer-alignment (cdr a))
                              (let ([ftd (make-ftd-pointer rtd/fptr
-                                          (and defid (symbol->string (syntax->datum defid)))
+                                          (or uid (and defid (symbol->string (syntax->datum defid))))
                                           stype pointer-size pointer-alignment #f)])
                                (set-cdr! a (cons ftd (cdr a)))
                                ftd)))]
                       [else (make-ftd-pointer rtd/fptr
-                              (and defid (symbol->string (syntax->datum defid)))
-                              stype pointer-size pointer-alignment (f #'ftype #f (datum ftype) #t))])]
+                              (or uid (and defid (symbol->string (syntax->datum defid))))
+                              stype pointer-size pointer-alignment (f #'ftype #f (datum ftype) #t #f))])]
                    [(function-kwd (arg-type ...) result-type)
                     (eq? (datum function-kwd) 'function)
-                    (f #'(function-kwd #f (arg-type ...) result-type) #f stype funok?)]
+                    (f #'(function-kwd #f (arg-type ...) result-type) #f stype funok? uid)]
                    [(function-kwd conv ... (arg-type ...) result-type)
                     (eq? (datum function-kwd) 'function)
                     (let ()
@@ -622,10 +641,10 @@ ftype operators:
                         (filter-type r #'result-type #t)))]
                    [(packed-kwd ftype)
                     (eq? (datum packed-kwd) 'packed)
-                    (f/flags #'ftype #f stype #t eness funok?)]
+                    (f/flags #'ftype #f stype #t eness funok? uid)]
                    [(unpacked-kwd ftype)
                     (eq? (datum unpacked-kwd) 'unpacked)
-                    (f/flags #'ftype #f stype #f eness funok?)]
+                    (f/flags #'ftype #f stype #f eness funok? uid)]
                    [(endian-kwd ?eness ftype)
                     (eq? (datum endian-kwd) 'endian)
                     (let ([new-eness (datum ?eness)])
@@ -638,7 +657,7 @@ ftype operators:
                                                   [(native) 'swapped]
                                                   [(swapped) 'native])]
                                      [else new-eness])])
-                        (f/flags #'ftype #f stype packed? eness funok?)))]
+                        (f/flags #'ftype #f stype packed? eness funok? uid)))]
                    [_ (syntax-error ftype "invalid ftype")])))))]))
   (define expand-fp-ftype
     (lambda (who what r ftype def-alist)
@@ -647,7 +666,11 @@ ftype operators:
          (and (or (eq? (datum */&-kwd) '*)
                   (eq? (datum */&-kwd) '&))
               (identifier? #'ftype-name)
-              (member (datum ptr-kind) '(() (ftype-pointer) (ftype-scheme-object-pointer))))
+              (let ([ptr-kind (datum ptr-kind)])
+                (or (null? ptr-kind)
+                    (and (eq? (datum */&-kwd) '&)
+                         (null? (cdr ptr-kind))
+                         (symbol? (car ptr-kind))))))
          (let* ([stype (syntax->datum ftype)]
                 [ftd
                  (cond
@@ -673,16 +696,18 @@ ftype operators:
                  [(null? (datum ptr-kind))
                   (cons ftd ftd)]
                  [else
-                  (let ([rep-fptd (if (eq? (car (datum ptr-kind)) 'ftype-scheme-object-pointer)
-                                      rtd/object-fptr
-                                      rtd/fptr)])
-                    (cons ftd
-                          (make-ftd-pointer rtd/fptr #f 'void pointer-size pointer-alignment rep-fptd)))])))]
+                  (let* ([ptr-name (car (syntax->list (syntax ptr-kind)))]
+                         [rep-fptd (expand-ftype-name r ptr-name)])
+                    (unless (or (ftd-pointer? rep-fptd)
+                                (ftd-generic-pointer? rep-fptd))
+                      (syntax-error ptr-name "not a pointer ftype name"))
+                    (cons ftd rep-fptd))])))]
       [_ (cond
              [(and (identifier? ftype) (expand-ftype-name r ftype #f)) =>
               (lambda (ftd)
                 (cond
-                  [(ftd-pointer? ftd)
+                  [(or (ftd-pointer? ftd)
+                       (ftd-generic-pointer? ftd))
                    ftd]
                   [else
                    (unless (ftd-base? ftd)
@@ -695,26 +720,36 @@ ftype operators:
     (lambda (x)
       (cond
        [(ftd? x)
-        (if (ftd-pointer? x)
-            (ftd-pointer-fptd x)
-            ($oops who "~s is not an ftd-pointer" x))]
+        (cond
+          [(ftd-pointer? x)
+           (ftd-pointer-fptd x)]
+          [(ftd-generic-pointer? x)
+           x]
+          [else
+           ($oops who "~s is not an pointer ftd" x)])]
        [(pair? x)
         (cons (indirect-ftd-pointer (car x))
               (indirect-ftd-pointer (cdr x)))]
        [else x])))
   (define-who expand-ftype-defns
-    (lambda (r defid* ftype*)
+    (lambda (r defid* ftype* maybe-uid*)
       (define patch-pointer-ftds!
         (lambda (id ftd)
           (lambda (pointer-ftd)
             (ftd-pointer-fptd-set! pointer-ftd ftd))))
       (let ([alist (map list defid*)])
         (for-each
-          (lambda (defid ftype a)
-            (let ([ftd (expand-ftype r alist defid ftype)])
-              (for-each (patch-pointer-ftds! defid ftd) (cdr a))
-              (set-cdr! a ftd)))
-          defid* ftype* alist)
+          (lambda (defid ftype maybe-uid a)
+            (let ([uid (syntax-case maybe-uid ()
+                         [() #f]
+                         [((_ uid))
+                          (unless (gensym? (datum uid))
+                            (syntax-error #'uid "not a gensym"))
+                          (datum uid)])])
+              (let ([ftd (expand-ftype r alist defid ftype uid)])
+                (for-each (patch-pointer-ftds! defid ftd) (cdr a))
+                (set-cdr! a ftd))))
+          defid* ftype* maybe-uid* alist)
         (map cdr alist))))
   (define unsigned-type
     (lambda (size)
@@ -844,7 +879,7 @@ ftype operators:
             ($oops who "invalid address ~s" addr)))))
   (set! $verify-ftype-pointer
     (lambda (info fptr)
-      (unless (record? fptr (fptd-info-fptd info))
+      (unless (record? fptr (ftd->predicate-rtd (fptd-info-fptd info)))
         ($source-violation (fptd-info-who info) (src-info-src info) #t
           (if ($fptr? fptr)
               "ftype mismatch for ~s"
@@ -857,15 +892,22 @@ ftype operators:
   (set! $trans-define-ftype
     (lambda (x)
       (lambda (r)
+        (define (maybe-uid? x)
+          (syntax-case x (nongenerative)
+            [() #t]
+            [((nongenerative uid)) (identifier? #'uid)]
+            [_ #f]))
         (syntax-case x ()
-          [(_ ftype-name ftype)
-           (identifier? #'ftype-name)
+          [(_ ftype-name ftype . maybe-uid)
+           (and (identifier? #'ftype-name)
+                (maybe-uid? #'maybe-uid))
            #`(define-syntax ftype-name
                (make-compile-time-value
-                 '#,(car (expand-ftype-defns r #'(ftype-name) #'(ftype)))))]
-          [(_ [ftype-name ftype] ...)
-           (andmap identifier? #'(ftype-name ...))
-           (with-syntax ([(ftd ...) (expand-ftype-defns r #'(ftype-name ...) #'(ftype ...))])
+                 '#,(car (expand-ftype-defns r #'(ftype-name) #'(ftype) #'(maybe-uid)))))]
+          [(_ [ftype-name ftype . maybe-uid] ...)
+           (and (andmap identifier? #'(ftype-name ...))
+                (andmap maybe-uid? #'(maybe-uid ...)))
+           (with-syntax ([(ftd ...) (expand-ftype-defns r #'(ftype-name ...) #'(ftype ...) #'(maybe-uid ...))])
              #'(begin
                  (define-syntax ftype-name
                    (make-compile-time-value 'ftd))
@@ -922,7 +964,9 @@ ftype operators:
       (lambda (r)
         (syntax-case x ()
           [(_ x) #`(record? x '#,rtd/fptr)]
-          [(_ ftype x) (identifier? #'ftype) #`(record? x '#,(expand-ftype-name r #'ftype))]))))
+          [(_ ftype x)
+           (identifier? #'ftype)
+           #`(record? x '#,(ftd->predicate-rtd (expand-ftype-name r #'ftype #t)))]))))
   (set! $trans-ftype-scheme-object-pointer?
     (lambda (x)
       (lambda (r)
@@ -952,11 +996,11 @@ ftype operators:
   (set-who! ftype-pointer-ftype
     (lambda (fptr)
       (unless ($fptr? fptr) ($oops who "~s is not an ftype pointer" fptr))
-      (let ([fptd (record-rtd fptr)])
+      (let ([rtd (record-rtd fptr)])
         (cond
-          [($ftd? fptd)
-           (ftd-stype (record-rtd fptr))]
-          [(eq? fptd rtd/object-fptr)
+          [($ftd? rtd)
+           (ftd-stype rtd)]
+          [(eq? rtd rtd/object-fptr)
            'scheme-object]
           [else
            'void]))))
@@ -992,7 +1036,6 @@ ftype operators:
         (let fptr->sexpr ([fptr fptr])
           (record fptr
             (let f ([fptr fptr] [ftd (record-rtd fptr)] [offset 0])
-              ;; `ftd` is more generally a `fptd`
               (cond
                 [(ftd-struct? ftd)
                  `(struct
@@ -1029,9 +1072,7 @@ ftype operators:
                                         (g (fx+ i 1))))))))]
                 [(ftd-pointer? ftd)
                  (cond
-                   [(guard (c [#t #f]) (if ($fptd-object? (ftd-pointer-fptd ftd))
-                                           ($fptr-object-fptr-ref fptr offset (ftd-pointer-fptd ftd))
-                                           ($fptr-fptr-ref fptr offset (ftd-pointer-fptd ftd)))) =>
+                   [(guard (c [#t #f]) ($fptr-fptr-ref fptr offset (ftd-pointer-fptd ftd))) =>
                     (lambda (fptr)
                       (if (zero? (ftype-pointer-address fptr))
                           'null
@@ -1067,14 +1108,18 @@ ftype operators:
                  (guard (c [#t 'invalid])
                    ($fptr-ref (filter-foreign-type (ftd-base-type ftd))
                      (ftd-base-eness ftd) fptr offset))]
-                [(eq? ftd rtd/object-fptr)
+                [(ftd-generic-pointer? ftd)
+                 (if (ftd-generic-pointer-object? ftd)
+                     (f fptr rtd/object-fptr offset)
+                     (f fptr rtd/fptr offset))]
+                [(eq? ftd rtd/fptr) ; can be instantiated directly
+                 `(address ,($ftype-pointer-address fptr))]
+                [(eq? ftd rtd/object-fptr) ; can be instantiated directly
                  (let ([offset (ftype-scheme-object-pointer-offset fptr)])
                    (if (eqv? offset 0)
                        (ftype-scheme-object-pointer-object fptr)
                        `(offset ,(ftype-scheme-object-pointer-object fptr) ,offset)))]
-                [(eq? ftd rtd/fptr)
-                 `(address ,($ftype-pointer-address fptr))]
-                [else ($oops '$fptr->sexpr "unhandled fptd ~s" ftd)])))))))
+                [else ($oops '$fptr->sexpr "unhandled ftd ~s" ftd)])))))))
   (set! $unwrap-ftype-pointer
     (lambda (fptr)
       (let f ([ftd (record-rtd fptr)])
@@ -1099,9 +1144,7 @@ ftype operators:
                    ($fptr-&ref fptr (* i (ftd-size ftd)) ftd))))]
           [(ftd-pointer? ftd)
            (let ([fptd (ftd-pointer-fptd ftd)])
-             `(* ,(lambda () (if ($fptd-object? fptd)
-                                 ($fptr-object-fptr-ref fptr 0 fptd)
-                                 ($fptr-fptr-ref fptr 0 fptd)))
+             `(* ,(lambda () ($fptr-fptr-ref fptr 0 fptd))
                  ,(lambda (who v)
                     ($verify-ftype-pointer (make-fptd-info who #f fptd) v)
                     (#3%$fptr-fptr-set! fptr 0 v))))]
@@ -1128,14 +1171,18 @@ ftype operators:
                 ,type
                 ,(lambda () (guard (c [#t 'invalid]) ($fptr-ref type (ftd-base-eness ftd) fptr 0)))
                 ,(lambda (v) (#2%$fptr-set! (ftd-base-type ftd) type (ftd-base-eness ftd) fptr 0 v))))]
-          [(eq? ftd rtd/object-fptr)
+          [(ftd-generic-pointer? ftd)
+           (if (ftd-generic-pointer-object? ftd)
+               (f rtd/object-fptr)
+               (f rtd/fptr))]
+          [(eq? ftd rtd/fptr) ; can be instantiated directly
+           `(address ,($ftype-pointer-address fptr))]
+          [(eq? ftd rtd/object-fptr) ; can be instantiated directly
            (let ([offset (ftype-scheme-object-pointer-offset fptr)])
              (if (eqv? offset 0)
                  (ftype-scheme-object-pointer-object fptr)
                  `(offset ,(ftype-scheme-object-pointer-object fptr) ,offset)))]
-          [(eq? ftd rtd/fptr)
-           `(address ,($ftype-pointer-address fptr))]
-          [else ($oops '$unwrap-ftype-pointer "unhandled fptd ~s" ftd)]))))
+          [else ($oops '$unwrap-ftype-pointer "unhandled ftd ~s" ftd)]))))
   (set! $trans-ftype-sizeof
     (lambda (x)
       (lambda (r)
@@ -1149,12 +1196,13 @@ ftype operators:
   (set! $ftd?
     (lambda (x)
       (ftd? x)))
-  (set! $fptd?
-    (lambda (x)
-      (fptd? x)))
-  (set! $fptd-object?
-    (lambda (x)
-      (fptd-object? x)))
+  (set! $ftd-object?
+        (lambda (x)
+          (and (ftd-generic-pointer? x)
+               (ftd-generic-pointer-object? x))))
+  (set! $ftd->predicate-rtd
+        (lambda (x)
+          (ftd->predicate-rtd x)))
   (set! $ftd-size
     (lambda (ftd)
       (constant-case special-initial-field-alignment?
@@ -1177,7 +1225,7 @@ ftype operators:
                (ftd-size ftd)))])))
   (set! $ftd-pair? ; represents `(& <ftype> [<kind>])` `$expand-fp-ftype`
     (lambda (x)
-      (and (pair? x) (ftd? (car x)) ($fptd? (cdr x)))))
+      (and (pair? x) (ftd? (car x)) ($ftd? (cdr x)))))
   (set! $ftd-alignment
     (lambda (x)
       (ftd-alignment x)))
@@ -1333,9 +1381,7 @@ ftype operators:
                              (cons (list ftd a-id a len) idx*)))))]
                   [(ftd-pointer? ftd)
                    (let ([elt-fptd (ftd-pointer-fptd ftd)])
-                     (let ([fptr-expr (if (eq? elt-fptd rtd/object-fptr)
-                                          #`(#3%$fptr-object-fptr-ref #,fptr-expr #,offset '#,elt-fptd)
-                                          #`(#3%$fptr-fptr-ref #,fptr-expr #,offset '#,elt-fptd))])
+                     (let ([fptr-expr #`(#3%$fptr-fptr-ref #,fptr-expr #,offset '#,elt-fptd)])
                         (if (memv (syntax->datum a) '(* 0))
                             (if ($ftd? elt-fptd)
                                 (loop elt-fptd (cdr a*) fptr-expr 0 idx*)
@@ -1346,6 +1392,18 @@ ftype operators:
                                     (trans-idx a-id a #f elt-fptd (make-index-info whoid a ftd #f))
                                     (cons (list ftd a-id a #f) idx*))
                                 (syntax-error a "cannot dereference generic pointer"))))))]
+                  [(ftd-generic-pointer? ftd)
+                   (let ([fptr-expr (if (ftd-generic-pointer-object? ftd)
+                                        #`(#3%$fptr-object-fptr-ref #,fptr-expr #,offset '#,ftd)
+                                        #`(#3%$fptr-fptr-ref #,fptr-expr #,offset '#,ftd))])
+                     (if (memv (syntax->datum a) '(* 0))
+                         (syntax-error a "cannot dereference generic pointer")
+                         (let ([a-id (car (generate-temporaries (list #'i)))])
+                           (if (null? (cdr a*))
+                               (loop ftd (cdr a*) fptr-expr
+                                     (trans-idx a-id a #f ftd (make-index-info whoid a ftd #f))
+                                     (cons (list ftd a-id a #f) idx*))
+                               (syntax-error a "cannot dereference generic pointer")))))]
                   [(ftd-bits? ftd)
                    (let ([s (syntax->datum a)])
                      (cond
@@ -1506,9 +1564,11 @@ ftype operators:
                                           bitfield)]
                                       [(ftd-base? ftd) (do-base (filter-foreign-type (ftd-base-type ftd)) (ftd-base-eness ftd) offset)]
                                       [(ftd-pointer? ftd)
-                                       (if (eq? (ftd-pointer-fptd ftd) rtd/object-fptr)
-                                           #`(#3%$fptr-object-fptr-ref #,fptr-expr #,offset '#,(ftd-pointer-fptd ftd))
-                                           #`(#3%$fptr-fptr-ref #,fptr-expr #,offset '#,(ftd-pointer-fptd ftd)))]
+                                       #`(#3%$fptr-fptr-ref #,fptr-expr #,offset '#,(ftd-pointer-fptd ftd))]
+                                      [(ftd-generic-pointer? ftd)
+                                       (if (ftd-generic-pointer-object? ftd)
+                                           #`(#3%$fptr-object-fptr-ref #,fptr-expr #,offset '#,ftd)
+                                           #`(#3%$fptr-fptr-ref #,fptr-expr #,offset '#,ftd))]
                                       [(ftd-function? ftd) 
                                        ($make-foreign-procedure 'make-ftype-pointer
                                          (ftd-function-conv* ftd)
@@ -1587,6 +1647,11 @@ ftype operators:
                                        #`(begin
                                            (unless #,(fx= (optimize-level) 3)
                                              ($verify-ftype-pointer '#,(make-fptd-info 'ftype-set! val-expr (ftd-pointer-fptd ftd)) val))
+                                           (#3%$fptr-fptr-set! #,fptr-expr #,offset val))]
+                                      [(ftd-generic-pointer? ftd)
+                                       #`(begin
+                                           (unless #,(fx= (optimize-level) 3)
+                                             ($verify-ftype-pointer '#,(make-fptd-info 'ftype-set! val-expr ftd) val))
                                            (#3%$fptr-fptr-set! #,fptr-expr #,offset val))]
                                       [else (syntax-error q "non-scalar value cannot be assigned")])))))))))))
         (syntax-case q ()
