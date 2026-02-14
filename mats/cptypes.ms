@@ -2482,3 +2482,19 @@
         '(lambda (x y) (fxdiv-and-mod x y) (zero? x))
         '(lambda (x y) (fxdiv-and-mod x y) #f)))
 )
+
+(mat cptypes-no-return
+  ; Ensure that cptypes and cp0 cooperate using no-return.
+  ; In particular, this is like a `begin0` form
+  ; where cptypes detects one of the branches will fail
+  ; and then cp0 can detect the first lambda is single-valued
+  ; so it can reduce the `begin0` to a `let`.
+  (cptypes-equivalent-expansion?
+    '(lambda (t m)
+       (call-with-values
+         (lambda () (if t (random) (div-and-mod "2" m)))
+         (lambda (x) (list x x x))))
+    '(lambda (t m)
+       (let ([x (if t (random) (div-and-mod "2" m))])
+         (list x x x))))
+)

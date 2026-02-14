@@ -777,6 +777,11 @@ Notes:
   (define (primref->unsafe-primref pr)
     (lookup-primref 3 (primref-name pr)))
 
+  (define (preinfo->preinfo/no-return preinfo)
+     (make-preinfo-call (preinfo-src preinfo)
+                       (preinfo-sexpr preinfo)
+                       (preinfo-call-mask unchecked no-inline no-return single-valued)))
+
   (define (non-literal-fixmediate? e x)
     (and (not (check-constant-is? e))
          (predicate-implies? x $fixmediate-pred)))
@@ -1737,7 +1742,7 @@ Notes:
         [(n) (let ([r (get-type n)])
                (cond
                  [(predicate-disjoint? r number-pred)
-                  (values `(call ,preinfo ,pr ,n)
+                  (values `(call ,(preinfo->preinfo/no-return preinfo) ,pr ,n)
                           'bottom pred-env-bottom #f #f)]
                  [else
                   (values `(call ,preinfo ,pr ,n) ret 
@@ -1747,7 +1752,7 @@ Notes:
                  (cond
                    [(or (predicate-disjoint? rx real-pred)
                         (predicate-disjoint? ry real-pred))
-                    (values `(call ,preinfo ,pr ,x ,y)
+                    (values `(call ,(preinfo->preinfo/no-return preinfo) ,pr ,x ,y)
                             'bottom pred-env-bottom #f #f)]
                    [else
                     (values `(call ,preinfo ,pr ,x ,y) ret 
@@ -1766,7 +1771,8 @@ Notes:
                   (values ir maybe-char-pred ntypes #f #f)]
                  [(and (predicate-disjoint? r char-pred)
                        (predicate-disjoint? r symbol-pred))
-                  (values ir 'bottom pred-env-bottom #f #f)]
+                  (values `(call ,(preinfo->preinfo/no-return preinfo) ,pr ,n)
+                          'bottom pred-env-bottom #f #f)]
                  [else
                   (values ir (predicate-union maybe-char-pred symbol-pred)
                           (pred-env-add/ref ntypes n (predicate-union char-pred symbol-pred) plxc) #f #f)]))]
@@ -1776,7 +1782,8 @@ Notes:
                  (cond
                    [(or (predicate-disjoint? rn symbol-pred)
                         (predicate-disjoint? rc maybe-char-pred))
-                    (values ir 'bottom pred-env-bottom #f #f)]
+                    (values `(call ,(preinfo->preinfo/no-return preinfo) ,pr ,n ,c)
+                            'bottom pred-env-bottom #f #f)]
                    [else
                     (values ir void-rec
                             (pred-env-add/ref (pred-env-add/ref ntypes
@@ -1951,12 +1958,13 @@ Notes:
   (define (fold-primref/try-unsafe preinfo pr e* ret r* ctxt ntypes oldtypes plxc)
     (let* ([unsafe (all-set? (prim-mask unsafe) (primref-flags pr))]
            [len (length e*)]
-           [err (or (predicate-implies? ret 'bottom)
-                    (not (arity-okay? (primref-arity pr) len)))]
+           [err/immed (or (predicate-implies? ret 'bottom)
+                          (not (arity-okay? (primref-arity pr) len))
+                          (preinfo-call-no-return? preinfo))]
            [to-unsafe (and (not unsafe)
                            (all-set? (prim-mask safeongoodargs) (primref-flags pr)))])
-      (let-values ([(err nr* ntypes to-unsafe)
-                    (let loop ([e* e*] [r* r*] [n 0] [rev-nr* '()] [ntypes ntypes] [err err] [to-unsafe to-unsafe])
+      (let-values ([(err/cptypes nr* ntypes to-unsafe)
+                    (let loop ([e* e*] [r* r*] [n 0] [rev-nr* '()] [ntypes ntypes] [err err/immed] [to-unsafe to-unsafe])
                       (if (null? e*)
                           (values err (reverse rev-nr*) ntypes to-unsafe)
                           (let* ([r (car r*)]
@@ -1971,8 +1979,11 @@ Notes:
                                   (or err (predicate-implies? nr 'bottom))
                                   (and to-unsafe (predicate-implies? r pred*))))))])
         (cond
-          [(or err (eq? ntypes pred-env-bottom))
-           (fold-primref/default preinfo pr e* 'bottom r* ctxt pred-env-bottom #f #f oldtypes plxc)]
+          [err/immed
+           (values `(call ,preinfo ,pr ,e* ...) 'bottom pred-env-bottom #f #f)]
+          [(or err/cptypes (eq? ntypes pred-env-bottom))
+           (values `(call ,(preinfo->preinfo/no-return preinfo) ,pr ,e* ...)
+                   'bottom pred-env-bottom #f #f)]
           [else
            (let ([pr (if to-unsafe
                          (primref->unsafe-primref pr)
