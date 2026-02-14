@@ -143,7 +143,7 @@ allocating a string or pair.
 The new \scheme{__disable_interrupts} convention disables interupts
 during a foreign call or during the invocation of a foreign callable.
 A foreign call could be wrapped just as well with
-\scheme{with-interrupts-disabled}, and the
+\scheme{with-interrupts-disabled}; the
 \scheme{__disable_interrupts} convention is intended more for foreign
 callables. For a callable, interrupts are disabled just before the
 first point that a callable would otherwise allow interrupt handling,
