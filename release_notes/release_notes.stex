@@ -137,7 +137,7 @@ from \scheme{GetLastError} instead of \scheme{errno}.
 
 The new \scheme{__alloc} foreign-procedure convention modifies a preceding
 \scheme{__atomic} to allow a foreign procedure to call back into
-Scheme's C librarry routines to allocate Scheme values, such as
+Scheme's C library routines to allocate Scheme values, such as
 allocating a string or pair.
 
 The new \scheme{__disable_interrupts} convention disables interupts
