@@ -317,6 +317,16 @@
 
 (mat foreign-procedure
    (procedure? (foreign-procedure "idiptr" (scheme-object) scheme-object))
+   (procedure? (foreign-procedure __errno "idiptr" (scheme-object) scheme-object))
+   (procedure? (meta-cond
+                [(windows?)
+                 (foreign-procedure __get_last_error "idiptr" (scheme-object) scheme-object)]
+                [else void]))
+   (error? (meta-cond
+            [(windows?)
+             (error #f "invalid foreign-procedure convention __get_last_error")]
+            [else
+             (lambda () (foreign-procedure __get_last_error "idiptr" (scheme-object) scheme-object))]))
    (error? (foreign-procedure "i do not exist" (scheme-object) scheme-object))
    (error? (begin (foreign-procedure "i do not exist" () scheme-object) 'q))
    (error? (if (foreign-procedure "i do not exist" () scheme-object) 'q 'q))
@@ -325,13 +335,22 @@
    (error? (if (foreign-procedure 'foo () scheme-object) 'q 'q))
 
    (error? (lambda () (foreign-procedure __bad_conv "foo" () scheme-object)))
+   (error? (lambda () (foreign-procedure __collect_safe __atomic "foo" () scheme-object)))
    (error? (lambda () (foreign-procedure __atomic __collect_safe "foo" () scheme-object)))
+   (error? (meta-cond
+            [(windows?) (lambda () (foreign-procedure __errno __get_last_error "foo" () scheme-object))]
+            [else (error #f "conflicting foreign-procedure convention __get_last_error")]))
+   (error? (meta-cond
+            [(windows?) (lambda () (foreign-procedure __get_last_error __errno "foo" () scheme-object))]
+            [else (error #f "conflicting foreign-procedure convention __errno")]))
+   (error? (lambda () (foreign-procedure __alloc "foo" () scheme-object)))
 
    (eq? 'foo ((foreign-procedure "idiptr" (scheme-object) scheme-object) 'foo))
 
    (procedure? (foreign-procedure __atomic "idiptr" (scheme-object) scheme-object))
    (error? (foreign-procedure __atomic "i do not exist" (scheme-object) scheme-object))
    (eq? 'foo ((foreign-procedure __atomic "idiptr" (scheme-object) scheme-object) 'foo))
+   (eq? 'foo ((foreign-procedure __atomic __alloc "idiptr" (scheme-object) scheme-object) 'foo))
 
    (parameterize ([current-eval interpret])
        (eq? 'foo ((foreign-procedure "idiptr" (scheme-object) scheme-object) 'foo)))
@@ -739,6 +758,7 @@
     (define rt-int (foreign-procedure "rt_int" (iptr) ptr))
     (define rt-int32 (foreign-procedure "rt_int32" (integer-32) ptr))
     (define rt-int64 (foreign-procedure "rt_int64" (integer-64) ptr))
+    (define rt-int64/atomic (foreign-procedure __atomic __alloc "rt_int64" (integer-64) ptr))
     (define rt-uint (foreign-procedure "rt_uint" (uptr) ptr))
     (define rt-uint32 (foreign-procedure "rt_uint32" (unsigned-32) ptr))
     (define rt-uint64 (foreign-procedure "rt_uint64" (unsigned-64) ptr))
@@ -780,6 +800,12 @@
   (check #f (rt-int64 (- (ash 1 63))))
   (let ([n (+ -1 (ash 1 63))])
     (check n (rt-int64 n)))
+  (let loop ([i 1000])
+     (or (fx= i 0)
+         (and (check #f (rt-int64/atomic (ash 1 63)))
+              (loop (sub1 i)))))
+  (let ([n (+ -1 (ash 1 63))])
+    (check n (rt-int64/atomic n)))
 
   (check 0 (rt-uint 0))
   (check #f (rt-uint -1))
@@ -3363,7 +3389,7 @@
     (define-ftype i64 integer-64)
     (define-syntax check*
       (syntax-rules ()
-        [(_ (conv ...) T s [vi ...] [T-ref ...] [T-set! ...])
+        [(_ foreign-procedure (conv ...) T s [vi ...] [T-ref ...] [T-set! ...])
          (let ()
            (define-ftype callback (function conv ... ((& T)) double))
            (define-ftype callback-two (function conv ... ((& T) (& T)) double))
@@ -3469,11 +3495,34 @@
                        (begin
                          (free_at_boundary (ftype-pointer-address a))
                          #t)))))]))
+    (define-syntax foreign-procedure/discard-errno
+      (lambda (stx)
+        (syntax-case stx ()
+          [(_ a ...)
+           #'(let ([f (foreign-procedure a ...)])
+               (lambda args
+                 (call-with-values
+                  (lambda () (apply f args))
+                  (lambda (v errno)
+                    (unless (and (integer? errno) (exact? errno)) (errorf 'foreign "not a valid errno result ~s" errno))
+                    v))))])))
+    ;; used to get broad coverage, on average, without inflating test times too much
+    (define-syntax randomly
+      (lambda (stx)
+        (syntax-case stx ()
+          [(_ e)
+           (if (< (random 1.0) 0.1)
+               #'e
+               #'#t)])))
     (define-syntax check*t
       (syntax-rules ()
         [(_ arg ...)
-         (and (check* () arg ...)
-              (check* (__collect_safe) arg ...))]))
+         (and (check* foreign-procedure () arg ...)
+              (check* foreign-procedure (__collect_safe) arg ...)
+              (randomly
+               (check* foreign-procedure/discard-errno (__errno) arg ...))
+              (randomly
+               (check* foreign-procedure/discard-errno (__collect_safe __errno) arg ...)))]))
     (define-syntax check-n
       (syntax-rules ()
         [(_ [ni ti vi] ...)
@@ -3812,6 +3861,91 @@
            (begin
              (unlock-object callable)
              (< (maximum-memory-bytes) (* 1.2 old-max)))))))
+  )
+
+(mat save-errno
+  (begin
+    (define set-errno-value
+      (foreign-procedure __errno "set_errno_value" (int) int))
+    (define set-errno-value/collect-safe
+      (foreign-procedure __errno __collect_safe "set_errno_value" (int) int))
+    (define set-last-error-value
+      (meta-cond
+       [(windows?)
+        (foreign-procedure __get_last_error "set_last_error_value" (int) int)]
+       [else
+        set-errno-value]))
+    (define set-last-error-value/collect-safe
+      (meta-cond
+       [(windows?)
+        (foreign-procedure __get_last_error __collect_safe "set_last_error_value" (int) int)]
+       [else
+        set-errno-value/collect-safe]))
+    #t)
+  (equal? (call-with-values (lambda () (set-errno-value 123)) list)
+          (list 124 123))
+  (equal? (call-with-values (lambda () (set-errno-value/collect-safe 125)) list)
+          (list 126 125))
+  (equal? (call-with-values (lambda () (set-last-error-value 127)) list)
+          (list 128 127))
+  (equal? (call-with-values (lambda () (set-last-error-value/collect-safe 129)) list)
+          (list 130 129))
+)
+
+(mat disable-interrupts
+  (begin
+    (define (check-foreign-call-interrupt-disable disable-on-call? disable-on-callback?)
+      (let ([old-timer-handler (timer-interrupt-handler)]
+            [old-collect-handler (collect-request-handler)])
+        (define-ftype int->int (function (int) int))
+        (define-ftype int->int* (function __disable_interrupts (int) int))
+        (define hit 0)
+        (define call (if disable-on-callback?
+                         (foreign-procedure "call_for_interrupt_test" ((* int->int*) int) int)
+                         (foreign-procedure "call_for_interrupt_test" ((* int->int) int) int)))
+        (define call* (if disable-on-callback?
+                          (foreign-procedure __disable_interrupts "call_for_interrupt_test" ((* int->int*) int) int)
+                          (foreign-procedure __disable_interrupts "call_for_interrupt_test" ((* int->int) int) int)))
+        (define in? (foreign-procedure "is_in_callback_for_interrupt_test" () boolean))
+
+        (define (callback x)
+          (+ 1 (string-length (make-string x))))
+
+        (define callback-ptr (if disable-on-callback?
+                                 (make-ftype-pointer int->int* callback)
+                                 (make-ftype-pointer int->int callback)))
+
+        (timer-interrupt-handler (lambda ()
+                                   (set! hit (add1 hit))
+                                   (when (in?) (error 'timeout "inside!"))
+                                   (set-timer (add1 (random 100)))))
+        (collect-request-handler (lambda ()
+                                   (when (in?) (error 'timeout "inside for GC!"))
+                                   (old-collect-handler)))
+
+        (set-timer (add1 (random 100)))
+        (let loop ([i 10000])
+          (unless (zero? i)
+            (unless (eqv? (+ i 1)
+                          (if disable-on-call?
+                              (call* callback-ptr i)
+                              (call callback-ptr i)))
+              (error 'call "bad result"))
+            (loop (sub1 i))))
+
+        (set-timer 0)
+        (timer-interrupt-handler old-timer-handler)
+        (collect-request-handler old-collect-handler)
+
+        (unlock-object
+         (foreign-callable-code-object
+          (ftype-pointer-address callback-ptr)))
+
+        (positive? hit)))
+    #t)
+  (check-foreign-call-interrupt-disable #t #f)
+  (check-foreign-call-interrupt-disable #f #t)
+  (check-foreign-call-interrupt-disable #t #t)
 )
 
 (machine-case

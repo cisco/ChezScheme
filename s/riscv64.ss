@@ -475,6 +475,14 @@
         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
         `(asm ,info ,asm-unactivate-thread ,u)))])
 
+  (define-instruction value (save-errno)
+    [(op (z ur))
+     (safe-assert (eq? z %Cretval))
+     (let ([u (make-tmp 'u)])
+       (seq
+        `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+        `(set! ,(make-live-info) ,z (asm ,info ,asm-save-errno ,u))))])
+
   (define-instruction value (asmlibcall)
     [(op (z ur))
      (let ([u (make-tmp 'asmlib)]) ;; for building jump addr
@@ -619,6 +627,7 @@
                     asm-direct-jump asm-indirect-jump asm-literal-jump asm-condition-code
                     asm-jump asm-conditional-jump asm-library-jump
                     asm-get-tc asm-activate-thread asm-deactivate-thread asm-unactivate-thread
+                    asm-save-errno
                     asm-push asm-pop asm-return asm-c-return asm-kill
                     asm-load asm-store asm-fence asm-swap asm-lock asm-lock+/- asm-move asm-move/extend
                     asm-fpmove asm-fpmove-single asm-single->double asm-double->single
@@ -1690,6 +1699,11 @@
       (lambda (code* tmp . ignore)
         (asm-helper-call code* target #f tmp))))
 
+  (define asm-save-errno
+    (let ([target `(riscv64-call 0 (entry ,(lookup-c-entry save-errno)))])
+      (lambda (code* dest tmp . ignore) ; dest is ignored, since it is always Cretval
+        (asm-helper-call code* target #f tmp))))
+
   (define asm-push
     (lambda (code* x)
       (Trivit (x)
@@ -2137,15 +2151,29 @@
                                               (reg-to-memory %Carg3 (cadr offsets) (cadr sizes) r2))))]
                                      [else ($oops 'assembler-internal "unexpected result place")])))]
                       [else e]))]
-                 [add-deactivate
-                  (lambda (adjust-active? t0 live* result-live* k)
+                 [add-deactivate/errno
+                  (lambda (adjust-active? maybe-errno-lvalue t0 live* result-live* k)
                     (cond
                       [adjust-active?
                        (%seq
 			(set! ,%ac0 ,t0)
                         ,(save-and-restore live* (%inline deactivate-thread))
                         ,(k %ac0)
-                        ,(save-and-restore result-live* `(set! ,%Cretval ,(%inline activate-thread))))]
+                        ,(save-and-restore result-live* (let ([e `(set! ,%Cretval ,(%inline activate-thread))])
+                                                          (cond
+                                                            [maybe-errno-lvalue
+                                                             (%seq
+                                                              (set! ,%Cretval ,(%inline save-errno))
+                                                              ,(save-and-restore (list %Cretval) e)
+                                                              (set! ,maybe-errno-lvalue ,%Cretval))]
+                                                            [else e]))))]
+                      [maybe-errno-lvalue
+                       (%seq
+                        ,(k t0)
+                        ,(save-and-restore result-live*
+                                           (%seq
+                                            (set! ,%Cretval ,(%inline save-errno))
+                                            (set! ,maybe-errno-lvalue ,%Cretval))))]
                       [else (k t0)]))])
           (define returnem
             (lambda (frame-size locs ccall r-loc)
@@ -2190,15 +2218,15 @@
                                ;; stash extra argument on the stack to be retrieved after call and filled with the result:
                                (cons (load-int-stack frame-size) locs)]
                               [else locs])
-                            (lambda (t0 not-varargs?)
+                            (lambda (t0 not-varargs? maybe-errno-lvalue)
                               (let* ([cat (categorize-result result-type)]
                                      [result-reg* (if pass-result-ptr?
                                                       '()
                                                       (cat-regs cat))])
                                 (add-fill-result
                                  (and ftd-result? (not pass-result-ptr?)) cat frame-size
-                                 (add-deactivate
-                                  adjust-active? t0 live* result-reg*
+                                 (add-deactivate/errno
+                                  adjust-active? maybe-errno-lvalue t0 live* result-reg*
                                   (lambda (t0)
                                     `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0))))))
                             (nanopass-case (Ltype Type) result-type

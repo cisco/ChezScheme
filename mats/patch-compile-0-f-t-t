@@ -1,5 +1,5 @@
-*** output-compile-0-f-t-f-experr/errors-compile-0-f-t-f	Wed Jan 14 14:33:19 2026
---- output-compile-0-f-t-t-experr/errors-compile-0-f-t-t	Wed Jan 14 14:33:14 2026
+*** output-compile-0-f-t-f-experr/errors-compile-0-f-t-f	Wed Feb  4 08:08:02 2026
+--- output-compile-0-f-t-t-experr/errors-compile-0-f-t-t	Wed Feb  4 08:07:56 2026
 ***************
 *** 9596,9608 ****
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".

@@ -8,11 +8,12 @@
 /* 
    Encoding of a function type:
 
-     #(cached abi fixed-arg-count adjust-active? return-type ret-is-arg? arg-type ...)
+     #(cached abi fixed-arg-count adjust-active? save-errno/last-error return-type ret-is-arg? arg-type ...)
 
    where `cached` is filled with a bytevector that starts as a
-   `ffi_cif*` and has all of its associated data, fix-arg-count is 0
-   for a non-varrags function, and a type is one of
+   `ffi_cif*` and has all of its associated data, `fix-arg-count` is 0
+   for a non-varrags function, `save-errno/last-error` is 1 for `errno`
+   and 2 for `GetlastError()`, and a `type` is one of
 
      - a fixnum for an atomic: ffi_typerep_void, ffi_typerep_uint8, ...
      - a boxed fixnum representing a pointer to an atomic
@@ -25,9 +26,10 @@
 # define ABI_INDEX         1
 # define FIXED_COUNT_INDEX 2
 # define ADJ_ACTIVE_INDEX  3
-# define RET_TYPE_INDEX    4
-# define RET_IS_ARG_INDEX  5
-# define ARG_TYPE_START_INDEX 6
+# define SAVE_ERRNO_INDEX  4
+# define RET_TYPE_INDEX    5
+# define RET_IS_ARG_INDEX  6
+# define ARG_TYPE_START_INDEX 7
 
 typedef struct alloc_state {
   /* to allocate exactly as much as needed in a single bytevector,
@@ -475,6 +477,16 @@ void S_ffi_call(ptr types, ptr proc, ptr *arena) {
 #endif
 
   ffi_call(cif, TO_VOIDP(proc), rvalue, args);
+
+  if (Svector_ref(types, SAVE_ERRNO_INDEX) != Sfalse) {
+    ptr tc = get_thread_context();
+#ifdef WIN32
+    if (Svector_ref(types, SAVE_ERRNO_INDEX) == Sfixnum(2))
+      U(tc) = S_save_last_error();
+    else
+#endif
+      U(tc) = S_save_errno();
+  }
 
 #ifdef PTHREADS
   if (Svector_ref(types, ADJ_ACTIVE_INDEX) != Sfalse) {

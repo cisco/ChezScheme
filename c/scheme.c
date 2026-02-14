@@ -107,6 +107,8 @@ static void main_init(void) {
       VIRTREG(tc, i) = FIX(0);
     }
 
+    CURRENTERRNOSOURCE(tc) = Sfalse;
+
     S_thread_start_code_write(tc, 0, 0, NULL, 0);
     p = S_code(tc, type_code, size_rp_header);
     CODERELOC(p) = S_relocation_table(0);

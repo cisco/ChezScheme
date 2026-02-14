@@ -1,5 +1,5 @@
-*** output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Wed Jan 14 14:33:27 2026
---- output-compile-0-t-f-t-experr/errors-compile-0-t-f-t	Wed Jan 14 14:33:25 2026
+*** output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Wed Feb  4 08:12:19 2026
+--- output-compile-0-t-f-t-experr/errors-compile-0-t-f-t	Wed Feb  4 08:12:06 2026
 ***************
 *** 4070,4076 ****
   misc.mo:Expected error in mat compute-composition: "compute-composition: invalid generation -1".

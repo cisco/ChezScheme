@@ -1,5 +1,5 @@
-*** output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Wed Jan 14 14:33:27 2026
---- output-compile-0-t-t-f-experr/errors-compile-0-t-t-f	Wed Jan 14 14:36:04 2026
+*** output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Wed Feb  4 08:12:19 2026
+--- output-compile-0-t-t-f-experr/errors-compile-0-t-t-f	Wed Feb  4 08:13:29 2026
 ***************
 *** 231,238 ****
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable b".

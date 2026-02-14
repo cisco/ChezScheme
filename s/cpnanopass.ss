@@ -1032,6 +1032,8 @@
       (Expr : Expr (ir) -> Expr ()
         [(call ,info1 ,mdcl (foreign ,info ,[e]) ,[e*] ...)
          (guard (memq 'atomic (info-foreign-conv* info)))
+         (safe-assert (not (or (memq 'save-errno (info-foreign-conv* info))
+                               (memq 'save-last-error (info-foreign-conv* info)))))
          ;; convert atomic calls directly to `foreign-call`
          `(foreign-call ,info ,e ,e* ...)]
         [(foreign ,info ,[e])
@@ -1051,7 +1053,25 @@
          (%primcall #f #f $instantiate-code-object
            (fcallable ,info)
            (quote 0) ; hard-wiring "cookie" to 0
-           ,e)]))
+           ,(if (memq 'disable-interrupts (info-foreign-conv* info))
+                ;; need to build a wrapper procedure that does not have interrupt traps,
+                ;; so we can disable interrupts early enough and reenabled them late enough
+                (let* ([p (make-tmp 'proc)]
+                       [r (make-tmp 'result)]
+                       [interface (length (info-foreign-arg-type* info))]
+                       [x* (map (lambda (x) (make-tmp 'x)) (info-foreign-arg-type* info))]
+                       [lambda-info (make-info-lambda #f #f #f (list interface) #f (constant code-flag-no-interrupt-trap))])
+                   `(let ([,p ,e])
+                      (case-lambda ,lambda-info
+                        (clause (,x* ...) ,interface
+                          (seq
+                           (call ,(make-info-call #f #f #f #f #f) #f ,(lookup-primref 2 'disable-interrupts))
+                           (let ([,r (call ,(make-info-call #f #f #f #f #f) #f ,p ,x* ...)])
+                             (seq
+                              (call ,(make-info-call #f #f #f #f #f) #f ,(lookup-primref 2 '$enable-interrupts/no-event))
+                              ,r)))))))
+                ;; no extra wrapper needed
+                e))]))
 
     (define-pass np-recognize-loops : L4.75 (ir) -> L4.875 ()
       ; TODO: also recognize andmap/for-all, ormap/exists, for-each
@@ -3100,29 +3120,33 @@
         [(raw ,[e #f -> e oc tc]) (values `(raw ,e) oc tc)]
         [(seq ,[e0 #f -> e0 oc0 tc0] ,[e1 oc1 tc1])
          (values `(seq ,e0 ,e1) (combine-seq oc0 oc1) (combine-seq tc0 tc1))])
-      (CaseLambdaClause : CaseLambdaClause (ir force-overflow?) -> CaseLambdaClause ()
+      (CaseLambdaClause : CaseLambdaClause (ir force-overflow? no-trap-check?) -> CaseLambdaClause ()
         [(clause (,x* ...) ,mcp ,interface ,body)
          (safe-assert (not repeat?)) ; should always be initialized and/or reset to #f
-         `(clause (,x* ...) ,mcp ,interface
-            ,(or (let f ()
-                   (let-values ([(body oc tc) (Expr body #t)])
-                     (if repeat?
-                         (begin (set! repeat? #f) (f))
-                         (strip-redundant-overflow-and-trap
-                           (let ([body (if (eq? tc 'yes) (add-trap-check #t body) body)])
-                             (if (or force-overflow? (eq? oc 'yes))
-                                 `(overflow-check ,body)
-                                 body))))))
-                 ; punting badly here under assumption that we currently can't even generate
-                 ; misbehaved gotos, i.e., paths ending in a goto that don't do an overflow
-                 ; or trap check where the target label expects it to have been done.  if we
-                 ; ever violate this assumption on a regular basis, might want to revisit and
-                 ; do something better.
-                 ; ... test punt case by commenting out above for all but library.ss
-                 `(overflow-check (trap-check #f ,(insert-loop-traps body)))))])
+         (fluid-let ([request-trap-check (if no-trap-check? 'no request-trap-check)])
+           `(clause (,x* ...) ,mcp ,interface
+              ,(or (let f ()
+                     (let-values ([(body oc tc) (Expr body #t)])
+                       (if repeat?
+                           (begin (set! repeat? #f) (f))
+                           (strip-redundant-overflow-and-trap
+                             (let ([body (if (eq? tc 'yes) (add-trap-check #t body) body)])
+                               (if (or force-overflow? (eq? oc 'yes))
+                                   `(overflow-check ,body)
+                                   body))))))
+                   ; punting badly here under assumption that we currently can't even generate
+                   ; misbehaved gotos, i.e., paths ending in a goto that don't do an overflow
+                   ; or trap check where the target label expects it to have been done.  if we
+                   ; ever violate this assumption on a regular basis, might want to revisit and
+                   ; do something better.
+                   ; ... test punt case by commenting out above for all but library.ss
+                   `(overflow-check (trap-check #f ,(insert-loop-traps body))))))])
       (CaseLambdaExpr : CaseLambdaExpr (ir) -> CaseLambdaExpr ()
         [(case-lambda ,info ,[cl* (let ([libspec (info-lambda-libspec info)])
-                                    (and libspec (libspec-does-not-expect-headroom? libspec))) -> cl*] ...)
+                                    (and libspec (libspec-does-not-expect-headroom? libspec)))
+                                  (fx= (bitwise-and (info-lambda-flags info) (constant code-flag-no-interrupt-trap))
+                                       (constant code-flag-no-interrupt-trap))
+                                  -> cl*] ...)
          `(case-lambda ,info ,cl* ...)]))
 
     (define-pass np-rebind-on-ruined-path : L9.5 (ir) -> L9.5 ()
@@ -4681,14 +4705,22 @@
               [else (lookup-c-entry Scall-one-result)]))
           (define build-foreign-call
             (with-output-language (L13 Effect)
-              (lambda (info t0 t1* maybe-lvalue new-frame?)
-                (let ([atomic? (memq 'atomic (info-foreign-conv* info))]) ;; 'atomic => no callables, varargs is precise
+              (lambda (info t0 t1* maybe-lvalue maybe-errno-lvalue new-frame?)
+                (let* ([atomic? (memq 'atomic (info-foreign-conv* info))] ;; 'atomic => no callables, varargs is precise
+                       [alloc? (and atomic? (memq 'alloc (info-foreign-conv* info)))])
                   (safe-assert (or atomic? (not new-frame?)))
                   (let ([arg-type* (info-foreign-arg-type* info)]
                         [result-type (info-foreign-result-type info)]
                         [unboxed? (info-foreign-unboxed? info)]
                         [save-reg? (if atomic?
-                                       (lambda (reg) (not (reg-callee-save? reg)))
+                                       (lambda (reg) (or (not (reg-callee-save? reg))
+                                                         (and alloc?
+                                                              (or (meta-cond
+                                                                   [(real-register? '%ap) (eq? reg %ap)]
+                                                                   [else #f])
+                                                                  (meta-cond
+                                                                   [(real-register? '%trap) (eq? reg %trap)]
+                                                                   [else #f])))))
                                        (lambda (reg) #t))])
                     (let ([e (let-values ([(allocate c-args ccall c-res deallocate) (asm-foreign-call info)])
                               ; NB. allocate must save tc if not callee-save, and ccall
@@ -4700,11 +4732,11 @@
                                     ;; cp must hold our closure or our code object.  we choose code object
                                     `(set! ,(%tc-ref cp) (label-ref ,le-label 0)))
                                ,(with-saved-scheme-state
-                                 save-reg?
+                                  save-reg?
                                   (in) ; save just the required registers, e.g., %sfp
                                   (out %ac0 %ac1 %cp %xp %yp %ts %td scheme-args extra-regs)
                                   (fold-left (lambda (e t1 arg-type c-arg) `(seq ,(Scheme->C arg-type c-arg t1 #t unboxed?) ,e))
-                                    (ccall t0 atomic?) t1* arg-type* c-args))
+                                    (ccall t0 atomic? maybe-errno-lvalue) t1* arg-type* c-args))
                                ,(let ([e (deallocate)])
                                   (if maybe-lvalue
                                       (nanopass-case (Ltype Type) result-type
@@ -5487,9 +5519,11 @@
                  (restore-local-saves ,newframe-info)
                  (set! ,lvalue ,retval)))))]
         [(foreign-call ,info ,[t0] ,[t1*] ...)
-         (build-foreign-call info t0 t1* #f #t)]
+         (safe-assert (memq 'atomic (info-foreign-conv* info)))
+         (build-foreign-call info t0 t1* #f #f #t)]
         [(set! ,[lvalue] (foreign-call ,info ,[t0] ,[t1*] ...))
-         (build-foreign-call info t0 t1* lvalue #t)]
+         (safe-assert (memq 'atomic (info-foreign-conv* info)))
+         (build-foreign-call info t0 t1* lvalue #f #t)]
         [(set! ,[lvalue] (attachment-get ,reified? ,[t?]))
          (cond
           [(not t?)
@@ -5653,10 +5687,18 @@
         [(mvcall ,info ,mdcl ,t0? ,t1* ... (,t* ...))
          (build-tail-call info mdcl t0? t1* t*)]
         [(foreign-call ,info ,[t0] ,[t1*] ...)
-         `(seq
-            ; CAUTION: fv0 must hold return address when we call into C
-            ,(build-foreign-call info t0 t1* %ac0 #f)
-            (jump ,(get-ret-fv) (,%ac0)))]
+         ;; CAUTION: if not atomic, fv0 must hold return address when we call into C
+         (cond
+           [(or (memq 'save-errno (info-foreign-conv* info))
+                (memq 'save-last-error (info-foreign-conv* info)))
+            (let ([tmp (make-tmp 'errno)])
+              `(seq
+                ,(build-foreign-call info t0 t1* %ac0 tmp #f)
+                ,(build-mv-return (list %ac0 tmp))))]
+           [else
+            `(seq
+              ,(build-foreign-call info t0 t1* %ac0 #f #f)
+              (jump ,(get-ret-fv) (,%ac0)))])]
         [,rhs (do-return ,(Rhs ir))]
         [(values ,info ,[t]) (do-return ,t)]
         [(values ,info ,t* ...) (build-mv-return t*)]))
