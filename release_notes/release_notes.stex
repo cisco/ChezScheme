@@ -2935,9 +2935,9 @@ in fasl files does not generally make sense.
 
 \subsection{Out-of-memory improvements for \scheme{expt}, \scheme{logbit0}, and \scheme{logbit1} (10.4.0)}
 
-A call to \scheme{expt} with an integer base and an exponent too large
-to allow the result to fit in memory now raises a catchable exception
-rather than exhausting memory and aborting the process.
+A call to \scheme{expt} with an exact rational base and an integer exponent too large
+to allow the result to fit into a number representation now raises a catchable exception
+rather than exhausting memory and aborting the process. A call to
 \scheme{logbit0} with a large bit index and a non-negative second argument
 now returns the second argument directly, since the indicated bit is
 already clear, and \scheme{logbit1} with a large bit index and a
