@@ -3238,6 +3238,13 @@ floating point value (i.e., an infinity or NaN).  For example,
 \scheme{(rational-valued? +inf.0+0.0i)} incorrectly returned \scheme{#t}, but now
 returns \scheme{#f}.
 
+\subsection{Generic \protect\scheme{+} could be misoptimized with \protect\scheme{+nan.0} and non-real arguments (10.4.0)}
+
+A bug in the source optimizer (cp0) treated flonum NaN as a bottom value
+too aggressively when partially folding \scheme{+}. In expressions such as
+\scheme{(+ x +nan.0)} where \scheme{x} can be non-real, optimization could
+discard non-real contributions. The fold now uses a complex-NaN predicate for
+the generic \scheme{+} case so non-real contributions are preserved.
 \subsection{Calls to foreign-callable procedures may cause the process to terminate with
 error 0xC0000409 STATUS\_STACK\_BUFFER\_OVERRUN on 64-bit Windows (9.5.8)}
 
