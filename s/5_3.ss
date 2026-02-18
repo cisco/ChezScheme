@@ -1714,7 +1714,12 @@
                  ($impoops 'expt "undefined for values ~s and ~s" x y)
                  0)]
             [(eq? x 1) 1]
-            [(eq? x 2) (if (< y 0) (/ (ash 1 (- y))) (ash 1 y))]
+            [(eq? x -1) (if (odd? y) -1 1)]
+            [(eq? x 2)
+             (let ([abs-y (if (< y 0) (- y) y)])
+               (when (> abs-y (* (constant maximum-bignum-length) (constant bigit-bits)))
+                 ($oops 'expt "out of memory"))
+               (if (< y 0) (/ (ash 1 (- y))) (ash 1 y)))]
             [(flonum? x)
              ;; By Bradley Lucier (@gambiteer) for Gambit, relies
              ;; on some special cases already handled by the time
@@ -1765,6 +1770,10 @@
                  (let ([y (- y)])
                    (/ (expt (denominator x) y) (expt (numerator x) y)))
                  (/ (expt (numerator x) y) (expt (denominator x) y)))]
+            [(and (or (fixnum? x) (bignum? x))
+                  (> (* (if (< y 0) (- y) y) (integer-length x))
+                     (* (constant maximum-bignum-length) (constant bigit-bits))))
+             ($oops 'expt "out of memory")]
             [else
              (let ()
                (define (f x n)

@@ -984,12 +984,17 @@
           [(fixnum? k)
            (if (fx< k 0)
                (invalidindexoops 'logbit0 k)
-               ($logbit0 k n))]
+               (if (and (if (fixnum? n) (fxnonnegative? n) ($bigpositive? n))
+                        (>= k (integer-length n)))
+                   n
+                   ($logbit0 k n)))]
           [(bignum? k)
            (if (< k 0)
                (invalidindexoops 'logbit0 k)
-              ; $logbit0 requires k to be a fixnum
-               ($logand n ($lognot (ash 1 k))))]
+               (if (if (fixnum? n) (fxnonnegative? n) ($bigpositive? n))
+                   n
+                   ; $logbit0 requires k to be a fixnum
+                   ($logand n ($lognot (ash 1 k)))))]
           [else (invalidindexoops 'logbit0 k)])
         (exactintoops1 'logbit0 n)))
 
@@ -1003,8 +1008,10 @@
           [(bignum? k)
            (if (< k 0)
                (invalidindexoops 'logbit1 k)
-              ; $logbit1 requires k to be a fixnum
-               ($logor n (ash 1 k)))]
+               (if (if (fixnum? n) (fxnegative? n) (not ($bigpositive? n)))
+                   n
+                   ; $logbit1 requires k to be a fixnum
+                   ($logor n (ash 1 k))))]
           [else (invalidindexoops 'logbit1 k)])
         (exactintoops1 'logbit1 n)))
 
