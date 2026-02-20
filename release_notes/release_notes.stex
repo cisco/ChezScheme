@@ -2985,6 +2985,14 @@ A bug that affects compilation on 32-bit ARM systems has been fixed. The bug was
 when an offset to a floating-point field or array element was unaligned or too large to
 fit into the 12-bit encoding used for immediate offsets.
 
+\subsection{Generic \protect\scheme{+} misoptimized with \protect\scheme{+nan.0} and non-real arguments (10.4.0)}
+
+A bug in the source optimizer (cp0) treated flonum NaN as a bottom value
+too aggressively when partially folding \scheme{+}. In expressions such as
+\scheme{(+ x +nan.0)} where \scheme{x} can be non-real, optimization could
+discard non-real contributions. The fold now uses a complex-NaN predicate for
+the generic \scheme{+} case so non-real contributions are preserved.
+
 \subsection{Exit with failure on error from boot file (10.3.0)}
 
 When an error is encountered within a boot file---either raised

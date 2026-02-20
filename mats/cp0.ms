@@ -1239,11 +1239,13 @@
       (expand/optimize
         '(list
            (+) (+ 3) (+ 3 4) (+ x) (+ x 0) (+ 0 x) (+ x 3)
-           (+ x 3 4) (+ 3 x 4) (+ 3 x -3) (+ 3 x 4 y 5)
-           (+ +nan.0 x 4 y 5))))
+           (+ x +nan.0) (+ x 3 4) (+ 3 x 4) (+ 3 x -3) (+ 3 x 4 y 5)
+           (+ +nan.0 x 4 y 5)
+           (+ +nan.0+nan.0i x 4 y 5))))
     '(#2%list 0 3 7 (#2%+ x) (#2%+ x) (#2%+ x) (#2%+ 3 x)
-       (#2%+ 7 x) (#2%+ 7 x) (#2%+ x) (#2%+ 12 x y)
-       (begin (#2%+ x y) +nan.0)))
+       (#2%+ +nan.0 x) (#2%+ 7 x) (#2%+ 7 x) (#2%+ x) (#2%+ 12 x y)
+       (#2%+ +nan.0 x y)
+       (begin (#2%+ x y) +nan.0+nan.0i)))
   (equivalent-expansion?
     (parameterize ([#%$suppress-primitive-inlining #f]
                    [run-cp0 (lambda (cp0 x) (cp0 x))]
@@ -1251,11 +1253,13 @@
       (expand/optimize
         '(list
            (+) (+ 3) (+ 3 4) (+ x) (+ x 0) (+ 0 x) (+ x 3)
-           (+ x 3 4) (+ 3 x 4) (+ 3 x -3) (+ 3 x 4 y 5)
-           (+ +nan.0 x 4 y 5))))
+           (+ x +nan.0) (+ x 3 4) (+ 3 x 4) (+ 3 x -3) (+ 3 x 4 y 5)
+           (+ +nan.0 x 4 y 5)
+           (+ +nan.0+nan.0i x 4 y 5))))
     '(#3%list 0 3 7 x x x (#3%+ 3 x)
-       (#3%+ 7 x) (#3%+ 7 x) x (#3%+ 12 x y)
-       +nan.0))
+       (#3%+ +nan.0 x) (#3%+ 7 x) (#3%+ 7 x) x (#3%+ 12 x y)
+       (#3%+ +nan.0 x y)
+       +nan.0+nan.0i))
   (equivalent-expansion?
     (parameterize ([#%$suppress-primitive-inlining #f]
                    [run-cp0 (lambda (cp0 x) (cp0 x))]
@@ -1830,11 +1834,17 @@
       (expand/optimize
         '(list
            (+) (+ 3) (+ 3 4) (+ x) (+ x 0) (+ 0 x) (+ x 3)
-           (+ x 3 4) (+ 3 x 4) (+ 3 x -3) (+ 3 x 4 y 5)
-           (+ +nan.0 x 4 y 5))))
+           (+ x +nan.0) (+ x 3 4) (+ 3 x 4) (+ 3 x -3) (+ 3 x 4 y 5)
+           (+ +nan.0 x 4 y 5)
+           (+ +nan.0 x 4 y 5.0+0.25i)
+           (+ +nan.0+nan.0i x 4 y 5)
+           (+ +nan.0+nan.0i x 4 y 5.0+0.25i))))
     '(#2%list 0 3 7 (#2%+ x) (#2%+ x 0) (#2%+ x) (#2%+ x 3)
-       (#2%+ x 3 4) (#2%+ 3 x 4) (#2%+ 3 x -3) (#2%+ 3 x 4 y 5)
-       (begin (#2%+ +nan.0 x 4 y 5) +nan.0)))
+       (#2%+ x +nan.0) (#2%+ x 3 4) (#2%+ 3 x 4) (#2%+ 3 x -3) (#2%+ 3 x 4 y 5)
+       (#2%+ +nan.0 x 4 y 5)
+       (#2%+ +nan.0 x 4 y 5.0+0.25i)
+       (begin (#2%+ +nan.0+nan.0i x 4 y 5) +nan.0+nan.0i)
+       (begin (#2%+ +nan.0+nan.0i x 4 y 5.0+0.25i) +nan.0+nan.0i)))
   (equivalent-expansion?
     (parameterize ([#%$suppress-primitive-inlining #f]
                    [run-cp0 (lambda (cp0 x) (cp0 x))]
@@ -1843,11 +1853,25 @@
       (expand/optimize
         '(list
            (+) (+ 3) (+ 3 4) (+ x) (+ x 0) (+ 0 x) (+ x 3)
-           (+ x 3 4) (+ 3 x 4) (+ 3 x -3) (+ 3 x 4 y 5)
-           (+ +nan.0 x 4 y 5))))
+           (+ x +nan.0) (+ x 3 4) (+ 3 x 4) (+ 3 x -3) (+ 3 x 4 y 5)
+           (+ +nan.0 x 4 y 5)
+           (+ +nan.0 x 4 y 5.0+0.25i)
+           (+ +nan.0+nan.0i x 4 y 5)
+           (+ +nan.0+nan.0i x 4 y 5.0+0.25i))))
     '(#3%list 0 3 7 x (#3%+ x 0) x (#3%+ x 3)
-       (#3%+ x 3 4) (#3%+ 3 x 4) (#3%+ 3 x -3) (#3%+ 3 x 4 y 5)
-       +nan.0))
+       (#3%+ x +nan.0) (#3%+ x 3 4) (#3%+ 3 x 4) (#3%+ 3 x -3) (#3%+ 3 x 4 y 5)
+       (#3%+ +nan.0 x 4 y 5)
+       (#3%+ +nan.0 x 4 y 5.0+0.25i)
+       +nan.0+nan.0i
+       +nan.0+nan.0i))
+ ; regression for generic + with NaN and possible complex contributions
+  (eqv?
+    ((lambda (x) (+ x +nan.0))
+     +1.0i)
+    +nan.0+1.0i)
+  (eqv?
+    (+ +nan.0 (black-box +1.0i))
+    +nan.0+1.0i)
   (equivalent-expansion?
     (parameterize ([#%$suppress-primitive-inlining #f]
                    [run-cp0 (lambda (cp0 x) (cp0 x))]

@@ -2232,10 +2232,6 @@
                                     body)))))
                      ($sputprop 'prim 'key (foo 'prim)) ...)))))))
 
-      (define generic-nan?
-        (lambda (x)
-          (and (flonum? x) ($nan? x))))
-
       (define fl-nan?
         (lambda (x)
           ($nan? x)))
@@ -2243,6 +2239,10 @@
       (define cfl-nan?
         (lambda (z)
           (and ($nan? (cfl-real-part z)) ($nan? (cfl-imag-part z)))))
+
+      (define generic-cfl-nan?
+        (lambda (x)
+          (and (cflonum? x) (cfl-nan? x))))
 
       (define exact-zero?
         (lambda (x)
@@ -3053,7 +3053,7 @@
 
         ; handling nans here using the support for handling exact zero in
         ; the multiply case.  maybe shouldn't bother with nans anyway.
-        (partial-folder plus + + 0 generic-nan?)
+        (partial-folder plus + + 0 generic-cfl-nan?)
         (partial-folder plus fx+ + 0 (lambda (x) #f) 3)
         (partial-folder plus $fxx+ + 0 (lambda (x) #f))
         (r6rs-fixnum-partial-folder plus r6rs:fx+ fx+ + 0 (lambda (x) #f) 3)
