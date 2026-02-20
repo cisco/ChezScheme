@@ -151,7 +151,8 @@ as essentialy constant-time.
 \subsection{Type recovery improvements (10.4.0)}
 
 The compiler now avoids moving predicates from tail position when they may raise an error,
-even if the result is known in case of a success.
+even if the result is known in case of a success; and it records must-error information
+that is inferred by type recovery so that it can be used by other optimization passes.
 
 The type recovery pass has improved support for \scheme{exact}, \scheme{inexact},
 and similar functions; improved support for \scheme{quotient},
