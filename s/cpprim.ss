@@ -5459,7 +5459,7 @@
                     (if ,(%type-check mask-flonum type-flonum ,e-x)
                         ,e-x
                         ,(build-libcall #t src sexpr $real->flonum `(quote real->flonum) e-x)))))])
-      (define-inline 3 $real->flonum
+      (define-inline 2 $real->flonum
         [(who x) (build-$real->flonum src sexpr who x)])
     )
     (define-inline 2 $record

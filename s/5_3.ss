@@ -1445,7 +1445,7 @@
   (set-who! inexact (lambda (z) (convert-to-inexact z who)))
   (set-who! exact->inexact (lambda (z) (convert-to-inexact z who))))
 
-(set! $real->flonum
+(set! $real->flonum*
   (lambda (who z)
     (type-case z
       [(fixnum?) (fixnum->flonum z)]

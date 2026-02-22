@@ -1150,12 +1150,18 @@
     '(lambda (x) (when (bignum? x)
                    (#3%$real->flonum 'real->flonum x))))
   (cptypes-equivalent-expansion?
-    '(lambda (x) (when (and (ineger? x) (exact? x))
+    '(lambda (x) (when (and (integer? x) (exact? x))
                    (real->flonum x)))
-    '(lambda (x) (when (and (ineger? x) (exact? x))
+    '(lambda (x) (when (and (integer? x) (exact? x))
                    (if (#2%fixnum? x) ;the specialization uses #2%fixnum?
                        (#3%fixnum->flonum x)
                        (#3%$real->flonum 'real->flonum x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (real? x) (real->flonum x) 7))
+    '(lambda (x) (when (real? x) 7)))
+  (not (cptypes-equivalent-expansion?
+         '(lambda (x) (#2%real->flonum x) 7)
+         '(lambda (x) 7)))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (or (zero? x) (integer? x)) ; a subset of complex-rational? that is representable
                    (exact x)))
