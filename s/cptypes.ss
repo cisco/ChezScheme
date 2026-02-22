@@ -1632,13 +1632,13 @@ Notes:
                               (let-values ([(irfx retfx ntfx ttfx ftfx)
                                             (fold-call/primref/shallow (make-preinfo-call) (lookup-primref 3 'fixnum->flonum) (list n) ret (list (predicate-intersect r fixnum-pred)) ctxt ntypes oldtypes plxc)]
                                            [(irot retot ntot ttot ftot)
-                                            (fold-call/primref/shallow preinfo (lookup-primref 3 '$real->flonum) (list `(quote ,'real->flonum) n) ret (list `(quote ,'real->flonum) (predicate-substract r fixnum-pred)) ctxt ntypes oldtypes plxc)])
+                                            (fold-call/primref/shallow preinfo (lookup-primref level '$real->flonum) (list `(quote ,'real->flonum) n) ret (list `(quote ,'real->flonum) (predicate-substract r fixnum-pred)) ctxt ntypes oldtypes plxc)])
                                 `(if (call ,(make-preinfo-call) ,(lookup-primref 2 'fixnum?) ,n)
                                      ,irfx
                                      ,irot))))
                           ret ntypes #f #f)]))])
 
-      (define-specialize 2 $real->flonum
+      (define-specialize 2 ($real->flonum $real->flonum*)
         [(w n) (let ([rw (get-type w)]
                      [rn (get-type n)])
                  (when (predicate-implies? rw maybe-symbol-pred)
