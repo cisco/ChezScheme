@@ -2370,6 +2370,97 @@
   (ftype-pointer-null? (void*->obj-void* (make-ftype-pointer integer-8 0) 0))
   (ftype-pointer-null? (void*->obj-void* (make-ftype-pointer integer-8 -1) 1))
 
+  (begin
+    (define-ftype IUI (struct [a int] [b unsigned-int] [c int]))
+    (define-ftype unsigned-int-ptr (* unsigned-int))
+    (define get-int-uint-int (foreign-procedure "get_int_uint_int" (int unsigned-int int) (& IUI)))
+    (define get-int-uint-int-as-ptr (foreign-procedure "get_int_uint_int" (int unsigned-int int) (& IUI ftype-pointer)))
+    (define get-int-uint-int-as-uint* (foreign-procedure "get_int_uint_int" (int unsigned-int int) (& IUI unsigned-int-ptr)))
+    (define-ftype iui-callback (function ((& IUI)) int))
+    (define-ftype iui-callback-as-ptr (function ((& IUI ftype-pointer)) int))
+    (define-ftype iui-callback-as-uint* (function ((& IUI unsigned-int-ptr)) int))
+    (define call-with-int-uint-int (foreign-procedure "call_with_int_uint_int" ((* iui-callback) int unsigned-int int) int))
+    (define call-with-int-uint-int-as-ptr (foreign-procedure "call_with_int_uint_int" ((* iui-callback-as-ptr) int unsigned-int int) int))
+    (define call-with-int-uint-int-as-uint* (foreign-procedure "call_with_int_uint_int" ((* iui-callback-as-uint*) int unsigned-int int) int))
+    #t)
+
+  (let* ([addr (foreign-alloc (ftype-sizeof IUI))]
+         [p (make-ftype-pointer IUI addr)])
+    (get-int-uint-int p -10 3 100)
+    (and (= -9 (ftype-ref IUI (a) p))
+         (= -9 (ftype-ref int () p))
+         (= 6 (ftype-ref IUI (b) p))
+         (= 99 (ftype-ref IUI (c) p))
+         (begin (foreign-free addr) #t)))
+
+  (let* ([addr (foreign-alloc (ftype-sizeof IUI))]
+         [p (make-ftype-pointer int addr)])
+    (get-int-uint-int-as-ptr p -10 3 100)
+    (and (= -9 (ftype-ref int () p))
+         (= 6 (ftype-any-ref unsigned-int () p (ftype-sizeof int)))
+         (= 99 (ftype-ref int () p 2))
+         (begin (foreign-free addr) #t)))
+
+  (let* ([addr (foreign-alloc (ftype-sizeof IUI))]
+         [p (make-ftype-pointer unsigned-int addr)])
+    (get-int-uint-int-as-ptr p -10 3 100)
+    (and (= 4294967287 (ftype-ref unsigned-int () p))
+         (= 6 (ftype-ref unsigned-int () p 1))
+         (= 99 (ftype-ref unsigned-int () p 2))
+         (begin (foreign-free addr) #t)))
+
+  (let* ([bv (make-bytevector (ftype-sizeof IUI))]
+         [p (make-ftype-scheme-object-pointer bv)])
+    (get-int-uint-int-as-ptr p -10 3 100)
+    (and (= -9 (bytevector-s32-native-ref bv 0))
+         (= 6 (bytevector-s32-native-ref bv 4))
+         (= 99 (bytevector-s32-native-ref bv 8))))
+
+  (error? (let* ([addr (foreign-alloc (ftype-sizeof IUI))]
+                 [p (make-ftype-pointer IUI addr)])
+            (dynamic-wind
+             void
+             (lambda () (get-int-uint-int-as-uint* p -10 3 100))
+             (lambda () (foreign-free addr)))))
+
+  (error? (let* ([addr (foreign-alloc (ftype-sizeof IUI))]
+                 [p (make-ftype-pointer int addr)])
+            (dynamic-wind
+             void
+             (lambda () (get-int-uint-int p -10 3 100))
+             (lambda () (foreign-free addr)))))
+
+  (let* ([cb (lambda (p) ; IUI pointer
+               (+ (ftype-ref IUI (a) p)
+                  (ftype-ref int () p)
+                  (ftype-ref IUI (b) p)
+                  (ftype-ref IUI (c) p)))]
+         [p (make-ftype-pointer iui-callback cb)])
+    (and (= 87 (call-with-int-uint-int p -10 3 100))
+         (begin
+           (unlock-object (foreign-callable-code-object (ftype-pointer-address p)))
+           #t)))
+
+  (let* ([cb (lambda (p) ; generic pointer
+               (+ (ftype-any-ref int () p)
+                  (ftype-any-ref int () p (ftype-sizeof int))
+                  (ftype-any-ref int () p (* 2 (ftype-sizeof int)))))]
+         [p (make-ftype-pointer iui-callback-as-ptr cb)])
+    (and (= 96 (call-with-int-uint-int-as-ptr p -10 3 100))
+         (begin
+           (unlock-object (foreign-callable-code-object (ftype-pointer-address p)))
+           #t)))
+
+  (let* ([cb (lambda (p) ; unsigned-int pointer
+               (+ (quotient (ftype-ref unsigned-int () p) 16)
+                  (ftype-ref unsigned-int () p 1)
+                  (ftype-ref unsigned-int () p 2)))]
+         [p (make-ftype-pointer iui-callback-as-uint* cb)])
+    (and (= (+ (quotient 4294967287 16) 6 99) (call-with-int-uint-int-as-uint* p -10 3 100))
+         (begin
+           (unlock-object (foreign-callable-code-object (ftype-pointer-address p)))
+           #t)))
+
   (begin 
     (define-ftype A (struct [x uptr] [y uptr]))
     (define a (make-ftype-pointer A (foreign-alloc (ftype-sizeof A))))

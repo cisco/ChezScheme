@@ -1881,7 +1881,7 @@
                                      [(fp-scheme-object) 'uptr]
                                      [(fp-fixnum) 'uptr]
                                      [(fp-u8*) 'void*]
-                                     [(fp-fptd ,fptd) 'void*]
+                                     [(fp-ftd ,fptd) 'void*]
                                      [(fp-void) 'void]
                                      [else (if (eq? (subset-mode) 'system)
                                                (sorry! who "unhandled type in prototype ~s" type)

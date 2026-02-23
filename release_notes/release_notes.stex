@@ -161,6 +161,20 @@ and partial support for more numeric predicates,
 including \scheme{even?}, \scheme{odd?}, \scheme{positive?}, \scheme{negative?}
 and \scheme{real-valued?}.
 
+\subsection{Nongenerative ftype definitions (10.4.0)}
+
+The \scheme{define-ftype} form allows a \scheme{(nongenerative \var{uid})}
+clause, which is analogous to the same kind of clause in
+\scheme{define-record-type}. Supplying \var{uid} binds an ftype name
+as equivalent to any previous definition declaring the same \var{uid}, or
+it reports an error if the new definition is incompatible with a
+previous definition declaring \var{uid}.
+
+The \scheme{(& \var{ftype-name} \var{ftype-name})} argument or result
+type for a foreign procedure or callable now allows any pointer ftype
+for the second \var{ftype-name}, instead of allowing only the name
+\scheme{ftype-pointer} or the name \scheme{ftype-scheme-object-pointer}.
+
 \subsection{In-place vector copying (10.3.0)}
 
 The \scheme{vector-copy!} procedure copies a subsequence

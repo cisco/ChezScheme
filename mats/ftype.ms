@@ -124,6 +124,44 @@
      (define-ftype F1 (function (int) int))
      #t)
 
+   (error? ; bad uid
+     (define-ftype P1 ftype-pointer (nongenerative 100)))
+
+   (error? ; require gensym for uid
+     (define-ftype P1 ftype-pointer (nongenerative p)))
+
+   (error? ; must include a uid
+     (define-ftype I1 int (nongenerative)))
+
+   (error? ; bad syntax
+     (define-ftype I1 int (ng #{int of6r270eh1theews7ikmyh8vo-0})))
+
+   (error? ; bad syntax
+     (define-ftype I1 int nongenerative))
+
+   (error? ; must include a uid
+     (define-ftype (I1 int (nongenerative))))
+
+   (error? ; bad syntax
+     (define-ftype (I1 int (ng #{int of6r270eh1theews7ikmyh8vo-0}))))
+
+   (error? ; bad syntax
+     (define-ftype (I1 int nongenerative)))
+
+   (error? ; alias cannot have a uid
+     (define-ftype I1 int (nongenerative #{int of6r270eh1theews7ikmyh8vo-0})))
+
+   (begin
+     (define-ftype PI1 (* int) (nongenerative #{int of6r270eh1theews7ikmyh8vo-0}))
+     (define-ftype PI2 (* int) (nongenerative #{int of6r270eh1theews7ikmyh8vo-0}))
+     (define-ftype
+      (PI3 (* int) (nongenerative #{int of6r270eh1theews7ikmyh8vo-0}))
+      (PI4 (* long) (nongenerative #{int of6r270eh1theews7ikmyh8vo-2})))
+     #t)
+
+   (error? ; mismatch
+     (define-ftype PI5 (* long) (nongenerative #{int of6r270eh1theews7ikmyh8vo-0})))
+
    (error? ; function ftypes have unknown size
      (ftype-sizeof F1))
 
@@ -3074,6 +3112,36 @@
   (begin
     (load "testfile-ftype5.so")
     (ftype-pointer? ftype5-A (make-ftype-pointer ftype5-A 0)))
+
+  (begin
+    (with-output-to-file "testfile-ftype6.ss"
+      (lambda ()
+        (pretty-print
+         '(define-ftype ftype6-A (struct [a double] [b wchar])
+            (nongenerative #{ftype-6 jni7x5i9jgwk8q0utdook23gt-1})))
+        (pretty-print
+          '(define a (make-ftype-pointer ftype6-A (foreign-alloc (ftype-sizeof ftype6-A))))))
+      'replace)
+    (load "testfile-ftype6.ss")
+    #t)
+  (begin
+    (for-each separate-compile '(ftype6))
+    (load "testfile-ftype6.so")
+    #t)
+  (begin
+    ;; separate compile with same uid should be ok
+    (with-output-to-file "testfile-ftype6.ss"
+      (lambda ()
+        (pretty-print
+         '(define-ftype ftype6-A (union [a double] [b wchar])
+            (nongenerative #{ftype-6 jni7x5i9jgwk8q0utdook23gt-1}))))
+      'replace)
+    (for-each separate-compile '(ftype6))
+    #t)
+  (error?
+    ;; ...but fail on load
+    (load "testfile-ftype6.so"))
+
 )
 
 (mat ftype-bits

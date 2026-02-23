@@ -10585,6 +10585,8 @@ foreign.mo:Expected error in mat foreign-ftype: "unexpected function ftype name 
 foreign.mo:Expected error in mat foreign-ftype: "void*->void*: invalid foreign-procedure argument 0".
 foreign.mo:Expected error in mat foreign-ftype: "invalid syntax (ftype-ref integer-8 (void*->void* (make-ftype-pointer integer-8 0) 0))".
 foreign.mo:Expected error in mat foreign-ftype: "obj-void*->obj-void*: invalid foreign-procedure argument <ftype-pointer>".
+foreign.mo:Expected error in mat foreign-ftype: "get-int-uint-int-as-uint*: invalid foreign-procedure argument <ftype-pointer>".
+foreign.mo:Expected error in mat foreign-ftype: "get-int-uint-int: invalid foreign-procedure argument <ftype-pointer>".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
 foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
@@ -10630,6 +10632,16 @@ ftype.mo:Expected error in mat ftype: "unexpected function ftype name outside po
 ftype.mo:Expected error in mat ftype: "unexpected function ftype name outside pointer field F1".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype name outside pointer field F1".
 ftype.mo:Expected error in mat ftype: "unexpected function ftype name outside pointer field F1".
+ftype.mo:Expected error in mat ftype: "invalid syntax (define-ftype P1 ftype-pointer (nongenerative 100))".
+ftype.mo:Expected error in mat ftype: "not a gensym p".
+ftype.mo:Expected error in mat ftype: "invalid syntax (define-ftype I1 int (nongenerative))".
+ftype.mo:Expected error in mat ftype: "invalid syntax (define-ftype I1 int (ng #{int of6r270eh1theews7ikmyh8vo-0}))".
+ftype.mo:Expected error in mat ftype: "invalid syntax (define-ftype I1 int nongenerative)".
+ftype.mo:Expected error in mat ftype: "invalid syntax (define-ftype (I1 int (nongenerative)))".
+ftype.mo:Expected error in mat ftype: "invalid syntax (define-ftype (I1 int (ng #{int of6r270eh1theews7ikmyh8vo-0})))".
+ftype.mo:Expected error in mat ftype: "invalid syntax (define-ftype (I1 int nongenerative))".
+ftype.mo:Expected error in mat ftype: "nongenerative disallowed for alias I1".
+ftype.mo:Expected error in mat ftype: "make-record-type: incompatible record type int - different extra".
 ftype.mo:Expected error in mat ftype: "ftype-sizeof: function ftypes have unknown size".
 ftype.mo:Expected error in mat ftype: "cannot calculate offset for function index 10".
 ftype.mo:Expected error in mat ftype: "cannot calculate offset for function index 1".
@@ -10930,6 +10942,7 @@ ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-b
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-integer or non-word-size field unsupported (ftype-unlock! A (f f2 0 f3a) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-base-type field unsupported (ftype-unlock! A (g) x)".
 ftype.mo:Expected error in mat ftype-lock-operations: "locked operation on non-native field unsupported (ftype-unlock! A (h) x)".
+ftype.mo:Expected error in mat ftype-compile-file: "incompatible record type ftype-6 in testfile-ftype6.so".
 ftype.mo:Expected error in mat ftype-bits: "ftype-set!: invalid value 113886 for bit field of size 1".
 ftype.mo:Expected error in mat ftype-bits: "ftype-set!: invalid value #\a for bit field of size 3".
 ftype.mo:Expected error in mat ftype-bits: "ftype-set!: invalid value oops for bit field of size 14".
