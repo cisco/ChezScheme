@@ -3544,7 +3544,7 @@ fasl objects from a compressed file.
 \noindent
 If present, \var{situation} must be one of the symbols \scheme{load},
 \scheme{visit}, or \scheme{revisit}; it defaults to \scheme{load}.
-If present, \var{exterrnals} must be a vector; it defaults to
+If present, \var{externals} must be a vector; it defaults to
 \scheme{'#()}.
 
 \scheme{fasl-read} reads one object from
