@@ -503,7 +503,7 @@ ptr S_save_errno(void) {
 	if (!ucrt_get_errno_ptr) {
 	  HMODULE hm;
 	  get_errno_ptr_t new_get_errno_ptr;
-	  hm = LoadLibrary("api-ms-win-crt-runtime-l1-1-1.0.dll");
+	  hm = LoadLibrary("ucrtbase.dll");
 	  if (hm)
 	    new_get_errno_ptr = (get_errno_ptr_t)GetProcAddress(hm, "_errno");
 	  if (!new_get_errno_ptr)

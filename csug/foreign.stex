@@ -3203,7 +3203,7 @@ executable.
 \scheme{"msvcrt.dll"} dynamically.
 
 \item \scheme{ucrt}: \scheme{errno} is accessed from
-\scheme{"api-ms-win-crt-runtime-l1-1-1.0.dll"} dynamically.
+\scheme{"ucrtbase.dll"} dynamically.
 
 \end{itemize}
 
