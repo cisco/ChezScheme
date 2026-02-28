@@ -22,6 +22,7 @@
 #else
 #include "scheme.h"
 #endif
+#include <errno.h>
 
 EXPORT int id(int x) {
    return x;
@@ -135,3 +136,30 @@ EXPORT void windows_free(void *x) {
   free(x);
 }
 #endif
+
+EXPORT int set_errno_value(int x) {
+   errno = x;
+   return x + 1;
+}
+
+#ifdef _WIN32
+#include <windows.h>
+EXPORT int set_last_error_value(int x) {
+  SetLastError(x);
+  return x + 1;
+}
+#endif
+
+static int in_callback = 0;
+
+EXPORT int call_for_interrupt_test(int (*f)(int), int v) {
+  int result;
+  in_callback = 1;
+  result = f(v);
+  in_callback = 0;
+  return result;
+}
+
+EXPORT int is_in_callback_for_interrupt_test() {
+  return in_callback;
+}

@@ -68,7 +68,7 @@
 #endif
   
 #if !defined(PTHREADS)
-# define COMPARE_AND_SWAP_PTR(a, old, new) ((*(ptr *)(a) == TO_PTR(old)) ? (*(ptr)(a) = TO_PTR(new), 1) : 0)
+# define COMPARE_AND_SWAP_PTR(a, old, new) ((*(ptr *)(a) == TO_PTR(old)) ? (*(ptr *)(a) = TO_PTR(new), 1) : 0)
 #elif defined(_MSC_VER)
 # if ptr_bits == 64
 #  define COMPARE_AND_SWAP_PTR(a, old, new) (_InterlockedCompareExchange64((__int64 *)(a), (__int64)(new), (__int64)(old)) == (__int64)(old))

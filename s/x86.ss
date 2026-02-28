@@ -601,6 +601,16 @@
     [(op)
      `(asm ,info ,asm-unactivate-thread)])
 
+  (define-instruction value save-errno
+    [(op (z ur))
+     (safe-assert (eq? z %eax)) ; see get-tc
+     `(set! ,(make-live-info) ,z (asm ,info ,asm-save-errno))])
+
+  (define-instruction value save-last-error
+    [(op (z ur))
+     (safe-assert (eq? z %eax)) ; see get-tc
+     `(set! ,(make-live-info) ,z (asm ,info ,asm-save-last-error))])
+
   ; TODO: should we insist that asm-library-call preserve %ts and %td?
   ; TODO: risc architectures will have to take info-asmlib-save-ra? into account
   (define-instruction value asmlibcall
@@ -764,6 +774,7 @@
                      asm-inc-cc-counter asm-read-time-stamp-counter asm-read-performance-monitoring-counter
                      ; threaded version specific
                      asm-get-tc asm-activate-thread asm-deactivate-thread asm-unactivate-thread
+                     asm-save-errno asm-save-last-error
                      ; machine dependent exports
                      asm-sext-eax->edx)
 
@@ -2048,6 +2059,16 @@
       (lambda (code*)
         (emit bsr target code*))))
 
+  (define asm-save-errno
+    (let ([target `(literal 0 (entry ,(lookup-c-entry save-errno)))])
+      (lambda (code* dest) ; dest is ignored, as in asm-get-tc
+        (emit bsr target code*))))
+
+  (define asm-save-last-error
+    (let ([target `(literal 0 (entry ,(lookup-c-entry save-last-error)))])
+      (lambda (code* dest) ; dest is ignored, as in asm-get-tc
+        (emit bsr target code*))))
+
   (define asm-indirect-call
     (lambda (code* t)
       (Trivit (t)
@@ -2371,9 +2392,9 @@
                  [else (values (reg-list %eax) 0)])]
               [(fp-void) (values '() 0)]
               [else (values (reg-list %eax) 0)])]))
-        (define (add-deactivate adjust-active? fill-result-here? t0 result-type e)
+        (define (add-deactivate/errno adjust-active? save-last-error? maybe-errno-lvalue fill-result-here? t0 result-type e)
           (cond
-           [adjust-active?
+           [(or adjust-active? maybe-errno-lvalue)
             (let-values ([(result-regs result-fp-count) (get-result-registers fill-result-here? result-type)])
               (let ([save-and-restore
                      (lambda (regs fp-count e)
@@ -2383,11 +2404,32 @@
                                ,(push-registers regs fp-count 0)
                                ,e
                                ,(pop-registers regs fp-count 0))]))])
-                (%seq
-                 (set! ,%edx ,t0)
-                 ,(save-and-restore (list %edx) 0 (%inline deactivate-thread))
-                 ,e
-                 ,(save-and-restore result-regs result-fp-count `(set! ,%eax ,(%inline activate-thread))))))]
+                (cond
+                  [adjust-active?
+                   (%seq
+                    (set! ,%edx ,t0)
+                    ,(save-and-restore (list %edx) 0 (%inline deactivate-thread))
+                    ,e
+                    ,(save-and-restore result-regs result-fp-count
+                                       (let ([e `(set! ,%eax ,(%inline activate-thread))])
+                                         (cond
+                                           [maybe-errno-lvalue
+                                            (%seq
+                                             (set! ,%eax , (if save-last-error?
+                                                               (%inline save-last-error)
+                                                               (%inline save-errno)))
+                                             ,(save-and-restore (list %eax) 0 e)
+                                             (set! ,maybe-errno-lvalue ,%eax))]
+                                           [else e]))))]
+                  [else ; maybe-errno-lvalue
+                   (%seq
+                    ,e
+                    ,(save-and-restore result-regs result-fp-count
+                                       (%seq
+                                        (set! ,%eax ,(if save-last-error?
+                                                         (%inline save-last-error)
+                                                         (%inline save-errno)))
+                                        (set! ,maybe-errno-lvalue ,%eax))))])))]
            [else e]))
         (define (add-cleanup-compensate result-type e)
           ;; The convention for the calle to pop the return-pointer argument makes a mess,
@@ -2424,13 +2466,16 @@
             (with-values (do-stack arg-type* '() 0 result-type)
               (lambda (frame-size locs)
                 (returnem conv* frame-size locs result-type
-                  (lambda (t0 not-varargs?)
+                  (lambda (t0 not-varargs? maybe-errno-lvalue)
                     (let* ([fill-result-here? (fill-result-pointer-from-registers? result-type)]
                            [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
+                           [save-last-error? (if-feature windows (memq 'save-last-error conv*) #f)]
                            [t (if adjust-active? %edx t0)] ; need a register if `adjust-active?`
                            [live* (add-caller-save-registers (reg-list %eax %edx))]
                            [call
-                            (add-deactivate adjust-active? fill-result-here? t0 result-type
+                            (add-deactivate/errno
+                              adjust-active? save-last-error? maybe-errno-lvalue
+                              fill-result-here? t0 result-type
                               (add-cleanup-compensate result-type
                                 (cond
                                   [(memq 'i3nt-com conv*)

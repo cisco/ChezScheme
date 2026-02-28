@@ -679,6 +679,16 @@
      (safe-assert (eq? x %Carg1))
      `(asm ,info ,asm-unactivate-thread ,x)])
 
+  (define-instruction value save-errno
+    [(op (z ur))
+     (safe-assert (eq? z %rax)) ; see get-tc
+     `(set! ,(make-live-info) ,z (asm ,info ,asm-save-errno))])
+
+  (define-instruction value save-last-error
+    [(op (z ur))
+     (safe-assert (eq? z %rax)) ; see get-tc
+     `(set! ,(make-live-info) ,z (asm ,info ,asm-save-last-error))])
+
   ; TODO: risc architectures will have to take info-asmlib-save-ra? into account
   (define-instruction value asmlibcall
     [(op (z ur))
@@ -896,6 +906,7 @@
                      asm-cpuid
                      ; threaded version specific
                      asm-get-tc asm-activate-thread asm-deactivate-thread asm-unactivate-thread
+                     asm-save-errno asm-save-last-error
                      ; machine dependent exports
                      asm-sext-rax->rdx asm-store-single->double asm-kill asm-get-double)
 
@@ -2298,6 +2309,16 @@
       (lambda (code* arg-reg)
         (asm-helper-call code* target %rax))))
 
+  (define asm-save-errno
+    (let ([target `(x86_64-call 0 (entry ,(lookup-c-entry save-errno)))])
+      (lambda (code* dest-reg) ; dest is %rax
+        (asm-helper-call code* target %rax))))
+
+  (define asm-save-last-error
+    (let ([target `(x86_64-call 0 (entry ,(lookup-c-entry save-last-error)))])
+      (lambda (code* dest-reg) ; dest is %rax
+        (asm-helper-call code* target %rax))))
+
   (define asm-indirect-call
     (lambda (code* t . ignore)
       ; NB: c-call is already required to be a register or memory operand, so
@@ -2836,20 +2857,40 @@
                                    (loop (cdr types)
                                      (cons (load-int-stack isp) locs)
                                      regs fp-regs iint ifp (fx+ isp 8)))])))))])
-          (define (add-deactivate adjust-active? t0 live* result-live* e)
-            (cond
-             [adjust-active?
-              (let ([save-and-restore
-                     (lambda (regs e)
-                       (cond
-                        [(null? regs) e]
-                        [else (%seq ,(push-registers regs) ,e ,(pop-registers regs))]))])
+          (define (add-deactivate/errno adjust-active? save-last-error? maybe-errno-lvalue t0 live* result-live* e)
+            (let ([save-and-restore
+                   (lambda (regs e)
+                     (cond
+                       [(null? regs) e]
+                       [else (%seq ,(push-registers regs) ,e ,(pop-registers regs))]))])
+              (cond
+               [adjust-active?
                 (%seq
                  (set! ,%deact ,t0)
                  ,(save-and-restore (cons %deact live*) (as-c-call (%inline deactivate-thread)))
                  ,e
-                 ,(save-and-restore result-live* (as-c-call `(set! ,%rax ,(%inline activate-thread))))))]
-             [else e]))
+                 ,(save-and-restore result-live* (as-c-call
+                                                  (let ([e (as-c-call `(set! ,%rax ,(%inline activate-thread)))])
+                                                    (cond
+                                                      [maybe-errno-lvalue
+                                                       (%seq
+                                                        ,(as-c-call
+                                                          `(set! ,%rax ,(if save-last-error?
+                                                                            (%inline save-last-error)
+                                                                            (%inline save-errno))))
+                                                        ,(save-and-restore (list %rax) e)
+                                                        (set! ,maybe-errno-lvalue ,%rax))]
+                                                      [else e])))))]
+               [maybe-errno-lvalue
+                (%seq
+                 ,e
+                 ,(save-and-restore result-live* (as-c-call
+                                                  `(seq
+                                                    (set! ,%rax ,(if save-last-error?
+                                                                     (%inline save-last-error)
+                                                                     (%inline save-errno)))
+                                                    (set! ,maybe-errno-lvalue ,%rax)))))]
+               [else e])))
           (define (add-save-fill-target fill-result-here? frame-size locs)
             (cond
              [fill-result-here?
@@ -2954,13 +2995,14 @@
                    [fill-result-here? (result-fits-in-registers? result-classes)]
                    [result-reg* (get-result-regs fill-result-here? result-type result-classes)]
                    [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
+                   [save-last-error? (if-feature windows (memq 'save-last-error conv*) #f)]
                    [varargs-after (extract-varargs-after-conv conv*)])
               (with-values (do-args (if fill-result-here? (cdr arg-type*) arg-type*))
                 (lambda (frame-size nfp locs live* fp-live*)
                   (with-values (add-save-fill-target fill-result-here? frame-size locs)
                     (lambda (frame-size locs)
                       (returnem frame-size locs
-                        (lambda (t0 atomic?)
+                        (lambda (t0 atomic? maybe-errno-lvalue)
                           (let* ([t (if adjust-active? %deact t0)] ; need a register if `adjust-active?`
                                  [kill* (add-caller-save-registers result-reg*)]
                                  [set-varargs-reg?
@@ -2969,7 +3011,9 @@
                                   ;; we don't know if a non-atomic callee may be a varargs function, so we always set it.
                                   (not (and atomic? (not varargs-after)))]
                                  [c-call
-                                  (add-deactivate adjust-active? t0 (append fp-live* live*)
+                                  (add-deactivate/errno
+                                   adjust-active? save-last-error? maybe-errno-lvalue
+                                   t0 (append fp-live* live*)
                                    result-reg*
                                    (if-feature windows
                                      (%seq

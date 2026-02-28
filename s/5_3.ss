@@ -60,19 +60,19 @@
 
 (define cflop1
    (lambda (x)
-      (foreign-procedure x (double-float) double-float)))
+      (foreign-procedure __atomic x (double-float) double-float)))
 
 (define cflop2
    (lambda (x)
-      (foreign-procedure x (double-float double-float) double-float)))
+      (foreign-procedure __atomic x (double-float double-float) double-float)))
 
 (define schemeop1
    (lambda (x)
-      (foreign-procedure x (scheme-object) scheme-object)))
+      (foreign-procedure __atomic __alloc x (scheme-object) scheme-object)))
 
 (define schemeop2
    (lambda (x)
-      (foreign-procedure x (scheme-object scheme-object) scheme-object)))
+      (foreign-procedure __atomic __alloc x (scheme-object scheme-object) scheme-object)))
 
 (let ()
 
@@ -81,10 +81,10 @@
 (define float (schemeop1 "(cs)s_float"))
 
 (define big=
-  (foreign-procedure "(cs)s_big_eq" (scheme-object scheme-object)
+  (foreign-procedure __atomic "(cs)s_big_eq" (scheme-object scheme-object)
     boolean))
 (define big<
-  (foreign-procedure "(cs)s_big_lt" (scheme-object scheme-object)
+  (foreign-procedure __atomic "(cs)s_big_lt" (scheme-object scheme-object)
     boolean))
 (define big-negate (schemeop1 "(cs)s_big_negate"))
 (define integer-ash (schemeop2 "(cs)s_ash"))
@@ -268,7 +268,7 @@
        (schoolbook-intremainder n d)])))
 
 (define integer-gcd
-  (let ([$bignum-trailing-zero-bits (foreign-procedure "(cs)s_big_trailing_zero_bits" (ptr) ptr)])
+  (let ([$bignum-trailing-zero-bits (foreign-procedure __atomic "(cs)s_big_trailing_zero_bits" (ptr) ptr)])
     (lambda (n d)
       (cond
         [(and (bignum? n) (bignum? d))
@@ -2522,7 +2522,7 @@
           [else (nonnumber-error who x)])])))
 
 (set! $*
-  (let ([$bignum-trailing-zero-bits (foreign-procedure "(cs)s_big_trailing_zero_bits" (ptr) ptr)])
+  (let ([$bignum-trailing-zero-bits (foreign-procedure __atomic "(cs)s_big_trailing_zero_bits" (ptr) ptr)])
    (lambda (who x y)
     (cond
       [(and (fixnum? y) ($fxu< (fx+/wraparound y 1) 3))
@@ -3111,7 +3111,7 @@
 (set-who! bitwise-first-bit-set
   (let ()
     (define $big-first-bit-set
-      (foreign-procedure "(cs)s_big_first_bit_set" (ptr) ptr))
+      (foreign-procedure __atomic "(cs)s_big_first_bit_set" (ptr) ptr))
     (lambda (n)
       (cond
         [(fixnum? n) (fxfirst-bit-set n)]
@@ -3123,7 +3123,7 @@
    ; big-positive-bit-field assumes n is a positive bignum, start and
    ; end are nonnegative fixnums, and end > start
     (define big-positive-bit-field
-      (foreign-procedure "(cs)s_big_positive_bit_field" (ptr ptr ptr) ptr))
+      (foreign-procedure __atomic __alloc "(cs)s_big_positive_bit_field" (ptr ptr ptr) ptr))
     (define (generic-bit-field n start end)
       (bitwise-and
         ($sra who n start)
@@ -3212,7 +3212,7 @@
   (set! pseudo-random-generator?
         (lambda (x) (is-pseudo-random-generator? x)))
 
-  (let ([init! (foreign-procedure "(cs)s_random_state_init" (scheme-object unsigned) void)])
+  (let ([init! (foreign-procedure __atomic "(cs)s_random_state_init" (scheme-object unsigned) void)])
     (set! make-pseudo-random-generator
           (lambda ()
             (let ([s (create-pseudo-random-generator 0.0 0.0 0.0 0.0 0.0 0.0)]
@@ -3229,9 +3229,9 @@
         (init! s (bitwise-and n #xFFFFFFFF)))))
 
   (set-who! pseudo-random-generator-next!
-     (let ([random-double (foreign-procedure "(cs)s_random_state_next_double"
+     (let ([random-double (foreign-procedure __atomic "(cs)s_random_state_next_double"
                             (scheme-object) double)]
-           [random-int (foreign-procedure "(cs)s_random_state_next_integer"
+           [random-int (foreign-procedure __atomic "(cs)s_random_state_next_integer"
                             (scheme-object uptr) uptr)])
        (case-lambda
         [(s)
@@ -3284,7 +3284,7 @@
               (inexact->exact (pseudo-random-generator-x22 s)))))
 
   (let ([vector->prgen
-         (let ([ok? (foreign-procedure "(cs)s_random_state_check" (double double double double double double) boolean)])
+         (let ([ok? (foreign-procedure __atomic "(cs)s_random_state_check" (double double double double double double) boolean)])
            (lambda (who s v)
              (define (bad-vector)
                ($oops who "not a valid pseudo-random generator state vector ~s" v))
@@ -3318,9 +3318,9 @@
         (vector->prgen who s vec)))))
 
 (set! random
-   (let ([fxrandom (foreign-procedure "(cs)s_fxrandom"
+   (let ([fxrandom (foreign-procedure __atomic __alloc "(cs)s_fxrandom"
                       (scheme-object) scheme-object)]
-         [flrandom (foreign-procedure "(cs)s_flrandom"
+         [flrandom (foreign-procedure __atomic __alloc "(cs)s_flrandom"
                       (scheme-object) scheme-object)])
       (lambda (x)
          (cond
@@ -3335,9 +3335,9 @@
 
 (set! random-seed ; must follow \#-
    (let ([limit #xFFFFFFFF]
-         [get-seed (foreign-procedure "(cs)s_random_seed"
+         [get-seed (foreign-procedure __atomic "(cs)s_random_seed"
                       () unsigned-32)]
-         [set-seed (foreign-procedure "(cs)s_set_random_seed"
+         [set-seed (foreign-procedure __atomic "(cs)s_set_random_seed"
                       (unsigned-32) void)])
       (case-lambda
          [() (get-seed)]

@@ -10391,6 +10391,7 @@ cfl.mo:Expected error in mat cfl=: "cfl=: a is not a cflonum".
 cfl.mo:Expected error in mat cfl=: "cfl=: a is not a cflonum".
 cfl.mo:Expected error in mat cfl=: "incorrect argument count in call (cfl=)".
 foreign.mo:Expected error in mat load-shared-object: "load-shared-object: invalid path 3".
+foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure convention __get_last_error".
 foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
@@ -10398,7 +10399,11 @@ foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid 
 foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
 foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle foo".
 foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure convention __bad_conv".
+foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __atomic".
 foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __collect_safe".
+foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __get_last_error".
+foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __errno".
+foreign.mo:Expected error in mat foreign-procedure: "missing __atomic before foreign-procedure convention __alloc".
 foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <int>".
 foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <int>".

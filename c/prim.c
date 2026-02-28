@@ -137,6 +137,10 @@ static void create_c_entry_vector(void) {
     S_install_c_entry(CENTRY_deactivate_thread, proc2ptr(Sdeactivate_thread));
     S_install_c_entry(CENTRY_unactivate_thread, proc2ptr(S_unactivate_thread));
 #endif /* PTHREADS */
+    S_install_c_entry(CENTRY_save_errno, proc2ptr(S_save_errno));
+#ifdef WIN32
+    S_install_c_entry(CENTRY_save_last_error, proc2ptr(S_save_last_error));
+#endif
     S_install_c_entry(CENTRY_handle_values_error, proc2ptr(S_handle_values_error));
     S_install_c_entry(CENTRY_handle_mvlet_error, proc2ptr(S_handle_mvlet_error));
     S_install_c_entry(CENTRY_handle_arg_error, proc2ptr(S_handle_arg_error));
@@ -167,6 +171,10 @@ void S_check_c_entry_vector() {
           || i == CENTRY_unactivate_thread)
         continue;
 #endif /* NOT PTHREADS */
+#ifndef WIN32
+      if (i == CENTRY_save_last_error)
+        continue;
+#endif
       if (Svector_ref(S_G.c_entry_vector, i) == Sfalse) {
         fprintf(stderr, "c_entry_vector entry %d is uninitialized\n", i);
         S_abnormal_exit();

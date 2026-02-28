@@ -27,6 +27,10 @@ uninstall: $(ZUO_DEP)
 test-one: $(ZUO_DEP)
 	+ $(ZUO) $(workarea) test-one MAKE="$(MAKE)"
 
+.PHONY: test-one-safe
+test-one-safe: $(ZUO_DEP)
+	+ $(ZUO) $(workarea) test-one-safe MAKE="$(MAKE)"
+
 .PHONY: test-some-fast
 test-some-fast: $(ZUO_DEP)
 	+ $(ZUO) $(workarea) test-some-fast MAKE="$(MAKE)"

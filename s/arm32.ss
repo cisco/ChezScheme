@@ -681,6 +681,15 @@
          `(set! ,(make-live-info) ,ulr (asm ,null-info ,asm-kill))
          `(asm ,info ,asm-unactivate-thread ,x ,u ,ulr)))])
 
+  (define-instruction value save-errno
+    [(op (z ur))
+     (safe-assert (eq? z %Cretval))
+     (let ([u (make-tmp 'u)] [ulr (make-precolored-unspillable 'ulr %lr)])
+       (seq
+         `(set! ,(make-live-info) ,u (asm ,null-info ,asm-kill))
+         `(set! ,(make-live-info) ,ulr (asm ,null-info ,asm-kill))
+         `(set! ,(make-live-info) ,z (asm ,info ,asm-save-errno ,u ,ulr))))])
+
   (define-instruction value (asmlibcall)
     [(op (z ur))
      (let ([u (make-tmp 'u)])
@@ -873,6 +882,7 @@
                      ; threaded version specific
                      asm-get-tc
                      asm-activate-thread asm-deactivate-thread asm-unactivate-thread
+                     asm-save-errno
                      ; machine dependent exports
                      asm-kill
                      info-vpush-reg info-vpush-n)
@@ -2200,6 +2210,11 @@
       (lambda (code* arg-reg jmp-tmp . ignore)
         (asm-helper-call code* target #f jmp-tmp))))
 
+  (define asm-save-errno
+    (let ([target `(arm32-call 0 (entry ,(lookup-c-entry save-errno)))])
+      (lambda (code* dest jmp-tmp . ignore)
+        (asm-helper-call code* target #f jmp-tmp))))
+
   (define-who asm-return-address
     (lambda (dest l incr-offset next-addr)
       (make-rachunk dest l incr-offset next-addr
@@ -2789,15 +2804,29 @@
                              [(8) (list %Cretval %r1)]
                              [else (list %Cretval)])]))]
                       [else (list %r0)]))]
-                 [add-deactivate
-                  (lambda (adjust-active? t0 live* result-live* k)
+                 [add-deactivate/errno
+                  (lambda (adjust-active? maybe-errno-lvalue t0 live* result-live* k)
                     (cond
                      [adjust-active?
                       (%seq
                        (set! ,%ac0 ,t0)
                        ,(save-and-restore live* (%inline deactivate-thread))
                        ,(k %ac0)
-                       ,(save-and-restore result-live* `(set! ,%Cretval ,(%inline activate-thread))))]
+                       ,(save-and-restore result-live* (let ([e `(set! ,%Cretval ,(%inline activate-thread))])
+                                                         (cond
+                                                           [maybe-errno-lvalue
+                                                            (%seq
+                                                             (set! ,%Cretval ,(%inline save-errno))
+                                                             ,(save-and-restore (list %Cretval) e)
+                                                             (set! ,maybe-errno-lvalue ,%Cretval))]
+                                                           [else
+                                                            e]))))]
+                     [maybe-errno-lvalue
+                      (%seq
+                       ,(k t0)
+                       ,(save-and-restore result-live* (%seq
+                                                        (set! ,%Cretval ,(%inline save-errno))
+                                                        (set! ,maybe-errno-lvalue ,%Cretval))))]
                      [else (k t0)]))])
           (lambda (info)
             (safe-assert (reg-callee-save? %tc)) ; no need to save-restore
@@ -2828,11 +2857,12 @@
                          ;; stash extra argument on the stack to be retrieved after call and filled with the result:
                          (cons (load-int-stack args-frame-size) locs)]
                         [else locs]))
-                     (lambda (t0 not-varargs?)
+                     (lambda (t0 not-varargs? maybe-errno-lvalue)
                        (add-fill-result fill-result-here? result-type args-frame-size
-                                        (add-deactivate adjust-active? t0 live* result-reg*
-                                                        (lambda (t0)
-                                                          `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0)))))
+                                        (add-deactivate/errno
+                                         adjust-active? maybe-errno-lvalue t0 live* result-reg*
+                                         (lambda (t0)
+                                           `(inline ,(make-info-kill*-live* (add-caller-save-registers result-reg*) live*) ,%c-call ,t0)))))
                      (nanopass-case (Ltype Type) result-type
                        [(fp-double-float)
                         (if varargs?
