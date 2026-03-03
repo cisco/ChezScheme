@@ -3019,6 +3019,13 @@ too aggressively when partially folding \scheme{+}. In expressions such as
 discard non-real contributions. The fold now uses a complex-NaN predicate for
 the generic \scheme{+} case so non-real contributions are preserved.
 
+\subsection{Fix interaction of pbchunk and atomic foreign procedures (10.4.0)}
+
+The output of \scheme{pbchunk-convert-file} could be incorrect in the
+case of an inlined foreign call within certain blocks. The generated
+source was ill-formed in the case of a block that has too many entries
+and exits around unconvertible code to productively compile via C.
+
 \subsection{Exit with failure on error from boot file (10.3.0)}
 
 When an error is encountered within a boot file---either raised

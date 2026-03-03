@@ -919,7 +919,7 @@
            (next))
 
          (define (call-form _op)
-           (emit-foreign-call o instr)
+           (emit-foreign-call o instr emit-pre emit-post)
            (next))
 
          (define-syntax (emit stx)
@@ -1081,12 +1081,13 @@
 
          (instruction-cases instr emit))])))
 
-(define (emit-foreign-call o instr)
+(define (emit-foreign-call o instr emit-pre emit-post)
   (let* ([proto-index (instr-dri-imm instr)]
          [proto (ormap (lambda (p) (and (eqv? (cdr p) proto-index) (car p)))
                        (constant pb-prototype-table))])
     (unless proto ($oops 'pbchunk "could not find foreign-call prototype"))
-    (emit-c o "  ")
+    (emit-pre)
+    (emit-c o " ")
     (case (car proto)
       [(void) (void)]
       [(double) (emit-c o "fpregs[Cfpretval] = ")]
@@ -1124,7 +1125,9 @@
     (case (car proto)
       [(void*) (emit-c o ")")] ; close `TO_PTR`
       [else (void)])
-    (emit-c o "); /* pb_call ~a */\n" proto-index)))
+    (emit-c o ");")
+    (emit-post)
+    (emit-c o " /* pb_call ~a */\n" proto-index)))
 
 (define (extract-name name)
   (fasl-case* name
