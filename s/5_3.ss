@@ -3111,7 +3111,7 @@
 (set-who! bitwise-first-bit-set
   (let ()
     (define $big-first-bit-set
-      (foreign-procedure __atomic "(cs)s_big_first_bit_set" (ptr) ptr))
+      (foreign-procedure __atomic __alloc "(cs)s_big_first_bit_set" (ptr) ptr))
     (lambda (n)
       (cond
         [(fixnum? n) (fxfirst-bit-set n)]
