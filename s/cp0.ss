@@ -3233,6 +3233,7 @@
 
         (fold (fixnum->flonum fixnum?) flonum? #2%inexact)
         (fold (flonum->fixnum flonum?) target-fixnum? (lambda (x) (#2%truncate (#2%exact x))))
+        (fold ($other-real->flonum (lambda (x) (or (target-bignum? x) (ratnum? x)))) flonum? #2%inexact)
 
         (fold (fxzero? tfixnum?) boolean? zero?)
         (fold (fxnegative? tfixnum?) boolean? negative?)

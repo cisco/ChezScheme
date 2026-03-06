@@ -1148,6 +1148,11 @@
     '(lambda (x) (when (bignum? x)
                    (real->flonum x)))
     '(lambda (x) (when (bignum? x)
+                   (#3%$other-real->flonum x))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (or (bignum? x) (flonum? x))
+                   (real->flonum x)))
+    '(lambda (x) (when (or (bignum? x) (flonum? x))
                    (#3%$real->flonum 'real->flonum x))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (and (integer? x) (exact? x))
@@ -1156,6 +1161,13 @@
                    (if (#2%fixnum? x) ;the specialization uses #2%fixnum?
                        (#3%fixnum->flonum x)
                        (#3%$real->flonum 'real->flonum x)))))
+  (cptypes-equivalent-expansion?
+    '(lambda (x) (when (number? x)
+                   (#2%real->flonum x)))
+    '(lambda (x) (when (number? x)
+                   (if (#2%fixnum? x) ;the specialization uses #2%fixnum?
+                       (#3%fixnum->flonum x)
+                       (#2%$real->flonum 'real->flonum x)))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (real? x) (real->flonum x) 7))
     '(lambda (x) (when (real? x) 7)))

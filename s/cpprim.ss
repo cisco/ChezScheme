@@ -742,6 +742,7 @@
                              (set! ,(%mref ,t ,offset) ,(car args))
                              ,(f (cdr args) (fx+ offset (constant ptr-bytes)))))))))))))
     (define build-$real->flonum
+      ; $real->flonum assumes the generated code will raise an error at runtime if x is not real
       (lambda (src sexpr who x)
         (if (known-flonum-result? x)
             x
@@ -5459,8 +5460,16 @@
                     (if ,(%type-check mask-flonum type-flonum ,e-x)
                         ,e-x
                         ,(build-libcall #t src sexpr $real->flonum `(quote real->flonum) e-x)))))])
-      (define-inline 2 $real->flonum
+      (define-inline 3 $real->flonum
         [(who x) (build-$real->flonum src sexpr who x)])
+      (define-inline 2 $real->flonum
+        [(who x)
+         (nanopass-case (L7 Expr) who
+           [(quote ,d)
+            (guard (symbol? d))
+            ; assume the generated code will raise an error at runtime if x is not real
+            (build-$real->flonum src sexpr who x)]
+           [else #f])])
     )
     (define-inline 2 $record
       [(tag . args) (build-$record tag args)])

@@ -439,7 +439,7 @@
   (define-library-entry ($real->flonum who x)
     (cond
       [(fixnum? x) (fixnum->flonum x)]
-      [(or (bignum? x) (ratnum? x)) ($real->flonum* who x)]
+      [(or (bignum? x) (ratnum? x)) ($other-real->flonum x)]
       [else (real-oops who x)]))
 )
 

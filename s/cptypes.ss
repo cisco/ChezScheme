@@ -1630,6 +1630,7 @@ Notes:
                  [(predicate-implies? r fixnum-pred)
                   (fold-call/primref/shallow preinfo (lookup-primref 3 'fixnum->flonum) (list n) ret (list r) ctxt ntypes oldtypes plxc)]
                  [(predicate-disjoint? r fixnum-pred)
+                  ; $real->flonum does not inline the test for fixnums 
                   (fold-call/primref/shallow preinfo (lookup-primref 3 '$real->flonum) (list `(quote ,'real->flonum) n) ret (list `(quote ,'real->flonum) r) ctxt ntypes oldtypes plxc)]
                  [else
                   (values (build-let1 ctxt n r
@@ -1643,13 +1644,15 @@ Notes:
                                      ,irot))))
                           ret ntypes #f #f)]))])
 
-      (define-specialize 2 ($real->flonum $real->flonum*)
+      (define-specialize 2 $real->flonum
         [(w n) (let ([rw (get-type w)]
                      [rn (get-type n)])
                  (when (predicate-implies? rw maybe-symbol-pred)
                    (let ([pr (cond
                                [(predicate-implies? rn fixnum-pred)
                                 (lookup-primref 3 'fixnum->flonum)]
+                               [(predicate-implies? rn bignum-or-ratnum-pred)
+                                (lookup-primref 3 '$other-real->flonum)]
                                [(predicate-implies? rn flonum-pred)
                                 (lookup-primref 3 'fl+)]
                                [else #f])])

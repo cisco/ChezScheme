@@ -1445,13 +1445,9 @@
   (set-who! inexact (lambda (z) (convert-to-inexact z who)))
   (set-who! exact->inexact (lambda (z) (convert-to-inexact z who))))
 
-(set! $real->flonum*
-  (lambda (who z)
-    (type-case z
-      [(fixnum?) (fixnum->flonum z)]
-      [(bignum? ratnum?) (float z)]
-      [(flonum?) z]
-      [else (nonreal-error who z)])))
+(set! $other-real->flonum
+  ; assume x is a bignum or ratnum
+  (lambda (x) (float x)))
 
 (let ()
   (define convert-to-exact
