@@ -22,25 +22,27 @@
         (mutable alloc-count)
         (mutable time-ns)
         (mutable time-s)
-        (immutable mutex))
-      (nongenerative #{cost-center fgbx8g23emx4rf0txn2sr0-1})
+        (immutable mutex)
+        (immutable name))
+      (nongenerative #{cost-center k3k8qugwirxkqxmvxdy2jz0xm-1})
       (opaque #t)
       (protocol
         (lambda (new)
-          (lambda ()
-            (new (make-thread-parameter 0) 0 0 0 0 (make-mutex))))))
+          (lambda (name)
+            (new (make-thread-parameter 0) 0 0 0 0 (make-mutex) name)))))
     (define-record-type ($cost-center $make-cost-center $cost-center?)
       (fields
         (mutable level)
         (mutable instr-count)
         (mutable alloc-count)
         (mutable time-ns)
-        (mutable time-s))
-      (nongenerative #{cost-center fgbx8g23emx4rf0txn2sr0-2})
+        (mutable time-s)
+        (immutable name))
+      (nongenerative #{cost-center k3k8qugwirxkqxmvxdy2jz0xm-2})
       (opaque #t)
       (protocol
         (lambda (new)
-          (lambda () (new 0 0 0 0 0))))))
+          (lambda (name) (new 0 0 0 0 0 name))))))
 
   (define-syntax cc-level
     (lambda (x)
@@ -129,6 +131,11 @@
       (unless ($cost-center? cc) ($oops who "~s is not a cost center" cc))
       (ash ($cost-center-alloc-count cc) (constant log2-ptr-bytes))))
 
+  (set-who! cost-center-name
+    (lambda (cc)
+      (unless ($cost-center? cc) ($oops who "~s is not a cost center" cc))
+      ($cost-center-name cc)))
+
   (set-who! cost-center-time
     (lambda (cc)
       (unless ($cost-center? cc) ($oops who "~s is not a cost center" cc))
@@ -144,7 +151,13 @@
 
   (set! cost-center? (lambda (x) ($cost-center? x)))
 
-  (set! make-cost-center (lambda () ($make-cost-center)))
+  (set-who! make-cost-center
+            (case-lambda
+              [() ($make-cost-center #f)]
+              [(name)
+               (unless (or (not name) (symbol? name))
+                 ($oops who "~s is not a symbol or #f" name))
+               ($make-cost-center name)]))
 
   (set! with-cost-center
     (rec with-cost-center
@@ -154,8 +167,10 @@
 
   (record-writer (record-type-descriptor $cost-center)
     (lambda (x p wr)
-      (let ([ns ($cost-center-time-ns x)] [s ($cost-center-time-s x)])
-        (fprintf p "#<cost center~[~2*~:; t=~d.~9,'0d~]~[~:; i=~:*~s~]~[~:; a=~:*~s~]>"
+      (let ([ns ($cost-center-time-ns x)] [s ($cost-center-time-s x)]
+            [name ($cost-center-name x)])
+        (fprintf p "#<cost center~[~*~:; ~a~]~[~2*~:; t=~d.~9,'0d~]~[~:; i=~:*~s~]~[~:; a=~:*~s~]>"
+          (if name 1 0) name
           (+ ns s) s ns
           ($cost-center-instr-count x)
           ($cost-center-alloc-count x))))))
