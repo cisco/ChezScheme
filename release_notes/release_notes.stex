@@ -2959,6 +2959,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Fix improper boolean returned by \scheme{eq-hashtable-ref-cell} (10.4.0)}
+Due to a typo in its signature, \scheme{eq-hashtable-ref-cell} was returning
+an incorrectly constructed \scheme{#f}, which satisfied \scheme{boolean?} (but
+was \scheme{eq?} to neither \scheme{#t} nor \scheme{#f}) and was considered a
+true value.
+
 \subsection{Out-of-memory improvements for \scheme{expt}, \scheme{logbit0}, and \scheme{logbit1} (10.4.0)}
 
 A call to \scheme{expt} with an exact rational base and an integer exponent too large
