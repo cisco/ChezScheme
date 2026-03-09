@@ -2388,7 +2388,7 @@
   ($read-performance-monitoring-counter [flags single-valued])
   ($read-time-stamp-counter [flags single-valued])
   ($real->flonum [sig [(maybe-who real) -> (flonum)]] [flags single-valued arith-op mifoldable discard safeongoodargs cptypes2])
-  ($other-real->flonum [sig [(sub-real) -> (flonum)]] [flags single-valued arith-op cp02 discard]) ; no #2% version, the argument shlould be bignum-or-ratnum
+  ($real->flonum/slow [sig [(real) -> (flonum)]] [flags single-valued arith-op mifoldable discard safeongoodargs]) ; slow path for bignum or ratnum
   ($real-sym-name [flags single-valued])
   ($recompile-condition? [sig [(ptr) -> (boolean)]] [flags pure unrestricted mifoldable])
   ($recompile-importer-path [flags single-valued])

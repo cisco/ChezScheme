@@ -1445,8 +1445,8 @@
   (set-who! inexact (lambda (z) (convert-to-inexact z who)))
   (set-who! exact->inexact (lambda (z) (convert-to-inexact z who))))
 
-(set! $other-real->flonum
-  ; assume x is a bignum or ratnum
+(set! $real->flonum/slow
+  ; slow path for bignum or ratnum
   (lambda (x) (float x)))
 
 (let ()

@@ -1652,7 +1652,7 @@ Notes:
                                [(predicate-implies? rn fixnum-pred)
                                 (lookup-primref 3 'fixnum->flonum)]
                                [(predicate-implies? rn bignum-or-ratnum-pred)
-                                (lookup-primref 3 '$other-real->flonum)]
+                                (lookup-primref 3 '$real->flonum/slow)]
                                [(predicate-implies? rn flonum-pred)
                                 (lookup-primref 3 'fl+)]
                                [else #f])])

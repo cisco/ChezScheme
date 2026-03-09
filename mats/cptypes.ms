@@ -1148,7 +1148,7 @@
     '(lambda (x) (when (bignum? x)
                    (real->flonum x)))
     '(lambda (x) (when (bignum? x)
-                   (#3%$other-real->flonum x))))
+                   (#3%$real->flonum/slow x))))
   (cptypes-equivalent-expansion?
     '(lambda (x) (when (or (bignum? x) (flonum? x))
                    (real->flonum x)))
