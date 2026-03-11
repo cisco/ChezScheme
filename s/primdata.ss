@@ -1326,7 +1326,7 @@
   (eq-hashtable-delete! [sig [(eq-hashtable ptr) -> (void)]] [flags true])
   (eq-hashtable-ephemeron? [sig [(eq-hashtable) -> (boolean)]] [flags pure mifoldable discard])
   (eq-hashtable-ref [sig [(eq-hashtable ptr ptr) -> (ptr)]] [flags discard])
-  (eq-hashtable-ref-cell [sig [(eq-hashtable ptr) -> (prt)]] [flags discard])
+  (eq-hashtable-ref-cell [sig [(eq-hashtable ptr) -> (ptr)]] [flags discard])
   (eq-hashtable-set! [sig [(eq-hashtable ptr ptr) -> (void)]] [flags true])
   (eq-hashtable-try-atomic-cell [sig [(eq-hashtable ptr ptr) -> (maybe-pair)]] [flags])
   (eq-hashtable-update! [sig [(eq-hashtable ptr procedure ptr) -> (void)]] [flags])
