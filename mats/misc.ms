@@ -2102,7 +2102,7 @@
 
 (mat cost-center
   (error? ; wrong number of arguments
-    (make-cost-center 'foo))
+    (make-cost-center 'foo 'bar))
 
   (error? ; foo is not a cost center
     (with-cost-center 'foo (lambda () 5)))
@@ -2122,8 +2122,16 @@
   (error? ; #\c is not a cost center
     (reset-cost-center! #\c))
 
+  (error? ; "test" is not a cost center
+    (cost-center-name "test"))
+
   (let ([cc (make-cost-center)])
-    (cost-center? cc))
+    (cost-center? cc)
+    (string=? (format "~a" cc) "#<cost center>"))
+
+  (let ([cc (make-cost-center 'foo)])
+    (eq? (cost-center-name cc) 'foo)
+    (string=? (format "~a" cc) "#<cost center foo>"))
 
   ;;; instruction cost center tests
   ((lambda (x)

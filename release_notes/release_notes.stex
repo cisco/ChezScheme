@@ -117,6 +117,13 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Named Cost Center (10.4.0)}
+
+The procedure \scheme{make-cost-center} now
+accepts an optional argument \scheme{name}, which must be a symbol
+that identifies the object or \scheme{#f} for no name. The name is
+printed every time the cost center is printed.
+
 \subsection{Unicode 17.0.0 support (10.4.0)}
 
 The character sets, character classes, and word-breaking algorithms for character, string,

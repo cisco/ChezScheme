@@ -4141,13 +4141,14 @@ misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for 
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: failed for probably-does-not-exist: no such file or directory".
 misc.mo:Expected error in mat $fasl-file-equal?: "$fasl-file-equal?: record comparison failed while comparing testfile-fatfib1.so and testfile-fatfib3.so within fasl entry 4".
-misc.mo:Expected error in mat cost-center: "incorrect argument count in call (make-cost-center (quote foo))".
+misc.mo:Expected error in mat cost-center: "incorrect argument count in call (make-cost-center (quote foo) (quote bar))".
 misc.mo:Expected error in mat cost-center: "with-cost-center: foo is not a cost center".
 misc.mo:Expected error in mat cost-center: "with-cost-center: bar is not a procedure".
 misc.mo:Expected error in mat cost-center: "cost-center-instruction-count: 5 is not a cost center".
 misc.mo:Expected error in mat cost-center: "cost-center-allocation-count: "test" is not a cost center".
 misc.mo:Expected error in mat cost-center: "cost-center-time: 4.7 is not a cost center".
 misc.mo:Expected error in mat cost-center: "reset-cost-center!: #\c is not a cost center".
+misc.mo:Expected error in mat cost-center: "cost-center-name: "test" is not a cost center".
 misc.mo:Expected error in mat (argcnt eval-error): "incorrect argument count in call (car) at line 3, char 38 of testfile.ss".
 misc.mo:Expected error in mat (argcnt eval-error): "incorrect argument count in call (car (quote (a b)) (quote (c d))) at line 3, char 38 of testfile.ss".
 misc.mo:Expected error in mat (argcnt eval-error): "incorrect argument count in call (g 7) at line 3, char 47 of testfile.ss".

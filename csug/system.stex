@@ -5306,11 +5306,16 @@ This parameter is initially false.
 %----------------------------------------------------------------------------
 \entryheader
 \formdef{make-cost-center}{\categoryprocedure}{(make-cost-center)}
+\formdef{make-cost-center}{\categoryprocedure}{(make-cost-center \var{name})}
 \returns a new cost center
 \listlibraries
 \endentryheader
 
 The recorded costs of the new cost center are initialized to zero.
+
+\var{name}, if supplied, must be a symbol which identifies the cost center, or
+\scheme{#f} for no name. The name is printed every time the cost center is
+printed.
 
 %----------------------------------------------------------------------------
 \entryheader
@@ -5364,6 +5369,13 @@ code.
 \endentryheader
 
 The cpu time is returned as a time object with time-type \scheme{time-duration}.
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{cost-center-name}{\categoryprocedure}{(cost-center-name \var{cost-center})}
+\returns the name associated with \var{cost-center}, if any; otherwise \scheme{#f}
+\listlibraries
+\endentryheader
 
 %----------------------------------------------------------------------------
 \entryheader
