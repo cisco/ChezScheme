@@ -159,8 +159,10 @@ Notes:
                        (st? e3 fuel))]
                  [(call ,preinfo ,pr ,e* ...)
                   (let ([flags (primref-flags pr)])
-                    (or (all-set? (prim-mask unsafe) flags)
-                        (all-set? (prim-mask unrestricted) flags)))]
+                    (and (if (all-set? (prim-mask unsafe) flags)
+                             (all-set? (prim-mask discard) flags)
+                             (all-set? (prim-mask (or discard unrestricted)) flags))
+                         (arity-okay? (primref-arity pr) (length e*))))]
                  [(call ,preinfo1 (case-lambda ,preinfo2 (clause (,x* ...) ,interface ,body)) ,e*  ...) ; let-like expressions
                   (guard (fx= interface (length e*)))
                   (st? body fuel)]
