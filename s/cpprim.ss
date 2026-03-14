@@ -5466,7 +5466,9 @@
         [(who x)
          (nanopass-case (L7 Expr) who
            [(quote ,d)
-            (guard (symbol? d))
+            (guard (or (not d)
+                       (symbol? d)
+                       (string? d)))
             ; assume the generated code will raise an error at runtime if x is not real
             (build-$real->flonum src sexpr who x)]
            [else #f])])
