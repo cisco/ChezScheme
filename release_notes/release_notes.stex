@@ -3042,6 +3042,14 @@ A bug that affects compilation on 32-bit ARM systems has been fixed. The bug was
 when an offset to a floating-point field or array element was unaligned or too large to
 fit into the 12-bit encoding used for immediate offsets.
 
+\subsection{Fix x86\_64 foreign callables with in-register struct results (10.4.0)}
+
+A bug that affects compilation for foreign callables on x86\_64
+systems has been fixed. The bug was triggered when a callable returns
+a \scheme{struct} that is small enough to fit into return registers,
+and when arguments to the callable include floating-point values. In
+that case, arguments were not delivered correctly to the callable.
+
 \subsection{Generic \protect\scheme{+} misoptimized with \protect\scheme{+nan.0} and non-real arguments (10.4.0)}
 
 A bug in the source optimizer (cp0) treated flonum NaN as a bottom value

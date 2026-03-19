@@ -3807,6 +3807,28 @@
           (let ([v (cb_send cb)])
             (and (= v 112.25)
                  (loop (sub1 i))))]))))
+
+  (let ()
+    (define-ftype intfloat (struct
+                             [i int]
+                             [f float]))
+    (define-ftype callback (function (int float) (& intfloat)))
+    (define intfloat_sum_built
+      (foreign-procedure "intfloat_sum_built"
+                         ((* callback)) double))
+    (let ([cb (make-ftype-pointer
+               callback
+               (lambda (r i f)
+                 (ftype-set! intfloat (i) r i)
+                 (ftype-set! intfloat (f) r f)))])
+      (and (equal? (intfloat_sum_built cb)
+                   110.0)
+           (begin
+             (unlock-object
+              (foreign-callable-code-object
+               (ftype-pointer-address cb)))
+             #t))))
+
   )
 
 (mat collect-safe
