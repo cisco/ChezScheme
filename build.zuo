@@ -271,7 +271,16 @@
                   (run-make ""))]
       [:target ,(string->symbol (~a "install-" name)) (,name-sym)
                ,(lambda (token . args)
-                  (run-make "install"))]))
+                  (run-make "install"))]
+      [:target ,(string->symbol (~a "clean-" name)) (,mf-out)
+               ,(lambda (token . args)
+                  (run-make (~a name ".clean"))
+                  (for-each (lambda (name)
+                              (when (member (car (reverse (string-split name ".")))
+                                            '("tex" "html" "aux" "bbl" "out" "pdf"
+                                                    "firstrun" "secondrun" "thirdrun" "idx"))
+                                (rm* (build-path doc-dir name))))
+                            (ls doc-dir)))]))
 
   (define (check-boot-file-version)
     (define src-ver (source-version))
@@ -408,7 +417,8 @@
                 ,void]
        [:target install-docs (install-csug install-release_notes)
                 ,void]
-
+       [:target clean-docs (clean-csug clean-release_notes)
+                ,void]
 
        [:target rpm ()
                 ,(lambda (token)

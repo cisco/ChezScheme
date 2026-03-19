@@ -1,22 +1,24 @@
-*** output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	2026-03-10 17:14:26.327284163 -0700
---- output-compile-0-t-t-f-experr/errors-compile-0-t-t-f	2026-03-10 17:14:23.968283386 -0700
+*** output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	Sat Mar 14 11:32:58 2026
+--- output-compile-0-t-t-f-experr/errors-compile-0-t-t-f	Sat Mar 14 11:34:14 2026
 ***************
-*** 231,237 ****
+*** 231,238 ****
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable b".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable a".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
-! 3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable f".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable f".
+- 3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable f".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable c".
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
---- 231,237 ----
+  3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable x".
+--- 231,238 ----
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable b".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable a".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
-! 3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
++ 3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable f".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable c".
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
+  3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable x".
 ***************
 *** 4118,4124 ****
   misc.mo:Expected error in mat cpletrec: "foreign-procedure: no entry for "foo"".

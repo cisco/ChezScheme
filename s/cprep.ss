@@ -120,7 +120,7 @@
                [(fp-fixnum) 'fixnum]
                [(fp-double-float) 'double-float]
                [(fp-single-float) 'single-float]
-               [(fp-fptd ,fptd) 'ftype]
+               [(fp-ftd ,ftd) 'ftype]
                [(fp-ftd& ,ftd ,fptd) 'ftype])))
          (define uncprep
            (lambda (x)

@@ -1,5 +1,5 @@
-*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	2026-03-10 17:14:12.556278673 -0700
---- output-compile-0-f-t-f-experr/errors-compile-0-f-t-f	2026-03-10 17:14:08.862276807 -0700
+*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	Sat Mar 14 11:28:51 2026
+--- output-compile-0-f-t-f-experr/errors-compile-0-f-t-f	Sat Mar 14 11:28:48 2026
 ***************
 *** 212,218 ****
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
@@ -18,22 +18,24 @@
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
   3.mo:Expected error in mat dipa-letrec: "attempt to reference undefined variable a".
 ***************
-*** 231,237 ****
+*** 231,238 ****
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable b".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable a".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
-! 3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable f".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable f".
+- 3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable f".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable c".
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
---- 231,237 ----
+  3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable x".
+--- 231,238 ----
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable b".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable a".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
-! 3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
++ 3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable g".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable f".
   3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable c".
   3.mo:Expected warning in mat cpvalid: "possible attempt to reference undefined variable x".
+  3.mo:Expected error in mat cpvalid: "attempt to reference undefined variable x".
 ***************
 *** 278,287 ****
   3.mo:Expected error in mat mrvs: "returned 3 values to single value return context".
