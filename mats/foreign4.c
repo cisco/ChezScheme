@@ -447,3 +447,16 @@ static double _f4_sum_struct_uniondoubledouble_double (struct_uniondoubledouble_
 }
 static struct_uniondoubledouble_double init_struct_uniondoubledouble_double = { { 99.0 }, -12.5};
 GEN(struct_uniondoubledouble_double, init_struct_uniondoubledouble_double, _f4_sum_struct_uniondoubledouble_double)
+
+typedef struct {
+  int i;
+  float f;
+} intfloat;
+typedef intfloat (*intfloat_build_t)(int i, float f);
+
+static double intfloat_sum(intfloat n) {
+  return n.f + n.i;
+}
+EXPORT double intfloat_sum_built(intfloat_build_t proc) {
+  return intfloat_sum(proc(10, 100.0));
+}

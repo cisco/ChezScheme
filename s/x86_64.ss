@@ -3088,8 +3088,8 @@ incoming           |   incoming return address | one quad
                    |                           |
                    |    incoming stack args    |
            sp+192: |                           |
-                   +---------------------------+ <- 16-byte boundary
-                   |   incoming return address | one quad
+incoming           +---------------------------+ <- 16-byte boundary
+      sp-> sp+184: |   incoming return address | one quad
                    +---------------------------+
            sp+176: |  pad word / active state  | one quad
                    +---------------------------+
@@ -3406,7 +3406,8 @@ incoming           |   incoming return address | one quad
                      [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
                      [synthesize-first? (and result-classes
                                              (result-fits-in-registers? result-classes))]
-                     [locs (do-stack (if synthesize-first? (cdr arg-type*) arg-type*) adjust-active?)])
+                     [save-arg-type* (if synthesize-first? (cdr arg-type*) arg-type*)]
+                     [locs (do-stack save-arg-type* adjust-active?)])
                 (let-values ([(get-result result-regs result-fp-regs) (do-result result-type result-classes adjust-active?)])
                   (values
                    (lambda ()
@@ -3431,7 +3432,7 @@ incoming           |   incoming return address | one quad
                            (set! ,(%mref ,%sp ,%zero 32 fp) ,%fp7)
                            (set! ,(%mref ,%sp ,%zero 40 fp) ,%fp8)
                            (set! ,%sp ,(%inline - ,%sp (immediate 8)))
-                           ,(save-arg-regs arg-type*))
+                           ,(save-arg-regs save-arg-type*))
                          (%seq
                            (set! ,%sp ,(%inline - ,%sp (immediate 136)))
                            ,(%inline push ,%rbx)
@@ -3440,7 +3441,7 @@ incoming           |   incoming return address | one quad
                            ,(%inline push ,%r13)
                            ,(%inline push ,%r14)
                            ,(%inline push ,%r15)
-                           ,(save-arg-regs arg-type*)))
+                           ,(save-arg-regs save-arg-type*)))
                       ,(if-feature pthreads
                          ((lambda (e)
                             (if adjust-active?
