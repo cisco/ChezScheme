@@ -159,8 +159,10 @@ Notes:
                        (st? e3 fuel))]
                  [(call ,preinfo ,pr ,e* ...)
                   (let ([flags (primref-flags pr)])
-                    (or (all-set? (prim-mask unsafe) flags)
-                        (all-set? (prim-mask unrestricted) flags)))]
+                    (and (if (all-set? (prim-mask unsafe) flags)
+                             (all-set? (prim-mask discard) flags)
+                             (all-set? (prim-mask (or discard unrestricted)) flags))
+                         (arity-okay? (primref-arity pr) (length e*))))]
                  [(call ,preinfo1 (case-lambda ,preinfo2 (clause (,x* ...) ,interface ,body)) ,e*  ...) ; let-like expressions
                   (guard (fx= interface (length e*)))
                   (st? body fuel)]
@@ -1630,6 +1632,7 @@ Notes:
                  [(predicate-implies? r fixnum-pred)
                   (fold-call/primref/shallow preinfo (lookup-primref 3 'fixnum->flonum) (list n) ret (list r) ctxt ntypes oldtypes plxc)]
                  [(predicate-disjoint? r fixnum-pred)
+                  ; $real->flonum does not inline the test for fixnums 
                   (fold-call/primref/shallow preinfo (lookup-primref 3 '$real->flonum) (list `(quote ,'real->flonum) n) ret (list `(quote ,'real->flonum) r) ctxt ntypes oldtypes plxc)]
                  [else
                   (values (build-let1 ctxt n r
@@ -1637,7 +1640,7 @@ Notes:
                               (let-values ([(irfx retfx ntfx ttfx ftfx)
                                             (fold-call/primref/shallow (make-preinfo-call) (lookup-primref 3 'fixnum->flonum) (list n) ret (list (predicate-intersect r fixnum-pred)) ctxt ntypes oldtypes plxc)]
                                            [(irot retot ntot ttot ftot)
-                                            (fold-call/primref/shallow preinfo (lookup-primref 3 '$real->flonum) (list `(quote ,'real->flonum) n) ret (list `(quote ,'real->flonum) (predicate-substract r fixnum-pred)) ctxt ntypes oldtypes plxc)])
+                                            (fold-call/primref/shallow preinfo (lookup-primref level '$real->flonum) (list `(quote ,'real->flonum) n) ret (list `(quote ,'real->flonum) (predicate-substract r fixnum-pred)) ctxt ntypes oldtypes plxc)])
                                 `(if (call ,(make-preinfo-call) ,(lookup-primref 2 'fixnum?) ,n)
                                      ,irfx
                                      ,irot))))
@@ -1650,6 +1653,8 @@ Notes:
                    (let ([pr (cond
                                [(predicate-implies? rn fixnum-pred)
                                 (lookup-primref 3 'fixnum->flonum)]
+                               [(predicate-implies? rn bignum-or-ratnum-pred)
+                                (lookup-primref 3 '$real->flonum/slow)]
                                [(predicate-implies? rn flonum-pred)
                                 (lookup-primref 3 'fl+)]
                                [else #f])])

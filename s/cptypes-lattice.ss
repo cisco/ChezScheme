@@ -72,6 +72,7 @@
    zero-pred
    flzero-pred
    flinteger-pred
+   bignum-or-ratnum-pred
    exact-real-pred
    exact-pred
    inexact-pred
@@ -1511,6 +1512,7 @@
   (define integer-pred (predicate-union flinteger-pred exact-integer-pred))
   (define exact-pred (predicate-union exact*-pred exact-integer-pred))
   (define exact-real-pred (predicate-union ratnum-pred exact-integer-pred))
+  (define bignum-or-ratnum-pred (predicate-union bignum-pred ratnum-pred))
   (define inexact-pred (predicate-union inexact*-pred flzero-pred))
   (define real-pred (predicate-union (predicate-union real*-pred flzero-pred)
                                      exact-integer-pred))
