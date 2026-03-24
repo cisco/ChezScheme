@@ -12,13 +12,13 @@ jobs:
             configure: --pb --threads --enable-libffi
             test: test-some-fast
           - machine: a6osx
-            os: macos-15-intel
+            os: macos-26-intel
           - machine: ta6osx
-            os: macos-15-intel
+            os: macos-26-intel
           - machine: arm64osx
-            os: macos-15
+            os: macos-26
           - machine: tarm64osx
-            os: macos-15
+            os: macos-26
           - machine: i3le
             os: ubuntu-24.04
           - machine: ti3le
