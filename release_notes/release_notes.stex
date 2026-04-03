@@ -2987,6 +2987,10 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{LZ4 library updated (10.4.0)}
+
+The LZ4 compression library was updated from v1.9.4 to v1.10.0.
+
 \subsection{Out-of-memory improvements for \scheme{expt}, \scheme{logbit0}, and \scheme{logbit1} (10.4.0)}
 
 A call to \scheme{expt} with an exact rational base and an integer exponent too large
