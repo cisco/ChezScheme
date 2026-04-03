@@ -12,13 +12,13 @@ jobs:
             configure: --pb --threads --enable-libffi
             test: test-some-fast
           - machine: a6osx
-            os: macos-15-intel
+            os: macos-26-intel
           - machine: ta6osx
-            os: macos-15-intel
+            os: macos-26-intel
           - machine: arm64osx
-            os: macos-15
+            os: macos-26
           - machine: tarm64osx
-            os: macos-15
+            os: macos-26
           - machine: i3le
             os: ubuntu-24.04
           - machine: ti3le
@@ -71,7 +71,7 @@ jobs:
         if: ${{ runner.os == 'Windows' }}
         run: git config --global core.autocrlf false
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - name: Setup 32-bit Linux
@@ -100,7 +100,7 @@ jobs:
         run: tar -c -h -z -f $TARGET_MACHINE$TOOLCHAIN$VARIANT.tgz $TARGET_MACHINE
       - name: Upload archive
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}${{ matrix.config.variant }}
           path: ${{ matrix.config.machine }}${{ matrix.config.toolchain }}${{ matrix.config.variant }}.tgz
