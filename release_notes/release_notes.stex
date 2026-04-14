@@ -2987,6 +2987,11 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Signals in non-Scheme threads (10.4.0)}
+
+A bug in threaded Chez Scheme where some signals raised in non-Scheme threads could cause
+a segmentation fault in the signal handler has been fixed.
+
 \subsection{LZ4 library updated (10.4.0)}
 
 The LZ4 compression library was updated from v1.9.4 to v1.10.0.

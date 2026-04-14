@@ -20,7 +20,7 @@
 
 /* locally defined functions */
 static void split(ptr k, ptr *s);
-static void reset_scheme(void);
+static void reset_scheme(ptr tc);
 static NORETURN void do_error(iptr type, const char *who, const char *s, ptr args);
 static void handle_call_error(ptr tc, iptr type, ptr x);
 static void init_signal_handlers(void);
@@ -323,9 +323,7 @@ void S_abnormal_exit() {
   abort();
 }
 
-static void reset_scheme() {
-    ptr tc = get_thread_context();
-
+static void reset_scheme(ptr tc) {
     alloc_mutex_acquire();
    /* eap should always be up-to-date now that we write-through to the tc
       when making any changes to eap when eap is a real register */
@@ -342,8 +340,8 @@ static void reset_scheme() {
  */
 
 void S_error_reset(const char *s) {
-
-    if (!S_errors_to_console) reset_scheme();
+    ptr tc = get_thread_context();
+    if (!S_errors_to_console && (tc != (ptr)0)) reset_scheme(tc);
     do_error(ERROR_RESET, "", s, Snil);
 }
 
@@ -597,9 +595,10 @@ void S_fire_collector(void) {
 
 void S_noncontinuable_interrupt(void) {
   ptr tc = get_thread_context();
-
-  reset_scheme();
-  KEYBOARDINTERRUPTPENDING(tc) = Sfalse;
+  if (tc != (ptr)0) {
+    reset_scheme(tc);
+    KEYBOARDINTERRUPTPENDING(tc) = Sfalse;
+  }
   do_error(ERROR_NONCONTINUABLE_INTERRUPT,"","",Snil);
 }
 
@@ -630,12 +629,9 @@ static BOOL WINAPI handle_signal(DWORD dwCtrlType) {
   switch (dwCtrlType) {
     case CTRL_C_EVENT:
     case CTRL_BREAK_EVENT: {
-#ifdef PTHREADS
-     /* get_thread_context() always returns 0, so assume main thread */
+      /* A new thread is created to handle these signals, so Scheme doesn't know about
+         it. Consequently, it interrupts the main thread. */
       ptr tc = TO_PTR(S_G.thread_context);
-#else
-      ptr tc = get_thread_context();
-#endif
       if (!THREAD_GC(tc)->during_alloc && Sboolean_value(KEYBOARDINTERRUPTPENDING(tc)))
         return(FALSE);
       keyboard_interrupt(tc);
@@ -649,6 +645,8 @@ static BOOL WINAPI handle_signal(DWORD dwCtrlType) {
 static LONG WINAPI fault_handler(LPEXCEPTION_POINTERS e) {
   if (e->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
     ptr tc = get_thread_context();
+    if (tc == (ptr)0) /* not a Scheme thread */
+      return EXCEPTION_CONTINUE_SEARCH;
     if (THREAD_GC(tc)->during_alloc)
       S_error_abort("nonrecoverable invalid memory reference");
     else
@@ -733,7 +731,7 @@ static void forward_signal_to_scheme(INT sig) {
 #ifdef PTHREADS
   /* deliver signals to the main thread, only; depending
      on the threads that are running, `tc` might even be NULL */
-  if (tc != TO_PTR(&S_G.thread_context)) {
+  if (tc != TO_PTR(S_G.thread_context)) {
     pthread_kill(S_main_thread_id, sig);
     RESET_SIGNAL
     return;
@@ -787,7 +785,7 @@ static void handle_signal(INT sig, UNUSED siginfo_t *si, UNUSED void *data) {
             ptr tc = get_thread_context();
            /* disable keyboard interrupts in subordinate threads until we think
              of something more clever to do with them */
-            if (tc == TO_PTR(&S_G.thread_context)) {
+            if (tc == TO_PTR(S_G.thread_context)) {
               if (!THREAD_GC(tc)->during_alloc && Sboolean_value(KEYBOARDINTERRUPTPENDING(tc))) {
                /* this is a no-no, but the only other options are to ignore
                   the signal or to kill the process */
@@ -816,16 +814,15 @@ static void handle_signal(INT sig, UNUSED siginfo_t *si, UNUSED void *data) {
 #ifdef SIGBUS
         case SIGBUS:
 #endif /* SIGBUS */
-        case SIGSEGV:
-          {
+        case SIGSEGV: {
             ptr tc = get_thread_context();
             RESET_SIGNAL
-            if (THREAD_GC(tc)->during_alloc)
+            if ((tc == (ptr)0) || THREAD_GC(tc)->during_alloc)
                 S_error_abort("nonrecoverable invalid memory reference");
             else
                 S_error_reset("invalid memory reference");
-          }
-	    break;
+            break;
+        }
         default:
             RESET_SIGNAL
             S_error_reset("unexpected signal");
