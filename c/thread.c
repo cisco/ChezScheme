@@ -238,9 +238,9 @@ void Sdeactivate_thread(void) { /* deactivate current thread */
 
 int Sdestroy_thread(void) { /* destroy current thread */
   ptr tc = get_thread_context();
-  if (tc != (ptr)0 && destroy_thread(tc)) {
-    s_thread_setspecific(S_tc_key, 0);
-    return 1;
+  if (tc != (ptr)0) {
+    s_thread_setspecific(S_tc_key, NULL);
+    if (destroy_thread(tc)) return 1;
   }
   return 0;
 }
@@ -359,8 +359,8 @@ static s_thread_rv_t start_thread(void *p) {
     is static, so we can access it. */
 
  /* find and destroy our thread */
-  destroy_thread(tc);
   s_thread_setspecific(S_tc_key, NULL);
+  destroy_thread(tc);
 
   s_thread_return;
 }
