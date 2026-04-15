@@ -209,6 +209,14 @@
       (error? (load-shared-object 3))
     )
    ]
+  [(a6hk ta6hk)
+  (mat load-shared-object
+	(file-exists? foreign1.so)
+      (begin (load-shared-object foreign1.so) #t)
+      (begin (load-shared-object "libroot.so") #t)
+      (error? (load-shared-object 3))
+    )
+   ]
   [(i3fb ti3fb a6fb ta6fb)
    (mat load-shared-object
       (file-exists? foreign1.so)
@@ -3372,6 +3380,8 @@
          '(load-shared-object "libc.so")]
         [(i3le ti3le a6le ta6le arm32le tarm32le arm64le tarm64le ppc32le tppc32le rv64le trv64le la64le tla64le)
          '(load-shared-object "libc.so.6")]
+	[(a6hk ta6hk)
+	 '(load-shared-object "libroot.so")]
         [(i3fb ti3fb a6fb ta6fb)
          '(load-shared-object "libc.so.7")]
         [(i3nt ti3nt a6nt ta6nt arm64nt tarm64nt)

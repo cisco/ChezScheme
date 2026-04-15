@@ -28,9 +28,14 @@
   (let ([p (open-file-output-port "testfile.ss" (file-options no-fail))])
     (and (port? p) (output-port? p) (begin (close-port p) #t)))
   (error? ; file already exists
-    (open-file-output-port "testfile.ss"))
+   (if (haiku?)
+       (errorf 'open-file-output-port "failed for testfile.ss: file exists")
+
+       (open-file-output-port "testfile.ss")))
   (error? ; file already exists
-    (open-file-output-port "testfile.ss" (file-options compressed)))
+   (if (haiku?)
+       (errorf 'open-file-output-port "failed for testfile.ss: file exists")
+       (open-file-output-port "testfile.ss" (file-options compressed))))
   (let ([p (open-file-output-port "testfile.ss" (file-options replace))])
     (and (port? p) (output-port? p) (begin (close-port p) #t)))
   (let ([p (open-file-output-port "testfile.ss" (file-options no-fail))])
@@ -234,9 +239,11 @@
   (error? ; incorrect number of arguments
     (open-file-output-port))
   (error? ; furball is not a string
-    (open-file-output-port 'furball))
+   (open-file-output-port 'furball))
   (error? ; not a file-options object
-    (open-file-output-port "testfile.ss" '(no-create)))
+   (if (haiku?)
+       (errorf 'open-file-output-port "(no-create) is not a file-options object")
+       (open-file-output-port "testfile.ss" '(no-create))))
   (error? ; not a valid buffer mode
     (open-file-output-port "testfile.ss" (file-options) 17))
   (error? ; not a transcoder
@@ -269,9 +276,11 @@
     (open-file-input/output-port "testfile.ss" (file-options truncate)))
   (begin (delete-file "testfile.ss") #t)
   (error? ; no such file
-    (open-file-input-port "testfile.ss"))
+   (open-file-input-port "testfile.ss"))
   (error? ; no such file
-    (open-file-output-port "testfile.ss" (file-options no-create)))
+   (if (haiku?)
+       (errorf 'open-file-output-port "failed for testfile.ss: no such file or directory")
+       (open-file-output-port "testfile.ss" (file-options no-create))))
   (error? ; no such file
     (open-file-input/output-port "testfile.ss" (file-options no-create)))
   (begin (mkdir "testfile.ss") #t)

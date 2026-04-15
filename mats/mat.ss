@@ -518,6 +518,11 @@
       (lambda () #t)
       (lambda () #f)))
 
+(define haiku?
+  (if (memq (machine-type) '(a6hk ta6hk))
+      (lambda () #t)
+      (lambda () #f)))
+
 (define embedded?
   (lambda () #f))
 

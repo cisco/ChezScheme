@@ -141,6 +141,36 @@ typedef int tputsputcchar;
 #endif
 #endif
 
+#if  defined(__HAIKU__)
+#define NOBLOCK O_NONBLOCK
+#define LOAD_SHARED_OBJECT
+#define USE_MMAP
+#define MMAP_HEAP
+#define IEEE_DOUBLE
+#define LDEXP
+#define ARCHYPERBOLIC
+#define GETPAGESIZE() getpagesize()
+typedef char *memcpy_t;
+#define MAKE_NAN(x) { x = 0.0; x = x / x; }
+#define GETWD(x) getcwd((x),PATH_MAX)
+typedef int tputsputcchar;
+#define LOCKF
+#define DIRMARKERP(c) ((c) == '/')
+#ifndef DISABLE_X11
+#define LIBX11 "libX11.so"
+#endif
+#define SECATIME(sb) (sb).st_atime
+#define SECCTIME(sb) (sb).st_ctime
+#define SECMTIME(sb) (sb).st_mtime
+#define NSECATIME(sb) 0
+#define NSECCTIME(sb) 0
+#define NSECMTIME(sb) 0
+#define ICONV_INBUF_TYPE char **
+#define USE_OSSP_UUID
+#endif
+
+
+
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
 #define NOBLOCK O_NONBLOCK
 #define LOAD_SHARED_OBJECT
