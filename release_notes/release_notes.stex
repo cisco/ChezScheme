@@ -2987,6 +2987,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Eager port closing on error in \scheme{open-source-file} (10.4.0)}
+
+When \scheme{open-source-file} fails on a non-seekable device, the file descriptor port
+was kept open until the garbage collector eventually closed it. It now closes the port on
+error.
+
 \subsection{Signals in non-Scheme threads (10.4.0)}
 
 A bug in threaded Chez Scheme where some signals raised in non-Scheme threads could cause
