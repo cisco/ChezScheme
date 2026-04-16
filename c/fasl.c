@@ -529,7 +529,7 @@ static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, faslFile
     f->next += offset;
     faslin(tc, &x, externals, &strbuf, f);
   } else {
-    S_error1("", "bad entry type (got ~s)", FIX(ty));
+    S_error2("", "bad fasl entry type (got ~s) found in ~a", FIX(ty), f->uf.path);
   }
 
   S_flush_instruction_cache(tc);
@@ -869,7 +869,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               ptr fl;
               faslin(tc, &fl, t, pstrbuf, f);
               if (!Sflonump(fl))
-                S_error1("", "not a flonum in flvector ~a", f->uf.path);
+                S_error1("", "invalid fasl flvector element found in ~a", f->uf.path);
               *p++ = Sflonum_value(fl);
             }
             return;
@@ -912,6 +912,8 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             ptr rtd, rtd_uid, plist, ls; iptr size;
 
             faslin(tc, &rtd_uid, t, pstrbuf, f);
+            if (!Ssymbolp(rtd_uid))
+              S_error1("", "invalid fasl rtd found in ~a", f->uf.path);
 
             tc_mutex_acquire();
 
@@ -1036,7 +1038,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
                 }
                 break;
               default:
-                S_error2("", "invalid symbol-hashtable equiv code", FIX(equiv_code), f->uf.path);
+                S_error2("", "invalid fasl symbol-hashtable equiv code ~a found in ~a", FIX(equiv_code), f->uf.path);
                 /* make compiler happy */
                 equiv = Sfalse;
             }
@@ -1050,6 +1052,8 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               ptr keyval;
               keyval = Scons(FIX(0), FIX(0));
               faslin(tc, &INITCAR(keyval), t, pstrbuf, f);
+              if (!Ssymbolp(Scar(keyval)))
+                S_error1("", "invalid fasl symbol-hashtable key found in ~a", f->uf.path);
               faslin(tc, &INITCDR(keyval), t, pstrbuf, f);
               i = UNFIX(SYMHASH(Scar(keyval))) & (veclen - 1);
               INITVECTIT(v, i) = Scons(keyval, Svector_ref(v, i));
@@ -1075,6 +1079,8 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             ptr rp, ip;
             faslin(tc, &rp, t, pstrbuf, f);
             faslin(tc, &ip, t, pstrbuf, f);
+            if (!Sflonump(rp) || !Sflonump(ip))
+              S_error1("", "malformed fasl inexactnum found in ~a", f->uf.path);
             *x = S_inexactnum(FLODAT(rp), FLODAT(ip));
             return;
         }
@@ -1182,7 +1188,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             iptr len = sizein(f), len2 = sizein(f), tlen = Svector_length(t), i;
             ptr new_t = S_vector(len);
             if ((tlen < len2) && (len2 != 0)) /* allowing a vector when not needed helps with `load-compiled-from-port` */
-              S_error2("", "incompatible external vector length ~d, expected ~d", FIX(tlen), FIX(len2));
+              S_error2("", "incompatible fasl graph external vector length ~d, expected ~d", FIX(tlen), FIX(len2));
             if (len2 > len) len2 = len;
             for (i = 0; i < len2; i++)
               INITVECTIT(new_t, i+(len-len2)) = Svector_ref(t, i);
@@ -1214,7 +1220,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             return;
         }
         default:
-            S_error2("", "invalid object type ~d in fasl file ~a", FIX(ty), f->uf.path);
+            S_error2("", "invalid fasl object type ~d found in ~a", FIX(ty), f->uf.path);
     }
 }
 
