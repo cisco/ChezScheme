@@ -15,7 +15,9 @@
  */
 
 #include "system.h"
-#include "popcount.h"
+#if defined(_MSC_VER)
+#include <intrin.h> /* for Spopcount below */
+#endif
 
 /* locally defined functions */
 static void maybe_queue_fire_collector(thread_gc *tgc);
@@ -796,6 +798,30 @@ ptr S_null_immutable_string(void) {
   find_room(tc, space_new, 0, type_typed_object, size_string(0), v);
   VECTTYPE(v) = (0 << string_length_offset) | type_string | string_immutable_flag;
   return v;
+}
+
+int Spopcount(uptr x) {
+#if defined(__clang__) || defined(__GNUC__)
+#if ptr_bits == 32
+  return __builtin_popcount(x);
+#else
+  return __builtin_popcountl(x);
+#endif
+#elif defined(_MSC_VER)
+#if ptr_bits == 32
+  return (int)__popcnt(x);
+#else
+  return (int)__popcnt64(x);
+#endif
+#else
+  /* Kernighan's method */
+  int count = 0;
+  while (x != 0) {
+    x &= x - 1;
+    ++count;
+  }
+  return count;
+#endif
 }
 
 static ptr stencil_vector(uptr type, uptr mask) {

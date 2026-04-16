@@ -340,6 +340,7 @@
 
         (defref Sunbox box ref)
   
+        (export "int" "Spopcount" "(uptr)")
         (def "Sstencil_vector_length(x)"
           (format "Spopcount(((uptr)~a)>>~d)"
             (access "x" stencil-vector type)

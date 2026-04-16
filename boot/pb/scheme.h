@@ -140,6 +140,7 @@ typedef unsigned char octet;
 #define Sstring_length(x) ((iptr)((uptr)(*((iptr *)TO_VOIDP((uptr)(x)+1)))>>4))
 #define Sstring_ref(x,i) Schar_value(((string_char *)TO_VOIDP((uptr)(x)+9))[i])
 #define Sunbox(x) (*((ptr *)TO_VOIDP((uptr)(x)+9)))
+EXPORT int Spopcount(uptr);
 #define Sstencil_vector_length(x) Spopcount(((uptr)(*((iptr *)TO_VOIDP((uptr)(x)+1))))>>6)
 #define Sstencil_vector_ref(x,i) (((ptr *)TO_VOIDP((uptr)(x)+9))[i])
 EXPORT iptr Sinteger_value(ptr);

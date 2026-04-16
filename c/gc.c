@@ -18,7 +18,6 @@
 #ifndef WIN32
 #include <sys/wait.h>
 #endif /* WIN32 */
-#include "popcount.h"
 #include <assert.h>
 
 /* 
