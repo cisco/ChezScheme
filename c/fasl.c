@@ -486,7 +486,7 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, faslFile f, ptr externals) {
           old_mode = f->buffer_mode;
           size -= 2;  /* adjust for u8 compression type and u8 fasl type */
           if (size < 0)
-            toolarge(f->uf.path);
+            S_error1("", "invalid fasl uncompressed size found in ~a", f->uf.path);
           if (old_mode == FASL_BUFFER_READ_MINIMAL) {
             f->buffer_mode = FASL_BUFFER_READ_REMAINING;
             f->remaining = size;
@@ -530,7 +530,7 @@ static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, faslFile
     f->next += offset;
     faslin(tc, &x, externals, &strbuf, f);
   } else {
-    S_error2("", "bad fasl entry type (got ~s) found in ~a", FIX(ty), f->uf.path);
+    S_error2("", "bad fasl entry type ~d found in ~a", FIX(ty), f->uf.path);
   }
 
   S_flush_instruction_cache(tc);
@@ -1039,7 +1039,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
                 }
                 break;
               default:
-                S_error2("", "invalid fasl symbol-hashtable equiv code ~a found in ~a", FIX(equiv_code), f->uf.path);
+                S_error2("", "invalid fasl symbol-hashtable equiv code ~d found in ~a", FIX(equiv_code), f->uf.path);
                 /* make compiler happy */
                 equiv = Sfalse;
             }
@@ -1189,7 +1189,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             iptr len = sizein(f), len2 = sizein(f), tlen = Svector_length(t), i;
             ptr new_t = S_vector(len);
             if ((tlen < len2) && (len2 != 0)) /* allowing a vector when not needed helps with `load-compiled-from-port` */
-              S_error2("", "incompatible fasl graph external vector length ~d, expected ~d", FIX(tlen), FIX(len2));
+              S_error3("", "incompatible fasl graph external vector length ~d (expected ~d) found in ~a", FIX(tlen), FIX(len2), f->uf.path);
             if (len2 > len) len2 = len;
             for (i = 0; i < len2; i++)
               INITVECTIT(new_t, i+(len-len2)) = Svector_ref(t, i);
@@ -1214,10 +1214,10 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             return;
         }
         case fasl_type_begin: {
-            iptr n = sizein(f) - 1; ptr v;
+            iptr n = sizein(f);
+            *x = Svoid; /* in case n == 0 */
             while (--n >= 0)
-              faslin(tc, &v, t, pstrbuf, f);
-            faslin(tc, x, t, pstrbuf, f);
+              faslin(tc, x, t, pstrbuf, f);
             return;
         }
         default:
