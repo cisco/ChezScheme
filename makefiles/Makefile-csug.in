@@ -149,7 +149,7 @@ tspl.haux: ${TSPLdir}/tspl.haux
          sed -e 's;url) ";url) "http://scheme.com/${TSPL}/;' > tspl.haux
 
 tspl.rfm: ${TSPLdir}/tspl.rfm
-	sed -e 's/\\pageref{/\\pageref{TSPL:/' ${TSPLdir}/tspl.rfm > tspl.rfm
+	sed -e 's/\\pageref{/t\\pageref{TSPL:/' ${TSPLdir}/tspl.rfm > tspl.rfm
 
 # this version leaves tspl entries out of the printed index
 #tspl.idx:
