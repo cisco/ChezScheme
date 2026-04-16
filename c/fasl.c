@@ -461,10 +461,11 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, faslFile f, ptr externals) {
         case fasl_type_lz4: {
           ptr result; INT bytes_consumed;
           iptr dest_size = S_fasl_uptrin(f, &bytes_consumed);
-          if ((uptr)dest_size > (uptr)most_positive_fixnum)
-            toolarge(f->uf.path);
           iptr src_size = size - (2 + bytes_consumed); /* adjust for u8 compression type, u8 fasl type, and uptr dest_size */
 
+          if ((uptr)src_size > (uptr)maximum_bytevector_length ||
+              (uptr)dest_size > (uptr)maximum_bytevector_length)
+            toolarge(f->uf.path);
           PREPARE_BYTEVECTOR(SRCBV(tc), src_size);
           PREPARE_BYTEVECTOR(DSTBV(tc), dest_size);
           S_fasl_bytesin(&BVIT(SRCBV(tc),0), src_size, f);
