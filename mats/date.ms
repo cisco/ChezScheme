@@ -131,15 +131,15 @@
   ((lambda (x) (and (or (fixnum? x) (bignum? x)) (>= x 0))) (time-second $time-t4))
   ((lambda (x) (and (or (fixnum? x) (bignum? x)) (>= x 0))) (time-second $time-t5))
   ((lambda (x) (and (or (fixnum? x) (bignum? x)) (>= x 0))) (time-second $time-t6))
-  ((lambda (x) (or (haiku?) (and (or (fixnum? x) (bignum? x)) (>= x 0)))) (time-second $time-t7))
-  ((lambda (x) (or (haiku?) (and (or (fixnum? x) (bignum? x)) (>= x 0)))) (time-second $time-t8))
+  ((lambda (x) (and (or (fixnum? x) (bignum? x)) (>= x 0))) (time-second $time-t7))
+  ((lambda (x) (and (or (fixnum? x) (bignum? x)) (>= x 0))) (time-second $time-t8))
   ((lambda (x) (and (or (fixnum? x) (bignum? x)) (<= 0 x (- #e1e9 1)))) (time-nanosecond $time-t2))
   ((lambda (x) (and (or (fixnum? x) (bignum? x)) (<= 0 x (- #e1e9 1)))) (time-nanosecond $time-t3))
   ((lambda (x) (and (or (fixnum? x) (bignum? x)) (<= 0 x (- #e1e9 1)))) (time-nanosecond $time-t4))
   ((lambda (x) (and (or (fixnum? x) (bignum? x)) (<= 0 x (- #e1e9 1)))) (time-nanosecond $time-t5))
   ((lambda (x) (and (or (fixnum? x) (bignum? x)) (<= 0 x (- #e1e9 1)))) (time-nanosecond $time-t6))
-  ((lambda (x) (or (haiku?) (and (or (fixnum? x) (bignum? x)) (<= 0 x (- #e1e9 1))))) (time-nanosecond $time-t7))
-  ((lambda (x) (or (haiku?) (and (or (fixnum? x) (bignum? x)) (<= 0 x (- #e1e9 1))))) (time-nanosecond $time-t8))
+  ((lambda (x) (and (or (fixnum? x) (bignum? x)) (<= 0 x (- #e1e9 1)))) (time-nanosecond $time-t7))
+  ((lambda (x) (and (or (fixnum? x) (bignum? x)) (<= 0 x (- #e1e9 1)))) (time-nanosecond $time-t8))
   (eqv?
     (let ([sec (+ (time-second (current-time 'time-thread)) 3)]
           [cnt 0]

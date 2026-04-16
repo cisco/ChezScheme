@@ -1545,9 +1545,7 @@
 (mat getenv/putenv
   (procedure? getenv)
   (procedure? putenv)
-  (or (embedded?) (haiku?)  ;; I don't actually know why this fails on
-			    ;; Haiku. I cannot reproduce it outside of
-			    ;; the test run.
+  (or (embedded?)
       (string? (or (getenv "HOME") (getenv "HOMEPATH"))))
   (not (getenv "FUBULYFRATZ"))
   (eq? (putenv "FUBULY" "FRATZ") (void))
