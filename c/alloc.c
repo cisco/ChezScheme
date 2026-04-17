@@ -15,10 +15,6 @@
  */
 
 #include "system.h"
-#ifdef _MSC_VER
-#include <intrin.h> /* for Spopcount below */
-static int has_popcnt = 0;
-#endif
 
 /* locally defined functions */
 static void maybe_queue_fire_collector(thread_gc *tgc);
@@ -27,11 +23,6 @@ void S_alloc_init(void) {
     ISPC s; IGEN g; UINT i;
 
     if (S_boot_time) {
-#ifdef _MSC_VER
-      int cpuinfo[4];
-      __cpuid(cpuinfo, 1);
-      has_popcnt = (cpuinfo[2] & (1 << 23)) != 0; /* ECX bit 23 */
-#endif
       ptr tc = TO_PTR(S_G.thread_context);
 
       GCDATA(tc) = TO_PTR(&S_G.main_thread_gc);
@@ -804,33 +795,6 @@ ptr S_null_immutable_string(void) {
   find_room(tc, space_new, 0, type_typed_object, size_string(0), v);
   VECTTYPE(v) = (0 << string_length_offset) | type_string | string_immutable_flag;
   return v;
-}
-
-int Spopcount(uptr x) {
-#if defined(__clang__) || defined(__GNUC__)
-  if (sizeof(x) <= sizeof(unsigned long))
-    return __builtin_popcountl((unsigned long)x);
-  else
-    return __builtin_popcountll((unsigned long long)x);
-#else
-# if defined(_MSC_VER)
-  if (has_popcnt) {
-#   if defined(_WIN64)
-    return (int)__popcnt64((unsigned __int64)x);
-#   else
-    return (int)__popcnt((unsigned int)x);
-#   endif
-# endif
-  }
-
-  /* Kernighan's method */
-  int count = 0;
-  while (x != 0) {
-    x &= x - 1;
-    ++count;
-  }
-  return count;
-#endif
 }
 
 static ptr stencil_vector(uptr type, uptr mask) {

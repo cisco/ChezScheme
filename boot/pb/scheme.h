@@ -140,7 +140,22 @@ typedef unsigned char octet;
 #define Sstring_length(x) ((iptr)((uptr)(*((iptr *)TO_VOIDP((uptr)(x)+1)))>>4))
 #define Sstring_ref(x,i) Schar_value(((string_char *)TO_VOIDP((uptr)(x)+9))[i])
 #define Sunbox(x) (*((ptr *)TO_VOIDP((uptr)(x)+9)))
-EXPORT int Spopcount(uptr);
+static inline int Spopcount(uptr x) {
+#if defined(__clang__) || defined(__GNUC__)
+  return __builtin_popcountll((unsigned long)x);
+#else
+  /* count bits of each 2-bit chunk */
+  x  = x - ((x >> 1) & 0x5555555555555555ULL);
+  /* count bits of each 4-bit chunk */
+  x  = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
+  /* count bits of each 8-bit chunk */
+  x  = x + (x >> 4);
+  /* mask out junk */
+  x &= 0x0F0F0F0F0F0F0F0FULL;
+  /* add all 8-bit chunks */
+  return (x * 0x0101010101010101ULL) >> 56;
+#endif
+}
 #define Sstencil_vector_length(x) Spopcount(((uptr)(*((iptr *)TO_VOIDP((uptr)(x)+1))))>>6)
 #define Sstencil_vector_ref(x,i) (((ptr *)TO_VOIDP((uptr)(x)+9))[i])
 EXPORT iptr Sinteger_value(ptr);
