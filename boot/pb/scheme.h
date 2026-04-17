@@ -145,11 +145,11 @@ static inline int Spopcount(uptr x) {
   return __builtin_popcountll((unsigned long)x);
 #else
   /* count bits of each 2-bit chunk */
-  x  = x - ((x >> 1) & 0x5555555555555555ULL);
+  x = x - ((x >> 1) & 0x5555555555555555ULL);
   /* count bits of each 4-bit chunk */
-  x  = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
+  x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
   /* count bits of each 8-bit chunk */
-  x  = x + (x >> 4);
+  x = x + (x >> 4);
   /* mask out junk */
   x &= 0x0F0F0F0F0F0F0F0FULL;
   /* add all 8-bit chunks */
