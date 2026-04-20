@@ -3037,6 +3037,9 @@ When \scheme{>} and \scheme{>=} are applied to two non-real arguments, the first
 is now reported as incorrect instead of the second. In general, when two or more arguments
 are invalid, there is no guarantee about which one is reported invalid.
 
+A bug in the error produced by \scheme{bytevector-ieee-double-native-set!}---when the last
+argument raises and error and the offset is out of bounds---has been fixed.
+
 \subsection{Fix \scheme{remainder} and \scheme{modulo} for inexact/exact mixtures (10.4.0)}
 
 When \scheme{remainder} and \scheme{modulo} receive an inexact first

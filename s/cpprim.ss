@@ -368,7 +368,12 @@
             (let-values ([(type e)
                           (nanopass-case (L7 Expr) e
                             [(raw ,e) (values 'uptr e)]
-                            [else (values type e)])])
+                            [else (cond
+                                    [(eq? type 'try-fp)
+                                     (if (known-flonum-result? e)
+                                         (values 'fp e)
+                                         (values 'uptr e))]
+                                    [else (values type e)])])])
               (let ([t (make-tmp 't type)])
                 (values t (lift-fp-unboxed
                            (lambda (body)
@@ -7211,11 +7216,11 @@
         (define-inline 2 bytevector-ieee-double-native-set!
           [(e-bv e-offset e-val)
            (bind #t (e-bv e-offset)
-             (let ([info (make-info-call #f #f #f #f #f)])
-               `(if (call ,info ,#f ,(lookup-primref 3 '$bytevector-set!-check?) (quote 64) ,e-bv ,e-offset)
-                    ;; checks to make sure e-val produces a real number:
-                    (call ,info ,#f ,(lookup-primref 3 'bytevector-ieee-double-native-set!) ,e-bv ,e-offset ,e-val)
-                    ,(build-libcall #t src sexpr bytevector-ieee-double-native-set! e-bv e-offset))))]))
+             (bind #f try-fp (e-val)
+               (let ([info (make-info-call #f #f #f #f #f)])
+                 `(if (call ,info ,#f ,(lookup-primref 3 '$bytevector-set!-check?) (quote 64) ,e-bv ,e-offset)
+                      (call ,info ,#f ,(lookup-primref 3 'bytevector-ieee-double-native-set!) ,e-bv ,e-offset ,e-val)
+                      ,(build-libcall #t src sexpr bytevector-ieee-double-native-set! e-bv e-offset)))))]))
 
       (let ()
         (define-syntax define-bv-int-ref-inline
