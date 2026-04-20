@@ -13,7 +13,7 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-(if (or (windows?) (equal? (getenv "USER") "root") (embedded?))
+(if (or (windows?) (haiku?) (equal? (getenv "USER") "root") (embedded?))
     (mat unix-file-io
       (error? (errorf 'open-output-file "failed for testfile.ss: file exists"))
       (error? (errorf 'open-output-file "failed for testfile.ss: file exists"))
@@ -177,7 +177,7 @@
     )
 )
 
-(if (or (windows?) (equal? (getenv "USER") "root") (embedded?))
+(if (or (windows?) (haiku?) (equal? (getenv "USER") "root") (embedded?))
     (mat file-operations
       (error? (errorf 'delete-directory "failed for ~a: ~a" "testlink1" "not a directory"))
       (error? (errorf 'delete-directory "failed for ~a: ~a" "testlink2" "not a directory"))

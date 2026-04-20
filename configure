@@ -143,6 +143,11 @@ case "${CONFIG_UNAME}" in
     installprefix=/usr
     installmansuffix=share/man
     ;;
+  Haiku)
+    unixsuffix=hk
+    installprefix=/system
+    installmansuffix=documentation/man
+    ;;
   QNX)
     if uname -m | egrep 'x86' > /dev/null 2>&1 ; then
       m32=i3qnx
@@ -777,7 +782,7 @@ fi
 
 # Infer flags needed for threads:
 case "${flagsm}" in
-  t*le|t*gnu|t*fb|t*ob|t*nb)
+  t*le|t*gnu|t*fb|t*ob|t*nb|t*hk)
       threadFlags="-D_REENTRANT -pthread"
       threadLibs="-lpthread"
       ;;
@@ -887,7 +892,7 @@ fi
 # Add automatic linking flags, unless suppressed by --disable-auto-flags
 if [ "$addflags" = "yes" ] ; then
   case "${flagsm}" in
-    *le|*gnu)
+    *le|*gnu|*hk)
         LDFLAGS="${LDFLAGS} -rdynamic"
         ;;
     *fb|*nb)
@@ -904,7 +909,7 @@ if [ "$addflags" = "yes" ] ; then
     *le|*gnu)
         LIBS="${LIBS} -lm -ldl ${ncursesLib} -lrt"
         ;;
-    *fb|*ob)
+    *fb|*ob|*hk)
         LIBS="${LIBS} ${iconvLib} -lm ${ncursesLib}"
         ;;
     *nb)
@@ -997,7 +1002,7 @@ exeSuffix=
 
 # compile flags for c/Mf-unix and mats/Mf-unix
 case "${flagsmuni}" in
-    *le|*gnu)
+    *le|*gnu|*hk)
         mdcflags="-fPIC -shared"
         ;;
     *fb|*ob)
@@ -1031,7 +1036,7 @@ case "${flagsmuni}" in
     i3le)
         mdldflags="-melf_i386"
         ;;
-    *le|*gnu)
+    *le|*gnu|*hk)
         ;;
     i3nb)
         mdldflags="-m elf_i386"

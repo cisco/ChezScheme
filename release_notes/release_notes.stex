@@ -89,6 +89,10 @@ procedure) is given in parentheses.
      \item x86, nonthreaded (i3s2) and threaded (ti3s2)
      \item x86\_64, nonthreaded (a6s2) and threaded (ta6s2)
      \end{itemizeC}
+\item Haiku
+     \begin{itemizeC}
+     \item x86\_64, nonthreaded (a6hk) and threaded (ta6hk)
+     \end{itemizeC}
 \item Other platforms
      \begin{itemizeC}
      \item bytecode interpretation (pb, tpb, pb32l, tpb32l, pb32b, tpb32b, pb64l, tpb64l, pb64b, tpb64b)

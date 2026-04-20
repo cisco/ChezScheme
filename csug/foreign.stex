@@ -2968,6 +2968,11 @@ On Windows:
 (load-shared-object "msvcrt.dll")
 \endschemedisplay
 
+On Haiku:
+\schemedisplay
+(load-shared-object "libroot.so")
+\endschemedisplay
+
 Once the C library has been loaded, \scheme{getenv} should be available
 as a foreign entry.
 
@@ -3009,7 +3014,7 @@ The files must be compiled and linked into a shared object before
 they can be loaded.
 How this is done depends upon the host system.
 \noindent
-On Linux, FreeBSD, OpenBSD, and OpenSolaris systems:
+On Linux, FreeBSD, Haiku, OpenBSD, and OpenSolaris systems:
 
 \schemedisplay
 (system "cc -fPIC -shared -o evenodd.so even.c odd.c")

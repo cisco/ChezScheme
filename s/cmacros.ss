@@ -419,6 +419,7 @@
   rv64ob    trv64ob
   rv64nb    trv64nb
   la64le    tla64le
+  a6hk      ta6hk
 )
 
 (include "machine.def")

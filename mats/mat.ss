@@ -121,24 +121,39 @@
           [else c])))
     (define (condition-message c)
       (define prefix?
-        (lambda (x y)
+        (lambda (x y y-start)
           (let ([n (string-length x)])
-            (and (fx<= n (string-length y))
+            (and (fx<= n (- (string-length y) y-start))
               (let prefix? ([i 0])
                 (or (fx= i n)
-                    (and (char=? (string-ref x i) (string-ref y i))
+                    (and (char=? (string-ref x i) (string-ref y (+ i y-start)))
                          (prefix? (fx+ i 1)))))))))
       (define prune-prefix
         (lambda (x y)
-          (and (prefix? x y)
+          (and (prefix? x y 0)
                (substring y (string-length x) (string-length y)))))
-      (let ([s (call-with-string-output-port
-                 (lambda (p) (display-condition c p)))])
-        (or (prune-prefix "Exception: " s)
-            (prune-prefix "Exception in " s)
-            (prune-prefix "Warning: " s)
-            (prune-prefix "Warning in " s)
-            s)))
+      (define rewrite-message
+        (lambda (s from to)
+          (let rewrite ([i 0])
+            (cond
+              [(= i (string-length s))
+               s]
+              [(prefix? from s i)
+               (string-append (substring s 0 i)
+                              to
+                              (substring s (+ i (string-length from)) (string-length s)))]
+              [else (rewrite (add1 i))]))))
+      (let* ([s (call-with-string-output-port
+                 (lambda (p) (display-condition c p)))]
+             [s (or (prune-prefix "Exception: " s)
+                    (prune-prefix "Exception in " s)
+                    (prune-prefix "Warning: " s)
+                    (prune-prefix "Warning in " s)
+                    s)]
+             [s (rewrite-message s
+                                 "file or directory already exists"
+                                 "file exists")])
+        s))
     (define (condition-type c)
       (case (fxior (if (warning? c) 1 0) (if (error? c) 2 0) (if (violation? c) 4 0))
         [(1) 'warning]
@@ -515,6 +530,11 @@
 
 (define windows?
   (if (memq (machine-type) '(i3nt ti3nt a6nt ta6nt arm64nt tarm64nt))
+      (lambda () #t)
+      (lambda () #f)))
+
+(define haiku?
+  (if (memq (machine-type) '(a6hk ta6hk))
       (lambda () #t)
       (lambda () #f)))
 
