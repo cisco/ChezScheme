@@ -799,16 +799,21 @@ ptr S_null_immutable_string(void) {
 }
 
 static ptr stencil_vector(uptr type, uptr mask) {
-    ptr tc;
-    ptr p; iptr d;
-    iptr n = Spopcount(mask);
+  ptr tc;
+  ptr p;
+  iptr d;
+  iptr n;
 
-    tc = get_thread_context();
+  if (mask >= ((uptr)1 << stencil_vector_mask_bits))
+    S_error("", "invalid stencil vector mask request");
 
-    d = size_stencil_vector(n);
-    newspace_find_room(tc, type_typed_object, d, p);
-    VECTTYPE(p) = (mask << stencil_vector_mask_offset) | type;
-    return p;
+  n = Spopcount(mask);
+  tc = get_thread_context();
+
+  d = size_stencil_vector(n);
+  newspace_find_room(tc, type_typed_object, d, p);
+  VECTTYPE(p) = (mask << stencil_vector_mask_offset) | type;
+  return p;
 }
 
 ptr S_stencil_vector(uptr mask) {
@@ -1088,6 +1093,9 @@ ptr S_bignum(ptr tc, iptr n, IBOOL sign) {
 ptr S_code(ptr tc, iptr type, iptr n) {
     ptr p; iptr d;
 
+    if ((uptr)n > (uptr)most_positive_fixnum)
+        S_error("", "invalid code size request");
+
     d = size_code(n);
     find_room(tc, space_code, 0, type_typed_object, d, p);
     CODETYPE(p) = type;
@@ -1102,6 +1110,9 @@ ptr S_code(ptr tc, iptr type, iptr n) {
 ptr S_relocation_table(iptr n) {
     ptr tc = get_thread_context();
     ptr p; iptr d;
+
+    if ((uptr)n > (uptr)most_positive_fixnum)
+        S_error("", "invalid relocation table size request");
 
     d = size_reloc_table(n);
     newspace_find_room(tc, type_untyped, d, p);

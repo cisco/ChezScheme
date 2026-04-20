@@ -78,7 +78,7 @@
  *
  *        -> {library-code}<uptr index>
  *
- *        -> {graph}<uptr graph-length><fasl object>
+ *        -> {graph}<uptr graph-length><uptr external-count><fasl object>
  *
  *        -> {graph-def}<uptr index><fasl object>
  *
@@ -220,11 +220,12 @@ static void toolarge(ptr path);
 static iptr iptrin(faslFile f);
 static int must_bytein(faslFile f);
 static void skipbytes(iptr n, faslFile f);
+static iptr sizein(faslFile f);
 static float singlein(faslFile f);
 static double doublein(faslFile f);
 static iptr stringin(ptr *pstrbuf, iptr start, faslFile f);
 static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f);
-static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr size);
+static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, iptr size);
 static IBOOL rtd_equiv(ptr x, ptr y);
 static IBOOL rtd_extras_equiv(ptr x, ptr y);
 static IBOOL equalp(ptr x, ptr y);
@@ -436,7 +437,7 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, faslFile f, ptr externals) {
         return (ptr)0;
     }
 
-    size = S_fasl_uptrin(f, NULL);
+    size = sizein(f);
   
     if (ty == situation || situation == fasl_type_visit_revisit || ty == fasl_type_visit_revisit) {
       struct faslFileObj bv_ffo;
@@ -462,6 +463,9 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, faslFile f, ptr externals) {
           iptr dest_size = S_fasl_uptrin(f, &bytes_consumed);
           iptr src_size = size - (2 + bytes_consumed); /* adjust for u8 compression type, u8 fasl type, and uptr dest_size */
 
+          if ((uptr)src_size > (uptr)maximum_bytevector_length ||
+              (uptr)dest_size > (uptr)maximum_bytevector_length)
+            toolarge(f->uf.path);
           PREPARE_BYTEVECTOR(SRCBV(tc), src_size);
           PREPARE_BYTEVECTOR(DSTBV(tc), dest_size);
           S_fasl_bytesin(&BVIT(SRCBV(tc),0), src_size, f);
@@ -481,6 +485,8 @@ static ptr fasl_entry(ptr tc, IFASLCODE situation, faslFile f, ptr externals) {
           in_f = f;
           old_mode = f->buffer_mode;
           size -= 2;  /* adjust for u8 compression type and u8 fasl type */
+          if (size < 0)
+            S_error1("", "invalid fasl uncompressed size found in ~a", f->uf.path);
           if (old_mode == FASL_BUFFER_READ_MINIMAL) {
             f->buffer_mode = FASL_BUFFER_READ_REMAINING;
             f->remaining = size;
@@ -524,7 +530,7 @@ static ptr bv_fasl_entry(ptr tc, ptr bv, int ty, uptr offset, uptr len, faslFile
     f->next += offset;
     faslin(tc, &x, externals, &strbuf, f);
   } else {
-    S_error1("", "bad entry type (got ~s)", FIX(ty));
+    S_error2("", "bad fasl entry type ~d found in ~a", FIX(ty), f->uf.path);
   }
 
   S_flush_instruction_cache(tc);
@@ -731,6 +737,13 @@ uptr S_fasl_uptrin(faslFile f, INT *bytes_consumed) {
 
 #define uptrin(f) S_fasl_uptrin(f, NULL)
 
+static iptr sizein(faslFile f) {
+  iptr n = S_fasl_uptrin(f, NULL);
+  if ((uptr)n > (uptr)most_positive_fixnum)
+    toolarge(f->uf.path);
+  return n;
+}
+
 static float singlein(faslFile f) {
   union { float f; U32 u; } val;
 
@@ -755,7 +768,7 @@ static double doublein(faslFile f) {
 static iptr stringin(ptr *pstrbuf, iptr start, faslFile f) {
   iptr end, n, i; ptr p = *pstrbuf;
 
-  end = start + (n = uptrin(f));
+  end = start + (n = sizein(f));
   if (Sstring_length(*pstrbuf) < end) {
      ptr newp = S_string((char *)0, end);
      for (i = 0; i != start; i += 1) Sstring_set(newp, i, Sstring_ref(p, i));
@@ -770,7 +783,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
     switch (ty) {
         case fasl_type_pair: {
             iptr n; ptr p;
-            n = uptrin(f);
+            n = sizein(f);
             *x = p = Scons(FIX(0), FIX(0));
             faslin(tc, &INITCAR(p), t, pstrbuf, f);
             while (--n) {
@@ -804,7 +817,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
         case fasl_type_uninterned_symbol: {
             iptr i, n;
             ptr str;
-            n = uptrin(f);
+            n = sizein(f);
             str = S_string((char *)0, n);
             for (i = 0; i != n; i += 1) Sstring_set(str, i, uptrin(f));
             STRTYPE(str) |= string_immutable_flag;
@@ -824,10 +837,10 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
         case fasl_type_vector:
         case fasl_type_immutable_vector: {
             iptr n; ptr *p;
-            n = uptrin(f);
+            n = sizein(f);
             *x = S_vector(n);
             p = &INITVECTIT(*x, 0);
-            while (n--) faslin(tc, p++, t, pstrbuf, f);
+            while (--n >= 0) faslin(tc, p++, t, pstrbuf, f);
             if (ty == fasl_type_immutable_vector) {
               if (Svector_length(*x) == 0)
                 *x = S_G.null_immutable_vector;
@@ -838,10 +851,10 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
         }
         case fasl_type_fxvector: {
             iptr n; ptr *p;
-            n = uptrin(f);
+            n = sizein(f);
             *x = S_fxvector(n);
             p = &FXVECTIT(*x, 0);
-            while (n--) {
+            while (--n >= 0) {
               iptr t = iptrin(f);
               if (!FIXRANGE(t)) toolarge(f->uf.path);
               *p++ = FIX(t);
@@ -850,14 +863,14 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
         }
         case fasl_type_flvector: {
             iptr n; double *p;
-            n = uptrin(f);
+            n = sizein(f);
             *x = S_flvector(n);
             p = &FLVECTIT(*x, 0);
-            while (n--) {
+            while (--n >= 0) {
               ptr fl;
               faslin(tc, &fl, t, pstrbuf, f);
               if (!Sflonump(fl))
-                S_error1("", "not a flonum in flvector ~a", f->uf.path);
+                S_error1("", "invalid fasl flvector element found in ~a", f->uf.path);
               *p++ = Sflonum_value(fl);
             }
             return;
@@ -865,7 +878,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
         case fasl_type_bytevector:
         case fasl_type_immutable_bytevector: {
             iptr n;
-            n = uptrin(f);
+            n = sizein(f);
             *x = S_bytevector(n);
             S_fasl_bytesin(&BVIT(*x,0), n, f);
             if (ty == fasl_type_immutable_bytevector) {
@@ -886,7 +899,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               *x = S_system_stencil_vector(mask);
             p = &INITSTENVECTIT(*x, 0);
             n = Spopcount(mask);
-            while (n--) faslin(tc, p++, t, pstrbuf, f);
+            while (--n >= 0) faslin(tc, p++, t, pstrbuf, f);
             return;
         }
         case fasl_type_base_rtd: {
@@ -897,9 +910,11 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             *x = rtd;
             return;
         } case fasl_type_rtd: {
-            ptr rtd, rtd_uid, plist, ls; uptr size;
+            ptr rtd, rtd_uid, plist, ls; iptr size;
 
             faslin(tc, &rtd_uid, t, pstrbuf, f);
+            if (!Ssymbolp(rtd_uid))
+              S_error1("", "invalid fasl rtd found in ~a", f->uf.path);
 
             tc_mutex_acquire();
 
@@ -910,7 +925,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
                 ptr tmp;
                 *x = rtd = Scar(Scdr(ls));
 
-                size = uptrin(f);
+                size = sizein(f);
                 if (size != 0) {
                   fasl_record(tc, &tmp, t, pstrbuf, f, size);
                   if (!rtd_equiv(tmp, rtd))
@@ -921,7 +936,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
               }
             }
 
-            size = uptrin(f);
+            size = sizein(f);
             if (size == 0)
               S_error2("", "unregistered record type ~s in ~a", rtd_uid, f->uf.path);
             fasl_record(tc, x, t, pstrbuf, f, size);
@@ -935,12 +950,12 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             return;
         }
         case fasl_type_record: {
-            uptr size = uptrin(f);
+            iptr size = sizein(f);
             fasl_record(tc, x, t, pstrbuf, f, size);
             return;
         }
         case fasl_type_eq_hashtable: {
-            ptr rtd, ht, v; uptr subtype; uptr veclen, i, n;
+            ptr rtd, ht, v; uptr subtype; iptr veclen, i, n;
             if ((rtd = S_G.eq_ht_rtd) == Sfalse) {
               S_G.eq_ht_rtd = rtd = SYMVAL(S_intern((const unsigned char *)"$eq-ht-rtd"));
               if (!Srecordp(rtd)) S_error_abort("$eq-ht-rtd has not been set");
@@ -958,10 +973,10 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             default:
               S_error2("", "invalid eq-hashtable subtype code", FIX(subtype), f->uf.path);
             }
-            INITPTRFIELD(ht,eq_hashtable_minlen_disp) = FIX(uptrin(f));
-            veclen = uptrin(f);
+            INITPTRFIELD(ht,eq_hashtable_minlen_disp) = FIX(sizein(f));
+            veclen = sizein(f);
             INITPTRFIELD(ht,eq_hashtable_vec_disp) = v = S_vector(veclen);
-            n = uptrin(f);
+            n = sizein(f);
             INITPTRFIELD(ht,eq_hashtable_size_disp) = FIX(n);
             for (i = 0; i < veclen ; i += 1) { INITVECTIT(v, i) = FIX(i); }
             while (n > 0) {
@@ -987,7 +1002,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             return;
         }
         case fasl_type_symbol_hashtable: {
-            ptr rtd, ht, equiv, v; uptr equiv_code, veclen, i, n;
+            ptr rtd, ht, equiv, v; uptr equiv_code; iptr veclen, i, n;
             if ((rtd = S_G.symbol_ht_rtd) == Sfalse) {
               S_G.symbol_ht_rtd = rtd = SYMVAL(S_intern((const unsigned char *)"$symbol-ht-rtd"));
               if (!Srecordp(rtd)) S_error_abort("$symbol-ht-rtd has not been set");
@@ -996,7 +1011,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             RECORDINSTTYPE(ht) = rtd;
             INITPTRFIELD(ht,symbol_hashtable_type_disp) = S_G.symbol_symbol;
             INITPTRFIELD(ht,symbol_hashtable_mutablep_disp) = bytein(f) ? Strue : Sfalse;
-            INITPTRFIELD(ht,symbol_hashtable_minlen_disp) = FIX(uptrin(f));
+            INITPTRFIELD(ht,symbol_hashtable_minlen_disp) = FIX(sizein(f));
             equiv_code = bytein(f);
             switch (equiv_code) {
               case 0:
@@ -1024,20 +1039,22 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
                 }
                 break;
               default:
-                S_error2("", "invalid symbol-hashtable equiv code", FIX(equiv_code), f->uf.path);
+                S_error2("", "invalid fasl symbol-hashtable equiv code ~d found in ~a", FIX(equiv_code), f->uf.path);
                 /* make compiler happy */
                 equiv = Sfalse;
             }
             INITPTRFIELD(ht,symbol_hashtable_equivp_disp) = equiv;
-            veclen = uptrin(f);
+            veclen = sizein(f);
             INITPTRFIELD(ht,symbol_hashtable_vec_disp) = v = S_vector(veclen);
-            n = uptrin(f);
+            n = sizein(f);
             INITPTRFIELD(ht,symbol_hashtable_size_disp) = FIX(n);
             for (i = 0; i < veclen ; i += 1) { INITVECTIT(v, i) = Snil; }
             while (n > 0) {
               ptr keyval;
               keyval = Scons(FIX(0), FIX(0));
               faslin(tc, &INITCAR(keyval), t, pstrbuf, f);
+              if (!Ssymbolp(Scar(keyval)))
+                S_error1("", "invalid fasl symbol-hashtable key found in ~a", f->uf.path);
               faslin(tc, &INITCDR(keyval), t, pstrbuf, f);
               i = UNFIX(SYMHASH(Scar(keyval))) & (veclen - 1);
               INITVECTIT(v, i) = Scons(keyval, Svector_ref(v, i));
@@ -1050,6 +1067,8 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             offset = uptrin(f);
             *x = S_closure((ptr)0, 0);
             faslin(tc, &cod, t, pstrbuf, f);
+            if (offset != code_data_disp || !Scodep(cod))
+              S_error1("", "malformed fasl closure found in ~a", f->uf.path);
             CLOSENTRY(*x) = (ptr)((uptr)cod + offset);
             return;
         }
@@ -1061,13 +1080,15 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             ptr rp, ip;
             faslin(tc, &rp, t, pstrbuf, f);
             faslin(tc, &ip, t, pstrbuf, f);
+            if (!Sflonump(rp) || !Sflonump(ip))
+              S_error1("", "malformed fasl inexactnum found in ~a", f->uf.path);
             *x = S_inexactnum(FLODAT(rp), FLODAT(ip));
             return;
         }
         case fasl_type_string:
         case fasl_type_immutable_string: {
             iptr i, n; ptr str;
-            n = uptrin(f);
+            n = sizein(f);
             str = S_string((char *)0, n);
             for (i = 0; i != n; i += 1) Sstring_set(str, i, uptrin(f));
             if (ty == fasl_type_immutable_string) {
@@ -1085,10 +1106,10 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
         case fasl_type_large_integer: {
             IBOOL sign; iptr n; ptr t; bigit *p;
             sign = bytein(f);
-            n = uptrin(f);
+            n = sizein(f);
             t = S_bignum(tc, n, sign);
             p = &BIGIT(t, 0);
-            while (n--) *p++ = (bigit)uptrin(f);
+            while (--n >= 0) *p++ = (bigit)uptrin(f);
             *x = S_normalize_bignum(t);
             return;
         }
@@ -1106,8 +1127,8 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             iptr n, m, a; INT flags; iptr free;
             ptr co, reloc, name, pinfos;
             flags = bytein(f);
-            free = uptrin(f);
-            n = uptrin(f) /* length in bytes of code */;
+            free = sizein(f);
+            n = sizein(f) /* length in bytes of code */;
             *x = co = S_code(tc, type_code | (flags << code_flags_offset), n);
             CODEFREE(co) = free;
             faslin(tc, &name, t, pstrbuf, f);
@@ -1124,7 +1145,7 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
 #ifdef PORTABLE_BYTECODE_SWAPENDIAN
             swap_code_endian((octet *)&CODEIT(co, 0), n);
 #endif
-            m = uptrin(f);
+            m = sizein(f);
             CODERELOC(co) = reloc = S_relocation_table(m);
             RELOCCODE(reloc) = co;
             a = 0;
@@ -1165,10 +1186,10 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             *x = S_phantom_bytevector(uptrin(f));
             return;
         case fasl_type_graph: {
-            uptr len = uptrin(f), len2 = uptrin(f), tlen = (uptr)Svector_length(t), i;
+            iptr len = sizein(f), len2 = sizein(f), tlen = Svector_length(t), i;
             ptr new_t = S_vector(len);
             if ((tlen < len2) && (len2 != 0)) /* allowing a vector when not needed helps with `load-compiled-from-port` */
-              S_error2("", "incompatible external vector length ~d, expected ~d", FIX(tlen), FIX(len2));
+              S_error3("", "incompatible fasl graph external vector length ~d (expected ~d) found in ~a", FIX(tlen), FIX(len2), f->uf.path);
             if (len2 > len) len2 = len;
             for (i = 0; i < len2; i++)
               INITVECTIT(new_t, i+(len-len2)) = Svector_ref(t, i);
@@ -1176,24 +1197,31 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
             return;
         }
         case fasl_type_graph_def: {
-            ptr *p;
-            p = &INITVECTIT(t, uptrin(f));
+            uptr i; ptr *p;
+            i = uptrin(f);
+            if (i >= (uptr)Svector_length(t))
+                S_error1("", "invalid fasl graph def index found in ~a", f->uf.path);
+            p = &INITVECTIT(t, i);
             faslin(tc, p, t, pstrbuf, f);
             *x = *p;
             return;
         }
-        case fasl_type_graph_ref:
-            *x = Svector_ref(t, uptrin(f));
+        case fasl_type_graph_ref: {
+            uptr i = uptrin(f);
+            if (i >= (uptr)Svector_length(t))
+                S_error1("", "invalid fasl graph ref index found in ~a", f->uf.path);
+            *x = Svector_ref(t, i);
             return;
+        }
         case fasl_type_begin: {
-            uptr n = uptrin(f) - 1; ptr v;
-            while (n--)
-              faslin(tc, &v, t, pstrbuf, f);
-            faslin(tc, x, t, pstrbuf, f);
+            iptr n = sizein(f);
+            *x = Svoid; /* in case n == 0 */
+            while (--n >= 0)
+              faslin(tc, x, t, pstrbuf, f);
             return;
         }
         default:
-            S_error2("", "invalid object type ~d in fasl file ~a", FIX(ty), f->uf.path);
+            S_error2("", "invalid fasl object type ~d found in ~a", FIX(ty), f->uf.path);
     }
 }
 
@@ -1208,10 +1236,10 @@ static void faslin(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f) {
 #else
 # define unknown 3
 #endif
-static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, uptr size) {
-  uptr n, addr; ptr p; UINT padty;
+static void fasl_record(ptr tc, ptr *x, ptr t, ptr *pstrbuf, faslFile f, iptr size) {
+  iptr n; uptr addr; ptr p; UINT padty;
 
-  n = uptrin(f);
+  n = sizein(f);
   *x = p = S_record(size_record_inst(size));
   faslin(tc, &RECORDINSTTYPE(p), t, pstrbuf, f);
   addr = (uptr)TO_PTR(&RECORDINSTIT(p, 0));
