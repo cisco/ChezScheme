@@ -142,7 +142,7 @@ typedef unsigned char octet;
 #define Sunbox(x) (*((ptr *)TO_VOIDP((uptr)(x)+9)))
 static inline int Spopcount(uptr x) {
 #if defined(__clang__) || defined(__GNUC__)
-  return __builtin_popcountll((unsigned long)x);
+  return __builtin_popcountll(x);
 #else
   /* count bits of each 2-bit chunk */
   x = x - ((x >> 1) & 0x5555555555555555ULL);

@@ -348,7 +348,7 @@
                         "0x0F0F0F0F0F0F0F0FULL" "0x0101010101010101ULL" 56)])])
           (pr "static inline int Spopcount(uptr x) {\n")
           (pr "#if defined(__clang__) || defined(__GNUC__)\n")
-          (pr "  return __builtin_popcount~a((unsigned long)x);\n" suffix)
+          (pr "  return __builtin_popcount~a(x);\n" suffix)
           (pr "#else\n")
           (pr "  /* count bits of each 2-bit chunk */\n")
           (pr "  x = x - ((x >> 1) & ~a);\n" fives)
