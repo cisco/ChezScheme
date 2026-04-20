@@ -15,7 +15,6 @@
  */
 
 #include "system.h"
-#include "popcount.h"
 
 /* locally defined functions */
 static void segment_tell(uptr seg);

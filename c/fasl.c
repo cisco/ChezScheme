@@ -195,7 +195,6 @@
 
 #include "system.h"
 #include "zlib.h"
-#include "popcount.h"
 
 #ifdef WIN32
 #include <io.h>

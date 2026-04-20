@@ -119,7 +119,7 @@
      (map at-source
           (list "system.h" "types.h" "version.h" "globals.h" "externs.h" "segment.h"
                 "atomic.h" "thread.h" "sort.h" "compress-io.h"
-                "nocurses.h" "popcount.h"))
+                "nocurses.h"))
      (list c-config-file)
      (map at-mach
           (list "equates.h"

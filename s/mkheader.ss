@@ -339,7 +339,30 @@
           (format "Schar_value~a" (access "x" "i" string data)))
 
         (defref Sunbox box ref)
-  
+
+        (let-values
+            ([(suffix fives threes junk-mask ones shift)
+              (constant-case ptr-bits
+                [(32) (values "l" "0x55555555" "0x33333333" "0xF0F0F0F" "0x01010101" 24)]
+                [(64) (values "ll" "0x5555555555555555ULL" "0x3333333333333333ULL"
+                        "0x0F0F0F0F0F0F0F0FULL" "0x0101010101010101ULL" 56)])])
+          (pr "static inline int Spopcount(uptr x) {\n")
+          (pr "#if defined(__clang__) || defined(__GNUC__)\n")
+          (pr "  return __builtin_popcount~a(x);\n" suffix)
+          (pr "#else\n")
+          (pr "  /* count bits of each 2-bit chunk */\n")
+          (pr "  x = x - ((x >> 1) & ~a);\n" fives)
+          (pr "  /* count bits of each 4-bit chunk */\n")
+          (pr "  x = (x & ~a) + ((x >> 2) & ~a);\n" threes threes)
+          (pr "  /* count bits of each 8-bit chunk */\n")
+          (pr "  x = x + (x >> 4);\n")
+          (pr "  /* mask out junk */\n")
+          (pr "  x &= ~a;\n" junk-mask)
+          (pr "  /* add all 8-bit chunks */\n")
+          (pr "  return (x * ~a) >> ~d;\n" ones shift)
+          (pr "#endif\n")
+          (pr "}\n"))
+
         (def "Sstencil_vector_length(x)"
           (format "Spopcount(((uptr)~a)>>~d)"
             (access "x" stencil-vector type)

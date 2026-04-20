@@ -2991,6 +2991,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+
+\subsection{Declare \scheme{Spopcount} in scheme.h (10.4.0)}
+
+A bug where the header file scheme.h refers to an undeclared \scheme{Spopcount} function
+has been fixed.
+
 \subsection{Eager port closing on error in \scheme{open-source-file} (10.4.0)}
 
 When \scheme{open-source-file} fails on a non-seekable device, the file descriptor port

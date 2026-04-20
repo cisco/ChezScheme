@@ -15,7 +15,6 @@
  */
 
 #include "system.h"
-#include "popcount.h"
 
 /* locally defined functions */
 static void maybe_queue_fire_collector(thread_gc *tgc);
