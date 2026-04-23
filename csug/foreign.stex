@@ -2151,7 +2151,7 @@ The resulting ftype pointer is recognized by
 \scheme{ftype-pointer?} without an \var{ftype-name}.
 
 If \var{ftype-name} is provided, it must be
-\var{ftype-scheme-object-pointer} or a derived Scheme-object pointer
+\scheme{ftype-scheme-object-pointer} or a derived Scheme-object pointer
 type that is defined using \scheme{define-ftype}.
 
 %----------------------------------------------------------------------------
