@@ -287,7 +287,7 @@ ftype operators:
   (define ftd-stype (record-accessor rtd/ftd 0))
   (define ftd-size (record-accessor rtd/ftd 1))
   (define ftd-alignment (record-accessor rtd/ftd 2))
-  (define rtd-pm (lambda (x) ($object-ref 'scheme-object x (constant record-type-pm-disp))))
+  (define rtd-pm (csv7:record-field-accessor #!base-rtd 'pm))
   (define-syntax define-ftd-record-type
     (lambda (x)
       (define construct-name
