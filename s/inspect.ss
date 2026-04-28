@@ -1978,9 +1978,20 @@
           ($oops 'ftype-pointer-object "invalid index ~s" f))
         (define (get-field f field*)
           (cond
-            [(assq f field*) => cdr]
+            [(let get ([field* field*])
+               (if (null? field*)
+                   #f
+                   (let* ([field (car field*)]
+                          [name (car field)])
+                     (if (or (eq? name f)
+                             (and (pair? name) (memq f name)))
+                         field
+                         (get (cdr field*))))))
+             => (lambda (field)
+                  (values (cdr field)
+                          (atom? (car field))))]
             [(and (fixnum? f) (#%$fxu< f (length field*)))
-             (cdr (list-ref field* f))]
+             (values (cdr (list-ref field* f)) #t)]
             [else (invalid-field-specifier f)]))
         (define (deref x)
           (let ([ux ($unwrap-ftype-pointer x)])
@@ -2003,8 +2014,13 @@
                 [ftype () (make-object (ftype-pointer-ftype x))]
                 [fields () (make-object (map (lambda (x) (or (car x) '_)) field*))]
                 [length () (length field*)]
-                [ref (f) (deref (get-field f field*))]
-                [set! (f v) (deset! 'ftype-struct-object (get-field f field*) v)]
+                [ref (f) (let-values ([(field gotten?) (get-field f field*)])
+                           (let ([object (deref field)])
+                             (if gotten? object (object 'ref f))))]
+                [set! (f v) (let-values ([(field gotten?) (get-field f field*)])
+                              (if gotten?
+                                  (deset! 'ftype-struct-object field v)
+                                  ((deref field) 'set! f v)))]
                 [size (g) (compute-size x g)]
                 [write (p) (write `(ftype struct ...) p)]
                 [print (p) (pretty-print (ftype-pointer->sexpr x) p)])
@@ -2015,8 +2031,13 @@
                 [ftype () (make-object (ftype-pointer-ftype x))]
                 [fields () (make-object (map (lambda (x) (or (car x) '_)) field*))]
                 [length () (length field*)]
-                [ref (f) (deref (get-field f field*))]
-                [set! (f v) (deset! 'ftype-union-object (get-field f field*) v)]
+                [ref (f) (let-values ([(field gotten?) (get-field f field*)])
+                           (let ([object (deref field)])
+                             (if gotten? object (object 'ref f))))]
+                [set! (f v) (let-values ([(field gotten?) (get-field f field*)])
+                              (if gotten?
+                                  (deset! 'ftype-union-object field v)
+                                  ((deref field) 'set! f v)))]
                 [size (g) (compute-size x g)]
                 [write (p) (write `(ftype union ...) p)]
                 [print (p) (pretty-print (ftype-pointer->sexpr x) p)])
@@ -2055,9 +2076,11 @@
                 [fields () (make-object (map (lambda (x) (or (car x) '_)) field*))]
                 [length () (length field*)]
                 [ref (f) (apply (lambda (getter setter) (make-object (getter)))
-                           (get-field f field*))]
+                           (let-values ([(field gotten?) (get-field f field*)])
+                             field))]
                 [set! (f v) (apply (lambda (getter setter) (make-object (setter v)))
-                              (get-field f field*))]
+                              (let-values ([(field gotten?) (get-field f field*)])
+                                field))]
                 [size (g) (compute-size x g)]
                 [write (p) (write `(ftype bits ...) p)]
                 [print (p) (pretty-print (ftype-pointer->sexpr x) p)])
