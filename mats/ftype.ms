@@ -472,9 +472,10 @@
                   [=> (struct
                         [a integer-32]
                         [b integer-16]
-                        [=> (bits
-                              [c unsigned 10]
-                              [d signed 6])])]
+                        [=> (endian little
+                              (bits
+                                [c unsigned 10]
+                                [d signed 6]))])]
                   [b2 (struct [a integer-8] [b double])]
                   [=> Aa])])]
         [v (* Ac)]))
@@ -1083,8 +1084,9 @@
         [=> (struct
               [prev (* Dlist)]
               [next (* Dlist)]
-              [=> (bits [lock unsigned 1]
-                        [z signed 7])])]))
+              [=> (endian little
+                    (bits [lock unsigned 1]
+                          [z signed 7]))])]))
     (define x (make-ftype-pointer Dlist (foreign-alloc (ftype-sizeof Dlist))))
     (ftype-set! Dlist (head) x 17)
     (ftype-set! Dlist (prev) x x)
