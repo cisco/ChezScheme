@@ -100,7 +100,7 @@ procedure) is given in parentheses.
 \end{itemize}
 
 {\thisversion} supports iOS natively to a limited extent. See
-\href[static]{section:ios-machine-types}{this section} for details.
+\href[static]{section:ios-machine-types}{``New machine types for iOS''} for details.
 
 This document contains three sections describing significant
 (1) \href[static]{section:functionality}{functionality changes},
@@ -143,7 +143,7 @@ return two values: the foreign procedure's direct result and the value
 of \scheme{errno} just after the foreign procedure returns. On
 Windows, the \scheme{current-errno-source} parameter selects the
 runtime C library whose \scheme{errno} is consulted, or instead of
-\scheme{__errno} use \scheme{__get_last-error} to get a result
+\scheme{__errno} use \scheme{__get_last_error} to get a result
 from \scheme{GetLastError} instead of \scheme{errno}.
 
 The new \scheme{__alloc} foreign-procedure convention modifies a preceding
@@ -161,9 +161,11 @@ first point that a callable would otherwise allow interrupt handling,
 and interrupts after reenabled after the last point where the callable
 would otherwise allow interrupt handling.
 
-\subsection{Add machine type a6gnu (10.4.0)}
+\subsection{New machine types for GNU/Hurd and Haiku on x86\_64 (10.4.0)}
 
-GNU/Hurd on x86\_64 is now supported as machine type a6gnu.
+GNU/Hurd on x86\_64 is now supported as machine types a6gnu (nonthreaded) and ta6gnu (threaded).
+
+Haiku on x86\_64 is now supported as machine types a6nk (nonthreaded) and ta6hk (threaded).
 
 \subsection{Interrupts and large-vector operations (10.4.0)}
 
@@ -2999,7 +3001,7 @@ has been fixed.
 
 \subsection{Eager port closing on error in \scheme{open-source-file} (10.4.0)}
 
-When \scheme{open-source-file} fails on a non-seekable device, the file descriptor port
+When \scheme{open-source-file} failed on a non-seekable device, the file descriptor port
 was kept open until the garbage collector eventually closed it. It now closes the port on
 error.
 
@@ -3025,8 +3027,8 @@ the indicated bit is already set.
 
 \subsection{Unicode Indic\_Conjunct\_Break support (10.4.0)}
 
-The grapheme cluster break algorithm neglected to consider the Indic\_Conjunct\_Break
-property available since Unicode 15.
+A bug where the grapheme cluster break algorithm neglected to consider the
+Indic\_Conjunct\_Break property available since Unicode 15 has been fixed.
 
 \subsection{Corrections and refinements to error reporting (10.4.0)}
 
@@ -3085,10 +3087,10 @@ the generic \scheme{+} case so non-real contributions are preserved.
 
 \subsection{Fix interaction of pbchunk and atomic foreign procedures (10.4.0)}
 
-The output of \scheme{pbchunk-convert-file} could be incorrect in the
-case of an inlined foreign call within certain blocks. The generated
-source was ill-formed in the case of a block that has too many entries
-and exits around unconvertible code to productively compile via C.
+A bug where the output of \scheme{pbchunk-convert-file} could be incorrect in the case of
+an inlined foreign call within certain blocks was fixed. The generated source was
+ill-formed in the case of a block that has too many entries and exits around unconvertible
+code to productively compile via C.
 
 \subsection{Exit with failure on error from boot file (10.3.0)}
 
