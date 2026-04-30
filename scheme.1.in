@@ -3,7 +3,7 @@
 .if t .ds c caf\o'\'e'
 .if n .ds c cafe
 .ds ]W 
-.TH SCHEME 1 "Chez Scheme Version 10.4.0 October 2025"
+.TH SCHEME 1 "Chez Scheme Version 10.4.0 May 2026"
 .SH NAME
 {InstallSchemeName} - Chez Scheme
 .br
@@ -801,6 +801,6 @@ Second Edition\fP,
 MIT press (1996).
 .in -5
 .SH AUTHOR
-Copyright 2025 Cisco Systems, Inc.
+Copyright 2026 Cisco Systems, Inc.
 Licensed under the Apache License, Version 2.0
 (http://www.apache.org/licenses/LICENSE-2.0)

@@ -2,8 +2,8 @@
 
 \thisversion{Version 10.4.0}
 \thatversion{Version 8.4}
-\pubmonth{October}
-\pubyear{2025}
+\pubmonth{May}
+\pubyear{2026}
 
 \iflatex
 \usepackage{enumitem}
