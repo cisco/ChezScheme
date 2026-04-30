@@ -1,0 +1,57 @@
+BODY {background-color: #FFFFFF}
+A:link {color:#880000; text-decoration:underline}
+A:active {color:#880000; text-decoration:underline}
+A:visited {color:#000088; text-decoration:underline}
+A:hover {color:white; text-decoration:underline; background:#880000}
+
+A.plain:link {color:#880000; text-decoration:none}
+A.plain:active {color:#880000; text-decoration:none}
+A.plain:visited {color:#000088; text-decoration:none}
+A.plain:hover {color:white; text-decoration:none; background:#880000}
+
+A.static:link {color:#880000; text-decoration:underline}
+A.static:active {color:#880000; text-decoration:underline}
+A.static:visited {color:#880000; text-decoration:underline}
+A.static:hover {color:white; text-decoration:underline; background:#880000}
+
+A.plainstatic:link {color:#880000; text-decoration:none}
+A.plainstatic:active {color:#880000; text-decoration:none}
+A.plainstatic:visited {color:#880000; text-decoration:none}
+A.plainstatic:hover {color:white; text-decoration:none; background:#880000}
+
+A.ref:link {color:#880000; text-decoration:underline}
+A.ref:active {color:#880000; text-decoration:underline}
+A.ref:visited {color:#880000; text-decoration:underline}
+A.ref:hover {color:white; text-decoration:underline; background:#880000}
+
+A.plainlink:link {color:#880000; text-decoration:none}
+A.plainlink:active {color:#880000; text-decoration:none}
+A.plainlink:visited {color:#880000; text-decoration:none}
+A.plainlink:hover {color:white; text-decoration:none; background:#880000}
+
+A.toc:link {color:#000088; text-decoration:none}
+A.toc:active {color:#000088; text-decoration:none}
+A.toc:visited {color:#000088; text-decoration:none}
+A.toc:hover {color:white; text-decoration:none; background:#000088}
+
+input.default { background: #ffffff; color: #000000; vertical-align: middle}
+
+H1, H2 { margin-top: 1em; margin-bottom: 1em }
+H3, H4, H5, H6 { margin-top: 1em; margin-bottom: 0em }
+
+H1, H2 {color: #880000}
+H3, H4 {color: #000088}
+H1 {font-size: 2em}
+H2 {font-size: 1.5em}
+H3 {font-size: 1.17em}
+H1, H2, H3, H4 {font-weight: bold}
+
+table.indent {margin-left: 20px}
+
+.pruned{ color: red; }
+.inserted{ color: green; }
+.attr{ font-weight: bold; }
+.attrvalue{ color: blue; }
+.tag{ color: navy; font-weight: bold; }
+.entity{ color: purple; font-weight: bold; }
+.errflag{ color: red; font-weight: bold; }
