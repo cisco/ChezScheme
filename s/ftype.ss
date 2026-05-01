@@ -90,7 +90,14 @@ notes:
     in the layout but are considered unnamed and cannot be accessed
     via the ftype operators described below.
 
-  - non-underscore field names are handled symbolically, i.e.,
+  - arrow ( => ) can be used as the field name for one or more fields
+    of a struct or union.  such fields must themselves be of a struct,
+    union, or bits ftype and are considered anonymous as defined by C11
+    and later.  anonymous fields differ only in that their own fields
+    are accessible directly from the containing ftype (recursively from
+    the innermost named parent when nested).
+
+  - non-underscore/arrow field names are handled symbolically, i.e.,
     they are treated as symbols rather than identifiers.  each
     symbol must be unique (as a symbol) with respect to the other
     field names within a single struct or union, but need not be
@@ -446,12 +453,13 @@ ftype operators:
             '()
             (let ([x (car x*)] [x* (cdr x*)])
               (unless (identifier? x) (syntax-error x "invalid field name"))
-              (if (free-identifier=? x #'_)
-                  (cons #f (f x* seen*))
-                  (let ([s (syntax->datum x)])
-                    (if (memq s seen*)
-                        (syntax-error x "duplicate field name")
-                        (cons s (f x* (cons s seen*)))))))))))
+              (cond
+                [(free-identifier=? x #'_) (cons #f (f x* seen*))]
+                [(free-identifier=? x #'=>) (cons #t (f x* seen*))]
+                [else (let ([s (syntax->datum x)])
+                        (if (memq s seen*)
+                            (syntax-error x "duplicate field name")
+                            (cons s (f x* (cons s seen*)))))]))))))
   (define expand-ftype-name
     (case-lambda
       [(r ftype) (expand-ftype-name r ftype #t)]
@@ -475,6 +483,44 @@ ftype operators:
              (unless (and (>= size 0) (< size (constant most-positive-fixnum)))
                (syntax-error ftype "non-fixnum overall size for ftype"))))
          ftd)
+       (define add-anon-accessors
+         (lambda (field* field->ftd)
+           (let ([name* (filter symbol? (map car field*))])
+             (let add ([f* field*] [added* '()])
+               (define check-unique
+                 (lambda (s)
+                   (when (or (memq s name*)
+                             (ormap (lambda (a*) (memq s a*)) added*))
+                     (syntax-error s "duplicate field name"))))
+               (if (null? f*)
+                   '()
+                   (let* ([f (car f*)]
+                          [name (car f)])
+                     (if (not (eq? name #t))
+                         (cons f (add (cdr f*) added*))
+                         (let* ([ftd (field->ftd f)]
+                                [sub-f* (cond
+                                          [(ftd-struct? ftd) (ftd-struct-field* ftd)]
+                                          [(ftd-union? ftd) (ftd-union-field* ftd)]
+                                          [(ftd-bits? ftd) (ftd-bits-field* ftd)]
+                                          [else #f])])
+                           (unless sub-f*
+                             (syntax-error defid "invalid anonymous field ftype in"))
+                           (let ([acc* (let gather ([sub-f* sub-f*] [acc* '()])
+                                         (if (null? sub-f*)
+                                             acc*
+                                             (let ([sub-name (caar sub-f*)])
+                                               (gather (cdr sub-f*)
+                                                       (cond
+                                                         [(symbol? sub-name)
+                                                          (check-unique sub-name)
+                                                          (cons sub-name acc*)]
+                                                         [(pair? sub-name)
+                                                          (for-each check-unique sub-name)
+                                                          (append sub-name acc*)]
+                                                         [else acc*])))))])
+                             (cons (cons acc* (cdr f))
+                                   (add (cdr f*) (cons acc* added*))))))))))))
        (check-size
          (let f/flags ([ftype ftype] [defid defid] [stype (syntax->datum ftype)] [packed? #f] [eness 'native] [funok? #t] [uid uid])
            (define (pad n k) (if packed? n (logand (+ n (- k 1)) (- k))))
@@ -547,7 +593,7 @@ ftype operators:
                                           #'(ftype ...) (datum (ftype ...)))]
                                [offset 0] [alignment 1] [field* '()])
                       (if (null? id*)
-                          (let ([field* (reverse field*)])
+                          (let ([field* (reverse (add-anon-accessors field* caddr))])
                             (make-ftd-struct (if (null? field*) rtd/fptr (sanitize-field-subtype (caddar field*)))
                               (or uid (and defid (symbol->string (syntax->datum defid))))
                               stype (pad offset alignment) alignment field*))
@@ -568,7 +614,7 @@ ftype operators:
                           stype
                           (pad (apply max 0 (map $ftd-size ftd*)) alignment)
                           alignment
-                          (map cons id* ftd*))))]
+                          (add-anon-accessors (map cons id* ftd*) cdr))))]
                    [(array-kwd ?n ftype)
                     (eq? (datum array-kwd) 'array)
                     (let ([n (datum ?n)])
@@ -1065,16 +1111,18 @@ ftype operators:
                 [(ftd-struct? ftd)
                  `(struct
                     ,@(map (lambda (field)
-                             (if (car field)
-                                 `(,(car field) ,(f fptr (caddr field) (+ offset (cadr field))))
-                                 '(_ _)))
+                             (let ([name (car field)])
+                               (if name
+                                   `(,(if (pair? name) '=> name) ,(f fptr (caddr field) (+ offset (cadr field))))
+                                   '(_ _))))
                         (ftd-struct-field* ftd)))]
                 [(ftd-union? ftd)
                  `(union
                     ,@(map (lambda (field)
-                             (if (car field)
-                                 `(,(car field) ,(f fptr (cdr field) offset))
-                                 '(_ _)))
+                             (let ([name (car field)])
+                               (if name
+                                   `(,(if (pair? name) '=> name) ,(f fptr (cdr field) offset))
+                                   '(_ _))))
                         (ftd-union-field* ftd)))]
                 [(ftd-array? ftd)
                  (let ([n (ftd-array-length ftd)]
@@ -1374,6 +1422,15 @@ ftype operators:
     (define-who ftype-access-code
       (lambda (whoid ftd a* fptr-expr offset)
         (let loop ([ftd ftd] [a* a*] [fptr-expr fptr-expr] [offset offset] [idx* '()])
+          (define (get-field s field*)
+            (if (null? field*)
+                (values #f #f)
+                (let* ([field (car field*)]
+                       [name (car field)])
+                  (cond
+                    [(eq? name s) (values field (cdr a*))]
+                    [(and (pair? name) (memq s name)) (values field a*)]
+                    [else (get-field s (cdr field*))]))))
           (if (null? a*)
               (values fptr-expr offset ftd idx* #f)
               (let ([a (car a*)])
@@ -1382,20 +1439,20 @@ ftype operators:
                    (syntax-error a "cannot access generic pointer content")]
                   [(ftd-struct? ftd)
                    (let ([s (syntax->datum a)])
-                     (cond
-                       [(and (symbol? s) (assq s (ftd-struct-field* ftd))) =>
-                        (lambda (field)
-                          (let ([offset #`(#3%fx+ #,offset #,(cadr field))] [ftd (caddr field)])
-                            (loop ftd (cdr a*) fptr-expr offset idx*)))]
-                       [else (syntax-error a "unexpected accessor")]))]
+                     (unless (symbol? s)
+                       (syntax-error a "unexpected accessor"))
+                     (let-values ([(field a*) (get-field s (ftd-struct-field* ftd))])
+                       (unless field (syntax-error a "unexpected accessor"))
+                       (let ([offset #`(#3%fx+ #,offset #,(cadr field))] [ftd (caddr field)])
+                         (loop ftd a* fptr-expr offset idx*))))]
                   [(ftd-union? ftd)
                    (let ([s (syntax->datum a)])
-                     (cond
-                       [(and (symbol? s) (assq s (ftd-union-field* ftd))) =>
-                        (lambda (field)
-                          (let ([ftd (cdr field)])
-                            (loop ftd (cdr a*) fptr-expr offset idx*)))]
-                       [else (syntax-error a "unexpected accessor")]))]
+                     (unless (symbol? s)
+                       (syntax-error a "unexpected accessor"))
+                     (let-values ([(field a*) (get-field s (ftd-union-field* ftd))])
+                       (unless field (syntax-error a "unexpected accessor"))
+                       (let ([ftd (cdr field)])
+                         (loop ftd a* fptr-expr offset idx*))))]
                   [(ftd-array? ftd)
                    (let ([elt-ftd (ftd-array-ftd ftd)] [len (ftd-array-length ftd)])
                      (if (memv (syntax->datum a) '(* 0))

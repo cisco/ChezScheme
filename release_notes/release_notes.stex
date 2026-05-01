@@ -199,6 +199,15 @@ and partial support for more numeric predicates,
 including \scheme{even?}, \scheme{odd?}, \scheme{positive?}, \scheme{negative?}
 and \scheme{real-valued?}.
 
+\subsection{Anonymous fields in struct and union ftypes (10.4.0)}
+
+Struct and union ftypes now support anonymous fields, which mirror the
+functionality of anonymous struct/union members as defined by C11 and
+later. Anonymous fields have arrow (\scheme{=>}) as their name and must
+themselves be of a struct, union, or bits ftype, whose fields are
+accessible directly from the containing ftype (recursively from the
+innermost named parent when nested).
+
 \subsection{Nongenerative ftype definitions (10.4.0)}
 
 The \scheme{define-ftype} form allows a \scheme{(nongenerative \var{uid})}

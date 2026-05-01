@@ -10692,6 +10692,11 @@ ftype.mo:Expected error in mat ftype: "non-scalar value cannot be assigned (ftyp
 ftype.mo:Expected error in mat ftype: "non-scalar value cannot be referenced (ftype-ref B (tail *) b)".
 ftype.mo:Expected error in mat ftype: "recursive or forward reference outside pointer field Qfrob".
 ftype.mo:Expected error in mat ftype: "recursive or forward reference outside pointer field Qsnark".
+ftype.mo:Expected error in mat ftype: "duplicate field name s1".
+ftype.mo:Expected error in mat ftype: "duplicate field name d".
+ftype.mo:Expected error in mat ftype: "duplicate field name k".
+ftype.mo:Expected error in mat ftype: "duplicate field name a1".
+ftype.mo:Expected error in mat ftype: "invalid anonymous field ftype in Qfrob".
 ftype.mo:Expected error in mat ftype: "ftype-ref: ftype mismatch for <ftype-pointer>".
 ftype.mo:Expected error in mat ftype: "ftype-set!: ftype mismatch for <ftype-pointer>".
 ftype.mo:Expected error in mat ftype: "ftype-ref: ftype mismatch for <ftype-pointer>".

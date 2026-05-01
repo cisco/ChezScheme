@@ -460,6 +460,91 @@
 
  ; ----------------
 
+  (begin
+    (define-ftype Fa
+      (struct
+        [x integer-32]
+        [y double-float]
+        [z (array 25 (struct [_ integer-16] [b integer-16]))]
+        [w (struct
+             [a integer-32]
+             [b (union
+                  [=> (struct
+                        [a integer-32]
+                        [b integer-16]
+                        [=> (endian little
+                              (bits
+                                [c unsigned 10]
+                                [d signed 6]))])]
+                  [b2 (struct [a integer-8] [b double])]
+                  [=> Aa])])]
+        [v (* Ac)]))
+    #t)
+
+  (equal?
+    (let ([x (make-ftype-pointer Fa 0)])
+      (list
+        (ftype-sizeof Fa)
+        (ftype-pointer-address (ftype-&ref Fa (x) x))
+        (ftype-pointer-address (ftype-&ref Fa (y) x))
+        (ftype-pointer-address (ftype-&ref Fa (z) x))
+        (ftype-pointer-address (ftype-&ref Fa (w) x))
+        (ftype-pointer-address (ftype-&ref Fa (v) x))
+        (ftype-pointer-address (ftype-&ref Fa (z 0) x))
+        (ftype-pointer-address (ftype-&ref Fa (z 4 b) x))
+        (ftype-pointer-address (ftype-&ref Fa (w a) x))
+        (ftype-pointer-address (ftype-&ref Fa (w b) x))
+        (ftype-pointer-address (ftype-&ref Fa (w b a) x))
+        (ftype-pointer-address (ftype-&ref Fa (w b b) x))
+        (ftype-pointer-address (ftype-&ref Fa (w b b2) x))
+        (ftype-pointer-address (ftype-&ref Fa (w b b2 a) x))
+        (ftype-pointer-address (ftype-&ref Fa (w b b2 b) x))
+        (ftype-pointer-address (ftype-&ref Fa (w b a1) x))
+        (ftype-pointer-address (ftype-&ref Fa (w b a2) x))
+        (ftype-pointer-address (ftype-&ref Fa (w b a3) x))))
+    (if (< max-float-alignment 8)
+        '(132 0 4 12 112 128 12 30 112 116 116 120 116 116 120 116 118 120)
+        '(152 0 8 16 120 144 16 34 120 128 128 132 128 128 136 128 130 132)))
+
+  (begin
+    (define-ftype Fb
+      (packed
+        (struct
+          [x integer-32]
+          [y double-float]
+          [z (array 25 (struct [_ integer-16] [b integer-16]))]
+          [=> (struct
+                [a integer-32]
+                [=> (union
+                      [b1 (struct [a integer-32] [b integer-32])]
+                      [b2 (struct [a integer-8] [b double])])])]
+          [v (* Ac)])))
+    #t)
+
+  (equal?
+    (let ([x (make-ftype-pointer Fb 0)])
+      (list
+        (ftype-sizeof Fb)
+        (ftype-pointer-address (ftype-&ref Fb (x) x))
+        (ftype-pointer-address (ftype-&ref Fb (y) x))
+        (ftype-pointer-address (ftype-&ref Fb (z) x))
+        (ftype-pointer-address (ftype-&ref Fb (a) x))
+        (ftype-pointer-address (ftype-&ref Fb (v) x))
+        (ftype-pointer-address (ftype-&ref Fb (z 0) x))
+        (ftype-pointer-address (ftype-&ref Fb (z 4 b) x))
+        (ftype-pointer-address (ftype-&ref Fb (a) x))
+        (ftype-pointer-address (ftype-&ref Fb (b1) x))
+        (ftype-pointer-address (ftype-&ref Fb (b1 a) x))
+        (ftype-pointer-address (ftype-&ref Fb (b1 b) x))
+        (ftype-pointer-address (ftype-&ref Fb (b2) x))
+        (ftype-pointer-address (ftype-&ref Fb (b2 a) x))
+        (ftype-pointer-address (ftype-&ref Fb (b2 b) x))))
+    (if (< (fixnum-width) 32)
+        '(129 0 4 12 112 125 12 30 112 116 116 120 116 116 117)
+        '(133 0 4 12 112 125 12 30 112 116 116 120 116 116 117)))
+
+ ; ----------------
+
   (equal?
     (let ()
       (define-ftype A (struct [a1 integer-32]))
@@ -991,6 +1076,40 @@
   (begin
     (fptr-free x)
     #t)
+ ; ----------------
+  (begin
+    (define-ftype Dlist
+      (struct
+        [head int]
+        [=> (struct
+              [prev (* Dlist)]
+              [next (* Dlist)]
+              [=> (endian little
+                    (bits [lock unsigned 1]
+                          [z signed 7]))])]))
+    (define x (make-ftype-pointer Dlist (foreign-alloc (ftype-sizeof Dlist))))
+    (ftype-set! Dlist (head) x 17)
+    (ftype-set! Dlist (prev) x x)
+    (ftype-set! Dlist (next) x x)
+    (ftype-set! Dlist (lock) x 1)
+    (ftype-set! Dlist (z) x -6)
+    #t)
+  (eqv? (ftype-ref Dlist (head) x) 17)
+  (eqv? (ftype-ref Dlist (next * head) x) 17)
+  (eqv? (ftype-ref Dlist (prev * next * next * next * head) x) 17)
+  (eqv? (ftype-ref Dlist (lock) x) 1)
+  (eqv? (ftype-ref Dlist (z) x) -6)
+  (equal?
+    (ftype-pointer->sexpr x)
+    '#4=(struct [head 17]
+                [=> (struct
+                      [prev (* #4#)]
+                      [next (* #4#)]
+                      [=> (bits [lock 1]
+                                [z -6])])]))
+  (begin
+    (fptr-free x)
+    #t)
 
  ; ----------------
   (begin
@@ -1042,6 +1161,85 @@
       [Qsnark (struct
                 [head int]
                 [tail (* Qfrob)])]))
+
+  (begin
+    (define-ftype Qa1jk
+      (struct
+        [a1 char]
+        [j int]
+        [k short]))
+    (define-ftype Qs3d
+      (union
+        [=> (struct
+              [s0 short]
+              [s1 short]
+              [s2 short])]
+        [d double]))
+    #t)
+
+  (error? ; duplicate name (s1)
+    (define-ftype Qfrob
+      (struct
+        [i int]
+        [=> (struct
+              [j int]
+              [s1 short])]
+        [=> Qs3d]
+        [c char])))
+
+  (error? ; duplicate name (d)
+    (define-ftype Qfrob
+      (struct
+        [i int]
+        [=> Qa1jk]
+        [=> (union
+              [=> (struct
+                    [d short]
+                    [s1 short]
+                    [s2 short])]
+              [d double])]
+        [c char])))
+
+  (error? ; duplicate name (k)
+    (define-ftype Qfrob
+      (struct
+        [k char]
+        [=> Qa1jk])))
+
+  (error? ; duplicate name (a1)
+    (define-ftype Qfrob
+      (struct
+        [=> Qa1jk]
+        [=> (union
+              [=> Aa]
+              [d double])])))
+
+  (error? ; invalid anonymous field ftype
+    (define-ftype Qfrob
+      (struct
+        [i int]
+        [=> Qa1jk]
+        [c char]
+        [=> (union
+              [=> (array 10 int)]
+              [d double])])))
+
+  (begin
+    (define-ftype Qfrob-ng0
+      (struct
+        [i int]
+        [=> Qa1jk]
+        [=> Qs3d]
+        [c char])
+      (nongenerative #{g1 o9p9ilrfa6hjqgdu4l7ulfkl1-6}))
+    (define-ftype Qfrob-ng1
+      (struct
+        [i int]
+        [=> Qa1jk]
+        [=> Qs3d]
+        [c char])
+      (nongenerative #{g1 o9p9ilrfa6hjqgdu4l7ulfkl1-6}))
+    #t)
 
  ; ----------------
   (begin
