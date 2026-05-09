@@ -2416,7 +2416,7 @@
     scheme-object))
 
 (define $logtest
-  (foreign-procedure __atomic "(cs)logtest"
+  (foreign-procedure __atomic __alloc "(cs)logtest"
     (scheme-object scheme-object)
     scheme-object))
 

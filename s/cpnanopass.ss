@@ -4719,6 +4719,9 @@
                                                                    [(real-register? '%ap) (eq? reg %ap)]
                                                                    [else #f])
                                                                   (meta-cond
+                                                                   [(real-register? '%eap) (eq? reg %eap)]
+                                                                   [else #f])
+                                                                  (meta-cond
                                                                    [(real-register? '%trap) (eq? reg %trap)]
                                                                    [else #f])))))
                                        (lambda (reg) #t))])
