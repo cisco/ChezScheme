@@ -2995,17 +2995,15 @@ in fasl files does not generally make sense.
 
 \subsection{Repair allocation in \scheme{logtest} (10.4.1)}
 
-The \scheme{logtest} procedure could allocate incorrectly when given a
-mixture of fixnum and bignum arguments. The problem has been fixed by
-adding a missing \scheme{__alloc} annotation on the internal
-implementation.
+In Version 10.4.0, the \scheme{logtest} procedure could allocate incorrectly when given a
+mixture of fixnum and bignum arguments. The problem has been fixed by adding a missing
+\scheme{__alloc} annotation on the internal implementation.
 
 \subsection{Repair \scheme{__alloc} mode for ppc32 (10.4.1)}
 
-On ppc32, an \scheme{__atomic __alloc} foreign-procedure annotation
-was not handled correctly. The problem has been fixed by migrating the
-end-of-allocation pointer between a register and the thread context
-during an allocating foreign call.
+In Version 10.4.0 on ppc32, an \scheme{__atomic __alloc} foreign-procedure annotation was
+not handled correctly. The problem has been fixed by migrating the end-of-allocation
+pointer between a register and the thread context during an allocating foreign call.
 
 \subsection{Declare \scheme{Spopcount} in scheme.h (10.4.0)}
 
