@@ -1085,8 +1085,9 @@
               [prev (* Dlist)]
               [next (* Dlist)]
               [=> (endian little
-                    (bits [lock unsigned 1]
-                          [z signed 7]))])]))
+                    (bits
+                      [lock unsigned 1]
+                      [z signed 7]))])]))
     (define x (make-ftype-pointer Dlist (foreign-alloc (ftype-sizeof Dlist))))
     (ftype-set! Dlist (head) x 17)
     (ftype-set! Dlist (prev) x x)
@@ -1101,12 +1102,14 @@
   (eqv? (ftype-ref Dlist (z) x) -6)
   (equal?
     (ftype-pointer->sexpr x)
-    '#4=(struct [head 17]
-                [=> (struct
-                      [prev (* #4#)]
-                      [next (* #4#)]
-                      [=> (bits [lock 1]
-                                [z -6])])]))
+    '#4=(struct
+          [head 17]
+          [=> (struct
+                [prev (* #4#)]
+                [next (* #4#)]
+                [=> (bits
+                      [lock 1]
+                      [z -6])])]))
   (begin
     (fptr-free x)
     #t)
