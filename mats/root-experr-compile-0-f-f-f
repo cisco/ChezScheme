@@ -1516,6 +1516,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_3.mo:Expected error in mat log: "incorrect argument count in call (log)".
 5_3.mo:Expected error in mat log: "log: a is not a number".
 5_3.mo:Expected error in mat log: "log: undefined for 0".
+5_3.mo:Expected error in mat log: "log: undefined for values 5 and 1".
 5_3.mo:Expected error in mat sin: "incorrect argument count in call (sin)".
 5_3.mo:Expected error in mat sin: "incorrect argument count in call (sin 3 4)".
 5_3.mo:Expected error in mat sin: "sin: a is not a number".
