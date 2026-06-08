@@ -3153,6 +3153,7 @@
     (error? (log))
     (error? (log 'a))
     (error? (log 0))
+    (error? (log 5 1))
     (= (log 1) 0)
     (fl= (log 1.0) 0.0)
     (eqv? (log 0.0) -inf.0)

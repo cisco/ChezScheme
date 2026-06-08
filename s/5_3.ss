@@ -1604,7 +1604,9 @@
             (/ (log (magnitude-squared x)) 2)
             (angle x))]
          [else (nonnumber-error 'log x)])]
-      [(x y) (/ (log x) (log y))])))
+      [(x y)
+       (when (eqv? y 1) (domain-error2 'log x y))
+       (/ (log x) (log y))])))
 
 (define-trig-op exp $flexp cflexp 1)
 (define-trig-op sin $flsin cflsin 0)
