@@ -2993,7 +2993,10 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
-\subsection{Error message fixes (10.4.1)}
+\subsection{Error message fixes (10.5.0)}
+
+A bug in the error produced by \scheme{bytevector-ieee-double-native-set!}---when the last
+argument raises and error and the offset is out of bounds---has been fixed.
 
 When \scheme{log} is called with exact \scheme{1} as the second argument, the error is now
 reported in terms of \scheme{log} instead of a divide-by-zero error in \scheme{/}.
