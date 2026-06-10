@@ -1735,7 +1735,13 @@ The following definitions establish ftype bindings for \scheme{F},
                  [hi unsigned 12]
                  [lo unsigned 20])]))]
     [e (* A)]
-    [f (* F)]))
+    [f (* F)]
+    [=> (endian little
+          (union
+            [=> (struct
+                  [glo unsigned-16]
+                  [ghi unsigned-16])]
+            [g unsigned-32]))]))
 \endschemedisplay
 
 The ftype \scheme{F} describes the type of a foreign function that
@@ -1743,11 +1749,11 @@ takes two arguments, a wide character and an integer, and returns an
 integer.
 The ftype \scheme{A} is simply an array of 10 \scheme{wchar_t} values,
 and its size will be 10 times the size of a single \scheme{wchar_t}.
-The ftype \scheme{E} is a structure with six fields: an integer
+The ftype \scheme{E} is a structure with seven fields: an integer
 \scheme{a}, a double-float \scheme{b}, an array \scheme{c}, a
-union \scheme{d}, a pointer \scheme{e}, and a pointer \scheme{f}.
-The array \scheme{c} is an array of 25 structs, each of which
-contains a short integer, a long integer, and a \scheme{A} array.
+union \scheme{d}, a pointer \scheme{e}, a pointer \scheme{f}, and an
+anonymous union. The array \scheme{c} is an array of 25 structs, each of
+which contains a short integer, a long integer, and a \scheme{A} array.
 The size of the \scheme{c} array will be 25 times the size of a
 single \scheme{A} array, plus 25 times the space needed to store
 each of the short and long integers.
@@ -1771,11 +1777,21 @@ cannot be accessed via the ftype operators described below.
 Thus, in the example above, the \scheme{long} field within the
 \scheme{c} array is inaccessible.
 
-Non-underscore field names are handled symbolically, i.e.,
+An arrow (~\scheme{=>}~) can be used as the field name for one or more
+fields of a \scheme{struct} or \scheme{union} ftype. Such fields must
+themselves be of a \scheme{struct}, \scheme{union}, or \scheme{bits}
+ftype and are considered anonymous as defined by C11 and
+later. Anonymous fields differ only in that their own fields are
+accessible directly from the containing ftype (recursively from the
+innermost named parent when nested). So, in the example above, the
+fields \scheme{g}, \scheme{glo}, and \scheme{ghi} are accessible as if
+they were fields of \scheme{E}.
+
+Non-underscore/arrow field names are handled symbolically, i.e.,
 they are treated as symbols rather than identifiers.
 Each symbol must be unique (as a symbol) with respect to the other
-field names within a single \scheme{struct}, \scheme{union},
-or \scheme{bits} ftype but need not be
+field names (including those from anonymous fields) within a single
+\scheme{struct}, \scheme{union}, or \scheme{bits} ftype but need not be
 unique with respect to field names in other \scheme{struct},
 \scheme{union}, or \scheme{bits} ftypes within the same
 ftype.
@@ -2539,9 +2555,9 @@ value is the symbol \scheme{invalid}.
     [a Frob]
     [b (* Frob)]
     [c (* Frob)]
-    [d (bits
-         [_ unsigned 15]
-         [dx signed 17])]
+    [=> (bits
+          [_ unsigned 15]
+          [dx signed 17])]
     [e (array 5 double)]))
 (define x
   (make-ftype-pointer Snurk
@@ -2550,12 +2566,12 @@ value is the symbol \scheme{invalid}.
   (make-ftype-pointer Frob
     (foreign-alloc (ftype-sizeof Frob))))
 (ftype-set! Snurk (c) x
-  (make-ftype-pointer Frob 0))
+  (make-ftype-pointer Frob 8))
 (ftype-set! Snurk (a p) x #t)
 (ftype-set! Snurk (a q) x #\A)
 (ftype-set! Snurk (b * p) x #f)
 (ftype-set! Snurk (b * q) x #\B)
-(ftype-set! Snurk (d dx) x -2500)
+(ftype-set! Snurk (dx) x -2500)
 (do ([i 0 (fx+ i 1)])
     ((fx= i 5))
   (ftype-set! Snurk (e i) x (+ (* i 5.0) 3.0)))
@@ -2563,7 +2579,7 @@ value is the symbol \scheme{invalid}.
                          ;==   [a (struct [p #t] [q #\A])]
                          ;==   [b (* (struct [p #f] [q #\B]))]
                          ;==   [c (* (struct [p invalid] [q invalid]))]
-                         ;==   [d (bits [_ _] [dx -2500])]
+                         ;==   [=> (bits [_ _] [dx -2500])]
                          ;==   [e (array 5 3.0 8.0 13.0 18.0 23.0)])
 \endschemedisplay
 
