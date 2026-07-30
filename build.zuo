@@ -517,9 +517,20 @@
                            (define Mf-config
                              (cond
                                [(string=? (hash-ref config 'crossCompile "no") "yes")
-                                (shell/wait (build-raw-path (at-source ".") "configure")
-                                            "--nomakefile"
-                                            "--pb")
+                                (apply shell/wait
+                                       (list* (build-raw-path (at-source ".") "configure")
+                                              "--nomakefile"
+                                              "--pb"
+                                              (filter (lambda (x) x)
+                                                      (map (lambda (key arg)
+                                                             (let ((val (hash-ref config key "")))
+                                                               (and (not (string=? val ""))
+                                                                    (string->shell
+                                                                     (~a arg "=" val)))))
+                                                           '(ZUO zlibLib LZ4Lib STEXLIB
+                                                            CC_FOR_BUILD CFLAGS_FOR_BUILD)
+                                                           '("ZUO" "ZLIB" "LZ4" "STEXLIB"
+                                                             "CC" "CFLAGS")))))
                                 (build-path pb-dir "Mf-config")]
                                [else (at-dir "Mf-config")]))
                            (define old-config (map (lambda (s) (string-trim (string-trim s "\r")))
