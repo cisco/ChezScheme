@@ -521,6 +521,9 @@
                                        (list* (build-raw-path (at-source ".") "configure")
                                               "--nomakefile"
                                               "--pb"
+                                              (string->shell
+                                               (~a  "--sessionkey="
+                                                    (hash-ref config 'sessionKey "")))
                                               (filter (lambda (x) x)
                                                       (map (lambda (key arg)
                                                              (let ((val (hash-ref config key "")))
