@@ -7,20 +7,20 @@
 ;; the C compiler supports 64-bit integers for the kernel's
 ;; implementation, where care is taken for the conversion between C
 ;; pointers and Scheme object addresses). That way, a single set of pb
-;; boot files can be used to bootstrap the compiler for any supporrted
+;; boot files can be used to bootstrap the compiler for any supported
 ;; platform.
 
 ;; The pb machine can be configured (through ".def") for 32-bit Scheme
 ;; object representations and a specific endianness.
 
 ;; In all configurations, the pb machine uses 32-bit instructions. The
-;; fasl format of instructuctions is always little-endian, and the
+;; fasl format of instructions is always little-endian, and the
 ;; machine-code content is swapped on load for a big-endian
 ;; environment.
 
-;; The pb binstruction set is load--store and vaguely similar to Arm.
+;; The pb instruction set is load--store and vaguely similar to Arm.
 ;; One difference is that there's a single flag for branching:
-;; signalling arithemtic, bitwise, and comparison operations set the
+;; signalling arithmetic, bitwise, and comparison operations set the
 ;; flag for a specific condition, such as "overflow" or "equal", and
 ;; the branch variants are "branch if true" or "branch if false".
 ;; The intent is that a test is always immediately followed by a
@@ -30,7 +30,7 @@
 ;; bit on the left (like byte order for a little-endian machine):
 ;;
 ;;     low byte                        high byte
-;;        8          8          8          8 
+;;        8          8          8          8
 ;;  -----------------------------------------------
 ;;  |    op    |    reg    |     immed/reg        |
 ;;  -----------------------------------------------
@@ -50,12 +50,12 @@
 ;; be the destination register. The long `immed` form is mainly for
 ;; branches. See "cmacros.ss" for the `op` constructions.
 
-;; Foreign-procedure calls always supported for specific prototypes,
-;; which are generally the ones for functions implemented the Chez
+;; Foreign-procedure calls are always supported for specific prototypes,
+;; which are generally the ones for functions implemented in the Chez
 ;; Scheme kernel. Supported prototypes are specified in "cmacros.ss".
 ;; Foreign callables are not always supported. All foreign-call
 ;; arguments and results are passed in registers for the
-;; always-supported set of protypoes.
+;; always-supported set of prototypes.
 
 ;; Foreign-call procedures and callables may be supported for other
 ;; prototypes (e.g., depending on whether libffi is available). Those
