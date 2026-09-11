@@ -159,7 +159,7 @@ typedef struct _seginfo {
   struct _seginfo *sweep_next;              /* next in list of segments allocated during GC => need to sweep */
   ptr sweep_start;                          /* address within segment to start sweep */
 #if defined(WRITE_XOR_EXECUTE_CODE)
-  iptr sweep_bytes;                         /* total number of bytes starting at sweep_start */
+  iptr sweep_bytes;                         /* total number of bytes starting at the segment's base */
 #endif
   struct _seginfo **dirty_prev;             /* pointer to the next pointer on the previous seginfo in the DirtySegments list */
   struct _seginfo *dirty_next;              /* pointer to the next seginfo on the DirtySegments list */
