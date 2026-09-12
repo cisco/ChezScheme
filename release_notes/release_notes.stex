@@ -122,6 +122,13 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Exact zeros and \scheme{lcm} (10.5.0)}
+
+Supplying an exact \scheme{0} to \scheme{lcm} produces exact
+\scheme{0}, even if other arguments are inexact integers. This change
+is in line with previous changes described in
+Section~\ref{section:transcendentals-and-zero}.
+
 \subsection{Anonymous fields in struct and union ftypes (10.5.0)}
 
 Struct and union ftypes now support anonymous fields, which mirror anonymous
@@ -639,7 +646,7 @@ changes make arithmetic and number-to-string conversions faster for
 large values, and they avoid unbounded delays between interrupt
 polling.
 
-\subsection{Exact zeros, transcendentals, and exponentials (10.0.0)}
+\subsection{Exact zeros, transcendentals, and exponentials (10.0.0)}\label{section:transcendentals-and-zero}
 
 Division of an exact \scheme{0} by an inexact number now always
 produces exact \scheme{0}, and
