@@ -510,12 +510,18 @@
     (case-lambda
       [(n fill)
        (unless (and (fixnum? n) (not ($fxu< (constant maximum-bytevector-length) n)))
-         ($oops who "~s is not a valid bytevector length" n))
+         (if (and (or (fixnum? n) (bignum? n))
+                  (> n (constant maximum-bytevector-length)))
+             ($impoops who "~s exceeds the maximum bytevector length" n)
+             ($oops who "~s is not a valid bytevector length" n)))
        (unless (fill? fill) (invalid-fill-value who fill))
        (#3%make-bytevector n fill)]
       [(n)
        (unless (and (fixnum? n) (not ($fxu< (constant maximum-bytevector-length) n)))
-         ($oops who "~s is not a valid bytevector length" n))
+         (if (and (or (fixnum? n) (bignum? n))
+                  (> n (constant maximum-bytevector-length)))
+             ($impoops who "~s exceeds the maximum bytevector length" n)
+             ($oops who "~s is not a valid bytevector length" n)))
        (#3%make-bytevector n)]))
 
   (set-who! make-immobile-bytevector
@@ -523,14 +529,20 @@
       (case-lambda
        [(n fill)
         (unless (and (fixnum? n) (not ($fxu< (constant maximum-bytevector-length) n)))
-          ($oops who "~s is not a valid bytevector length" n))
+          (if (and (or (fixnum? n) (bignum? n))
+                   (> n (constant maximum-bytevector-length)))
+              ($impoops who "~s exceeds the maximum bytevector length" n)
+              ($oops who "~s is not a valid bytevector length" n)))
         (unless (fill? fill) (invalid-fill-value who fill))
         (let ([bv ($make-immobile-bytevector n)])
           (#3%bytevector-fill! bv fill)
           bv)]
        [(n)
         (unless (and (fixnum? n) (not ($fxu< (constant maximum-bytevector-length) n)))
-          ($oops who "~s is not a valid bytevector length" n))
+          (if (and (or (fixnum? n) (bignum? n))
+                   (> n (constant maximum-bytevector-length)))
+              ($impoops who "~s exceeds the maximum bytevector length" n)
+              ($oops who "~s is not a valid bytevector length" n)))
         ($make-immobile-bytevector n)])))
 
   (set! bytevector? (lambda (x) (#2%bytevector? x)))

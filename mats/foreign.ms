@@ -4265,3 +4265,26 @@
     (bytevector-reference-set! $reftest-bv-odd 0 #f)
     (eq? #f (bytevector-reference-ref $reftest-bv-odd 0)))
 )
+
+(mat reference-bytevector-implementation-restriction
+  (parameters [optimize-level 0])
+  (let ([too-large (+ (greatest-fixnum) 1)])
+    (define (implementation-restriction? thunk)
+      (guard (c [else (and (implementation-restriction-violation? c)
+                           (equal? (condition-message c)
+                             "~s exceeds the maximum bytevector length")
+                           (equal? (condition-irritants c) (list too-large)))])
+        (thunk)
+        #f))
+    (define (assertion? thunk)
+      (guard (c [else (and (assertion-violation? c)
+                           (not (implementation-restriction-violation? c)))])
+        (thunk)
+        #f))
+    (and
+      (implementation-restriction?
+        (lambda () (make-reference-bytevector too-large)))
+      (assertion? (lambda () (make-reference-bytevector -1)))
+      (implementation-restriction?
+        (lambda () (make-immobile-reference-bytevector too-large)))
+      (assertion? (lambda () (make-immobile-reference-bytevector -1))))))

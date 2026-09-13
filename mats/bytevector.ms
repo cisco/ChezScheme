@@ -116,6 +116,25 @@
           (errorf #f "wrong value for ~s" n)))))
 )
 
+(mat make-bytevector-implementation-restriction (parameters [optimize-level 0])
+  (let ([too-large (+ (greatest-fixnum) 1)])
+    (define (implementation-restriction? thunk)
+      (guard (c [else (and (implementation-restriction-violation? c)
+                           (equal? (condition-message c)
+                             "~s exceeds the maximum bytevector length")
+                           (equal? (condition-irritants c) (list too-large)))])
+        (thunk)
+        #f))
+    (define (assertion? thunk)
+      (guard (c [else (and (assertion-violation? c)
+                           (not (implementation-restriction-violation? c)))])
+        (thunk)
+        #f))
+    (and (implementation-restriction? (lambda () (make-bytevector too-large)))
+         (implementation-restriction? (lambda () (make-bytevector too-large 0)))
+         (assertion? (lambda () (make-bytevector -1)))
+         (assertion? (lambda () (make-bytevector -1 0))))))
+
 (mat bytevector
  ; invalid value
   (error? (bytevector 3 4 256))
