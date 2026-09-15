@@ -770,6 +770,7 @@
   (declare-primitive fpcastto/hi value #t) ; 32-bit only
   (declare-primitive fpcastto/lo value #t) ; 32-bit only
   (declare-primitive fpcastfrom value #t) ; 64-bit: 1 argument; 32-bit: 2 arguments
+  (declare-primitive fpmove128 value #t) ; x86)64 only
 
   (define immediate?
     (let ([low (- (bitwise-arithmetic-shift-left 1 (fx- (constant ptr-bits) 1)))]

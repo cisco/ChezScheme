@@ -754,7 +754,8 @@
                               (let* ([config (config-merge config 'CPPFLAGS (or (lookup 'mdinclude) ""))]
                                      [config (config-merge config 'CFLAGS (or (lookup 'mdcflags) ""))]
                                      [config (if (eq? 'windows (hash-ref (runtime-env) 'toolchain-type))
-                                                 (config-merge config 'LDFLAGS (build-shell "/LD" "/MD"))
+                                                 (config-merge (config-merge config 'LDFLAGS (build-shell "/LD" "/MD"))
+							       'CFLAGS "/Ox")
                                                  config)]
                                      [config 
 				      (cond

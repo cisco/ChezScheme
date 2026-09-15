@@ -3023,6 +3023,13 @@ argument raises and error and the offset is out of bounds---has been fixed.
 When \scheme{log} is called with exact \scheme{1} as the second argument, the error is now
 reported in terms of \scheme{log} instead of a divide-by-zero error in \scheme{/}.
 
+\subsection{Repairs for x86\_64 Windows foreign callables (10.5.0)}
+
+A foreign callable on x86\_64 Windows did not properly preserve XMM
+registers, keeping only the low 64 bits of the registers in some cases
+and potentially further corrupting the registers values in
+\scheme{__collect_safe} mode. That bug has been fixed.
+
 \subsection{Repairs for 32-bit ARM foreign call and callables (10.5.0)}
 
 Several problems with floating-point values for foreign calls and

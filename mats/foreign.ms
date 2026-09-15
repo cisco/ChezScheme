@@ -3274,6 +3274,41 @@
      (call-with-many-args (foreign-callable-entry-point cb)))
     result)
 
+  (machine-case
+   [(ta6nt a6nt)
+    ;; check that callables save all 128 bits of XMM registers
+    (let ()
+      (define-ftype callback (function () void))
+      (define-ftype callback/collect-safe (function __collect_safe () void))
+      (define void-fptr (make-ftype-pointer callback void))
+      (define void-fptr/collect-safe (make-ftype-pointer callback/collect-safe void))
+      (define out1 (make-bytevector 16))
+      (define out2 (make-bytevector 16))
+      (define in '#vu8(00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+		       20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35
+		       40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55
+		       60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75))
+      (define expected '#vu8(100 104 108 112 212 216 220 224 228 232 236 240 20 25 29 33))
+      (define call_with_preserved_xmm
+	(foreign-procedure "call_with_preserved_xmm"
+			   ((* callback) u8* u8*)
+			   int))
+      (define call_with_preserved_xmm/collect-safe
+	(foreign-procedure "call_with_preserved_xmm"
+			   ((* callback/collect-safe) u8* u8*)
+			   int))
+      (lock-object out1)
+      (lock-object out2)
+      (call_with_preserved_xmm void-fptr in out1)
+      (call_with_preserved_xmm/collect-safe void-fptr/collect-safe in out2)
+      (unlock-object out1)
+      (unlock-object out2)
+      (unlock-object (foreign-callable-code-object (ftype-pointer-address void-fptr)))
+      (unlock-object (foreign-callable-code-object (ftype-pointer-address void-fptr/collect-safe)))
+      (and (equal? out1 expected)
+	   (equal? out2 expected)))]
+   [else #t])
+
 )
 
 (machine-case
