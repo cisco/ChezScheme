@@ -3023,6 +3023,16 @@ argument raises and error and the offset is out of bounds---has been fixed.
 When \scheme{log} is called with exact \scheme{1} as the second argument, the error is now
 reported in terms of \scheme{log} instead of a divide-by-zero error in \scheme{/}.
 
+\subsection{Code-write protection after a generation-0 collection (10.5.0)}
+
+On platforms configured for \scheme{WRITE_XOR_EXECUTE_CODE}, restoring execute permission
+for a recently closed-off region of code space used the collector's sweep cursor as the
+address to protect, while measuring the length from the region's base. A collection with
+target generation 0, as requested by \scheme{(collect 0 0)}, moves the cursor off the
+base, after which the protection call was made at an object boundary rather than a page
+boundary and the process aborted with ``failed to protect recent allocation segments''.
+The address is now taken from the segment the region starts in.
+
 \subsection{Repairs for 32-bit ARM foreign call and callables (10.5.0)}
 
 Several problems with floating-point values for foreign calls and
