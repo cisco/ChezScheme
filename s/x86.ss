@@ -2213,7 +2213,9 @@
         [else #f])))
   (define callee-pops-result-pointer?
     (lambda (result-type)
-      (callee-expects-result-pointer? result-type)))
+      (constant-case machine-type-name
+        [(i3nt ti3nt) #f]
+	[else (callee-expects-result-pointer? result-type)])))
   (define fill-result-pointer-from-registers?
     (lambda (result-type)
       (nanopass-case (Ltype Type) result-type
