@@ -110,6 +110,7 @@ LZ4Lib=
 STEXLIB=
 Kernel=KernelLib
 buildKernelOnly=no
+pic=no
 enableFrompb=yes
 pbendian=l
 emscripten=no
@@ -431,6 +432,9 @@ while [ $# != 0 ] ; do
     --kernelobj)
       Kernel=KernelO
       ;;
+    --pic)
+      pic=yes
+      ;;
     --emboot=*)
       bootfilenames=`echo $1 | sed -e 's/^--emboot=//'`
       moreBootFiles="${moreBootFiles} ${bootfilenames}"
@@ -704,6 +708,7 @@ if [ "$help" = "yes" ]; then
   echo "  --disable-hard-links              install with soft instead of hard links"
   echo "  --libkernel                       build libkernel.a (the default)"
   echo "  --kernelobj                       build kernel.o instead of libkernel.a"
+  echo "  --pic                             compile the kernel as position-independent code (for embedding in shared libraries)"
   echo "  --installprefix=<pathname>        final installation root ($installprefix)"
   echo "  --prefix=<pathname>               alias for --installprefix"
   echo "  --installbin=<pathname>           bin directory ($installbin)"
@@ -881,6 +886,12 @@ if [ "$addflags" = "yes" ] ; then
     if [ "$threadFlags" != "" ] ; then
         CFLAGS="${CFLAGS} ${threadFlags}"
     fi
+fi
+
+# Compile the kernel as position-independent code, for embedding in
+# shared libraries (e.g. plugins of a host application)
+if [ "$pic" = "yes" ] ; then
+    CFLAGS="${CFLAGS} -fPIC"
 fi
 
 # Add libffi library, unless suppressed by --disable-auto-flags

@@ -49,6 +49,16 @@ sequence:
   make
   sudo make install
 
+To build the kernel as position-independent code (for embedding the
+Chez runtime in a shared library, such as a host application's plugin),
+pass the --pic flag. The resulting kernel objects can then be linked
+into a shared object, and boot files from the same build must be used
+at runtime:
+
+  ./configure --pic
+  make
+
+
 This should not take more than a few minutes, after which the
 commands `scheme` and `petite` can be used to run Chez Scheme and
 Petite Chez Scheme, while `man scheme` and `man petite` can be used to
