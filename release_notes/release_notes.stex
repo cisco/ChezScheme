@@ -3033,7 +3033,7 @@ and potentially further corrupting the registers values in
 \subsection{Repairs for x86 Windows foreign calls and callables (10.5.0)}
 
 For a foreign call or callable on x86 Windows with a struct result
-that does not fit into registers, the callee recieves a result pointer
+that does not fit into registers, the callee receives a result pointer
 as an extra argument. The generated code incorrectly assumed or
 implemented a pop of the result-pointer argument by the callee. That
 bug has been fixed.
