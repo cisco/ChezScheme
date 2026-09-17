@@ -3895,6 +3895,7 @@
   (error? (foreign-callable __collect_safe (lambda () #f) () string))
   (error? (foreign-callable __collect_safe (lambda () #f) () wstring))
   (begin
+    (define $can-collect-safe? (and (threaded?) (foreign-procedure "(cs)collect_safe_supported" () boolean)))
     (define-ftype thread-callback-T (function __collect_safe (double) double))
     (define (call-with-thread-callback cb-proc proc)
       (let* ([exception #f]
@@ -3928,7 +3929,7 @@
           call-in-unknown-thread-1))
     (define call-in-unknown-thread-3
       ;; Call in a truly unknown thread:
-      (if (threaded?)
+      (if (and (threaded?) ($can-collect-safe?))
           (let ([call (foreign-procedure "call_in_unknown_thread"
                                          ((* thread-callback-T) double int boolean boolean)
                                          double)])
@@ -3941,7 +3942,7 @@
       ;; In an truly unknown thread, but also using `__collect_safe` to
       ;; deactivate the current thread instead of using `Sdeactivate_thread`
       ;; within the foreign function:
-      (if (threaded?)
+      (if (and (threaded?) ($can-collect-safe?))
           (let ([call (foreign-procedure __collect_safe "call_in_unknown_thread"
                                          ((* thread-callback-T) double int boolean boolean)
                                          double)])
@@ -4007,6 +4008,7 @@
   ;; doesn't use a huge amount of memory --- that is, that some of the
   ;; threads trigger a GC
   (or (not (threaded?))
+      (not ($can-collect-safe?))
       (let ([old-max (maximum-memory-bytes)])
         (let ([call (foreign-procedure __collect_safe
                                        "call_in_many_unknown_threads" (uptr int int)
