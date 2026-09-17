@@ -204,6 +204,8 @@ IBOOL Sactivate_thread(void) { /* create or reactivate current thread */
   }
 }
 
+#if !defined(WRITE_XOR_EXECUTE_CODE)
+
 int S_activate_thread(void) { /* Like Sactivate_thread(), but returns a mode to revert the effect */
   ptr tc = get_thread_context();
 
@@ -230,6 +232,17 @@ void S_unactivate_thread(int mode) { /* Reverts a previous S_activate_thread() e
     break;
   }
 }
+
+#else
+
+int S_activate_thread(void) {
+    return unactivate_mode_noop;
+}
+
+void S_unactivate_thread(UNUSED int mode) {
+}
+
+#endif
 
 void Sdeactivate_thread(void) { /* deactivate current thread */
   ptr tc = get_thread_context();
@@ -263,7 +276,7 @@ static IBOOL destroy_thread(ptr tc) {
       S_scan_dirty((ptr *)TO_VOIDP(EAP(tc)), (ptr *)TO_VOIDP(REAL_EAP(tc)));
 
      /* close off thread-local allocation */
-      S_thread_start_code_write(tc, static_generation, 0, NULL, 0);
+      S_thread_start_code_write(tc, 0, 1, NULL, 0);
       {
         ISPC s; IGEN g;
         thread_gc *tgc = THREAD_GC(tc);
@@ -272,7 +285,7 @@ static IBOOL destroy_thread(ptr tc) {
             if (tgc->next_loc[g][s])
               S_close_off_thread_local_segment(tc, s, g);
       }
-      S_thread_end_code_write(tc, static_generation, 0, NULL, 0);
+      S_thread_end_code_write(tc, 0, 1, NULL, 0);
 
       alloc_mutex_release();
 
