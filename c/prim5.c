@@ -103,6 +103,7 @@ static ptr s_get_reloc(ptr co, IBOOL with_offsets);
 #ifdef PTHREADS
 static s_thread_rv_t s_backdoor_thread_start(void *p);
 static iptr s_backdoor_thread(ptr p);
+static IBOOL s_collect_safe_supported(void);
 static ptr s_threads(void);
 static void s_mutex_acquire(ptr m);
 static ptr s_mutex_acquire_noblock(ptr m);
@@ -1051,7 +1052,7 @@ static ptr s_make_code(iptr flags, iptr free, ptr name, ptr arity_mark, iptr n, 
     ptr co;
     ptr tc = get_thread_context();
 
-    S_thread_start_code_write(tc, 0, 0, NULL, 0);
+    S_thread_start_code_write(tc, 0, 1, NULL, 0);
 
     co = S_code(tc, type_code | (flags << code_flags_offset), n);
     CODEFREE(co) = free;
@@ -1063,7 +1064,7 @@ static ptr s_make_code(iptr flags, iptr free, ptr name, ptr arity_mark, iptr n, 
       S_G.profile_counters = Scons(S_weak_cons(co, pinfos), S_G.profile_counters);
     }
 
-    S_thread_end_code_write(tc, 0, 0, NULL, 0);
+    S_thread_end_code_write(tc, 0, 1, NULL, 0);
 
     return co;
 }
@@ -1592,6 +1593,14 @@ static iptr s_backdoor_thread(ptr p) {
   return s_thread_create(s_backdoor_thread_start, TO_VOIDP(p));
 }
 
+static IBOOL s_collect_safe_supported(void) {
+#if defined(WRITE_XOR_EXECUTE_CODE)
+  return 0;
+#else
+  return 1;
+#endif
+}
+
 static ptr s_threads() {
   ptr ts;
   tc_mutex_acquire();
@@ -1730,6 +1739,7 @@ void S_prim5_init(void) {
     Sforeign_symbol("(cs)make_mutex", (void *)S_make_mutex);
     Sforeign_symbol("(cs)mutex_free", (void *)S_mutex_free);
     Sforeign_symbol("(cs)backdoor_thread", (void *)s_backdoor_thread);
+    Sforeign_symbol("(cs)collect_safe_supported", (void *)s_collect_safe_supported);
     Sforeign_symbol("(cs)threads", (void *)s_threads);
     Sforeign_symbol("(cs)mutex_acquire", (void *)s_mutex_acquire);
     Sforeign_symbol("(cs)mutex_release", (void *)s_mutex_release);

@@ -3038,6 +3038,22 @@ as an extra argument. The generated code incorrectly assumed or
 implemented a pop of the result-pointer argument by the callee. That
 bug has been fixed.
 
+\subsection{Improve support for W\^X hosts (10.5.0)}
+
+The new \scheme{--enable-wx} configuration option supports hosts that
+enforce exclusive write vs. execute mode on memory pages. This option
+is needed only when enforcement is process-wide (as on iOS or on
+OpenBSD when not on an wxallowed filesystem) as opposed to
+configurable per thread (as on Mac OS). The trade-off is that
+\scheme{__collect_safe} is ignored for foreign-procedure calls and
+callables.
+
+Partial support was previously available by compiling the Chez Scheme
+kernel with \scheme{WRITE_XOR_EXECUTE_CODE} defined, but that did not
+work correctly with threads. In addition, a bug has been fixed where a
+\scheme{(collect 0 0)} collection request could lead to a ``failed to
+protect recent allocation segments'' failure.
+
 \subsection{Repairs for 32-bit ARM foreign call and callables (10.5.0)}
 
 Several problems with floating-point values for foreign calls and

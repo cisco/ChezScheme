@@ -304,15 +304,21 @@ ptr S_find_more_gc_room(thread_gc *tgc, ISPC s, IGEN g, iptr n, ptr old) {
 }
 
 /* allocation mutex must be held (or single-threaded guaranteed because collecting) */
-void S_close_off_thread_local_segment(ptr tc, ISPC s, IGEN g) {
-  thread_gc *tgc = THREAD_GC(tc);
-
+void S_close_off_segment(thread_gc *tgc, ISPC s, IGEN g) {
   close_off_segment(tgc, tgc->next_loc[g][s], tgc->base_loc[g][s], tgc->sweep_loc[g][s], s, g);
 
   tgc->base_loc[g][s] = (ptr)0;
   tgc->bytes_left[g][s] = 0;
   tgc->next_loc[g][s] = (ptr)0;
   tgc->sweep_loc[g][s] = (ptr)0;
+}
+
+/* allocation mutex must be held (or single-threaded guaranteed because collecting) */
+void S_close_off_thread_local_segment(ptr tc, ISPC s, IGEN g) {
+  thread_gc *tgc = THREAD_GC(tc);
+
+  S_close_off_segment(tgc, s, g);
+
   tgc->sweep_next[g][s] = NULL;
 }
 

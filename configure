@@ -69,6 +69,7 @@ pbarch=no
 threads=yes
 nothreads=no
 libffi=no
+w_exclusive_x=no
 temproot=""
 help=no
 forceworkarea=no
@@ -416,6 +417,9 @@ while [ $# != 0 ] ; do
     --enable-libffi)
       libffi=yes
       ;;
+    --enable-wx)
+      w_exclusive_x=yes
+      ;;
     --disable-auto-flags)
       addflags=no
       ;;
@@ -699,6 +703,7 @@ if [ "$help" = "yes" ]; then
   echo "  --disable-curses                  disable [n]curses support"
   echo "  --disable-iconv                   disable iconv support"
   echo "  --enable-libffi                   enable libffi support for pb"
+  echo "  --enable-wx                       support W^X by disabling __collect_safe"
   echo "  --disable-auto-flags              no auto additions to CFLAGS/LDFLAGS/LIBS"
   echo "  --enable-warning-flags            add GCC warning flags to CFLAGS"
   echo "  --disable-hard-links              install with soft instead of hard links"
@@ -888,6 +893,10 @@ if [ "$addflags" = "yes" ] ; then
     if [ "$libffi" = "yes" ] ; then
         LIBS="${LIBS} -lffi"
     fi
+fi
+
+if [ "$w_exclusive_x" = "yes" ] ; then
+    CFLAGS="${CFLAGS} -DWRITE_XOR_EXECUTE_CODE"
 fi
 
 cursesLib=-lcurses
