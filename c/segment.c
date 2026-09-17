@@ -706,6 +706,8 @@ static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *
         /* Flip bits for whole runs of segs that are either unused or
            whose generation is within the range [0, maxg]. */
         int j;
+        /* chunk->addr can be below the chunk's first segment */
+        addr = TO_VOIDP(build_ptr(chunk->base, 0));
         for (j = 0; j < chunk->segs; j++) {
           seginfo si = chunk->sis[j];
           /* When maxg is 0, limit the search to unused segments and
@@ -722,7 +724,7 @@ static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *
               }
             }
 
-            addr = TO_VOIDP((char *)chunk->addr + (j + 1) * bytes_per_segment);
+            addr = TO_VOIDP(build_ptr(chunk->base + j + 1, 0));
             bytes = 0;
           }
         }

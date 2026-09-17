@@ -3015,6 +3015,16 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Code-write protection of segment runs (10.5.0)}
+
+On threaded platforms configured for \scheme{WRITE_XOR_EXECUTE_CODE}, flipping the
+protection of a run of code segments took the run's starting address from the base of the
+enclosing chunk while measuring its length from the segments themselves. Where the
+operating system's page size is smaller than a segment, a chunk's first segment can begin
+above the chunk's own address, so each protection call covered a window of the right size
+in the wrong place, leaving the tail of a segment holding a different permission from the
+rest of it. The addresses are now derived from the segments.
+
 \subsection{Error message fixes (10.5.0)}
 
 A bug in the error produced by \scheme{bytevector-ieee-double-native-set!}---when the last
