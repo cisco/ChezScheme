@@ -1085,6 +1085,7 @@
   (define-op sse.cvtsi2sd  sse-op1 #xF2 #x2A 1)
   (define-op sse.divsd     sse-op1 #xF2 #x5E 0)
   (define-op sse.movd      sse-op2 #x66 #x6E #x7E 1)
+  (define-op sse.movapd    sse-op2 #x66 #x28 #x29 0)
   (define-op sse.movsd     sse-op2 #xF2 #x10 #x11 0)
   (define-op sse.movss     sse-op2 #xF3 #x10 #x11 0)
   (define-op sse.movdqa    sse-op2 #x66 #x6F #x7F 1)
@@ -1793,19 +1794,29 @@
             [(zext32) (emit movl src dest code*)]
             [else (sorry! who "unexpected op ~s" op)])))))
 
+  (define maybe-clear-fp-dest
+    (lambda (src dest code*)
+      ;; Scalar conversions and square root preserve unused destination bits.
+      ;; Break that dependency, unless the destination is also the input.
+      (if (equal? src dest)
+          code*
+          (emit sse.xorpd dest dest code*))))
+
   (define asm-fl-cvt
     (lambda (op)
-      (lambda (code* dest-reg src)
-        (Trivit (src)
-          (case op
-            [(single->double) (emit sse.cvtss2sd src (cons 'reg dest-reg) code*)]
-            [(double->single) (emit sse.cvtsd2ss src (cons 'reg dest-reg) code*)])))))
+      (lambda (code* dest src)
+        (Trivit (dest src)
+          (maybe-clear-fp-dest src dest
+            (case op
+              [(single->double) (emit sse.cvtss2sd src dest code*)]
+              [(double->single) (emit sse.cvtsd2ss src dest code*)]))))))
 
   (define asm-fpsingle
     (lambda (code* dest src)
       (Trivit (dest src)
-        (emit sse.cvtsd2ss src dest
-          (emit sse.cvtss2sd dest dest code*)))))
+        (maybe-clear-fp-dest src dest
+          (emit sse.cvtsd2ss src dest
+            (emit sse.cvtss2sd dest dest code*))))))
 
   (define asm-store-single->double
     (lambda (flreg)
@@ -1831,7 +1842,18 @@
   (define asm-fpt
     (lambda (code* dest src)
       (Trivit (dest src)
-         (emit sse.cvtsi2sd src dest code*))))
+        ;; CVTSI2SD preserves the upper destination bits, so clear them to
+        ;; avoid a false dependency on the previous register contents
+        (emit sse.xorpd dest dest
+          (emit sse.cvtsi2sd src dest code*)))))
+
+  (define emit-fpmove
+    (lambda (src dest code*)
+      (if (and (ax-fp-register? src) (ax-fp-register? dest))
+          ;; use MOVAPD for a 64-bit register-to-register move to
+          ;; avoid a false dependency on the upper 64 bits
+          (emit sse.movapd src dest code*)
+          (emit sse.movsd src dest code*))))
 
   (define asm-fpop-2
     (lambda (op)
@@ -1853,27 +1875,28 @@
                ;; Assuming that any subtraction or division will be
                ;; done before we try to fill C arguments...
                (Trivit (dest-reg src1 src2)
-                 (emit sse.movsd src2 (cons 'reg %Cfparg1)
-                   (emit sse.movsd src1 dest-reg
-                         (emit-it (cons 'reg %Cfparg1) dest-reg code*)))))]
+                 (emit-fpmove src2 (cons 'reg %Cfparg1)
+                   (emit-fpmove src1 dest-reg
+                     (emit-it (cons 'reg %Cfparg1) dest-reg code*)))))]
           [else
            (Trivit (dest-reg src1 src2)
              (if (equal? src1 src2)
                  ;; avoid redundant load
-                 (emit sse.movsd src1 dest-reg
-                       (emit-it dest-reg dest-reg code*))
-                 (emit sse.movsd src1 dest-reg
+                 (emit-fpmove src1 dest-reg
+                   (emit-it dest-reg dest-reg code*))
+                 (emit-fpmove src1 dest-reg
                        (emit-it src2 dest-reg code*))))]))))
 
   (define asm-fpsqrt
     (lambda (code* dest-reg src)
       (Trivit (dest-reg src)
-        (emit sse.sqrtsd src dest-reg code*))))
+        (maybe-clear-fp-dest src dest-reg
+          (emit sse.sqrtsd src dest-reg code*)))))
 
   (define asm-fpmove
     (lambda (code* dest src)
       (Trivit (dest src)
-        (emit sse.movsd src dest code*))))
+        (emit-fpmove src dest code*))))
 
   (define asm-fpmove128
     (lambda (code* dest src)

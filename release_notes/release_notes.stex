@@ -143,6 +143,12 @@ The armv7le and tarmv7le machine types correspond to a 32-bit ARM
 compilation target using the armel ABI, which is consistent with (old)
 Android devices.
 
+\subsection{Floating-point performance improvements (10.5.0)}
+
+Improve unboxing of floating-point arguments to
+\scheme{fl-make-rectangular}. Adjust x86\_64 instruction selection
+to reduce false dependencies for floating-point operations.
+
 \subsection{Named Cost Center (10.4.0)}
 
 The procedure \scheme{make-cost-center} now
