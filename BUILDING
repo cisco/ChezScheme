@@ -348,7 +348,6 @@ The makefile supports several targets:
    Removes all built elements from the workarea, and then removes
    `bin/zuo` (unless configured with `ZUO=<zuo>`).
 
-
 WINDOWS VIA COMMAND PROMPT
 
 To build on Windows with MSYS2 and MinGW gcc or Clang, follow the same
@@ -486,6 +485,11 @@ Unset the `TZ` environment variable before running the tests, because
 the Cygwin values are incompatible with the Microsoft C Runtime
 Library.
 
+OPENBSD
+
+For building on OpenBSD, the source code needs to be on a filesystem
+that is mounted with the wxallowed option. Also Chez Scheme needs to be
+installed to such a filesystem.
 
 EMSCRIPTEN
 
