@@ -163,3 +163,29 @@ EXPORT int call_for_interrupt_test(int (*f)(int), int v) {
 EXPORT int is_in_callback_for_interrupt_test() {
   return in_callback;
 }
+
+#if defined(_WIN32) && (defined(_M_X64) || defined(_M_AMD64) || defined(__x86_64__) || defined(__amd64__))
+# include <immintrin.h>
+
+typedef void (*callback_t)(void);
+
+EXPORT int call_with_preserved_xmm(callback_t cb, const __m128i *in, __m128i *out) {
+    __m128i a = _mm_loadu_si128(&in[0]);
+    __m128i b = _mm_loadu_si128(&in[1]);
+    __m128i c = _mm_loadu_si128(&in[2]);
+    __m128i d = _mm_loadu_si128(&in[3]);
+
+    __m128i acc = _mm_add_epi32(_mm_add_epi32(a, b), _mm_add_epi32(c, d));
+
+    cb();  // a, b, c, d, acc must survive this call
+
+    // reuse the pre-call values so they can't just be reloaded/rematerialized
+    acc = _mm_add_epi32(acc, _mm_xor_si128(a, b));
+    acc = _mm_add_epi32(acc, _mm_xor_si128(c, d));
+    acc = _mm_add_epi32(acc, _mm_sub_epi32(a, d));
+
+    _mm_storeu_si128(&out[0], acc);
+    return 1;
+}
+
+#endif

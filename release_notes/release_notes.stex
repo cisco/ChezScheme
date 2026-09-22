@@ -122,6 +122,13 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Exact zeros and \scheme{lcm} (10.5.0)}
+
+Supplying an exact \scheme{0} to \scheme{lcm} produces exact
+\scheme{0}, even if other arguments are inexact integers. This change
+is in line with previous changes described in
+Section~\ref{section:transcendentals-and-zero}.
+
 \subsection{Anonymous fields in struct and union ftypes (10.5.0)}
 
 Struct and union ftypes now support anonymous fields, which mirror anonymous
@@ -639,7 +646,7 @@ changes make arithmetic and number-to-string conversions faster for
 large values, and they avoid unbounded delays between interrupt
 polling.
 
-\subsection{Exact zeros, transcendentals, and exponentials (10.0.0)}
+\subsection{Exact zeros, transcendentals, and exponentials (10.0.0)}\label{section:transcendentals-and-zero}
 
 Division of an exact \scheme{0} by an inexact number now always
 produces exact \scheme{0}, and
@@ -3010,8 +3017,8 @@ in fasl files does not generally make sense.
 
 \subsection{Error message fixes (10.5.0)}
 
-A bug in the error produced by \scheme{bytevector-ieee-double-native-set!}---when the last
-argument raises and error and the offset is out of bounds---has been fixed.
+A bug in the error produced by \scheme{bytevector-ieee-double-native-set!} when the last
+argument raises an error and the offset is out of bounds has been fixed.
 
 When \scheme{log} is called with exact \scheme{1} as the second argument, the error is now
 reported in terms of \scheme{log} instead of a divide-by-zero error in \scheme{/}.
@@ -3025,6 +3032,21 @@ target generation 0, as requested by \scheme{(collect 0 0)}, moves the cursor of
 base, after which the protection call was made at an object boundary rather than a page
 boundary and the process aborted with ``failed to protect recent allocation segments''.
 The address is now taken from the segment the region starts in.
+
+\subsection{Repairs for x86\_64 Windows foreign callables (10.5.0)}
+
+A foreign callable on x86\_64 Windows did not properly preserve XMM
+registers, keeping only the low 64 bits of the registers in some cases
+and potentially further corrupting the registers values in
+\scheme{__collect_safe} mode. That bug has been fixed.
+
+\subsection{Repairs for x86 Windows foreign calls and callables (10.5.0)}
+
+For a foreign call or callable on x86 Windows with a struct result
+that does not fit into registers, the callee receives a result pointer
+as an extra argument. The generated code incorrectly assumed or
+implemented a pop of the result-pointer argument by the callee. That
+bug has been fixed.
 
 \subsection{Repairs for 32-bit ARM foreign call and callables (10.5.0)}
 

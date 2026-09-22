@@ -1425,7 +1425,9 @@
              (begin
                (unless (integer? x1) (noninteger-error who x1))
                (unless (integer? x2) (noninteger-error who x2))
-               (inexact (exlcm (exact x1) (exact x2)))))]
+               (if (or (eqv? x1 0) (eqv? x2 0))
+                   0
+                   (inexact (exlcm (exact x1) (exact x2))))))]
         [(x1 x2 . xr)
          (let f ([x1 x1] [x2 x2] [xr xr])
            (let ([x1 (lcm x1 x2)])
