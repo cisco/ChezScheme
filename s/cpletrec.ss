@@ -253,7 +253,9 @@ Handling letrec and letrec*
                   ; dropping source here; could attach to body or add source record
                   body
                   (nanopass-case (Lsrc Expr) body
-                    ; assimilate nested letrecs
+                    ;; used to assimilate nested letrecs, but why?
+                    ;; keeping them ordered and split via SCC improves loop conversion
+                    #;
                     [(letrec ([,x* ,e*] ...) ,body)
                      `(letrec ([,(append lhs* x*) ,(append rhs* e*)] ...) ,body)]
                     [else `(letrec ([,lhs* ,rhs*] ...) ,body)]))))

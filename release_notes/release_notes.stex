@@ -149,6 +149,14 @@ Improve unboxing of floating-point arguments to
 \scheme{fl-make-rectangular}. Adjust x86\_64 instruction selection
 to reduce false dependencies for floating-point operations.
 
+\subsection{Compiler loop-detection improvements (10.5.0)}
+
+The compiler now detects loop patterns more consistently, turning any
+function that only tail-calls itself and has a single external call
+site into a loop form. That transformation can, in turn, aid
+floating-point unboxing (in the sense of
+Section~\ref{sec:unbox-floats}).
+
 \subsection{Named Cost Center (10.4.0)}
 
 The procedure \scheme{make-cost-center} now
