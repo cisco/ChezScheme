@@ -177,6 +177,8 @@
                            (if lz4-system-lib '() (list lz4-lib))))
   (define res-deps (if msvc? (list res-file) '()))
 
+  (define cflags-dep (input-data-target 'cflags (lookup 'CFLAGS)))
+
   (define preload-files (get-preload-files config at-dir mboot))
 
   (define (compile-one .c .o)
@@ -369,7 +371,7 @@
                                      'desc "lz4 make"))]))]
 
      ,@(map (lambda (.c .o)
-              `[:target ,.o (,.c ,@kernel-hdrs ,@lib-deps)
+              `[:target ,.o (,.c ,@kernel-hdrs ,@lib-deps ,cflags-dep)
                         ,(lambda (.o target)
                            (compile-one .c .o))])
             kernel-srcs kernel-srcobjs)
@@ -394,7 +396,7 @@
             kernel-asms kernel-asmobjs)
 
      ,@(map (lambda (.c .o)
-              `[:target ,.o (,.c ,@main-hdrs)
+              `[:target ,.o (,.c ,@main-hdrs ,cflags-dep)
                         ,(lambda (.o target)
                            (compile-one .c .o))])
             main-srcs main-objs)

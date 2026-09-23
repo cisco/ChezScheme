@@ -1718,6 +1718,15 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
 
     if (MAX_CG >= S_G.min_free_gen) S_free_chunks();
 
+#if defined(WRITE_XOR_EXECUTE_CODE)
+    /* any new allocation of code needs to happen on a new page */
+    for (ls = S_threads; ls != Snil; ls = Scdr(ls)) {
+      ptr t_tc = (ptr)THREADTC(Scar(ls));
+      for (g = 0; g <= MAX_TG; g++)
+        S_close_off_thread_local_segment(t_tc, space_code, g);
+    }
+#endif
+
     S_flush_instruction_cache(tc);
     S_thread_end_code_write(tc, MAX_TG, 0, NULL, 0);
 

@@ -3023,16 +3023,6 @@ argument raises an error and the offset is out of bounds has been fixed.
 When \scheme{log} is called with exact \scheme{1} as the second argument, the error is now
 reported in terms of \scheme{log} instead of a divide-by-zero error in \scheme{/}.
 
-\subsection{Code-write protection after a generation-0 collection (10.5.0)}
-
-On platforms configured for \scheme{WRITE_XOR_EXECUTE_CODE}, restoring execute permission
-for a recently closed-off region of code space used the collector's sweep cursor as the
-address to protect, while measuring the length from the region's base. A collection with
-target generation 0, as requested by \scheme{(collect 0 0)}, moves the cursor off the
-base, after which the protection call was made at an object boundary rather than a page
-boundary and the process aborted with ``failed to protect recent allocation segments''.
-The address is now taken from the segment the region starts in.
-
 \subsection{Repairs for x86\_64 Windows foreign callables (10.5.0)}
 
 A foreign callable on x86\_64 Windows did not properly preserve XMM
@@ -3047,6 +3037,22 @@ that does not fit into registers, the callee receives a result pointer
 as an extra argument. The generated code incorrectly assumed or
 implemented a pop of the result-pointer argument by the callee. That
 bug has been fixed.
+
+\subsection{Improve support for W\^X hosts (10.5.0)}
+
+The new \scheme{--enable-wx} configuration option supports hosts that
+enforce exclusive write vs. execute mode on memory pages. This option
+is needed only when enforcement is process-wide (as on iOS or on
+OpenBSD when not on an wxallowed filesystem) as opposed to
+configurable per thread (as on Mac OS). The trade-off is that
+\scheme{__collect_safe} is ignored for foreign-procedure calls and
+callables.
+
+Partial support was previously available by compiling the Chez Scheme
+kernel with \scheme{WRITE_XOR_EXECUTE_CODE} defined, but that did not
+work correctly with threads. In addition, a bug has been fixed where a
+\scheme{(collect 0 0)} collection request could lead to a ``failed to
+protect recent allocation segments'' failure.
 
 \subsection{Repairs for 32-bit ARM foreign call and callables (10.5.0)}
 
