@@ -690,6 +690,58 @@
     (eqv? (flsingle -1e-100) -0.0)
  )
 
+(mat fl-unary-destination
+  ;; Using `black-box` ensures that these exercise generated instructions
+  ;; instead of constant folding. Keep an input live as well as consuming it.
+  (let ([root (black-box (lambda (x) (flsqrt x)))]
+        [twice (black-box (lambda (x) (flsqrt (flsqrt x))))]
+        [live (black-box (lambda (x y)
+                           (let ([v (fl+ x y)]) (fl+ v (flsqrt v)))))])
+    (and (eqv? (root -0.0) -0.0)
+         (eqv? (root +inf.0) +inf.0)
+         (flnan? (root -1.0))
+         (andmap (lambda (p) (eqv? (twice (car p)) (cadr p)))
+                 '((81.0 3.0) (256.0 4.0) (1.0 1.0)
+                   (0.0 0.0) (-0.0 -0.0) (+inf.0 +inf.0)))
+         (eqv? (live 7.0 9.0) 20.0)
+         (eqv? (live 1.0 3.0) 6.0)))
+
+  (let ([round (black-box (lambda (x) (flsingle x)))]
+        [twice (black-box (lambda (x) (flsingle (flsingle x))))]
+        [live (black-box (lambda (x y)
+                          (let ([v (fl+ x y)]) (fl+ v (flsingle v)))))]
+        [store (black-box (lambda (bv x)
+                            (bytevector-ieee-single-native-set! bv 0 x)))]
+        [load (black-box (lambda (bv)
+                           (bytevector-ieee-single-native-ref bv 0)))]
+        [bv (make-bytevector 4)])
+    (and (eqv? (live 1.25 3.0) 8.5)
+         (flnan? (round +nan.0))
+         (flnan? (twice +nan.0))
+         (andmap
+          (lambda (p)
+            (let ([x (car p)] [bits (cadr p)] [expected (caddr p)])
+              (store bv x)
+              (and (= (bytevector-u32-native-ref bv 0) bits)
+                   (eqv? (load bv) expected)
+                   (eqv? (round x) expected)
+                   (eqv? (twice x) expected))))
+          '((0.0 #x00000000 0.0)
+            (-0.0 #x80000000 -0.0)
+            (1.0 #x3f800000 1.0)
+            (-2.5 #xc0200000 -2.5)
+            (16777217.0 #x4b800000 16777216.0)
+            (16777219.0 #x4b800002 16777220.0)
+            (1.401298464324817e-45 #x00000001 1.401298464324817e-45)
+            (-1.401298464324817e-45 #x80000001 -1.401298464324817e-45)
+            (7.006492321624085e-46 #x00000000 0.0)
+            (-7.006492321624085e-46 #x80000000 -0.0)
+            (3.4028234663852886e38 #x7f7fffff 3.4028234663852886e38)
+            (1e100 #x7f800000 +inf.0)
+            (-1e100 #xff800000 -inf.0)
+            (+inf.0 #x7f800000 +inf.0)
+            (-inf.0 #xff800000 -inf.0))))))
+
 (mat flinteger?
     (error? (flinteger? 'a))
     (error? (flinteger? "hi"))
@@ -1245,6 +1297,12 @@
       (check-loop-allocation (lambda (v)
                                (fl-make-rectangular (fl- (cfl-real-part v) 1.0)
                                                     (fl+ 1.0 (cfl-imag-part v))))
+                             1.0-3.0i))
+  (or (and (not (enable-cp0))
+           (not (= 3 (optimize-level))))
+      (check-loop-allocation (lambda (v)
+                               (let ([v (fl- (cfl-real-part v) 1.0)])
+                                 (fl-make-rectangular v v)))
                              1.0-3.0i))
 
   (check-loop-allocation (lambda (v)
