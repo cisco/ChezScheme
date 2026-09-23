@@ -23,7 +23,7 @@
 \endschemeinit
 
 \generated
-;; We assume here that the verison used to build the documentation
+;; We assume here that the version used to build the documentation
 ;; is the same as the documented version. If it's a release version,
 ;; then the date is fixed to the release date. Otherwise, use
 ;; the date when the document is built.

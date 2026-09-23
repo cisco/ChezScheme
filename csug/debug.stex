@@ -1460,7 +1460,7 @@ more efficient.
 The procedure \scheme{compute-size-increments} is similar to
 \scheme{compute-size} mapped over a list of elements, but it reports a
 size for each later element without including the size of objects
-reachable from ealier elements, and it treats weak and ephemeron pairs
+reachable from earlier elements, and it treats weak and ephemeron pairs
 differently. For a large number of reachable objects,
 \scheme{compute-size-increments} uses much less memory than
 \scheme{compute-size}.

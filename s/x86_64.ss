@@ -635,6 +635,10 @@
     [(op (x fpur) (y mem)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpmove ,y))]
     [(op (x fpur) (y ur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpcast ,y))])
 
+  (define-instruction value (fpmove128)
+    [(op (x fpmem) (y fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpmove128 ,y))]
+    [(op (x fpur) (y fpmem)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpmove128 ,y))])
+
   (define-instruction value (fp+ fp- fp* fp/)
     [(op (x fpur) (y fpur) (z fpmem fpur))
      (seq
@@ -897,7 +901,7 @@
                      asm-lea1 asm-lea2 asm-indirect-call asm-condition-code
                      asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount
                      asm-exchange asm-pause asm-debug asm-locked-incr asm-locked-decr asm-locked-cmpxchg
-                     asm-fpsqrt asm-fpop-2 asm-fpmove asm-fpcast asm-fpsingle
+                     asm-fpsqrt asm-fpop-2 asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
                      asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
@@ -1081,8 +1085,11 @@
   (define-op sse.cvtsi2sd  sse-op1 #xF2 #x2A 1)
   (define-op sse.divsd     sse-op1 #xF2 #x5E 0)
   (define-op sse.movd      sse-op2 #x66 #x6E #x7E 1)
+  (define-op sse.movapd    sse-op2 #x66 #x28 #x29 0)
   (define-op sse.movsd     sse-op2 #xF2 #x10 #x11 0)
   (define-op sse.movss     sse-op2 #xF3 #x10 #x11 0)
+  (define-op sse.movdqa    sse-op2 #x66 #x6F #x7F 1)
+  (define-op sse.movdqu    sse-op2 #xF3 #x6F #x7F 1)
   (define-op sse.mulsd     sse-op1 #xF2 #x59 0)
   (define-op sse.sqrtsd    sse-op1 #xF2 #x51 0)
   (define-op sse.subsd     sse-op1 #xF2 #x5C 0)
@@ -1787,19 +1794,29 @@
             [(zext32) (emit movl src dest code*)]
             [else (sorry! who "unexpected op ~s" op)])))))
 
+  (define maybe-clear-fp-dest
+    (lambda (src dest code*)
+      ;; Scalar conversions and square root preserve unused destination bits.
+      ;; Break that dependency, unless the destination is also the input.
+      (if (equal? src dest)
+          code*
+          (emit sse.xorpd dest dest code*))))
+
   (define asm-fl-cvt
     (lambda (op)
-      (lambda (code* dest-reg src)
-        (Trivit (src)
-          (case op
-            [(single->double) (emit sse.cvtss2sd src (cons 'reg dest-reg) code*)]
-            [(double->single) (emit sse.cvtsd2ss src (cons 'reg dest-reg) code*)])))))
+      (lambda (code* dest src)
+        (Trivit (dest src)
+          (maybe-clear-fp-dest src dest
+            (case op
+              [(single->double) (emit sse.cvtss2sd src dest code*)]
+              [(double->single) (emit sse.cvtsd2ss src dest code*)]))))))
 
   (define asm-fpsingle
     (lambda (code* dest src)
       (Trivit (dest src)
-        (emit sse.cvtsd2ss src dest
-          (emit sse.cvtss2sd dest dest code*)))))
+        (maybe-clear-fp-dest src dest
+          (emit sse.cvtsd2ss src dest
+            (emit sse.cvtss2sd dest dest code*))))))
 
   (define asm-store-single->double
     (lambda (flreg)
@@ -1825,7 +1842,18 @@
   (define asm-fpt
     (lambda (code* dest src)
       (Trivit (dest src)
-         (emit sse.cvtsi2sd src dest code*))))
+        ;; CVTSI2SD preserves the upper destination bits, so clear them to
+        ;; avoid a false dependency on the previous register contents
+        (emit sse.xorpd dest dest
+          (emit sse.cvtsi2sd src dest code*)))))
+
+  (define emit-fpmove
+    (lambda (src dest code*)
+      (if (and (ax-fp-register? src) (ax-fp-register? dest))
+          ;; use MOVAPD for a 64-bit register-to-register move to
+          ;; avoid a false dependency on the upper 64 bits
+          (emit sse.movapd src dest code*)
+          (emit sse.movsd src dest code*))))
 
   (define asm-fpop-2
     (lambda (op)
@@ -1847,27 +1875,34 @@
                ;; Assuming that any subtraction or division will be
                ;; done before we try to fill C arguments...
                (Trivit (dest-reg src1 src2)
-                 (emit sse.movsd src2 (cons 'reg %Cfparg1)
-                   (emit sse.movsd src1 dest-reg
-                         (emit-it (cons 'reg %Cfparg1) dest-reg code*)))))]
+                 (emit-fpmove src2 (cons 'reg %Cfparg1)
+                   (emit-fpmove src1 dest-reg
+                     (emit-it (cons 'reg %Cfparg1) dest-reg code*)))))]
           [else
            (Trivit (dest-reg src1 src2)
              (if (equal? src1 src2)
                  ;; avoid redundant load
-                 (emit sse.movsd src1 dest-reg
-                       (emit-it dest-reg dest-reg code*))
-                 (emit sse.movsd src1 dest-reg
+                 (emit-fpmove src1 dest-reg
+                   (emit-it dest-reg dest-reg code*))
+                 (emit-fpmove src1 dest-reg
                        (emit-it src2 dest-reg code*))))]))))
 
   (define asm-fpsqrt
     (lambda (code* dest-reg src)
       (Trivit (dest-reg src)
-        (emit sse.sqrtsd src dest-reg code*))))
+        (maybe-clear-fp-dest src dest-reg
+          (emit sse.sqrtsd src dest-reg code*)))))
 
   (define asm-fpmove
     (lambda (code* dest src)
       (Trivit (dest src)
-        (emit sse.movsd src dest code*))))
+        (emit-fpmove src dest code*))))
+
+  (define asm-fpmove128
+    (lambda (code* dest src)
+      (Trivit (dest src)
+        ;; assuming aligned
+        (emit sse.movdqa src dest code*))))
 
   (define asm-fpcast
     (lambda (code* dest src)
@@ -3065,19 +3100,25 @@
                    |                           |
                    |    incoming stack args    |
                    |                           |
-           sp+176: +---------------------------+ <- 16-byte boundary
+           sp+224: +---------------------------+ <- 16-byte boundary
                    |                           | 
                    |  space for register args  | four quads
                    |                           | 
-           sp+144: +---------------------------+ <- 16-byte boundary
-incoming           |   incoming return address | one quad
-      sp-> sp+120: +---------------------------+
+           sp+192: +---------------------------+ <- 16-byte boundary
+incoming           |  incoming return address  | one quad
+      sp-> sp+184: +---------------------------+
                    |                           |
                    |   callee-save registers   | RBX, RBP, RDI, RSI, R12, R13, R14, R15 (8 quads)
-                   |                           |                            and XMM6-11 (6 quads)
-            sp+24: +---------------------------+
-                   |        active state       | two quads
-                   +---------------------------+
+                   |                           |
+           sp+120: +---------------------------+
+                   |          pad word         | one quad
+           sp+112: +---------------------------+
+                   |                           |
+                   |   callee-save XXM regs    | XMM6-XMM11 (6 dblquads)
+                   |                           |
+            sp+16: +---------------------------+<- 16-byte boundary
+                   |        active state       | one quad
+             sp+8: +---------------------------+
                    | pad word / indirect space | one quad
              sp+0: +---------------------------+<- 16-byte boundary
 
@@ -3087,19 +3128,19 @@ incoming           |   incoming return address | one quad
                    +---------------------------+
                    |                           |
                    |    incoming stack args    |
-           sp+192: |                           |
-incoming           +---------------------------+ <- 16-byte boundary
-      sp-> sp+184: |   incoming return address | one quad
-                   +---------------------------+
-           sp+176: |  pad word / active state  | one quad
-                   +---------------------------+
+                   |                           |
+           sp+192: +---------------------------+ <- 16-byte boundary
+incoming           |  incoming return address  | one quad
+      sp-> sp+184: +---------------------------+
+                   |  pad word / active state  | one quad
+           sp+176: +---------------------------+
                    |   indirect result space   | two quads
-           sp+160: |  (for & results via regs) |
-                   +---------------------------+<- 16-byte boundary
+                   |  (for & results via regs) |
+           sp+160: +---------------------------+<- 16-byte boundary
                    |                           | 
                    |    saved register args    | space for Carg*, Cfparg* (14 quads)
-            sp+48: |                           |
-                   +---------------------------+<- 16-byte boundary
+                   |                           |
+            sp+48: +---------------------------+<- 16-byte boundary
                    |                           |
                    |   callee-save registers   | RBX, RBP, R12, R13, R14, R15 (6 quads)
                    |                           | 
@@ -3107,9 +3148,14 @@ incoming           +---------------------------+ <- 16-byte boundary
       |#
       (with-output-language (L13 Effect)
         (let ()
-          (define saved-register-arg-offset (if-feature windows 144 48))
-          (define active-state-offset (if-feature windows 24 176))
-          (define stack-args-offset (if-feature windows 176 192))
+          (define saved-register-arg-offset (if-feature windows 192 48))
+          (define active-state-offset (if-feature windows 8 176))
+          (define stack-args-offset (if-feature windows 224 192))
+	  (define needed-stack-space (if-feature windows
+						 ;; int callee-save registers pushed first:
+						 (- 184 (* 8 8))
+						 ;; callee-save registers pushed after:
+						 (- 184 (* 6 8))))
           (define load-double-stack
             (lambda (offset)
               (lambda (x) ; boxed (always a var)
@@ -3424,17 +3470,16 @@ incoming           +---------------------------+ <- 16-byte boundary
                            ,(%inline push ,%r15)
                            ;; 16 bytes of this space is needed needed only for `adjust-active?`, but
                            ;; always add the space so that unwind info can be consistent:
-                           (set! ,%sp ,(%inline - ,%sp (immediate 64)))
-                           (set! ,(%mref ,%sp ,%zero 0 fp) ,%fp3)
-                           (set! ,(%mref ,%sp ,%zero 8 fp) ,%fp4)
-                           (set! ,(%mref ,%sp ,%zero 16 fp) ,%fp5)
-                           (set! ,(%mref ,%sp ,%zero 24 fp) ,%fp6)
-                           (set! ,(%mref ,%sp ,%zero 32 fp) ,%fp7)
-                           (set! ,(%mref ,%sp ,%zero 40 fp) ,%fp8)
-                           (set! ,%sp ,(%inline - ,%sp (immediate 8)))
+                           (set! ,%sp ,(%inline - ,%sp (immediate ,needed-stack-space)))
+                           (set! ,(%mref ,%sp ,%zero 16 fp) ,(%inline fpmove128 ,%fp3))
+                           (set! ,(%mref ,%sp ,%zero 32 fp) ,(%inline fpmove128 ,%fp4))
+                           (set! ,(%mref ,%sp ,%zero 48 fp) ,(%inline fpmove128 ,%fp5))
+                           (set! ,(%mref ,%sp ,%zero 64 fp) ,(%inline fpmove128 ,%fp6))
+                           (set! ,(%mref ,%sp ,%zero 80 fp) ,(%inline fpmove128 ,%fp7))
+                           (set! ,(%mref ,%sp ,%zero 96 fp) ,(%inline fpmove128 ,%fp8))
                            ,(save-arg-regs save-arg-type*))
                          (%seq
-                           (set! ,%sp ,(%inline - ,%sp (immediate 136)))
+                           (set! ,%sp ,(%inline - ,%sp (immediate ,needed-stack-space)))
                            ,(%inline push ,%rbx)
                            ,(%inline push ,%rbp)
                            ,(%inline push ,%r12)
@@ -3476,14 +3521,13 @@ incoming           +---------------------------+ <- 16-byte boundary
                        (%seq
                         ,(if-feature windows
                            (%seq
-                             (set! ,%sp ,(%inline + ,%sp (immediate 8)))
-                             (set! ,%fp3 ,(%mref ,%sp ,%zero 0 fp))
-                             (set! ,%fp4 ,(%mref ,%sp ,%zero 8 fp))
-                             (set! ,%fp5 ,(%mref ,%sp ,%zero 16 fp))
-                             (set! ,%fp6 ,(%mref ,%sp ,%zero 24 fp))
-                             (set! ,%fp7 ,(%mref ,%sp ,%zero 32 fp))
-                             (set! ,%fp8 ,(%mref ,%sp ,%zero 40 fp))
-                             (set! ,%sp ,(%inline + ,%sp (immediate 64)))
+                             (set! ,%fp3 ,(%inline fpmove128 ,(%mref ,%sp ,%zero 16 fp)))
+                             (set! ,%fp4 ,(%inline fpmove128 ,(%mref ,%sp ,%zero 32 fp)))
+                             (set! ,%fp5 ,(%inline fpmove128 ,(%mref ,%sp ,%zero 48 fp)))
+                             (set! ,%fp6 ,(%inline fpmove128 ,(%mref ,%sp ,%zero 64 fp)))
+                             (set! ,%fp7 ,(%inline fpmove128 ,(%mref ,%sp ,%zero 80 fp)))
+                             (set! ,%fp8 ,(%inline fpmove128 ,(%mref ,%sp ,%zero 96 fp)))
+                             (set! ,%sp ,(%inline + ,%sp (immediate ,needed-stack-space)))
                              (set! ,%r15 ,(%inline pop))
                              (set! ,%r14 ,(%inline pop))
                              (set! ,%r13 ,(%inline pop))
@@ -3499,6 +3543,6 @@ incoming           +---------------------------+ <- 16-byte boundary
                              (set! ,%r12 ,(%inline pop))
                              (set! ,%rbp ,(%inline pop))
                              (set! ,%rbx ,(%inline pop))
-                             (set! ,%sp ,(%inline + ,%sp (immediate 136)))))
+                             (set! ,%sp ,(%inline + ,%sp (immediate ,needed-stack-space)))))
                         (asm-c-return ,null-info ,callee-save-regs ... ,result-regs ... ,result-fp-regs ...))))))))))))))
   )

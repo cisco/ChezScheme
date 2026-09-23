@@ -583,26 +583,40 @@ static void contract_segment_table(uptr base, uptr end) {
 #endif
 }
 
-/* Bracket all writes to `space_code` memory with calls to
+/*
+   Bracket all writes to `space_code` memory with calls to
    `S_thread_start_code_write` and `S_thread_end_code_write'.
 
    On a platform where a page cannot be both writable and executable
-   at the same time (a.k.a. W^X), AND assuming that the disposition is
-   thread-specific, the bracketing functions disable execution of the
-   code's memory while enabling writing.
+   at the same time (a.k.a. W^X), AND assuming that the enforcement
+   disposition can be thread-specific (e.g., on Mac OS), the
+   bracketing functions disable execution of the code's memory while
+   enabling writing. Define `S_ENABLE_CODE_WRITE` for those platforms.
 
-   A process-wide W^X disposition seems incompatible with the Chez
-   Scheme rule that a foreign thread is allowed to invoke a callback
-   (as long as the callback is immobile/locked) at any time --- even,
-   say, while Scheme is collecting garbage and needs to write to
-   executable pages.  However, on platforms where W^X is enforced
-   (eg. iOS), we provide a best-effort implementation that flips pages
-   between W and X for the minimal set of segments possible (depending
-   on the context) in an effort to minimize the chances of a page
-   being flipped while a thread is executing code off of it.
+   On a platform with a process-wide W^X enforcement disposition (e.g.
+   iOS), define `WRITE_XOR_EXECUTE_CODE`. A process-wide disposition
+   is incompatible with `__collect_safe` foreign-procedure mode,
+   either for foreign calls or foreign callables, since that mode
+   invoves running (immobile/locked) code while a Scheme garbage
+   collection is running, and collection may need to write to
+   executable pages. Otherwise, we can ensure that threads can share
+   code and not collide by forcing all allocation of code into a fresh
+   segment; that is, as soon as a code allocation is finished so that
+   it might run form any thread, the code's segment is removed from
+   further allocation (until stop-the-world collection potentially
+   compacts allocation and reuses segments).
 */
 
-void S_thread_start_code_write(WX_UNUSED ptr tc, WX_UNUSED IGEN maxg, WX_UNUSED IBOOL current,
+/* Start and end calls cannot be nested.
+   Arguments matter only in `WRITE_XOR_EXECUTE_CODE` mode. */
+void S_thread_start_code_write(WX_UNUSED ptr tc,
+                               /* Maximum generation to allow writing; when non-0,
+                                  causes `current` to be ignored: */
+                               WX_UNUSED IGEN maxg,
+                               /* Enables writes only to freshly allocated code: */
+                               WX_UNUSED IBOOL current,
+                               /* Non-NULL `hint` other options, and enables writing
+                                  only to the indicated range: */
                                WX_UNUSED void *hint, WX_UNUSED uptr hint_len) {
 #if defined(WRITE_XOR_EXECUTE_CODE)
   enable_code_write(tc, maxg, 1, current, hint, hint_len);
@@ -611,6 +625,7 @@ void S_thread_start_code_write(WX_UNUSED ptr tc, WX_UNUSED IGEN maxg, WX_UNUSED 
 #endif
 }
 
+/* Arguments should match `S_thread_start_code_write` arguments. */
 void S_thread_end_code_write(WX_UNUSED ptr tc, WX_UNUSED IGEN maxg, WX_UNUSED IBOOL current,
                              WX_UNUSED void *hint, WX_UNUSED uptr hint_len) {
 #if defined(WRITE_XOR_EXECUTE_CODE)
@@ -621,25 +636,6 @@ void S_thread_end_code_write(WX_UNUSED ptr tc, WX_UNUSED IGEN maxg, WX_UNUSED IB
 }
 
 #if defined(WRITE_XOR_EXECUTE_CODE)
-# if defined(PTHREADS)
-static IBOOL is_unused_seg(chunkinfo *chunk, seginfo *si) {
-  uptr number;
-  if (si->creator == NULL) {
-    /* If the seginfo doesn't have a creator, then it's unused so we
-       can skip the search. */
-    return 1;
-  }
-  number = si->number;
-  si = chunk->unused_segs;
-  while (si != NULL) {
-    if (si->number == number) {
-      return 1;
-    }
-    si = si->next;
-  }
-  return 0;
-}
-# endif
 
 static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *hint, uptr hint_len) {
   thread_gc *tgc;
@@ -649,8 +645,8 @@ static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *
   void *addr;
   INT flags = (on ? PROT_WRITE : PROT_EXEC) | PROT_READ;
 
-  /* Flip only the segment hinted at by the caller. */
-  if (maxg == 0 && hint != NULL) {
+  if (hint != NULL) {
+    /* Flip only the segment hinted at by the caller. */
     uptr seg, start_seg, end_seg;
     start_seg = addr_get_segment(TO_PTR(hint));
     end_seg = addr_get_segment((uptr)TO_PTR(hint) + hint_len - 1);
@@ -660,84 +656,45 @@ static void enable_code_write(ptr tc, IGEN maxg, IBOOL on, IBOOL current, void *
         S_error_abort("bad hint to enable_code_write");
       }
     }
-    return;
-  }
-
-  /* Flip only the current allocation segments. */
-  tgc = THREAD_GC(tc);
-  if (maxg == 0 && current) {
+  } else if (current && maxg == 0) {
+    /* Flip only the current allocation segments. */
+    tgc = THREAD_GC(tc);
     addr = TO_VOIDP(tgc->base_loc[0][space_code]);
-    if (addr == NULL) {
+    if (addr == NULL)
       return;
-    }
-    bytes = ((char*)tgc->next_loc[0][space_code] - (char*)tgc->base_loc[0][space_code]
-             + tgc->bytes_left[0][space_code] + allocation_segment_tail_padding);
-    if (mprotect(addr, bytes, flags) != 0) {
-      S_error_abort("failed to protect current allocation segments");
-    }
-    /* If disabling writes, turn on exec for recently-allocated
-       segments in addition to the current segments. Clears the
-       current sweep_next chain so must not be used durring
-       collection. */
-    if (!on) {
+    if (on) {
+      bytes = ((char*)tgc->next_loc[0][space_code] - (char*)tgc->base_loc[0][space_code]
+               + tgc->bytes_left[0][space_code] + allocation_segment_tail_padding);
+      if (mprotect(addr, bytes, flags) != 0) {
+        S_error_abort("failed to protect current allocation segments");
+      }
+    } else {
+      /* If disabling writes, close out current segment and turn on exec
+         for recently-allocated segments in addition to the current
+         segments. Clears the current sweep_next chain, so must not be
+         used during a collection. */
+      S_close_off_segment(tgc, space_code, 0);
       while ((sip = tgc->sweep_next[0][space_code]) != NULL) {
         tgc->sweep_next[0][space_code] = sip->sweep_next;
-        addr = TO_VOIDP(sip->sweep_start);
+        addr = TO_VOIDP(build_ptr(sip->number, 0));
         bytes = sip->sweep_bytes;
         if (mprotect(addr, bytes, flags) != 0) {
           S_error_abort("failed to protect recent allocation segments");
         }
       }
     }
-    return;
-  }
-
-  for (i = 0; i <= PARTIAL_CHUNK_POOLS; i++) {
-    chunk = S_code_chunks[i];
-    while (chunk != NULL) {
-      addr = chunk->addr;
-# if defined(PTHREADS)
-      bytes = 0;
-      if (chunk->nused_segs == 0) {
-        /* None of the segments in the chunk are used so flip the bits
-           for all of them in one go. */
+  } else {
+    for (i = 0; i <= PARTIAL_CHUNK_POOLS; i++) {
+      chunk = S_code_chunks[i];
+      while (chunk != NULL) {
+        addr = chunk->addr;
         bytes = chunk->bytes;
-      } else {
-        /* Flip bits for whole runs of segs that are either unused or
-           whose generation is within the range [0, maxg]. */
-        int j;
-        for (j = 0; j < chunk->segs; j++) {
-          seginfo si = chunk->sis[j];
-          /* When maxg is 0, limit the search to unused segments and
-             segments that belong to the current thread. */
-          if ((maxg == 0 && si.generation == 0 && si.creator == tgc) ||
-              (maxg != 0 && si.generation <= maxg) ||
-              (is_unused_seg(chunk, &si))) {
-            bytes += bytes_per_segment;
-          } else {
-            if (bytes > 0) {
-              debug(printf("mprotect flags=%d from=%p to=%p maxg=%d (interrupted)\n", flags, addr, TO_VOIDP((char *)addr + bytes), maxg))
-              if (mprotect(addr, bytes, flags) != 0) {
-                S_error_abort("mprotect failed");
-              }
-            }
-
-            addr = TO_VOIDP((char *)chunk->addr + (j + 1) * bytes_per_segment);
-            bytes = 0;
-          }
-        }
-      }
-# else
-      bytes = chunk->bytes;
-# endif
-      if (bytes > 0) {
         debug(printf("mprotect flags=%d from=%p to=%p maxg=%d\n", flags, addr, TO_VOIDP((char *)addr + bytes), maxg))
         if (mprotect(addr, bytes, flags) != 0) {
           S_error_abort("mprotect failed");
         }
+        chunk = chunk->next;
       }
-
-      chunk = chunk->next;
     }
   }
 }

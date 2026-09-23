@@ -1128,8 +1128,8 @@ in memory by the storage management system until it is reclaimed.
 
 \section{Phantom Bytevectors\label{SECTSMGMTPHANTOM}}
 
-\index{phamtom bytevectors}A \emph{phantom bytevector} represents
-memory that is allocated outside of the Scheme stroage management
+\index{phantom bytevectors}A \emph{phantom bytevector} represents
+memory that is allocated outside of the Scheme storage management
 system. A phantom bytevector itself uses a small amount of space, but
 it contains a length that reflects external allocation. Representing
 external allocation can be useful for reflecting memory consumption

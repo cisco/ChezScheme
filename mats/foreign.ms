@@ -3274,6 +3274,41 @@
      (call-with-many-args (foreign-callable-entry-point cb)))
     result)
 
+  (machine-case
+   [(ta6nt a6nt)
+    ;; check that callables save all 128 bits of XMM registers
+    (let ()
+      (define-ftype callback (function () void))
+      (define-ftype callback/collect-safe (function __collect_safe () void))
+      (define void-fptr (make-ftype-pointer callback void))
+      (define void-fptr/collect-safe (make-ftype-pointer callback/collect-safe void))
+      (define out1 (make-bytevector 16))
+      (define out2 (make-bytevector 16))
+      (define in '#vu8(00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+		       20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35
+		       40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55
+		       60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75))
+      (define expected '#vu8(100 104 108 112 212 216 220 224 228 232 236 240 20 25 29 33))
+      (define call_with_preserved_xmm
+	(foreign-procedure "call_with_preserved_xmm"
+			   ((* callback) u8* u8*)
+			   int))
+      (define call_with_preserved_xmm/collect-safe
+	(foreign-procedure "call_with_preserved_xmm"
+			   ((* callback/collect-safe) u8* u8*)
+			   int))
+      (lock-object out1)
+      (lock-object out2)
+      (call_with_preserved_xmm void-fptr in out1)
+      (call_with_preserved_xmm/collect-safe void-fptr/collect-safe in out2)
+      (unlock-object out1)
+      (unlock-object out2)
+      (unlock-object (foreign-callable-code-object (ftype-pointer-address void-fptr)))
+      (unlock-object (foreign-callable-code-object (ftype-pointer-address void-fptr/collect-safe)))
+      (and (equal? out1 expected)
+	   (equal? out2 expected)))]
+   [else #t])
+
 )
 
 (machine-case
@@ -3860,6 +3895,7 @@
   (error? (foreign-callable __collect_safe (lambda () #f) () string))
   (error? (foreign-callable __collect_safe (lambda () #f) () wstring))
   (begin
+    (define $can-collect-safe? (and (threaded?) (foreign-procedure "(cs)collect_safe_supported" () boolean)))
     (define-ftype thread-callback-T (function __collect_safe (double) double))
     (define (call-with-thread-callback cb-proc proc)
       (let* ([exception #f]
@@ -3893,7 +3929,7 @@
           call-in-unknown-thread-1))
     (define call-in-unknown-thread-3
       ;; Call in a truly unknown thread:
-      (if (threaded?)
+      (if (and (threaded?) ($can-collect-safe?))
           (let ([call (foreign-procedure "call_in_unknown_thread"
                                          ((* thread-callback-T) double int boolean boolean)
                                          double)])
@@ -3906,7 +3942,7 @@
       ;; In an truly unknown thread, but also using `__collect_safe` to
       ;; deactivate the current thread instead of using `Sdeactivate_thread`
       ;; within the foreign function:
-      (if (threaded?)
+      (if (and (threaded?) ($can-collect-safe?))
           (let ([call (foreign-procedure __collect_safe "call_in_unknown_thread"
                                          ((* thread-callback-T) double int boolean boolean)
                                          double)])
@@ -3972,6 +4008,7 @@
   ;; doesn't use a huge amount of memory --- that is, that some of the
   ;; threads trigger a GC
   (or (not (threaded?))
+      (not ($can-collect-safe?))
       (let ([old-max (maximum-memory-bytes)])
         (let ([call (foreign-procedure __collect_safe
                                        "call_in_many_unknown_threads" (uptr int int)

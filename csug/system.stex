@@ -2421,7 +2421,7 @@ to select a distinct symbol to hold the value of the \scheme{a-var}
 defininion, since \scheme{a-var} itself should not be defined directly
 at the top level. Finally, the \scheme{current-generate-id} procedure
 is called on \scheme{a-var} to select a name for the macro-introduced
-definiton of \scheme{a-var} in the expansion of \scheme{(def)}---which
+definition of \scheme{a-var} in the expansion of \scheme{(def)}---which
 turns out to be completely inaccessible since no reference is
 introduced by the same expansion step.
 

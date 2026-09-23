@@ -3095,7 +3095,7 @@ and \scheme{eq-hashtable-contains?} are used on a
 particular hash table by any thread. To handle certain forms of
 contention, the result may be \scheme{#f}, in which case the operation
 might be retried. An even more significant constraint is that the hash
-table will not be resized interally as needed to provide constant-time
+table will not be resized internally as needed to provide constant-time
 behavior. Use \scheme{eq-hashtable-set!} or a similar operation from a
 single thread (e.g., during a collect-reqest handler) to allow the
 opportunity of resizing.
@@ -4693,7 +4693,7 @@ is the ``pretty'' name of the gensym (see~\ref{desc:gensym}).
 \var{rtd} must be a record-type descriptor.
 The field names are symbols.
 
-See also the Revised$^6$ Report version of this prodecure (exported from
+See also the Revised$^6$ Report version of this procedure (exported from
 the \scheme{(chezscheme)} library) which returns a vector.
 
 \schemedisplay
@@ -4811,7 +4811,7 @@ new record type has anonymous fields. The \scheme{car} of \var{fields}
 is a field count, and it is added to any fields present in
 \var{parent} to determine the record type's total number of fields.
 The \scheme{cdr} of \var{fields} must be an exact non-negative integer
-that is treated as a bit array; a \scheme{1} bit indicates the the
+that is treated as a bit array; a \scheme{1} bit indicates the
 corresponding field among new fields is mutable. The total number of
 fields in a record type must be a fixnum.
 

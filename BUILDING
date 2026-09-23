@@ -487,6 +487,14 @@ the Cygwin values are incompatible with the Microsoft C Runtime
 Library.
 
 
+OPENBSD
+
+Build Chez Scheme on a filesystem that is mounted with the `wxallowed`
+option, and ensure that Chez Scheme is installed on a filesystem with
+`wxallowed`. Alternatively, configure with `--enable-wx` as described
+below.
+
+
 EMSCRIPTEN
 
 To target WebAssembly via Emscripten and `emcc`, use the
@@ -535,6 +543,38 @@ Finally, configure the Emscripten build to use "demo.boot":
 
  ./configure --pb --emscripten --emboot=demo.boot
  make
+
+
+PLATFORMS THAT ENFORCE W^X
+
+Chez Scheme can generate machine code at run time and modify code
+during garbage collection, and those actions can run afoul of W^X
+enforcement (write--execute exclusivity of memory) by the operating
+system. W^X enforcement particularly constrains the interaction of
+threads, code generation, and memory management. On some platforms,
+conforming to W^X requires disabling the `__collect_safe` convention
+(by making it ignored) for foreign procedure calls and callables.
+
+Use
+
+   ./configure --enable-wx
+
+to enable portable W^X cooperation and disable the `__collect_safe`
+convention. Using `--enable-wx` on OpenBSD, for example, supports
+building and installing on filesystems without `wxallowed`.
+
+Otherwise, the default handling of W^X depends on the platform:
+
+ * OpenBSD: Assumes W^X is disabled, which is why a default build
+   needs a filesystem with `wxallowed`.
+
+ * NetBSD: Uses `paxctl +m` to disable W^X enforcement for the
+   generated `scheme` executable.
+
+ * iOS: Always builds as if configured with `--enable-wx`.
+
+ * Mac OS on AArch64: Use a per-thread W^X disposition to support
+   `__collect_safe`, so `--enable-wx` is not needed.
 
 
 CROSS COMPILING

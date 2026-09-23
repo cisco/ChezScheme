@@ -527,7 +527,7 @@ The argument is passed to C as an \scheme{int}.
 \foreigntype{\scheme{stdbool}}
 \index{\scheme{stdbool}}Any Scheme object may be passed as a boolean.
 \scheme{#f} is converted to 0; all other objects are converted to 1.
-The argument is passed to C as a \scheme{bool} defined by the the host
+The argument is passed to C as a \scheme{bool} defined by the host
 machine's \scheme{stdbool.h} include file.
 
 \foreigntype{\scheme{char}}
@@ -3415,7 +3415,7 @@ as relative to the current directory, so the executable path is not needed.
 In all of those cases, the boot file is opened but not loaded until the heap is built via
 \scheme{Sbuild_heap}. \scheme{Sregister_boot_file_fd} provides a specific boot file as a file descriptor,
 the given file name is used only for error reporting, and the file descriptor
-is not read until until the heap is built via \scheme{Sbuild_heap}.
+is not read until the heap is built via \scheme{Sbuild_heap}.
 For the first boot file registered only, the system also
 searches for the boot files upon which the named file
 depends, either directly or indirectly.

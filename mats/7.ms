@@ -5916,6 +5916,41 @@ evaluating module init
                             (list v (ephemeron-cons v (gensym))))))
 )
 
+(mat code-write-flip
+  ; A collection whose target generation is 0 raises the collector's sweep
+  ; cursor for generation-0 code above the base of the region being filled.
+  ; A region closed off after that, while a code-write bracket is open, was
+  ; recorded at the cursor rather than at its base, so restoring execute
+  ; permission protected the wrong address.  Can only fail where
+  ; WRITE_XOR_EXECUTE_CODE is defined.
+  (begin
+    (with-output-to-file "testfile-code-write-flip.ss"
+      (lambda ()
+        (pretty-print
+          '(define $code-write-flip-f (lambda (n) (fx* n 3)))))
+      'replace)
+    (compile-file "testfile-code-write-flip")
+    #t)
+  (parameterize ([collect-request-handler void])
+    (let ([live (let loop ([i 0] [ls '()])
+                  (if (fx= i 600)
+                      ls
+                      (loop (fx+ i 1)
+                            (cons (eval `(lambda (a b) (fx+ (fx* a ,i) b))) ls))))])
+      ; sweep generation 0 in place, moving the cursor off the region base
+      (collect 0 0)
+      ; fill past the end of the current code region so that one is closed off
+      (let loop ([i 0])
+        (unless (fx= i 1500)
+          (eval `(lambda (a b c d) (fx+ (fx* a ,i) (fx- b c) d)))
+          (loop (fx+ i 1))))
+      ; a fasl read restores execute permission for the closed-off regions
+      (load "testfile-code-write-flip.so")
+      ; (p 1 1) is i+1, so the sum over i = 0 ... 599 is 180300
+      (eqv? (fold-left (lambda (acc p) (fx+ acc (p 1 1))) 0 live) 180300)))
+  (eqv? ($code-write-flip-f 7) 21)
+)
+
 (mat collect-rendezvous
   (begin
     (define (check-working-gc collect)
