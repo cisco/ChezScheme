@@ -3029,6 +3029,12 @@ argument raises an error and the offset is out of bounds has been fixed.
 When \scheme{log} is called with exact \scheme{1} as the second argument, the error is now
 reported in terms of \scheme{log} instead of a divide-by-zero error in \scheme{/}.
 
+When a vector, string, or bytevector constructor is given an exact nonnegative
+integer that exceeds the corresponding maximum object length, it now raises a
+condition of type \scheme{\&implementation-restriction} instead of
+\scheme{\&assertion}. This applies to \scheme{make-vector},
+\scheme{make-string}, \scheme{make-bytevector}, and their immobile or reference
+variants.
 \subsection{Repairs for x86\_64 Windows foreign callables (10.5.0)}
 
 A foreign callable on x86\_64 Windows did not properly preserve XMM

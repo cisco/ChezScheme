@@ -1,5 +1,5 @@
-*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	2026-06-07 11:25:30.944339316 +0800
---- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	2026-06-07 11:25:45.625974122 +0800
+*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	2026-08-20 23:56:22.974371544 -0700
+--- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	2026-08-20 23:48:44.311910135 -0700
 ***************
 *** 180,186 ****
   3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
@@ -2276,7 +2276,7 @@
 ! bytevector.mo:Expected error in mat make-bytevector: "incorrect argument count in call (make-bytevector 0 0 0)".
   bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a valid bytevector length".
   bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a valid bytevector length".
-  bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> is not a valid bytevector length".
+  bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> exceeds the maximum bytevector length".
 --- 2391,2443 ----
   5_5.mo:Expected error in mat string-append-immutable: "string-append-immutable: a is not a string".
   5_5.mo:Expected error in mat string-append-immutable: "string-append-immutable: b is not a string".
@@ -2330,7 +2330,7 @@
 ! bytevector.mo:Expected error in mat make-bytevector: "incorrect number of arguments 3 to #<procedure make-bytevector>".
   bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a valid bytevector length".
   bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a valid bytevector length".
-  bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> is not a valid bytevector length".
+  bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> exceeds the maximum bytevector length".
 ***************
 *** 2454,2483 ****
   bytevector.mo:Expected error in mat bytevector: "bytevector: invalid value -500".
@@ -4059,12 +4059,12 @@
 ! misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-vector)".
   misc.mo:Expected error in mat immobile: "make-immobile-vector: a is not a valid vector length".
   misc.mo:Expected error in mat immobile: "make-immobile-vector: -10 is not a valid vector length".
-  misc.mo:Expected error in mat immobile: "make-immobile-vector: 1267650600228229401496703205376 is not a valid vector length".
+  misc.mo:Expected error in mat immobile: "make-immobile-vector: 1267650600228229401496703205376 exceeds the maximum vector length".
 ! misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-vector 10 1 2)".
 ! misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-bytevector)".
   misc.mo:Expected error in mat immobile: "make-immobile-bytevector: a is not a valid bytevector length".
   misc.mo:Expected error in mat immobile: "variable make-immobile-byte-vector is not bound".
-  misc.mo:Expected error in mat immobile: "make-immobile-bytevector: 1267650600228229401496703205376 is not a valid bytevector length".
+  misc.mo:Expected error in mat immobile: "make-immobile-bytevector: 1267650600228229401496703205376 exceeds the maximum bytevector length".
   misc.mo:Expected error in mat immobile: "make-immobile-bytevector: 1024 is not a valid fill value".
 ! misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-bytevector 10 1 2)".
   cp0.mo:Expected error in mat cp0-regression: "attempt to reference undefined variable x".
@@ -4079,12 +4079,12 @@
 ! misc.mo:Expected error in mat immobile: "incorrect number of arguments 0 to #<procedure make-immobile-vector>".
   misc.mo:Expected error in mat immobile: "make-immobile-vector: a is not a valid vector length".
   misc.mo:Expected error in mat immobile: "make-immobile-vector: -10 is not a valid vector length".
-  misc.mo:Expected error in mat immobile: "make-immobile-vector: 1267650600228229401496703205376 is not a valid vector length".
+  misc.mo:Expected error in mat immobile: "make-immobile-vector: 1267650600228229401496703205376 exceeds the maximum vector length".
 ! misc.mo:Expected error in mat immobile: "incorrect number of arguments 3 to #<procedure make-immobile-vector>".
 ! misc.mo:Expected error in mat immobile: "incorrect number of arguments 0 to #<procedure make-immobile-bytevector>".
   misc.mo:Expected error in mat immobile: "make-immobile-bytevector: a is not a valid bytevector length".
   misc.mo:Expected error in mat immobile: "variable make-immobile-byte-vector is not bound".
-  misc.mo:Expected error in mat immobile: "make-immobile-bytevector: 1267650600228229401496703205376 is not a valid bytevector length".
+  misc.mo:Expected error in mat immobile: "make-immobile-bytevector: 1267650600228229401496703205376 exceeds the maximum bytevector length".
   misc.mo:Expected error in mat immobile: "make-immobile-bytevector: 1024 is not a valid fill value".
 ! misc.mo:Expected error in mat immobile: "incorrect number of arguments 3 to #<procedure make-immobile-bytevector>".
   cp0.mo:Expected error in mat cp0-regression: "attempt to reference undefined variable x".
@@ -6436,7 +6436,7 @@
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
   foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
 ***************
-*** 10992,11004 ****
+*** 10997,11009 ****
   unix.mo:Expected error in mat file-operations: "file-access-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-change-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-modification-time: failed for "testlink": no such file or directory".
@@ -6450,7 +6450,7 @@
   windows.mo:Expected error in mat registry: "get-registry: pooh is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
---- 10992,11004 ----
+--- 10997,11009 ----
   unix.mo:Expected error in mat file-operations: "file-access-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-change-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-modification-time: failed for "testlink": no such file or directory".
@@ -6465,7 +6465,7 @@
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
 ***************
-*** 11026,11097 ****
+*** 11031,11102 ****
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for -inf.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for +nan.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat fllp: "fllp: 3 is not a flonum".
@@ -6538,7 +6538,7 @@
   date.mo:Expected error in mat time: "time>=?: 3 is not a time record".
   date.mo:Expected error in mat time: "time>=?: #<procedure car> is not a time record".
   date.mo:Expected error in mat time: "time>=?: types of <time> and <time> differ".
---- 11026,11097 ----
+--- 11031,11102 ----
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for -inf.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for +nan.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat fllp: "fllp: 3 is not a flonum".
@@ -6612,7 +6612,7 @@
   date.mo:Expected error in mat time: "time>=?: #<procedure car> is not a time record".
   date.mo:Expected error in mat time: "time>=?: types of <time> and <time> differ".
 ***************
-*** 11099,11112 ****
+*** 11104,11117 ****
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
@@ -6627,7 +6627,7 @@
   date.mo:Expected error in mat date: "make-date: invalid nanosecond -1".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
---- 11099,11112 ----
+--- 11104,11117 ----
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
@@ -6643,7 +6643,7 @@
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
 ***************
-*** 11132,11192 ****
+*** 11137,11197 ****
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".
@@ -6705,7 +6705,7 @@
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset -90000".
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat conversions/sleep: "date->time-utc: <time> is not a date record".
---- 11132,11192 ----
+--- 11137,11197 ----
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".

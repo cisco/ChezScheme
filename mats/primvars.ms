@@ -641,6 +641,7 @@
                                                            (or (and (or (prefix=? "~s is not a" (condition-message c))
                                                                         (prefix=? "~s is not #f or a" (condition-message c))
                                                                         (prefix=? "index ~s is not a" (condition-message c))
+                                                                        (prefix=? "~s exceeds the maximum" (condition-message c))
                                                                         (member (condition-message c)
                                                                           '("~s is circular"
                                                                              "incorrect list structure ~s"
@@ -993,4 +994,3 @@
    (ok trace-output-port (open-output-string))
    (error? (trace-output-port (open-input-string "hello")))
  )
-

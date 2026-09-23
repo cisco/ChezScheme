@@ -2440,8 +2440,8 @@ bytevector.mo:Expected error in mat make-bytevector: "incorrect argument count i
 bytevector.mo:Expected error in mat make-bytevector: "incorrect argument count in call (make-bytevector 0 0 0)".
 bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a valid bytevector length".
 bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: -1 is not a valid bytevector length".
-bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> is not a valid bytevector length".
-bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> is not a valid bytevector length".
+bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> exceeds the maximum bytevector length".
+bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: <int> exceeds the maximum bytevector length".
 bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: a is not a valid bytevector length".
 bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: a is not a valid fill value".
 bytevector.mo:Expected error in mat make-bytevector: "make-bytevector: 256 is not a valid fill value".
@@ -4251,12 +4251,12 @@ misc.mo:Expected error in mat immobile: "incorrect argument count in call (box-i
 misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-vector)".
 misc.mo:Expected error in mat immobile: "make-immobile-vector: a is not a valid vector length".
 misc.mo:Expected error in mat immobile: "make-immobile-vector: -10 is not a valid vector length".
-misc.mo:Expected error in mat immobile: "make-immobile-vector: 1267650600228229401496703205376 is not a valid vector length".
+misc.mo:Expected error in mat immobile: "make-immobile-vector: 1267650600228229401496703205376 exceeds the maximum vector length".
 misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-vector 10 1 2)".
 misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-bytevector)".
 misc.mo:Expected error in mat immobile: "make-immobile-bytevector: a is not a valid bytevector length".
 misc.mo:Expected error in mat immobile: "variable make-immobile-byte-vector is not bound".
-misc.mo:Expected error in mat immobile: "make-immobile-bytevector: 1267650600228229401496703205376 is not a valid bytevector length".
+misc.mo:Expected error in mat immobile: "make-immobile-bytevector: 1267650600228229401496703205376 exceeds the maximum bytevector length".
 misc.mo:Expected error in mat immobile: "make-immobile-bytevector: 1024 is not a valid fill value".
 misc.mo:Expected error in mat immobile: "incorrect argument count in call (make-immobile-bytevector 10 1 2)".
 cp0.mo:Expected error in mat cp0-regression: "attempt to reference undefined variable x".
