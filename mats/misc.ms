@@ -5490,6 +5490,18 @@
            (loop))))
      #t))
 
+  ;; make sure large immobile bytevectors are really immobile
+  (let loop ([i 10])
+    (cond
+      [(zero? i) #t]
+      [else
+       (let* ([bv (make-immobile-bytevector #x200000)]
+              [addr (object->reference-address bv)])
+         (collect 0 0)
+         (collect 0 1)
+         (and (eqv? addr (object->reference-address bv))
+              (loop (sub1 i))))]))
+
   )
 
 (mat immobile-implementation-restriction (parameters [optimize-level 0])

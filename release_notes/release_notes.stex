@@ -3035,6 +3035,14 @@ condition of type \scheme{\&implementation-restriction} instead of
 \scheme{\&assertion}. This applies to \scheme{make-vector},
 \scheme{make-string}, \scheme{make-bytevector}, and their immobile or reference
 variants.
+
+\subsection{Repair large-object \scheme{make-immobile-bytevector} (10.5.0)}
+
+When \scheme{make-immobile-bytevector} was called with a size greater
+than the minimum segment allocation, which is roughtly 2MB on a 64-bit
+platform, then the resulting bytevector was not reliably immobile.
+That bug has been fixed.
+
 \subsection{Repairs for x86\_64 Windows foreign callables (10.5.0)}
 
 A foreign callable on x86\_64 Windows did not properly preserve XMM
@@ -3050,7 +3058,7 @@ as an extra argument. The generated code incorrectly assumed or
 implemented a pop of the result-pointer argument by the callee. That
 bug has been fixed.
 
-\subsection{Improve support for W\^X hosts (10.5.0)}
+\subsection{Improve support for W-xor-X hosts (10.5.0)}
 
 The new \scheme{--enable-wx} configuration option supports hosts that
 enforce exclusive write vs. execute mode on memory pages. This option

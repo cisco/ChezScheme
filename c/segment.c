@@ -380,8 +380,11 @@ iptr S_find_segments(thread_gc *creator, ISPC s, IGEN g, iptr n) {
 
   /* preemptively mark a huge allocation as immobile, since
      we don't want the GC to ever copy it */
-  if (n > 128)
+  if (n > minimum_segment_request) {
     si->must_mark = MUST_MARK_INFINITY;
+    if (g == 0)
+      S_G.must_mark_gen0 = 1;
+  }
 
   return si->number;
 }

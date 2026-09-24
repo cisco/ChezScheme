@@ -920,7 +920,8 @@ ptr GCENTRY(ptr tc, ptr count_roots_ls) {
 #ifndef NO_DIRTY_NEWSPACE_POINTERS
     S_G.new_dirty_cards = NULL;
 #endif /* !NO_DIRTY_NEWSPACE_POINTERS */
-    S_G.must_mark_gen0 = 0;
+    if (MIN_TG > 0)
+      S_G.must_mark_gen0 = 0;
 
     setup_sweepers(tgc); /* maps  threads to sweepers */
 
