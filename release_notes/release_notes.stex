@@ -145,8 +145,8 @@ Android devices.
 
 \subsection{Floating-point performance improvements (10.5.0)}
 
-Improve unboxing of floating-point arguments to
-\scheme{fl-make-rectangular}. Adjust x86\_64 instruction selection
+Improve unboxing of floating-point arguments to \scheme{flbit-field}
+and \scheme{fl-make-rectangular}. Adjust x86\_64 instruction selection
 to reduce false dependencies for floating-point operations.
 
 \subsection{Named Cost Center (10.4.0)}
