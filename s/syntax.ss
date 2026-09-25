@@ -3039,7 +3039,8 @@
                 (symbol-hashtable-set! ht sym (cons (make-entry marks label) orig-entry*))
                 (let ([entry (car entry*)])
                   (if (same-marks? (entry-marks entry) marks)
-                      (unless (eq? (entry-label entry) label)
+                      (unless (eq? (label/pl->label (entry-label entry))
+                                   label)
                         (defn-table-dup*-set! tbl (cons sym (defn-table-dup* tbl))))
                       (f (cdr entry*))))))))))
   (define record-only!
