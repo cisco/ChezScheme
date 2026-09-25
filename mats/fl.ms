@@ -1314,6 +1314,55 @@
                                  (fl+ v)
                                  (loop (fx- n 1) (fl+ v 1.0))))))
 
+  (check-loop-allocation (lambda (v)
+                           ;; check that a `let` around the initial call into a
+                           ;; loop is recognized by the lop-detection pass, which
+                           ;; in turn enables flonum unboxing
+                           (letrec ([loop (lambda (n v)
+                                            (if (fx= n 0)
+                                                (fl+ v)
+                                                (loop (fx- n 1) (fl+ v 1.0))))])
+                             (let ([v (fl+ v v)])
+                               ((black-box void))
+                               (loop 100 (fl+ v v))))))
+
+  (check-loop-allocation (lambda (v)
+                           ;; check that a loop entry can be nested in a call
+                           (letrec ([loop (lambda (n v)
+                                            (if (fx= n 0)
+                                                (fl+ v)
+                                                (loop (fx- n 1) (fl+ v 1.0))))])
+                             ((black-box (lambda (x y) x))
+                              ((black-box (lambda (x y z) z))
+                               'skip
+                               'skip-too
+                               (loop 100 (fl+ v)))
+                              'skip))))
+
+  (check-loop-allocation (lambda (v)
+                           ;; check that two loops can work
+                           (letrec ([loop (lambda (n v)
+                                            (if (fx= n 0)
+                                                (fl+ v)
+                                                (loop (fx- n 1) (fl+ v 1.0))))])
+                             (letrec ([loop2 (lambda (n v)
+                                               (if (fx= n 0)
+                                                   v
+                                                   (loop2 (fx- n 1) v)))])
+                               (loop2 100 (loop 100 (fl+ v 1.0)))))))
+
+  (check-loop-allocation (lambda (v)
+                           ;; check that nested loops can work
+                           (letrec* ([loop2 (lambda (n v)
+                                              (if (fx= n 0)
+                                                  (loop 100 (fl+ v 1.0))
+                                                  (loop2 (fx- n 1) v)))]
+                                     [loop (lambda (n v)
+                                             (if (fx= n 0)
+                                                 (fl+ v)
+                                                 (loop (fx- n 1) (fl+ v 1.0))))])
+                             (loop2 100 v))))
+
   (let ([bv (make-bytevector 8 0)])
     (check-loop-allocation (lambda (v) (fl+ v (bytevector-ieee-double-native-ref bv 0)))))
   (let ([bv (make-bytevector 8 0)])
