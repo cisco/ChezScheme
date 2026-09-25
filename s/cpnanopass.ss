@@ -2887,6 +2887,10 @@
          (guard (memq (primref-name pr) '($fptr-set-double-float! $fptr-set-single-float!)))
          (Expr e4 #t)
          #f]
+        [(call ,info ,mdcl ,pr ,e1 ,[e2 #f -> * fp?1] ,[e3 #f -> * fp?2])
+         (guard (eq? 'flbit-field (primref-name pr)))
+         (Expr e1 #t)
+         #f]
         [(call ,info ,mdcl ,pr ,[e* #f -> * fp?] ...)
          (primref-flonum-result? pr)]
         [(loop ,x (,x* ...) ,body)

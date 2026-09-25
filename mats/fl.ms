@@ -1263,6 +1263,7 @@
   (check-loop-allocation (lambda (v) (exact->inexact (flbit-field (fl+ v 2.0) 1 23))))
   (check-loop-allocation (lambda (v) (exact->inexact (flbit-field v 40 63))))
   (check-loop-allocation (lambda (v) (exact->inexact (flbit-field (fl+ v 2.0) 40 63))))
+  (check-loop-allocation (lambda (v) (let ([x (fl+ v v)]) (exact->inexact (flbit-field x 40 63)))))
 
   (let ([i 0])
     (check-loop-allocation (lambda (v) (begin
