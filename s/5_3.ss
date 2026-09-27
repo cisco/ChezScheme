@@ -398,20 +398,27 @@
 
 (define flsinh (cflop1 "(cs)sinh"))
 
+(define fllog1+
+   (or (op-if-entry? cflop1 "(cs)log1p")
+       ; somewhat more accurate than (log (+ 1.0 x)), see
+       ; https://stat.ethz.ch/pipermail/r-devel/2003-August/027396.html
+       ; https://books.google.com/books?id=OjUyDwAAQBAJ&pg=PA290&lpg=PA290&dq=beebe+log1p&source=bl&ots=VLxmiSk1fA&sig=ACfU3U0_8tqKemomSjKW73iJ0zUO1u3p3Q&hl=en&sa=X&q=beebe%20log1p&f=false
+       (lambda (x)
+         (let ([u (fl+ 1.0 x)])
+           (cond
+             [(fl= u 1.0) x]
+             [(fl= u x) ($fllog x)]
+             [else (fl* ($fllog u) (fl/ x (fl- u 1.0)))])))))
+
 (define flatanh
    (or (op-if-entry? cflop1 "(cs)atanh")
        ; |x| <= 1
        ; principal expression:
        ; (log(1+x)-log(1-x))/2
-       ; should use "log1p" but it doesn't exist on the 88k
        (let ([f (lambda (x)
-                   (fl* 0.5 (fl- ($fllog (fl+ 1.0 x)) ($fllog (fl- 1.0 x)))))])
+                   (fl* 0.5 (fl- (fllog1+ x) (fllog1+ (fl- x)))))])
           (lambda (x)
              (if (negated-flonum? x) (fl- (f (fl- x))) (f x))))))
-
-(define fllog1+
-   (or (op-if-entry? cflop1 "(cs)log1p")
-       (lambda (x) ($fllog (fl+ 1.0 x)))))
 
 (let ()
 
@@ -427,11 +434,13 @@
        ; avoids spurious overflows
        ; avoids underflow problems from negative x by using identity
        ; asinh(-x) = -asinh(x)
-       ; should use "log1p" for small x but it doesn't exist on the 88k
        (let ([f (lambda (x)
                    (if (fl= (fl+ x 1.0) x)
                        (fl+ ($fllog x) log2)
-                       ($fllog (fl+ x ($flsqrt (fl+ (fl* x x) 1.0))))))])
+                       (let ([x2 (fl* x x)])
+                         (if (fl< x 0.5)
+                             (fl* 0.5 (fllog1+ (+ (* 2 x2) (fl* 2.0 x ($flsqrt (fl+ 1.0 x2))))))
+                             ($fllog (fl+ x ($flsqrt (fl+ 1.0 x2))))))))])
           (lambda (x)
              (if (negated-flonum? x) (fl- (f (fl- x))) (f x))))))
 
@@ -445,7 +454,10 @@
        (lambda (x)
           (if (fl= (fl- x 1.0) x)
               (fl+ ($fllog x) log2)
-              ($fllog (fl+ x ($flsqrt (fl- (fl* x x) 1.0))))))))
+              (let ([r (fl- x 1.0)])
+                (if (fl< 0.0 r 0.25)
+                    (fllog1+ (fl+ r ($flsqrt (fl+ (* 2 r) (fl* r r)))))
+                    ($fllog (fl+ x ($flsqrt (fl- (fl* x x) 1.0))))))))))
 
 (let ()
 

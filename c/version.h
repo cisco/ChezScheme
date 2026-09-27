@@ -110,6 +110,7 @@ FORCEINLINE void store_unaligned_uptr(uptr *addr, uptr val) {
 #define IEEE_DOUBLE
 #define LDEXP
 #define ARCHYPERBOLIC
+#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
@@ -149,6 +150,7 @@ typedef int tputsputcchar;
 #define IEEE_DOUBLE
 #define LDEXP
 #define ARCHYPERBOLIC
+#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
@@ -179,6 +181,7 @@ typedef int tputsputcchar;
 #define IEEE_DOUBLE
 #define LDEXP
 #define ARCHYPERBOLIC
+#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
@@ -210,6 +213,7 @@ typedef int tputsputcchar;
 #define IEEE_DOUBLE
 #define LDEXP
 #define ARCHYPERBOLIC
+#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 struct timespec;
@@ -241,6 +245,7 @@ typedef int tputsputcchar;
 #define NAN_INCLUDE <math.h>
 #define MAKE_NAN(x) { x = sqrt(-1.0); }
 #define ARCHYPERBOLIC
+#define LOG1P
 #ifndef PATH_MAX
 # define PATH_MAX _MAX_PATH
 #endif
@@ -312,6 +317,7 @@ struct timespec;
 #define IEEE_DOUBLE
 #define LDEXP
 #define ARCHYPERBOLIC
+#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 struct timespec;
@@ -359,6 +365,7 @@ typedef int tputsputcchar;
 #endif
 #define LDEXP
 #define ARCHYPERBOLIC
+#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
@@ -392,6 +399,7 @@ typedef int tputsputcchar;
 #define IEEE_DOUBLE
 #define LDEXP
 #define ARCHYPERBOLIC
+#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
@@ -450,6 +458,7 @@ typedef char tputsputcchar;
 #define IEEE_DOUBLE
 #define LDEXP
 #define ARCHYPERBOLIC
+#define LOG1P
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
 #define GETWD(x) getcwd((x),PATH_MAX)
