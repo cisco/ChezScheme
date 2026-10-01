@@ -122,13 +122,6 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{Exact zeros and \scheme{lcm} (10.5.0)}
-
-Supplying an exact \scheme{0} to \scheme{lcm} produces exact
-\scheme{0}, even if other arguments are inexact integers. This change
-is in line with previous changes described in
-Section~\ref{section:transcendentals-and-zero}.
-
 \subsection{Anonymous fields in struct and union ftypes (10.5.0)}
 
 Struct and union ftypes now support anonymous fields, which mirror anonymous
@@ -142,6 +135,20 @@ ftype, whose fields are accessible directly from the containing ftype
 The armv7le and tarmv7le machine types correspond to a 32-bit ARM
 compilation target using the armel ABI, which is consistent with (old)
 Android devices.
+
+\subsection{Exact zeros and \scheme{lcm} (10.5.0)}
+
+Supplying an exact \scheme{0} to \scheme{lcm} produces exact
+\scheme{0}, even if other arguments are inexact integers. This change
+is in line with previous changes described in
+Section~\ref{section:transcendentals-and-zero}.
+
+\subsection{Improve precision of some inexact operations (10.5.0)}
+
+Use of the C library's \scheme{log1p} is now enabled by default, improving the
+accuracy of \scheme{log} and \scheme{atanh} for some complex arguments. Fallback
+implementations for \scheme{log1p} and the inverse hyperbolic functions are now
+also slightly more accurate.
 
 \subsection{Floating-point performance improvements (10.5.0)}
 

@@ -3173,6 +3173,7 @@
     (cfl~= (exp (log (exp 34.2+5.8i))) (exp 34.2+5.8i))
     (~= (log 1e30) (log #e1e30))
     (cfl~= (log -1e30) (log #e-1e30))
+    (fl~= (+ 1e-308 (real-part (log 1.0+1e-30i))) 0.5e-60) ; avoid (fl~= 0.0 5e-61) is #t
     (~= (/ (log (expt 10 500)) (log 10)) 500)
     (~= (log 3/4) (log .75))
     (~= (log 10 10) 1.0)
@@ -3327,6 +3328,7 @@
     (error? (asinh 3 4)) 
     (error? (asinh 'a))
     (fl~= (asinh (sinh 5.7)) 5.7)
+    (fl= (+ 1e-308 (asinh 1e-30)) 1e-30) ; avoid (fl~= 0.0 1e-30) is #t
     (let ([x 0.5]) (fl~= (asinh (sinh x)) x))
     (let ([x 0.5+1.5i]) (cfl~= (asinh (sinh x)) x))
     (let ([x 0.5-1.5i]) (cfl~= (asinh (sinh x)) x))
@@ -3341,6 +3343,7 @@
     (error? (acosh 3 4)) 
     (error? (acosh 'a))
     (fl~= (acosh (cosh 13.3)) 13.3)
+    (fl~= (acosh 1.000000001) 4.4721361396399915e-5)
     (let ([x 0.5]) (fl~= (acosh (cosh x)) x))
     (let ([x 0.5+1.5i]) (cfl~= (acosh (cosh x)) x))
     (let ([x 0.5-1.5i]) (cfl~= (acosh (cosh x)) x))
@@ -3359,6 +3362,7 @@
     (error? (atanh 1))
     (fl~= (atanh (tanh 1.0)) 1.0)
     (fl~= (atanh (tanh 1.0)) 1.0)
+    (fl= (+ 1e-308 (atanh 1e-30)) 1e-30) ; avoid (fl~= 0.0 1e-30) is #t
     (let ([x 0.5]) (fl~= (atanh (tanh x)) x))
     (let ([x 0.5+1.5i]) (cfl~= (atanh (tanh x)) x))
     (let ([x 0.5-1.5i]) (cfl~= (atanh (tanh x)) x))
