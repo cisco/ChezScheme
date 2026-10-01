@@ -22,6 +22,7 @@
     uvar-was-closure-ref? uvar-was-closure-ref!
     uvar-unspillable? uvar-spilled? uvar-spilled! uvar-local-save? uvar-local-save!
     uvar-seen? uvar-seen! uvar-loop? uvar-loop! uvar-poison? uvar-poison!
+    uvar-maybe-loop-entry? uvar-maybe-loop-entry! uvar-applied-once? uvar-applied-once!
     uvar-in-prefix? uvar-in-prefix!
     uvar-location uvar-location-set!
     uvar-move* uvar-move*-set!
@@ -237,16 +238,18 @@
                  ...)))))))
 
   (define-flag-field uvar flags
-    (referenced         #b00000000001)
-    (assigned           #b00000000010)
-    (unspillable        #b00000000100)
-    (spilled            #b00000001000)
-    (seen               #b00000010000)
-    (was-closure-ref    #b00000100000)
-    (loop               #b00001000000)
-    (in-prefix          #b00010000000)
-    (local-save         #b00100000000)
-    (poison             #b01000000000)
+    (referenced         #b0000000000001)
+    (assigned           #b0000000000010)
+    (unspillable        #b0000000000100)
+    (spilled            #b0000000001000)
+    (seen               #b0000000010000)
+    (was-closure-ref    #b0000000100000)
+    (loop               #b0000001000000)
+    (in-prefix          #b0000010000000)
+    (local-save         #b0000100000000)
+    (poison             #b0001000000000)
+    (maybe-loop-entry   #b0010000000000) ; during loop detection
+    (applied-once       #b0100000000000) ; during loop detection
   )
 
   (define-record-type (uvar $make-uvar uvar?)
