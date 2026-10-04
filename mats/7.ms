@@ -311,6 +311,394 @@
     (load-program "testfile.ss"))
 )
 
+;;; executable compilation
+
+(mat compile-executable
+  ;; --------------------------------------------------------------------------
+  ;; Test helpers
+  ;; --------------------------------------------------------------------------
+  (begin
+    (define $ce-source
+      "testfile-executable.ss")
+    (define $ce-output
+      (if (windows?)
+          "testfile-executable.exe"
+          "testfile-executable"))
+    (define $ce-output-command
+      (if (windows?)
+          (patch-exec-path $ce-output)
+          (string-append "./" $ce-output)))
+    (define $ce-run-output
+      "testfile-executable.out")
+    (define ($ce-intermediates output)
+      (list
+        (string-append output ".bootstrap.ss")
+        (string-append output ".bootstrap.so")
+        (string-append output ".bootstrap.wpo")
+        (string-append output ".whole.so")
+        (string-append output ".boot")
+        (string-append output ".tmp")))
+    (define ($ce-remove path)
+      (when (file-exists? path)
+        (rm-rf path)))
+    (define ($ce-clean output)
+      ($ce-remove output)
+      ($ce-remove $ce-run-output)
+      (for-each
+        $ce-remove
+        ($ce-intermediates output)))
+    (define ($ce-no-intermediates? output)
+      (andmap
+        (lambda (path)
+          (not (file-exists? path)))
+        ($ce-intermediates output)))
+    (define ($ce-condition? thunk)
+      (guard (c
+               [else #t])
+        (thunk)
+        #f))
+    (define ($ce-run output-command . args)
+      (system
+        (format
+          "~a~a > ~a 2>&1"
+          output-command
+          (if (null? args)
+              ""
+              (apply string-append
+                (map
+                  (lambda (arg)
+                    (string-append " " arg))
+                  args)))
+          $ce-run-output)))
+    (define ($ce-read-output)
+      (with-input-from-file
+        $ce-run-output
+        read))
+    (define ($ce-read-all-output)
+      (call-with-input-file
+        $ce-run-output
+        (lambda (ip)
+          (get-string-all ip))))
+    (define ($ce-corrupt-trailer-version path)
+      (let ([p
+             (open-file-input/output-port
+               path
+               (file-options no-create no-truncate)
+               (buffer-mode none)
+               #f)])
+        (dynamic-wind
+          (lambda () #f)
+          (lambda ()
+            (let ([n
+                   (port-length p)])
+              (unless
+                (and
+                  (integer? n)
+                  (exact? n)
+                  (>= n 32))
+                (error
+                  '$ce-corrupt-trailer-version
+                  "executable is too small to contain an embedded boot trailer"
+                  n))
+              ;; Trailer layout:
+              ;;
+              ;;   [0..7]   "CHEZBOOT"
+              ;;   [8..11]  version
+              ;;   [12..15] flags
+              ;;   [16..23] boot length
+              ;;   [24..31] reserved
+              ;;
+              ;; Set version from 1 to 2 while leaving the magic intact.
+              (set-port-position!
+                p
+                (+ (- n 32) 8))
+              (put-u8
+                p
+                2)
+              (flush-output-port p)))
+          (lambda ()
+            (close-port p)))))
+    #t)
+  ;; --------------------------------------------------------------------------
+  ;; Successful executable build
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main args)
+         (write
+           (list
+             (car (command-line))
+             (cdr (command-line))
+             (command-line-arguments)
+             args))
+         (newline)
+         0))
+    (compile-executable
+      $ce-source
+      $ce-output)
+    (and
+      (file-exists? $ce-output)
+      ($ce-no-intermediates? $ce-output)))
+  ;; --------------------------------------------------------------------------
+  ;; argv / command-line semantics
+  ;; --------------------------------------------------------------------------
+  (begin
+    (and
+      (= ($ce-run
+           $ce-output-command
+           "one"
+           "two"
+           "three")
+         0)
+      (let ([result
+             ($ce-read-output)])
+        (and
+          (list? result)
+          (= (length result) 4)
+          ;; argv[0] is present.
+          (string? (car result))
+          (not (string=? (car result) ""))
+          ;; Remaining command-line arguments.
+          (equal?
+            (cadr result)
+            '("one" "two" "three"))
+          (equal?
+            (caddr result)
+            '("one" "two" "three"))
+          ;; Argument passed to main.
+          (equal?
+            (cadddr result)
+            '("one" "two" "three"))))))
+  ;; --------------------------------------------------------------------------
+  ;; main's integer result becomes process exit status
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main args)
+         17))
+    (compile-executable
+      $ce-source
+      $ce-output)
+    (= ($ce-run $ce-output-command)
+       17))
+  ;; --------------------------------------------------------------------------
+  ;; Missing main is rejected during the build
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (not-main args)
+         0))
+    (and
+      ($ce-condition?
+        (lambda ()
+          (compile-executable
+            $ce-source
+            $ce-output)))
+      (not (file-exists? $ce-output))
+      ($ce-no-intermediates? $ce-output)))
+  ;; --------------------------------------------------------------------------
+  ;; Wrong main arity is rejected
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main)
+         0))
+    (and
+      ($ce-condition?
+        (lambda ()
+          (compile-executable
+            $ce-source
+            $ce-output)))
+      (not (file-exists? $ce-output))
+      ($ce-no-intermediates? $ce-output)))
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main x y)
+         0))
+    (and
+      ($ce-condition?
+        (lambda ()
+          (compile-executable
+            $ce-source
+            $ce-output)))
+      (not (file-exists? $ce-output))
+      ($ce-no-intermediates? $ce-output)))
+  ;; --------------------------------------------------------------------------
+  ;; Duplicate main is rejected
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main args)
+         0)
+      '(define (main xs)
+         1))
+    (and
+      ($ce-condition?
+        (lambda ()
+          (compile-executable
+            $ce-source
+            $ce-output)))
+      (not (file-exists? $ce-output))
+      ($ce-no-intermediates? $ce-output)))
+  ;; --------------------------------------------------------------------------
+  ;; Intermediate artifacts are cleaned after a compiler failure
+  ;;
+  ;; This source satisfies the main scanner, so compilation begins and
+  ;; bootstrap intermediates are created. The invalid IF then makes
+  ;; compile-program fail.
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main args)
+         0)
+      '(define broken
+         (if)))
+    (and
+      ($ce-condition?
+        (lambda ()
+          (compile-executable
+            $ce-source
+            $ce-output)))
+      (not (file-exists? $ce-output))
+      ($ce-no-intermediates? $ce-output)))
+  ;; --------------------------------------------------------------------------
+  ;; Existing output survives a failed replacement
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    ;; Pretend this is the previous successful executable.
+    (with-output-to-file
+      $ce-output
+      (lambda ()
+        (display "previous-output"))
+      'replace)
+    (mkfile
+      $ce-source
+      '(define (main args)
+         0)
+      '(define broken
+         (if)))
+    (and
+      ($ce-condition?
+        (lambda ()
+          (compile-executable
+            $ce-source
+            $ce-output)))
+      (file-exists? $ce-output)
+      (equal?
+        (call-with-input-file
+          $ce-output
+          (lambda (ip)
+            (get-string-all ip)))
+        "previous-output")
+      ($ce-no-intermediates? $ce-output)))
+  ;; --------------------------------------------------------------------------
+  ;; Corrupt embedded trailer is rejected by the native launcher
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main args)
+         0))
+    (compile-executable
+      $ce-source
+      $ce-output)
+    ($ce-corrupt-trailer-version
+      $ce-output)
+    ;; Magic is still CHEZBOOT, but version is now unsupported.
+    ;; This must be a hard startup failure instead of falling back to
+    ;; ordinary boot-file discovery.
+    (not
+      (= ($ce-run $ce-output-command)
+         0)))
+  ;; --------------------------------------------------------------------------
+  ;; Ordinary scheme executable still starts normally
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-remove "testfile-executable-normal.ss")
+    ($ce-remove $ce-run-output)
+    (mkfile
+      "testfile-executable-normal.ss"
+      '(begin
+         (display "ordinary-scheme")
+         (newline)))
+    (let ([status
+           (system
+             (format
+               "~a --script testfile-executable-normal.ss > ~a 2>&1"
+               (patch-exec-path *scheme*)
+               $ce-run-output))])
+      (and
+        (= status 0)
+        (equal?
+          ($ce-read-all-output)
+          "ordinary-scheme\n"))))
+  ;; --------------------------------------------------------------------------
+  ;; WPO must not silently leave an external library
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    ($ce-remove "testfile-executable-lib.ss")
+    ($ce-remove "testfile-executable-lib.so")
+    ($ce-remove "testfile-executable-lib.wpo")
+    (mkfile
+      "testfile-executable-lib.ss"
+      '(library (testfile-executable-lib)
+         (export executable-test-value)
+         (import (chezscheme))
+         (define executable-test-value
+           17)))
+    ;; Deliberately produce an object file without WPO information.
+    (parameterize ([generate-wpo-files #f])
+      (compile-library
+        "testfile-executable-lib.ss"
+        "testfile-executable-lib.so"))
+    (mkfile
+      $ce-source
+      '(import (testfile-executable-lib))
+      '(define (main args)
+         executable-test-value))
+    (let ([failed?
+           (parameterize
+             ([library-directories
+               (cons "." (library-directories))])
+             ($ce-condition?
+               (lambda ()
+                 (compile-executable
+                   $ce-source
+                   $ce-output))))])
+      (and
+        failed?
+        (not (file-exists? $ce-output))
+        ($ce-no-intermediates? $ce-output))))
+  ;; --------------------------------------------------------------------------
+  ;; Final cleanup
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    ($ce-remove $ce-source)
+    ($ce-remove "testfile-executable-normal.ss")
+    ($ce-remove "testfile-executable-lib.ss")
+    ($ce-remove "testfile-executable-lib.so")
+    ($ce-remove "testfile-executable-lib.wpo")
+    #t)
+)
+
 (mat maybe-compile
   (error? ; not a procedure
     (compile-program-handler 'ignore))
