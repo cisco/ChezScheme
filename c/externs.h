@@ -493,6 +493,8 @@ extern ptr S_ffi_closure(ptr types, ptr proc);
 
 /* self-exe.c */
 extern char *S_get_process_executable_path(const char *execpath);
+extern ptr S_process_executable_path(void);
+extern ptr S_petite_boot_path(void);
 
 /* statics.c */
 extern void scheme_statics(void);

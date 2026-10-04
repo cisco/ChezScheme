@@ -1,500 +1,756 @@
 ;;; executable.ss
 ;;;
-;;; Prototype support for producing a self-contained Chez Scheme
-;;; executable with the layout:
+;;; Support for producing self-contained Chez Scheme executables.
+;;;
+;;; Executable layout:
 ;;;
 ;;;   [native Chez launcher]
 ;;;   [complete base boot]
 ;;;   [32-byte CHEZBOOT trailer]
-;;;
-;;; The native launcher is expected to contain the embedded-boot
-;;; support in c/embedded-boot.c and c/main.c.
-;;;
-;;; The boot file supplied to make-executable must be a complete
-;;; base boot file with no external boot dependencies.
 
-(import (chezscheme))
+(begin
+  (let ()
+    ;; ------------------------------------------------------------------------
+    ;; Trailer constants
+    ;; ------------------------------------------------------------------------
+    (define embedded-boot-trailer-size 32)
+    (define embedded-boot-version 1)
+    (define embedded-boot-magic
+      #vu8(
+        #x43   ; C
+        #x48   ; H
+        #x45   ; E
+        #x5a   ; Z
+        #x42   ; B
+        #x4f   ; O
+        #x4f   ; O
+        #x54)) ; T
 
-;;; ==========================================================================
-;;; Embedded-boot trailer
-;;; ==========================================================================
+    ;; ------------------------------------------------------------------------
+    ;; Integer encoding
+    ;; ------------------------------------------------------------------------
 
-;;; The trailer is exactly 32 bytes:
-;;;
-;;;   offset  size  field
-;;;   ------  ----  ------------------------------------------
-;;;      0      8   ASCII "CHEZBOOT"
-;;;      8      4   uint32 little-endian format version
-;;;     12      4   uint32 little-endian flags
-;;;     16      8   uint64 little-endian boot length
-;;;     24      8   uint64 little-endian reserved
-;;;
-;;; Version 1 requires:
-;;;
-;;;   version     = 1
-;;;   flags       = 0
-;;;   boot-length > 0
-;;;   reserved    = 0
-
-(define embedded-boot-trailer-size 32)
-
-(define embedded-boot-version 1)
-
-(define embedded-boot-magic
-  #vu8(
-    #x43                         ; C
-    #x48                         ; H
-    #x45                         ; E
-    #x5a                         ; Z
-    #x42                         ; B
-    #x4f                         ; O
-    #x4f                         ; O
-    #x54))                       ; T
-
-;;; ==========================================================================
-;;; Little-endian integer encoding
-;;; ==========================================================================
-
-(define (put-u32le op n)
-  (unless
-    (and
-      (integer? n)
-      (exact? n)
-      (<= 0 n #xffffffff))
-    (error
-      'put-u32le
-      "value is outside the uint32 range"
-      n))
-  (put-u8 op (bitwise-and n #xff))
-  (put-u8 op
-    (bitwise-and
-      (bitwise-arithmetic-shift-right n 8)
-      #xff))
-  (put-u8 op
-    (bitwise-and
-      (bitwise-arithmetic-shift-right n 16)
-      #xff))
-  (put-u8 op
-    (bitwise-and
-      (bitwise-arithmetic-shift-right n 24)
-      #xff)))
-
-(define (put-u64le op n)
-  (unless
-    (and
-      (integer? n)
-      (exact? n)
-      (<= 0 n #xffffffffffffffff))
-    (error
-      'put-u64le
-      "value is outside the uint64 range"
-      n))
-  (let loop ([shift 0])
-    (unless (= shift 64)
+    (define (put-u32le op n)
+      (unless
+        (and
+          (integer? n)
+          (exact? n)
+          (<= 0 n #xffffffff))
+        (error
+          'put-u32le
+          "value is outside the uint32 range"
+          n))
+      (put-u8
+        op
+        (bitwise-and n #xff))
       (put-u8
         op
         (bitwise-and
-          (bitwise-arithmetic-shift-right n shift)
+          (bitwise-arithmetic-shift-right n 8)
           #xff))
-      (loop (+ shift 8)))))
+      (put-u8
+        op
+        (bitwise-and
+          (bitwise-arithmetic-shift-right n 16)
+          #xff))
+      (put-u8
+        op
+        (bitwise-and
+          (bitwise-arithmetic-shift-right n 24)
+          #xff)))
 
-;;; ==========================================================================
-;;; Little-endian integer decoding
-;;;
-;;; These are not needed by the native executable at runtime. They are here
-;;; so that the Scheme side can independently verify the trailer format that
-;;; it writes.
-;;; ==========================================================================
+    (define (put-u64le op n)
+      (unless
+        (and
+          (integer? n)
+          (exact? n)
+          (<= 0 n #xffffffffffffffff))
+        (error
+          'put-u64le
+          "value is outside the uint64 range"
+          n))
+      (let loop ([shift 0])
+        (unless (= shift 64)
+          (put-u8
+            op
+            (bitwise-and
+              (bitwise-arithmetic-shift-right n shift)
+              #xff))
 
-(define (get-u32le bv offset)
-  (bitwise-ior
-    (bytevector-u8-ref bv offset)
-    (bitwise-arithmetic-shift-left
-      (bytevector-u8-ref bv (+ offset 1))
-      8)
-    (bitwise-arithmetic-shift-left
-      (bytevector-u8-ref bv (+ offset 2))
-      16)
-    (bitwise-arithmetic-shift-left
-      (bytevector-u8-ref bv (+ offset 3))
-      24)))
+          (loop (+ shift 8)))))
 
-(define (get-u64le bv offset)
-  (let loop ([i 0]
-             [n 0])
-    (if (= i 8)
-        n
-        (loop
-          (+ i 1)
-          (bitwise-ior
-            n
-            (bitwise-arithmetic-shift-left
-              (bytevector-u8-ref bv (+ offset i))
-              (* i 8)))))))
+    ;; ------------------------------------------------------------------------
+    ;; Trailer
+    ;; ------------------------------------------------------------------------
 
-;;; ==========================================================================
-;;; Trailer writing
-;;; ==========================================================================
+    (define (write-embedded-boot-trailer op boot-length)
+      (unless
+        (and
+          (integer? boot-length)
+          (exact? boot-length)
+          (< 0 boot-length)
+          (<= boot-length #xffffffffffffffff))
+        (error
+          'write-embedded-boot-trailer
+          "invalid embedded boot length"
+          boot-length))
+      ;; 0..7
+      (put-bytevector
+        op
+        embedded-boot-magic)
+      ;; 8..11
+      (put-u32le
+        op
+        embedded-boot-version)
+      ;; 12..15: flags
+      (put-u32le
+        op
+        0)
+      ;; 16..23
+      (put-u64le
+        op
+        boot-length)
+      ;; 24..31: reserved
+      (put-u64le
+        op
+        0))
 
-(define (write-embedded-boot-trailer op boot-length)
-  (unless
-    (and
-      (integer? boot-length)
-      (exact? boot-length)
-      (< 0 boot-length)
-      (<= boot-length #xffffffffffffffff))
-    (error
-      'write-embedded-boot-trailer
-      "invalid embedded boot length"
-      boot-length))
-  (put-bytevector op embedded-boot-magic)
-  (put-u32le op embedded-boot-version)
-  (put-u32le op 0)
-  (put-u64le op boot-length)
-  (put-u64le op 0))
+    ;; ------------------------------------------------------------------------
+    ;; Streaming copy
+    ;; ------------------------------------------------------------------------
 
-;;; ==========================================================================
-;;; Trailer parsing
-;;; ==========================================================================
+    (define binary-copy-buffer-size
+      (* 64 1024))
 
-(define (embedded-boot-magic? bv)
-  (and
-    (= (bytevector-length bv)
-       embedded-boot-trailer-size)
-    (let loop ([i 0])
-      (cond
-        [(= i 8)
-         #t]
-        [(=
-           (bytevector-u8-ref bv i)
-           (bytevector-u8-ref embedded-boot-magic i))
-         (loop (+ i 1))]
-        [else
-         #f]))))
+    (define (copy-binary-port ip op)
+      (let ([buffer
+             (make-bytevector binary-copy-buffer-size)])
+        (let loop ([total 0])
+          (let ([n
+                 (get-bytevector-n!
+                   ip
+                   buffer
+                   0
+                   binary-copy-buffer-size)])
+            (cond
+              [(eof-object? n)
+               total]
+              [(zero? n)
+               (error
+                 'copy-binary-port
+                 "input port returned zero bytes before end of file")]
+              [else
+               (put-bytevector
+                 op
+                 buffer
+                 0
+                 n)
+               (loop (+ total n))])))))
 
-;;; Returns the encoded boot length.
-;;;
-;;; Raises an exception if BV is not a valid v1 trailer.
+    ;; ------------------------------------------------------------------------
+    ;; Temporary output handling
+    ;; ------------------------------------------------------------------------
 
-(define (parse-embedded-boot-trailer bv)
-  (unless
-    (= (bytevector-length bv)
-       embedded-boot-trailer-size)
-    (error
-      'parse-embedded-boot-trailer
-      "trailer must contain exactly 32 bytes"
-      (bytevector-length bv)))
-  (unless
-    (embedded-boot-magic? bv)
-    (error
-      'parse-embedded-boot-trailer
-      "invalid embedded-boot magic"))
-  (let ([version
-         (get-u32le bv 8)]
-        [flags
-         (get-u32le bv 12)]
-        [boot-length
-         (get-u64le bv 16)]
-        [reserved
-         (get-u64le bv 24)])
-    (unless (= version embedded-boot-version)
-      (error
-        'parse-embedded-boot-trailer
-        "unsupported embedded-boot trailer version"
-        version))
-    (unless (= flags 0)
-      (error
-        'parse-embedded-boot-trailer
-        "unsupported embedded-boot flags"
-        flags))
-    (unless (> boot-length 0)
-      (error
-        'parse-embedded-boot-trailer
-        "embedded boot length must be greater than zero"))
-    (unless (= reserved 0)
-      (error
-        'parse-embedded-boot-trailer
-        "reserved embedded-boot trailer field is nonzero"
-        reserved))
-    boot-length))
+    (define (temporary-output-path output)
+      ;; Same directory as OUTPUT so the final rename is within the
+      ;; same filesystem.
+      (string-append output ".tmp"))
 
-;;; ==========================================================================
-;;; Binary streaming
-;;; ==========================================================================
+    (define (delete-file-if-exists path)
+      (when (file-exists? path)
+        (delete-file path)))
 
-;;; 64 KiB keeps copying inexpensive without allocating based on the size of
-;;; the launcher or boot image.
+    ;; ------------------------------------------------------------------------
+    ;; Current executable path
+    ;; ------------------------------------------------------------------------
 
-(define binary-copy-buffer-size
-  (* 64 1024))
-
-;;; Copies IP to OP and returns the exact number of bytes copied.
-;;;
-;;; Both ports must be binary ports.
-
-(define (copy-binary-port ip op)
-  (let ([buffer
-         (make-bytevector binary-copy-buffer-size)])
-    (let loop ([total 0])
-      (let ([n
-             (get-bytevector-n!
-               ip
-               buffer
-               0
-               binary-copy-buffer-size)])
-        (cond
-          [(eof-object? n)
-           total]
-          ;; A regular file should not report a zero-byte read before EOF.
-          [(zero? n)
-           (error
-             'copy-binary-port
-             "input port returned zero bytes before end of file")]
-          [else
-           (put-bytevector
-             op
-             buffer
-             0
-             n)
-           (loop (+ total n))])))))
-
-;;; ==========================================================================
-;;; Packaging
-;;; ==========================================================================
-
-;;; make-executable
-;;;
-;;;   launcher : path to the modified generic Chez native executable
-;;;   boot     : path to a COMPLETE BASE BOOT
-;;;   output   : output executable pathname
-;;;
-;;; Produces:
-;;;
-;;;   launcher ++ boot ++ trailer
-;;;
-;;; Returns OUTPUT.
-;;;
-;;; The output inherits the launcher's mode bits so that executable
-;;; permissions are retained on Unix-like systems.
-
-(define (make-executable launcher boot output)
-  (unless (string? launcher)
-    (error
-      'make-executable
-      "launcher pathname is not a string"
-      launcher))
-  (unless (string? boot)
-    (error
-      'make-executable
-      "boot pathname is not a string"
-      boot))
-  (unless (string? output)
-    (error
-      'make-executable
-      "output pathname is not a string"
-      output))
-  (unless (file-exists? launcher)
-    (error
-      'make-executable
-      "launcher does not exist"
-      launcher))
-  (unless (file-regular? launcher)
-    (error
-      'make-executable
-      "launcher is not a regular file"
-      launcher))
-  (unless (file-exists? boot)
-    (error
-      'make-executable
-      "boot file does not exist"
-      boot))
-  (unless (file-regular? boot)
-    (error
-      'make-executable
-      "boot file is not a regular file"
-      boot))
-
-  ;; At least protect against the obvious destructive spellings
-  ;;
-  ;; A production implementation should canonicalize pathnames before
-  ;; comparing them.
-  (when (string=? launcher output)
-    (error
-      'make-executable
-      "output pathname must differ from launcher pathname"
-      output))
-  (when (string=? boot output)
-    (error
-      'make-executable
-      "output pathname must differ from boot pathname"
-      output))
-  (let ([launcher-mode
-         (get-mode launcher)])
-    (let ([launcher-ip #f]
-          [boot-ip #f]
-          [output-op #f]
-          [result #f])
-      (dynamic-wind
-        ;; --------------------------------------------------------------
-        ;; Open all three files.
-        ;; --------------------------------------------------------------
+    (define current-executable-path
+      (let ([get-process-executable-path
+             (foreign-procedure
+               "(cs)process_executable_path"
+               ()
+               scheme-object)])
         (lambda ()
-          (set!
-            launcher-ip
-            (open-file-input-port
-              launcher
-              (file-options)
-              (buffer-mode block)
-              #f))
-          (set!
-            boot-ip
-            (open-file-input-port
-              boot
-              (file-options)
-              (buffer-mode block)
-              #f))
-          ;; REPLACE removes and recreates OUTPUT if it already exists.
-          (set!
-            output-op
-            (open-file-output-port
-              output
-              (file-options replace)
-              (buffer-mode block)
-              #f)))
-        ;; --------------------------------------------------------------
-        ;; Write:
-        ;;
-        ;;   launcher
-        ;;   boot
-        ;;   trailer
-        ;; --------------------------------------------------------------
-        (lambda ()
-          ;; Native launcher.
-          (copy-binary-port
-            launcher-ip
-            output-op)
-          ;; Complete base boot.
-          ;;
-          ;; We count exactly the bytes written here. That value is what
-          ;; the native reader will later use to derive the region's offset.
-          (let ([boot-length
-                 (copy-binary-port
-                   boot-ip
-                   output-op)])
-            (when (> boot-length #xffffffffffffffff)
+          (let ([path
+                 (get-process-executable-path)])
+            (unless (string? path)
               (error
-                'make-executable
-                "boot image is too large for the v1 trailer"
-                boot-length))
-            ;; Fixed 32-byte trailer.
-            (write-embedded-boot-trailer
-              output-op
-              boot-length)
-            (flush-output-port output-op)
-            (set! result output)))
-        ;; --------------------------------------------------------------
-        ;; Close every port even when copying or trailer generation raises.
-        ;; --------------------------------------------------------------
+                'compile-executable
+                "cannot determine current Chez executable pathname"))
+            path))))
+
+    ;; ------------------------------------------------------------------------
+    ;; Matching petite.boot discovery
+    ;; ------------------------------------------------------------------------
+
+    (define current-petite-boot
+      (let ([find-petite-boot
+             (foreign-procedure
+               "(cs)petite_boot_path"
+               ()
+               scheme-object)])
         (lambda ()
-          (when launcher-ip
-            (close-port launcher-ip)
-            (set! launcher-ip #f))
-          (when boot-ip
-            (close-port boot-ip)
-            (set! boot-ip #f))
-          (when output-op
-            (close-port output-op)
-            (set! output-op #f))))
-      ;; Preserve executable bits and all other launcher permissions.
-      ;;
-      ;; Chez documents get-mode/chmod in the same numeric format. Under
-      ;; Windows, permission bits without a Windows counterpart are ignored.
-      (chmod output launcher-mode)
-      result)))
+          (let ([path
+                 (find-petite-boot)])
+            (unless (string? path)
+              (error
+                'compile-executable
+                "cannot find a compatible petite.boot"))
+            path))))
 
-;;; ==========================================================================
-;;; Compilation + packaging
-;;; ==========================================================================
+    ;; ------------------------------------------------------------------------
+    ;; Internal explicit compile-executable implementation
+    ;; ------------------------------------------------------------------------
 
-;;; compile-executable
-;;;
-;;;   source       : application Scheme source
-;;;   output       : final native executable
-;;;   launcher     : modified generic Chez launcher
-;;;   petite-boot  : petite.boot for the launcher's machine type
-;;;
-;;; SOURCE is expected to install its entry point through `scheme-start`.
-;;;
-;;; For this initial prototype, two intermediate files are deliberately kept:
-;;;
-;;;   OUTPUT.so
-;;;   OUTPUT.boot
-;;;
-;;; Keeping them makes it easy to inspect and independently test both stages.
+    (define (compile-executable/paths
+              source
+              output
+              launcher
+              petite-boot)
+      (unless (string? source)
+        (error
+          'compile-executable
+          "source pathname is not a string"
+          source))
+      (unless (string? output)
+        (error
+          'compile-executable
+          "output pathname is not a string"
+          output))
+      (unless (string? launcher)
+        (error
+          'compile-executable
+          "launcher pathname is not a string"
+          launcher))
+      (unless (string? petite-boot)
+        (error
+          'compile-executable
+          "petite boot pathname is not a string"
+          petite-boot))
+      (unless (file-exists? source)
+        (error
+          'compile-executable
+          "source file does not exist"
+          source))
+      (unless (file-regular? source)
+        (error
+          'compile-executable
+          "source file is not a regular file"
+          source))
+      (unless (file-exists? launcher)
+        (error
+          'compile-executable
+          "launcher does not exist"
+          launcher))
+      (unless (file-regular? launcher)
+        (error
+          'compile-executable
+          "launcher is not a regular file"
+          launcher))
+      (unless (file-exists? petite-boot)
+        (error
+          'compile-executable
+          "petite boot file does not exist"
+          petite-boot))
+      (unless (file-regular? petite-boot)
+        (error
+          'compile-executable
+          "petite boot file is not a regular file"
+          petite-boot))
+      ;; Validate the application contract before generating or compiling
+      ;; any intermediate executable files.
+      (validate-executable-main source)
+      (let* ([bootstrap-source
+              (string-append output ".bootstrap.ss")]
+             [bootstrap-object
+              (string-append output ".bootstrap.so")]
+             [bootstrap-wpo
+              (string-append output ".bootstrap.wpo")]
+             [whole-object
+              (string-append output ".whole.so")]
+             [boot-file
+              (string-append output ".boot")]
+             [intermediates
+              (list
+                bootstrap-source
+                bootstrap-object
+                bootstrap-wpo
+                whole-object
+                boot-file)])
+        (dynamic-wind
+          ;; ----------------------------------------------------------------------
+          ;; Before build.
+          ;;
+          ;; Remove leftovers from a previously interrupted build.
+          ;; ----------------------------------------------------------------------
+          (lambda ()
+            (cleanup-executable-intermediates
+              intermediates))
+          ;; ----------------------------------------------------------------------
+          ;; Build.
+          ;; ----------------------------------------------------------------------
+          (lambda ()
+            ;; Stage 1:
+            ;;
+            ;; Generate the top-level executable program, compile it, and
+            ;; produce its WPO representation.
+            (compile-executable-bootstrap
+              source
+              bootstrap-source
+              bootstrap-object
+              bootstrap-wpo)
+            ;; Stage 2:
+            ;;
+            ;; Optimize the complete application into one whole-program
+            ;; object.
+            (compile-executable-whole-program
+              bootstrap-wpo
+              whole-object)
+            ;; Stage 3:
+            ;;
+            ;; Construct the complete base boot.
+            (make-boot-file
+              boot-file
+              '()
+              petite-boot
+              whole-object)
+            ;; Stage 4:
+            ;;
+            ;; Atomically package the native launcher and complete base boot.
+            ;;
+            ;; make-executable returns OUTPUT.
+            (make-executable
+              launcher
+              boot-file
+              output))
+          ;; ----------------------------------------------------------------------
+          ;; After build.
+          ;;
+          ;; Runs on both normal return and exceptional exit.
+          ;; ----------------------------------------------------------------------
+          (lambda ()
+            (cleanup-executable-intermediates
+              intermediates)))))
 
-(define (compile-executable source output launcher petite-boot)
-  (unless (string? source)
-    (error
-      'compile-executable
-      "source pathname is not a string"
-      source))
-  (unless (string? output)
-    (error
-      'compile-executable
-      "output pathname is not a string"
-      output))
-  (unless (string? launcher)
-    (error
-      'compile-executable
-      "launcher pathname is not a string"
-      launcher))
-  (unless (string? petite-boot)
-    (error
-      'compile-executable
-      "petite boot pathname is not a string"
-      petite-boot))
-  (unless (file-exists? source)
-    (error
-      'compile-executable
-      "source file does not exist"
-      source))
-  (unless (file-exists? launcher)
-    (error
-      'compile-executable
-      "launcher does not exist"
-      launcher))
-  (unless (file-exists? petite-boot)
-    (error
-      'compile-executable
-      "petite boot file does not exist"
-      petite-boot))
-  (let ([object-file
-         (string-append output ".so")]
-        [boot-file
-         (string-append output ".boot")])
-    ;; ---------------------------------------------------------------
-    ;; 1. Compile the application's Scheme code.
-    ;; ---------------------------------------------------------------
-    (compile-file
-      source
-      object-file)
-    ;; ---------------------------------------------------------------
-    ;; 2. Construct a COMPLETE BASE BOOT.
+    ;; ------------------------------------------------------------------------
+    ;; Generated application bootstrap
+    ;; ------------------------------------------------------------------------
+
+    (define (write-executable-bootstrap path source)
+      (let ([op
+             (open-file-output-port
+               path
+               (file-options replace)
+               (buffer-mode block)
+               (native-transcoder))])
+        (dynamic-wind
+          (lambda () #f)
+          (lambda ()
+            ;; This is a real Chez/R6RS top-level program.
+            (display
+              "(import (chezscheme))\n\n"
+              op)
+            ;; Put the user's definitions and generated startup code in
+            ;; one lexical unit.
+            (display
+              "(let ()\n"
+              op)
+            (display
+              "  "
+              op)
+            (write
+              `(include ,source)
+              op)
+            (newline op)
+            (newline op)
+            (display
+              "  (suppress-greeting #t)\n\n"
+              op)
+            (display
+              "  (scheme-start\n"
+              op)
+            (display
+              "    (lambda (program-name . args)\n"
+              op)
+            (display
+              "      (command-line (cons program-name args))\n"
+              op)
+            (display
+              "      (command-line-arguments args)\n"
+              op)
+            (display
+              "      (main args)))\n"
+              op)
+            (display
+              ")\n"
+              op)
+            (flush-output-port op))
+          (lambda ()
+            (close-port op)))))
+
+    (define (compile-executable-bootstrap
+              source
+              bootstrap-source
+              bootstrap-object
+              bootstrap-wpo)
+      (write-executable-bootstrap
+        bootstrap-source
+        source)
+      ;; compile-program is important here: compile-whole-program expects
+      ;; the WPO file for a top-level program.
+      (parameterize ([generate-wpo-files #t])
+        (compile-program
+          bootstrap-source
+          bootstrap-object))
+      ;; generate-wpo-files derives the .wpo filename from the object
+      ;; pathname. Verify that the expected artifact was produced.
+      (unless (file-exists? bootstrap-wpo)
+        (error
+          'compile-executable
+          "compiler did not produce expected WPO file"
+          bootstrap-wpo)))
+
+    ;; ------------------------------------------------------------------------
+    ;; Executable entry-point validation
+    ;; ------------------------------------------------------------------------
+
+    ;; True for a proper one-element list whose element is a symbol.
     ;;
-    ;; The dependency list MUST be empty.
+    ;; This is the shape required for the executable entry point:
     ;;
-    ;; petite.boot MUST be first among the inputs. Chez documents this
-    ;; as the mechanism for constructing a base boot file.
-    ;; ---------------------------------------------------------------
-    (make-boot-file
-      boot-file
-      '()
-      petite-boot
-      object-file)
-    ;; ---------------------------------------------------------------
-    ;; 3. Package launcher + base boot + trailer.
-    ;; ---------------------------------------------------------------
-    (make-executable
-      launcher
-      boot-file
-      output)))
+    ;;   (main args)
+    ;;
+    (define (single-symbol-formals? formals)
+      (and
+        (pair? formals)
+        (symbol? (car formals))
+        (null? (cdr formals))))
+
+    ;; Classify a single top-level form with respect to the executable
+    ;; entry-point contract.
+    ;;
+    ;; Results:
+    ;;
+    ;;   'none
+    ;;     The form does not define `main`.
+    ;;
+    ;;   'valid
+    ;;     The form defines `main` as a procedure accepting exactly
+    ;;     one fixed argument.
+    ;;
+    ;;   'invalid
+    ;;     The form attempts to define `main`, but does not satisfy
+    ;;     the executable entry-point contract.
+    ;;
+    (define (main-definition-status form)
+      (cond
+        [(and
+           (pair? form)
+           (eq? (car form) 'define)
+           (pair? (cdr form)))
+         (let ([lhs
+                (cadr form)])
+           (cond
+             ;; Procedure-definition form:
+             ;;
+             ;;   (define (main args)
+             ;;     ...)
+             ;;
+             [(and
+                (pair? lhs)
+                (eq? (car lhs) 'main))
+
+              (if (single-symbol-formals? (cdr lhs))
+                  'valid
+                  'invalid)]
+             ;; Variable-definition form:
+             ;;
+             ;;   (define main
+             ;;     (lambda (args)
+             ;;       ...))
+             ;;
+             [(eq? lhs 'main)
+              (if
+                (and
+                  (pair? (cddr form))
+                  (null? (cdddr form))
+                  (let ([rhs
+                         (caddr form)])
+                    (and
+                      (pair? rhs)
+                      (eq? (car rhs) 'lambda)
+                      (pair? (cdr rhs))
+                      (single-symbol-formals?
+                        (cadr rhs)))))
+                'valid
+                'invalid)]
+             [else
+              'none]))]
+        [else
+         'none]))
+
+    ;; Validate one form, recursively looking through top-level BEGIN
+    ;; forms.
+    ;;
+    ;; Returns the number of valid `main` definitions found.
+    (define (count-main-definitions form source)
+      (cond
+        ;; Treat top-level BEGIN as a sequence of top-level forms.
+        [(and
+           (pair? form)
+           (eq? (car form) 'begin))
+         (let loop ([forms (cdr form)]
+                    [count 0])
+           (if (null? forms)
+               count
+               (loop
+                 (cdr forms)
+                 (+ count
+                    (count-main-definitions
+                      (car forms)
+                      source)))))]
+        [else
+         (case (main-definition-status form)
+           [(none)
+            0]
+           [(valid)
+            1]
+           [(invalid)
+            (error
+              'compile-executable
+              "invalid executable entry point; expected (define (main args) ...)"
+              source)]
+           [else
+            0])]))
+
+    ;; Read SOURCE without evaluating it and verify the executable
+    ;; entry-point contract.
+    ;;
+    ;; Exactly one valid top-level `main` definition is required.
+    (define (validate-executable-main source)
+      (let ([ip
+             (open-file-input-port
+               source
+               (file-options)
+               (buffer-mode block)
+               (native-transcoder))])
+        (dynamic-wind
+          (lambda () #f)
+          (lambda ()
+            (let loop ([count 0])
+              (let ([form
+                     (get-datum ip)])
+                (if (eof-object? form)
+                    (cond
+                      [(zero? count)
+                       (error
+                         'compile-executable
+                         "executable source does not define main; expected (define (main args) ...)"
+                         source)]
+                      [(> count 1)
+                       (error
+                         'compile-executable
+                         "executable source defines main more than once"
+                         source)]
+                      [else
+                       (void)])
+                    (loop
+                      (+ count
+                         (count-main-definitions
+                           form
+                           source)))))))
+          (lambda ()
+            (close-port ip)))))
+
+    (define (compile-executable-whole-program
+              wpo-file
+              output-file)
+      (let ([external-libraries
+             (compile-whole-program
+               wpo-file
+               output-file
+               #f)])
+        ;; For compile-executable, silently leaving libraries to be loaded
+        ;; from disk would violate the self-contained executable contract.
+        (unless (null? external-libraries)
+          (error
+            'compile-executable
+            "whole-program compilation left libraries to be loaded at runtime"
+            external-libraries))
+        output-file))
+
+    ;; ------------------------------------------------------------------------
+    ;; Intermediate artifact cleanup
+    ;; ------------------------------------------------------------------------
+
+    (define (cleanup-executable-intermediates paths)
+      (for-each
+        (lambda (path)
+          (when (file-exists? path)
+            (guard (condition
+                    [else
+                     (void)])
+              (delete-file path))))
+        paths))
+
+    ;; ------------------------------------------------------------------------
+    ;; make-executable
+    ;; ------------------------------------------------------------------------
+
+    (set-who! make-executable
+      (lambda (launcher boot output)
+        (unless (string? launcher)
+          (error
+            who
+            "launcher pathname is not a string"
+            launcher))
+        (unless (string? boot)
+          (error
+            who
+            "boot pathname is not a string"
+            boot))
+        (unless (string? output)
+          (error
+            who
+            "output pathname is not a string"
+            output))
+        (unless (file-exists? launcher)
+          (error
+            who
+            "launcher does not exist"
+            launcher))
+        (unless (file-regular? launcher)
+          (error
+            who
+            "launcher is not a regular file"
+            launcher))
+        (unless (file-exists? boot)
+          (error
+            who
+            "boot file does not exist"
+            boot))
+        (unless (file-regular? boot)
+          (error
+            who
+            "boot file is not a regular file"
+            boot))
+        (when (string=? launcher output)
+          (error
+            who
+            "output pathname must differ from launcher pathname"
+            output))
+        (when (string=? boot output)
+          (error
+            who
+            "output pathname must differ from boot pathname"
+            output))
+        (let* ([launcher-mode
+                (get-mode launcher)]
+               [temporary
+                (temporary-output-path output)]
+               [launcher-ip #f]
+               [boot-ip #f]
+               [output-op #f]
+               [committed? #f])
+          ;; Remove a stale incomplete build, never the real OUTPUT.
+          (delete-file-if-exists temporary)
+          (guard
+            (condition
+              [else
+               (unless committed?
+                 (delete-file-if-exists temporary))
+               (raise condition)])
+            ;; --------------------------------------------------------------
+            ;; Build the entire file into OUTPUT.tmp.
+            ;; --------------------------------------------------------------
+            (dynamic-wind
+              (lambda ()
+                (set!
+                  launcher-ip
+                  (open-file-input-port
+                    launcher
+                    (file-options)
+                    (buffer-mode block)
+                    #f))
+                (set!
+                  boot-ip
+                  (open-file-input-port
+                    boot
+                    (file-options)
+                    (buffer-mode block)
+                    #f))
+                (set!
+                  output-op
+                  (open-file-output-port
+                    temporary
+                    (file-options)
+                    (buffer-mode block)
+                    #f)))
+              (lambda ()
+                ;; Native launcher.
+                (copy-binary-port
+                  launcher-ip
+                  output-op)
+                ;; Base boot.
+                (let ([boot-length
+                       (copy-binary-port
+                         boot-ip
+                         output-op)])
+                  (when (> boot-length #xffffffffffffffff)
+                    (error
+                      who
+                      "boot image is too large for the v1 trailer"
+                      boot-length))
+                  ;; Trailer.
+                  (write-embedded-boot-trailer
+                    output-op
+                    boot-length))
+                (flush-output-port output-op))
+              (lambda ()
+                (when launcher-ip
+                  (close-port launcher-ip)
+                  (set! launcher-ip #f))
+                (when boot-ip
+                  (close-port boot-ip)
+                  (set! boot-ip #f))
+                (when output-op
+                  (close-port output-op)
+                  (set! output-op #f))))
+            ;; --------------------------------------------------------------
+            ;; Commit only after the complete file has been closed.
+            ;; --------------------------------------------------------------
+            (chmod
+              temporary
+              launcher-mode)
+            (rename-file
+              temporary
+              output)
+            (set! committed? #t)
+            output))))
+
+    ;; ------------------------------------------------------------------------
+    ;; Public compile-executable API
+    ;; ------------------------------------------------------------------------
+
+    (set-who! compile-executable
+      (lambda (source output)
+        (unless (string? source)
+          (error
+            who
+            "source pathname is not a string"
+            source))
+        (unless (string? output)
+          (error
+            who
+            "output pathname is not a string"
+            output))
+        (let* ([launcher
+                (current-executable-path)]
+               [petite-boot
+                (current-petite-boot)])
+          (compile-executable/paths
+            source
+            output
+            launcher
+            petite-boot))))
+    ))

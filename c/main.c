@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include "scheme.h"
 #include "config.h"
+#include "embedded-boot.h"
 
 /****
   CUSTOM_INIT may be defined as a function with the signature shown to
@@ -42,6 +43,49 @@
 #ifndef SCHEME_SCRIPT
 #define SCHEME_SCRIPT "scheme-script"
 #endif
+
+static const char **
+make_embedded_argv(
+    int argc,
+    const char *argv[])
+{
+    const char **new_argv;
+    int i;
+
+    /*
+     * We need argc + 1 actual arguments plus the conventional trailing
+     * NULL slot:
+     *
+     *   new_argv[0] = argv[0]
+     *   new_argv[1] = argv[0]
+     *   new_argv[2] = argv[1]
+     *   ...
+     *   new_argv[argc] = argv[argc - 1]
+     *   new_argv[argc + 1] = NULL
+     */
+    new_argv =
+      (const char **)malloc(
+        (size_t)(argc + 2) * sizeof(const char *));
+
+    if (new_argv == NULL) {
+        fprintf(
+          stderr,
+          "%s: unable to allocate application argument vector\n",
+          argv[0]);
+
+        exit(1);
+    }
+
+    new_argv[0] = argv[0];
+    new_argv[1] = argv[0];
+
+    for (i = 1; i < argc; i += 1)
+        new_argv[i + 1] = argv[i];
+
+    new_argv[argc + 1] = NULL;
+
+    return new_argv;
+}
 
 static const char *path_last(const char *p) {
   const char *s;
@@ -89,6 +133,8 @@ int main(int argc, const char *argv[]) {
   const char *libdirs = (char *)0;
   const char *libexts = (char *)0;
   int status;
+  S_embedded_boot embedded_boot;
+  S_embedded_boot_status embedded_boot_status;
   const char *arg;
   int quiet = 0;
   int eoc = 0;
@@ -110,6 +156,54 @@ int main(int argc, const char *argv[]) {
   }
 
   Sscheme_init(ABNORMAL_EXIT);
+
+  embedded_boot_status =
+    S_find_embedded_boot(
+      execpath,
+      &embedded_boot);
+
+  if (embedded_boot_status == S_EMBEDDED_BOOT_FOUND) {
+      const char **application_argv;
+
+      Sregister_boot_file_fd_region(
+        "<embedded>",
+        embedded_boot.fd,
+        embedded_boot.offset,
+        embedded_boot.length,
+        1);
+
+      Sbuild_heap(
+        execpath,
+        CUSTOM_INIT);
+
+      application_argv =
+        make_embedded_argv(
+          argc,
+          argv);
+
+      status =
+        Sscheme_start(
+          argc + 1,
+          application_argv);
+
+      free(application_argv);
+
+      Sscheme_deinit();
+
+      exit(status);
+  }
+
+  if (embedded_boot_status == S_EMBEDDED_BOOT_IO_ERROR
+      || embedded_boot_status == S_EMBEDDED_BOOT_INVALID) {
+      (void)fprintf(
+        stderr,
+        "%s: %s\n",
+        execpath,
+        S_embedded_boot_status_message(
+          embedded_boot_status));
+
+      exit(1);
+  }
 
   if (strcmp(path_last(execpath), SCHEME_SCRIPT) == 0) {
     if (argc < 2) {
