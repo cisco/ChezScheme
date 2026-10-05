@@ -489,6 +489,40 @@
               "SCHEMEHEAPDIRS='~a' ~a"
               heapdirs
               command))))
+    (define ($ce-run-cli source output)
+      (system
+        (format
+          "~a --compile-executable ~a -o ~a > ~a 2>&1"
+          (patch-exec-path *scheme*)
+          source
+          output
+          $ce-run-output)))
+    (define ($ce-run-cli-command command)
+      (system
+        (format
+          "~a ~a > ~a 2>&1"
+          (patch-exec-path *scheme*)
+          command
+          $ce-run-output)))
+    (define ($ce-string-contains? text needle)
+      (let ([text-length
+             (string-length text)]
+            [needle-length
+             (string-length needle)])
+        (let loop ([i 0])
+          (cond
+            [(> (+ i needle-length)
+                text-length)
+             #f]
+            [(string=?
+               (substring
+                 text
+                 i
+                 (+ i needle-length))
+               needle)
+             #t]
+            [else
+             (loop (+ i 1))]))))
     #t)
   ;; --------------------------------------------------------------------------
   ;; Successful executable build
@@ -825,6 +859,152 @@
         failed?
         (not (file-exists? $ce-output))
         ($ce-no-intermediates? $ce-output))))
+  ;; --------------------------------------------------------------------------
+  ;; --compile-executable builds a native executable
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main args)
+         (display "cli-executable")
+         (newline)
+         0))
+    (and
+      (= ($ce-run-cli
+           $ce-source
+           $ce-output)
+         0)
+      (file-exists?
+        $ce-output)
+      ($ce-no-intermediates?
+        $ce-output)
+      (= ($ce-run
+           $ce-output-command)
+         0)
+      (equal?
+        ($ce-read-all-output)
+        "cli-executable\n")))
+  ;; --------------------------------------------------------------------------
+  ;; --compile-executable preserves application argv semantics
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main args)
+         (write args)
+         (newline)
+         0))
+    (and
+      (= ($ce-run-cli
+           $ce-source
+           $ce-output)
+         0)
+      (= ($ce-run
+           $ce-output-command
+           "one"
+           "two"
+           "three")
+         0)
+      (equal?
+        ($ce-read-output)
+        '("one" "two" "three"))))
+  ;; --------------------------------------------------------------------------
+  ;; --compile-executable requires -o
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main args)
+         0))
+    (not
+      (=
+        ($ce-run-cli-command
+          (format
+            "--compile-executable ~a"
+            $ce-source))
+        0)))
+  ;; --------------------------------------------------------------------------
+  ;; -o is only valid with --compile-executable
+  ;; --------------------------------------------------------------------------
+  (not
+    (=
+      ($ce-run-cli-command
+        (format
+          "-o ~a"
+          $ce-output))
+      0))
+  ;; --------------------------------------------------------------------------
+  ;; --compile-executable requires a source pathname
+  ;; --------------------------------------------------------------------------
+  (not
+    (=
+      ($ce-run-cli-command
+        "--compile-executable")
+      0))
+  ;; --------------------------------------------------------------------------
+  ;; --compile-executable rejects unrelated file arguments
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main args)
+         0))
+    (not
+      (=
+        ($ce-run-cli-command
+          (format
+            "--compile-executable ~a -o ~a extra.ss"
+            $ce-source
+            $ce-output))
+        0)))
+  ;; --------------------------------------------------------------------------
+  ;; Existing compiler options apply to --compile-executable
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-clean $ce-output)
+    (mkfile
+      $ce-source
+      '(define (main args)
+         (display "optimized-cli")
+         (newline)
+         0))
+    (and
+      (=
+        ($ce-run-cli-command
+          (format
+            "--optimize-level 3 --compile-executable ~a -o ~a"
+            $ce-source
+            $ce-output))
+        0)
+      (file-exists?
+        $ce-output)
+      (= ($ce-run
+           $ce-output-command)
+         0)
+      (equal?
+        ($ce-read-all-output)
+        "optimized-cli\n")))
+  ;; --------------------------------------------------------------------------
+  ;; --help advertises executable compilation
+  ;; --------------------------------------------------------------------------
+  (begin
+    (and
+      (= ($ce-run-cli-command
+           "--help")
+         0)
+      (let ([text
+             ($ce-read-all-output)])
+        (and
+          ($ce-string-contains?
+            text
+            "--compile-executable")
+          ($ce-string-contains?
+            text
+            "-o <path>")))))
   ;; --------------------------------------------------------------------------
   ;; Final cleanup
   ;; --------------------------------------------------------------------------

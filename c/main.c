@@ -130,6 +130,8 @@ int main(int argc, const char *argv[]) {
   const char *execpath = argv[0];
   const char *scriptfile = (char *)0;
   const char *programfile = (char *)0;
+  const char *compile_executable_source = (char *)0;
+  const char *compile_executable_output = (char *)0;
   const char *libdirs = (char *)0;
   const char *libexts = (char *)0;
   int status;
@@ -291,6 +293,18 @@ int main(int argc, const char *argv[]) {
         fprintf(stderr, "-s and --saveheap options are not presently supported\n");
         exit(1);
 #endif /* SAVEDHEAPS */
+      } else if (strcmp(arg,"--compile-executable") == 0) {
+        if (++n == argc) {
+          (void) fprintf(stderr,"%s requires argument\n", arg);
+          exit(1);
+        }
+        compile_executable_source = argv[n];
+      } else if (strcmp(arg,"-o") == 0) {
+        if (++n == argc) {
+          (void) fprintf(stderr,"%s requires argument\n", arg);
+          exit(1);
+        }
+        compile_executable_output = argv[n];
       } else if (strcmp(arg,"--script") == 0) {
         if (++n == argc) {
           (void) fprintf(stderr,"%s requires argument\n", arg);
@@ -350,6 +364,8 @@ int main(int argc, const char *argv[]) {
         fprintf(stdout,"  -q, --quiet                             suppress greeting and prompt\n");
         fprintf(stdout,"  --script <path>                         run as shell script\n");
         fprintf(stdout,"  --program <path>                        run rnrs program as shell script\n");
+        fprintf(stdout,"  --compile-executable <path>             compile native executable\n");
+        fprintf(stdout,"  -o <path>                               output for --compile-executable\n");
 #ifdef WIN32
 #define sep ";"
 #else
@@ -385,6 +401,30 @@ int main(int argc, const char *argv[]) {
     }
   }
 
+  if (compile_executable_source != (char *)0) {
+    if (compile_executable_output == (char *)0) {
+      (void) fprintf(stderr,
+        "--compile-executable requires -o <path>\n");
+      exit(1);
+    }
+
+    if (scriptfile != (char *)0 || programfile != (char *)0) {
+      (void) fprintf(stderr,
+        "--compile-executable cannot be combined with --script or --program\n");
+      exit(1);
+    }
+
+    if (new_argc != 1) {
+      (void) fprintf(stderr,
+        "--compile-executable does not accept additional file arguments\n");
+      exit(1);
+    }
+  } else if (compile_executable_output != (char *)0) {
+    (void) fprintf(stderr,
+      "-o requires --compile-executable\n");
+    exit(1);
+  }
+
  /* must call Sbuild_heap after registering boot and heap files.
   * Sbuild_heap() completes the initialization of the Scheme system
   * and loads the boot or heap files.  If no boot or heap files have
@@ -398,6 +438,8 @@ int main(int argc, const char *argv[]) {
 
 #define CALL0(who) Scall0(Stop_level_value(Sstring_to_symbol(who)))
 #define CALL1(who, arg) Scall1(Stop_level_value(Sstring_to_symbol(who)), arg)
+#define CALL2(who, arg1, arg2) \
+  Scall2(Stop_level_value(Sstring_to_symbol(who)), arg1, arg2)
 #ifdef FunCRepl
   {
     ptr p;
@@ -457,8 +499,14 @@ int main(int argc, const char *argv[]) {
  /* Senable_expeditor must be called before Scheme_start/Scheme_script (if at all) */
   if (!quiet && expeditor_enable) Senable_expeditor(expeditor_history_file);
 #endif /* FEATURE_EXPEDITOR */
-
-  if (scriptfile != (char *)0)
+  if (compile_executable_source != (char *)0) {
+    CALL2(
+      "compile-executable",
+      Sstring_utf8(compile_executable_source, -1),
+      Sstring_utf8(compile_executable_output, -1));
+    status = 0;
+  }
+  else if (scriptfile != (char *)0)
    /* Sscheme_script invokes the value of the scheme-script parameter */
     status = Sscheme_script(scriptfile, new_argc, argv);
   else if (programfile != (char *)0)
