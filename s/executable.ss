@@ -208,24 +208,24 @@
               launcher
               petite-boot)
       (unless (string? source)
-        (error
+        ($oops
           'compile-executable
-          "source pathname is not a string"
+          "~s is not a pathname"
           source))
       (unless (string? output)
-        (error
+        ($oops
           'compile-executable
-          "output pathname is not a string"
+          "~s is not a pathname"
           output))
       (unless (string? launcher)
-        (error
+        ($oops
           'compile-executable
-          "launcher pathname is not a string"
+          "~s is not a pathname"
           launcher))
       (unless (string? petite-boot)
-        (error
+        ($oops
           'compile-executable
-          "petite boot pathname is not a string"
+          "~s is not a pathname"
           petite-boot))
       (unless (file-exists? source)
         (error
@@ -600,19 +600,19 @@
     (set-who! make-executable
       (lambda (launcher boot output)
         (unless (string? launcher)
-          (error
+          ($oops
             who
-            "launcher pathname is not a string"
+            "~s is not a pathname"
             launcher))
         (unless (string? boot)
-          (error
+          ($oops
             who
-            "boot pathname is not a string"
+            "~s is not a pathname"
             boot))
         (unless (string? output)
-          (error
+          ($oops
             who
-            "output pathname is not a string"
+            "~s is not a pathname"
             output))
         (unless (file-exists? launcher)
           (error
@@ -735,14 +735,14 @@
     (set-who! compile-executable
       (lambda (source output)
         (unless (string? source)
-          (error
+          ($oops
             who
-            "source pathname is not a string"
+            "~s is not a pathname"
             source))
         (unless (string? output)
-          (error
+          ($oops
             who
-            "output pathname is not a string"
+            "~s is not a pathname"
             output))
         (let* ([launcher
                 (current-executable-path)]

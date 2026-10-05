@@ -379,7 +379,7 @@
         $ce-run-output
         (lambda (ip)
           (get-string-all ip))))
-    (define ($ce-corrupt-trailer-version path)
+    (define ($ce-patch-trailer-byte path offset value)
       (let ([p
              (open-file-input/output-port
                path
@@ -397,27 +397,98 @@
                   (exact? n)
                   (>= n 32))
                 (error
-                  '$ce-corrupt-trailer-version
+                  '$ce-patch-trailer-byte
                   "executable is too small to contain an embedded boot trailer"
                   n))
-              ;; Trailer layout:
-              ;;
-              ;;   [0..7]   "CHEZBOOT"
-              ;;   [8..11]  version
-              ;;   [12..15] flags
-              ;;   [16..23] boot length
-              ;;   [24..31] reserved
-              ;;
-              ;; Set version from 1 to 2 while leaving the magic intact.
+              (unless
+                (and
+                  (integer? offset)
+                  (exact? offset)
+                  (<= 0 offset 31))
+                (error
+                  '$ce-patch-trailer-byte
+                  "invalid trailer-relative offset"
+                  offset))
+              (unless
+                (and
+                  (integer? value)
+                  (exact? value)
+                  (<= 0 value #xff))
+                (error
+                  '$ce-patch-trailer-byte
+                  "invalid byte value"
+                  value))
               (set-port-position!
                 p
-                (+ (- n 32) 8))
+                (+ (- n 32) offset))
               (put-u8
                 p
-                2)
+                value)
               (flush-output-port p)))
           (lambda ()
             (close-port p)))))
+    (define ($ce-corrupt-trailer-magic path)
+      ($ce-patch-trailer-byte
+        path
+        0
+        (char->integer #\X)))
+    (define ($ce-corrupt-trailer-version path)
+      ($ce-patch-trailer-byte
+        path
+        8
+        2))
+    (define ($ce-corrupt-trailer-flags path)
+      ($ce-patch-trailer-byte
+        path
+        12
+        1))
+    (define ($ce-corrupt-trailer-reserved path)
+      ($ce-patch-trailer-byte
+        path
+        24
+        1))
+    (define ($ce-corrupt-trailer-length path)
+      ;; Boot length is bytes 16..23, little endian.
+      ;; Make its high byte nonzero so the claimed length is impossible.
+      ($ce-patch-trailer-byte
+        path
+        23
+        #xff))
+    (define ($ce-build-zero-executable)
+      ($ce-clean $ce-output)
+      (mkfile
+        $ce-source
+        '(define (main args)
+           0))
+      (compile-executable
+        $ce-source
+        $ce-output))
+    (define $ce-heap-test-script
+      "testfile-executable-heapdirs.ss")
+    (define ($ce-boot-directory)
+      (let* ([workarea
+              (path-parent
+                (path-parent
+                  (current-directory)))]
+             [boot-directory
+              (path-build
+                (path-build
+                  workarea
+                  "boot")
+                (symbol->string
+                  (machine-type)))])
+        boot-directory))
+    (define ($ce-run-with-schemeheapdirs heapdirs command)
+      (system
+        (if (windows?)
+            (format
+              "set \"SCHEMEHEAPDIRS=~a\"&& ~a"
+              heapdirs
+              command)
+            (format
+              "SCHEMEHEAPDIRS='~a' ~a"
+              heapdirs
+              command))))
     #t)
   ;; --------------------------------------------------------------------------
   ;; Successful executable build
@@ -607,25 +678,93 @@
         "previous-output")
       ($ce-no-intermediates? $ce-output)))
   ;; --------------------------------------------------------------------------
-  ;; Corrupt embedded trailer is rejected by the native launcher
+  ;; Missing CHEZBOOT magic falls back to ordinary Chez launcher behavior
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-build-zero-executable)
+    ($ce-corrupt-trailer-magic
+      $ce-output)
+    (= ($ce-run
+         $ce-output-command
+         "--version")
+       0))
+  ;; --------------------------------------------------------------------------
+  ;; Unsupported embedded trailer version is rejected
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-build-zero-executable)
+    ($ce-corrupt-trailer-version
+      $ce-output)
+    (not
+      (= ($ce-run $ce-output-command)
+         0)))
+  ;; --------------------------------------------------------------------------
+  ;; Nonzero trailer flags are rejected
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-build-zero-executable)
+    ($ce-corrupt-trailer-flags
+      $ce-output)
+    (not
+      (= ($ce-run $ce-output-command)
+         0)))
+  ;; --------------------------------------------------------------------------
+  ;; Nonzero reserved trailer field is rejected
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-build-zero-executable)
+    ($ce-corrupt-trailer-reserved
+      $ce-output)
+    (not
+      (= ($ce-run $ce-output-command)
+         0)))
+  ;; --------------------------------------------------------------------------
+  ;; Impossible embedded boot length is rejected
+  ;; --------------------------------------------------------------------------
+  (begin
+    ($ce-build-zero-executable)
+    ($ce-corrupt-trailer-length
+      $ce-output)
+    (not
+      (= ($ce-run $ce-output-command)
+         0)))
+  ;; --------------------------------------------------------------------------
+  ;; compile-executable honors SCHEMEHEAPDIRS boot discovery
   ;; --------------------------------------------------------------------------
   (begin
     ($ce-clean $ce-output)
+    ($ce-remove $ce-heap-test-script)
     (mkfile
       $ce-source
       '(define (main args)
          0))
-    (compile-executable
-      $ce-source
-      $ce-output)
-    ($ce-corrupt-trailer-version
-      $ce-output)
-    ;; Magic is still CHEZBOOT, but version is now unsupported.
-    ;; This must be a hard startup failure instead of falling back to
-    ;; ordinary boot-file discovery.
-    (not
-      (= ($ce-run $ce-output-command)
-         0)))
+    (mkfile
+      $ce-heap-test-script
+      '(import (chezscheme))
+      `(compile-executable
+         ,$ce-source
+         ,$ce-output))
+    (let* ([scheme
+            (patch-exec-path *scheme*)]
+           [command
+            (format
+              "~a --script ~a > ~a 2>&1"
+              scheme
+              $ce-heap-test-script
+              $ce-run-output)]
+           [status
+            ($ce-run-with-schemeheapdirs
+              ($ce-boot-directory)
+              command)])
+      (and
+        (= status 0)
+        (file-exists?
+          $ce-output)
+        ($ce-no-intermediates?
+          $ce-output)
+        (= ($ce-run
+             $ce-output-command)
+           0))))
   ;; --------------------------------------------------------------------------
   ;; Ordinary scheme executable still starts normally
   ;; --------------------------------------------------------------------------
@@ -692,6 +831,7 @@
   (begin
     ($ce-clean $ce-output)
     ($ce-remove $ce-source)
+    ($ce-remove $ce-heap-test-script)
     ($ce-remove "testfile-executable-normal.ss")
     ($ce-remove "testfile-executable-lib.ss")
     ($ce-remove "testfile-executable-lib.so")
