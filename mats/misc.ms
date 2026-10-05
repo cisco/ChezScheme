@@ -5643,3 +5643,32 @@
        (black-box (expt 2 to-power))
        (loop (sub1 i))))))
   )
+
+(when (memq (machine-type) '(arm64osx tarm64osx))
+  (mat code-placement
+    ;; code chunks come from one reserved region aligned to 512MB, so code
+    ;; allocated after compiling many procedures and a full collection is
+    ;; in the same 512MB-aligned window as code allocated before
+    (let ([window (lambda (a) (quotient a (expt 2 29)))]
+          [entry (lambda ()
+                   (let ([c (foreign-callable (lambda () 0) () int)])
+                     (lock-object c)
+                     (let ([a (foreign-callable-entry-point c)])
+                       (unlock-object c)
+                       a)))])
+      (let* ([before (entry)]
+             [ps (map (lambda (k) (eval `(lambda (x) (list x ,k ,@(iota 50))))) (iota 2000))])
+        (collect (collect-maximum-generation))
+        (and (= (window before) (window (entry)))
+             (equal? (map (lambda (p) (car (p 'x))) ps) (make-list 2000 'x)))))
+    ;; code ranges freed by a collection are reused, and code placed in a
+    ;; reused range runs
+    (let loop ([i 0])
+      (or (= i 5)
+          (let ([ps (map (lambda (k) (eval `(lambda (x) (+ x ,k)))) (iota 2000))])
+            (and (equal? (map (lambda (p) (p 1)) ps) (map add1 (iota 2000)))
+                 (begin
+                   (set! ps #f)
+                   (collect (collect-maximum-generation))
+                   (loop (+ i 1)))))))
+  ))

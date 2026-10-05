@@ -356,6 +356,8 @@ typedef int tputsputcchar;
 # if !defined(WRITE_XOR_EXECUTE_CODE)
 #  define S_MAP_CODE MAP_JIT
 #  define S_ENABLE_CODE_WRITE(on) pthread_jit_write_protect_np(!(on))
+/* keep code chunks in one aligned region; see segment.c */
+#  define S_CODE_REGION_BYTES ((uptr)512 << 20)
 # endif
 # define CANNOT_READ_DIRECTLY_INTO_CODE
 # include <pthread.h>

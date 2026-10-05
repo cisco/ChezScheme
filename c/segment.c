@@ -158,6 +158,95 @@ void S_freemem(void *addr, iptr bytes, UNUSED IBOOL for_code) {
 # undef S_PROT_CODE
 # define S_PROT_CODE (PROT_WRITE | PROT_READ)
 #endif
+
+#if defined(S_CODE_REGION_BYTES)
+/* Code chunks are carved from one reserved region, so that all code
+   stays within a single aligned window of the address space. Without
+   it, each code chunk lands wherever the OS has room, and in a process
+   whose address space is already fragmented (a large host application
+   loading Scheme as a library, say), chunks can end up gigabytes
+   apart. On Apple arm64, hot calls and returns whose targets lie in a
+   different 1GB- or 4GB-aligned region than the branch mispredict far
+   more often (Scheme returns, and most calls, are indirect branches),
+   so a program can run up to 1.7x slower for the life of the process
+   depending on where its code chunks happened to land.
+
+   The region is reserved PROT_NONE and aligned to its own size, so it
+   never straddles a boundary larger than itself. Pieces are made
+   accessible the first time they are handed out. A freed chunk's pages
+   are released with madvise, but its range stays accessible (macOS
+   refuses to change the protection of MAP_JIT memory once it has been
+   made executable) and goes on a free list for reuse. If the reservation fails or the region fills,
+   code chunks fall back to plain mmap. Chunks are allocated with the
+   allocation mutex held and freed by the collector after sweeping, so
+   this needs no lock of its own. */
+typedef struct code_range { char *addr; uptr bytes; struct code_range *next; } code_range;
+static char *code_region, *code_region_next, *code_region_end;
+static code_range *code_region_free; /* sorted by address, coalesced */
+static IBOOL code_region_tried;
+
+static void code_region_reserve(void) {
+  uptr size = S_CODE_REGION_BYTES;
+  char *p, *start;
+  code_region_tried = 1;
+  /* over-reserve so that an aligned window of `size` fits, then trim */
+  p = mmap(NULL, 2 * size, PROT_NONE, (MAP_PRIVATE | MAP_ANONYMOUS) | S_MAP_CODE, -1, 0);
+  if (p == (char *)-1) return;
+  start = (char *)(((uptr)p + size - 1) & ~(size - 1));
+  if (start > p) munmap(p, start - p);
+  if (start + size < p + 2 * size) munmap(start + size, (p + 2 * size) - (start + size));
+  code_region = code_region_next = start;
+  code_region_end = start + size;
+}
+
+static void *code_region_get(uptr bytes) {
+  code_range **pr, *r;
+  char *addr = NULL;
+  if (!code_region_tried) code_region_reserve();
+  if (code_region == NULL) return NULL;
+  for (pr = &code_region_free; (r = *pr) != NULL; pr = &r->next) {
+    if (r->bytes >= bytes) {
+      addr = r->addr;
+      if (r->bytes == bytes) {
+        *pr = r->next;
+        free(r);
+      } else {
+        r->addr += bytes;
+        r->bytes -= bytes;
+      }
+      break;
+    }
+  }
+  if (addr == NULL) {
+    if ((uptr)(code_region_end - code_region_next) < bytes) return NULL;
+    if (mprotect(code_region_next, bytes, S_PROT_CODE) != 0) return NULL;
+    addr = code_region_next;
+    code_region_next += bytes;
+  }
+  return addr;
+}
+
+static IBOOL code_region_put(void *vaddr, uptr bytes) {
+  char *addr = vaddr;
+  code_range *prev = NULL, *r = code_region_free, *n;
+  if (addr < code_region || addr >= code_region_end) return 0;
+  madvise(addr, bytes, MADV_FREE);
+  while (r != NULL && r->addr < addr) { prev = r; r = r->next; }
+  if (prev != NULL && prev->addr + prev->bytes == addr) {
+    prev->bytes += bytes;
+    n = prev;
+  } else {
+    if ((n = malloc(sizeof(code_range))) == NULL) out_of_memory();
+    n->addr = addr; n->bytes = bytes; n->next = r;
+    if (prev != NULL) prev->next = n; else code_region_free = n;
+  }
+  if (r != NULL && n->addr + n->bytes == r->addr) {
+    n->bytes += r->bytes; n->next = r->next; free(r);
+  }
+  return 1;
+}
+#endif
+
 void *S_getmem(iptr bytes, IBOOL zerofill, IBOOL for_code) {
   void *addr;
 
@@ -170,6 +259,15 @@ void *S_getmem(iptr bytes, IBOOL zerofill, IBOOL for_code) {
     uptr n = S_pagesize - 1; iptr p_bytes = (iptr)(((uptr)bytes + n) & ~n);
     int perm = (for_code ? S_PROT_CODE : (PROT_WRITE | PROT_READ));
     int flags = (MAP_PRIVATE | MAP_ANONYMOUS) | (for_code ? S_MAP_CODE : 0);
+#if defined(S_CODE_REGION_BYTES)
+    /* region memory may be reused, so it is not handed out zero-filled */
+    if (for_code && !zerofill && (addr = code_region_get((uptr)p_bytes)) != NULL) {
+      for_code_succeeded = 1;
+      if ((membytes += p_bytes) > maxmembytes) maxmembytes = membytes;
+      debug(printf("getmem code region(%p => %p) -> %p\n", TO_VOIDP(bytes), TO_VOIDP(p_bytes), addr))
+      return addr;
+    }
+#endif
 #ifdef MAP_32BIT
     /* try for first 2GB of the memory space first of x86_64 so that we have a
        better chance of having short jump instructions */
@@ -200,7 +298,10 @@ void S_freemem(void *addr, iptr bytes, UNUSED IBOOL for_code) {
   } else {
     uptr n = S_pagesize - 1; iptr p_bytes = (iptr)(((uptr)bytes + n) & ~n);
     debug(printf("freemem munmap(%p, %p => %p)\n", addr, TO_VOIDP(bytes), TO_VOIDP(p_bytes)))
-    munmap(addr, p_bytes);
+#if defined(S_CODE_REGION_BYTES)
+    if (!code_region_put(addr, p_bytes))
+#endif
+      munmap(addr, p_bytes);
     membytes -= p_bytes;
   }
 }

@@ -3944,6 +3944,20 @@ x86\_64 has been fixed.
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
 
+\subsection{Code placement on Apple arm64 (10.5.0)}
+
+On Apple arm64 (the arm64osx and tarm64osx machine types), code is now
+allocated from a single reserved region aligned to 512MB, and a code
+chunk falls back to being placed anywhere only when that region is
+full or could not be reserved. Formerly, each code chunk was placed
+wherever the operating system had room, so in a process whose address
+space was already fragmented (for example, a large application that
+loads Scheme as a library), code chunks could end up gigabytes apart.
+On Apple arm64, calls and returns whose targets lie in a different
+1GB- or 4GB-aligned region than the branch are mispredicted far more
+often, so such a process could run up to about 1.7 times slower than
+the same program in another process, for as long as it ran.
+
 \subsection{Reduced allocation and copying (9.6.0)}
 
 When given a bytevector whose length is less than \scheme{file-buffer-size},
