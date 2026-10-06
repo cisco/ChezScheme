@@ -4387,4 +4387,38 @@ constructors created by a record definition in one library and exported
 by another are inlined in the importing library, just as if the record
 type were defined in the importing library.
 
+\subsection{Native executable compilation (10.5.0)}
+
+The new \scheme{compile-executable} procedure compiles a Scheme source
+file that defines a one-argument \scheme{main} procedure into a
+self-contained native executable containing the compiled program and
+its Chez Scheme boot image.
+
+The same functionality is available from the command line with the
+\scheme{--compile-executable} option. For example,
+
+\schemedisplay
+scheme --compile-executable app.ss -o app
+\endschemedisplay
+
+compiles \scheme{app.ss} to the native executable \scheme{app}.
+
+The \scheme{main} procedure receives the program's command-line
+arguments, excluding the executable pathname. The usual
+\scheme{command-line} and \scheme{command-line-arguments} parameters
+are also initialized for the application.
+
+Existing compiler and library command-line options, including
+\scheme{--optimize-level}, \scheme{--libdirs},
+\scheme{--libexts}, and \scheme{--compile-imported-libraries}, apply
+when using \scheme{--compile-executable}.
+
+Native executable generation is designed to be independent of the
+host executable format and processor architecture, and is intended
+for Chez Scheme's native-code platforms, including Windows, macOS,
+Linux, the BSDs, Solaris, GNU/Hurd, and Haiku. Some deployment
+environments, notably iOS and Android, may require additional
+platform-specific packaging or code-signing steps. The WebAssembly
+target is not covered by this native executable mechanism.
+
 \end{document}
