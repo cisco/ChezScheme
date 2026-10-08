@@ -1073,75 +1073,138 @@
                 ;; no extra wrapper needed
                 e))]))
 
-    (define-pass np-recognize-loops : L4.75 (ir) -> L4.875 ()
-      ; TODO: also recognize andmap/for-all, ormap/exists, for-each
-      ;       and remove inline handlers
+    (define-pass np-recognize-loops : L4.75 (ir) -> L4.75 ()
+      ;; Sets the `loop` flag on uvars, where a loop uvar is bound to
+      ;; a function that calls itself only in tail position, and there's
+      ;; one other call from outside, all with the right number of arguments.
+      ;; Rely on `cpletrec` to break up `letrec`s into SCCs, so a loop
+      ;; candidate will be by itself in its own `letrec`.
+      (Expr : Expr (ir tail*) -> * ()
+        [,x (uvar-loop! x #f)]
+        [(letrec ([,x1 (case-lambda ,info1
+                         (clause (,x* ...) ,interface
+                           ,body))])
+           ,e)
+         (uvar-loop! x1 #t)
+         (uvar-maybe-loop-entry! x1 #t)
+         (uvar-applied-once! x1 #f)
+         (Expr e tail*)
+         (uvar-maybe-loop-entry! x1 #f)
+         (Expr body (list x1))]
+        [(letrec ([,x* ,[Expr : le* '() -> le*]] ...) ,[Expr : body tail* -> body]) (void)]
+        [(call ,info ,mdcl ,x1 ,[Expr : e* '() -> e*] ...)
+         (cond
+           [(uvar-maybe-loop-entry? x1)
+            (cond
+              [(or (uvar-applied-once? x1)
+                   (not (let ([interface* (info-lambda-interface* (uvar-info-lambda x1))])
+                          (and (fx= (length interface*) 1) (fx= (length e*) (car interface*))))))
+               (uvar-applied-once! x1 #f)
+               (uvar-loop! x1 #f)]
+              [else
+               (uvar-applied-once! x1 #t)])]
+           [(uvar-loop? x1)
+            (cond
+              [(memq x1 tail*)
+               (let ([interface* (info-lambda-interface* (uvar-info-lambda x1))])
+                 (unless (and (fx= (length interface*) 1) (fx= (length e*) (car interface*)))
+                   (uvar-loop! x1 #f)))]
+              [else
+               (uvar-loop! x1 #f)])])]
+        [(call ,info ,mdcl ,[Expr : e '() -> e] ,[Expr : e* '() -> e*] ...) (void)]
+        [(foreign-call ,info ,[Expr : e '() -> e] ,[Expr : e* '() -> e*] ...) (void)]
+        [(fcallable ,info) (void)]
+        [(label ,l ,[Expr : body tail* -> body]) (void)]
+        [(mvlet ,[Expr : e '() -> e] ((,x** ...) ,interface* ,[Expr : body* tail* -> body*]) ...) (void)]
+        [(mvcall ,info ,[Expr : e1 '() -> e1] ,[Expr : e2 '() -> e2]) (void)]
+        [(let ([,x ,[Expr : e* '() -> e*]] ...) ,[Expr : body tail* -> body]) (void)]
+        [(case-lambda ,info ,[CaseLambdaClause : cl] ...) (void)]
+        [(quote ,d) (void)]
+        [(if ,[Expr : e0 '() -> e0] ,[Expr : e1 tail* -> e1] ,[Expr : e2 tail* -> e2]) (void)]
+        [(seq ,[Expr : e0 '() -> e0] ,[Expr : e1 tail* -> e1]) (void)]
+        [(profile ,src) (void)]
+        [(pariah) (void)]
+        [,pr (void)]
+        [else ($oops who "unexpected Expr ~s" ir)])
+      (CaseLambdaClause : CaseLambdaClause (cl) -> * ()
+        [(clause (,x* ...) ,interface ,[Expr : body '() -> body]) (void)])
+      (CaseLambdaExpr : CaseLambdaExpr (ir) -> * ()
+        [(case-lambda ,info ,[CaseLambdaClause : cl] ...) (void)])
+      (begin (CaseLambdaExpr ir) ir))
+
+    (define-pass np-convert-loops : L4.75 (ir) -> L4.875 ()
+      ;; Moves each loop function to its unique call site and converts
+      ;; to the `loop` function.
+      ;; TODO: also recognize andmap/for-all, ormap/exists, for-each
+      ;;       and remove inline handlers
       (definitions
         (define make-assigned-tmp
           (lambda (x)
             (let ([t (make-tmp 'tloop)])
               (uvar-assigned! t #t)
               t))))
-      (Expr : Expr (ir [tail* '()]) -> Expr ()
-        [,x (uvar-referenced! x #t) (uvar-loop! x #f) x]
+      (Expr : Expr (ir to-enter) -> Expr ()
+        [,x x]
         [(letrec ([,x1 (case-lambda ,info1
                          (clause (,x* ...) ,interface
-                           ,body))])
-           (call ,info2 ,mdcl ,x2 ,e* ...))
-         (guard (eq? x2 x1) (eq? (length e*) interface))
+                                 ,body))])
+           ,e)
+         (guard (uvar-loop? x1))
          (uvar-referenced! x1 #f)
-         (uvar-loop! x1 #t)
-         (let ([tref?* (map uvar-referenced? tail*)])
-           (for-each (lambda (x) (uvar-referenced! x #f)) tail*)
-           (let ([e* (map (lambda (e) (Expr e '())) e*)]
-                 [body (Expr body (cons x1 tail*))])
-             (let ([body-tref?* (map uvar-referenced? tail*)])
-               (for-each (lambda (x tref?) (when tref? (uvar-referenced! x #t))) tail* tref?*)
-               (if (uvar-referenced? x1)
-                   (if (uvar-loop? x1)
-                       (let ([t* (map make-assigned-tmp x*)])
-                         `(let ([,t* ,e*] ...)
-                            (loop ,x1 (,t* ...)
-                              (let ([,x* ,t*] ...)
-                                ,body))))
-                       (begin
-                         (for-each (lambda (x body-tref?)
-                                     (when body-tref? (uvar-loop! x #f)))
-                           tail* body-tref?*)
-                         `(letrec ([,x1 (case-lambda ,info1
-                                          (clause (,x* ...) ,interface
-                                            ,body))])
-                            (call ,info2 ,mdcl ,x2 ,e* ...))))
-                   `(let ([,x* ,e*] ...) ,body)))))]
+         (let ([body (Expr body to-enter)])
+           (let ([used? (uvar-referenced? x1)])
+             (Expr e (cons (cons x1 (lambda (info2 mdcl e*)
+                                      (cond
+                                        [used?
+                                         (let ([t* (map make-assigned-tmp x*)])
+                                           `(let ([,t* ,e*] ...)
+                                              (loop ,x1 (,t* ...)
+                                                    (let ([,x* ,t*] ...)
+                                                      ,body))))]
+                                        [else
+                                         (uvar-referenced! x1 #f)
+                                         `(let ([,x* ,e*] ...)
+                                            ,body)])))
+                           to-enter))))]
         [(letrec ([,x* ,[le*]] ...) ,[body])
          `(letrec ([,x* ,le*] ...) ,body)]
-        [(call ,info ,mdcl ,x ,[e* '() -> e*] ...)
-         (guard (memq x tail*))
-         (uvar-referenced! x #t)
-         (let ([interface* (info-lambda-interface* (uvar-info-lambda x))])
-           (unless (and (fx= (length interface*) 1) (fx= (length e*) (car interface*)))
-             (uvar-loop! x #f)))
-         `(call ,info ,mdcl ,x ,e* ...)]
-        [(call ,info ,mdcl ,[e '() -> e] ,[e* '() -> e*] ...)
+        [(call ,info ,mdcl ,x ,e* ...)
+         (let ([e* (map (lambda (e) (Expr e to-enter)) e*)]
+               [p (assq x to-enter)])
+           (cond
+             [p ((cdr p) info mdcl e*)]
+             [else
+              (uvar-referenced! x #t)
+              (let ([x (Expr x to-enter)])
+                `(call ,info ,mdcl ,x ,e* ...))]))]
+        [(call ,info ,mdcl ,[e] ,[e*] ...)
          `(call ,info ,mdcl ,e ,e* ...)]
-        [(foreign-call ,info ,[e '() -> e] ,[e* '() -> e*] ...)
+        [(foreign-call ,info ,[e] ,[e*] ...)
          `(foreign-call ,info ,e ,e* ...)]
         [(fcallable ,info) `(fcallable ,info)]
         [(label ,l ,[body]) `(label ,l ,body)]
-        [(mvlet ,[e '() -> e] ((,x** ...) ,interface* ,[body*]) ...)
+        [(mvlet ,[e] ((,x** ...) ,interface* ,[body*]) ...)
          `(mvlet ,e ((,x** ...) ,interface* ,body*) ...)]
-        [(mvcall ,info ,[e1 '() -> e1] ,[e2 '() -> e2])
+        [(mvcall ,info ,[e1] ,[e2])
          `(mvcall ,info ,e1 ,e2)]
-        [(let ([,x ,[e* '() -> e*]] ...) ,[body])
+        [(let ([,x ,[e*]] ...) ,[body])
          `(let ([,x ,e*] ...) ,body)]
-        [(case-lambda ,info ,[cl] ...) `(case-lambda ,info ,cl ...)]
+        [(case-lambda ,info ,[CaseLambdaClause : cl to-enter -> cl] ...) `(case-lambda ,info ,cl ...)]
         [(quote ,d) `(quote ,d)]
-        [(if ,[e0 '() -> e0] ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]
-        [(seq ,[e0 '() -> e0] ,[e1]) `(seq ,e0 ,e1)]
+        [(if ,[e0] ,[e1] ,[e2]) `(if ,e0 ,e1 ,e2)]
+        [(seq ,[e0] ,[e1])
+         `(seq ,e0 ,e1)]
         [(profile ,src) `(profile ,src)]
         [(pariah) `(pariah)]
         [,pr pr]
-        [else ($oops who "unexpected Expr ~s" ir)]))
+        [else ($oops who "unexpected Expr ~s" ir)])
+      (CaseLambdaClause : CaseLambdaClause (cl to-enter) -> CaseLambdaClause ()
+        [(clause (,x* ...) ,interface ,[Expr : body to-enter -> body])
+         `(clause (,x* ...) ,interface ,body)])
+      (CaseLambdaExpr : CaseLambdaExpr (ir to-enter) -> CaseLambdaExpr ()
+        [(case-lambda ,info ,[CaseLambdaClause : cl* to-enter -> cl*] ...)
+         `(case-lambda ,info ,cl* ...)])
+      (CaseLambdaExpr ir '()))
 
     (define-pass np-recognize-attachment : L4.875 (ir) -> L4.9375 ()
       (definitions
@@ -2399,7 +2462,7 @@
                                           (closure-seen! loc #t)
                                           (fx (cdr x*) free* (cons (closure-name loc) sibling*))
                                           (closure-seen! loc #f)))]
-                                   [else (sorry! who "unexpected uvar location ~s" loc)])))))))
+                                   [else (sorry! who "unexpected uvar location ~s ~s" loc x)])))))))
                  c*)
 
                ; find closures w/free variables (non-constant closures) and propagate
@@ -10858,7 +10921,8 @@
               (pass np-suppress-procedure-checks unparse-L4)
               (pass np-recognize-mrvs unparse-L4.5)
               (pass np-expand-foreign unparse-L4.75)
-              (pass np-recognize-loops unparse-L4.875)
+              (pass np-recognize-loops unparse-L4.75)
+              (pass np-convert-loops unparse-L4.875)
               (pass np-recognize-attachment unparse-L4.9375)
               (pass np-name-anonymous-lambda unparse-L5)
               (pass np-convert-closures unparse-L6)
