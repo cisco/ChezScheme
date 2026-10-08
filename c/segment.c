@@ -165,11 +165,12 @@ void S_freemem(void *addr, iptr bytes, UNUSED IBOOL for_code) {
    it, each code chunk lands wherever the OS has room, and in a process
    whose address space is already fragmented (a large host application
    loading Scheme as a library, say), chunks can end up gigabytes
-   apart. On Apple arm64, hot calls and returns whose targets lie in a
+   apart. On an Apple M1, hot calls and returns whose targets lie in a
    different 1GB- or 4GB-aligned region than the branch mispredict far
    more often (Scheme returns, and most calls, are indirect branches),
    so a program can run up to 1.7x slower for the life of the process
-   depending on where its code chunks happened to land.
+   depending on where its code chunks happened to land. An M2 showed
+   no such penalty; keeping code in one region costs nothing there.
 
    The region is reserved PROT_NONE and aligned to its own size, so it
    never straddles a boundary larger than itself. Pieces are made

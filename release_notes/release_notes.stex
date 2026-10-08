@@ -3953,10 +3953,11 @@ full or could not be reserved. Formerly, each code chunk was placed
 wherever the operating system had room, so in a process whose address
 space was already fragmented (for example, a large application that
 loads Scheme as a library), code chunks could end up gigabytes apart.
-On Apple arm64, calls and returns whose targets lie in a different
+On an Apple M1, calls and returns whose targets lie in a different
 1GB- or 4GB-aligned region than the branch are mispredicted far more
 often, so such a process could run up to about 1.7 times slower than
-the same program in another process, for as long as it ran.
+the same program in another process, for as long as it ran. An Apple
+M2 showed no such penalty.
 
 \subsection{Reduced allocation and copying (9.6.0)}
 
