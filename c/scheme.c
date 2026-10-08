@@ -1384,6 +1384,8 @@ extern void Sscheme_deinit(void) {
   S_initframe(tc, 0);
   boot_call(tc, p, 0);
 
+  S_schsig_deinit();
+
   S_errors_to_console = 1;
   current_state = DEINITIALIZED;
 }
