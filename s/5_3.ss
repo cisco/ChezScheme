@@ -788,16 +788,18 @@
                                      (fl/ r (fl+ y (fl* r x)))))
                                (if (negated-flonum? y) pi/2 -pi/2))]
                            [(fl= x 1.0)
-                            (let ([k (fl+ ay rho)])
-                               (fl-make-rectangular
-                                  ($fllog (fl/ ($flsqrt ($flsqrt (fl+ 4.0
-                                                                   (* y y))))
-                                                      ($flsqrt k)))
-                                  (fl/ (fl+ pi/2 ($flatan (fl/ k 2.0)))
-                                       (if (negated-flonum? y) 2.0 -2.0))))]
+                            (fl-make-rectangular
+                             (cond
+                               [(fl< ay 1e-9)
+                                ($fllog (fl/ ($flsqrt ($flsqrt (fl+ 4.0 (fl* y y))))
+                                             ($flsqrt ay)))]
+                               [(fl< ay 1e9) (fl* 0.25 (fllog1+ (fl/ 4.0 y y)))]
+                               [else         (flexpt y -2.0)])
+                             (fl/ (fl+ pi/2 ($flatan (fl/ ay 2.0)))
+                                  (if (negated-flonum? y) 2.0 -2.0)))]
                            [else
                             (let ([1-x (fl- 1.0 x)]
-                                  [k (let ([k (fl+ ay rho)]) (fl* k k))])
+                                  [k (fl* ay ay)])
                                (fl-make-rectangular
                                   (fl/ (fllog1+ (fl/ (fl* 4.0 x)
                                                      (fl+ (fl* 1-x 1-x) k)))
