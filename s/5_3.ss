@@ -793,8 +793,7 @@
                                [(fl< ay 1e-9)
                                 ($fllog (fl/ ($flsqrt ($flsqrt (fl+ 4.0 (fl* y y))))
                                              ($flsqrt ay)))]
-                               [(fl< ay 1e9) (fl* 0.25 (fllog1+ (fl/ 4.0 y y)))]
-                               [else         (flexpt y -2.0)])
+                               [else (fl* 0.25 (fllog1+ (fl* 4.0 (flexpt y -2.0))))])
                              (fl/ (fl+ pi/2 ($flatan (fl/ ay 2.0)))
                                   (if (negated-flonum? y) 2.0 -2.0)))]
                            [else
