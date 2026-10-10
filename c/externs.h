@@ -386,6 +386,7 @@ extern void S_register_scheme_signal(iptr sig);
 extern void S_fire_collector(void);
 extern NORETURN void S_noncontinuable_interrupt(void);
 extern void S_schsig_init(void);
+extern void S_schsig_deinit(void);
 #ifdef DEFINE_MATHERR
 #include <math.h>
 extern INT matherr(struct exception *x);

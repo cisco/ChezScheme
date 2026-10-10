@@ -777,8 +777,72 @@ void S_register_scheme_signal(iptr sig) {
     sigaction(sig, &act, (struct sigaction *)0);
 }
 
-static void handle_signal(INT sig, UNUSED siginfo_t *si, UNUSED void *data) {
+/* the handlers that were installed for the fault signals before ours.  a
+   program that embeds Chez Scheme may handle these signals itself (.NET and
+   Java runtimes turn a null dereference into an exception that way), so a
+   fault that does not come from Scheme code is passed on to that handler,
+   and Sscheme_deinit puts them back. */
+#define MAXCHAINEDSIGNALS 4
+static INT chained_sig[MAXCHAINEDSIGNALS];
+static struct sigaction chained_act[MAXCHAINEDSIGNALS];
+static INT chained_count;
+
+static void save_previous_handler(INT sig, struct sigaction *prev) {
+  INT i;
+  /* never save our own handler: passing a fault to it would recurse */
+  if ((prev->sa_flags & SA_SIGINFO) && prev->sa_sigaction == handle_signal) return;
+  for (i = 0; i < chained_count; i += 1) {
+    if (chained_sig[i] == sig) {
+      chained_act[i] = *prev;
+      return;
+    }
+  }
+  if (chained_count < MAXCHAINEDSIGNALS) {
+    chained_sig[chained_count] = sig;
+    chained_act[chained_count] = *prev;
+    chained_count += 1;
+  }
+}
+
+/* pass sig to the handler saved for it, if any; returns 0 if there is
+   none to pass it to */
+static IBOOL chain_to_previous_handler(INT sig, siginfo_t *si, void *data) {
+  INT i;
+  for (i = 0; i < chained_count; i += 1) {
+    if (chained_sig[i] == sig) {
+      struct sigaction *prev = &chained_act[i];
+      if (prev->sa_flags & SA_SIGINFO) {
+        if (prev->sa_sigaction == NULL) return 0;
+        prev->sa_sigaction(sig, si, data);
+      } else {
+        if (prev->sa_handler == SIG_DFL || prev->sa_handler == SIG_IGN) return 0;
+        prev->sa_handler(sig);
+      }
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/* a thread with no context is not running Scheme code, and neither is one
+   whose context is deactivated: it is in C, through a __collect_safe call,
+   after Sdeactivate_thread, or in one of the run time's blocking I/O calls */
+static IBOOL not_running_scheme(ptr tc) {
+  if (tc == (ptr)0) return 1;
+#ifdef PTHREADS
+  if (!ACTIVE(tc)) return 1;
+#endif
+  return 0;
+}
+
+static void handle_signal(INT sig, siginfo_t *si, void *data) {
 /* printf("handle_signal(%d) for tc %x\n", sig, UNFIX(get_thread_context())); fflush(stdout); */
+  /* a fault outside Scheme code goes to the handler installed before ours,
+     if there was one; only the fault signals have a saved handler */
+    if (not_running_scheme(get_thread_context())
+        && chain_to_previous_handler(sig, si, data))
+      return;
+
   /* check for particular signals */
     switch (sig) {
         case SIGINT: {
@@ -836,7 +900,7 @@ static void no_op_register(UNUSED int sigid) {
 #define SIGACTION(id, act_p, old_p) (register_modified_signal(id), sigaction(id, act_p, old_p))
 
 static void init_signal_handlers(void) {
-    struct sigaction act;
+    struct sigaction act, prev;
 
     if (register_modified_signal == NULL)
       register_modified_signal = no_op_register;
@@ -874,15 +938,30 @@ static void init_signal_handlers(void) {
 #ifdef SIGQUIT
     SIGACTION(SIGQUIT, &act, (struct sigaction *)0);
 #endif /* SIGQUIT */
-    SIGACTION(SIGILL, &act, (struct sigaction *)0);
-    SIGACTION(SIGFPE, &act, (struct sigaction *)0);
+  /* keep the fault signals' previous handlers to pass foreign faults on to */
+    if (SIGACTION(SIGILL, &act, &prev) == 0) save_previous_handler(SIGILL, &prev);
+    if (SIGACTION(SIGFPE, &act, &prev) == 0) save_previous_handler(SIGFPE, &prev);
 #ifdef SIGBUS
-    SIGACTION(SIGBUS, &act, (struct sigaction *)0);
+    if (SIGACTION(SIGBUS, &act, &prev) == 0) save_previous_handler(SIGBUS, &prev);
 #endif /* SIGBUS */
-    SIGACTION(SIGSEGV, &act, (struct sigaction *)0);
+    if (SIGACTION(SIGSEGV, &act, &prev) == 0) save_previous_handler(SIGSEGV, &prev);
+}
+
+/* once Chez Scheme is gone, the fault signals belong to the host again */
+static void restore_previous_handlers(void) {
+    INT i;
+
+    for (i = 0; i < chained_count; i += 1)
+      SIGACTION(chained_sig[i], &chained_act[i], (struct sigaction *)0);
 }
 
 #endif /* WIN32 */
+
+void S_schsig_deinit(void) {
+#ifndef WIN32
+    restore_previous_handlers();
+#endif
+}
 
 void S_schsig_init(void) {
     if (S_boot_time) {

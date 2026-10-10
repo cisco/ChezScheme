@@ -122,6 +122,19 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Fault signals not raised by Scheme code go to the previous handler (10.5.0)}
+
+A SIGSEGV, SIGBUS, SIGFPE, or SIGILL that arrives on a thread with no Scheme
+thread context, or whose context is deactivated (for example, during a
+\scheme{__collect_safe} foreign call or after \scheme{Sdeactivate_thread}),
+now goes to the handler that was installed for that signal before
+\scheme{Sscheme_init}, if there was one. A program that embeds Chez Scheme
+and handles these signals itself, as .NET and Java runtimes do to turn a null
+dereference into an exception, therefore keeps that handling.
+\scheme{Sscheme_deinit} reinstalls those handlers. When there was
+no such handler, or the fault happens while running Scheme code, the behavior
+is unchanged.
+
 \subsection{Anonymous fields in struct and union ftypes (10.5.0)}
 
 Struct and union ftypes now support anonymous fields, which mirror anonymous
