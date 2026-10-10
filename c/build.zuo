@@ -129,7 +129,8 @@
   (define res-file (at-dir "../boot" m "scheme.res"))
   
   (define main-src-files
-    '("main.c"))
+    '("main.c"
+      "embedded-boot.c"))
   (define main-srcs
     (map at-source main-src-files))
   (define main-objs
@@ -138,8 +139,17 @@
         (map (lambda (name) (at-dir "../boot" m (.c->.o name))) main-src-files)))
 
   (define main-hdrs
-    (list (at-mach "scheme.h")
-          c-config-file))
+  (append
+    (map at-source
+      '("embedded-boot.h"
+        "system.h"
+        "types.h"
+        "version.h"
+        "externs.h"))
+    (list
+      (at-mach "equates.h")
+      (at-mach "scheme.h")
+      c-config-file)))
 
   (define gc-wrap (list (at-source "gc.c")))
 
