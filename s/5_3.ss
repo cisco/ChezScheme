@@ -790,9 +790,8 @@
                            [(fl= x 1.0)
                             (fl-make-rectangular
                              (cond
-                               [(fl< ay 1e-9)
-                                ($fllog (fl/ ($flsqrt ($flsqrt (fl+ 4.0 (fl* y y))))
-                                             ($flsqrt ay)))]
+                               [(fl< ay 1e-8)
+                                (* -0.5 (fllog (fl* 0.5 (flabs y))))]
                                [else (fl* 0.25 (fllog1+ (fl* 4.0 (flexpt y -2.0))))])
                              (fl/ (fl+ pi/2 ($flatan (fl/ ay 2.0)))
                                   (if (negated-flonum? y) 2.0 -2.0)))]
