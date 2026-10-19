@@ -3049,6 +3049,15 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair \scheme{configure} on FreeBSD powerpc64 and powerpc64le (10.5.0)}
+
+On FreeBSD, \scheme{uname -m} reports \scheme{powerpc} for 32-bit and
+64-bit PowerPC systems alike, so \scheme{configure --pbarch} selected the
+32-bit, big-endian \scheme{tpb32b} machine type on powerpc64 and
+powerpc64le.  The \scheme{configure} script now also consults
+\scheme{uname -p}, which distinguishes \scheme{powerpc64} and
+\scheme{powerpc64le} there.
+
 \subsection{Error message fixes (10.5.0)}
 
 A bug in the error produced by \scheme{bytevector-ieee-double-native-set!} when the last
