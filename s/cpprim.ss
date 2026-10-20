@@ -4956,6 +4956,23 @@
                             (make-info-foreign '(atomic) (map (lambda (e) `(fp-double-float)) e*) `(fp-double-float) #t))
                          (literal ,(make-info-literal #f 'entry entry 0))
                          ,e* ...)))
+      (define build-fltanh
+        (lambda (e)
+          (case ($target-machine)
+            [(i3fb ti3fb i3nb ti3nb a6nb ta6nb)
+             ;; Match the corrections in $fltanh for the affected libm versions.
+             (bind #t (e)
+               `(if ,(build-fl= e `(quote 0.0))
+                    ,e
+                    ,(case ($target-machine)
+                       [(i3fb ti3fb)
+                        `(if ,(build-fl= e `(quote +inf.0))
+                             (quote 1.0)
+                             (if ,(build-fl= e `(quote -inf.0))
+                                 (quote -1.0)
+                                 ,(build-fl-call (lookup-c-entry fltanh) e)))]
+                       [else (build-fl-call (lookup-c-entry fltanh) e)])))]
+            [else (build-fl-call (lookup-c-entry fltanh) e)])))
       (define build-flminmax
         (lambda (min?)
           (lambda (e1 e2)
@@ -5034,7 +5051,28 @@
         (define-fl-call flacos)
         (define-fl2-call flatan flatan2)
         (define-fl-call flexp)
-        (define-fl2-call fllog fllog2))
+        (define-fl-call fllog1p)
+        (define-fl-call fllog2)
+        (define-fl-call flexpm1)
+        (define-fl-call flexp2)
+        (define-fl-call flsinh)
+        (define-fl-call flcosh)
+        (define-fl-call flasinh)
+        (define-fl-call flacosh)
+        (define-fl-call flatanh)
+        (define-fl2-call fllog fllog-base))
+
+      (define-inline 3 fltanh
+        [(e) (build-fltanh e)])
+
+      (define-inline 3 flfma
+        [(e1 e2 e3) (build-fl-call (lookup-c-entry flfma) e1 e2 e3)])
+
+      (define-inline 3 flhypot
+        [(e1 e2) (build-fl-call (lookup-c-entry flhypot) e1 e2)])
+
+      (define-inline 3 flnextafter
+        [(e1 e2) (build-fl-call (lookup-c-entry flnextafter) e1 e2)])
 
       (define-inline 3 flexpt
         [(e1 e2) (build-fl-call (lookup-c-entry flexpt) e1 e2)])
@@ -5408,8 +5446,42 @@
         (define-fl-call flacos)
         (define-fl2-call flatan flatan2)
         (define-fl-call flexp)
-        (define-fl2-call fllog fllog2))
+        (define-fl-call fllog1p)
+        (define-fl-call fllog2)
+        (define-fl-call flexpm1)
+        (define-fl-call flexp2)
+        (define-fl-call flsinh)
+        (define-fl-call flcosh)
+        (define-fl-call flasinh)
+        (define-fl-call flacosh)
+        (define-fl-call flatanh)
+        (define-fl2-call fllog fllog-base))
       
+      (define-inline 2 fltanh
+        [(e) (build-checked-fp-op e build-fltanh
+               (lambda (e) (build-libcall #t src sexpr fltanh e)))])
+
+      (define-inline 2 flfma
+        [(e1 e2 e3)
+         (if (and (known-flonum-result? e1) (known-flonum-result? e2) (known-flonum-result? e3))
+             (build-fl-call (lookup-c-entry flfma) e1 e2 e3)
+             (bind #t (e1 e2 e3)
+               `(if ,(build-flonums? (list e1 e2 e3))
+                    ,(build-fl-call (lookup-c-entry flfma) e1 e2 e3)
+                    ,(build-libcall #t src sexpr flfma e1 e2 e3))))])
+
+      (define-inline 2 flhypot
+        [(e1 e2) (build-checked-fp-op e1 e2
+                   (lambda (e1 e2) (build-fl-call (lookup-c-entry flhypot) e1 e2))
+                   (lambda (e1 e2)
+                     (build-libcall #t src sexpr flhypot e1 e2)))])
+
+      (define-inline 2 flnextafter
+        [(e1 e2) (build-checked-fp-op e1 e2
+                   (lambda (e1 e2) (build-fl-call (lookup-c-entry flnextafter) e1 e2))
+                   (lambda (e1 e2)
+                     (build-libcall #t src sexpr flnextafter e1 e2)))])
+
       (define-inline 2 flexpt
         [(e1 e2) (build-checked-fp-op e1 e2
                    (lambda (e1 e2) (build-fl-call (lookup-c-entry flexpt) e1 e2))

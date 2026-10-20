@@ -10161,6 +10161,72 @@ fl.mo:Expected error in mat fllog: "incorrect argument count in call (fllog)".
 fl.mo:Expected error in mat fllog: "fllog: 3 is not a flonum".
 fl.mo:Expected error in mat fllog: "fllog: a is not a flonum".
 fl.mo:Expected error in mat fllog: "fllog: 0 is not a flonum".
+fl.mo:Expected error in mat fllog2: "incorrect argument count in call (fllog2)".
+fl.mo:Expected error in mat fllog2: "incorrect argument count in call (fllog2 1.0 2.0)".
+fl.mo:Expected error in mat fllog2: "fllog2: a is not a flonum".
+fl.mo:Expected error in mat fllog2: "fllog2: 1 is not a flonum".
+fl.mo:Expected error in mat fllog2: "fllog2: 1.0+2.0i is not a flonum".
+fl.mo:Expected error in mat flexp2: "incorrect argument count in call (flexp2)".
+fl.mo:Expected error in mat flexp2: "incorrect argument count in call (flexp2 1.0 2.0)".
+fl.mo:Expected error in mat flexp2: "flexp2: a is not a flonum".
+fl.mo:Expected error in mat flexp2: "flexp2: 1 is not a flonum".
+fl.mo:Expected error in mat flexp2: "flexp2: 1.0+2.0i is not a flonum".
+fl.mo:Expected error in mat flnextafter: "incorrect argument count in call (flnextafter)".
+fl.mo:Expected error in mat flnextafter: "incorrect argument count in call (flnextafter 1.0)".
+fl.mo:Expected error in mat flnextafter: "incorrect argument count in call (flnextafter 1.0 2.0 3.0)".
+fl.mo:Expected error in mat flnextafter: "flnextafter: a is not a flonum".
+fl.mo:Expected error in mat flnextafter: "flnextafter: a is not a flonum".
+fl.mo:Expected error in mat flnextafter: "flnextafter: 1 is not a flonum".
+fl.mo:Expected error in mat flnextafter: "flnextafter: 2 is not a flonum".
+fl.mo:Expected error in mat flnextafter: "flnextafter: 1.0+2.0i is not a flonum".
+fl.mo:Expected error in mat flhypot: "incorrect argument count in call (flhypot)".
+fl.mo:Expected error in mat flhypot: "incorrect argument count in call (flhypot 3.0)".
+fl.mo:Expected error in mat flhypot: "incorrect argument count in call (flhypot 3.0 4.0 5.0)".
+fl.mo:Expected error in mat flhypot: "flhypot: a is not a flonum".
+fl.mo:Expected error in mat flhypot: "flhypot: a is not a flonum".
+fl.mo:Expected error in mat flhypot: "flhypot: 3 is not a flonum".
+fl.mo:Expected error in mat flhypot: "flhypot: 4 is not a flonum".
+fl.mo:Expected error in mat flhypot: "flhypot: 0+1i is not a flonum".
+fl.mo:Expected error in mat fllog1p: "incorrect argument count in call (fllog1p)".
+fl.mo:Expected error in mat fllog1p: "incorrect argument count in call (fllog1p 1.0 2.0)".
+fl.mo:Expected error in mat fllog1p: "fllog1p: a is not a flonum".
+fl.mo:Expected error in mat fllog1p: "fllog1p: 1 is not a flonum".
+fl.mo:Expected error in mat fllog1p: "fllog1p: 1.0+2.0i is not a flonum".
+fl.mo:Expected error in mat flexpm1: "incorrect argument count in call (flexpm1)".
+fl.mo:Expected error in mat flexpm1: "incorrect argument count in call (flexpm1 1.0 2.0)".
+fl.mo:Expected error in mat flexpm1: "flexpm1: a is not a flonum".
+fl.mo:Expected error in mat flexpm1: "flexpm1: 1 is not a flonum".
+fl.mo:Expected error in mat flexpm1: "flexpm1: 1.0+2.0i is not a flonum".
+fl.mo:Expected error in mat flsinh: "incorrect argument count in call (flsinh)".
+fl.mo:Expected error in mat flsinh: "incorrect argument count in call (flsinh 1.0 2.0)".
+fl.mo:Expected error in mat flsinh: "flsinh: a is not a flonum".
+fl.mo:Expected error in mat flsinh: "flsinh: 1 is not a flonum".
+fl.mo:Expected error in mat flsinh: "flsinh: 1.0+2.0i is not a flonum".
+fl.mo:Expected error in mat flcosh: "incorrect argument count in call (flcosh)".
+fl.mo:Expected error in mat flcosh: "incorrect argument count in call (flcosh 1.0 2.0)".
+fl.mo:Expected error in mat flcosh: "flcosh: a is not a flonum".
+fl.mo:Expected error in mat flcosh: "flcosh: 1 is not a flonum".
+fl.mo:Expected error in mat flcosh: "flcosh: 1.0+2.0i is not a flonum".
+fl.mo:Expected error in mat fltanh: "incorrect argument count in call (fltanh)".
+fl.mo:Expected error in mat fltanh: "incorrect argument count in call (fltanh 1.0 2.0)".
+fl.mo:Expected error in mat fltanh: "fltanh: a is not a flonum".
+fl.mo:Expected error in mat fltanh: "fltanh: 1 is not a flonum".
+fl.mo:Expected error in mat fltanh: "fltanh: 1.0+2.0i is not a flonum".
+fl.mo:Expected error in mat flasinh: "incorrect argument count in call (flasinh)".
+fl.mo:Expected error in mat flasinh: "incorrect argument count in call (flasinh 1.0 2.0)".
+fl.mo:Expected error in mat flasinh: "flasinh: a is not a flonum".
+fl.mo:Expected error in mat flasinh: "flasinh: 1 is not a flonum".
+fl.mo:Expected error in mat flasinh: "flasinh: 1.0+2.0i is not a flonum".
+fl.mo:Expected error in mat flacosh: "incorrect argument count in call (flacosh)".
+fl.mo:Expected error in mat flacosh: "incorrect argument count in call (flacosh 1.0 2.0)".
+fl.mo:Expected error in mat flacosh: "flacosh: a is not a flonum".
+fl.mo:Expected error in mat flacosh: "flacosh: 1 is not a flonum".
+fl.mo:Expected error in mat flacosh: "flacosh: 1.0+2.0i is not a flonum".
+fl.mo:Expected error in mat flatanh: "incorrect argument count in call (flatanh)".
+fl.mo:Expected error in mat flatanh: "incorrect argument count in call (flatanh 1.0 2.0)".
+fl.mo:Expected error in mat flatanh: "flatanh: a is not a flonum".
+fl.mo:Expected error in mat flatanh: "flatanh: 1 is not a flonum".
+fl.mo:Expected error in mat flatanh: "flatanh: 1.0+2.0i is not a flonum".
 fl.mo:Expected error in mat flexp: "incorrect argument count in call (flexp)".
 fl.mo:Expected error in mat flexp: "incorrect argument count in call (flexp 3.0 4.0)".
 fl.mo:Expected error in mat flexp: "flexp: a is not a flonum".
@@ -10357,6 +10423,12 @@ fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index <int>
 fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index <int>".
 fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index 1267650600228229401496703205376".
 fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index 1267650600228229401496703205376".
+fl.mo:Expected error in mat flfma: "incorrect argument count in call (flfma)".
+fl.mo:Expected error in mat flfma: "incorrect argument count in call (flfma 1.0 2.0)".
+fl.mo:Expected error in mat flfma: "incorrect argument count in call (flfma 1.0 2.0 3.0 4.0)".
+fl.mo:Expected error in mat flfma: "flfma: 1 is not a flonum".
+fl.mo:Expected error in mat flfma: "flfma: a is not a flonum".
+fl.mo:Expected error in mat flfma: "flfma: 3 is not a flonum".
 cfl.mo:Expected error in mat fl-make-rectangular: "fl-make-rectangular: 3 is not a flonum".
 cfl.mo:Expected error in mat fl-make-rectangular: "fl-make-rectangular: b is not a flonum".
 cfl.mo:Expected error in mat fl-make-rectangular: "fl-make-rectangular: 3 is not a flonum".

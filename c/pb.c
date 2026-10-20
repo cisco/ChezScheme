@@ -335,6 +335,11 @@ void S_pb_interp(ptr tc, void *bytecode) {
         case pb_call_double_uptr:
           fpregs[Cfpretval] = ((pb_double_uptr_t)proc)(regs[Carg1]);
           break;
+#ifdef pb_call_double_double_double_double
+        case pb_call_double_double_double_double:
+          fpregs[Cfpretval] = ((pb_double_double_double_double_t)proc)(fpregs[Cfparg1], fpregs[Cfparg2], fpregs[Cfparg3]);
+          break;
+#endif
         case pb_call_double_double_double:
           fpregs[Cfpretval] = ((pb_double_double_double_t)proc)(fpregs[Cfparg1], fpregs[Cfparg2]);
           break;

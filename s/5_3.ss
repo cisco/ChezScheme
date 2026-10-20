@@ -46,15 +46,6 @@
 )
 
 (let ()
-; could use foreign-entry? primitive if foreign.ss were loaded first
-(define op-if-entry?
-   (let ()
-      (define lookup
-         (foreign-procedure "(cs)lookup_foreign_entry" (string)
-            void*))
-      (lambda (op name)
-         (and (not (eqv? (lookup name) 0))
-              (op name)))))
 
 (let ()
 
@@ -323,9 +314,9 @@
 
 (define $fltan (cflop1 "(cs)tan"))
 
-(define flcosh (cflop1 "(cs)cosh"))
+(define $flcosh (cflop1 "(cs)cosh"))
 
-(define fltanh
+(define $fltanh
    (machine-case
       [(i3fb ti3fb)
        ; broken for -0.0, +/-inf
@@ -343,6 +334,7 @@
            [(fl= x 0.0) x]
            [else (ctanh x)])))]
       [else (cflop1 "(cs)tanh")]))
+
 
 (define $flexp (cflop1 "(cs)exp"))
 
@@ -396,75 +388,32 @@
 
 (define $flatan (cflop1 "(cs)atan"))
 
-(define flsinh (cflop1 "(cs)sinh"))
-
-(define fllog1+
-   (or (op-if-entry? cflop1 "(cs)log1p")
-       ; somewhat more accurate than (log (+ 1.0 x)), see
-       ; https://stat.ethz.ch/pipermail/r-devel/2003-August/027396.html
-       ; https://books.google.com/books?id=OjUyDwAAQBAJ&pg=PA290&lpg=PA290&dq=beebe+log1p&source=bl&ots=VLxmiSk1fA&sig=ACfU3U0_8tqKemomSjKW73iJ0zUO1u3p3Q&hl=en&sa=X&q=beebe%20log1p&f=false
-       (lambda (x)
-         (let ([u (fl+ 1.0 x)])
-           (cond
-             [(fl= u 1.0) x]
-             [(fl= u x) ($fllog x)]
-             [else (fl* ($fllog u) (fl/ x (fl- u 1.0)))])))))
-
-(define flatanh
-   (or (op-if-entry? cflop1 "(cs)atanh")
-       ; |x| <= 1
-       ; principal expression:
-       ; (log(1+x)-log(1-x))/2
-       (let ([f (lambda (x)
-                   (fl* 0.5 (fl- (fllog1+ x) (fllog1+ (fl- x)))))])
-          (lambda (x)
-             (if (negated-flonum? x) (fl- (f (fl- x))) (f x))))))
+(define $flsinh (cflop1 "(cs)sinh"))
+(define $fllog1p (cflop1 "(cs)log1p"))
+(define $fllog2 (cflop1 "(cs)log2"))
+(define $flexpm1 (cflop1 "(cs)expm1"))
+(define $flexp2 (cflop1 "(cs)exp2"))
+(define $flatanh (cflop1 "(cs)atanh"))
 
 (let ()
 
 (define log2 ($fllog 2.0))
 
-(define flhypot (cflop2 "(cs)hypot"))
+(define $flfma
+  (foreign-procedure __atomic "(cs)fma"
+    (double-float double-float double-float) double-float))
 
-(define flasinh
-   ; scheme-coded version needs "log2"
-   (or (op-if-entry? cflop1 "(cs)asinh")
-       ; principal expression:
-       ; log(x + sqrt(xx + 1))
-       ; avoids spurious overflows
-       ; avoids underflow problems from negative x by using identity
-       ; asinh(-x) = -asinh(x)
-       (let ([f (lambda (x)
-                   (if (fl= (fl+ x 1.0) x)
-                       (fl+ ($fllog x) log2)
-                       (let ([x2 (fl* x x)])
-                         (if (fl< x 0.5)
-                             (fl* 0.5 (fllog1+ (+ (* 2 x2) (fl* 2.0 x ($flsqrt (fl+ 1.0 x2))))))
-                             ($fllog (fl+ x ($flsqrt (fl+ 1.0 x2))))))))])
-          (lambda (x)
-             (if (negated-flonum? x) (fl- (f (fl- x))) (f x))))))
-
-(define flacosh
-   ; scheme-coded version needs "log2"
-   (or (op-if-entry? cflop1 "(cs)acosh")
-       ; x >= 1
-       ; principal expression:
-       ; log(x + sqrt(xx - 1))
-       ; avoids spurious overflows
-       (lambda (x)
-          (if (fl= (fl- x 1.0) x)
-              (fl+ ($fllog x) log2)
-              (let ([r (fl- x 1.0)])
-                (if (fl< 0.0 r 0.25)
-                    (fllog1+ (fl+ r ($flsqrt (fl+ (* 2 r) (fl* r r)))))
-                    ($fllog (fl+ x ($flsqrt (fl- (fl* x x) 1.0))))))))))
+(define $flhypot (cflop2 "(cs)hypot"))
+(define $flnextafter (cflop2 "(cs)nextafter"))
+(define $flasinh (cflop1 "(cs)asinh"))
+(define $flacosh (cflop1 "(cs)acosh"))
 
 (let ()
 
 (define pi (flatan2 0.0 -1.0))
 (define sqrt-omega ($flsqrt omega))
 (define log-omega ($fllog omega))
-(define acosh-omega (flacosh omega))
+(define acosh-omega ($flacosh omega))
 
 (let ()
 
@@ -564,7 +513,7 @@
    (let ([f (lambda (x y)
                ; x >= y
                (let ([r (fl/ y x)])
-                  (fl+ ($fllog x) (fl* .5 (fllog1+ (fl* r r))))))]
+                  (fl+ ($fllog x) (fl* .5 ($fllog1p (fl* r r))))))]
          [k (fl* .5 log2)])
       (lambda (z)
          (let ([x (cfl-real-part z)] [y (cfl-imag-part z)])
@@ -658,8 +607,8 @@
    (lambda (z)
       (let ([a (cfl-real-part z)] [b (cfl-imag-part z)])
          (if (fl<= (flabs b) acosh-omega)
-             (fl-make-rectangular (fl* ($flsin a) (flcosh b))
-                                  (fl* ($flcos a) (flsinh b)))
+             (fl-make-rectangular (fl* ($flsin a) ($flcosh b))
+                                  (fl* ($flcos a) ($flsinh b)))
              (cfl/i (cflslowsinh (cfl*i z)))))))
 
 (define cflcos
@@ -667,8 +616,8 @@
    (lambda (z)
       (let ([a (cfl-real-part z)] [b (cfl-imag-part z)])
          (if (fl<= (flabs b) acosh-omega)
-             (fl-make-rectangular (fl* ($flcos a) (flcosh b))
-                                  (fl- (fl* ($flsin a) (flsinh b))))
+             (fl-make-rectangular (fl* ($flcos a) ($flcosh b))
+                                  (fl- (fl* ($flsin a) ($flsinh b))))
              (cflslowcosh (cfl*i z))))))
 
 (define cfltan
@@ -689,7 +638,7 @@
          (let ([a (cfl-real-part z-)] [b (cfl-imag-part z-)]
                [c (cfl-real-part z+)] [d (cfl-imag-part z+)])
             (fl-make-rectangular (fl* 2.0 (flatan2 a c))
-                                 (flasinh (fl- (fl* b c) (fl* a d))))))))
+                                 ($flasinh (fl- (fl* b c) (fl* a d))))))))
 
 (define cflasin
    ; from Kahan
@@ -707,7 +656,7 @@
                (flatan2 (cfl-real-part z) (if (flonum? z)
                                               0.0
                                               (fl- (fl* a c) (fl* b d))))
-               (flasinh (fl- (fl* a d) (fl* b c))))))))
+               ($flasinh (fl- (fl* a d) (fl* b c))))))))
 
 (define cflasinh
    ; from Kahan
@@ -721,8 +670,8 @@
    (lambda (z)
       (let ([a (cfl-real-part z)] [b (cfl-imag-part z)])
          (if (fl<= a acosh-omega)
-             (fl-make-rectangular (fl* (flsinh a) ($flcos b))
-                                  (fl* (flcosh a) ($flsin b)))
+             (fl-make-rectangular (fl* ($flsinh a) ($flcos b))
+                                  (fl* ($flcosh a) ($flsin b)))
              (cflslowsinh z)))))
 
 (define cflcosh
@@ -730,8 +679,8 @@
    (lambda (z)
       (let ([a (cfl-real-part z)] [b (cfl-imag-part z)])
          (if (fl<= a acosh-omega)
-             (fl-make-rectangular (fl* (flcosh a) ($flcos b))
-                                  (fl* (flsinh a) ($flsin b)))
+             (fl-make-rectangular (fl* ($flcosh a) ($flcos b))
+                                  (fl* ($flsinh a) ($flsin b)))
              (cflslowcosh z)))))
 
 (define cfltanh
@@ -745,7 +694,7 @@
                       (if (negated-flonum? x) -1.0 1.0)
                       (if (negated-flonum? y) (fl- 0.0) 0.0))
                    (let ([t ($fltan y)]
-                         [s (flsinh x)])
+                         [s ($flsinh x)])
                       (let ([beta (fl+ 1.0 (fl* t t))]
                             [ss (fl* s s)])
                          (let ([rho ($flsqrt (fl+ 1.0 ss))])
@@ -767,7 +716,7 @@
             [z+ (cflsqrt (cfl+ z 1.0))])
          (let ([a (cfl-real-part z-)] [b (cfl-imag-part z-)]
                [c (cfl-real-part z+)] [d (cfl-imag-part z+)])
-            (fl-make-rectangular (flasinh (fl+ (fl* a c) (fl* b d)))
+            (fl-make-rectangular ($flasinh (fl+ (fl* a c) (fl* b d)))
                                  (fl* 2.0 ($flatan (fl/ b c))))))))
 
 (define cflatanh
@@ -799,7 +748,7 @@
                             (let ([1-x (fl- 1.0 x)]
                                   [k (let ([k (fl+ ay rho)]) (fl* k k))])
                                (fl-make-rectangular
-                                  (fl/ (fllog1+ (fl/ (fl* 4.0 x)
+                                  (fl/ ($fllog1p (fl/ (fl* 4.0 x)
                                                      (fl+ (fl* 1-x 1-x) k)))
                                        4.0)
                                   (fl/ (flatan2 (fl* 2.0 y)
@@ -1681,17 +1630,17 @@
            (unless (real? x) (nonreal-error 'atan x))
            (angle (make-rectangular x y))])]))
 
-(define-trig-op sinh flsinh cflsinh 0)
-(define-trig-op cosh flcosh cflcosh 1)
-(define-trig-op tanh fltanh cfltanh 0)
-(define-trig-op asinh flasinh cflasinh 0)
+(define-trig-op sinh $flsinh cflsinh 0)
+(define-trig-op cosh $flcosh cflcosh 1)
+(define-trig-op tanh $fltanh cfltanh 0)
+(define-trig-op asinh $flasinh cflasinh 0)
 
 (set! acosh
    (lambda (x)
       (type-case x
          [(flonum?)
-          ; make sure NANs go the "flacosh" route
-          (if (fl< x 1.0) (cflacosh x) (flacosh x))]
+          ; make sure NANs go the "$flacosh" route
+          (if (fl< x 1.0) (cflacosh x) ($flacosh x))]
          [($inexactnum?) (cflacosh x)]
          [(fixnum?) (if (fx= x 1) 0 (acosh (fixnum->flonum x)))]
          [(bignum? ratnum? $exactnum?) (acosh (inexact x))]
@@ -1701,10 +1650,10 @@
    (lambda (x)
       (type-case x
          [(flonum?)
-          ; make sure NANs go the "flatanh" route
+          ; make sure NANs go the "$flatanh" route
           (if (or (fl< x -1.0) (fl> x 1.0))
               (cflatanh x)
-              (flatanh x))]
+              ($flatanh x))]
          [($inexactnum?) (cflatanh x)]
          [(fixnum?)
           (cond
@@ -3375,6 +3324,19 @@
   (fl-op flacos $flacos x)
   (fl-op flsqrt $flsqrt x)
   (fl-op flexpt $flexpt x y)
+  (fl-op fllog1p $fllog1p x)
+  (fl-op fllog2 $fllog2 x)
+  (fl-op flexpm1 $flexpm1 x)
+  (fl-op flexp2 $flexp2 x)
+  (fl-op flsinh $flsinh x)
+  (fl-op flcosh $flcosh x)
+  (fl-op fltanh $fltanh x)
+  (fl-op flasinh $flasinh x)
+  (fl-op flacosh $flacosh x)
+  (fl-op flatanh $flatanh x)
+  (fl-op flfma $flfma x y z)
+  (fl-op flhypot $flhypot x y)
+  (fl-op flnextafter $flnextafter x y)
   (fl-op flfloor $flfloor x)
   (fl-op flceiling $flceiling x))
 
