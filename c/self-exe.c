@@ -215,6 +215,24 @@ static char *get_self_path_platform() {
 }
 #endif
 
+#ifdef __OpenBSD__
+#include <sys/param.h>
+#if OpenBSD >= 202610
+#include <limits.h>
+#define HAVE_GET_SELF_PATH_PLATFORM
+static char *get_self_path_platform() {
+  char *buf = malloc(PATH_MAX);
+  if (!buf) {
+	return NULL;
+  }
+  if (getexecpath(buf, PATH_MAX)) {
+	return NULL;
+  }
+  return buf;
+}
+#endif
+#endif /* __OpenBSD__ */
+
 #if defined(__sun__) && defined(__svr4__)
 #define HAVE_GET_SELF_PATH_PLATFORM
 static char *get_self_path_platform() {
