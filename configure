@@ -123,6 +123,7 @@ alwaysUseBootFile=
 skipSubmoduleUpdate=
 skipImmediateMakefile=
 zuoExternal=
+sessionKey=
 
 CONFIG_UNAME=`uname`
 
@@ -451,6 +452,9 @@ while [ $# != 0 ] ; do
     --start=*)
       alwaysUseBootFile=`echo $1 | sed -e 's/^--start=//'`
       ;;
+    --sessionkey=*)
+      sessionKey=`echo $1 | sed -e 's/^--sessionkey=//'`
+      ;;
     CC=*)
       CC=`echo $1 | sed -e 's/^CC=//'`
       ;;
@@ -741,6 +745,7 @@ if [ "$help" = "yes" ]; then
   echo "  --force                           disable use of pb to (re)build boot files"
   echo "  --as-is                           skip Git submodule update"
   echo "  --nomakefile                      create build-directory files only"
+  echo "  --sessionkey=<string>             base gensym session key for the build"
   echo "  CC=<C compiler>                   C compiler"
   echo "  CPPFLAGS=<C preprocessor flags>   C preprocessor flags"
   echo "  CPPFLAGS+=<C preprocessor flags>  add C preprocessor flags"
@@ -1255,6 +1260,7 @@ enablelibffi=$libffi
 preloadBootFiles=$preloadBootFiles
 alwaysUseBootFile=$alwaysUseBootFile
 relativeBootFiles=$relativeBootFiles
+sessionKey=$sessionKey
 
 ZUO=$ZUO
 ZUO_DEP=$ZUO_DEP
