@@ -254,6 +254,9 @@ if [ "$unixsuffix" != "" ] ; then
         tm64=tppc64${unixsuffix}
         if uname -m | egrep 'ppc64le' > /dev/null 2>&1 ; then
             pbendian=l
+        # FreeBSD `uname -m` produces "powerpc" for all PowerPC variants
+        elif uname -p | egrep 'powerpc64le' > /dev/null 2>&1 ; then
+            pbendian=l
         else
             pbendian=b
         fi
@@ -543,6 +546,9 @@ if [ "$bits" = "" ] ; then
     bits=64
   # NetBSD `uname -m` produces "evbarm" for AArch64
   elif uname -p | egrep 'aarch64' > /dev/null 2>&1 ; then
+    bits=64
+  # FreeBSD `uname -m` produces "powerpc" for all PowerPC variants
+  elif uname -p | egrep 'powerpc64' > /dev/null 2>&1 ; then
     bits=64
   else
     bits=32
