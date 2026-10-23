@@ -1446,7 +1446,7 @@ static double s_exp(double x) { return exp(x); }
 
 static double s_log(double x) { return log(x); }
 
-static double s_log2(double x, double y) { return log(x) / log(y); }
+static double s_log_base(double x, double y) { return log(x) / log(y); }
 
 #if (machine_type == machine_type_i3fb || machine_type == machine_type_ti3fb)
 #include <ieeefp.h>
@@ -1514,19 +1514,25 @@ static double s_round(double x) { return rint(x); }
 
 static double s_trunc(double x) { return trunc(x); }
 
+static double s_fma(double x, double y, double z) { return fma(x, y, z); }
+
 static double s_hypot(double x, double y) { return HYPOT(x, y); }
 
-#ifdef ARCHYPERBOLIC
+static double s_nextafter(double x, double y) { return nextafter(x, y); }
+
 static double s_asinh(double x) { return CHECK_ASINTAN_ZERO(x, asinh(x)); }
 
 static double s_acosh(double x) { return acosh(x); }
 
 static double s_atanh(double x) { return CHECK_ASINTAN_ZERO(x, atanh(x)); }
-#endif /* ARCHHYPERBOLIC */
 
-#ifdef LOG1P
 static double s_log1p(double x) { return log1p(x); }
-#endif /* LOG1P */
+
+static double s_log2(double x) { return log2(x); }
+
+static double s_expm1(double x) { return expm1(x); }
+
+static double s_exp2(double x) { return exp2(x); }
 
 static ptr s_getenv(char *name) {
 #ifdef WIN32
@@ -1921,16 +1927,17 @@ void S_prim5_init(void) {
     Sforeign_symbol("(cs)floor", (void *)s_floor);
     Sforeign_symbol("(cs)ceil", (void *)s_ceil);
     Sforeign_symbol("(cs)hypot", (void *)s_hypot);
+    Sforeign_symbol("(cs)nextafter", (void *)s_nextafter);
+    Sforeign_symbol("(cs)fma", (void *)s_fma);
 
-#ifdef ARCHYPERBOLIC
     Sforeign_symbol("(cs)asinh", (void *)s_asinh);
     Sforeign_symbol("(cs)acosh", (void *)s_acosh);
     Sforeign_symbol("(cs)atanh", (void *)s_atanh);
-#endif /* ARCHHYPERBOLIC */
 
-#ifdef LOG1P
     Sforeign_symbol("(cs)log1p", (void *)s_log1p);
-#endif /* LOG1P */
+    Sforeign_symbol("(cs)log2", (void *)s_log2);
+    Sforeign_symbol("(cs)expm1", (void *)s_expm1);
+    Sforeign_symbol("(cs)exp2", (void *)s_exp2);
 
     Sforeign_symbol("(cs)s_get_reloc", (void *)s_get_reloc);
     Sforeign_symbol("(cs)getenv", (void *)s_getenv);
@@ -1980,8 +1987,21 @@ void S_prim5_init(void) {
     S_install_c_entry(CENTRY_flatan2, proc2ptr(s_atan2));
     S_install_c_entry(CENTRY_flexp, proc2ptr(s_exp));
     S_install_c_entry(CENTRY_fllog, proc2ptr(s_log));
-    S_install_c_entry(CENTRY_fllog2, proc2ptr(s_log2));
+    S_install_c_entry(CENTRY_fllog_base, proc2ptr(s_log_base));
     S_install_c_entry(CENTRY_flexpt, proc2ptr(s_pow));
+    S_install_c_entry(CENTRY_fllog1p, proc2ptr(s_log1p));
+    S_install_c_entry(CENTRY_fllog2, proc2ptr(s_log2));
+    S_install_c_entry(CENTRY_flexpm1, proc2ptr(s_expm1));
+    S_install_c_entry(CENTRY_flexp2, proc2ptr(s_exp2));
+    S_install_c_entry(CENTRY_flsinh, proc2ptr(s_sinh));
+    S_install_c_entry(CENTRY_flcosh, proc2ptr(s_cosh));
+    S_install_c_entry(CENTRY_fltanh, proc2ptr(s_tanh));
+    S_install_c_entry(CENTRY_flasinh, proc2ptr(s_asinh));
+    S_install_c_entry(CENTRY_flacosh, proc2ptr(s_acosh));
+    S_install_c_entry(CENTRY_flatanh, proc2ptr(s_atanh));
+    S_install_c_entry(CENTRY_flfma, proc2ptr(s_fma));
+    S_install_c_entry(CENTRY_flhypot, proc2ptr(s_hypot));
+    S_install_c_entry(CENTRY_flnextafter, proc2ptr(s_nextafter));
     S_install_c_entry(CENTRY_flsqrt, proc2ptr(s_sqrt));
 
     S_check_c_entry_vector();

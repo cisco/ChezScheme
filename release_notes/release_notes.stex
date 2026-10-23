@@ -122,6 +122,22 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Additional flonum procedures (10.5.0)}
+
+The new \scheme{flhypot}, \scheme{flfma}, \scheme{fllog1p},
+\scheme{flexpm1}, \scheme{flsinh}, \scheme{flcosh}, \scheme{fltanh},
+\scheme{flasinh}, \scheme{flacosh}, \scheme{flatanh}, \scheme{fllog2},
+\scheme{flexp2}, and \scheme{flnextafter} procedures
+correspond to the C mathematics library (commonly called libm) exports
+\scheme{hypot}, \scheme{fma}, \scheme{log1p}, \scheme{expm1},
+\scheme{sinh}, \scheme{cosh}, \scheme{tanh}, \scheme{asinh},
+\scheme{acosh}, \scheme{atanh}, \scheme{log2}, \scheme{exp2}, and
+\scheme{nextafter}, respectively.
+
+Chez Scheme now uses these C mathematics-library functions unconditionally,
+since they are required by C99 for hosted implementations. Existing
+corrections for platform library bugs are retained.
+
 \subsection{Fault signals not raised by Scheme code go to the previous handler (10.5.0)}
 
 A SIGSEGV, SIGBUS, SIGFPE, or SIGILL that arrives on a thread with no Scheme

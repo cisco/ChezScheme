@@ -1,5 +1,5 @@
-*** output-compile-0-f-f-f-experr/errors-compile-0-f-f-f	2026-08-20 23:56:22.974371544 -0700
---- output-compile-0-t-f-f-experr/errors-compile-0-t-f-f	2026-08-20 23:48:44.311910135 -0700
+*** errors-compile-0-f-f-f	2026-10-20 16:42:18.175354671 -0400
+--- errors-compile-0-t-f-f	2026-10-20 16:42:21.008941780 -0400
 ***************
 *** 180,186 ****
   3.mo:Expected error in mat case-lambda: "incorrect number of arguments 2 to #<procedure foo>".
@@ -6006,7 +6006,7 @@
   fl.mo:Expected error in mat fl-: "fl-: 1 is not a flonum".
   fl.mo:Expected error in mat fl-: "fl-: a is not a flonum".
 ***************
-*** 10146,10235 ****
+*** 10146,10301 ****
   fl.mo:Expected error in mat fl*: "fl*: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 1 is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 2/3 is not a flonum".
@@ -6025,6 +6025,72 @@
   fl.mo:Expected error in mat fllog: "fllog: 3 is not a flonum".
   fl.mo:Expected error in mat fllog: "fllog: a is not a flonum".
   fl.mo:Expected error in mat fllog: "fllog: 0 is not a flonum".
+! fl.mo:Expected error in mat fllog2: "incorrect argument count in call (fllog2)".
+! fl.mo:Expected error in mat fllog2: "incorrect argument count in call (fllog2 1.0 2.0)".
+  fl.mo:Expected error in mat fllog2: "fllog2: a is not a flonum".
+  fl.mo:Expected error in mat fllog2: "fllog2: 1 is not a flonum".
+  fl.mo:Expected error in mat fllog2: "fllog2: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flexp2: "incorrect argument count in call (flexp2)".
+! fl.mo:Expected error in mat flexp2: "incorrect argument count in call (flexp2 1.0 2.0)".
+  fl.mo:Expected error in mat flexp2: "flexp2: a is not a flonum".
+  fl.mo:Expected error in mat flexp2: "flexp2: 1 is not a flonum".
+  fl.mo:Expected error in mat flexp2: "flexp2: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flnextafter: "incorrect argument count in call (flnextafter)".
+! fl.mo:Expected error in mat flnextafter: "incorrect argument count in call (flnextafter 1.0)".
+! fl.mo:Expected error in mat flnextafter: "incorrect argument count in call (flnextafter 1.0 2.0 3.0)".
+  fl.mo:Expected error in mat flnextafter: "flnextafter: a is not a flonum".
+  fl.mo:Expected error in mat flnextafter: "flnextafter: a is not a flonum".
+  fl.mo:Expected error in mat flnextafter: "flnextafter: 1 is not a flonum".
+  fl.mo:Expected error in mat flnextafter: "flnextafter: 2 is not a flonum".
+  fl.mo:Expected error in mat flnextafter: "flnextafter: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flhypot: "incorrect argument count in call (flhypot)".
+! fl.mo:Expected error in mat flhypot: "incorrect argument count in call (flhypot 3.0)".
+! fl.mo:Expected error in mat flhypot: "incorrect argument count in call (flhypot 3.0 4.0 5.0)".
+  fl.mo:Expected error in mat flhypot: "flhypot: a is not a flonum".
+  fl.mo:Expected error in mat flhypot: "flhypot: a is not a flonum".
+  fl.mo:Expected error in mat flhypot: "flhypot: 3 is not a flonum".
+  fl.mo:Expected error in mat flhypot: "flhypot: 4 is not a flonum".
+  fl.mo:Expected error in mat flhypot: "flhypot: 0+1i is not a flonum".
+! fl.mo:Expected error in mat fllog1p: "incorrect argument count in call (fllog1p)".
+! fl.mo:Expected error in mat fllog1p: "incorrect argument count in call (fllog1p 1.0 2.0)".
+  fl.mo:Expected error in mat fllog1p: "fllog1p: a is not a flonum".
+  fl.mo:Expected error in mat fllog1p: "fllog1p: 1 is not a flonum".
+  fl.mo:Expected error in mat fllog1p: "fllog1p: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flexpm1: "incorrect argument count in call (flexpm1)".
+! fl.mo:Expected error in mat flexpm1: "incorrect argument count in call (flexpm1 1.0 2.0)".
+  fl.mo:Expected error in mat flexpm1: "flexpm1: a is not a flonum".
+  fl.mo:Expected error in mat flexpm1: "flexpm1: 1 is not a flonum".
+  fl.mo:Expected error in mat flexpm1: "flexpm1: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flsinh: "incorrect argument count in call (flsinh)".
+! fl.mo:Expected error in mat flsinh: "incorrect argument count in call (flsinh 1.0 2.0)".
+  fl.mo:Expected error in mat flsinh: "flsinh: a is not a flonum".
+  fl.mo:Expected error in mat flsinh: "flsinh: 1 is not a flonum".
+  fl.mo:Expected error in mat flsinh: "flsinh: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flcosh: "incorrect argument count in call (flcosh)".
+! fl.mo:Expected error in mat flcosh: "incorrect argument count in call (flcosh 1.0 2.0)".
+  fl.mo:Expected error in mat flcosh: "flcosh: a is not a flonum".
+  fl.mo:Expected error in mat flcosh: "flcosh: 1 is not a flonum".
+  fl.mo:Expected error in mat flcosh: "flcosh: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat fltanh: "incorrect argument count in call (fltanh)".
+! fl.mo:Expected error in mat fltanh: "incorrect argument count in call (fltanh 1.0 2.0)".
+  fl.mo:Expected error in mat fltanh: "fltanh: a is not a flonum".
+  fl.mo:Expected error in mat fltanh: "fltanh: 1 is not a flonum".
+  fl.mo:Expected error in mat fltanh: "fltanh: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flasinh: "incorrect argument count in call (flasinh)".
+! fl.mo:Expected error in mat flasinh: "incorrect argument count in call (flasinh 1.0 2.0)".
+  fl.mo:Expected error in mat flasinh: "flasinh: a is not a flonum".
+  fl.mo:Expected error in mat flasinh: "flasinh: 1 is not a flonum".
+  fl.mo:Expected error in mat flasinh: "flasinh: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flacosh: "incorrect argument count in call (flacosh)".
+! fl.mo:Expected error in mat flacosh: "incorrect argument count in call (flacosh 1.0 2.0)".
+  fl.mo:Expected error in mat flacosh: "flacosh: a is not a flonum".
+  fl.mo:Expected error in mat flacosh: "flacosh: 1 is not a flonum".
+  fl.mo:Expected error in mat flacosh: "flacosh: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flatanh: "incorrect argument count in call (flatanh)".
+! fl.mo:Expected error in mat flatanh: "incorrect argument count in call (flatanh 1.0 2.0)".
+  fl.mo:Expected error in mat flatanh: "flatanh: a is not a flonum".
+  fl.mo:Expected error in mat flatanh: "flatanh: 1 is not a flonum".
+  fl.mo:Expected error in mat flatanh: "flatanh: 1.0+2.0i is not a flonum".
 ! fl.mo:Expected error in mat flexp: "incorrect argument count in call (flexp)".
 ! fl.mo:Expected error in mat flexp: "incorrect argument count in call (flexp 3.0 4.0)".
   fl.mo:Expected error in mat flexp: "flexp: a is not a flonum".
@@ -6097,7 +6163,7 @@
   fl.mo:Expected error in mat flsingle: "flsingle: a is not a flonum".
   fl.mo:Expected error in mat flsingle: "flsingle: 3 is not a flonum".
   fl.mo:Expected error in mat flsingle: "flsingle: 2.0+1.0i is not a flonum".
---- 10146,10235 ----
+--- 10146,10301 ----
   fl.mo:Expected error in mat fl*: "fl*: (a . b) is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 1 is not a flonum".
   fl.mo:Expected error in mat fl*: "fl*: 2/3 is not a flonum".
@@ -6116,6 +6182,72 @@
   fl.mo:Expected error in mat fllog: "fllog: 3 is not a flonum".
   fl.mo:Expected error in mat fllog: "fllog: a is not a flonum".
   fl.mo:Expected error in mat fllog: "fllog: 0 is not a flonum".
+! fl.mo:Expected error in mat fllog2: "incorrect number of arguments 0 to #<procedure fllog2>".
+! fl.mo:Expected error in mat fllog2: "incorrect number of arguments 2 to #<procedure fllog2>".
+  fl.mo:Expected error in mat fllog2: "fllog2: a is not a flonum".
+  fl.mo:Expected error in mat fllog2: "fllog2: 1 is not a flonum".
+  fl.mo:Expected error in mat fllog2: "fllog2: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flexp2: "incorrect number of arguments 0 to #<procedure flexp2>".
+! fl.mo:Expected error in mat flexp2: "incorrect number of arguments 2 to #<procedure flexp2>".
+  fl.mo:Expected error in mat flexp2: "flexp2: a is not a flonum".
+  fl.mo:Expected error in mat flexp2: "flexp2: 1 is not a flonum".
+  fl.mo:Expected error in mat flexp2: "flexp2: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flnextafter: "incorrect number of arguments 0 to #<procedure flnextafter>".
+! fl.mo:Expected error in mat flnextafter: "incorrect number of arguments 1 to #<procedure flnextafter>".
+! fl.mo:Expected error in mat flnextafter: "incorrect number of arguments 3 to #<procedure flnextafter>".
+  fl.mo:Expected error in mat flnextafter: "flnextafter: a is not a flonum".
+  fl.mo:Expected error in mat flnextafter: "flnextafter: a is not a flonum".
+  fl.mo:Expected error in mat flnextafter: "flnextafter: 1 is not a flonum".
+  fl.mo:Expected error in mat flnextafter: "flnextafter: 2 is not a flonum".
+  fl.mo:Expected error in mat flnextafter: "flnextafter: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flhypot: "incorrect number of arguments 0 to #<procedure flhypot>".
+! fl.mo:Expected error in mat flhypot: "incorrect number of arguments 1 to #<procedure flhypot>".
+! fl.mo:Expected error in mat flhypot: "incorrect number of arguments 3 to #<procedure flhypot>".
+  fl.mo:Expected error in mat flhypot: "flhypot: a is not a flonum".
+  fl.mo:Expected error in mat flhypot: "flhypot: a is not a flonum".
+  fl.mo:Expected error in mat flhypot: "flhypot: 3 is not a flonum".
+  fl.mo:Expected error in mat flhypot: "flhypot: 4 is not a flonum".
+  fl.mo:Expected error in mat flhypot: "flhypot: 0+1i is not a flonum".
+! fl.mo:Expected error in mat fllog1p: "incorrect number of arguments 0 to #<procedure fllog1p>".
+! fl.mo:Expected error in mat fllog1p: "incorrect number of arguments 2 to #<procedure fllog1p>".
+  fl.mo:Expected error in mat fllog1p: "fllog1p: a is not a flonum".
+  fl.mo:Expected error in mat fllog1p: "fllog1p: 1 is not a flonum".
+  fl.mo:Expected error in mat fllog1p: "fllog1p: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flexpm1: "incorrect number of arguments 0 to #<procedure flexpm1>".
+! fl.mo:Expected error in mat flexpm1: "incorrect number of arguments 2 to #<procedure flexpm1>".
+  fl.mo:Expected error in mat flexpm1: "flexpm1: a is not a flonum".
+  fl.mo:Expected error in mat flexpm1: "flexpm1: 1 is not a flonum".
+  fl.mo:Expected error in mat flexpm1: "flexpm1: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flsinh: "incorrect number of arguments 0 to #<procedure flsinh>".
+! fl.mo:Expected error in mat flsinh: "incorrect number of arguments 2 to #<procedure flsinh>".
+  fl.mo:Expected error in mat flsinh: "flsinh: a is not a flonum".
+  fl.mo:Expected error in mat flsinh: "flsinh: 1 is not a flonum".
+  fl.mo:Expected error in mat flsinh: "flsinh: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flcosh: "incorrect number of arguments 0 to #<procedure flcosh>".
+! fl.mo:Expected error in mat flcosh: "incorrect number of arguments 2 to #<procedure flcosh>".
+  fl.mo:Expected error in mat flcosh: "flcosh: a is not a flonum".
+  fl.mo:Expected error in mat flcosh: "flcosh: 1 is not a flonum".
+  fl.mo:Expected error in mat flcosh: "flcosh: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat fltanh: "incorrect number of arguments 0 to #<procedure fltanh>".
+! fl.mo:Expected error in mat fltanh: "incorrect number of arguments 2 to #<procedure fltanh>".
+  fl.mo:Expected error in mat fltanh: "fltanh: a is not a flonum".
+  fl.mo:Expected error in mat fltanh: "fltanh: 1 is not a flonum".
+  fl.mo:Expected error in mat fltanh: "fltanh: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flasinh: "incorrect number of arguments 0 to #<procedure flasinh>".
+! fl.mo:Expected error in mat flasinh: "incorrect number of arguments 2 to #<procedure flasinh>".
+  fl.mo:Expected error in mat flasinh: "flasinh: a is not a flonum".
+  fl.mo:Expected error in mat flasinh: "flasinh: 1 is not a flonum".
+  fl.mo:Expected error in mat flasinh: "flasinh: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flacosh: "incorrect number of arguments 0 to #<procedure flacosh>".
+! fl.mo:Expected error in mat flacosh: "incorrect number of arguments 2 to #<procedure flacosh>".
+  fl.mo:Expected error in mat flacosh: "flacosh: a is not a flonum".
+  fl.mo:Expected error in mat flacosh: "flacosh: 1 is not a flonum".
+  fl.mo:Expected error in mat flacosh: "flacosh: 1.0+2.0i is not a flonum".
+! fl.mo:Expected error in mat flatanh: "incorrect number of arguments 0 to #<procedure flatanh>".
+! fl.mo:Expected error in mat flatanh: "incorrect number of arguments 2 to #<procedure flatanh>".
+  fl.mo:Expected error in mat flatanh: "flatanh: a is not a flonum".
+  fl.mo:Expected error in mat flatanh: "flatanh: 1 is not a flonum".
+  fl.mo:Expected error in mat flatanh: "flatanh: 1.0+2.0i is not a flonum".
 ! fl.mo:Expected error in mat flexp: "incorrect number of arguments 0 to #<procedure flexp>".
 ! fl.mo:Expected error in mat flexp: "incorrect number of arguments 2 to #<procedure flexp>".
   fl.mo:Expected error in mat flexp: "flexp: a is not a flonum".
@@ -6189,7 +6321,7 @@
   fl.mo:Expected error in mat flsingle: "flsingle: 3 is not a flonum".
   fl.mo:Expected error in mat flsingle: "flsingle: 2.0+1.0i is not a flonum".
 ***************
-*** 10248,10283 ****
+*** 10314,10349 ****
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3/4 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: hi is not a flonum".
@@ -6226,7 +6358,7 @@
   fl.mo:Expected error in mat fleven?: "fleven?: a is not a flonum".
   fl.mo:Expected error in mat fleven?: "fleven?: 3 is not a flonum".
   fl.mo:Expected error in mat fleven?: "fleven?: 3.2 is not an integer".
---- 10248,10283 ----
+--- 10314,10349 ----
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: 3/4 is not a flonum".
   fl.mo:Expected error in mat flinfinite?: "flinfinite?: hi is not a flonum".
@@ -6264,7 +6396,7 @@
   fl.mo:Expected error in mat fleven?: "fleven?: 3 is not a flonum".
   fl.mo:Expected error in mat fleven?: "fleven?: 3.2 is not an integer".
 ***************
-*** 10285,10292 ****
+*** 10351,10358 ****
   fl.mo:Expected error in mat fleven?: "fleven?: 1+1i is not a flonum".
   fl.mo:Expected error in mat fleven?: "fleven?: +inf.0 is not an integer".
   fl.mo:Expected error in mat fleven?: "fleven?: +nan.0 is not an integer".
@@ -6273,7 +6405,7 @@
   fl.mo:Expected error in mat flodd?: "flodd?: a is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: 3 is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: 3.2 is not an integer".
---- 10285,10292 ----
+--- 10351,10358 ----
   fl.mo:Expected error in mat fleven?: "fleven?: 1+1i is not a flonum".
   fl.mo:Expected error in mat fleven?: "fleven?: +inf.0 is not an integer".
   fl.mo:Expected error in mat fleven?: "fleven?: +nan.0 is not an integer".
@@ -6283,7 +6415,7 @@
   fl.mo:Expected error in mat flodd?: "flodd?: 3 is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: 3.2 is not an integer".
 ***************
-*** 10294,10300 ****
+*** 10360,10366 ****
   fl.mo:Expected error in mat flodd?: "flodd?: 3+1i is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: +inf.0 is not an integer".
   fl.mo:Expected error in mat flodd?: "flodd?: +nan.0 is not an integer".
@@ -6291,7 +6423,7 @@
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
---- 10294,10300 ----
+--- 10360,10366 ----
   fl.mo:Expected error in mat flodd?: "flodd?: 3+1i is not a flonum".
   fl.mo:Expected error in mat flodd?: "flodd?: +inf.0 is not an integer".
   fl.mo:Expected error in mat flodd?: "flodd?: +nan.0 is not an integer".
@@ -6300,7 +6432,7 @@
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
 ***************
-*** 10302,10308 ****
+*** 10368,10374 ****
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0+1i is not a flonum".
@@ -6308,7 +6440,7 @@
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 3 is not a flonum".
---- 10302,10308 ----
+--- 10368,10374 ----
   fl.mo:Expected error in mat flmin: "flmin: a is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmin: "flmin: 0+1i is not a flonum".
@@ -6317,7 +6449,7 @@
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 3 is not a flonum".
 ***************
-*** 10310,10323 ****
+*** 10376,10389 ****
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0+1i is not a flonum".
@@ -6332,7 +6464,7 @@
   fl.mo:Expected error in mat fldenominator: "fldenominator: a is not a flonum".
   fl.mo:Expected error in mat fldenominator: "fldenominator: 3 is not a flonum".
   fl.mo:Expected error in mat fldenominator: "fldenominator: 0+1i is not a flonum".
---- 10310,10323 ----
+--- 10376,10389 ----
   fl.mo:Expected error in mat flmax: "flmax: a is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0.0+1.0i is not a flonum".
   fl.mo:Expected error in mat flmax: "flmax: 0+1i is not a flonum".
@@ -6348,7 +6480,7 @@
   fl.mo:Expected error in mat fldenominator: "fldenominator: 3 is not a flonum".
   fl.mo:Expected error in mat fldenominator: "fldenominator: 0+1i is not a flonum".
 ***************
-*** 10346,10354 ****
+*** 10412,10420 ****
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: 17 is not a flonum".
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: a is not a flonum".
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: (a) is not a flonum".
@@ -6358,7 +6490,7 @@
   fl.mo:Expected error in mat flbit-field: "flbit-field: 0 is not a flonum".
   fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index -1".
   fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index 1".
---- 10346,10354 ----
+--- 10412,10420 ----
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: 17 is not a flonum".
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: a is not a flonum".
   fl.mo:Expected error in mat fldiv0-and-mod0: "flmod0: (a) is not a flonum".
@@ -6369,7 +6501,28 @@
   fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index -1".
   fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index 1".
 ***************
-*** 10374,10380 ****
+*** 10423,10431 ****
+  fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index <int>".
+  fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index 1267650600228229401496703205376".
+  fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index 1267650600228229401496703205376".
+! fl.mo:Expected error in mat flfma: "incorrect argument count in call (flfma)".
+! fl.mo:Expected error in mat flfma: "incorrect argument count in call (flfma 1.0 2.0)".
+! fl.mo:Expected error in mat flfma: "incorrect argument count in call (flfma 1.0 2.0 3.0 4.0)".
+  fl.mo:Expected error in mat flfma: "flfma: 1 is not a flonum".
+  fl.mo:Expected error in mat flfma: "flfma: a is not a flonum".
+  fl.mo:Expected error in mat flfma: "flfma: 3 is not a flonum".
+--- 10423,10431 ----
+  fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index <int>".
+  fl.mo:Expected error in mat flbit-field: "flbit-field: invalid start index 1267650600228229401496703205376".
+  fl.mo:Expected error in mat flbit-field: "flbit-field: invalid end index 1267650600228229401496703205376".
+! fl.mo:Expected error in mat flfma: "incorrect number of arguments 0 to #<procedure flfma>".
+! fl.mo:Expected error in mat flfma: "incorrect number of arguments 2 to #<procedure flfma>".
+! fl.mo:Expected error in mat flfma: "incorrect number of arguments 4 to #<procedure flfma>".
+  fl.mo:Expected error in mat flfma: "flfma: 1 is not a flonum".
+  fl.mo:Expected error in mat flfma: "flfma: a is not a flonum".
+  fl.mo:Expected error in mat flfma: "flfma: 3 is not a flonum".
+***************
+*** 10446,10452 ****
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
@@ -6377,7 +6530,7 @@
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
---- 10374,10380 ----
+--- 10446,10452 ----
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
@@ -6386,7 +6539,7 @@
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
   cfl.mo:Expected error in mat cfl-: "cfl-: a is not a cflonum".
 ***************
-*** 10384,10397 ****
+*** 10456,10469 ****
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
@@ -6401,7 +6554,7 @@
   foreign.mo:Expected error in mat load-shared-object: "load-shared-object: invalid path 3".
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure convention __get_last_error".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
---- 10384,10397 ----
+--- 10456,10469 ----
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
   cfl.mo:Expected error in mat cfl/: "cfl/: a is not a cflonum".
@@ -6417,7 +6570,7 @@
   foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure convention __get_last_error".
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
 ***************
-*** 10448,10455 ****
+*** 10520,10527 ****
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle abcde".
   foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
   foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
@@ -6426,7 +6579,7 @@
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
   foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
---- 10448,10455 ----
+--- 10520,10527 ----
   foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle abcde".
   foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
   foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
@@ -6436,7 +6589,7 @@
   foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
   foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
 ***************
-*** 10997,11009 ****
+*** 11069,11081 ****
   unix.mo:Expected error in mat file-operations: "file-access-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-change-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-modification-time: failed for "testlink": no such file or directory".
@@ -6450,7 +6603,7 @@
   windows.mo:Expected error in mat registry: "get-registry: pooh is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
---- 10997,11009 ----
+--- 11069,11081 ----
   unix.mo:Expected error in mat file-operations: "file-access-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-change-time: failed for "testlink": no such file or directory".
   unix.mo:Expected error in mat file-operations: "file-modification-time: failed for "testlink": no such file or directory".
@@ -6465,7 +6618,7 @@
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
   windows.mo:Expected error in mat registry: "put-registry!: 3 is not a string".
 ***************
-*** 11031,11102 ****
+*** 11103,11174 ****
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for -inf.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for +nan.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat fllp: "fllp: 3 is not a flonum".
@@ -6538,7 +6691,7 @@
   date.mo:Expected error in mat time: "time>=?: 3 is not a time record".
   date.mo:Expected error in mat time: "time>=?: #<procedure car> is not a time record".
   date.mo:Expected error in mat time: "time>=?: types of <time> and <time> differ".
---- 11031,11102 ----
+--- 11103,11174 ----
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for -inf.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat flonum->fixnum: "flonum->fixnum: result for +nan.0 would be outside of fixnum range".
   ieee.mo:Expected error in mat fllp: "fllp: 3 is not a flonum".
@@ -6612,7 +6765,7 @@
   date.mo:Expected error in mat time: "time>=?: #<procedure car> is not a time record".
   date.mo:Expected error in mat time: "time>=?: types of <time> and <time> differ".
 ***************
-*** 11104,11117 ****
+*** 11176,11189 ****
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
@@ -6627,7 +6780,7 @@
   date.mo:Expected error in mat date: "make-date: invalid nanosecond -1".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
---- 11104,11117 ----
+--- 11176,11189 ----
   date.mo:Expected error in mat time: "add-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "subtract-duration: <time> does not have type time-duration".
   date.mo:Expected error in mat time: "copy-time: <date> is not a time record".
@@ -6643,7 +6796,7 @@
   date.mo:Expected error in mat date: "make-date: invalid nanosecond <int>".
   date.mo:Expected error in mat date: "make-date: invalid nanosecond zero".
 ***************
-*** 11137,11197 ****
+*** 11209,11269 ****
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".
@@ -6705,7 +6858,7 @@
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset -90000".
   date.mo:Expected error in mat date: "current-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat conversions/sleep: "date->time-utc: <time> is not a date record".
---- 11137,11197 ----
+--- 11209,11269 ----
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset 90000".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset est".
   date.mo:Expected error in mat date: "make-date: invalid time-zone offset "est"".

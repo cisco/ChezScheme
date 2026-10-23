@@ -357,7 +357,7 @@
 ;; ---------------------------------------------------------------------
 ;; Version and machine types:
 
-(define-constant scheme-version #x0a050001)
+(define-constant scheme-version #x0a050002)
 
 (define-syntax define-machine-types
   (lambda (x)
@@ -3032,8 +3032,21 @@
      (flatan2 #f 2 #t #t)
      (flexp #f 1 #t #t)
      (fllog #f 1 #t #t)
-     (fllog2 #f 2 #t #t)
+     (fllog-base #f 2 #t #t)
      (flexpt #f 2 #t #t)
+     (fllog1p #f 1 #t #t)
+     (fllog2 #f 1 #t #t)
+     (flexpm1 #f 1 #t #t)
+     (flexp2 #f 1 #t #t)
+     (flsinh #f 1 #t #t)
+     (flcosh #f 1 #t #t)
+     (fltanh #f 1 #t #t)
+     (flasinh #f 1 #t #t)
+     (flacosh #f 1 #t #t)
+     (flatanh #f 1 #t #t)
+     (flfma #f 3 #t #t)
+     (flhypot #f 2 #t #t)
+     (flnextafter #f 2 #t #t)
      (flonum->fixnum #f 1 #t #t)
      (bitwise-and #f 2 #f #t)
      (bitwise-ior #f 2 #f #t)
@@ -3168,8 +3181,21 @@
      flatan2
      flexp
      fllog
-     fllog2
+     fllog-base
      flexpt
+     fllog1p
+     fllog2
+     flexpm1
+     flexp2
+     flsinh
+     flcosh
+     fltanh
+     flasinh
+     flacosh
+     flatanh
+     flfma
+     flhypot
+     flnextafter
      flsqrt
      null-immutable-vector
      null-immutable-bytevector
@@ -3467,7 +3493,8 @@
     [uptr uptr uptr uptr uptr uptr uptr uptr]
     [uptr double double double double double double]
     [void*]
-    [void* uptr])
+    [void* uptr]
+    [double double double double])
 
   ;; end pb
   ]

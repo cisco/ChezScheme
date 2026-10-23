@@ -717,7 +717,24 @@
   (define-library-entry (flatan2 x y) (flonum-oops 'flatan (if (flonum? x) y x)))
   (define-library-entry (flexp x) (flonum-oops 'flexp x))
   (define-library-entry (fllog x) (flonum-oops 'fllog x))
-  (define-library-entry (fllog2 x y) (flonum-oops 'fllog (if (flonum? x) y x)))
+  (define-library-entry (fllog-base x y) (flonum-oops 'fllog (if (flonum? x) y x)))
+  (define-library-entry (fllog1p x) (flonum-oops 'fllog1p x))
+  (define-library-entry (fllog2 x) (flonum-oops 'fllog2 x))
+  (define-library-entry (flexpm1 x) (flonum-oops 'flexpm1 x))
+  (define-library-entry (flexp2 x) (flonum-oops 'flexp2 x))
+  (define-library-entry (flsinh x) (flonum-oops 'flsinh x))
+  (define-library-entry (flcosh x) (flonum-oops 'flcosh x))
+  (define-library-entry (fltanh x) (flonum-oops 'fltanh x))
+  (define-library-entry (flasinh x) (flonum-oops 'flasinh x))
+  (define-library-entry (flacosh x) (flonum-oops 'flacosh x))
+  (define-library-entry (flatanh x) (flonum-oops 'flatanh x))
+  (define-library-entry (flfma x y z)
+    (cond
+      [(not (flonum? x)) (flonum-oops 'flfma x)]
+      [(not (flonum? y)) (flonum-oops 'flfma y)]
+      [else (flonum-oops 'flfma z)]))
+  (define-library-entry (flhypot x y) (flonum-oops 'flhypot (if (flonum? x) y x)))
+  (define-library-entry (flnextafter x y) (flonum-oops 'flnextafter (if (flonum? x) y x)))
   (define-library-entry (flexpt x y) (flonum-oops 'flexpt (if (flonum? x) y x)))
   (define-library-entry (flbit-field x y z) (flonum-oops 'flbit-field x))
 

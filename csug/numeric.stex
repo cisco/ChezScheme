@@ -663,6 +663,147 @@ reported as a nonnegative exact integer.
 (flbit-field 3.14e132 52 63) ; => 1463
 \endschemedisplay
 
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flhypot}{\categoryprocedure}{(flhypot \var{flonum_1} \var{flonum_2})}
+\returns a flonum
+\listlibraries
+\endentryheader
+
+\noindent
+\var{flonum_1} and \var{flonum_2} must be flonums.
+\scheme{flhypot} returns the magnitude of the complex number whose real
+and imaginary parts are \var{flonum_1} and \var{flonum_2}.
+The computation avoids unnecessary intermediate overflow and underflow.
+If either argument is infinite, the result is \scheme{+inf.0}, even if
+the other argument is NAN. Otherwise, a NAN argument produces NAN.
+
+\schemedisplay
+(flhypot 3.0 4.0) ;=> 5.0
+(flhypot -0.0 -0.0) ;=> 0.0
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fllog2}{\categoryprocedure}{(fllog2 \var{flonum})}
+\formdef{flexp2}{\categoryprocedure}{(flexp2 \var{flonum})}
+\returns a flonum
+\listlibraries
+\endentryheader
+
+\var{flonum} must be a flonum.
+\scheme{fllog2} computes the base-2 logarithm of \var{flonum},
+and \scheme{flexp2} computes $2^{\var{flonum}}$.
+\scheme{fllog2} returns \scheme{-inf.0} for either zero and NAN for
+negative arguments. Both procedures return \scheme{+inf.0} for
+\scheme{+inf.0} and NAN for NAN; \scheme{flexp2} returns \scheme{0.0}
+for \scheme{-inf.0}.
+
+\schemedisplay
+(fllog2 8.0) ;=> 3.0
+(flexp2 -3.0) ;=> 0.125
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flnextafter}{\categoryprocedure}{(flnextafter \var{flonum_1} \var{flonum_2})}
+\returns a flonum
+\listlibraries
+\endentryheader
+
+\var{flonum_1} and \var{flonum_2} must be flonums.
+\scheme{flnextafter} returns the next representable flonum after
+\var{flonum_1} in the direction of \var{flonum_2}.
+If the arguments are equal, the result is \var{flonum_2}, including
+its sign when both arguments are zero.
+If either argument is NAN, the result is NAN.
+
+\schemedisplay
+(flnextafter 1.0 2.0) ;=> 1.0000000000000002
+(flnextafter 0.0 -0.0) ;=> -0.0
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{fllog1p}{\categoryprocedure}{(fllog1p \var{flonum})}
+\formdef{flexpm1}{\categoryprocedure}{(flexpm1 \var{flonum})}
+\returns a flonum
+\listlibraries
+\endentryheader
+
+\var{flonum} must be a flonum.
+\scheme{fllog1p} computes the natural logarithm of one plus \var{flonum},
+and \scheme{flexpm1} computes $e^{\var{flonum}}-1$.
+These procedures avoid the loss of accuracy near zero that can result
+from explicitly adding or subtracting \scheme{1.0}.
+Both preserve the sign of a zero argument and return NAN for a NAN argument.
+\scheme{fllog1p} returns \scheme{-inf.0} for \scheme{-1.0} and NAN for
+arguments less than \scheme{-1.0}. Both return \scheme{+inf.0} for
+\scheme{+inf.0}; \scheme{flexpm1} returns \scheme{-1.0} for \scheme{-inf.0}.
+
+\schemedisplay
+(fllog1p 1e-20) ;=> 1e-20
+(flexpm1 1e-20) ;=> 1e-20
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flsinh}{\categoryprocedure}{(flsinh \var{flonum})}
+\formdef{flcosh}{\categoryprocedure}{(flcosh \var{flonum})}
+\formdef{fltanh}{\categoryprocedure}{(fltanh \var{flonum})}
+\formdef{flasinh}{\categoryprocedure}{(flasinh \var{flonum})}
+\formdef{flacosh}{\categoryprocedure}{(flacosh \var{flonum})}
+\formdef{flatanh}{\categoryprocedure}{(flatanh \var{flonum})}
+\returns a flonum
+\listlibraries
+\endentryheader
+
+\var{flonum} must be a flonum.
+These procedures compute the hyperbolic sine, cosine, and tangent and
+their inverses, respectively. They are flonum versions of
+\scheme{sinh}, \scheme{cosh}, \scheme{tanh}, \scheme{asinh},
+\scheme{acosh}, and \scheme{atanh}.
+Unlike their general counterparts, \scheme{flacosh} and \scheme{flatanh}
+return NAN when the result would be non-real:
+\scheme{flacosh} for arguments less than \scheme{1.0}, and
+\scheme{flatanh} for arguments with absolute value greater than \scheme{1.0}.
+\scheme{flatanh} returns \scheme{+inf.0} for \scheme{1.0} and
+\scheme{-inf.0} for \scheme{-1.0}.
+All return NAN for a NAN argument.
+\scheme{flsinh}, \scheme{fltanh}, \scheme{flasinh}, and \scheme{flatanh}
+preserve the sign of a zero argument.
+
+\schemedisplay
+(flsinh 0.0) ;=> 0.0
+(flcosh 0.0) ;=> 1.0
+(fltanh +inf.0) ;=> 1.0
+(flacosh 1.0) ;=> 0.0
+\endschemedisplay
+
+%----------------------------------------------------------------------------
+\entryheader
+\formdef{flfma}{\categoryprocedure}{(flfma \var{fl_1} \var{fl_2} \var{fl_3})}
+\returns a flonum
+\listlibraries
+\endentryheader
+
+\noindent
+Computes the product of \var{fl_1} and \var{fl_2}, plus \var{fl_3},
+with a single rounding to the flonum format.  The intermediate product
+is not rounded and cannot overflow or underflow.  The arguments must
+all be flonums.
+
+Multiplying an infinity by zero or adding an infinite product to an
+infinity of the opposite sign produces a NAN.  A NAN argument produces
+a NAN result.  Signed zeros follow the rules for multiplication and addition.
+
+\schemedisplay
+(flfma 2.0 3.0 4.0) ;=> 10.0
+(flfma 1.0000000000000002 0.9999999999999998 -1.0) ;=> -4.930380657631324e-32
+(fl+ (fl* 1.0000000000000002 0.9999999999999998) -1.0) ;=> 0.0
+(flfma 1e308 2.0 -1e308) ;=> 1e308
+\endschemedisplay
+
 \section{Inexact Complex Operations\label{SECTNUMERICCOMPLEXNUM}}
 
 The procedures described in this section provide mechanisms for

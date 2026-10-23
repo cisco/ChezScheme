@@ -109,8 +109,6 @@ FORCEINLINE void store_unaligned_uptr(uptr *addr, uptr val) {
 #define MMAP_HEAP
 #define IEEE_DOUBLE
 #define LDEXP
-#define ARCHYPERBOLIC
-#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
@@ -149,8 +147,6 @@ typedef int tputsputcchar;
 #define MMAP_HEAP
 #define IEEE_DOUBLE
 #define LDEXP
-#define ARCHYPERBOLIC
-#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
@@ -180,8 +176,6 @@ typedef int tputsputcchar;
 #define MMAP_HEAP
 #define IEEE_DOUBLE
 #define LDEXP
-#define ARCHYPERBOLIC
-#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
@@ -212,8 +206,6 @@ typedef int tputsputcchar;
 #define MMAP_HEAP
 #define IEEE_DOUBLE
 #define LDEXP
-#define ARCHYPERBOLIC
-#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 struct timespec;
@@ -244,8 +236,6 @@ typedef int tputsputcchar;
 #define USE_VIRTUAL_ALLOC
 #define NAN_INCLUDE <math.h>
 #define MAKE_NAN(x) { x = sqrt(-1.0); }
-#define ARCHYPERBOLIC
-#define LOG1P
 #ifndef PATH_MAX
 # define PATH_MAX _MAX_PATH
 #endif
@@ -316,8 +306,6 @@ struct timespec;
 #define MMAP_HEAP
 #define IEEE_DOUBLE
 #define LDEXP
-#define ARCHYPERBOLIC
-#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 struct timespec;
@@ -364,8 +352,6 @@ typedef int tputsputcchar;
 # define CANNOT_READ_DIRECTLY_INTO_CODE
 #endif
 #define LDEXP
-#define ARCHYPERBOLIC
-#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
@@ -398,8 +384,6 @@ typedef int tputsputcchar;
 #define MMAP_HEAP
 #define IEEE_DOUBLE
 #define LDEXP
-#define ARCHYPERBOLIC
-#define LOG1P
 #define GETPAGESIZE() getpagesize()
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
@@ -427,8 +411,6 @@ typedef int tputsputcchar;
 #define MMAP_HEAP
 #define IEEE_DOUBLE
 #define LDEXP
-#define ARCHYPERBOLIC
-#define LOG1P
 #define DEFINE_MATHERR
 #define NO_USELOCALE
 #define GETPAGESIZE() getpagesize()
@@ -457,8 +439,6 @@ typedef char tputsputcchar;
 #define NOBLOCK O_NONBLOCK
 #define IEEE_DOUBLE
 #define LDEXP
-#define ARCHYPERBOLIC
-#define LOG1P
 typedef char *memcpy_t;
 #define MAKE_NAN(x) { x = 0.0; x = x / x; }
 #define GETWD(x) getcwd((x),PATH_MAX)
