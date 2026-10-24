@@ -3376,6 +3376,7 @@
        (let ([c (cosh z)] [s (sinh z)])
           (cfl~= (- (* c c) (* s s)) 1.0)))
     (cfl~= (atanh 0.0+inf.0i) (atanh +inf.0))
+    (cfl~= (atanh 1.+1e100i) (make-rectangular 1e-200 (/ pi 2)))
     (nan? (real-part (atanh +inf.0+inf.0i)))
  )
 
