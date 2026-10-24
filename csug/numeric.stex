@@ -797,6 +797,12 @@ Multiplying an infinity by zero or adding an infinite product to an
 infinity of the opposite sign produces a NAN.  A NAN argument produces
 a NAN result.  Signed zeros follow the rules for multiplication and addition.
 
+On AArch64, RISC-V, LoongArch, and PowerPC, this operation uses a native
+fused multiply-add instruction.
+On x86\_64, it uses FMA3 instructions when Chez Scheme is configured
+for x86-64 level 3 or higher.  Otherwise, it uses the C library's
+\scheme{fma} function.
+
 \schemedisplay
 (flfma 2.0 3.0 4.0) ;=> 10.0
 (flfma 1.0000000000000002 0.9999999999999998 -1.0) ;=> -4.930380657631324e-32

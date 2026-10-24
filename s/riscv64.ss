@@ -404,6 +404,10 @@
     [(op (x fpur) (y fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsqrt ,y))])
 
+  (define-instruction value (fpfma)
+    [(op (x fpur) (a fpur) (b fpur) (c fpur))
+     `(set! ,(make-live-info) ,x (asm ,info ,asm-fpfma ,a ,b ,c))])
+
   (define-instruction value (fp+ fp- fp/ fp*)
     [(op (x fpur) (y fpur) (z fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,(asm-fpop-2 op) ,y ,z))])
@@ -623,7 +627,7 @@
                     asm-mul asm-mul/ovfl asm-div asm-logand asm-logor asm-logxor asm-lognot
                     asm-read-performance-monitoring-counter asm-read-time-stamp-counter asm-inc-cc-counter
                     asm-enter asm-sll asm-srl asm-sra asm-fpsqrt asm-fptrunc asm-fpt
-                    asm-cas asm-relop asm-fp-relop asm-fpop-2 asm-save-flrv asm-restore-flrv
+                    asm-cas asm-relop asm-fp-relop asm-fpop-2 asm-fpfma asm-save-flrv asm-restore-flrv
                     asm-direct-jump asm-indirect-jump asm-literal-jump asm-condition-code
                     asm-jump asm-conditional-jump asm-library-jump
                     asm-get-tc asm-activate-thread asm-deactivate-thread asm-unactivate-thread
@@ -666,6 +670,7 @@
   (define-op sll  bin-op #b0110011 #b001 #b0000000)
   (define-op srl  bin-op #b0110011 #b101 #b0000000)
   (define-op sra  bin-op #b0110011 #b101 #b0100000)
+  (define-op fmadd.d fma-op #b1000011)
   (define-op fadd.d bin-op #b1010011 #b111 #b0000001) ; #b111: dynamic rounding mode
   (define-op fsub.d bin-op #b1010011 #b111 #b0000101) ; #b111: dynamic rounding mode
   (define-op fmul.d bin-op #b1010011 #b111 #b0001001) ; #b111: dynamic rounding mode
@@ -726,6 +731,17 @@
 
   (define-op bne conditional-branch-op #b1100011 #b001) ; offset in multiples of 2 bytes
   (define-op beq conditional-branch-op #b1100011 #b000) ; offset in multiples of 2 bytes
+
+  (define fma-op
+    (lambda (op opcode dest a b c code*)
+      (emit-code (op dest a b c code*)
+        [27 (ax-ea-reg-code c)]
+        [25 #b01]
+        [20 (ax-ea-reg-code b)]
+        [15 (ax-ea-reg-code a)]
+        [12 #b111] ; dynamic rounding mode
+        [7 (ax-ea-reg-code dest)]
+        [0 opcode])))
 
   (define bin-op
     (lambda (op opcode funct3 funct7 dest rs1 rs2 code*)
@@ -1131,6 +1147,11 @@
                                                          (emit sb src %scratch0 0 code*))]
                            [else (sorry! who "unexpected mref type ~s" type)])]
                         [else (sorry! who "expected zero index or 0 offset, got ~s and ~s" index offset)])))))))
+
+  (define asm-fpfma
+    (lambda (code* dest a b c)
+      (Trivit (dest a b c)
+        (emit fmadd.d dest a b c code*))))
 
   (define-who asm-fpop-2
     (lambda (op)

@@ -470,6 +470,10 @@
     [(op (x fpur) (y fpur) (z fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,(asm-fpop-2 op) ,y ,z))])
 
+  (define-instruction value (fpfma)
+    [(op (x fpur) (a fpur) (b fpur) (c fpur))
+     `(set! ,(make-live-info) ,x (asm ,info ,asm-fpfma ,a ,b ,c))])
+
   (define-instruction value (fpsqrt)
     [(op (x fpur) (y fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsqrt ,y))])
@@ -735,7 +739,7 @@
                      asm-fpmove-single asm-fl-cvt asm-fpt asm-fpmove asm-fpcastto asm-fpcastfrom
                      asm-fptrunc asm-fpsingle
                      asm-lock asm-lock+/- asm-cas asm-fence
-                     asm-fpop-2 asm-fpsqrt asm-fpround asm-c-simple-call
+                     asm-fpop-2 asm-fpsqrt asm-fpround asm-fpfma asm-c-simple-call
                      asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
                      asm-debug
@@ -975,6 +979,7 @@
 
   (define-op und  und-op)
 
+  (define-op fmadd fma-op)
   (define-op fadd  f-arith-op  #b0010) ; selector is at bit 12
   (define-op fsub  f-arith-op  #b0011)
   (define-op fmul  f-arith-op  #b0000)
@@ -1376,6 +1381,16 @@
         [10 #b0000]
         [5  (ax-ea-reg-code src)]
         [0  (ax-ea-reg-code dest)])))
+
+  (define fma-op
+    (lambda (op dest a b c code*)
+      (emit-code (op dest a b c code*)
+        [24 #x1f]
+        [22 #b01]
+        [16 (ax-ea-reg-code b)]
+        [10 (ax-ea-reg-code c)]
+        [5 (ax-ea-reg-code a)]
+        [0 (ax-ea-reg-code dest)])))
 
   (define f-arith-op
     (lambda (op opcode dest src0 src1 code*)
@@ -1859,6 +1874,11 @@
             [(fp*) (emit fmul dest src1 src2 code*)]
             [(fp/) (emit fdiv dest src1 src2 code*)]
             [else (sorry! who "unrecognized op ~s" op)])))))
+
+  (define asm-fpfma
+    (lambda (code* dest a b c)
+      (Trivit (dest a b c)
+        (emit fmadd dest a b c code*))))
 
   (define asm-fpsqrt
     (lambda (code* dest src)
