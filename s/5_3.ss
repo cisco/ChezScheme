@@ -3475,7 +3475,7 @@
                  0))])]))))
 
 (set-who! flmin
-  (let ([$flmin (lambda (x y) (if (or (fl< x y) ($nan? x)) x y))])
+  (let ([$flmin (lambda (x y) (#3%flmin x y))])
     (case-lambda
        [(x y)
         (unless (flonum? x) ($oops who "~s is not a flonum" x))
@@ -3495,7 +3495,7 @@
                 (loop ($flmin x y) (cdr r)))))])))
 
 (set-who! flmax
-  (let ([$flmax (lambda (x y) (if (or (fl> x y) ($nan? x)) x y))])
+  (let ([$flmax (lambda (x y) (#3%flmax x y))])
     (case-lambda
        [(x y)
         (unless (flonum? x) ($oops who "~s is not a flonum" x))

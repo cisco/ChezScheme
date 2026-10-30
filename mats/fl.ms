@@ -1186,6 +1186,17 @@
            (eqv? (flmin (flvector-ref fl 1) 0.0) 0.0)
            (eqv? (flmin (flvector-ref fl 0) (flvector-ref fl 0) -0.0) -0.0)
            (eqv? (flmin (flvector-ref fl 1) (flvector-ref fl 1) 0.0) 0.0)))
+    ;; variable-argument cases exercise the fpmin inline path
+    (fl= (flmin (string->number "3.2") 1.0) 1.0)
+    (fl= (flmin 1.0 (string->number "3.2")) 1.0)
+    (fl= (flmin +inf.0 (string->number "1.0")) 1.0)
+    (fl= (flmin -inf.0 (string->number "1.0")) -inf.0)
+    (== (flmin (nan) 1.0) (nan))
+    (== (flmin 1.0 (nan)) (nan))
+    ;; signed zero: 1/(flmin 0.0 -0.0) is -inf.0
+    (fl<? (fl/ 1.0 (flmin (string->number "0.0") -0.0)) 0.0)
+    (let ([f flmin]) (fl= (f (string->number "3.2") 1.0) 1.0))
+    (fl= (flmin (string->number "4.5") (string->number "2.5") 0.5) 0.5)
  )
 
 (mat flmax
@@ -1231,6 +1242,16 @@
            (eqv? (flmax (flvector-ref fl 1) 0.0) 0.0)
            (eqv? (flmax (flvector-ref fl 0) (flvector-ref fl 0) -0.0) -0.0)
            (eqv? (flmax (flvector-ref fl 1) (flvector-ref fl 1) 0.0) 0.0)))
+    ;; variable-argument cases exercise the fpmax inline path
+    (fl= (flmax (string->number "3.2") 1.0) 3.2)
+    (fl= (flmax 1.0 (string->number "3.2")) 3.2)
+    (fl= (flmax -inf.0 (string->number "1.0")) 1.0)
+    (fl= (flmax +inf.0 (string->number "1.0")) +inf.0)
+    (== (flmax (nan) 1.0) (nan))
+    ;; signed zero: 1/(flmax -0.0 -0.0) is -inf.0
+    (fl<? (fl/ 1.0 (flmax -0.0 (string->number "-0.0"))) 0.0)
+    (let ([f flmax]) (fl= (f (string->number "3.2") 1.0) 3.2))
+    (fl= (flmax (string->number "4.5") (string->number "2.5") 0.5) 4.5)
  )
 
 (mat flnumerator
