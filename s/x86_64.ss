@@ -376,6 +376,13 @@
        `(move-related ,z ,x)
        `(set! ,(make-live-info) ,z (asm ,info ,(asm-lea2 0) ,x ,y)))])
 
+  (define-instruction value (ipmin ipmax)
+    [(op (z ur) (x ur) (y ur))
+     (seq
+       `(move-related ,z ,y)
+       `(move-related ,z ,x)
+       `(set! ,(make-live-info) ,z (asm ,info ,(asm-ipminmax (eq? op 'ipmin)) ,x ,y)))])
+
   (define-instruction value (+/ovfl +/carry) ; must set condition codes, so can't use lea
     [(op (z mem) (x z) (y ur imm32))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-add ,z ,y))]
@@ -918,7 +925,7 @@
                      asm-pop asm-shiftop asm-sll asm-logand asm-lognot
                      asm-logtest asm-fp-relop asm-relop asm-push asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
-                     asm-lea1 asm-lea2 asm-indirect-call asm-condition-code
+                     asm-lea1 asm-lea2 asm-ipminmax asm-indirect-call asm-condition-code
                      asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount
                      asm-exchange asm-pause asm-debug asm-locked-incr asm-locked-decr asm-locked-cmpxchg
                      asm-fpsqrt asm-fpround asm-fpop-2 asm-fpminmax asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
@@ -1095,6 +1102,9 @@
   (define-op bge branch-op #b1101) ; jump on greater than or equal
   (define-op ble branch-op #b1110) ; jump on less than or equal
   (define-op bgt branch-op #b1111) ; jump on greater than
+
+  (define-op cmovl cmov-op #b1100) ; move on less than
+  (define-op cmovg cmov-op #b1111) ; move on greater than
 
   ; SSE2 instructions
   (define-op sse.addsd     sse-op1 #xF2 #x58 0)
@@ -1452,6 +1462,20 @@
            (ax-ea-addr-disp source))]
         [else
           ($oops 'assembler-internal "xchg-op source=~s dest=~s" source dest)])))
+
+  (define cmov-op
+    ; cmovcc dest, source.  Unlike mov/add (dest = r/m), CMOVcc encodes
+    ; the destination in the modrm reg field and the source as r/m, so the
+    ; ax-ea-modrm-reg arguments are swapped relative to binary-op, and the
+    ; rex R/B bits follow the same swap.
+    (lambda (op condition-code source dest code*)
+      (emit-code (op source dest code*)
+        (ax-ea-rex 1 source dest 'quad)
+        (build byte #x0F)
+        (build byte (byte-fields [4 4] [0 condition-code]))
+        (ax-ea-modrm-reg source dest)
+        (ax-ea-sib source)
+        (ax-ea-addr-disp source))))
 
   (define branch-op
     (lambda (op condition-code disp code*)
@@ -2361,6 +2385,40 @@
               (Trivit (dest)
                 (emit lea `(index ,offset ,src1 ,src2)
                   dest code*))])))))
+
+  (define asm-ipminmax
+    ; branchless fixnum min/max via cmp + cmovcc.  (emit cmp a b) sets
+    ; flags for b - a, so:
+    ;   dest == src1: cmp dest, src2 flags src2 - dest;  min takes src2 on
+    ;     less (cmovl), max on greater (cmovg)
+    ;   dest == src2: cmp src1, dest flags dest - src1;  min takes src1 on
+    ;     greater, max on less
+    ;   otherwise: preset dest = src1 (dest aliases nothing, so the move
+    ;     cannot clobber a source) and take the dest == src1 case.  No
+    ;     scratch register is needed in any case.
+    (lambda (min?)
+      (rec asm-ipminmax-internal
+        (lambda (code* dest src1 src2)
+          (cond
+            [(equal? dest src1)
+             (Trivit (dest src2)
+               (emit cmp dest src2
+                 (if min?
+                     (emit cmovl src2 dest code*)
+                     (emit cmovg src2 dest code*))))]
+            [(equal? dest src2)
+             (Trivit (dest src1)
+               (emit cmp src1 dest
+                 (if min?
+                     (emit cmovg src1 dest code*)
+                     (emit cmovl src1 dest code*))))]
+            [else
+             (Trivit (dest src1 src2)
+               (emit mov src1 dest
+                 (emit cmp dest src2
+                   (if min?
+                       (emit cmovl src2 dest code*)
+                       (emit cmovg src2 dest code*)))))])))))
 
   (define asm-logtest
     (lambda (i? info)

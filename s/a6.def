@@ -12,3 +12,4 @@
 (define-constant integer-divide-instruction #t)
 (define-constant popcount-instruction #t)
 (define-constant fpround-instruction #t)
+(define-constant ipmin-instruction #t)

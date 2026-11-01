@@ -764,6 +764,8 @@
   (declare-primitive fpfloor value #t) ; x86_64 and arm64 only (so we don't use it elsewhere)
   (declare-primitive fpceiling value #t) ; x86_64 and arm64 only (so we don't use it elsewhere)
   (declare-primitive fptruncate value #t) ; x86_64 and arm64 only (so we don't use it elsewhere)
+  (declare-primitive ipmin value #t) ; x86_64 only (so we don't use it elsewhere)
+  (declare-primitive ipmax value #t) ; x86_64 only (so we don't use it elsewhere)
   (declare-primitive fptrunc value #t)
   (declare-primitive fpsingle value #t)
   (declare-primitive double->single value #t) ; not required by cpnanopass
