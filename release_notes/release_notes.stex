@@ -3142,6 +3142,12 @@ members, the argument or result could be passed incorrectly. A varargs
 foreign call's struct result was not received correctly when it was
 small and with only \scheme{double} or \scheme{float} members.
 
+\subsection{Consistent \scheme{flmax} result with signed zeros (10.5.0)}
+
+For consistency with \scheme{flmin}, \scheme{min}, and \scheme{max},
+ensure that \scheme{flmax} always returns the last of arguments that
+are all \scheme{0.0} and \scheme{-0.0}.
+
 \subsection{Repair allocation in \scheme{logtest} (10.4.1)}
 
 In Version 10.4.0, the \scheme{logtest} procedure could allocate incorrectly when given a
