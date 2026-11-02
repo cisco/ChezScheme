@@ -13,7 +13,12 @@
 ;;; See the License for the specific language governing permissions and
 ;;; limitations under the License.
 
-(if (or (windows?) (haiku?) (equal? (getenv "USER") "root") (embedded?))
+;; file permissions don't apply to root; check the effective user id
+;; instead of $USER, which is often unset in containers and CI
+(define (running-as-root?)
+  (zero? (system "test `id -u` -eq 0")))
+
+(if (or (windows?) (haiku?) (embedded?) (running-as-root?))
     (mat unix-file-io
       (error? (errorf 'open-output-file "failed for testfile.ss: file exists"))
       (error? (errorf 'open-output-file "failed for testfile.ss: file exists"))
@@ -177,7 +182,7 @@
     )
 )
 
-(if (or (windows?) (haiku?) (equal? (getenv "USER") "root") (embedded?))
+(if (or (windows?) (haiku?) (embedded?) (running-as-root?))
     (mat file-operations
       (error? (errorf 'delete-directory "failed for ~a: ~a" "testlink1" "not a directory"))
       (error? (errorf 'delete-directory "failed for ~a: ~a" "testlink2" "not a directory"))
