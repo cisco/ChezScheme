@@ -4027,6 +4027,17 @@ x86\_64 has been fixed.
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
 
+\subsection{Branchless boolean-producing fixnum comparisons (10.5.0)}
+
+On x86\_64, a fixnum comparison whose boolean result is used as a value
+--- stored into an aggregate, returned, or passed to a procedure ---
+now compiles at optimize level 3 to a compare and \scheme{setcc}
+instead of a compare and branch, so the cost no longer depends on
+branch-prediction accuracy.  Comparisons that feed a branch keep the
+conditional-jump form.  Materializing a stream of unpredictable
+comparison results is about 2.3 times faster; predictable workloads are
+unchanged.
+
 \subsection{Reduced allocation and copying (9.6.0)}
 
 When given a bytevector whose length is less than \scheme{file-buffer-size},

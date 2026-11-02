@@ -376,6 +376,35 @@
        `(move-related ,z ,x)
        `(set! ,(make-live-info) ,z (asm ,info ,(asm-lea2 0) ,x ,y)))])
 
+  (define-instruction value (ipbool< ipbool<= ipbool= ipbool> ipbool>=)
+    ; branchless boolean-producing fixnum compare; see asm-ipbool
+    [(op (z ur) (x ur) (y ur))
+     `(set! ,(make-live-info) ,z
+        (asm ,null-info
+             ,(asm-ipbool (case op
+                            [(ipbool<) #x9C]   ; setl
+                            [(ipbool<=) #x9E]  ; setle
+                            [(ipbool=) #x94]   ; sete
+                            [(ipbool>) #x9F]   ; setg
+                            [(ipbool>=) #x9D]  ; setge
+                            [else ($oops 'ipbool "unsupported ~s" op)]))
+             ,z ,x ,y))]
+    [(op (z mem) (x ur) (y ur))
+     ; setcc writes a register, so compute into a temp and store
+     (let ([u (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u
+            (asm ,null-info
+                 ,(asm-ipbool (case op
+                                [(ipbool<) #x9C]
+                                [(ipbool<=) #x9E]
+                                [(ipbool=) #x94]
+                                [(ipbool>) #x9F]
+                                [(ipbool>=) #x9D]
+                                [else ($oops 'ipbool "unsupported ~s" op)]))
+                 ,u ,x ,y))
+         `(set! ,(make-live-info) ,z ,u)))])
+
   (define-instruction value (+/ovfl +/carry) ; must set condition codes, so can't use lea
     [(op (z mem) (x z) (y ur imm32))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-add ,z ,y))]
@@ -920,7 +949,7 @@
                      asm-pop asm-shiftop asm-sll asm-logand asm-lognot
                      asm-logtest asm-fp-relop asm-relop asm-push asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
-                     asm-lea1 asm-lea2 asm-indirect-call asm-condition-code
+                     asm-lea1 asm-lea2 asm-ipbool asm-indirect-call asm-condition-code
                      asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount
                      asm-exchange asm-pause asm-debug asm-locked-incr asm-locked-decr asm-locked-cmpxchg
                      asm-fpsqrt asm-fpround asm-fpop-2 asm-fpminmax asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
@@ -2395,6 +2424,37 @@
           (Trivit (x y)
             (emit sse.ucomisd x y '()))
           (asm-conditional-jump info l1 l2 offset)))))
+
+  (define asm-ipbool
+    ; branchless boolean-producing fixnum compare, in one asm node:
+    ; flags from cmp (x - y), then dest = 0; setcc dest-low; and
+    ; dest = dest*8 + 6 turns 0/1 into the Chez boolean immediates
+    ; sfalse/strue (6/14).  cmp reads x and y before anything writes
+    ; dest, so any dest/x/y aliasing is safe.  Byte encodings verified
+    ; against GNU as: setl %al/%sil/%r8b = 0f 9c c0 / 40 0f 9c c6 /
+    ; 41 0f 9c c0; shl $3 and add $6 as 48 c1 e0 03 / 48 83 c0 06.
+    ; SETcc writes an r/m8: dest's low byte goes in modrm r/m (mod=11,
+    ; /0) and REX is required for sil/dil/bpl/spl (codes 4-7) and
+    ; r8b-r15b, else codes 4-7 would name ah/ch/dh/bh.
+    (lambda (cc)
+      (rec asm-ipbool-internal
+        (lambda (code* dest self x y)
+          (Trivit (dest self x y)
+            (safe-assert (equal? self dest))
+            (let* ([rn (ax-ea-reg-code dest)]
+                   [rm (fxlogand rn 7)]
+                   [w (fxlogor #x48 (fxsrl rn 3))]     ; REX.W(+B)
+                   [setcc-bytes (if (fx>= rn 4)
+                                    (list (fxlogor #x40 (fxsrl rn 3)) #x0F cc (fxlogor #xC0 rm))
+                                    (list #x0F cc (fxlogor #xC0 rm)))]
+                   [tail-bytes (append setcc-bytes
+                                 (list w #xC1 (fxlogor #xE0 rm) 3      ; shl dest, 3
+                                       w #x83 (fxlogor #xC0 rm) 6))])     ; add dest, 6
+              (emit cmp y x
+                (emit movi '(imm 0) dest
+                  (aop-cons* `(asm setcc ,cc ,dest)
+                    (fold-right (lambda (b cs) (cons (build byte b) cs))
+                      code* tail-bytes))))))))))
 
   (define asm-relop
     (lambda (info)
