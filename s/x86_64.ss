@@ -658,6 +658,9 @@
   (define-instruction value (fpsqrt)
     [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsqrt ,y))])
 
+  (define-instruction value (fpround fpfloor fpceiling fptruncate)
+    [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x (asm ,info ,(asm-fpround op) ,y))])
+
   (define-instruction value (fpsingle)
     [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsingle ,y))])
 
@@ -909,7 +912,7 @@
                      asm-lea1 asm-lea2 asm-indirect-call asm-condition-code
                      asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount
                      asm-exchange asm-pause asm-debug asm-locked-incr asm-locked-decr asm-locked-cmpxchg
-                     asm-fpsqrt asm-fpop-2 asm-fpminmax asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
+                     asm-fpsqrt asm-fpround asm-fpop-2 asm-fpminmax asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
                      asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
@@ -1122,6 +1125,28 @@
         (ax-ea-sib source)
         (ax-ea-addr-disp source)
         (build byte 3))))
+
+  (define sse-roundsd-op
+    ; ROUNDSD family: 66 0F 3A 0B /r ib, with the rounding-control
+    ; immediate fixed at compile time (0 = nearest/even, 1 = floor,
+    ; 2 = ceiling, 3 = truncate); the REX byte goes after the 66
+    ; prefix and before the 0F escape
+    (lambda (op prefix-code map-code1 map-code2 op-code imm-code source dest-reg code*)
+      (emit-code (op source dest-reg code*)
+        (build byte prefix-code)
+        (ax-ea-rex 0 source dest-reg #f)
+        (build byte map-code1)
+        (build byte map-code2)
+        (build byte op-code)
+        (ax-ea-modrm-reg source dest-reg)
+        (ax-ea-sib source)
+        (ax-ea-addr-disp source)
+        (build byte imm-code))))
+
+  (define-op sse.roundsd    sse-roundsd-op #x66 #x0F #x3A #x0B 0)
+  (define-op sse.floorsd    sse-roundsd-op #x66 #x0F #x3A #x0B 1)
+  (define-op sse.ceilingsd  sse-roundsd-op #x66 #x0F #x3A #x0B 2)
+  (define-op sse.truncsd    sse-roundsd-op #x66 #x0F #x3A #x0B 3)
 
   (define sse-op1
     (lambda (op prefix-code op-code w source dest-reg code*)
@@ -1957,6 +1982,19 @@
       (Trivit (dest-reg src)
         (maybe-clear-fp-dest src dest-reg
           (emit sse.sqrtsd src dest-reg code*)))))
+
+  (define asm-fpround
+    (lambda (op)
+      (lambda (code* dest-reg src)
+        (define (emit-round code* src dest-reg)
+          (case op
+            [(fpround) (emit sse.roundsd src dest-reg code*)]
+            [(fpfloor) (emit sse.floorsd src dest-reg code*)]
+            [(fpceiling) (emit sse.ceilingsd src dest-reg code*)]
+            [(fptruncate) (emit sse.truncsd src dest-reg code*)]))
+        (Trivit (dest-reg src)
+          (maybe-clear-fp-dest src dest-reg
+            (emit-round code* src dest-reg))))))
 
   (define asm-fpmove
     (lambda (code* dest src)

@@ -42,6 +42,7 @@
 ;; instruction availability (defaults to unavailable)
 (define-constant-default integer-divide-instruction #f)
 (define-constant-default popcount-instruction #f)
+(define-constant-default roundsd-instruction #f)
 (define-constant-default sqrt-instruction #f)
 (define-constant-default fence-instruction #f)
 (define-constant-default software-floating-point #f)

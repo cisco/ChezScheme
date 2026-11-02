@@ -838,6 +838,12 @@
     (fl= (fltruncate 2.5) 2.0)
    ; r6rs:
     (== (fltruncate +nan.0) +nan.0)
+    ;; variable-argument cases exercise the fptruncate inline path
+    (fl= (fltruncate (string->number "17.7")) 17.0)
+    (fl= (fltruncate (string->number "-17.7")) -17.0)
+    (== (fltruncate (nan)) (nan))
+    (fl<? (fl/ 1.0 (fltruncate (string->number "-0.7"))) 0.0)
+    (let ([f fltruncate]) (fl= (f (string->number "3.7")) 3.0))
  )
 
 (mat flfloor
@@ -855,6 +861,12 @@
     (fl= (flfloor 2.5) 2.0)
    ; r6rs:
     (== (flfloor +inf.0) +inf.0)
+    ;; variable-argument cases exercise the fpfloor inline path
+    (fl= (flfloor (string->number "17.3")) 17.0)
+    (fl= (flfloor (string->number "-17.3")) -18.0)
+    (== (flfloor (nan)) (nan))
+    (fl<? (fl/ 1.0 (flfloor (string->number "-0.3"))) 0.0)
+    (let ([f flfloor]) (fl= (f (string->number "3.3")) 3.0))
  )
 
 (mat flceiling
@@ -871,6 +883,12 @@
     (fl= (flceiling 2.5) 3.0)
    ; r6rs:
     (== (flceiling -inf.0) -inf.0)
+    ;; variable-argument cases exercise the fpceiling inline path
+    (fl= (flceiling (string->number "17.3")) 18.0)
+    (fl= (flceiling (string->number "-17.3")) -17.0)
+    (== (flceiling (nan)) (nan))
+    (fl<? (fl/ 1.0 (flceiling (string->number "-0.7"))) 0.0)
+    (let ([f flceiling]) (fl= (f (string->number "3.3")) 4.0))
  )
 
 (mat flround
@@ -890,6 +908,14 @@
     (eqv? (flround 0.5) 0.0)
     (eqv? (flround -0.5) -0.0)
     (fl= (flround -0.5000000000000001) -1.0)
+    ;; variable-argument cases exercise the fpround inline path
+    (fl= (flround (string->number "17.3")) 17.0)
+    (fl= (flround (string->number "2.5")) 2.0)
+    (fl= (flround (string->number "-2.5")) -2.0)
+    (== (flround (nan)) (nan))
+    (== (flround +inf.0) +inf.0)
+    (fl<? (fl/ 1.0 (flround (string->number "-0.4"))) 0.0)
+    (let ([f flround]) (fl= (f (string->number "3.5")) 4.0))
  )
 
 (mat flsingle

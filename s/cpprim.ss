@@ -5050,10 +5050,26 @@
             [(_ id id2)
              (define-fl-call id
                [(e1 e2) (build-fl-call (lookup-c-entry id2) e1 e2)])]))
-        (define-fl-call flround) ; no support in SSE2 for flround, though this was added in SSE4.1
-        (define-fl-call flfloor)
-        (define-fl-call flceiling)
-        (define-fl-call fltruncate)
+        (define-inline 3 flround
+          [(e)
+           (constant-case roundsd-instruction
+             [(#t) (build-fp-op-1 %fpround e)]
+             [else (build-fl-call (lookup-c-entry flround) e)])]) ; no support in SSE2 for flround, though this was added in SSE4.1
+        (define-inline 3 flfloor
+          [(e)
+           (constant-case roundsd-instruction
+             [(#t) (build-fp-op-1 %fpfloor e)]
+             [else (build-fl-call (lookup-c-entry flfloor) e)])])
+        (define-inline 3 flceiling
+          [(e)
+           (constant-case roundsd-instruction
+             [(#t) (build-fp-op-1 %fpceiling e)]
+             [else (build-fl-call (lookup-c-entry flceiling) e)])])
+        (define-inline 3 fltruncate
+          [(e)
+           (constant-case roundsd-instruction
+             [(#t) (build-fp-op-1 %fptruncate e)]
+             [else (build-fl-call (lookup-c-entry fltruncate) e)])])
         (define-fl-call flsin)
         (define-fl-call flcos)
         (define-fl-call fltan)

@@ -11,3 +11,4 @@
 (define-constant unaligned-integers #t)
 (define-constant integer-divide-instruction #t)
 (define-constant popcount-instruction #t)
+(define-constant roundsd-instruction #t)
