@@ -3319,6 +3319,25 @@
              [else #f]))]
         [else (lambda (prim) #f)]))
 
+    ; setcc counterpart of the fp relops for branchless boolean
+    ; materialization, or #f for any other predicate, which keeps the
+    ; (if p #t #f) conversion.  Only genuine value contexts reach these
+    ; converters, so predicates feeding branches keep the ucomisd + jcc
+    ; path.  fl>? and fl>=? are swapped onto fp</fp<= by cpprim, so the
+    ; only fp pred primitives that can appear here are fp<, fp<=, fp=.
+    (define pred->fpbool
+      (constant-case setcc-instruction
+        [(#t)
+         (lambda (prim)
+           ; prim is a nanopass primitive (np-languages); compare by
+           ; identity against the declared % bindings
+           (cond
+             [(eq? prim %fp<) %fpbool<]
+             [(eq? prim %fp<=) %fpbool<=]
+             [(eq? prim %fp=) %fpbool=]
+             [else #f]))]
+        [else (lambda (prim) #f)]))
+
     (define-pass np-optimize-pred-in-value : L9.75 (ir) -> L9.75 ()
       (definitions
         (define bar
@@ -3785,6 +3804,13 @@
                            `(seq
                               (set! ,u (inline ,null-info ,ipbool ,t* ...))
                               (set! ,lvalue ,u))))]
+                   [(pred->fpbool prim)
+                    => (lambda (fpbool)
+                         ; same as ipbool above
+                         (let ([u (make-tmp 'u)])
+                           `(seq
+                              (set! ,u (inline ,null-info ,fpbool ,t* ...))
+                              (set! ,lvalue ,u))))]
                    [else
                     `(if (inline ,info ,prim ,t* ...)
                          (set! ,lvalue ,(%constant strue))
@@ -3932,6 +3958,12 @@
                  (let ([u (make-tmp 'u)])
                    `(seq
                       (set! ,u (inline ,null-info ,ipbool ,t* ...))
+                      ,u)))]
+           [(pred->fpbool prim)
+            => (lambda (fpbool)
+                 (let ([u (make-tmp 'u)])
+                   `(seq
+                      (set! ,u (inline ,null-info ,fpbool ,t* ...))
                       ,u)))]
            [else
             `(if (inline ,info ,prim ,t* ...)

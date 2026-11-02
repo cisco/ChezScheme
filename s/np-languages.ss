@@ -769,6 +769,11 @@
   (declare-primitive ipbool= value #t) ; x86_64 only (so we don't use it elsewhere)
   (declare-primitive ipbool> value #t) ; x86_64 only (so we don't use it elsewhere)
   (declare-primitive ipbool>= value #t) ; x86_64 only (so we don't use it elsewhere)
+  (declare-primitive fpbool< value #t) ; x86_64 only (so we don't use it elsewhere)
+  (declare-primitive fpbool<= value #t) ; x86_64 only (so we don't use it elsewhere)
+  (declare-primitive fpbool= value #t) ; x86_64 only (so we don't use it elsewhere)
+  (declare-primitive fpbool> value #t) ; x86_64 only (so we don't use it elsewhere)
+  (declare-primitive fpbool>= value #t) ; x86_64 only (so we don't use it elsewhere)
   (declare-primitive fptrunc value #t)
   (declare-primitive fpsingle value #t)
   (declare-primitive double->single value #t) ; not required by cpnanopass

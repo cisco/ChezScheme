@@ -10094,6 +10094,8 @@ fl.mo:Expected error in mat fl>=: "fl>=: 3 is not a flonum".
 fl.mo:Expected error in mat fl>=: "fl>=: 3 is not a flonum".
 fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
 fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
+fl.mo:Expected error in mat fl-compare-value-position: "fl<: a is not a flonum".
+fl.mo:Expected error in mat fl-compare-value-position: "fl<: a is not a flonum".
 fl.mo:Expected error in mat fl=?: "incorrect argument count in call (fl=?)".
 fl.mo:Expected error in mat fl=?: "incorrect argument count in call (fl=? 3.4)".
 fl.mo:Expected error in mat fl=?: "fl=?: a is not a flonum".

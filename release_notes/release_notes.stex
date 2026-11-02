@@ -4027,6 +4027,16 @@ x86\_64 has been fixed.
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
 
+\subsection{Branchless boolean-producing flonum comparisons (10.5.0)}
+
+On x86\_64, a flonum comparison whose boolean result is used as a value
+now compiles at optimize level 3 to \scheme{ucomisd} and \scheme{setcc}
+instead of a compare and branch, with an explicit parity check keeping
+NaN results false as R6RS requires.  Comparisons that feed a branch
+keep the conditional-jump form.  Materializing a stream of
+unpredictable comparison results is over twice as fast; predictable
+workloads are unchanged.
+
 \subsection{Branchless boolean-producing fixnum comparisons (10.5.0)}
 
 On x86\_64, a fixnum comparison whose boolean result is used as a value
