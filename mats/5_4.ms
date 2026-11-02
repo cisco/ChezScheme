@@ -246,6 +246,46 @@
     (guard (c [#t #t]) (not (char-ci>=? (error #f "oops"))))
  )
 
+(mat char-compare-value-position
+    ; char compares whose boolean result is used as a value (stored into
+    ; an aggregate, passed to a call, returned) must produce the same
+    ; booleans as in test position; on x86_64 these materialize via
+    ; cmp + setcc because char predicates share the fixnum relop path
+    ; (char immediates all carry type-char, so a tagged compare
+    ; preserves both equality and ordering)
+    (equal? (list (char<? #\a #\b) (char<? #\b #\a) (char<? #\a #\a)) '(#t #f #f))
+    (equal? (list (char<=? #\a #\b) (char<=? #\a #\a) (char<=? #\b #\a)) '(#t #t #f))
+    (equal? (list (char=? #\a #\a) (char=? #\a #\b)) '(#t #f))
+    (equal? (list (char>? #\b #\a) (char>? #\a #\b) (char>? #\a #\a)) '(#t #f #f))
+    (equal? (list (char>=? #\b #\a) (char>=? #\a #\a) (char>=? #\a #\b)) '(#t #t #f))
+    ; r6rs names
+    (equal? (list (r6rs:char<? #\a #\b) (r6rs:char>? #\a #\b)) '(#t #f))
+    ; boundary characters
+    (equal? (list (char<? #\nul #\x10FFFF) (char<? #\x10FFFF #\nul) (char=? #\nul #\nul)) '(#t #f #t))
+    (equal? (list (char<? #\x7f #\x80) (char<? #\xD7FF #\xE000)) '(#t #t))
+    ; vector materialization
+    (let ([v (make-vector 5 #f)])
+      (vector-set! v 0 (char<? #\a #\b))
+      (vector-set! v 1 (char>? #\a #\b))
+      (vector-set! v 2 (char=? #\a #\a))
+      (vector-set! v 3 (char<=? #\b #\a))
+      (vector-set! v 4 (char>=? #\b #\a))
+      (equal? v '#(#t #f #t #f #t)))
+    ; higher-order binding
+    (let ([f char<?]) (and (f #\a #\b) (not (f #\b #\a))))
+    ; n-ary chain in value position
+    (equal? (list (char<? #\a #\b #\c) (char<? #\a #\c #\b)) '(#t #f))
+    ; results flowing through boolean operators
+    (eq? (not (char<? #\a #\b)) #f)
+    (eq? (and (char<? #\a #\b) (char<? #\b #\c)) #t)
+    (eq? (or (char<? #\b #\a) (char<? #\a #\b)) #t)
+    ; predicate feeding a branch is unchanged (test position)
+    (eq? (if (char<? #\a #\b) 'yes 'no) 'yes)
+    (eq? (if (char<? #\b #\a) 'yes 'no) 'no)
+    ; non-char arguments still raise the usual errors
+    (error? (vector-set! (make-vector 1) 0 (char<? 'a #\b)))
+ )
+
 (mat r6rs:char=?/r6rs:char-ci=?
     (error? (r6rs:char=?))
     (error? (r6rs:char=? 'a))
