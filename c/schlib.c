@@ -125,21 +125,42 @@ ptr Sstring_of_length(const char *s, iptr n) {
 
 /* Sunsigned64 is in number.c */
 
+/* While interrupts are disabled, the Scheme-level protocol in event.ss
+   keeps the timer stopped, so stop it here along with raising the
+   disable count, and restore its ticks afterward. Otherwise a nested
+   disable-interrupts and enable-interrupts in the called Scheme code
+   (from parameterize in $c-tlv's guard, for example) stops the timer and
+   leaves it stopped, with any set-timer request still pending. An event
+   that arrives meanwhile stays pending until the restored ticks run out. */
+static xptr disable_interrupts(ptr tc) {
+  xptr ticks = TRAP(tc);
+  DISABLECOUNT(tc) = FIX(1);
+  TRAP(tc) = (xptr)most_positive_fixnum;
+  return ticks;
+}
+
+static void enable_interrupts(ptr tc, xptr ticks) {
+  DISABLECOUNT(tc) = FIX(0);
+  TRAP(tc) = ticks;
+}
+
 ptr Stop_level_value(ptr x) {
   ptr tc = get_thread_context();
   IBOOL enabled = (DISABLECOUNT(tc) == 0);
-  if (enabled) DISABLECOUNT(tc) = FIX(UNFIX(DISABLECOUNT(tc)) + 1);
+  xptr ticks = 0;
+  if (enabled) ticks = disable_interrupts(tc);
   x = Scall1(S_symbol_value(Sstring_to_symbol("$c-tlv")), x);
-  if (enabled) DISABLECOUNT(tc) = FIX(UNFIX(DISABLECOUNT(tc)) - 1);
+  if (enabled) enable_interrupts(tc, ticks);
   return x;
 }
 
 void Sset_top_level_value(ptr x, ptr y) {
   ptr tc = get_thread_context();
   IBOOL enabled = (DISABLECOUNT(tc) == 0);
-  if (enabled) DISABLECOUNT(tc) = FIX(UNFIX(DISABLECOUNT(tc)) + 1);
+  xptr ticks = 0;
+  if (enabled) ticks = disable_interrupts(tc);
   Scall2(S_symbol_value(Sstring_to_symbol("$c-stlv!")), x, y);
-  if (enabled) DISABLECOUNT(tc) = FIX(UNFIX(DISABLECOUNT(tc)) - 1);
+  if (enabled) enable_interrupts(tc, ticks);
 }
 
 #include <setjmp.h>

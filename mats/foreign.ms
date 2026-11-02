@@ -4111,6 +4111,21 @@
   (check-foreign-call-interrupt-disable #t #t)
 )
 
+(mat c-top-level-value-timer
+  ;; Stop_level_value and Sset_top_level_value disable interrupts while
+  ;; they call into Scheme, which may itself disable and enable interrupts;
+  ;; a pending timer request must survive
+  (let ([tlv (foreign-procedure "(cs)s_tlv" (ptr) ptr)])
+    (set-timer 100000)
+    (and (eq? (tlv 'car) car)
+         (<= 0 (set-timer 0) 100000)))
+  (let ([stlv (foreign-procedure "(cs)s_stlv" (ptr ptr) void)])
+    (set-timer 100000)
+    (stlv 'c-top-level-value-timer-var 17)
+    (and (<= 0 (set-timer 0) 100000)
+         (eqv? (top-level-value 'c-top-level-value-timer-var) 17)))
+)
+
 (machine-case
   [(i3nt ti3nt)
    (mat i3nt-stdcall-collect-safe
