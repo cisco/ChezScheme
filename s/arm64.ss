@@ -474,6 +474,10 @@
     [(op (x fpur) (y fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsqrt ,y))])
 
+  (define-instruction value (fpround fpfloor fpceiling fptruncate)
+    [(op (x fpur) (y fpur))
+     `(set! ,(make-live-info) ,x (asm ,info ,(asm-fpround op) ,y))])
+
   (define-instruction pred (fp= fp< fp<=)
     [(op (x fpur) (y fpur))
      (let ([info (make-info-condition-code op #f #f)])
@@ -731,7 +735,7 @@
                      asm-fpmove-single asm-fl-cvt asm-fpt asm-fpmove asm-fpcastto asm-fpcastfrom
                      asm-fptrunc asm-fpsingle
                      asm-lock asm-lock+/- asm-cas asm-fence
-                     asm-fpop-2 asm-fpsqrt asm-c-simple-call
+                     asm-fpop-2 asm-fpsqrt asm-fpround asm-c-simple-call
                      asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
                      asm-debug
@@ -977,6 +981,11 @@
   (define-op fdiv  f-arith-op  #b0001)
 
   (define-op fsqrt fsqrt-op)
+
+  (define-op frintn frint-op #b000) ; rmode selector is at bit 15
+  (define-op frintp frint-op #b001)
+  (define-op frintm frint-op #b010)
+  (define-op frintz frint-op #b011)
 
   (define movzi-op
     (lambda (op opc dest imm shift code*)
@@ -1390,6 +1399,19 @@
         [21 #b1]
         [17 #b0000]
         [15 #b11] ; opc
+        [10 #b10000]
+        [5  (ax-ea-reg-code src)]
+        [0  (ax-ea-reg-code dest)])))
+
+  (define frint-op
+    (lambda (op rmode dest src code*)
+      (emit-code (op dest src code*)
+        [29 #b000]
+        [24 #b11110]
+        [22 #b01] ; type
+        [21 #b1]
+        [18 #b001]
+        [15 rmode]
         [10 #b10000]
         [5  (ax-ea-reg-code src)]
         [0  (ax-ea-reg-code dest)])))
@@ -1842,6 +1864,17 @@
     (lambda (code* dest src)
       (Trivit (dest src)
         (emit fsqrt dest src code*))))
+
+  (define-who asm-fpround
+    (lambda (op)
+      (lambda (code* dest src)
+        (Trivit (dest src)
+          (case op
+            [(fpround) (emit frintn dest src code*)]
+            [(fpfloor) (emit frintm dest src code*)]
+            [(fpceiling) (emit frintp dest src code*)]
+            [(fptruncate) (emit frintz dest src code*)]
+            [else (sorry! who "unrecognized op ~s" op)])))))
 
   (define-who asm-fpsingle
     (lambda (code* dest src)
