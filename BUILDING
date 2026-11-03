@@ -650,3 +650,20 @@ and in the process creates a cross-compilation patch file as
 "xc-<machine type>/s/xpatch". Loading that "xpatch" file into Chez
 Scheme for the current platform changes functions like `compile-file`
 and `make-boot-file` to generate code for the target <machine type>.
+
+
+REPRODUCIBLE BUILDS
+
+The `--sessionkey=<string>` option for `configure` enables
+byte-for-byte reproducible builds. It uses `<string>` to seed a hash
+that is used for gensyms created during the build.
+
+A few limitations apply. Start with a fresh build space to add or
+change the `--sessionkey` configuration option, because incremental
+builds via `make` do not adapt to a changed key. Along similar lines,
+`--sessionkey` is not compatible with development of Chez Scheme
+itself, where a non-cross, fixpoint-finding build loop is often
+needed. Building with `--sessionkey` through a typical non-cross,
+pb-based build requires that the pb boot files are up-to-date (like
+they are in a release) to ensure that the build reaches a fixpoint in
+a single iteration.
