@@ -723,7 +723,7 @@
    ; principal expression from Kahan:
    ; (log(1+z) - log(1-z))/2
    (let ([f (let ([theta (fl/ sqrt-omega 4.0)] [pi/2 (flatan2 1.0 0.0)])
-               (let ([rho (fl/ theta)] [-pi/2 (fl- pi/2)])
+               (let ([sqrt2 ($flsqrt 2.0)] [-pi/2 (fl- pi/2)])
                   (lambda (x y)
                      ; x is positive
                      (let ([ay (flabs y)])
@@ -731,22 +731,29 @@
                            [(or (fl> x theta) (fl> ay theta))
                             ; RP(1/z) +/- (pi/2)i
                             (fl-make-rectangular
-                               (if (fl>= x ay)
-                                   (fl/ (fl+ x (fl* (fl/ y x) y)))
+                               (cond
+                                  [(and (fl< 1.0e300 x) (fl< 1.0e300 ay) (fl< 9e307 (+ x ay)))
+                                   (fl/ 1. (fl+ (fl/ x ay) (fl/ ay x)) ay)]
+                                  [(fl>= x ay)
+                                   (fl/ (fl+ x (fl* (fl/ y x) y)))]
+                                  [else
                                    (let ([r (fl/ x y)])
-                                     (fl/ r (fl+ y (fl* r x)))))
+                                      (fl/ r (fl+ y (fl* r x))))])
                                (if (negated-flonum? y) pi/2 -pi/2))]
                            [(fl= x 1.0)
-                            (let ([k (fl+ ay rho)])
-                               (fl-make-rectangular
-                                  ($fllog (fl/ ($flsqrt ($flsqrt (fl+ 4.0
-                                                                   (* y y))))
-                                                      ($flsqrt k)))
-                                  (fl/ (fl+ pi/2 ($flatan (fl/ k 2.0)))
-                                       (if (negated-flonum? y) 2.0 -2.0))))]
+                            (fl-make-rectangular
+                               (cond
+                                  [(fl<= 1e-8 ay)
+                                   (fl* 0.25 ($fllog1p (fl* 4.0 ($flexpt y -2.0))))]
+                                  [(fl< 1.74e-310 ay) ;; ~ (* (expt 2 45) 5e-324)
+                                   (fl* -0.5 ($fllog (fl* 0.5 ay)))]
+                                  [else ;; 45 subnormal bits
+                                   ($fllog (fl/ sqrt2 ($flsqrt ay)))])
+                               (fl/ (fl+ pi/2 ($flatan (fl/ ay 2.0)))
+                                    (if (negated-flonum? y) 2.0 -2.0)))]
                            [else
                             (let ([1-x (fl- 1.0 x)]
-                                  [k (let ([k (fl+ ay rho)]) (fl* k k))])
+                                  [k (fl* ay ay)])
                                (fl-make-rectangular
                                   (fl/ ($fllog1p (fl/ (fl* 4.0 x)
                                                      (fl+ (fl* 1-x 1-x) k)))
