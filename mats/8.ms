@@ -7371,6 +7371,21 @@
       (import (testfile-C))
       (list $testfile-A-x (get-property $testfile-A-x $testfile-A-prop-id)))
     '((a . b) (c . d)))
+  (begin
+    (expand
+     '(begin
+        (library (beep-lib)
+          (export cons beep)
+          (import (chezscheme))
+          (define beep 'beep)
+          (define-property cons beep #t))
+        (library (boop-lib)
+          (export button)
+          (import (chezscheme)
+                  (rename (beep-lib)
+                          (beep boop)))
+          (define (button) (display boop)))))
+    #t)
 )
 
 (mat library1

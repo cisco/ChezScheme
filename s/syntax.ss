@@ -3326,7 +3326,7 @@
                                  (record-iface! defn-table imps))
                                (begin
                                  (for-each (lambda (id) (import-extend-ribcage! ribcage id)) imps)
-                                 (for-each (lambda (id) (record-id! defn-table id (resolved-id->label/pl id))) imps)))))))
+                                 (for-each (lambda (id) (record-id! defn-table id (resolved-id->label id))) imps)))))))
                  (parse (cdr body) mb* inits chexports #f expspec** iexport* impind? label*)]
                 [(export-form)
                  (let ([expspec* (parse-export e w ae)])
