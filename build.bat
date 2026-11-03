@@ -10,6 +10,7 @@ set MAKETARGET=all-dlls
 set SKIPVS=no
 set SKIPSUBMODULE=no
 set USEPB=yes
+set XLEVEL=1
 
 if "%WORKAREA%"=="" goto needargument
 
@@ -21,6 +22,10 @@ if defined ARG (
   if "%ARG%"=="/exe" set LINKAS=exe && goto argloop
   if "%ARG%"=="/MD" set RUNTIMEAS=dll && goto argloop
   if "%ARG%"=="/MT" set RUNTIMEAS=static && goto argloop
+  if "%ARG%"=="/x86-64-v1" set XLEVEL=1 && goto argloop
+  if "%ARG%"=="/x86-64-v2" set XLEVEL=2 && goto argloop
+  if "%ARG%"=="/x86-64-v3" set XLEVEL=3 && goto argloop
+  if "%ARG%"=="/x86-64-v4" set XLEVEL=4 && goto argloop
   if "%ARG%"=="/only" set MAKETARGET=build && goto argloop
   if "%ARG%"=="/kernel" set MAKETARGET=kernel && goto argloop
   if "%ARG%"=="/none" set MAKETARGET=none && goto argloop
@@ -63,6 +68,7 @@ echo m=%M% >> %WORKAREA%\Mf-config
 echo linkAs=%LINKAS% >> %WORKAREA%\Mf-config
 echo runtimeAs=%RUNTIMEAS% >> %WORKAREA%\Mf-config
 echo enableFrompb=%USEPB% >> %WORKAREA%\Mf-config
+echo x86_64_level=%XLEVEL% >> %WORKAREA%\Mf-config
 
 echo workarea=%WORKAREA% > Makefile
 echo !include %WORKAREA%\Mf-config >> Makefile

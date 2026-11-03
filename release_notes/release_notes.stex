@@ -165,6 +165,15 @@ The armv7le and tarmv7le machine types correspond to a 32-bit ARM
 compilation target using the armel ABI, which is consistent with (old)
 Android devices.
 
+\subsection{Support for additional x86-64 instructions (10.5.0)}
+
+Supplying \scheme{--x86-64-v\var{level}} to \scheme{configure} enables
+use of instructions at \var{level} as specified by the x86-64 psABI.
+In particular, \var{level} as \scheme{2} enables direct use of
+POPCOUNT and SSE4.1 instructions in code that is generated for x86\_64
+targets, instead of substituting those instructions (with a small
+overhead) dynamically when they are available at run time.
+
 \subsection{Exact zeros and \scheme{lcm} (10.5.0)}
 
 Supplying an exact \scheme{0} to \scheme{lcm} produces exact

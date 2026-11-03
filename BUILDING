@@ -435,6 +435,13 @@ after <machine type>:
    Specifies that "scheme.exe" (and its DLL, if any) should statically
    link to the multi-threaded C runtime.
 
+ * `/x86-64-v<level>` with <level> as 1, 2, 3, or 4
+
+   Configures x64 output to for instructions that can be used
+   directly, instead of dynamically substituting them when available
+   or using other fallbacks. The <level> corresponds to the level
+   in the x86-64 psABI.
+
  * `/keepvs`
 
    Specifies that command-line tools like "cl.exe" are available and

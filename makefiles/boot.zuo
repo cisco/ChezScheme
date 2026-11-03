@@ -34,6 +34,7 @@
                        (if (or host-scheme host-workarea)
                            "cross=t\n"
                            "")
+                       (~a "x86_64_level=" (hash-ref config 'x86_64_level "1") "\n")
                        (~a "sessionKey=" (hash-ref config 'sessionKey "") "\n")
                        "\n")
                    (build-path dir "Mf-config")

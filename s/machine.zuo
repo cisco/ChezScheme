@@ -16,7 +16,8 @@
 ;; Get or synthesize a "machine.def" file and supporting files,
 ;; returns
 ;;    (list (cons dep-name build) dep-input-name ...)
-(define (get-machine-files m arch)
+;; The `x86-64-level` argument is relevant only for the "a6" architecture
+(define (get-machine-files m arch [x86-64-level 0])
   (define threaded? (= (char "t") (string-ref m 0)))
   (define uni (if threaded? (substring m 1) m))
   (cond
@@ -50,21 +51,43 @@
      (define arch.def (~a arch ".def"))
      (define os.def (~a os ".def"))
      (define src (at-source m.def))
-     (cons (if (file-exists? src)
-               (cons m.def
-                     (lambda (dest token)
-                       (cp/ln src dest)))
-               (let ([src (if threaded? "tunix.def" "unix.def")])
-                 (cons src
-                       (lambda (dest token)
-                         (fill-template (at-source src) dest
-                                        (hash 'M m 'March arch))))))
+     (define dep
+       (if (file-exists? src)
+           (cons m.def
+                 (lambda (dest token)
+                   (cp/ln src dest)))
+           (let ([src (if threaded? "tunix.def" "unix.def")])
+             (cons src
+                   (lambda (dest token)
+                     (fill-template (at-source src) dest
+                                    (hash 'M m 'March arch)))))))
+     (define a6? (string=? arch "a6"))
+     (cons (if a6?
+               (add-a6-options dep x86-64-level)
+               dep)
            (append
             (list "default.def"
                   arch.def)
+            (if a6?
+                (list "a6-options.def")
+                '())
             (if (file-exists? (at-source os.def))
                 (list os.def)
                 '())))]))
+
+;; "a6.def" includes "a6-options.def"
+(define (add-a6-options dep x86-64-level)
+  (cons (car dep)
+        (lambda (dest token)
+          ((cdr dep) dest token)
+          (define options.def (build-path (path-only dest) "a6-options.def"))
+          (rm* options.def)
+          (fill-template (at-source "a6-options.def") options.def
+                         (hash 'level x86-64-level))
+          ;; record level in `dest` so the file changes f the configuration changes
+          (define o (fd-open-output dest :append))
+          (fd-write o (~a "\n;; level = " x86-64-level "\n"))
+          (fd-close o))))
 
 (define (fill-template src dest vars)
   (define s (file->string src))
