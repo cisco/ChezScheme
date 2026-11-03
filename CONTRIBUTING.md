@@ -67,6 +67,12 @@ Please keep in mind the following guidance when preparing contributions:
 * Appropriate tests and documentation changes should be included
   with all code changes.
 
+* Working on C code with language servers (such as clangd):
+  See the **CLANGD AND IDE COMPILATION DATABASE SETUP** section in `BUILDING`
+  for instructions on generating a compilation database (`compile_commands.json`)
+  using Bear so that clangd can find generated machine-specific headers like
+  `scheme.h` and `config.h`.
+
 * Coding structure (including indentation) should be consistent
   with the existing code base.  This implies that contributors should
   study the existing code before contributing.

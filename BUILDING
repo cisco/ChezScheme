@@ -650,3 +650,61 @@ and in the process creates a cross-compilation patch file as
 "xc-<machine type>/s/xpatch". Loading that "xpatch" file into Chez
 Scheme for the current platform changes functions like `compile-file`
 and `make-boot-file` to generate code for the target <machine type>.
+
+CLANGD AND IDE COMPILATION DATABASE SETUP
+
+When working on the C runtime code in the `c/` directory using an editor
+configured with clangd (or another LSP-based language server), clangd may
+report missing headers such as `scheme.h` or `config.h`, along with errors
+for types and functions declared within them.
+
+This happens because Chez Scheme uses a machine-specific configuration and
+build structure:
+ * Header files like `scheme.h` and `config.h` are located in or generated
+   into machine-specific workareas (for example, `boot/<machine-type>/` and
+   `<machine-type>/c/`), rather than existing as static files in `c/`.
+ * Target machine types, preprocessor definitions, and include paths vary
+   across architectures (such as `ta6le`, `a6le`, `tarm64le`, `pb`, etc.).
+
+Hardcoding machine-specific include paths in a static `.clangd` configuration
+file is not recommended, because hardcoded paths break when switching machine
+types, across different platforms, and with out-of-tree builds.
+
+The standard and portable solution is to generate a JSON Compilation Database
+(`compile_commands.json`) using Bear (https://github.com/rizsotto/Bear) or an
+equivalent build interceptor:
+
+1. Configure Chez Scheme for your desired machine type:
+
+     ./configure
+
+2. Use Bear to intercept the compilation commands during the C build:
+
+     bear -- make kernel
+
+   or to capture the entire build:
+
+     bear -- make
+
+   This generates a `compile_commands.json` file in the working directory
+   containing the exact compiler invocations, preprocessor definitions, and
+   include paths (e.g., `-I../boot/<machine-type> -I../<machine-type>/c`) for
+   every C source file in `c/`.
+
+3. Clangd automatically detects `compile_commands.json` if it resides in the
+   repository root or in a `build/` subdirectory.
+
+   For out-of-tree builds (where `./configure` is run from a separate build
+   directory), you can point clangd to the compilation database by either:
+    * Symlinking the generated compilation database to the project root:
+        ln -s <build-dir>/compile_commands.json .
+    * Or specifying the build directory in a root `.clangd` configuration:
+        CompileFlags:
+          CompilationDatabase: "<path-to-build-dir>"
+
+4. Whenever you reconfigure Chez Scheme (e.g. for a different machine type or
+   with different configure flags) or add new C files, regenerate the
+   compilation database:
+
+     make clean
+     bear -- make kernel
