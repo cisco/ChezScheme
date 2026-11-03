@@ -6782,6 +6782,42 @@
                    `(seq
                      (set! ,%ac0 (immediate 0))
                      (jump ,%ref-ret (,%ac0)))]))]
+           [(fpround-slow fpfloor-slow fpceiling-slow fptruncate-slow)
+            `(lambda ,(make-info (symbol->string sym) '()) 0 ()
+               ,(constant-case architecture
+                  [(x86_64)
+                   ;; Called by the linker-patchable sequence for `%fpround` and
+                   ;; friends, which is replaced by ROUNDSD when SSE4.1 is available
+                   (let* ([entry (case sym
+                                   [(fpround-slow) (lookup-c-entry flround)]
+                                   [(fpfloor-slow) (lookup-c-entry flfloor)]
+                                   [(fpceiling-slow) (lookup-c-entry flceiling)]
+                                   [else (lookup-c-entry fltruncate)])]
+                          [reg* (remq %rax (add-caller-save-registers '()))]
+                          [offset* (map (lambda (i) (fx* 8 i)) (iota (length reg*)))]
+                          ;; on entry, %sp is 8 mod 16 due to the return address, so
+                          ;; use an odd number of slots to align it for the C call
+                          [frame-size (fx* 8 (fxlogor (length reg*) 1))])
+                     (with-output-language (L13.5 Effect)
+                       (let ([save* (append
+                                     (list `(set! ,%sp ,(%inline - ,%sp (immediate ,frame-size))))
+                                     (map (lambda (r offset) `(set! ,(%mref ,%sp ,%zero ,offset ,(reg-type r)) ,r)) reg* offset*)
+                                     (list (with-saved-scheme-state
+                                             (in)
+                                             (out %ac0 %ac1 %cp %xp %yp %ts %td scheme-args extra-regs)
+                                             `(inline ,(make-info-c-simple-call #f entry) ,%c-simple-call))))]
+                             [restore* (append
+                                        (map (lambda (r offset) `(set! ,r ,(%mref ,%sp ,%zero ,offset ,(reg-type r)))) reg* offset*)
+                                        (list `(set! ,%sp ,(%inline + ,%sp (immediate ,frame-size)))))])
+                         (with-output-language (L13.5 Tail)
+                           (fold-right (lambda (e rest) `(seq ,e ,rest))
+                                       `(asm-c-return ,null-info ,%Cfparg1 ,reg* ...)
+                                       (append save* restore*))))))]
+                  [else
+                   ;; Generate anything, since this should not get called
+                   `(seq
+                     (set! ,%ac0 (immediate 0))
+                     (jump ,%ref-ret (,%ac0)))]))]
            [(cpu-features)
             `(lambda ,(make-info "cpu-features" '()) 0 ()
                ,(constant-case architecture

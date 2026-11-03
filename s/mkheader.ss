@@ -1479,6 +1479,14 @@
              (libspec-index (lookup-libspec popcount-slow)))
         (def "library_cpu_features"
              (libspec-index (lookup-libspec cpu-features)))
+        (def "library_fpround_slow"
+             (libspec-index (lookup-libspec fpround-slow)))
+        (def "library_fpfloor_slow"
+             (libspec-index (lookup-libspec fpfloor-slow)))
+        (def "library_fpceiling_slow"
+             (libspec-index (lookup-libspec fpceiling-slow)))
+        (def "library_fptruncate_slow"
+             (libspec-index (lookup-libspec fptruncate-slow)))
 
       )))
 )

@@ -43,7 +43,7 @@ static void install_library_entry(ptr n, ptr x) {
     }
 #ifdef X86_64
     if (n == FIX(library_cpu_features))
-      x86_64_set_popcount_present(x);
+      x86_64_set_cpu_features(x);
 #endif
 #ifdef PORTABLE_BYTECODE_SWAPENDIAN
     if (n == FIX(library_dounderflow))
