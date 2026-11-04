@@ -756,6 +756,8 @@
   (declare-primitive fp- value #t)
   (declare-primitive fp* value #t)
   (declare-primitive fp/ value #t)
+  (declare-primitive fpmin value #t) ; x86_64 only (so we don't use it elsewhere)
+  (declare-primitive fpmax value #t) ; x86_64 only (so we don't use it elsewhere)
   (declare-primitive fpt value #t)
   (declare-primitive fpsqrt value #t) ; not implemented for some ppc32 (so we don't use it)
   (declare-primitive fptrunc value #t)

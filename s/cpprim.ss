@@ -4976,14 +4976,23 @@
       (define build-flminmax
         (lambda (min?)
           (lambda (e1 e2)
-            (bind 'always fp (e1 e2)
-                  (let ([lo (if min? e1 e2)] [hi (if min? e2 e1)])
-                    `(if (inline ,(make-info-unboxed-args '(#t #t)) ,%fp< ,lo ,hi)
-                         (unboxed-fp ,e1)
-                         (if (inline ,(make-info-unboxed-args '(#t #t)) ,%fp<= ,hi ,lo)
-                             (unboxed-fp ,e2)
-                             ;; one of them must be +nan.0, so ensure +nan.0 result
-                             (unboxed-fp (inline ,(make-info-unboxed-args '(#t #t)) ,%fp+ ,e1 ,e2)))))))))
+            (constant-case architecture
+              [(x86_64)
+               ;; branchless NaN-propagating min/max via %fpmin/%fpmax
+               ;; (see asm-fpminmax in x86_64.ss); minsd/maxsd tie to the
+               ;; second operand, matching the convention #1086
+               ;; establishes for (flmin 0.0 -0.0) / (flmax 0.0 -0.0)
+               (bind 'always fp (e1 e2)
+                     `(unboxed-fp (inline ,(make-info-unboxed-args '(#t #t)) ,(if min? %fpmin %fpmax) ,e1 ,e2)))]
+              [else
+               (bind 'always fp (e1 e2)
+                     (let ([lo (if min? e1 e2)] [hi (if min? e2 e1)])
+                       `(if (inline ,(make-info-unboxed-args '(#t #t)) ,%fp< ,lo ,hi)
+                            (unboxed-fp ,e1)
+                            (if (inline ,(make-info-unboxed-args '(#t #t)) ,%fp<= ,hi ,lo)
+                                (unboxed-fp ,e2)
+                                ;; one of them must be +nan.0, so ensure +nan.0 result
+                                (unboxed-fp (inline ,(make-info-unboxed-args '(#t #t)) ,%fp+ ,e1 ,e2))))))]))))
 
       (define-inline 3 fl+
         [() `(quote 0.0)]
