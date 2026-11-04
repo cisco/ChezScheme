@@ -2550,7 +2550,12 @@
                                          [offset 0]
                                          [int* int*]
                                          [live* live*]
-                                         [loc (load-indirect-stack isp ($ftd-size ftd))])
+                                         ;; a 1- or 2-byte object is right-justified in its
+                                         ;; word, as it is in a register
+                                         [loc (load-indirect-stack (if (fx< ($ftd-size ftd) 3)
+                                                                       (fx+ isp (fx- 4 ($ftd-size ftd)))
+                                                                       isp)
+                                                                   ($ftd-size ftd))])
                               (cond
                                [(or (fx<= size 0) (null? int*))
                                 (loop (cdr types)
@@ -3208,14 +3213,19 @@
                                       ;; in FP register
                                       (loop (cdr types)
                                             (cons (load-double-stack float-reg-offset) locs)
-                                            (fx+ iint width) (fx+ iflt 1) (fx+ int-reg-offset size) (fx+ float-reg-offset size)
+                                            ;; FP registers are saved as doubles, even for a single
+                                            (fx+ iint width) (fx+ iflt 1) (fx+ int-reg-offset size) (fx+ float-reg-offset 8)
                                             (fx+ stack-arg-offset size)
                                             next-varargs-after)]
                                      [(or (not (eq? varargs-after 0))
                                           (fx>= iint gp-reg-count))
-                                      ;; on stack
+                                      ;; on stack, where a single is not widened to a double
                                       (loop (cdr types)
-                                            (cons (load-double-stack stack-arg-offset) locs)
+                                            (cons (if (and (fx= width 1)
+                                                           (not (eq? varargs-after 0)))
+                                                      (load-soft-single-stack stack-arg-offset)
+                                                      (load-double-stack stack-arg-offset))
+                                                  locs)
                                             iint iflt int-reg-offset float-reg-offset
                                             (fx+ stack-arg-offset size)
                                             next-varargs-after)]
@@ -3398,10 +3408,17 @@
                              (loop (cdr types)
                                    (cons (load-double-stack float-reg-offset) locs)
                                    iint (fx+ iflt 1) int-reg-offset (fx+ float-reg-offset 8) stack-arg-offset)
-                             (let ([stack-arg-offset (align 8 stack-arg-offset)])
-                               (loop (cdr types)
-                                     (cons (load-double-stack stack-arg-offset) locs)
-                                     iint iflt int-reg-offset float-reg-offset (fx+ stack-arg-offset 8))))]
+                             (nanopass-case (Ltype Type) (car types)
+                               [(fp-single-float)
+                                ;; as in `asm-foreign-call`, not widened to a double on the stack
+                                (loop (cdr types)
+                                      (cons (load-soft-single-stack stack-arg-offset) locs)
+                                      iint iflt int-reg-offset float-reg-offset (fx+ stack-arg-offset 4))]
+                               [else
+                                (let ([stack-arg-offset (align 8 stack-arg-offset)])
+                                  (loop (cdr types)
+                                        (cons (load-double-stack stack-arg-offset) locs)
+                                        iint iflt int-reg-offset float-reg-offset (fx+ stack-arg-offset 8)))]))]
                         [(and (constant software-floating-point)
                               (nanopass-case (Ltype Type) (car types)
                                              [(fp-double-float) #t]
@@ -3439,14 +3456,21 @@
                               (let ([load-address (case ($ftd-size ftd)
                                                     [(4) load-stack-address/convert-float]
                                                     [else load-stack-address])])
-                                (if (fx< iflt fp-reg-count)
-                                    (loop (cdr types)
-                                          (cons (load-address float-reg-offset) locs)
-                                          iint (fx+ iflt 1) int-reg-offset (fx+ float-reg-offset 8) stack-arg-offset)
-                                    (let ([stack-arg-offset (align 8 stack-arg-offset)])
-                                      (loop (cdr types)
-                                            (cons (load-address stack-arg-offset) locs)
-                                            iint iflt int-reg-offset float-reg-offset (fx+ stack-arg-offset 8)))))]
+                                (cond
+                                  [(fx< iflt fp-reg-count)
+                                   (loop (cdr types)
+                                         (cons (load-address float-reg-offset) locs)
+                                         iint (fx+ iflt 1) int-reg-offset (fx+ float-reg-offset 8) stack-arg-offset)]
+                                  [(fx= ($ftd-size ftd) 4)
+                                   ;; already a single on the stack, so no conversion
+                                   (loop (cdr types)
+                                         (cons (load-stack-address stack-arg-offset) locs)
+                                         iint iflt int-reg-offset float-reg-offset (fx+ stack-arg-offset 4))]
+                                  [else
+                                   (let ([stack-arg-offset (align 8 stack-arg-offset)])
+                                     (loop (cdr types)
+                                           (cons (load-address stack-arg-offset) locs)
+                                           iint iflt int-reg-offset float-reg-offset (fx+ stack-arg-offset 8)))]))]
                              [else
                               (case ($ftd-size ftd)
                                 [(8)

@@ -3103,6 +3103,18 @@ overwrote the start of the argument after it. In a register, the first two
 of those bytes were sign-extended before the third was added, so a high
 bit in the second byte changed the third byte.
 
+\subsection{Repair PowerPC foreign-callable \scheme{float} arguments and Mac OS small struct arguments (10.5.0)}
+
+On 32-bit PowerPC, a \scheme{foreign-callable} argument of type
+\scheme{float} that is passed on the stack after the floating-point
+registers are used up was read as a double, instead of the single that a
+C caller supplies, and on Linux that also misplaced later stack arguments.
+On Mac OS, a callable also read the wrong register for a floating-point
+argument after a \scheme{float} passed in a register. Finally, on Mac OS, a
+\scheme{foreign-procedure} argument that is a struct of one or two bytes
+with multiple members and that is passed on the stack was placed at the
+start of its word instead of the end.
+
 \subsection{Repair \scheme{configure} on FreeBSD powerpc64 and powerpc64le (10.5.0)}
 
 On FreeBSD, \scheme{uname -m} reports \scheme{powerpc} for 32-bit and

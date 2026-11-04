@@ -2648,6 +2648,7 @@
     (define (stack-fold . vs) (fold-left (lambda (r v) (+ (* r 7) v)) 0 vs))
     (define-ftype two_ints (struct (x int) (y int)))
     (define-ftype one_short (struct (a short)))
+    (define-ftype two_chars (struct (a integer-8) (b integer-8)))
     (define-ftype three_chars (struct (a integer-8) (b integer-8) (c integer-8)))
     (define-ftype one_float (struct (a float)))
     (define-ftype three_longs (struct (a integer-64) (b integer-64) (c integer-64)))
@@ -2672,6 +2673,12 @@
                                                         (lambda (p) (foreign-set! 'integer-8 p 0 41) (foreign-set! 'integer-8 p 1 42) (foreign-set! 'integer-8 p 2 43))))])
     (= (proc 1 2 3 4 5 6 7 8 9 s 44)
        (stack-fold 1 2 3 4 5 6 7 8 9 41 42 43 44)))
+
+  (let ([proc (foreign-procedure "stack_char_two_chars" (int int int int int int int int integer-8 (& two_chars) integer-8) integer-64)]
+        [s (make-ftype-pointer two_chars (alloc-stack-struct (ftype-sizeof two_chars)
+                                                      (lambda (p) (foreign-set! 'integer-8 p 0 41) (foreign-set! 'integer-8 p 1 42))))])
+    (= (proc 1 2 3 4 5 6 7 8 9 s 43)
+       (stack-fold 1 2 3 4 5 6 7 8 9 41 42 43)))
 
   ;; a high bit in the middle byte must not disturb the last byte
   (let ([proc (foreign-procedure "reg_three_chars" ((& three_chars)) integer-64)]
@@ -2713,6 +2720,42 @@
                                                         (lambda (p) (foreign-set! 'integer-64 p 0 41) (foreign-set! 'integer-64 p 8 42) (foreign-set! 'integer-64 p 16 43))))])
     (= (proc 1 2 3 4 5 6 7 8 s 44)
        (stack-fold 1 2 3 4 5 6 7 8 41 42 43 44)))
+
+  ;; a callable that receives floats after the floating-point registers are used up
+  (begin
+    (define-ftype a_float float)
+    (define-ftype many_floats_callback
+      (function (float float float float float float float float
+                 float float float float float float float
+                 double float int)
+                void))
+    (define-ftype many_a_floats_callback
+      (function ((& a_float) (& a_float) (& a_float) (& a_float) (& a_float) (& a_float) (& a_float) (& a_float)
+                 (& a_float) (& a_float) (& a_float) (& a_float) (& a_float) (& a_float) (& a_float)
+                 double (& a_float) int)
+                void))
+    (define many-floats-expected '(1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18))
+    #t)
+
+  (let* ([got #f]
+         [cb (make-ftype-pointer many_floats_callback (lambda args (set! got args)))]
+         [proc (foreign-procedure "call_with_many_floats" ((* many_floats_callback)) void)])
+    (proc cb)
+    (unlock-object (foreign-callable-code-object (ftype-pointer-address cb)))
+    (equal? got many-floats-expected))
+
+  (let* ([got #f]
+         [cb (make-ftype-pointer many_a_floats_callback
+                                 (lambda args
+                                   (set! got (map (lambda (v)
+                                                    (if (ftype-pointer? a_float v)
+                                                        (ftype-ref a_float () v)
+                                                        v))
+                                                  args))))]
+         [proc (foreign-procedure "call_with_many_floats" ((* many_a_floats_callback)) void)])
+    (proc cb)
+    (unlock-object (foreign-callable-code-object (ftype-pointer-address cb)))
+    (equal? got many-floats-expected))
 
  )
 
