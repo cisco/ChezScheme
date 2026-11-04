@@ -620,6 +620,23 @@ static IBOOL next_path(const char *execpath, char *path,
 #undef setp
 }
 
+ptr S_process_executable_path(void)
+{
+    char *path;
+    ptr result;
+
+    path = S_get_process_executable_path(NULL);
+
+    if (path == NULL)
+        return Sfalse;
+
+    result = Sstring_utf8(path, -1);
+
+    free(path);
+
+    return result;
+}
+
 /***************************************************************************/
 /* BOOT FILES */
 
@@ -705,6 +722,88 @@ static IBOOL check_boot(faslFile f, IBOOL verbose, const char *path) {
   }
 
   return 1;
+}
+
+ptr S_petite_boot_path(void)
+{
+    char pathbuf[BOOT_PATH_MAX];
+    const char *sp;
+    const char *dsp;
+    char *expandedpath;
+    int fd;
+    struct fileFaslFileObj ffo;
+
+    /*
+     * Search exactly the same two-part path used by find_boot:
+     *
+     *   1. SCHEMEHEAPDIRS / Sschemeheapdirs
+     *   2. configured default heap directories / Sdefaultheapdirs
+     *
+     * next_path performs the normal Chez substitutions:
+     *
+     *   %x  directory containing the running executable
+     *   %m  machine type
+     *   %v  Chez version
+     */
+    sp = Sschemeheapdirs;
+    dsp = Sdefaultheapdirs;
+
+    while (next_path(
+               NULL,
+               pathbuf,
+               "petite",
+               ".boot",
+               &sp,
+               &dsp)) {
+
+        expandedpath =
+            S_malloc_pathname(pathbuf);
+
+        fd =
+            OPEN(
+                expandedpath,
+                O_BINARY | O_RDONLY,
+                0);
+
+        free(expandedpath);
+
+        if (fd == -1)
+            continue;
+
+        /*
+         * check_boot verifies the Chez boot magic, Scheme version,
+         * and machine type.
+         *
+         * On failure, check_boot closes fd itself.
+         *
+         * On success, fd remains open and we close it below.
+         */
+        S_fasl_init_fd(
+            &ffo,
+            (ptr)0,
+            fd,
+            FASL_BUFFER_READ_ALL,
+            0);
+
+        if (check_boot(
+                &ffo.f,
+                0,
+                pathbuf)) {
+
+            ptr result;
+
+            CLOSE(fd);
+
+            result =
+                Sstring_utf8(
+                    pathbuf,
+                    -1);
+
+            return result;
+        }
+    }
+
+    return Sfalse;
 }
 
 static void check_dependencies_header(faslFile f, const char *path) {

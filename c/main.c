@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include "scheme.h"
 #include "config.h"
+#include "embedded-boot.h"
 
 /****
   CUSTOM_INIT may be defined as a function with the signature shown to
@@ -42,6 +43,49 @@
 #ifndef SCHEME_SCRIPT
 #define SCHEME_SCRIPT "scheme-script"
 #endif
+
+static const char **
+make_embedded_argv(
+    int argc,
+    const char *argv[])
+{
+    const char **new_argv;
+    int i;
+
+    /*
+     * We need argc + 1 actual arguments plus the conventional trailing
+     * NULL slot:
+     *
+     *   new_argv[0] = argv[0]
+     *   new_argv[1] = argv[0]
+     *   new_argv[2] = argv[1]
+     *   ...
+     *   new_argv[argc] = argv[argc - 1]
+     *   new_argv[argc + 1] = NULL
+     */
+    new_argv =
+      (const char **)malloc(
+        (size_t)(argc + 2) * sizeof(const char *));
+
+    if (new_argv == NULL) {
+        fprintf(
+          stderr,
+          "%s: unable to allocate application argument vector\n",
+          argv[0]);
+
+        exit(1);
+    }
+
+    new_argv[0] = argv[0];
+    new_argv[1] = argv[0];
+
+    for (i = 1; i < argc; i += 1)
+        new_argv[i + 1] = argv[i];
+
+    new_argv[argc + 1] = NULL;
+
+    return new_argv;
+}
 
 static const char *path_last(const char *p) {
   const char *s;
@@ -86,9 +130,13 @@ int main(int argc, const char *argv[]) {
   const char *execpath = argv[0];
   const char *scriptfile = (char *)0;
   const char *programfile = (char *)0;
+  const char *compile_executable_source = (char *)0;
+  const char *compile_executable_output = (char *)0;
   const char *libdirs = (char *)0;
   const char *libexts = (char *)0;
   int status;
+  S_embedded_boot embedded_boot;
+  S_embedded_boot_status embedded_boot_status;
   const char *arg;
   int quiet = 0;
   int eoc = 0;
@@ -110,6 +158,54 @@ int main(int argc, const char *argv[]) {
   }
 
   Sscheme_init(ABNORMAL_EXIT);
+
+  embedded_boot_status =
+    S_find_embedded_boot(
+      execpath,
+      &embedded_boot);
+
+  if (embedded_boot_status == S_EMBEDDED_BOOT_FOUND) {
+      const char **application_argv;
+
+      Sregister_boot_file_fd_region(
+        "<embedded>",
+        embedded_boot.fd,
+        embedded_boot.offset,
+        embedded_boot.length,
+        1);
+
+      Sbuild_heap(
+        execpath,
+        CUSTOM_INIT);
+
+      application_argv =
+        make_embedded_argv(
+          argc,
+          argv);
+
+      status =
+        Sscheme_start(
+          argc + 1,
+          application_argv);
+
+      free(application_argv);
+
+      Sscheme_deinit();
+
+      exit(status);
+  }
+
+  if (embedded_boot_status == S_EMBEDDED_BOOT_IO_ERROR
+      || embedded_boot_status == S_EMBEDDED_BOOT_INVALID) {
+      (void)fprintf(
+        stderr,
+        "%s: %s\n",
+        execpath,
+        S_embedded_boot_status_message(
+          embedded_boot_status));
+
+      exit(1);
+  }
 
   if (strcmp(path_last(execpath), SCHEME_SCRIPT) == 0) {
     if (argc < 2) {
@@ -197,6 +293,18 @@ int main(int argc, const char *argv[]) {
         fprintf(stderr, "-s and --saveheap options are not presently supported\n");
         exit(1);
 #endif /* SAVEDHEAPS */
+      } else if (strcmp(arg,"--compile-executable") == 0) {
+        if (++n == argc) {
+          (void) fprintf(stderr,"%s requires argument\n", arg);
+          exit(1);
+        }
+        compile_executable_source = argv[n];
+      } else if (strcmp(arg,"-o") == 0) {
+        if (++n == argc) {
+          (void) fprintf(stderr,"%s requires argument\n", arg);
+          exit(1);
+        }
+        compile_executable_output = argv[n];
       } else if (strcmp(arg,"--script") == 0) {
         if (++n == argc) {
           (void) fprintf(stderr,"%s requires argument\n", arg);
@@ -256,6 +364,8 @@ int main(int argc, const char *argv[]) {
         fprintf(stdout,"  -q, --quiet                             suppress greeting and prompt\n");
         fprintf(stdout,"  --script <path>                         run as shell script\n");
         fprintf(stdout,"  --program <path>                        run rnrs program as shell script\n");
+        fprintf(stdout,"  --compile-executable <path>             compile native executable\n");
+        fprintf(stdout,"  -o <path>                               output for --compile-executable\n");
 #ifdef WIN32
 #define sep ";"
 #else
@@ -291,6 +401,30 @@ int main(int argc, const char *argv[]) {
     }
   }
 
+  if (compile_executable_source != (char *)0) {
+    if (compile_executable_output == (char *)0) {
+      (void) fprintf(stderr,
+        "--compile-executable requires -o <path>\n");
+      exit(1);
+    }
+
+    if (scriptfile != (char *)0 || programfile != (char *)0) {
+      (void) fprintf(stderr,
+        "--compile-executable cannot be combined with --script or --program\n");
+      exit(1);
+    }
+
+    if (new_argc != 1) {
+      (void) fprintf(stderr,
+        "--compile-executable does not accept additional file arguments\n");
+      exit(1);
+    }
+  } else if (compile_executable_output != (char *)0) {
+    (void) fprintf(stderr,
+      "-o requires --compile-executable\n");
+    exit(1);
+  }
+
  /* must call Sbuild_heap after registering boot and heap files.
   * Sbuild_heap() completes the initialization of the Scheme system
   * and loads the boot or heap files.  If no boot or heap files have
@@ -304,6 +438,8 @@ int main(int argc, const char *argv[]) {
 
 #define CALL0(who) Scall0(Stop_level_value(Sstring_to_symbol(who)))
 #define CALL1(who, arg) Scall1(Stop_level_value(Sstring_to_symbol(who)), arg)
+#define CALL2(who, arg1, arg2) \
+  Scall2(Stop_level_value(Sstring_to_symbol(who)), arg1, arg2)
 #ifdef FunCRepl
   {
     ptr p;
@@ -363,8 +499,14 @@ int main(int argc, const char *argv[]) {
  /* Senable_expeditor must be called before Scheme_start/Scheme_script (if at all) */
   if (!quiet && expeditor_enable) Senable_expeditor(expeditor_history_file);
 #endif /* FEATURE_EXPEDITOR */
-
-  if (scriptfile != (char *)0)
+  if (compile_executable_source != (char *)0) {
+    CALL2(
+      "compile-executable",
+      Sstring_utf8(compile_executable_source, -1),
+      Sstring_utf8(compile_executable_output, -1));
+    status = 0;
+  }
+  else if (scriptfile != (char *)0)
    /* Sscheme_script invokes the value of the scheme-script parameter */
     status = Sscheme_script(scriptfile, new_argc, argv);
   else if (programfile != (char *)0)
