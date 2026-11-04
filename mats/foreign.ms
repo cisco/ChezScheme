@@ -2641,6 +2641,72 @@
                                                             p))
        (+ 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 10.0 11.0 12.0 34.0 35.0 36.0)))
 
+  ;; stack arguments after the registers: on arm64 Mac OS, scalars are packed
+  ;; at their natural alignment, any other composite takes 8-byte-aligned
+  ;; slots, and padding before an argument never goes back
+  (begin
+    (define (stack-fold . vs) (fold-left (lambda (r v) (+ (* r 7) v)) 0 vs))
+    (define-ftype two_ints (struct (x int) (y int)))
+    (define-ftype one_short (struct (a short)))
+    (define-ftype three_chars (struct (a integer-8) (b integer-8) (c integer-8)))
+    (define-ftype one_float (struct (a float)))
+    (define-ftype three_longs (struct (a integer-64) (b integer-64) (c integer-64)))
+    (define (alloc-stack-struct ftd-size set)
+      (let ([p (foreign-alloc ftd-size)])
+        (set p)
+        p))
+    #t)
+
+  (let ([proc (foreign-procedure "stack_int_two_ints" (int int int int int int int int int (& two_ints) int) integer-64)]
+        [s (make-ftype-pointer two_ints (alloc-stack-struct (ftype-sizeof two_ints) (lambda (p) (foreign-set! 'int p 0 41) (foreign-set! 'int p 4 42))))])
+    (= (proc 1 2 3 4 5 6 7 8 9 s 43)
+       (stack-fold 1 2 3 4 5 6 7 8 9 41 42 43)))
+
+  (let ([proc (foreign-procedure "stack_short_one_short" (int int int int int int int int short (& one_short) short) integer-64)]
+        [s (make-ftype-pointer one_short (alloc-stack-struct (ftype-sizeof one_short) (lambda (p) (foreign-set! 'short p 0 41))))])
+    (= (proc 1 2 3 4 5 6 7 8 9 s 43)
+       (stack-fold 1 2 3 4 5 6 7 8 9 41 43)))
+
+  (let ([proc (foreign-procedure "stack_char_three_chars" (int int int int int int int int integer-8 (& three_chars) integer-8) integer-64)]
+        [s (make-ftype-pointer three_chars (alloc-stack-struct (ftype-sizeof three_chars)
+                                                        (lambda (p) (foreign-set! 'integer-8 p 0 41) (foreign-set! 'integer-8 p 1 42) (foreign-set! 'integer-8 p 2 43))))])
+    (= (proc 1 2 3 4 5 6 7 8 9 s 44)
+       (stack-fold 1 2 3 4 5 6 7 8 9 41 42 43 44)))
+
+  (let ([proc (foreign-procedure "stack_three_chars_short" (int int int int int int int int integer-8 integer-8 integer-8 short int) integer-64)])
+    (= (proc 1 2 3 4 5 6 7 8 9 10 11 12 13)
+       (stack-fold 1 2 3 4 5 6 7 8 9 10 11 12 13)))
+
+  (let ([proc (foreign-procedure "stack_three_floats_char_three_floats"
+                                 (int int int int int int int int
+                                  double double double double double double double double
+                                  (& three_floats) integer-8 (& three_floats))
+                                 double)])
+    (= (proc 1 2 3 4 5 6 7 8 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 three-floats 9
+             (let ([p (make-ftype-pointer three_floats (foreign-alloc (ftype-sizeof three_floats)))])
+               (ftype-set! three_floats (a) p 34.0)
+               (ftype-set! three_floats (b) p 35.0)
+               (ftype-set! three_floats (c) p 36.0)
+               p))
+       (+ 36 36.0 10.0 (* 2 11.0) (* 3 12.0) (* 4 9) (* 5 34.0) (* 6 35.0) (* 7 36.0))))
+
+  (let ([proc (foreign-procedure "stack_one_float_char_one_float"
+                                 (int int int int int int int int
+                                  double double double double double double double double
+                                  (& one_float) integer-8 (& one_float))
+                                 double)]
+        [f (lambda (v) (let ([p (make-ftype-pointer one_float (foreign-alloc (ftype-sizeof one_float)))])
+                         (ftype-set! one_float (a) p v)
+                         p))])
+    (= (proc 1 2 3 4 5 6 7 8 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 (f 10.0) 9 (f 11.0))
+       (+ 36 36.0 10.0 (* 2 9) (* 3 11.0))))
+
+  (let ([proc (foreign-procedure "stack_three_longs" (int int int int int int int int (& three_longs) int) integer-64)]
+        [s (make-ftype-pointer three_longs (alloc-stack-struct (ftype-sizeof three_longs)
+                                                        (lambda (p) (foreign-set! 'integer-64 p 0 41) (foreign-set! 'integer-64 p 8 42) (foreign-set! 'integer-64 p 16 43))))])
+    (= (proc 1 2 3 4 5 6 7 8 s 44)
+       (stack-fold 1 2 3 4 5 6 7 8 41 42 43 44)))
+
  )
 
 (mat auto-mat-icks

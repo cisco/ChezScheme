@@ -3072,6 +3072,19 @@ an import that has a property via \scheme{define-property}. Before
 this repair, a non-conflicting import could be incorrectly rejected as
 having a conflict.
 
+\subsection{Repair arm64 stack placement of foreign-procedure arguments (10.5.0)}
+
+On arm64 macOS, once the argument registers were used up, a
+\scheme{foreign-procedure} argument that is a struct of 16 bytes or
+less but not a homogeneous floating-point aggregate was packed onto the
+stack like a scalar, while the platform ABI gives such a struct
+8-byte-aligned slots. The padding computed before a stack argument could
+also be negative, so an argument after one ending at an offset beyond
+its alignment started too early (for example, three \scheme{char}s
+followed by a \scheme{short}). In both cases, the foreign procedure
+received the wrong bytes. On all arm64 platforms, a struct larger than
+16 bytes passed by pointer on the stack failed to compile.
+
 \subsection{Repair \scheme{configure} on FreeBSD powerpc64 and powerpc64le (10.5.0)}
 
 On FreeBSD, \scheme{uname -m} reports \scheme{powerpc} for 32-bit and

@@ -2507,9 +2507,12 @@
                                                4
                                                8)]
                                               [(fp-ftd& ,ftd ,fptd)
+                                               ;; Only an HFA is packed at its natural alignment;
+                                               ;; any other composite takes 8-byte-aligned slots
                                                (cond
                                                  [(> ($ftd-size ftd) 16) 8]
-                                                 [else ($ftd-alignment ftd)])]
+                                                 [(hfa-register-count ftd) ($ftd-alignment ftd)]
+                                                 [else 8])]
                                               [(fp-integer ,bits) (fxquotient bits 8)]
                                               [(fp-unsigned ,bits) (fxquotient bits 8)]
                                               [else 8])])])
@@ -2517,7 +2520,8 @@
                       [(fx= 0 (fxand end-this-align (fx- next-align 1)))
                        (k size 0 end-this-align)]
                       [else
-                       (k size (- next-align end-this-align) next-align)])))
+                       (let ([pad (fxand (fx- next-align end-this-align) (fx- next-align 1))])
+                         (k size pad (fxand #x7 (fx+ end-this-align pad))))])))
                 ;; Look past arguments that fit in registers
                 (let loop ([types types] [int* int*] [fp* fp*])
                   (cond
@@ -2546,14 +2550,9 @@
                           (cond
                             [(> ($ftd-size ftd) 16) (next-is-stack types)]
                             [else
-                             (let ([members ($ftd->members ftd)])
+                             (let ([n (hfa-register-count ftd)])
                                (cond
-                                 [(and (fx= 8 ($ftd-alignment ftd))
-                                       (andmap double-member? members))
-                                  (use-fp-regs (length members))]
-                                 [(and (fx= 4 ($ftd-alignment ftd))
-                                       (andmap float-member? members))
-                                  (use-fp-regs (length members))]
+                                 [n (use-fp-regs n)]
                                  [else
                                   (use-int-regs (fxquotient (align ($ftd-size ftd) 8) 8))]))])]
                          [else (use-int-regs 1)]))])))])]
@@ -2583,6 +2582,19 @@
             [(null? members) '()]
             [(member (car members) (cdr members)) (loop (cdr members))]
             [else (cons (car members) (loop (cdr members)))]))))
+
+    ;; number of fp registers for an `&`-wrapped ftd that is a homogeneous
+    ;; floating-point aggregate, or #f
+    (define hfa-register-count
+      (lambda (ftd)
+        (let* ([members (filter-union ($ftd->members ftd))]
+               [n (length members)])
+          (and (fx<= n 4)
+               (or (and (fx= 8 ($ftd-alignment ftd))
+                        (andmap double-member? members))
+                   (and (fx= 4 ($ftd-alignment ftd))
+                        (andmap float-member? members)))
+               n))))
 
     (define categorize-arguments
       (lambda (types varargs-after)
@@ -2695,7 +2707,13 @@
                             [else
                              ;; Stop using int registers, put on stack
                              (alignment-via-lookahead
-                              size (cdr types) int* fp* fp-in-int? stack-align varargs-after
+                              (constant-case machine-type-name
+                                [(arm64osx tarm64osx arm64ios tarm64ios)
+                                 ;; Mac OS packs only scalars; this composite
+                                 ;; still takes 8-byte slots
+                                 (align 8 size)]
+                                [else size])
+                              (cdr types) int* fp* fp-in-int? stack-align varargs-after
                               (lambda (size pad stack-align)
                                 (cons (make-cat 'stack '() size pad #f)
                                       (loop (cdr types) '() fp* next-varargs-after stack-align))))]))]))]
@@ -2906,11 +2924,11 @@
                                          ;; pointer (passed on stack) to an indirect argument (also on stack)
                                          (safe-assert (fx= size-on-stack 8))
                                          (loop types cats
-                                               (cons (let ([ind (load-indirect-stack ind-sp 0 size-on-stack)])
+                                               (cons (let ([ind (load-indirect-stack ind-sp 0 size)])
                                                        (lambda (x)
                                                          (%seq
                                                           ,(ind x)
-                                                          (set! ,(%mref ,%sp ,isp) ,(%inline + ,%sp ,ind)))))
+                                                          (set! ,(%mref ,%sp ,isp) ,(%inline + ,%sp (immediate ,ind-sp))))))
                                                      locs)
                                                (fx+ isp size-on-stack) (fx+ ind-sp indirect-bytes))]
                                         [else
