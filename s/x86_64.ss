@@ -2769,19 +2769,21 @@
                             (set! ,(%mref ,%sp ,offset) (inline ,(make-info-load 'integer-64 #f)
                                                                 ,%load ,x ,%zero (immediate ,x-offset)))
                             ,(loop (fx+ offset 8) (fx+ x-offset 8) (fx- len 8)))]
-                         [(>= len 4)
-                          `(seq
-                            (set! ,(%mref ,%sp ,offset) (inline ,(make-info-load 'integer-32 #f)
-                                                                ,%load ,x ,%zero (immediate ,x-offset)))
-                            ,(loop (fx+ offset 4) (fx+ x-offset 4) (fx- len 4)))]
-                         [(>= len 2)
-                          `(seq
-                            (set! ,(%mref ,%sp ,offset) (inline ,(make-info-load 'integer-16 #f)
-                                                                ,%load ,x ,%zero (immediate ,x-offset)))
-                            ,(loop (fx+ offset 2) (fx+ x-offset 2) (fx- len 2)))]
                          [else
-                          `(set! ,(%mref ,%sp ,offset) (inline ,(make-info-load 'integer-8 #f)
-                                                               ,%load ,x ,%zero (immediate ,x-offset)))]))))]
+                          ;; a piece smaller than a word is stored at its own width:
+                          ;; a word-sized store here would reach into the next
+                          ;; argument's slot, which was filled before this one
+                          (let-values ([(type size) (cond
+                                                     [(>= len 4) (values 'integer-32 4)]
+                                                     [(>= len 2) (values 'integer-16 2)]
+                                                     [else (values 'integer-8 1)])])
+                            (let ([tmp %rax]) ;; as in load-content-regs
+                              (%seq
+                               (set! ,tmp (inline ,(make-info-load type #f)
+                                                  ,%load ,x ,%zero (immediate ,x-offset)))
+                               (inline ,(make-info-load type #f)
+                                       ,%store ,%sp ,%zero (immediate ,offset) ,tmp)
+                               ,(loop (fx+ offset size) (fx+ x-offset size) (fx- len size)))))]))))]
                  [load-content-regs
                   (lambda (classes size unsigned? iint ifp)
                     (lambda (x) ; requires var
