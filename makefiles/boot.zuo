@@ -34,6 +34,7 @@
                        (if (or host-scheme host-workarea)
                            "cross=t\n"
                            "")
+                       (~a "sessionKey=" (hash-ref config 'sessionKey "") "\n")
                        "\n")
                    (build-path dir "Mf-config")
                    :truncate)

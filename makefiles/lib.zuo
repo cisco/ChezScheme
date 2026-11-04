@@ -153,6 +153,17 @@
        (fd-write to (~s `(library-directories '(,@extra-library-dirs
                                                 ,(cons (at-source ".")
                                                        (at-dir "."))))))
+       (let ((session-key-base (lookup 'sessionKey)))
+         (define (session-key-for what)
+           (~a "k"
+               (substring (string-sha256 (~a session-key-base "\0"
+                                             (at-dir ".") "\0"
+                                             what))
+                          0 24)
+               "-"))
+         (when (and session-key-base (not (equal? session-key-base "")))
+           (fd-write to (~s `(,(string->symbol "#%$set-top-level-value!")
+                              '$session-key ,(session-key-for what))))))
        (fd-write to (string-join (map ~s script)))
        (fd-close to)
        (thread-process-wait (hash-ref p 'process))
