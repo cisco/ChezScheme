@@ -578,6 +578,7 @@ EXPORT double many_doubles_and_three_floats_and_three_floats(double a, double b,
 typedef struct { int x, y; } two_ints;
 typedef struct { char a, b; } two_chars;
 typedef struct { char a, b, c; } three_chars;
+typedef struct { char a, b, c, d, e, f, g; } seven_chars;
 typedef struct { short a; } one_short;
 typedef struct { float a; } one_float;
 typedef struct { long long a, b, c; } three_longs;
@@ -600,6 +601,11 @@ EXPORT long long stack_char_two_chars(int a, int b, int c, int d, int e, int f, 
 
 EXPORT long long reg_three_chars(three_chars j) {
   return FOLD(FOLD((unsigned char)j.a, (unsigned char)j.b), (unsigned char)j.c);
+}
+
+EXPORT long long reg_seven_chars(seven_chars j) {
+  return FOLD(FOLD(FOLD(FOLD(FOLD(FOLD((unsigned char)j.a, (unsigned char)j.b), (unsigned char)j.c), (unsigned char)j.d),
+                         (unsigned char)j.e), (unsigned char)j.f), (unsigned char)j.g);
 }
 
 EXPORT long long stack_three_chars_short(int a, int b, int c, int d, int e, int f, int g, int h, char i, char j, char k, short l, int m) {

@@ -2650,6 +2650,8 @@
     (define-ftype one_short (struct (a short)))
     (define-ftype two_chars (struct (a integer-8) (b integer-8)))
     (define-ftype three_chars (struct (a integer-8) (b integer-8) (c integer-8)))
+    (define-ftype seven_chars (struct (a integer-8) (b integer-8) (c integer-8) (d integer-8)
+                                      (e integer-8) (f integer-8) (g integer-8)))
     (define-ftype one_float (struct (a float)))
     (define-ftype three_longs (struct (a integer-64) (b integer-64) (c integer-64)))
     (define (alloc-stack-struct ftd-size set)
@@ -2686,6 +2688,16 @@
                                                         (lambda (p) (foreign-set! 'unsigned-8 p 0 #x41) (foreign-set! 'unsigned-8 p 1 #xC2) (foreign-set! 'unsigned-8 p 2 #x43))))])
     (= (proc s)
        (stack-fold #x41 #xC2 #x43)))
+
+  ;; likewise for a high bit at the end of a 4-byte or 2-byte piece
+  (let ([proc (foreign-procedure "reg_seven_chars" ((& seven_chars)) integer-64)]
+        [vals '(#x41 #x42 #x43 #xC4 #x45 #xC6 #x47)]
+        [s (make-ftype-pointer seven_chars (foreign-alloc (ftype-sizeof seven_chars)))])
+    (for-each (lambda (v i) (foreign-set! 'unsigned-8 (ftype-pointer-address s) i v))
+              vals
+              (iota (length vals)))
+    (= (proc s)
+       (apply stack-fold vals)))
 
   (let ([proc (foreign-procedure "stack_three_chars_short" (int int int int int int int int integer-8 integer-8 integer-8 short int) integer-64)])
     (= (proc 1 2 3 4 5 6 7 8 9 10 11 12 13)
