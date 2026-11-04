@@ -3085,6 +3085,15 @@ followed by a \scheme{short}). In both cases, the foreign procedure
 received the wrong bytes. On all arm64 platforms, a struct larger than
 16 bytes passed by pointer on the stack failed to compile.
 
+\subsection{Repair x86\_64 stack placement of a struct argument with an odd size (10.5.0)}
+
+On x86\_64 (non-Windows), a \scheme{foreign-procedure} argument that is a
+struct passed by value on the stack was copied in pieces of 8, 4, 2 and 1
+bytes, but each piece was stored as a full word, so a struct whose last
+8-byte slot takes more than one piece (a size of 3, 5, 6, 7, 11, 13, 14
+or 15 bytes) overwrote the start of the argument after it. Each piece is
+now stored at its own width.
+
 \subsection{Repair \scheme{configure} on FreeBSD powerpc64 and powerpc64le (10.5.0)}
 
 On FreeBSD, \scheme{uname -m} reports \scheme{powerpc} for 32-bit and
