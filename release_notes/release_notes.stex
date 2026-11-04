@@ -3065,6 +3065,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair duplicate checking in \scheme{import} (10.5.0)}
+
+Repair checking of duplicate names on \scheme{import} in the case of
+an import that has a property via \scheme{define-property}. Before
+this repair, a non-conflicting import could be incorrectly rejected as
+having a conflict.
+
 \subsection{Repair \scheme{configure} on FreeBSD powerpc64 and powerpc64le (10.5.0)}
 
 On FreeBSD, \scheme{uname -m} reports \scheme{powerpc} for 32-bit and
