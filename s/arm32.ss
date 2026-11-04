@@ -2498,11 +2498,15 @@
                     (lambda (x) ; requires var
                       (case size
                         [(3)
-                         (%seq
-                          (set! ,(%mref ,%sp ,offset)
-                                (inline ,(make-info-load 'integer-16 #f) ,%load ,x ,%zero (immediate ,from-offset)))
-                          (set! ,(%mref ,%sp ,(fx+ offset 2))
-                                (inline ,(make-info-load 'integer-8 #f) ,%load ,x ,%zero (immediate ,(fx+ from-offset 2)))))]
+                         ;; the last byte is stored at its own width: a word-sized
+                         ;; store would reach into the next argument's slot, which
+                         ;; was filled before this one
+                         (let ([tmp %lr]) ; as in `load-int-indirect-reg`
+                           (%seq
+                            (set! ,(%mref ,%sp ,offset)
+                                  (inline ,(make-info-load 'integer-16 #f) ,%load ,x ,%zero (immediate ,from-offset)))
+                            (set! ,tmp (inline ,(make-info-load 'integer-8 #f) ,%load ,x ,%zero (immediate ,(fx+ from-offset 2))))
+                            (inline ,(make-info-load 'integer-8 #f) ,%store ,%sp ,%zero (immediate ,(fx+ offset 2)) ,tmp)))]
                         [else
                          `(set! ,(%mref ,%sp ,offset)
                                 ,(case size
@@ -2564,7 +2568,7 @@
                         [(3)
                          (let ([tmp %lr]) ; ok to use %lr here?
                            (%seq
-                            (set! ,ireg (inline ,(make-info-load 'integer-16 #f) ,%load ,x ,%zero (immediate ,from-offset)))
+                            (set! ,ireg (inline ,(make-info-load 'unsigned-16 #f) ,%load ,x ,%zero (immediate ,from-offset)))
                             (set! ,tmp (inline ,(make-info-load 'integer-8 #f) ,%load ,x ,%zero (immediate ,(fx+ from-offset 2))))
                             (set! ,tmp ,(%inline sll ,tmp (immediate 16)))
                             (set! ,ireg ,(%inline + ,ireg ,tmp))))]
