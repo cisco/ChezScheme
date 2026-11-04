@@ -2807,7 +2807,7 @@
                             ,(loop (fx- size 8) (fx+ iint 1) ifp (cdr classes) (fx+ x-offset 8)))]
                          ;; Remaining cases must be the last element
                          [else
-                          (let loop ([reg (vector-ref vint iint)] [size size] [x-offset x-offset])
+                          (let loop ([reg (vector-ref vint iint)] [size size] [x-offset x-offset] [unsigned? unsigned?])
                             (cond
                              [(= size 4)
                               `(set! ,reg (inline ,(make-info-load (if unsigned? 'unsigned-32 'integer-32) #f)
@@ -2819,20 +2819,22 @@
                               `(set! ,reg (inline ,(make-info-load (if unsigned? 'unsigned-8 'integer-8) #f)
                                                   ,%load ,x ,%zero (immediate ,x-offset)))]
                              [(> size 4)
-                              ;; 5, 6, or 7: multiple steps to avoid reading too many bytes
+                              ;; 5, 6, or 7: multiple steps to avoid reading too many bytes;
+                              ;; the low piece is added, so it must not be sign-extended
                               (let ([tmp %rax]) ;; ?? ok to use %rax?
                                 (%seq
-                                 ,(loop reg (fx- size 4) (fx+ x-offset 4))
+                                 ,(loop reg (fx- size 4) (fx+ x-offset 4) unsigned?)
                                  (set! ,reg ,(%inline sll ,reg (immediate 32)))
-                                 ,(loop tmp 4 x-offset)
+                                 ,(loop tmp 4 x-offset #t)
                                  (set! ,reg ,(%inline + ,reg ,tmp))))]
                              [else
-                              ;; 3: multiple steps to avoid reading too many bytes
+                              ;; 3: multiple steps to avoid reading too many bytes;
+                              ;; the low piece is added, so it must not be sign-extended
                               (let ([tmp %rax]) ;; ?? ok to use %rax?
                                 (%seq
-                                 ,(loop reg (fx- size 2) (fx+ x-offset 2))
+                                 ,(loop reg (fx- size 2) (fx+ x-offset 2) unsigned?)
                                  (set! ,reg ,(%inline sll ,reg (immediate 16)))
-                                 ,(loop tmp 2 x-offset)
+                                 ,(loop tmp 2 x-offset #t)
                                  (set! ,reg ,(%inline + ,reg ,tmp))))]))]))))]
                  [add-regs
                   (lambda (ints ir vr regs)
@@ -3420,7 +3422,7 @@ incoming           |  incoming return address  | one quad
                              ;; receive on the stack
                              (f (cdr types)
                                 (cons (load-stack-address sisp) locs)
-                                iint ifp risp (fx+ sisp ($ftd-size ftd)))]
+                                iint ifp risp (fx+ sisp (align ($ftd-size ftd) 8)))]
                             [else
                              ;; receive via registers; `save-args-regs` has saved
                              ;; the registers in a suitable order so that the data

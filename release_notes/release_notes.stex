@@ -3115,6 +3115,15 @@ argument after a \scheme{float} passed in a register. Finally, on Mac OS, a
 with multiple members and that is passed on the stack was placed at the
 start of its word instead of the end.
 
+\subsection{Repair x86\_64 struct arguments in registers and to callables on the stack (10.5.0)}
+
+On x86\_64 (non-Windows), a \scheme{foreign-procedure} argument that is a
+struct passed by value in a register with a final piece of 3, 5, 6, or 7
+bytes was assembled from a sign-extended low part, so a high bit in that
+part changed the bytes after it. Also, a \scheme{foreign-callable} argument
+received by value on the stack with a size that is not a multiple of 8
+misplaced the stack arguments after it.
+
 \subsection{Repair \scheme{configure} on FreeBSD powerpc64 and powerpc64le (10.5.0)}
 
 On FreeBSD, \scheme{uname -m} reports \scheme{powerpc} for 32-bit and
