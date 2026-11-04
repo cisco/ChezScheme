@@ -593,6 +593,10 @@ EXPORT long long stack_char_three_chars(int a, int b, int c, int d, int e, int f
   return FOLD(FOLD(FOLD(FOLD(FOLD(FOLD8(a, b, c, d, e, f, g, h), i), j.a), j.b), j.c), k);
 }
 
+EXPORT long long reg_three_chars(three_chars j) {
+  return FOLD(FOLD((unsigned char)j.a, (unsigned char)j.b), (unsigned char)j.c);
+}
+
 EXPORT long long stack_three_chars_short(int a, int b, int c, int d, int e, int f, int g, int h, char i, char j, char k, short l, int m) {
   return FOLD(FOLD(FOLD(FOLD(FOLD(FOLD8(a, b, c, d, e, f, g, h), i), j), k), l), m);
 }

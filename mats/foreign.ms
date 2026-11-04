@@ -2673,6 +2673,13 @@
     (= (proc 1 2 3 4 5 6 7 8 9 s 44)
        (stack-fold 1 2 3 4 5 6 7 8 9 41 42 43 44)))
 
+  ;; a high bit in the middle byte must not disturb the last byte
+  (let ([proc (foreign-procedure "reg_three_chars" ((& three_chars)) integer-64)]
+        [s (make-ftype-pointer three_chars (alloc-stack-struct (ftype-sizeof three_chars)
+                                                        (lambda (p) (foreign-set! 'unsigned-8 p 0 #x41) (foreign-set! 'unsigned-8 p 1 #xC2) (foreign-set! 'unsigned-8 p 2 #x43))))])
+    (= (proc s)
+       (stack-fold #x41 #xC2 #x43)))
+
   (let ([proc (foreign-procedure "stack_three_chars_short" (int int int int int int int int integer-8 integer-8 integer-8 short int) integer-64)])
     (= (proc 1 2 3 4 5 6 7 8 9 10 11 12 13)
        (stack-fold 1 2 3 4 5 6 7 8 9 10 11 12 13)))

@@ -3094,6 +3094,15 @@ bytes, but each piece was stored as a full word, so a struct whose last
 or 15 bytes) overwrote the start of the argument after it. Each piece is
 now stored at its own width.
 
+\subsection{Repair arm32 passing of a struct argument with an odd size (10.5.0)}
+
+On 32-bit ARM, a \scheme{foreign-procedure} argument that is a struct
+passed by value with a size of 3 modulo 4 had its last three bytes
+mishandled. On the stack, the final byte was stored as a full word, which
+overwrote the start of the argument after it. In a register, the first two
+of those bytes were sign-extended before the third was added, so a high
+bit in the second byte changed the third byte.
+
 \subsection{Repair \scheme{configure} on FreeBSD powerpc64 and powerpc64le (10.5.0)}
 
 On FreeBSD, \scheme{uname -m} reports \scheme{powerpc} for 32-bit and
