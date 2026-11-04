@@ -576,6 +576,7 @@ EXPORT double many_doubles_and_three_floats_and_three_floats(double a, double b,
 #define FOLD8(a, b, c, d, e, f, g, h) FOLD(FOLD(FOLD(FOLD(FOLD(FOLD(FOLD(FOLD(0, a), b), c), d), e), f), g), h)
 
 typedef struct { int x, y; } two_ints;
+typedef struct { char a, b; } two_chars;
 typedef struct { char a, b, c; } three_chars;
 typedef struct { short a; } one_short;
 typedef struct { float a; } one_float;
@@ -591,6 +592,10 @@ EXPORT long long stack_short_one_short(int a, int b, int c, int d, int e, int f,
 
 EXPORT long long stack_char_three_chars(int a, int b, int c, int d, int e, int f, int g, int h, char i, three_chars j, char k) {
   return FOLD(FOLD(FOLD(FOLD(FOLD(FOLD8(a, b, c, d, e, f, g, h), i), j.a), j.b), j.c), k);
+}
+
+EXPORT long long stack_char_two_chars(int a, int b, int c, int d, int e, int f, int g, int h, char i, two_chars j, char k) {
+  return FOLD(FOLD(FOLD(FOLD(FOLD8(a, b, c, d, e, f, g, h), i), j.a), j.b), k);
 }
 
 EXPORT long long reg_three_chars(three_chars j) {
@@ -617,6 +622,15 @@ EXPORT double stack_one_float_char_one_float(int a, int b, int c, int d, int e, 
 
 EXPORT long long stack_three_longs(int a, int b, int c, int d, int e, int f, int g, int h, three_longs i, int j) {
   return FOLD(FOLD(FOLD(FOLD(FOLD8(a, b, c, d, e, f, g, h), i.a), i.b), i.c), j);
+}
+
+/* enough floats to use up the floating-point registers on every platform */
+EXPORT void call_with_many_floats(void (*f)(float, float, float, float, float, float, float, float,
+                                            float, float, float, float, float, float, float,
+                                            double, float, int)) {
+  f(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f,
+    9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f,
+    16.0, 17.0f, 18);
 }
 
 typedef struct {
