@@ -1,5 +1,5 @@
-*** output-compile-0-f-t-f-experr/errors-compile-0-f-t-f	Sat Mar 14 11:28:48 2026
---- output-interpret-0-f-t-f-experr/errors-interpret-0-f-t-f	Sat Mar 14 11:30:03 2026
+*** output-compile-0-f-t-f-experr/errors-compile-0-f-t-f	2026-11-05 14:29:14.232092751 +0800
+--- output-interpret-0-f-t-f-rmg2/errors-interpret-0-f-t-f	2026-11-05 15:58:07.803721710 +0800
 ***************
 *** 24,31 ****
   primvars.mo:Expected error testing (call-in-continuation 1.0+2.0i (quote #f) values): Exception in call-in-continuation: 1.0+2.0i is not a continuation
@@ -207,7 +207,18 @@
   4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
   4.mo:Expected error in mat refcount-guardians: "first field must be a word-sized integer with native endianness (ftype-guardian A)".
 ***************
-*** 7595,7603 ****
+*** 4000,4005 ****
+--- 4000,4007 ----
+  bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8()".
+  bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: invalid data in source bytevector #vu8(0 0 0 0 0 0 ...)".
+  bytevector.mo:Expected error in mat bytevector-compress: "bytevector-uncompress: bytevector #vu8(255 255 255 255 255 255 ...) claims invalid uncompressed size <int>".
++ thread.mo:Error in mat thread clause 69: "(while loading /home/ufo/Documents/workspace/ChezScheme/ta6le/mats/foreign1.so) /home/ufo/Documents/workspace/ChezScheme/ta6le/mats/foreign1.so: undefined symbol: Sdeactivate_thread" at line 1370, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/thread.ms
++ thread.mo:Error in mat thread clause 70: "foreign-procedure: no entry for "locked_incr"" at line 1379, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/thread.ms
+  profile.mo:Expected error in mat compile-profile: "compile-profile: invalid mode src [must be #f, #t, source, or block]".
+  profile.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-dump (quote ()))".
+  profile.mo:Expected error in mat compile-profile: "incorrect argument count in call (profile-clear (quote ()))".
+***************
+*** 7597,7605 ****
   io.mo:Expected error in mat transcoded-port-buffer-size: "transcoded-port-buffer-size: 1024.0 is not a positive fixnum".
   io.mo:Expected error in mat make-codec-buffer: "incorrect argument count in call (make-codec-buffer (lambda (bp) (make-bytevector 4)) "extra arg")".
   io.mo:Expected error in mat make-codec-buffer: "make-codec-buffer: shoe is not a procedure".
@@ -217,7 +228,7 @@
   io.mo:Expected error in mat compress-parameters: "compress-format: foo is not a supported format".
   io.mo:Expected error in mat compress-parameters: "compress-format: "gzip" is not a supported format".
   io.mo:Expected error in mat compress-parameters: "compress-level: foo is not a supported level".
---- 7595,7603 ----
+--- 7599,7607 ----
   io.mo:Expected error in mat transcoded-port-buffer-size: "transcoded-port-buffer-size: 1024.0 is not a positive fixnum".
   io.mo:Expected error in mat make-codec-buffer: "incorrect argument count in call (make-codec-buffer (lambda (bp) (make-bytevector 4)) "extra arg")".
   io.mo:Expected error in mat make-codec-buffer: "make-codec-buffer: shoe is not a procedure".
@@ -228,26 +239,24 @@
   io.mo:Expected error in mat compress-parameters: "compress-format: "gzip" is not a supported format".
   io.mo:Expected error in mat compress-parameters: "compress-level: foo is not a supported level".
 ***************
-*** 7870,7877 ****
+*** 7872,7878 ****
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
-- 7.mo:Expected error in mat eval: "compile: 7 is not an environment".
+! 7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
-  7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
---- 7870,7877 ----
+--- 7874,7880 ----
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for testfile-mc-1a.ss: no such file or directory
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: file "testfile-mc-1a.ss" not found in source directories
   7.mo:Expected error in mat maybe-compile: "separate-compile: Exception in include: failed for ./testfile-mc-3a.ss: no such file or directory
+! 7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
   7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
-+ 7.mo:Expected error in mat eval: "interpret: 7 is not an environment".
   7.mo:Expected error in mat eval: "compile: 7 is not an environment".
-  7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
   7.mo:Expected error in mat expand: "sc-expand: 7 is not an environment".
 ***************
-*** 8070,8077 ****
+*** 8072,8079 ****
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -256,7 +265,7 @@
   record.mo:Expected error in mat record2: "invalid value 3 for foreign type double-float".
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
---- 8070,8077 ----
+--- 8074,8081 ----
   7.mo:Expected error in mat bytes-allocated: "bytes-allocated: invalid space gnu".
   7.mo:Expected error in mat error: "a: hit me!".
   7.mo:Expected error in mat error: "f: n is 0".
@@ -266,7 +275,7 @@
   record.mo:Expected error in mat record2: "3 is not of type #<record type fudge>".
   record.mo:Expected error in mat record2: "make-record-type: invalid field list ((immutable double-float a) . b)".
 ***************
-*** 8079,8093 ****
+*** 8081,8095 ****
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -282,7 +291,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid input #f".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
---- 8079,8093 ----
+--- 8083,8097 ----
   record.mo:Expected error in mat type-descriptor: "invalid syntax (type-descriptor 3)".
   record.mo:Expected error in mat type-descriptor: "type-descriptor: unrecognized record car".
   record.mo:Expected error in mat record3: "variable set-fudge-a! is not bound".
@@ -299,7 +308,7 @@
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
   record.mo:Expected error in mat record9: "record-reader: invalid second argument fudge".
 ***************
-*** 8100,8125 ****
+*** 8102,8127 ****
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -326,7 +335,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: 0 is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
---- 8100,8125 ----
+--- 8104,8129 ----
   record.mo:Expected error in mat record10: "read: unresolvable cycle constructing record of type #<record type bar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
   record.mo:Expected error in mat record16: "read: unresolvable cycle constructing record of type #<record type bazar> at char 3 of #<input port string>".
@@ -354,7 +363,7 @@
   record.mo:Expected error in mat foreign-data: "foreign-alloc: <int> is not a positive fixnum".
   record.mo:Expected error in mat foreign-data: "foreign-alloc: -5 is not a positive fixnum".
 ***************
-*** 8262,8300 ****
+*** 8264,8302 ****
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo> as bar".
@@ -394,7 +403,7 @@
   record.mo:Expected error in mat record?: "record?: 4 is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
---- 8262,8300 ----
+--- 8266,8304 ----
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record22: "invalid field specifier (immutable creepy q)".
   record.mo:Expected error in mat record23: "make-record-type: cannot extend sealed record type #<record type foo> as bar".
@@ -435,7 +444,7 @@
   record.mo:Expected error in mat record?: "record?: a is not a record type descriptor".
   record.mo:Expected error in mat record?: "record?: #(1) is not a record type descriptor".
 ***************
-*** 8311,8368 ****
+*** 8313,8370 ****
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
@@ -494,7 +503,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
---- 8311,8368 ----
+--- 8315,8372 ----
   record.mo:Expected error in mat r6rs-records-procedural: "make-record-constructor-descriptor: invalid protocol flimflam".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure not-a-procedure".
   record.mo:Expected error in mat r6rs-records-procedural: "attempt to apply non-procedure spam".
@@ -554,7 +563,7 @@
   record.mo:Expected error in mat r6rs-records-syntactic: "define-record-type: incompatible record type cpoint - different parent".
   record.mo:Expected error in mat r6rs-records-syntactic: "cannot extend define-record-type parent fratrat".
 ***************
-*** 9601,9613 ****
+*** 9603,9615 ****
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -568,7 +577,7 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
---- 9601,9613 ----
+--- 9605,9617 ----
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx-/wraparound: "fx-: <-int> is not a fixnum".
   fx.mo:Expected error in mat fx*: "fx*: (a . b) is not a fixnum".
@@ -583,7 +592,904 @@
   fx.mo:Expected error in mat r6rs:fx*: "fx*: <-int> is not a fixnum".
   fx.mo:Expected error in mat r6rs:fx*: "fx*: #f is not a fixnum".
 ***************
-*** 11194,11203 ****
+*** 10467,10473 ****
+--- 10469,10481 ----
+  cfl.mo:Expected error in mat cfl=: "cfl=: a is not a cflonum".
+  cfl.mo:Expected error in mat cfl=: "cfl=: a is not a cflonum".
+  cfl.mo:Expected error in mat cfl=: "incorrect argument count in call (cfl=)".
++ foreign.mo:Error in mat load-shared-object clause 2: "(while loading /home/ufo/Documents/workspace/ChezScheme/ta6le/mats/foreign1.so) /home/ufo/Documents/workspace/ChezScheme/ta6le/mats/foreign1.so: undefined symbol: Sdeactivate_thread" at line 209, char 7 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+  foreign.mo:Expected error in mat load-shared-object: "load-shared-object: invalid path 3".
++ foreign.mo:Bug in mat foreign-entry? clause 1 at line 323, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Bug in mat foreign-entry? clause 2 at line 324, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Bug in mat foreign-entry? clause 3 at line 325, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-procedure clause 1: "foreign-procedure: no entry for "idiptr"" at line 329, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-procedure clause 2: "foreign-procedure: no entry for "idiptr"" at line 330, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure convention __get_last_error".
+  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
+  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
+***************
+*** 10481,10514 ****
+  foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __get_last_error".
+  foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __errno".
+  foreign.mo:Expected error in mat foreign-procedure: "missing __atomic before foreign-procedure convention __alloc".
+  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument 83076749736557242056487941267521535".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument #f".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32: invalid foreign-procedure argument "hi"".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument 83076749736557242056487941267521535".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument #f".
+! foreign.mo:Expected error in mat foreign-procedure: "idint32-a: invalid foreign-procedure argument "hi"".
+! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument -5444517870735015415413993718908291383295".
+! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument <-int>".
+! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument #f".
+! foreign.mo:Expected error in mat foreign-procedure: "iduns32: invalid foreign-procedure argument "hi"".
+! foreign.mo:Expected error in mat foreign-procedure: "idfix: invalid foreign-procedure argument <int>".
+! foreign.mo:Expected error in mat foreign-procedure: "idfix: invalid foreign-procedure argument <-int>".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier booleen".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
+--- 10489,10569 ----
+  foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __get_last_error".
+  foreign.mo:Expected error in mat foreign-procedure: "conflicting foreign-procedure convention __errno".
+  foreign.mo:Expected error in mat foreign-procedure: "missing __atomic before foreign-procedure convention __alloc".
++ foreign.mo:Error in mat foreign-procedure clause 17: "foreign-procedure: no entry for "idiptr"" at line 358, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-procedure clause 18: "foreign-procedure: no entry for "idiptr"" at line 360, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "i do not exist"".
+! foreign.mo:Error in mat foreign-procedure clause 20: "foreign-procedure: no entry for "idiptr"" at line 362, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 21: "foreign-procedure: no entry for "idiptr"" at line 363, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 22: "foreign-procedure: no entry for "idiptr"" at line 365, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 23: "foreign-procedure: no entry for "idiptr"" at line 368, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 24: "foreign-procedure: no entry for "idiptr"" at line 369, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 25: "foreign-procedure: no entry for "idiptr"" at line 371, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 26: "foreign-procedure: no entry for "id"" at line 374, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 27: "variable idint32 is not bound" at line 376, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 28: "variable idint32 is not bound" at line 377, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 29: "variable idint32 is not bound" at line 378, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 30: "variable idint32 is not bound" at line 379, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 31: "variable idint32 is not bound" at line 380, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 32: "variable idint32 is not bound" at line 381, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 33: "variable idint32 is not bound" at line 382, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 34: "variable idint32 is not bound" at line 383, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32 is not bound".
+! foreign.mo:Error in mat foreign-procedure clause 43: "foreign-procedure: no entry for "id"" at line 393, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 44: "variable idint32-a is not bound" at line 395, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 45: "variable idint32-a is not bound" at line 396, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 46: "variable idint32-a is not bound" at line 397, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 47: "variable idint32-a is not bound" at line 398, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 48: "variable idint32-a is not bound" at line 399, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 49: "variable idint32-a is not bound" at line 400, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 50: "variable idint32-a is not bound" at line 401, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 51: "variable idint32-a is not bound" at line 402, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32-a is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32-a is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32-a is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32-a is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32-a is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32-a is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32-a is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idint32-a is not bound".
+! foreign.mo:Error in mat foreign-procedure clause 60: "foreign-procedure: no entry for "id"" at line 412, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 61: "variable iduns32 is not bound" at line 414, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 62: "variable iduns32 is not bound" at line 415, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 63: "variable iduns32 is not bound" at line 416, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 64: "variable iduns32 is not bound" at line 417, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 65: "variable iduns32 is not bound" at line 418, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 66: "variable iduns32 is not bound" at line 419, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-procedure: "variable iduns32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable iduns32 is not bound".
+! foreign.mo:Error in mat foreign-procedure clause 69: "variable iduns32 is not bound" at line 422, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 70: "variable iduns32 is not bound" at line 423, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 71: "variable iduns32 is not bound" at line 424, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-procedure: "variable iduns32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable iduns32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable iduns32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable iduns32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable iduns32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable iduns32 is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable iduns32 is not bound".
+! foreign.mo:Error in mat foreign-procedure clause 79: "foreign-procedure: no entry for "id"" at line 433, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 80: "foreign-procedure: no entry for "id"" at line 434, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 81: "foreign-procedure: no entry for "id"" at line 436, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 82: "foreign-procedure: no entry for "id"" at line 437, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 83: "foreign-procedure: no entry for "idiptr"" at line 439, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 84: "variable idfix is not bound" at line 441, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 85: "variable idfix is not bound" at line 442, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 86: "variable idfix is not bound" at line 443, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 87: "variable idfix is not bound" at line 445, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 88: "variable idfix is not bound" at line 447, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 89: "variable idfix is not bound" at line 448, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-procedure: "variable idfix is not bound".
+! foreign.mo:Expected error in mat foreign-procedure: "variable idfix is not bound".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier booleen".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
+***************
+*** 10517,10641 ****
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier void".
+! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument foo".
+! foreign.mo:Expected error in mat foreign-procedure: "id: invalid foreign-procedure argument foo".
+  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle abcde".
+! foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-procedure: "float_id: invalid foreign-procedure argument 0".
+  foreign.mo:Expected error in mat foreign-sizeof: "incorrect argument count in call (foreign-sizeof)".
+  foreign.mo:Expected error in mat foreign-sizeof: "incorrect argument count in call (foreign-sizeof (quote int) (quote int))".
+  foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
+  foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
+! foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument "hello"".
+! foreign.mo:Expected error in mat foreign-bytevectors: "u16*->u16*: invalid foreign-procedure argument "hello"".
+! foreign.mo:Expected error in mat foreign-bytevectors: "u32*->u32*: invalid foreign-procedure argument "hello"".
+! foreign.mo:Expected error in mat foreign-bytevectors: "u8*->u8*: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-bytevectors: "u16*->u16*: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-bytevectors: "u32*->u32*: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-bytevectors: "foreign-callable: invalid return value (#vu8(2 3 4 5) 4) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-bytevectors: "foreign-callable: invalid return value (#vu8(3 4 5 6) 4) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-bytevectors: "foreign-callable: invalid return value (#vu8(5 6 7 8) 4) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-bytevectors: "call-u8*: invalid foreign-procedure argument #(1 2 3 4 5 0)".
+! foreign.mo:Expected error in mat foreign-bytevectors: "call-u16*: invalid foreign-procedure argument #(1 2 3 4 5 6 ...)".
+! foreign.mo:Expected error in mat foreign-bytevectors: "call-u32*: invalid foreign-procedure argument #(1 2 3 4 5 6 ...)".
+! foreign.mo:Expected error in mat foreign-strings: "utf-8->utf-8: invalid foreign-procedure argument #vu8(1 2 3 4 0 0 ...)".
+! foreign.mo:Expected error in mat foreign-strings: "utf-16le->utf-16le: invalid foreign-procedure argument #vu8(1 2 3 4 0 0 ...)".
+! foreign.mo:Expected error in mat foreign-strings: "utf-16be->utf-16be: invalid foreign-procedure argument #vu8(1 2 3 4 0 0 ...)".
+! foreign.mo:Expected error in mat foreign-strings: "utf-32le->utf-32le: invalid foreign-procedure argument #vu8(1 2 3 4 0 0 ...)".
+! foreign.mo:Expected error in mat foreign-strings: "utf-32be->utf-32be: invalid foreign-procedure argument #vu8(1 2 3 4 0 0 ...)".
+! foreign.mo:Expected error in mat foreign-strings: "string->string: invalid foreign-procedure argument #vu8(1 2 3 4 0 0 ...)".
+! foreign.mo:Expected error in mat foreign-strings: "wstring->wstring: invalid foreign-procedure argument #vu8(1 2 3 4 0 0 ...)".
+! foreign.mo:Expected error in mat foreign-strings: "utf-8->utf-8: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-strings: "utf-16le->utf-16le: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-strings: "utf-16be->utf-16be: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-strings: "utf-32le->utf-32le: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-strings: "utf-32be->utf-32be: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-strings: "string->string: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-strings: "wstring->wstring: invalid foreign-procedure argument 0".
+! foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-strings: "foreign-callable: invalid return value ("ello" 4) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-fixed-types: "i8-to-i8: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "u8-to-u8: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "i16-to-i16: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "u16-to-u16: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "i24-to-i24: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "u24-to-u24: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "i32-to-i32: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "u32-to-u32: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "i64-to-i64: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "u64-to-u64: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "i8-to-i8: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-fixed-types: "u8-to-u8: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-fixed-types: "i16-to-i16: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-fixed-types: "u16-to-u16: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-fixed-types: "i32-to-i32: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-fixed-types: "u32-to-u32: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-fixed-types: "i64-to-i64: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-fixed-types: "u64-to-u64: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-fixed-types: "sf-to-sf: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "df-to-df: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-fixed-types: "foreign-callable: invalid return value (- x 7) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "int-to-int: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "unsigned-to-unsigned: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "unsigned-int-to-unsigned-int: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "unsigned-short-to-unsigned-short: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "short-to-short: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "long-to-long: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "unsigned-long-to-unsigned-long: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "long-long-to-long-long: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "unsigned-long-long-to-unsigned-long-long: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "iptr-to-iptr: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "uptr-to-uptr: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "void*-to-void*: invalid foreign-procedure argument qqq".
+! foreign.mo:Expected error in mat foreign-C-types: "int-to-int: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "unsigned-to-unsigned: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "unsigned-int-to-unsigned-int: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "unsigned-short-to-unsigned-short: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "short-to-short: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "long-to-long: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "unsigned-long-to-unsigned-long: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "long-long-to-long-long: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "unsigned-long-long-to-unsigned-long-long: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "iptr-to-iptr: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "uptr-to-uptr: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "void*-to-void*: invalid foreign-procedure argument "oops"".
+! foreign.mo:Expected error in mat foreign-C-types: "char-to-char: invalid foreign-procedure argument 73".
+! foreign.mo:Expected error in mat foreign-C-types: "char-to-char: invalid foreign-procedure argument #\U+100".
+! foreign.mo:Expected error in mat foreign-C-types: "wchar-to-wchar: invalid foreign-procedure argument 73".
+! foreign.mo:Expected error in mat foreign-C-types: "float-to-float: invalid foreign-procedure argument qqq.5".
+! foreign.mo:Expected error in mat foreign-C-types: "double-to-double: invalid foreign-procedure argument qqq.5".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (#\a) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (#\a) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73.25 74.25) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73.25 74.25) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+! foreign.mo:Expected error in mat foreign-C-types: "foreign-callable: invalid return value (73 74) from #<procedure>".
+  foreign.mo:Expected error in mat foreign-ftype: "unrecognized foreign-procedure argument ftype name broken".
+  foreign.mo:Expected error in mat foreign-ftype: "invalid foreign-procedure argument type specifier (+ * -)".
+  foreign.mo:Expected error in mat foreign-ftype: "invalid foreign-procedure argument type specifier (* * *)".
+--- 10572,10992 ----
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier integer-34".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure result type specifier chare".
+  foreign.mo:Expected error in mat foreign-procedure: "invalid foreign-procedure argument type specifier void".
+! foreign.mo:Error in mat foreign-procedure clause 100: "foreign-procedure: no entry for "id"" at line 467, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 101: "foreign-procedure: no entry for "id"" at line 468, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 102: "foreign-procedure: no entry for "id"" at line 469, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 103: "foreign-procedure: no entry for "id"" at line 470, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 104: "foreign-procedure: no entry for "id"" at line 471, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 105: "foreign-procedure: no entry for "id"" at line 472, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 106: "foreign-procedure: no entry for "id"" at line 473, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 107: "foreign-procedure: no entry for "id"" at line 474, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 108: "foreign-procedure: no entry for "id"" at line 476, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 109: "foreign-procedure: no entry for "id"" at line 477, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 110: "foreign-procedure: no entry for "id"" at line 478, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 111: "foreign-procedure: no entry for "id"" at line 479, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 112: "foreign-procedure: no entry for "id"" at line 480, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 113: "foreign-procedure: no entry for "id"" at line 482, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 114: "foreign-procedure: no entry for "id"" at line 483, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 115: "foreign-procedure: no entry for "id"" at line 484, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 116: "foreign-procedure: no entry for "id"" at line 485, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "id"".
+! foreign.mo:Error in mat foreign-procedure clause 118: "foreign-procedure: no entry for "idiptr"" at line 488, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 119: "foreign-procedure: no entry for "idiptr"" at line 490, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 120: "foreign-procedure: no entry for "idiptr"" at line 493, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "id"".
+! foreign.mo:Error in mat foreign-procedure clause 123: "foreign-procedure: no entry for "idiptr"" at line 514, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "id"".
+! foreign.mo:Error in mat foreign-procedure clause 125: "foreign-procedure: no entry for "idid"" at line 520, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 126: "foreign-procedure: no entry for "ididid"" at line 521, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 127: "foreign-procedure: no entry for "id"" at line 524, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 128: "foreign-procedure: no entry for "id"" at line 526, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 129: "foreign-procedure: no entry for "id"" at line 528, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 130: "foreign-procedure: no entry for "id"" at line 530, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+  foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: invalid foreign procedure handle abcde".
+! foreign.mo:Error in mat foreign-procedure clause 132: "foreign-procedure: no entry for "ididid"" at line 534, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 133: "foreign-procedure: no entry for "float_id"" at line 544, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 134: "foreign-procedure: no entry for "float_id"" at line 545, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "float_id"".
+! foreign.mo:Error in mat foreign-procedure clause 136: "foreign-procedure: no entry for "float_id"" at line 548, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 137: "foreign-procedure: no entry for "float_id"" at line 549, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-procedure: "foreign-procedure: no entry for "float_id"".
+! foreign.mo:Error in mat foreign-procedure clause 139: "foreign-procedure: no entry for "float_id"" at line 552, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 140: "foreign-procedure: no entry for "testten"" at line 559, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 141: "foreign-procedure: no entry for "testten"" at line 567, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 142: "foreign-procedure: no entry for "flsum8"" at line 575, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 143: "foreign-procedure: no entry for "flsum8"" at line 582, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 144: "foreign-procedure: no entry for "sparcfltest"" at line 589, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 145: "foreign-procedure: no entry for "mipsfltest1"" at line 596, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 146: "foreign-procedure: no entry for "mipsfltest2"" at line 602, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 147: "foreign-procedure: no entry for "ppcfltest"" at line 608, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 148: "foreign-procedure: no entry for "ppcfltest2"" at line 619, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 149: "foreign-procedure: no entry for "chk_data"" at line 646, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 150: "foreign-procedure: no entry for "chk_bss"" at line 647, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-procedure clause 151: "foreign-procedure: no entry for "chk_malloc"" at line 648, char 4 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 1: "foreign-procedure: no entry for "rt_int"" at line 767, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 2: "variable check-fixnum is not bound" at line 787, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 3: "variable check-fixnum is not bound" at line 788, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 4: "variable check-fixnum is not bound" at line 789, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 5: "variable check-fixnum is not bound" at line 790, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 6: "variable check-fixnum is not bound" at line 791, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 7: "variable rt-int is not bound" at line 793, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 8: "variable rt-int is not bound" at line 794, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 9: "variable rt-int is not bound" at line 795, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 10: "variable rt-int is not bound" at line 796, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 11: "variable rt-int is not bound" at line 797, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 12: "variable rt-int is not bound" at line 799, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 13: "variable rt-int32 is not bound" at line 801, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 14: "variable rt-int32 is not bound" at line 802, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 15: "variable rt-int32 is not bound" at line 803, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 16: "variable rt-int32 is not bound" at line 804, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 17: "variable rt-int32 is not bound" at line 805, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 18: "variable rt-int64 is not bound" at line 807, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 19: "variable rt-int64 is not bound" at line 808, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 20: "variable rt-int64 is not bound" at line 809, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 21: "variable rt-int64 is not bound" at line 810, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 22: "variable rt-int64 is not bound" at line 811, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 23: "variable rt-int64/atomic is not bound" at line 813, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 24: "variable rt-int64/atomic is not bound" at line 817, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 25: "variable rt-uint is not bound" at line 820, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 26: "variable rt-uint is not bound" at line 821, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 27: "variable rt-uint is not bound" at line 822, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 28: "variable rt-uint is not bound" at line 823, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 29: "variable rt-uint is not bound" at line 824, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 30: "variable rt-uint is not bound" at line 826, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 31: "variable rt-uint32 is not bound" at line 828, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 32: "variable rt-uint32 is not bound" at line 829, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 33: "variable rt-uint32 is not bound" at line 830, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 34: "variable rt-uint32 is not bound" at line 831, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 35: "variable rt-uint32 is not bound" at line 832, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 36: "variable rt-uint32 is not bound" at line 834, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 37: "variable rt-uint64 is not bound" at line 836, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 38: "variable rt-uint64 is not bound" at line 837, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 39: "variable rt-uint64 is not bound" at line 838, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 40: "variable rt-uint64 is not bound" at line 839, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 41: "variable rt-uint64 is not bound" at line 840, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat round-trip clause 42: "variable rt-uint64 is not bound" at line 842, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 1: "foreign-procedure: no entry for "to_int"" at line 847, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 2: "variable to-int is not bound" at line 883, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 3: "variable to-int32 is not bound" at line 884, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 4: "variable to-int64 is not bound" at line 885, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 5: "variable to-uint is not bound" at line 886, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 6: "variable to-uint32 is not bound" at line 887, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 7: "variable to-uint64 is not bound" at line 888, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 8: "variable to-int is not bound" at line 889, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 9: "variable to-int32 is not bound" at line 890, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 10: "variable to-int64 is not bound" at line 891, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 11: "variable to-uint is not bound" at line 892, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 12: "variable to-uint32 is not bound" at line 893, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 13: "variable to-uint64 is not bound" at line 894, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 14: "variable check-error is not bound" at line 896, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 15: "variable check-error is not bound" at line 897, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 16: "variable check-error is not bound" at line 898, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 17: "variable check-error is not bound" at line 899, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 18: "variable check-error is not bound" at line 900, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 19: "variable check-error is not bound" at line 901, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 20: "variable check-error is not bound" at line 903, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 21: "variable check-error is not bound" at line 904, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 22: "variable check-error is not bound" at line 905, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 23: "variable check-error is not bound" at line 906, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 24: "variable check-error is not bound" at line 907, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 25: "variable check-error is not bound" at line 908, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 26: "variable check-error is not bound" at line 909, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 27: "variable check-error is not bound" at line 910, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 28: "variable check-error is not bound" at line 911, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 29: "variable check-error is not bound" at line 912, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 30: "variable check-error is not bound" at line 913, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat convert clause 31: "variable check-error is not bound" at line 914, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat try-convert clause 2: "foreign-procedure: no entry for "try_integer_value2"" at line 975, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat try-convert clause 3: "foreign-procedure: no entry for "try_integer32_value2"" at line 983, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat try-convert clause 4: "foreign-procedure: no entry for "try_integer64_value2"" at line 984, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat try-convert clause 5: "foreign-procedure: no entry for "try_unsigned_value2"" at line 993, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat try-convert clause 6: "foreign-procedure: no entry for "try_unsigned32_value2"" at line 998, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat try-convert clause 7: "foreign-procedure: no entry for "try_unsigned64_value2"" at line 1004, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-sizeof clause 2: "foreign-procedure: no entry for "check_types"" at line 1031, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+  foreign.mo:Expected error in mat foreign-sizeof: "incorrect argument count in call (foreign-sizeof)".
+  foreign.mo:Expected error in mat foreign-sizeof: "incorrect argument count in call (foreign-sizeof (quote int) (quote int))".
+  foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier i-am-not-a-type".
+  foreign.mo:Expected error in mat foreign-sizeof: "foreign-sizeof: invalid foreign type specifier 1".
+! foreign.mo:Error in mat foreign-bytevectors clause 1: "foreign-procedure: no entry for "u8_star_to_u8_star"" at line 1061, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 2: "variable u8*->u8* is not bound" at line 1066, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 3: "variable u16*->u16* is not bound" at line 1067, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 4: "variable u32*->u32* is not bound" at line 1068, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 5: "variable u8*->u8* is not bound" at line 1070, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 6: "variable u16*->u16* is not bound" at line 1071, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 7: "variable u32*->u32* is not bound" at line 1072, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 8: "variable u8*->u8* is not bound" at line 1074, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 9: "variable u16*->u16* is not bound" at line 1075, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 10: "variable u32*->u32* is not bound" at line 1076, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable u8*->u8* is not bound".
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable u16*->u16* is not bound".
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable u32*->u32* is not bound".
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable u8*->u8* is not bound".
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable u16*->u16* is not bound".
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable u32*->u32* is not bound".
+! foreign.mo:Error in mat foreign-bytevectors clause 17: "foreign-procedure: no entry for "call_u8_star"" at line 1085, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 18: "variable call-u8* is not bound" at line 1094, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 19: "variable call-u16* is not bound" at line 1100, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-bytevectors clause 20: "variable call-u32* is not bound" at line 1106, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable call-u8* is not bound".
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable call-u16* is not bound".
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable call-u32* is not bound".
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable call-u8* is not bound".
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable call-u16* is not bound".
+! foreign.mo:Expected error in mat foreign-bytevectors: "variable call-u32* is not bound".
+! foreign.mo:Error in mat foreign-bytevectors clause 27: "variable call-void* is not bound" at line 1142, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 1: "foreign-procedure: no entry for "u8_star_to_u8_star"" at line 1161, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 2: "variable utf-8->utf-8 is not bound" at line 1170, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 3: "variable utf-16le->utf-16le is not bound" at line 1171, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 4: "variable utf-16be->utf-16be is not bound" at line 1172, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 5: "variable utf-32le->utf-32le is not bound" at line 1173, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 6: "variable utf-32be->utf-32be is not bound" at line 1174, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 7: "variable string->string is not bound" at line 1175, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 8: "variable wstring->wstring is not bound" at line 1176, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 9: "variable utf-8->utf-8 is not bound" at line 1178, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 10: "variable utf-16le->utf-16le is not bound" at line 1179, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 11: "variable utf-16be->utf-16be is not bound" at line 1180, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 12: "variable utf-32le->utf-32le is not bound" at line 1181, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 13: "variable utf-32be->utf-32be is not bound" at line 1182, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 14: "variable string->string is not bound" at line 1183, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 15: "variable wstring->wstring is not bound" at line 1184, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 16: "variable utf-8->utf-8 is not bound" at line 1186, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 17: "variable utf-16le->utf-16le is not bound" at line 1187, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 18: "variable utf-16be->utf-16be is not bound" at line 1188, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 19: "variable utf-32le->utf-32le is not bound" at line 1189, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 20: "variable utf-32be->utf-32be is not bound" at line 1190, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 21: "variable string->string is not bound" at line 1191, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 22: "variable wstring->wstring is not bound" at line 1192, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-strings: "variable utf-8->utf-8 is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable utf-16le->utf-16le is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable utf-16be->utf-16be is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable utf-32le->utf-32le is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable utf-32be->utf-32be is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable string->string is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable wstring->wstring is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable utf-8->utf-8 is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable utf-16le->utf-16le is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable utf-16be->utf-16be is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable utf-32le->utf-32le is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable utf-32be->utf-32be is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable string->string is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable wstring->wstring is not bound".
+! foreign.mo:Error in mat foreign-strings clause 37: "foreign-procedure: no entry for "call_u8_star"" at line 1210, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 38: "variable call-utf-8 is not bound" at line 1219, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 39: "variable call-utf-16le is not bound" at line 1225, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 40: "variable call-utf-16be is not bound" at line 1231, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 41: "variable call-utf-32le is not bound" at line 1237, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 42: "variable call-utf-32be is not bound" at line 1243, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 43: "variable call-string is not bound" at line 1249, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-strings clause 44: "variable call-wstring is not bound" at line 1255, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-strings: "variable call-utf-8 is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable call-utf-16le is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable call-utf-16be is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable call-utf-32le is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable call-utf-32be is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable call-string is not bound".
+! foreign.mo:Expected error in mat foreign-strings: "variable call-wstring is not bound".
+! foreign.mo:Error in mat foreign-fixed-types clause 1: "foreign-procedure: no entry for "i8_to_i8"" at line 1300, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 2: "variable i8-to-i8 is not bound" at line 1385, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 3: "variable u8-to-u8 is not bound" at line 1386, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 4: "variable i16-to-i16 is not bound" at line 1387, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 5: "variable u16-to-u16 is not bound" at line 1388, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 6: "variable i24-to-i24 is not bound" at line 1389, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 7: "variable u24-to-u24 is not bound" at line 1390, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 8: "variable i32-to-i32 is not bound" at line 1391, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 9: "variable u32-to-u32 is not bound" at line 1392, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 10: "variable i40-to-i40 is not bound" at line 1393, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 11: "variable u40-to-u40 is not bound" at line 1394, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 12: "variable i48-to-i48 is not bound" at line 1395, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 13: "variable u48-to-u48 is not bound" at line 1396, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 14: "variable i56-to-i56 is not bound" at line 1397, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 15: "variable u56-to-u56 is not bound" at line 1398, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 16: "variable i64-to-i64 is not bound" at line 1399, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 17: "variable u64-to-u64 is not bound" at line 1400, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 18: "variable sf-to-sf is not bound" at line 1401, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 19: "variable df-to-df is not bound" at line 1402, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable i8-to-i8 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable u8-to-u8 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable i16-to-i16 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable u16-to-u16 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable i24-to-i24 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable u24-to-u24 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable i32-to-i32 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable u32-to-u32 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable i64-to-i64 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable u64-to-u64 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable i8-to-i8 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable u8-to-u8 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable i16-to-i16 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable u16-to-u16 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable i32-to-i32 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable u32-to-u32 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable i64-to-i64 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable u64-to-u64 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable sf-to-sf is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable df-to-df is not bound".
+! foreign.mo:Error in mat foreign-fixed-types clause 40: "foreign-procedure: no entry for "call_i8"" at line 1426, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 41: "variable $test-call-int is not bound" at line 1521, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 42: "variable $test-call-int is not bound" at line 1523, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 43: "variable $test-call-int is not bound" at line 1525, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 44: "variable $test-call-int is not bound" at line 1527, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 45: "variable $test-call-int is not bound" at line 1529, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 46: "variable $test-call-int is not bound" at line 1531, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 47: "variable $test-call-int is not bound" at line 1533, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 48: "variable $test-call-int is not bound" at line 1535, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 49: "variable $test-call-int is not bound" at line 1537, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 50: "variable $test-call-int is not bound" at line 1539, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 51: "variable $test-call-int is not bound" at line 1541, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 52: "variable $test-call-int is not bound" at line 1543, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 53: "variable $test-call-int is not bound" at line 1545, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 54: "variable $test-call-int is not bound" at line 1547, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 55: "variable $test-call-int is not bound" at line 1549, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 56: "variable $test-call-int is not bound" at line 1551, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 57: "variable call-sf is not bound" at line 1553, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 58: "variable call-df is not bound" at line 1560, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 59: "variable call-varargs-df is not bound" at line 1567, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 60: "variable call-varargs-i7df is not bound" at line 1575, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 61: "variable call-varargs-dfii is not bound" at line 1584, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 62: "variable call-varargs-dfidf is not bound" at line 1593, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 63: "variable call-varargs-dfsfi is not bound" at line 1602, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable call-i8 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable call-u8 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable call-i16 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable call-u16 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable call-i32 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable call-u32 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable call-i64 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable call-u64 is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable call-sf is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable call-df is not bound".
+! foreign.mo:Expected error in mat foreign-fixed-types: "variable call-varargs-df is not bound".
+! foreign.mo:Error in mat foreign-fixed-types clause 75: "foreign-procedure: no entry for "u32xu32_to_u64"" at line 1681, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 76: "variable u32xu32->u64 is not bound" at line 1698, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 77: "variable u32xu32->u64 is not bound" at line 1699, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 78: "variable u32xu32->u64 is not bound" at line 1700, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 79: "variable i32xu32->i64 is not bound" at line 1702, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 80: "variable i32xu32->i64 is not bound" at line 1703, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 81: "variable i32xu32->i64 is not bound" at line 1704, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 82: "variable i32xu32->i64 is not bound" at line 1705, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 83: "variable i32xu32->i64 is not bound" at line 1706, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 84: "variable i32xu32->i64 is not bound" at line 1707, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 85: "variable i32xu32->i64 is not bound" at line 1708, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 86: "variable i32xu32->i64 is not bound" at line 1709, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 87: "variable i32xu32->i64 is not bound" at line 1710, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 88: "variable i32xu32->i64 is not bound" at line 1711, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 89: "variable i32xu32->i64 is not bound" at line 1712, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 90: "variable call-i32xu32->i64 is not bound" at line 1714, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 91: "variable call-i32xu32->i64 is not bound" at line 1715, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 92: "variable call-i32xu32->i64 is not bound" at line 1716, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 93: "variable call-i32xu32->i64 is not bound" at line 1717, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 94: "variable call-i32xu32->i64 is not bound" at line 1718, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 95: "variable call-i32xu32->i64 is not bound" at line 1719, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 96: "variable call-i32xu32->i64 is not bound" at line 1720, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 97: "variable call-i32xu32->i64 is not bound" at line 1721, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 98: "variable call-i32xu32->i64 is not bound" at line 1722, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 99: "variable call-i32xu32->i64 is not bound" at line 1723, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 100: "variable call-i32xu32->i64 is not bound" at line 1724, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 101: "foreign-procedure: no entry for "ufoo64a"" at line 1727, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 102: "variable test-ufoo is not bound" at line 1739, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 103: "variable test-ufoo is not bound" at line 1748, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 104: "variable test-ufoo is not bound" at line 1757, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 105: "variable test-ufoo is not bound" at line 1766, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 106: "variable test-ufoo is not bound" at line 1775, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 107: "foreign-procedure: no entry for "ifoo64a"" at line 1788, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 108: "variable test-ifoo is not bound" at line 1800, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 109: "variable test-ifoo is not bound" at line 1809, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 110: "variable test-ifoo is not bound" at line 1818, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 111: "variable test-ifoo is not bound" at line 1827, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-fixed-types clause 112: "variable test-ifoo is not bound" at line 1836, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 1: "foreign-procedure: no entry for "int_to_int"" at line 1853, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 2: "variable int-to-int is not bound" at line 1871, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 3: "variable unsigned-to-unsigned is not bound" at line 1872, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 4: "variable unsigned-int-to-unsigned-int is not bound" at line 1873, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 5: "variable short-to-short is not bound" at line 1874, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 6: "variable unsigned-short-to-unsigned-short is not bound" at line 1875, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 7: "variable long-to-long is not bound" at line 1876, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 8: "variable unsigned-long-to-unsigned-long is not bound" at line 1877, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 9: "variable long-long-to-long-long is not bound" at line 1878, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 10: "variable unsigned-long-long-to-unsigned-long-long is not bound" at line 1879, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 11: "variable iptr-to-iptr is not bound" at line 1880, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 12: "variable uptr-to-uptr is not bound" at line 1881, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 13: "variable void*-to-void* is not bound" at line 1882, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 14: "variable char-to-char is not bound" at line 1884, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 15: "variable wchar-to-wchar is not bound" at line 1885, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 16: "variable float-to-float is not bound" at line 1886, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 17: "variable double-to-double is not bound" at line 1887, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-C-types: "variable int-to-int is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable unsigned-to-unsigned is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable unsigned-int-to-unsigned-int is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable unsigned-short-to-unsigned-short is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable short-to-short is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable long-to-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable unsigned-long-to-unsigned-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable long-long-to-long-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable unsigned-long-long-to-unsigned-long-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable iptr-to-iptr is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable uptr-to-uptr is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable void*-to-void* is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable int-to-int is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable unsigned-to-unsigned is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable unsigned-int-to-unsigned-int is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable unsigned-short-to-unsigned-short is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable short-to-short is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable long-to-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable unsigned-long-to-unsigned-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable long-long-to-long-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable unsigned-long-long-to-unsigned-long-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable iptr-to-iptr is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable uptr-to-uptr is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable void*-to-void* is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable char-to-char is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable char-to-char is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable wchar-to-wchar is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable float-to-float is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable double-to-double is not bound".
+! foreign.mo:Error in mat foreign-C-types clause 48: "foreign-procedure: no entry for "call_int"" at line 1924, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 49: "variable $test-call-int is not bound" at line 1942, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 50: "variable $test-call-int is not bound" at line 1944, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 51: "variable $test-call-int is not bound" at line 1946, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 52: "variable $test-call-int is not bound" at line 1948, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 53: "variable $test-call-int is not bound" at line 1950, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 54: "variable $test-call-int is not bound" at line 1952, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 55: "variable $test-call-int is not bound" at line 1954, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 56: "variable $test-call-int is not bound" at line 1956, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 57: "variable $test-call-int is not bound" at line 1958, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 58: "variable $test-call-int is not bound" at line 1960, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 59: "variable $test-call-int is not bound" at line 1962, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 60: "variable $test-call-int is not bound" at line 1964, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 61: "variable call-char is not bound" at line 1966, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 62: "variable call-wchar is not bound" at line 1973, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 63: "variable call-float is not bound" at line 1980, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-C-types clause 64: "variable call-double is not bound" at line 1987, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-int is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-unsigned is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-unsigned-int is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-char is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-wchar is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-short is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-unsigned-short is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-unsigned-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-long-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-unsigned-long-long is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-float is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-double is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-iptr is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-uptr is not bound".
+! foreign.mo:Expected error in mat foreign-C-types: "variable call-void* is not bound".
+! foreign.mo:Error in mat foreign-ftype clause 1: "foreign-procedure: no entry for "uptr_to_uptr"" at line 2094, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 2: "ftype-&ref: 0.0+1.1i is not an ftype pointer" at line 2106, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 3: "ftype-&ref: 0.0+1.1i is not an ftype pointer" at line 2109, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 4: "ftype-&ref: 0.0+1.1i is not an ftype pointer" at line 2112, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 5: "ftype-&ref: 0.0+1.1i is not an ftype pointer" at line 2115, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 6: "foreign-procedure: no entry for "call_uptr"" at line 2118, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 7: "ftype-&ref: 0.0+1.1i is not an ftype pointer" at line 2125, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 8: "ftype-&ref: 0.0+1.1i is not an ftype pointer" at line 2128, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 9: "ftype-&ref: 0.0+1.1i is not an ftype pointer" at line 2131, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 10: "ftype-&ref: 0.0+1.1i is not an ftype pointer" at line 2134, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 11: "invalid foreign-procedure argument 0.0+1.1i" at line 2137, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+  foreign.mo:Expected error in mat foreign-ftype: "unrecognized foreign-procedure argument ftype name broken".
+  foreign.mo:Expected error in mat foreign-ftype: "invalid foreign-procedure argument type specifier (+ * -)".
+  foreign.mo:Expected error in mat foreign-ftype: "invalid foreign-procedure argument type specifier (* * *)".
+***************
+*** 10664,10677 ****
+  foreign.mo:Expected error in mat foreign-ftype: "foreign-entry: 1000000 is not a string".
+  foreign.mo:Expected error in mat foreign-ftype: "foreign-entry: no entry for "i am not defined"".
+  foreign.mo:Expected error in mat foreign-ftype: "unexpected function ftype name outside pointer field A".
+! foreign.mo:Expected error in mat foreign-ftype: "void*->void*: invalid foreign-procedure argument 0".
+  foreign.mo:Expected error in mat foreign-ftype: "invalid syntax (ftype-ref integer-8 (void*->void* (make-ftype-pointer integer-8 0) 0))".
+! foreign.mo:Expected error in mat foreign-ftype: "obj-void*->obj-void*: invalid foreign-procedure argument <ftype-pointer>".
+! foreign.mo:Expected error in mat foreign-ftype: "get-int-uint-int-as-uint*: invalid foreign-procedure argument <ftype-pointer>".
+! foreign.mo:Expected error in mat foreign-ftype: "get-int-uint-int: invalid foreign-procedure argument <ftype-pointer>".
+  foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
+  foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
+  foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
+  foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+  foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+  foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+--- 11015,11187 ----
+  foreign.mo:Expected error in mat foreign-ftype: "foreign-entry: 1000000 is not a string".
+  foreign.mo:Expected error in mat foreign-ftype: "foreign-entry: no entry for "i am not defined"".
+  foreign.mo:Expected error in mat foreign-ftype: "unexpected function ftype name outside pointer field A".
+! foreign.mo:Error in mat foreign-ftype clause 60: "foreign-entry: no entry for "idiptr"" at line 2335, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 61: "attempt to apply non-procedure 1.1" at line 2345, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 62: "foreign-entry: no entry for "idiptr"" at line 2347, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 63: "attempt to apply non-procedure 1.1" at line 2354, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 64: "foreign-entry: no entry for "idiptr"" at line 2356, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 65: "attempt to apply non-procedure 1.1" at line 2363, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 66: "foreign-entry: no entry for "idiptr"" at line 2365, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 67: "ftype-pointer-address: 1.1 is not an ftype pointer" at line 2369, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-ftype: "variable void*->void* is not bound".
+! foreign.mo:Error in mat foreign-ftype clause 69: "variable void*->void* is not bound" at line 2372, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+  foreign.mo:Expected error in mat foreign-ftype: "invalid syntax (ftype-ref integer-8 (void*->void* (make-ftype-pointer integer-8 0) 0))".
+! foreign.mo:Error in mat foreign-ftype clause 71: "variable void*->void* is not bound" at line 2374, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 72: "variable void*->void* is not bound" at line 2379, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 73: "variable obj-void*->obj-void* is not bound" at line 2389, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 74: "variable void*->obj-void* is not bound" at line 2396, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-ftype: "variable obj-void*->obj-void* is not bound".
+! foreign.mo:Error in mat foreign-ftype clause 76: "variable void*->obj-void* is not bound" at line 2406, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 77: "variable void*->obj-void* is not bound" at line 2407, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 78: "foreign-procedure: no entry for "get_int_uint_int"" at line 2409, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 79: "variable get-int-uint-int is not bound" at line 2423, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 80: "variable get-int-uint-int-as-ptr is not bound" at line 2432, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 81: "variable get-int-uint-int-as-ptr is not bound" at line 2440, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 82: "variable get-int-uint-int-as-ptr is not bound" at line 2448, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Expected error in mat foreign-ftype: "variable get-int-uint-int-as-uint* is not bound".
+! foreign.mo:Expected error in mat foreign-ftype: "variable get-int-uint-int is not bound".
+! foreign.mo:Error in mat foreign-ftype clause 85: "variable call-with-int-uint-int is not bound" at line 2469, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 86: "variable call-with-int-uint-int-as-ptr is not bound" at line 2480, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 87: "variable call-with-int-uint-int-as-uint* is not bound" at line 2490, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 88: "foreign-procedure: no entry for "init_lock"" at line 2500, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 89: "variable ff-init-lock is not bound" at line 2509, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Bug in mat foreign-ftype clause 90 at line 2510, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 93: "variable ff-spinlock is not bound" at line 2513, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Bug in mat foreign-ftype clause 94 at line 2514, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 95: "variable ff-unlock is not bound" at line 2515, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Bug in mat foreign-ftype clause 96 at line 2516, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 97: "variable ff-unlock is not bound" at line 2517, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 98: "variable ff-spinlock is not bound" at line 2518, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 100: "variable ff-unlock is not bound" at line 2520, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 102: "variable ff-locked-incr is not bound" at line 2522, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Bug in mat foreign-ftype clause 103 at line 2523, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 104: "variable ff-locked-decr is not bound" at line 2524, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 105: "variable ff-locked-decr is not bound" at line 2525, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Bug in mat foreign-ftype clause 106 at line 2526, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 107: "variable ff-locked-decr is not bound" at line 2527, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-ftype clause 108: "variable ff-locked-incr is not bound" at line 2528, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Bug in mat foreign-ftype clause 110 at line 2530, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Bug in mat foreign-ftype clause 111 at line 2531, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Bug in mat foreign-ftype clause 112 at line 2532, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat foreign-anonymous clause 1: "foreign-procedure: no entry for "idiptr_addr"" at line 2537, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat single-float clause 1: "foreign-procedure: no entry for "sxstos"" at line 2566, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat single-float clause 2: "foreign-procedure: no entry for "singlesum12"" at line 2570, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat single-float clause 3: "foreign-procedure: no entry for "many_ints_and_floats"" at line 2580, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat single-float clause 5: "foreign-procedure: no entry for "many_doubles_and_three_floats_and_float"" at line 2597, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat single-float clause 6: "foreign-procedure: no entry for "many_doubles_and_three_floats_and_float"" at line 2603, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat single-float clause 7: "foreign-procedure: no entry for "many_doubles_and_float_and_three_floats"" at line 2622, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat single-float clause 8: "foreign-procedure: no entry for "many_doubles_and_float_and_three_floats"" at line 2628, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat single-float clause 9: "foreign-procedure: no entry for "many_doubles_and_three_floats_and_three_floats"" at line 2634, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 1: "foreign-procedure: no entry for "d1d2"" at line 2647, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 2: "foreign-procedure: no entry for "s1s2"" at line 2648, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 3: "foreign-procedure: no entry for "s1d1"" at line 2649, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 4: "foreign-procedure: no entry for "d1s1"" at line 2650, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 5: "foreign-procedure: no entry for "n1n2n3n4"" at line 2651, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 6: "foreign-procedure: no entry for "d1n1d2"" at line 2652, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 7: "foreign-procedure: no entry for "d1n1n2"" at line 2653, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 8: "foreign-procedure: no entry for "s1n1n2"" at line 2654, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 9: "foreign-procedure: no entry for "n1n2n3d1"" at line 2655, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 10: "foreign-procedure: no entry for "n1n2n3s1"" at line 2656, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 11: "foreign-procedure: no entry for "n1n2d1"" at line 2657, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 12: "foreign-procedure: no entry for "n1d1"" at line 2658, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 13: "foreign-procedure: no entry for "s1s2s3s4"" at line 2659, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 14: "foreign-procedure: no entry for "s1n1s2n2"" at line 2660, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 15: "foreign-procedure: no entry for "d1s1s2"" at line 2661, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 16: "foreign-procedure: no entry for "s1s2d1"" at line 2662, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 17: "foreign-procedure: no entry for "n1s1n2s2"" at line 2663, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 18: "foreign-procedure: no entry for "n1s1n2n3"" at line 2664, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 19: "foreign-procedure: no entry for "n1n2s1n3"" at line 2665, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 20: "foreign-procedure: no entry for "d1d2s1s2"" at line 2666, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 21: "foreign-procedure: no entry for "d1d2n1n2"" at line 2667, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+! foreign.mo:Error in mat auto-mat-icks clause 22: "foreign-procedure: no entry for "s1d1s2s3"" at line 2668, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+  foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
+  foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
+  foreign.mo:Expected error in mat foreign-callable: "foreign-callable: spam is not a procedure".
++ foreign.mo:Error in mat foreign-callable clause 5: "foreign-procedure: no entry for "Sinvoke2"" at line 2691, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 6: "foreign-procedure: no entry for "Sinvoke2"" at line 2718, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 7: "foreign-procedure: no entry for "Sinvoke2"" at line 2735, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 8: "foreign-procedure: no entry for "Sargtest"" at line 2752, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 9: "foreign-procedure: no entry for "Sargtest2"" at line 2778, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 10: "foreign-procedure: no entry for "Srvtest_int32"" at line 2804, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 11: "foreign-procedure: no entry for "Srvtest_uns32"" at line 2817, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 12: "foreign-procedure: no entry for "Srvtest_single"" at line 2830, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 13: "foreign-procedure: no entry for "Srvtest_double"" at line 2841, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 14: "foreign-procedure: no entry for "Srvtest_char"" at line 2852, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 15: "foreign-procedure: no entry for "Srvtest_int32"" at line 2863, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 16: "foreign-procedure: no entry for "Srvtest_stdbool"" at line 2876, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 17: "foreign-procedure: no entry for "Srvtest_int32"" at line 2889, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 18: "foreign-procedure: no entry for "Srvtest_int32"" at line 2900, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 19: "foreign-procedure: no entry for "call_twice"" at line 2915, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 20: "foreign-procedure: no entry for "cb_init"" at line 2924, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 23: "foreign-procedure: no entry for "unlock_callback"" at line 2974, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 24: "foreign-procedure: no entry for "unlock_callback"" at line 2981, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 25: "foreign-procedure: no entry for "call_and_unlock"" at line 2989, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 26: "foreign-procedure: no entry for "call_and_unlock"" at line 2997, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 35: "foreign-procedure: no entry for "Sinvoke2"" at line 3185, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 36: "foreign-procedure: no entry for "call_many_times"" at line 3210, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 37: "foreign-procedure: no entry for "call_many_times_bv"" at line 3231, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat foreign-callable clause 38: "foreign-procedure: no entry for "call_with_many_args"" at line 3256, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat varargs clause 1: "foreign-procedure: no entry for "varargs_df"" at line 3413, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat varargs clause 8: "variable varargs_df is not bound" at line 3506, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat varargs clause 9: "variable varargs_dfii is not bound" at line 3509, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat varargs clause 10: "variable varargs_dfidf is not bound" at line 3512, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat varargs clause 11: "variable varargs_sfdfi is not bound" at line 3515, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat varargs clause 12: "variable varargs_i7df is not bound" at line 3518, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 1: "foreign-procedure: no entry for "malloc_at_boundary"" at line 3524, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 2: "foreign-procedure: no entry for "f4_get_i8"" at line 3745, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 3: "foreign-procedure: no entry for "f4_get_u8"" at line 3746, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 4: "foreign-procedure: no entry for "f4_get_short"" at line 3747, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 5: "foreign-procedure: no entry for "f4_get_u16"" at line 3748, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 6: "foreign-procedure: no entry for "f4_get_long"" at line 3749, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 7: "foreign-procedure: no entry for "f4_get_int"" at line 3750, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 8: "foreign-procedure: no entry for "f4_get_i64"" at line 3751, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 9: "foreign-procedure: no entry for "f4_get_float"" at line 3752, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 10: "foreign-procedure: no entry for "f4_get_double"" at line 3753, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 11: "foreign-procedure: no entry for "f4_get_struct_i8"" at line 3754, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 12: "foreign-procedure: no entry for "f4_get_struct_u8"" at line 3755, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 13: "foreign-procedure: no entry for "f4_get_struct_short"" at line 3756, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 14: "foreign-procedure: no entry for "f4_get_struct_u16"" at line 3757, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 15: "foreign-procedure: no entry for "f4_get_struct_long"" at line 3758, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 16: "foreign-procedure: no entry for "f4_get_struct_int"" at line 3759, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 17: "foreign-procedure: no entry for "f4_get_struct_i64"" at line 3760, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 18: "foreign-procedure: no entry for "f4_get_struct_float"" at line 3761, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 19: "foreign-procedure: no entry for "f4_get_struct_double"" at line 3762, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 20: "foreign-procedure: no entry for "f4_get_struct_int_i8"" at line 3763, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 21: "foreign-procedure: no entry for "f4_get_struct_float_i8"" at line 3764, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 22: "foreign-procedure: no entry for "f4_get_struct_double_i8"" at line 3765, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 23: "foreign-procedure: no entry for "f4_get_struct_int_int"" at line 3766, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 24: "foreign-procedure: no entry for "f4_get_struct_float_float"" at line 3767, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 25: "foreign-procedure: no entry for "f4_get_struct_double_double"" at line 3768, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 26: "foreign-procedure: no entry for "f4_get_struct_int_i8_int"" at line 3769, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 27: "foreign-procedure: no entry for "f4_get_struct_float_i8_int"" at line 3770, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 28: "foreign-procedure: no entry for "f4_get_struct_double_i8_int"" at line 3771, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 29: "foreign-procedure: no entry for "f4_get_struct_i8_i8_i8"" at line 3772, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 30: "foreign-procedure: no entry for "f4_get_struct_short_short_short"" at line 3773, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 31: "foreign-procedure: no entry for "f4_get_struct_int_int_int"" at line 3774, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 32: "foreign-procedure: no entry for "f4_get_struct_float_float_float"" at line 3775, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 33: "foreign-procedure: no entry for "f4_get_struct_double_double_double"" at line 3776, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 34: "foreign-procedure: no entry for "f4_get_struct_i8_i8_i8_i8_i8"" at line 3777, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 35: "foreign-procedure: no entry for "f4_get_struct_i8_i8_i8_i8_i8_i8_i8"" at line 3778, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 36: "foreign-procedure: no entry for "f4_get_union_i8"" at line 3779, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 37: "foreign-procedure: no entry for "f4_get_union_u8"" at line 3780, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 38: "foreign-procedure: no entry for "f4_get_union_short"" at line 3781, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 39: "foreign-procedure: no entry for "f4_get_union_u16"" at line 3782, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 40: "foreign-procedure: no entry for "f4_get_union_long"" at line 3783, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 41: "foreign-procedure: no entry for "f4_get_union_int"" at line 3784, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 42: "foreign-procedure: no entry for "f4_get_union_i64"" at line 3785, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 43: "foreign-procedure: no entry for "f4_get_union_float"" at line 3786, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 44: "foreign-procedure: no entry for "f4_get_union_double"" at line 3787, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 45: "foreign-procedure: no entry for "f4_get_union_i8_int"" at line 3788, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 46: "foreign-procedure: no entry for "f4_get_union_short_int"" at line 3789, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 47: "foreign-procedure: no entry for "f4_get_union_long_int"" at line 3790, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 48: "foreign-procedure: no entry for "f4_get_union_int_int"" at line 3791, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 49: "foreign-procedure: no entry for "f4_get_union_i64_int"" at line 3792, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 50: "foreign-procedure: no entry for "f4_get_union_float_int"" at line 3793, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 51: "foreign-procedure: no entry for "f4_get_union_double_int"" at line 3794, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 52: "foreign-procedure: no entry for "f4_get_struct_uniondoubledouble_double"" at line 3796, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 53: "foreign-procedure: no entry for "f4_sum_pre_double_double_double_double_double_double_double_double_struct_double_i8_int"" at line 3816, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 54: "foreign-procedure: no entry for "f4_cb_send_struct_double_i8_int"" at line 3835, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat structs clause 55: "foreign-procedure: no entry for "intfloat_sum_built"" at line 3859, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+  foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+  foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+  foreign.mo:Expected error in mat collect-safe: "foreign-procedure: string argument not allowed with __collect_safe procedure".
+***************
+*** 10686,10691 ****
+--- 11196,11216 ----
+  foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+  foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
+  foreign.mo:Expected error in mat collect-safe: "foreign-callable: string result not allowed with __collect_safe callable".
++ foreign.mo:Error in mat collect-safe clause 15: "foreign-procedure: no entry for "call_in_unknown_thread"" at line 3897, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat collect-safe clause 17: "variable call-in-unknown-thread-2 is not bound" at line 3959, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat collect-safe clause 18: "variable call-in-unknown-thread-3 is not bound" at line 3961, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat collect-safe clause 19: "variable call-in-unknown-thread-4 is not bound" at line 3963, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat collect-safe clause 20: "variable call-in-unknown-thread-4 is not bound" at line 3965, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat collect-safe clause 21: "foreign-procedure: no entry for "spin_a_while"" at line 3978, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat collect-safe clause 22: "foreign-procedure: no entry for "call_in_many_unknown_threads"" at line 4010, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat save-errno clause 1: "foreign-procedure: no entry for "set_errno_value"" at line 4030, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat save-errno clause 2: "variable set-errno-value is not bound" at line 4048, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat save-errno clause 3: "variable set-errno-value/collect-safe is not bound" at line 4050, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat save-errno clause 4: "variable set-last-error-value is not bound" at line 4052, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat save-errno clause 5: "variable set-last-error-value/collect-safe is not bound" at line 4054, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat disable-interrupts clause 2: "foreign-procedure: no entry for "call_for_interrupt_test"" at line 4109, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat disable-interrupts clause 3: "foreign-procedure: no entry for "call_for_interrupt_test"" at line 4110, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
++ foreign.mo:Error in mat disable-interrupts clause 4: "foreign-procedure: no entry for "call_for_interrupt_test"" at line 4111, char 3 of /home/ufo/Documents/workspace/ChezScheme/mats/foreign.ms
+  foreign.mo:Expected error in mat reference-bytevector: "make-reference-bytevector: -1 is not a valid bytevector length".
+  foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: #vu8(1 2 3) is not a reference bytevector".
+  foreign.mo:Expected error in mat reference-bytevector: "bytevector-reference-ref: invalid index -8 for #vu8(0 0 0 0 0 0 ...)".
+***************
+*** 11275,11284 ****
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
@@ -594,7 +1500,7 @@
   oop.mo:Expected error in mat oop: "m1: not applicable to 17".
   oop.mo:Expected error in mat oop: "variable <a>-x1 is not bound".
   oop.mo:Expected error in mat oop: "variable <a>-x1-set! is not bound".
---- 11194,11203 ----
+--- 11800,11809 ----
   exceptions.mo:Expected error in mat assert: "failed assertion (memq (quote b) (quote (1 2 a 3 4)))".
   exceptions.mo:Expected error in mat assert: "failed assertion (q ...)".
   exceptions.mo:Expected error in mat assert: "failed assertion (andmap symbol? (syntax (x ...)))".
