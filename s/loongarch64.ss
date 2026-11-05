@@ -1822,11 +1822,18 @@
     (define-record-type cat
       (nongenerative #{cat ker6am0odx7w7wg5n44fxof76-1})
       (sealed #t)
-      (fields place            ; 'int, 'fp, 'mix ('fp + 'int/'fp), or 'stack
+      (fields place            ; 'int, 'fp, 'mix ('fp + 'int/'fp), 'split ('int + stack), or 'stack
               regs             ; list of registers
-              size/s           ; size in bytes for 'stack, list of sizes for register
+              size/s           ; size in bytes for 'stack or stack part of 'split, list of sizes for register
               offsets          ; for 'mix mode
               by-reference))   ; #f or size of referenced data
+
+    ;; space that a callable needs to make a contiguous copy of an argument
+    (define (cat-copy-bytes cat)
+      (cond
+        [(cat-by-reference cat) => (lambda (size) (align 8 size))]
+        [(eq? (cat-place cat) 'split) 16]
+        [else 0]))
 
     (define categorize-arguments
       (lambda (types varargs-after)
@@ -1917,13 +1924,19 @@
                                          (<= size (* 2 (constant ptr-bytes)))
                                          (<= i 6))
                                     ;;@ 8 < size <= 16
-                                    ;; in two int registers (and never split across registers and stack?)
+                                    ;; in two int registers
                                     (cons (make-cat 'int (list (vector-ref int-argument-regs i)
                                                                (vector-ref int-argument-regs (fx+ i 1)))
                                                     (list 8 (fx- size 8))
                                                     #f
                                                     #f)
                                           (loop (cdr types) (fx+ i 2) fpi next-varargs-after))]
+                                   [(and (> size (constant ptr-bytes))
+                                         (<= size (* 2 (constant ptr-bytes)))
+                                         (< i 8))
+                                    ;; first word in the last int register, and the rest on the stack
+                                    (cons (make-cat 'split (list (vector-ref int-argument-regs i)) (fx- size 8) #f #f)
+                                          (loop (cdr types) (fx+ i 1) fpi next-varargs-after))]
                                    [(and (or (<= size (constant ptr-bytes))
                                              (> size (* 2 (constant ptr-bytes))))
                                          (< i 8))
@@ -2088,6 +2101,12 @@
                                           (%seq
                                            (set! ,reg1 ,(%mref ,x 0))
                                            ,(memory-to-reg reg2 x 8 (fx- size 8) #t %scratch1))))]
+                                     [load-indirect-split
+                                      (lambda (reg offset rest-size)
+                                        (lambda (x) ; requires var
+                                          (%seq
+                                           (set! ,reg ,(%mref ,x 0))
+                                           ,(memory-to-memory %sp offset x 8 rest-size %scratch1))))]
                                      [do-args
                                       (lambda (types varargs-after)
                                         (let* ([cats (categorize-arguments types varargs-after)])
@@ -2148,6 +2167,11 @@
                                                                              (cons (load-two-indirect-regs to-regs (cat-size/s cat) (cat-offsets cat))
                                                                                    locs)
                                                                              (append to-regs regs) isp))]
+                                                                    [(split)
+                                                                     ;; first word in a register, and the rest on the stack
+                                                                     (loop (cdr types) (cdr cats)
+                                                                           (cons (load-indirect-split reg isp (cat-size/s cat)) locs)
+                                                                           (cons reg regs) (fx+ isp 8))]
                                                                     [else
                                                                      (cond
                                                                       [(cat-by-reference cat)
@@ -2429,9 +2453,11 @@
                                                                             ,(memory-to-memory %sp copy-offset x 0
                                                                                                (cat-by-reference cat) %scratch1)
                                                                             (set! ,x ,(%inline + ,%sp (immediate ,copy-offset)))))])
-                                                              (if (eq? (cat-place cat) 'stack)
-                                                                  (use-stack load)
-                                                                  (use-reg load)))]
+                                                              (let ([stack? (eq? (cat-place cat) 'stack)])
+                                                                (loop (cdr types) (cdr cats) (cons load locs)
+                                                                      (if stack? reg-offset (fx+ reg-offset 8))
+                                                                      (if stack? (fx+ stack-arg-offset 8) stack-arg-offset)
+                                                                      (fx+ copy-offset (cat-copy-bytes cat)))))]
                                                            [else
                                                             ;; point to argument on stack; even in the case of two registers,
                                                             ;; they'll have been copied there in sequence as needed, but 'mix
@@ -2455,6 +2481,16 @@
                                                                  (loop (cdr types) (cdr cats)
                                                                        (cons load locs)
                                                                        (fx+ reg-offset 16) stack-arg-offset copy-offset))]
+                                                              [(split)
+                                                               ;; the first word's saved register and the rest on the stack are not
+                                                               ;; necessarily adjacent, so copy to get a contiguous object
+                                                               (let ([load (lambda (x)
+                                                                             (%seq
+                                                                              ,(memory-to-memory %sp copy-offset %sp reg-offset 8 %scratch1)
+                                                                              ,(memory-to-memory %sp (fx+ copy-offset 8) %sp stack-arg-offset (cat-size/s cat) %scratch1)
+                                                                              (set! ,x ,(%inline + ,%sp (immediate ,copy-offset)))))])
+                                                                 (loop (cdr types) (cdr cats) (cons load locs)
+                                                                       (fx+ reg-offset 8) (fx+ stack-arg-offset 8) (fx+ copy-offset (cat-copy-bytes cat))))]
                                                               [(int fp)
                                                                ;; one or two registers
                                                                (let ([load (load-stack-address reg-offset)])
@@ -2463,7 +2499,11 @@
                                                                      (loop (cdr types) (cdr cats)
                                                                            (cons load locs)
                                                                            (fx+ reg-offset 16) stack-arg-offset copy-offset)))]
-                                                              [else (use-reg (load-stack-address stack-arg-offset))])])]
+                                                              [else
+                                                               ;; on the stack
+                                                               (loop (cdr types) (cdr cats)
+                                                                     (cons (load-stack-address stack-arg-offset) locs)
+                                                                     reg-offset (fx+ stack-arg-offset (cat-size/s cat)) copy-offset)])])]
                                                          [else
                                                           ;; integer, scheme-object, etc.
                                                           (case (cat-place cat)
@@ -2550,10 +2590,7 @@
                                            [adjust-active? (if-feature pthreads (memq 'adjust-active conv*) #f)]
                                            [arg-regs (apply append (map cat-regs arg-cat*))])
                                       (let* ([arg-reg-bytes (fx* (length arg-regs) 8)]
-                                             [copy-bytes (apply + (map (lambda (cat)
-                                                                         (or (cat-by-reference cat)
-                                                                             0))
-                                                                       arg-cat*))]
+                                             [copy-bytes (apply + (map cat-copy-bytes arg-cat*))]
                                              [active-state-bytes (if adjust-active? 8 0)]
                                              [return-bytes (if synthesize-first?
                                                                ;;@ main Scheme code first stores the results in the &-return space
