@@ -630,6 +630,36 @@ EXPORT long long stack_three_longs(int a, int b, int c, int d, int e, int f, int
   return FOLD(FOLD(FOLD(FOLD(FOLD8(a, b, c, d, e, f, g, h), i.a), i.b), i.c), j);
 }
 
+/* on some platforms, only the first half of `h` fits in the last argument register */
+typedef struct { long long a, b; } two_longs;
+
+EXPORT long long last_reg_two_longs(int a, int b, int c, int d, int e, int f, int g, two_longs h, int i) {
+  return FOLD(FOLD(FOLD(FOLD(FOLD(FOLD(FOLD(FOLD(FOLD(FOLD(0, a), b), c), d), e), f), g), h.a), h.b), i);
+}
+
+EXPORT long long call_with_last_reg_two_longs(long long (*f)(int, int, int, int, int, int, int, two_longs, int)) {
+  two_longs h = { 41, 42 };
+  return f(1, 2, 3, 4, 5, 6, 7, h, 43);
+}
+
+typedef struct { int a, b, c; } three_ints;
+
+/* a floating-point argument after a struct that may be split between a register and the stack */
+EXPORT long long last_reg_three_ints(int a, int b, int c, int d, int e, int f, int g, three_ints h, double i, int j) {
+  return FOLD(FOLD(FOLD(FOLD(FOLD8(a, b, c, d, e, f, g, h.a), h.b), h.c), i), j);
+}
+
+EXPORT long long call_with_last_reg_three_ints(long long (*f)(int, int, int, int, int, int, int, three_ints, double, int)) {
+  three_ints h = { 41, 42, 43 };
+  return f(1, 2, 3, 4, 5, 6, 7, h, 44.0, 45);
+}
+
+/* structs large enough to be passed by reference on some platforms */
+EXPORT long long call_with_two_three_longs(long long (*f)(three_longs, three_longs)) {
+  three_longs a = { 1, 2, 3 }, b = { 4, 5, 6 };
+  return f(a, b);
+}
+
 /* enough floats to use up the floating-point registers on every platform */
 EXPORT void call_with_many_floats(void (*f)(float, float, float, float, float, float, float, float,
                                             float, float, float, float, float, float, float,

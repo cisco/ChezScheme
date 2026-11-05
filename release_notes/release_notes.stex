@@ -3124,6 +3124,24 @@ part changed the bytes after it. Also, a \scheme{foreign-callable} argument
 received by value on the stack with a size that is not a multiple of 8
 misplaced the stack arguments after it.
 
+\subsection{Repair riscv64 and loongarch64 foreign-callable struct arguments on the stack (10.5.0)}
+
+On riscv64 and loongarch64, a \scheme{foreign-callable} argument received
+by value on the stack did not advance past its stack slot, so the next
+stack argument was read from the same slot. It also shifted the saved
+register position used for any later register argument.
+
+\subsection{Repair riscv64 and loongarch64 passing of a struct with only one register left (10.5.0)}
+
+On riscv64 and loongarch64, a struct of 9 to 16 bytes passed by value when
+only one integer argument register was left went entirely on the stack,
+and the next integer argument took that register. The platform ABIs
+instead put the first word in the register and the rest on the stack. This
+is repaired for both \scheme{foreign-procedure} and
+\scheme{foreign-callable}. Also, a \scheme{foreign-callable} with multiple
+struct arguments of more than 16 bytes received them all at the same
+address, so each one overwrote the one before.
+
 \subsection{Repair \scheme{configure} on FreeBSD powerpc64 and powerpc64le (10.5.0)}
 
 On FreeBSD, \scheme{uname -m} reports \scheme{powerpc} for 32-bit and

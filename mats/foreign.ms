@@ -2733,6 +2733,71 @@
     (= (proc 1 2 3 4 5 6 7 8 s 44)
        (stack-fold 1 2 3 4 5 6 7 8 41 42 43 44)))
 
+  ;; a struct that takes two words when only one argument register may be left
+  (begin
+    (define-ftype two_longs (struct (a integer-64) (b integer-64)))
+    (define-ftype last_reg_two_longs_callback
+      (function (int int int int int int int (& two_longs) int) integer-64))
+    #t)
+
+  (let ([proc (foreign-procedure "last_reg_two_longs" (int int int int int int int (& two_longs) int) integer-64)]
+        [s (make-ftype-pointer two_longs (alloc-stack-struct (ftype-sizeof two_longs)
+                                                      (lambda (p) (foreign-set! 'integer-64 p 0 41) (foreign-set! 'integer-64 p 8 42))))])
+    (= (proc 1 2 3 4 5 6 7 s 43)
+       (stack-fold 1 2 3 4 5 6 7 41 42 43)))
+
+  (let* ([cb (make-ftype-pointer last_reg_two_longs_callback
+                                 (lambda (a b c d e f g h i)
+                                   (stack-fold a b c d e f g
+                                               (ftype-ref two_longs (a) h)
+                                               (ftype-ref two_longs (b) h)
+                                               i)))]
+         [proc (foreign-procedure "call_with_last_reg_two_longs" ((* last_reg_two_longs_callback)) integer-64)]
+         [r (proc cb)])
+    (unlock-object (foreign-callable-code-object (ftype-pointer-address cb)))
+    (= r (stack-fold 1 2 3 4 5 6 7 41 42 43)))
+
+  (begin
+    (define-ftype three_ints (struct (a int) (b int) (c int)))
+    (define-ftype last_reg_three_ints_callback
+      (function (int int int int int int int (& three_ints) double int) integer-64))
+    (define-ftype two_three_longs_callback
+      (function ((& three_longs) (& three_longs)) integer-64))
+    #t)
+
+  (let ([proc (foreign-procedure "last_reg_three_ints" (int int int int int int int (& three_ints) double int) integer-64)]
+        [s (make-ftype-pointer three_ints (alloc-stack-struct (ftype-sizeof three_ints)
+                                                       (lambda (p) (foreign-set! 'int p 0 41) (foreign-set! 'int p 4 42) (foreign-set! 'int p 8 43))))])
+    (= (proc 1 2 3 4 5 6 7 s 44.0 45)
+       (stack-fold 1 2 3 4 5 6 7 41 42 43 44 45)))
+
+  (let* ([cb (make-ftype-pointer last_reg_three_ints_callback
+                                 (lambda (a b c d e f g h i j)
+                                   (stack-fold a b c d e f g
+                                               (ftype-ref three_ints (a) h)
+                                               (ftype-ref three_ints (b) h)
+                                               (ftype-ref three_ints (c) h)
+                                               (flonum->fixnum i)
+                                               j)))]
+         [proc (foreign-procedure "call_with_last_reg_three_ints" ((* last_reg_three_ints_callback)) integer-64)]
+         [r (proc cb)])
+    (unlock-object (foreign-callable-code-object (ftype-pointer-address cb)))
+    (= r (stack-fold 1 2 3 4 5 6 7 41 42 43 44 45)))
+
+  ;; two large structs must arrive at a callable as distinct objects
+  (let* ([cb (make-ftype-pointer two_three_longs_callback
+                                 (lambda (x y)
+                                   (stack-fold (ftype-ref three_longs (a) x)
+                                               (ftype-ref three_longs (b) x)
+                                               (ftype-ref three_longs (c) x)
+                                               (ftype-ref three_longs (a) y)
+                                               (ftype-ref three_longs (b) y)
+                                               (ftype-ref three_longs (c) y))))]
+         [proc (foreign-procedure "call_with_two_three_longs" ((* two_three_longs_callback)) integer-64)]
+         [r (proc cb)])
+    (unlock-object (foreign-callable-code-object (ftype-pointer-address cb)))
+    (= r (stack-fold 1 2 3 4 5 6)))
+
   ;; a callable that receives floats after the floating-point registers are used up
   (begin
     (define-ftype a_float float)
