@@ -536,6 +536,49 @@
         (andmap (lambda (y) (eq? y x)) (vector->list v))))
  )
 
+(mat pointer-sized-fill-runtime-sizes
+    ; runtime-produced sizes exercise the dynamic-size fill path for
+    ; pointer-sized elements (on x86_64, REP STOSQ); lengths straddle
+    ; the pointer-size boundary and scale up past a page, with values
+    ; checked at both ends.  Fill values deliberately have non-zero low
+    ; bytes so a byte-at-a-time fill would be caught.
+    (let ([v (make-fxvector (string->number "0"))])
+      (fxvector-fill! v #x1234)
+      (fxvector? v))
+    (let ([v (make-fxvector (string->number "1"))])
+      (fxvector-fill! v #x1234)
+      (eqv? (fxvector-ref v 0) #x1234))
+    (let ([v (make-fxvector (string->number "3"))])
+      (fxvector-fill! v -77)
+      (and (eqv? (fxvector-ref v 0) -77)
+           (eqv? (fxvector-ref v 2) -77)))
+    (let ([v (make-fxvector (string->number "513"))])
+      (fxvector-fill! v #x1234)
+      (collect)
+      (and (eqv? (fxvector-ref v 0) #x1234)
+           (eqv? (fxvector-ref v 512) #x1234)
+           (begin (fxvector-fill! v -1)
+                  (and (eqv? (fxvector-ref v 0) -1)
+                       (eqv? (fxvector-ref v 512) -1)))))
+    (let ([v (make-fxvector (string->number "513") -55)])
+      (and (eqv? (fxvector-ref v 0) -55)
+           (eqv? (fxvector-ref v 512) -55)))
+    (let ([x (cons 'a 'b)])
+      (let ([v (make-vector (string->number "513") x)])
+        (collect)
+        (and (eq? (vector-ref v 0) x)
+             (eq? (vector-ref v 512) x))))
+    (let ([v (make-vector (string->number "513") 17)])
+      (and (eqv? (vector-ref v 0) 17)
+           (eqv? (vector-ref v 512) 17)))
+    (let ([v (make-flvector (string->number "513") 1.5)])
+      (and (fl= (flvector-ref v 0) 1.5)
+           (fl= (flvector-ref v 512) 1.5)))
+    (let ([v (make-flvector (string->number "513"))])
+      (and (fl= (flvector-ref v 0) 0.0)
+           (fl= (flvector-ref v 512) 0.0)))
+ )
+
 (mat list->vector
     (equal? (list->vector '(a b c)) '#(a b c))
     (equal? (list->vector '()) '#())

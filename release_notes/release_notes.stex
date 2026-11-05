@@ -4123,15 +4123,20 @@ x86\_64 has been fixed.
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
 
-\subsection{Faster bytevector fill at optimize level 3 (10.5.0)}
+\subsection{Faster bytevector and vector fill at optimize level 3 (10.5.0)}
 
 On x86\_64, \scheme{bytevector-fill!} (and \scheme{make-bytevector}
 with a fill, and utf-8 \scheme{string-fill!}) with a length that is
 not a compile-time constant now compile to a single \scheme{rep
 stosb} instead of a store-and-branch loop per pointer-sized word.
+Similarly, dynamic-size \scheme{fxvector-fill!} and the fill paths for
+\scheme{make-vector} and \scheme{make-fxvector} compile to
+\scheme{rep stosq}; zero initialization for \scheme{make-flvector}
+uses the same path.
 Filling a 4KB bytevector is about 2.5 times faster; filling 50MB is
-about twice as fast.  Other architectures and wider element sizes are
-unchanged.
+about twice as fast.  Filling a 512-element fxvector is also about
+twice as fast.  Other architectures and 2- and 4-byte-element fills
+are unchanged.
 
 \subsection{Reduced allocation and copying (9.6.0)}
 
