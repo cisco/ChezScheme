@@ -658,6 +658,18 @@
   (define-instruction value (fpsqrt)
     [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsqrt ,y))])
 
+  (define-instruction value (fpround fpfloor fpceiling fptruncate)
+    [(op (x fpur) (y fpmem fpur))
+     ;; Direct ROUNDSD instruction variant, works with corresponding `asm-fpround`:
+     #;
+     `(set! ,(make-live-info) ,x (asm ,info ,(asm-fpround op) ,y))
+
+     ;; Link-editable variant, for corresponding `asm-fpround`:
+     (let ([urax (make-precolored-unspillable 'urax %rax)]) ; rax is assumed by linker's x86_64_set_jump
+       (seq
+         `(set! ,(make-live-info) ,urax (asm ,null-info ,asm-kill))
+         `(set! ,(make-live-info) ,x (asm ,info ,(asm-fpround op) ,y ,urax))))])
+
   (define-instruction value (fpsingle)
     [(op (x fpur) (y fpmem fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsingle ,y))])
 
@@ -909,7 +921,7 @@
                      asm-lea1 asm-lea2 asm-indirect-call asm-condition-code
                      asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount
                      asm-exchange asm-pause asm-debug asm-locked-incr asm-locked-decr asm-locked-cmpxchg
-                     asm-fpsqrt asm-fpop-2 asm-fpminmax asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
+                     asm-fpsqrt asm-fpround asm-fpop-2 asm-fpminmax asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
                      asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
@@ -1122,6 +1134,29 @@
         (ax-ea-sib source)
         (ax-ea-addr-disp source)
         (build byte 3))))
+
+  ; SSE4.1
+  (define sse-roundsd-op
+    ; ROUNDSD family: 66 0F 3A 0B /r ib, with the rounding-control
+    ; immediate fixed at compile time (0 = nearest/even, 1 = floor,
+    ; 2 = ceiling, 3 = truncate); the REX byte goes after the 66
+    ; prefix and before the 0F escape
+    (lambda (op prefix-code map-code1 map-code2 op-code imm-code source dest-reg code*)
+      (emit-code (op source dest-reg code*)
+        (build byte prefix-code)
+        (ax-ea-rex 0 source dest-reg #f)
+        (build byte map-code1)
+        (build byte map-code2)
+        (build byte op-code)
+        (ax-ea-modrm-reg source dest-reg)
+        (ax-ea-sib source)
+        (ax-ea-addr-disp source)
+        (build byte imm-code))))
+
+  (define-op sse.roundsd    sse-roundsd-op #x66 #x0F #x3A #x0B 0)
+  (define-op sse.floorsd    sse-roundsd-op #x66 #x0F #x3A #x0B 1)
+  (define-op sse.ceilingsd  sse-roundsd-op #x66 #x0F #x3A #x0B 2)
+  (define-op sse.truncsd    sse-roundsd-op #x66 #x0F #x3A #x0B 3)
 
   (define sse-op1
     (lambda (op prefix-code op-code w source dest-reg code*)
@@ -1791,7 +1826,7 @@
   (define asm-size
     (lambda (x)
       (case (car x)
-        [(asm x86_64-jump x86_64-call x86_64-popcount) 0]
+        [(asm x86_64-jump x86_64-call x86_64-popcount x86_64-fpround) 0]
         [(byte) 1]
         [(word) 2]
         [(long) 4]
@@ -1957,6 +1992,47 @@
       (Trivit (dest-reg src)
         (maybe-clear-fp-dest src dest-reg
           (emit sse.sqrtsd src dest-reg code*)))))
+
+  ;; Direct ROUNDSD instruction variant:
+  #;
+  (define asm-fpround
+    (lambda (op)
+      (lambda (code* dest-reg src)
+        (define (emit-round code* src dest-reg)
+          (case op
+            [(fpround) (emit sse.roundsd src dest-reg code*)]
+            [(fpfloor) (emit sse.floorsd src dest-reg code*)]
+            [(fpceiling) (emit sse.ceilingsd src dest-reg code*)]
+            [(fptruncate) (emit sse.truncsd src dest-reg code*)]))
+        (Trivit (dest-reg src)
+          (maybe-clear-fp-dest src dest-reg
+            (emit-round code* src dest-reg))))))
+
+  ;; Link-editable variant: moves the argument to %Cfparg1 (xmm0),
+  ;; sets up a call to `fpround-slow` or similar, and moves the result
+  ;; from %Cfparg1. The linker replaces the call with
+  ;; `ROUNDSD xmm0, xmm0, mode` when SSE4.1 is available. The rounding
+  ;; mode is communicated to the linker as an addition to the
+  ;; relocation's usual `code-data-disp` item offset. Using %Cfparg1
+  ;; as a scratch register makes the same assumption as `asm-fpop-2`.
+  (define asm-fpround
+    (lambda (op)
+      (let* ([mode (case op
+                     [(fpround) 0]
+                     [(fpfloor) 1]
+                     [(fpceiling) 2]
+                     [(fptruncate) 3])]
+             [libspec (case op
+                        [(fpround) (lookup-libspec fpround-slow)]
+                        [(fpfloor) (lookup-libspec fpfloor-slow)]
+                        [(fpceiling) (lookup-libspec fpceiling-slow)]
+                        [(fptruncate) (lookup-libspec fptruncate-slow)])]
+             [target `(x86_64-fpround ,(fx+ (constant code-data-disp) mode) (library ,libspec))]
+             [xmm0 (cons 'reg %Cfparg1)])
+        (lambda (code* dest-reg src jmp-reg)
+          (Trivit (dest-reg src)
+            (emit-fpmove src xmm0
+              (asm-helper-call (emit-fpmove xmm0 dest-reg code*) target jmp-reg)))))))
 
   (define asm-fpmove
     (lambda (code* dest src)

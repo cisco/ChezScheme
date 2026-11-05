@@ -3513,7 +3513,8 @@
         (lambda (name)
           (not (memq name '(nuate nonprocedure-code error-invoke invoke
                                   $wrapper-apply wrapper-apply arity-wrapper-apply
-                                  popcount-slow cpu-features)))))
+                                  popcount-slow cpu-features
+                                  fpround-slow fpfloor-slow fpceiling-slow fptruncate-slow)))))
       (define-inline 2 $hand-coded
         [(name)
          (nanopass-case (L7 Expr) name
@@ -5050,10 +5051,26 @@
             [(_ id id2)
              (define-fl-call id
                [(e1 e2) (build-fl-call (lookup-c-entry id2) e1 e2)])]))
-        (define-fl-call flround) ; no support in SSE2 for flround, though this was added in SSE4.1
-        (define-fl-call flfloor)
-        (define-fl-call flceiling)
-        (define-fl-call fltruncate)
+        (define-inline 3 flround
+          [(e)
+           (constant-case fpround-instruction
+             [(#t) (build-fp-op-1 %fpround e)]
+             [else (build-fl-call (lookup-c-entry flround) e)])]) ; fpround-instruction: SSE4.1 roundsd on x86_64, frint* on arm64
+        (define-inline 3 flfloor
+          [(e)
+           (constant-case fpround-instruction
+             [(#t) (build-fp-op-1 %fpfloor e)]
+             [else (build-fl-call (lookup-c-entry flfloor) e)])])
+        (define-inline 3 flceiling
+          [(e)
+           (constant-case fpround-instruction
+             [(#t) (build-fp-op-1 %fpceiling e)]
+             [else (build-fl-call (lookup-c-entry flceiling) e)])])
+        (define-inline 3 fltruncate
+          [(e)
+           (constant-case fpround-instruction
+             [(#t) (build-fp-op-1 %fptruncate e)]
+             [else (build-fl-call (lookup-c-entry fltruncate) e)])])
         (define-fl-call flsin)
         (define-fl-call flcos)
         (define-fl-call fltan)

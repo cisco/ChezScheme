@@ -126,7 +126,7 @@ extern void S_set_code_obj(char *who, IFASLCODE typ, ptr p, iptr n,
 extern ptr S_get_code_obj(IFASLCODE typ, ptr p, iptr n, iptr o);
 extern int S_fasl_intern_rtd(ptr *x);
 #ifdef X86_64
-extern void x86_64_set_popcount_present(ptr code);
+extern void x86_64_set_cpu_features(ptr code);
 #endif
 #ifdef PORTABLE_BYTECODE_SWAPENDIAN
 extern void S_swap_dounderflow_header_endian(ptr code);

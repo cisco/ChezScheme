@@ -252,6 +252,8 @@ static uptr ppc32_get_jump(void *address);
 static void x86_64_set_jump(void *address, uptr item, IBOOL callp);
 static uptr x86_64_get_jump(void *address);
 static void x86_64_set_popcount(void *address, uptr item);
+static void x86_64_set_fpround(void *address, uptr item, int mode);
+static iptr x86_64_fpround_slow_index(int mode);
 #endif /* X86_64 */
 #ifdef SPARC64
 static INT extract_reg_from_sethi(void *address);
@@ -1526,6 +1528,10 @@ void S_set_code_obj(char *who, IFASLCODE typ, ptr p, iptr n, ptr x, iptr o) {
         case reloc_x86_64_popcount:
             x86_64_set_popcount(address, item);
             break;
+        case reloc_x86_64_fpround:
+            /* rounding mode is added to the usual item offset */
+            x86_64_set_fpround(address, item - (o - code_data_disp), (int)(o - code_data_disp));
+            break;
 #endif /* X86_64 */
 #ifdef SPARC64
         case reloc_sparc64abs:
@@ -1632,6 +1638,10 @@ ptr S_get_code_obj(IFASLCODE typ, ptr p, iptr n, iptr o) {
             break;
         case reloc_x86_64_popcount:
             item = (uptr)Svector_ref(S_G.library_entry_vector, library_popcount_slow) + o;
+            break;
+        case reloc_x86_64_fpround:
+            /* rounding mode is added to the usual item offset */
+            item = (uptr)Svector_ref(S_G.library_entry_vector, x86_64_fpround_slow_index((int)(o - code_data_disp))) + o;
             break;
 #endif /* X86_64 */
 #ifdef SPARC64
@@ -1901,11 +1911,46 @@ static void x86_64_set_popcount(void *address, uptr item) {
   }
 }
 
-void x86_64_set_popcount_present(ptr code) {
+static int sse41_present;
+
+static iptr x86_64_fpround_slow_index(int mode) {
+  /* mode is ROUNDSD's rounding-control immediate */
+  switch (mode) {
+  case 0: return library_fpround_slow;
+  case 1: return library_fpfloor_slow;
+  case 2: return library_fpceiling_slow;
+  default: return library_fptruncate_slow;
+  }
+}
+
+static void x86_64_set_fpround(void *address, uptr item, int mode) {
+  if (!sse41_present) {
+    x86_64_set_jump(address, item, 1);
+  } else {
+    *((octet *)address + 0) = 0x66; /* ROUNDSD XMM0, XMM0, mode */
+    *((octet *)address + 1) = 0x0F;
+    *((octet *)address + 2) = 0x3A;
+    *((octet *)address + 3) = 0x0B;
+    *((octet *)address + 4) = 0xC0;
+    *((octet *)address + 5) = (octet)mode;
+    /* 6-byte nop: */
+    *((octet *)address + 6) = 0x66;
+    *((octet *)address + 7) = 0x0F;
+    *((octet *)address + 8) = 0x1F;
+    *((octet *)address + 9) = 0x44;
+    *((octet *)address + 10) = 0x00;
+    *((octet *)address + 11) = 0x00;
+  }
+}
+
+void x86_64_set_cpu_features(ptr code) {
   /* cpu_features returns ECX after CPUID for function 1 */
   int (*cpu_features)() = (int (*)())((uptr)code + code_data_disp);
-  if (cpu_features() & (1 << 23))
+  int ecx = cpu_features();
+  if (ecx & (1 << 23))
     popcount_present = 1;
+  if (ecx & (1 << 19))
+    sse41_present = 1;
 }
 
 #endif /* X86_64 */
