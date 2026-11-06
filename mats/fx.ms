@@ -382,6 +382,17 @@
   (test-cp0-expansion eqv? '(#%$fxu< -3 -7) #f)
   (test-cp0-expansion eqv? '(#%$fxu< -3 0) #f)
   (test-cp0-expansion eqv? '(#%$fxu< 0 -3) #t)
+  ; value position: materialized via cmp + setb (unsigned) on x86_64,
+  ; pinned with runtime-produced operands so cp0 cannot fold them
+  (let ([a (string->number "3")] [b (string->number "7")])
+    (equal? (list (#%$fxu< a b) (#%$fxu< b a) (#%$fxu< a a)) '(#t #f #f)))
+  (let ([a (string->number "-3")] [b (string->number "7")])
+    (equal? (list (#%$fxu< a b) (#%$fxu< b a)) '(#f #t)))
+  (let ([v (make-vector 2 #f)])
+    (let ([a (string->number "0")] [b (string->number "-3")])
+      (vector-set! v 0 (#%$fxu< a b))
+      (vector-set! v 1 (#%$fxu< b a))
+      (equal? v '#(#t #f))))
  )
 
 (mat fx+

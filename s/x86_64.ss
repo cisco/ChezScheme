@@ -376,7 +376,7 @@
        `(move-related ,z ,x)
        `(set! ,(make-live-info) ,z (asm ,info ,(asm-lea2 0) ,x ,y)))])
 
-  (define-instruction value (ipbool< ipbool<= ipbool= ipbool> ipbool>=)
+  (define-instruction value (ipbool< ipbool<= ipbool= ipbool> ipbool>= ipboolu<)
     ; branchless boolean-producing fixnum compare; see asm-ipbool
     [(op (z ur) (x ur) (y ur))
      `(set! ,(make-live-info) ,z
@@ -387,6 +387,7 @@
                             [(ipbool=) #x94]   ; sete
                             [(ipbool>) #x9F]   ; setg
                             [(ipbool>=) #x9D]  ; setge
+                            [(ipboolu<) #x92]  ; setb (unsigned <)
                             [else ($oops 'ipbool "unsupported ~s" op)]))
              ,z ,x ,y))]
     [(op (z mem) (x ur) (y ur))
@@ -401,6 +402,7 @@
                                 [(ipbool=) #x94]
                                 [(ipbool>) #x9F]
                                 [(ipbool>=) #x9D]
+                                [(ipboolu<) #x92]  ; setb (unsigned <)
                                 [else ($oops 'ipbool "unsupported ~s" op)]))
                  ,u ,x ,y))
          `(set! ,(make-live-info) ,z ,u)))])

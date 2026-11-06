@@ -3316,6 +3316,7 @@
              [(eq? prim %eq?) %ipbool=]
              [(eq? prim %>) %ipbool>]
              [(eq? prim %>=) %ipbool>=]
+             [(eq? prim %u<) %ipboolu<]
              [else #f]))]
         [else (lambda (prim) #f)]))
 
