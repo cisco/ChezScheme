@@ -134,6 +134,10 @@
   '("../unicode/unicode-char-cases.ss"
     "../unicode/unicode-charinfo.ss"))
 
+(define def-src-names
+  (sort (filter (glob->matcher "*.def") (ls (at-source ".")))
+        string<?))
+
 ;; used externally as dependencies
 (define all-src-names
   (append base-src-names
@@ -141,7 +145,8 @@
           other-src-names
           type-src-names
           cpnanopass-src-names
-          unicode-src-names))
+          unicode-src-names
+          def-src-names))
 
 ;; The `compiler-compiler-options` argument overrides certain `var` and config-file
 ;; options for building preamble files, which is useful for compiling a cross-compiler
@@ -168,7 +173,11 @@
   (define host-scheme (lookup 'hostscheme))
   (define arch (m->arch m))
 
-  (define mach-src+dep+more-srcs (get-machine-files m arch))
+  (define x86-64-level (if (string=? arch "a6")
+                           (or (lookup 'x86_64_level) "1")
+                           0))
+
+  (define mach-src+dep+more-srcs (get-machine-files m arch x86-64-level))
   (define machine-def-inputs (map at-source (cons (caar mach-src+dep+more-srcs)
                                                   (cdr mach-src+dep+more-srcs))))
 
@@ -221,7 +230,8 @@
                  other-src-names)))
 
   (define all-srcs
-    (append base-srcs
+    (append (map at-source def-src-names)
+            base-srcs
             compiler-srcs
             included-srcs
             other-srcs))
@@ -345,9 +355,9 @@
                              loads))])
 
   ;; Create a `:depend` line for a file that `include`s other files
-  (define (include-dep name src-names)
+  (define (include-dep name src-names [more-deps '()])
     `[:depend (,(at-dir (~a name "." m)) ,(at-dir (~a name ".so")) ,(at-dir (~a name ".patch")))
-              ,(map at-source src-names)])
+              ,(append more-deps (map at-source src-names))])
 
   (define (run-scheme-header-script dest make-script mk.so*)
     (define tmp (~a dest ".next"))
@@ -532,7 +542,8 @@
 
        ;; Internal targets ----------------------------------------
 
-       [:target ,machine.def (,(input-data-target 'machine m) ,@machine-def-inputs)
+       [:target ,machine.def (,(input-data-target 'machine (list m x86-64-level))
+                              ,@machine-def-inputs)
                 ,(lambda (dest token)
                    ((cdar mach-src+dep+more-srcs) dest token))]
 
@@ -593,8 +604,8 @@
        ,(include-dep "strip" (list "strip-types.ss"))
        ,(include-dep "vfasl" (list "strip-types.ss"))
        ,(include-dep "pbchunk" (list "strip-types.ss"))
-       ,(include-dep "cpnanopass" cpnanopass-src-names)
-       ,(include-dep "cpprim" cpnanopass-src-names)
+       ,(include-dep "cpnanopass" cpnanopass-src-names (list machine.def))
+       ,(include-dep "cpprim" cpnanopass-src-names (list machine.def))
 
        [:target ,petite.boot ,(add-patchfile base-objs)
                 ,(lambda (petite.boot token)

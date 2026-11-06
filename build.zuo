@@ -85,6 +85,15 @@
            (map (lambda (file) (build-path pb-dir file))
                 boot:boot-file-names))))
 
+  (define x86-64-level
+    (hash-ref config 'x86_64_level "1"))
+
+  (define (add-x86-64-level-target xm targets)
+    (if (equal? (m->arch xm) "a6")
+        (cons (input-data-target 'x86-64-level x86-64-level)
+              targets)
+        targets))
+
   (define all-src-files
     (map (lambda (n) (at-source "s" n))
          all-src-names))
@@ -176,7 +185,8 @@
                            (hash)))
        (reboot m xm scheme (hash 'shell-options options
                                  'out-dir (at-dir "..")
-                                 'work-dir (at-dir "..")))
+                                 'work-dir (at-dir "..")
+                                 'x86-64-level x86-64-level))
        (record-build-success token xm m host-scheme host-workarea))))
 
   (define (record-build-success token xm m host-scheme host-workarea)
@@ -197,13 +207,15 @@
         [else boot-files]))
     (build (target (at-boot (car boot-file-names))
                    (lambda (path token)
-                     (rule (if record-from-pb?
-                               ;; declare dependency on pb instead of host,
-                               ;; so we don't rebuild via pb:
-                               via-pb-files
-                               ;; otherwise, bootquick again if host changes:
-                               (append (host-boot-files)
-                                       all-src-files))
+                     (rule (add-x86-64-level-target
+                            xm
+                            (if record-from-pb?
+                                ;; declare dependency on pb instead of host,
+                                ;; so we don't rebuild via pb:
+                                via-pb-files
+                                ;; otherwise, bootquick again if host changes:
+                                (append (host-boot-files)
+                                        all-src-files)))
                            thunk))
                    (hash 'co-outputs (map at-boot (cdr boot-file-names))
                          'precious? #t
@@ -507,7 +519,7 @@
               boot-files)
 
        ,@(if boot-from-pb?
-             `([:target (,@boot-src-files) (,@via-pb-files)
+             `([:target (,@boot-src-files) (,@(add-x86-64-level-target m via-pb-files))
                         ,(lambda (first-path token)
                            (check-machine-type m)
                            (alert (~a "checking boot files for " m " against pb"))
@@ -521,6 +533,7 @@
                                        (list* (build-raw-path (at-source ".") "configure")
                                               "--nomakefile"
                                               "--pb"
+                                              (~a "--x86-64-v" x86-64-level)
                                               (string->shell
                                                (~a  "--sessionkey="
                                                     (hash-ref config 'sessionKey "")))

@@ -12,3 +12,5 @@
 (define-constant integer-divide-instruction #t)
 (define-constant popcount-instruction #t)
 (define-constant fpround-instruction #t)
+
+(include "a6-options.def")

@@ -114,6 +114,7 @@ buildKernelOnly=no
 enableFrompb=yes
 pbendian=l
 emscripten=no
+x86_64_level=1
 empetite=no
 android=no
 crossCompile=no
@@ -332,6 +333,17 @@ while [ $# != 0 ] ; do
       LD="emld"
       AR="emar"
       RANLIB="emranlib"
+      ;;
+    --x86-64-v*)
+      x86_64_level=`echo $1 | sed -e 's/^--x86-64-v//'`
+      case "$x86_64_level" in
+          1|2|3|4)
+              ;;
+          *)
+              echo "unrecoginzed x86-64 level: $x86_64_level"
+              exit 1
+              ;;
+      esac
       ;;
     --force)
       forceworkarea=yes
@@ -708,6 +720,7 @@ if [ "$help" = "yes" ]; then
   echo "  --pb                              specify pb (portable bytecode) version"
   echo "  --pbarch                          specify pb with inferred word and endianness"
   echo "  --emscripten                      build via emscripten (\"em\" tool prefix)"
+  echo "  --x86-64-v<level>                 configure a6 code generation; see below"
   echo "  --cross                           build host to bootstrap target"
   echo "  --disable-x11                     disable X11 support"
   echo "  --disable-curses                  disable [n]curses support"
@@ -767,6 +780,13 @@ if [ "$help" = "yes" ]; then
   echo "  LZ4=<lib>                         link to <lib> instead of own LZ4"
   echo "  STEXLIB=<stex>                    build docs with <stex> instead of own stex"
   echo "  ZUO=<zuo>                         build with <zuo> instead of own Zuo"
+  echo ""
+  echo "For --x86-64-v<level>, the <level> can be 1, 2, or 4 corresponding to a level"
+  echo "in the x86-64 psABI:"
+  echo "  1 is the baseline supported by all x86_64 processors"
+  echo "  2 includes POPCOUNT and SSE4.1 instructions"
+  echo "  3 includes FMA and AVX instructions"
+  echo "  4 includes AVX512 instructions"
   echo ""
   echo "Available machine types: $machs"
   echo ""
@@ -1222,6 +1242,7 @@ mboot=$mboot
 crossCompile=$crossCompile
 buildKernelOnly=$buildKernelOnly
 enableFrompb=$enableFrompb
+x86_64_level=$x86_64_level
 mdinclude=$mdinclude
 mdcppflags=$mdcppflags
 mdcflags=$mdcflags

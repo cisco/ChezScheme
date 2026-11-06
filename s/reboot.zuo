@@ -13,6 +13,8 @@
           (hash-set flags 'target machine)]
    [flags ("--dest") dest "Write boot files to <dest>/boot/<target>"
           (hash-set flags 'dest dest)]
+   [flags ("--x86-64-v") level "Enable x86-64 instructions for <level>>"
+          (hash-set flags 'x86-64-level level)]
    :args
    ()
    (lambda (flags)
@@ -21,7 +23,8 @@
      (define target (hash-ref flags 'target host))
      (define dest (hash-ref flags 'dest "."))
 
-     (reboot 'infer target command (hash 'out-dir dest)))))
+     (reboot 'infer target command (hash 'out-dir dest
+                                          'x86-64-level (hash-ref flags 'x86-64-level "1"))))))
 
 (define (reboot given-host target command [options (hash)])
   (define host (if (eq? given-host 'infer)
@@ -41,7 +44,8 @@
   (mkdir-p host-dir)
   
   (define host-config (get-machine-files host (m->arch host)))
-  (define target-config (get-machine-files target (m->arch target)))
+  (define target-config (get-machine-files target (m->arch target)
+                                           (hash-ref options 'x86-64-level "1")))
   
   ((cdar host-config) (build-path host-dir "machine.def") #f)
   ((cdar target-config) (build-path s-dir "machine.def") #f)
