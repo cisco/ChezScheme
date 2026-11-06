@@ -3120,6 +3120,18 @@ condition of type \scheme{\&implementation-restriction} instead of
 \scheme{make-string}, \scheme{make-bytevector}, and their immobile or reference
 variants.
 
+\subsection{Repair in-place marking of empty continuation stacks (10.5.0)}
+
+A continuation whose stack is empty can be captured when the current
+frame is at the base of a stack segment. When the collector marked
+that stack in place, it marked a zero-length object at the stack's
+base. Another continuation whose stack starts at the same address was
+then treated as already marked, and the rest of its stack was freed
+while still in use; when the base was on a segment boundary, the mark
+also corrupted the preceding segment's mark count, or crashed if that
+segment was not allocated. Empty stacks are now dropped in both the
+copying and marking paths of the collector.
+
 \subsection{Repair large-object \scheme{make-immobile-bytevector} (10.5.0)}
 
 When \scheme{make-immobile-bytevector} was called with a size greater

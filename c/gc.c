@@ -813,6 +813,9 @@ static ptr copy_stack(thread_gc *tgc, ptr old, iptr *length, iptr clength) {
 
   n = *length;
 
+  /* A continuation with an empty stack owns no stack bytes. */
+  if (n == 0) return (ptr)0;
+
 #ifndef NO_NEWSPACE_MARKS
   if (si->use_marks) {
     if (!marked(si, old)) {
