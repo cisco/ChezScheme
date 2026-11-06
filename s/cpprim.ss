@@ -2552,18 +2552,31 @@
 
     (define-inline 3 fxmin
       [(e) (ensure-single-valued e)]
-      [(e1 e2) (bind #t (e1 e2)
-                 `(if ,(%inline < ,e1 ,e2)
-                      ,e1
-                      ,e2))]
+      [(e1 e2)
+       (constant-case ipmin-instruction
+         [(#t)
+          ; branchless cmp + cmovcc (see asm-ipminmax in x86_64.ss)
+          (bind #f (e1 e2)
+            (%inline ipmin ,e1 ,e2))]
+         [else
+          (bind #t (e1 e2)
+            `(if ,(%inline < ,e1 ,e2)
+                 ,e1
+                 ,e2))])]
       [(e1 . e*) (reduce src sexpr moi e1 e*)])
 
     (define-inline 3 fxmax
       [(e) (ensure-single-valued e)]
-      [(e1 e2) (bind #t (e1 e2)
-                 `(if ,(%inline < ,e2 ,e1)
-                      ,e1
-                      ,e2))]
+      [(e1 e2)
+       (constant-case ipmin-instruction
+         [(#t)
+          (bind #f (e1 e2)
+            (%inline ipmax ,e1 ,e2))]
+         [else
+          (bind #t (e1 e2)
+            `(if ,(%inline < ,e2 ,e1)
+                 ,e1
+                 ,e2))])]
       [(e1 . e*) (reduce src sexpr moi e1 e*)])
 
     (define-inline 3 fxif

@@ -4018,6 +4018,16 @@ x86\_64 has been fixed.
 %-----------------------------------------------------------------------------
 \section{Performance Enhancements}\label{section:performance}
 
+\subsection{Branchless fixnum min/max at optimize level 3 (10.5.0)}
+
+On x86\_64, \scheme{fxmin} and \scheme{fxmax} (and their multi-argument
+reductions) now compile at optimize level 3 to a compare and a conditional
+move instead of a compare and branch, eliminating branch-misprediction
+stalls when the comparison direction is data-dependent.  In a loop of
+random fixnum min operations, throughput improves by about a factor of
+three; when the comparison direction is predictable, performance is
+unchanged.
+
 \subsection{Reduced allocation and copying (9.6.0)}
 
 When given a bytevector whose length is less than \scheme{file-buffer-size},
