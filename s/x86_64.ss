@@ -376,6 +376,102 @@
        `(move-related ,z ,x)
        `(set! ,(make-live-info) ,z (asm ,info ,(asm-lea2 0) ,x ,y)))])
 
+  (define-instruction value (isel< isel<= isel= isel> isel>= iselu<)
+    ; branchless select between two immediates on a fixnum compare;
+    ; see asm-isel.  The clause presets the then-value into an L15d
+    ; scratch (cmov has no immediate source) and passes both immediates
+    ; to the instruction; the else-value preset and the cmov both happen
+    ; inside the one asm node, after the cmp, so no write can clobber a
+    ; compare operand.
+    [(op (z ur) (x ur) (y ur) (it imm) (ie imm))
+     (let ([u (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u ,it)
+         `(set! ,(make-live-info) ,z
+            (asm ,null-info
+                 ; cmovcc condition nibbles (0F 40+cc, unlike the
+                 ; 0F 90+cc setcc codes used by asm-ipbool)
+                 ,(asm-isel (case op
+                              [(isel<) #x0C]   ; cmovl
+                              [(isel<=) #x0E]  ; cmovle
+                              [(isel=) #x04]   ; cmove
+                              [(isel>) #x0F]   ; cmovg
+                              [(isel>=) #x0D]  ; cmovge
+                              [(iselu<) #x02]  ; cmovb (unsigned <)
+                              [else ($oops 'isel "unsupported ~s" op)]))
+                 ,z ,x ,y ,u ,ie))))])
+
+  (define-instruction value (ipbool< ipbool<= ipbool= ipbool> ipbool>= ipboolu<)
+    ; branchless boolean-producing fixnum compare; see asm-ipbool
+    [(op (z ur) (x ur) (y ur))
+     `(set! ,(make-live-info) ,z
+        (asm ,null-info
+             ,(asm-ipbool (case op
+                            [(ipbool<) #x9C]   ; setl
+                            [(ipbool<=) #x9E]  ; setle
+                            [(ipbool=) #x94]   ; sete
+                            [(ipbool>) #x9F]   ; setg
+                            [(ipbool>=) #x9D]  ; setge
+                            [(ipboolu<) #x92]  ; setb (unsigned <)
+                            [else ($oops 'ipbool "unsupported ~s" op)]))
+             ,z ,x ,y))]
+    [(op (z mem) (x ur) (y ur))
+     ; setcc writes a register, so compute into a temp and store
+     (let ([u (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u
+            (asm ,null-info
+                 ,(asm-ipbool (case op
+                                [(ipbool<) #x9C]
+                                [(ipbool<=) #x9E]
+                                [(ipbool=) #x94]
+                                [(ipbool>) #x9F]
+                                [(ipbool>=) #x9D]
+                                [(ipboolu<) #x92]  ; setb (unsigned <)
+                                [else ($oops 'ipbool "unsupported ~s" op)]))
+                 ,u ,x ,y))
+         `(set! ,(make-live-info) ,z ,u)))])
+
+  (define-instruction value (fpbool< fpbool<= fpbool= fpbool> fpbool>=)
+    ; branchless boolean-producing flonum compare; see asm-fpbool
+    [(op (z ur) (x fpur) (y fpur))
+     `(set! ,(make-live-info) ,z
+        (asm ,null-info
+             ,(asm-fpbool (case op
+                            [(fpbool<) #x97]   ; seta
+                            [(fpbool<=) #x93]  ; setae
+                            [(fpbool=) #x94]   ; sete
+                            [(fpbool>) #x92]   ; setb
+                            [(fpbool>=) #x96]  ; setbe
+                            [else ($oops 'fpbool "unsupported ~s" op)]))
+             ,z ,x ,y))]
+    [(op (z ur) (x fpmem) (y fpur))
+     `(set! ,(make-live-info) ,z
+        (asm ,null-info
+             ,(asm-fpbool (case op
+                            [(fpbool<) #x97]
+                            [(fpbool<=) #x93]
+                            [(fpbool=) #x94]
+                            [(fpbool>) #x92]
+                            [(fpbool>=) #x96]
+                            [else ($oops 'fpbool "unsupported ~s" op)]))
+             ,z ,x ,y))]
+    [(op (z mem) (x fpmem fpur) (y fpur))
+     ; setcc writes a register, so compute into a temp and store
+     (let ([u (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u
+            (asm ,null-info
+                 ,(asm-fpbool (case op
+                                [(fpbool<) #x97]
+                                [(fpbool<=) #x93]
+                                [(fpbool=) #x94]
+                                [(fpbool>) #x92]
+                                [(fpbool>=) #x96]
+                                [else ($oops 'fpbool "unsupported ~s" op)]))
+                 ,u ,x ,y))
+         `(set! ,(make-live-info) ,z ,u)))])
+
   (define-instruction value (+/ovfl +/carry) ; must set condition codes, so can't use lea
     [(op (z mem) (x z) (y ur imm32))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-add ,z ,y))]
@@ -926,7 +1022,7 @@
                      asm-pop asm-shiftop asm-sll asm-logand asm-lognot
                      asm-logtest asm-fp-relop asm-relop asm-push asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
-                     asm-lea1 asm-lea2 asm-indirect-call asm-condition-code
+                     asm-lea1 asm-lea2 asm-ipbool asm-fpbool asm-isel asm-indirect-call asm-condition-code
                      asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount
                      asm-exchange asm-pause asm-debug asm-locked-incr asm-locked-decr asm-locked-cmpxchg
                      asm-fpsqrt asm-fpround asm-fpfma asm-fpop-2 asm-fpminmax asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
@@ -1106,6 +1202,13 @@
 
   (define-op vfmadd213sd fma-op #xa9)
   (define-op vfmadd231sd fma-op #xb9)
+
+  (define-op cmovl cmov-op #b1100)  ; move on less than
+  (define-op cmovle cmov-op #b1110) ; move on less or equal
+  (define-op cmove cmov-op #b0100)  ; move on equal
+  (define-op cmovg cmov-op #b1111)  ; move on greater than
+  (define-op cmovge cmov-op #b1101) ; move on greater or equal
+  (define-op cmovb cmov-op #b0010)  ; move on below (unsigned <)
 
   ; SSE2 instructions
   (define-op sse.addsd     sse-op1 #xF2 #x58 0)
@@ -1463,6 +1566,21 @@
            (ax-ea-addr-disp source))]
         [else
           ($oops 'assembler-internal "xchg-op source=~s dest=~s" source dest)])))
+
+  (define cmov-op
+    ; cmovcc dest, source.  Unlike mov/add (dest = r/m), CMOVcc encodes
+    ; the destination in the modrm reg field and the source as r/m, so the
+    ; ax-ea-modrm-reg arguments are swapped relative to binary-op, and the
+    ; rex R/B bits follow the same swap.  Signature matches the other op
+    ; handlers: (op size opcode source dest code*).
+    (lambda (op size condition-code source dest code*)
+      (emit-code (op source dest code*)
+        (ax-ea-rex (if (eq? size 'quad) 1 0) source dest size)
+        (build byte #x0F)
+        (build byte (byte-fields [4 4] [0 condition-code]))
+        (ax-ea-modrm-reg source dest)
+        (ax-ea-sib source)
+        (ax-ea-addr-disp source))))
 
   (define branch-op
     (lambda (op condition-code disp code*)
@@ -2152,6 +2270,96 @@
       (Trivit (dest src1)
         (safe-assert (equal? (Triv->rand src0) dest))
         (emit muls src1 dest code*))))
+
+  (define asm-ipbool
+    ; branchless boolean-producing fixnum compare, in one asm node:
+    ; flags from cmp (x - y), then dest = 0; setcc dest-low; and
+    ; dest = dest*8 + 6 turns 0/1 into the Chez boolean immediates
+    ; sfalse/strue (6/14).  cmp reads x and y before anything writes
+    ; dest, so any dest/x/y aliasing is safe.  Byte encodings verified
+    ; against GNU as: setl %al/%sil/%r8b = 0f 9c c0 / 40 0f 9c c6 /
+    ; 41 0f 9c c0; shl $3 and add $6 as 48 c1 e0 03 / 48 83 c0 06.
+    ; SETcc writes an r/m8: dest's low byte goes in modrm r/m (mod=11,
+    ; /0) and REX is required for sil/dil/bpl/spl (codes 4-7) and
+    ; r8b-r15b, else codes 4-7 would name ah/ch/dh/bh.
+    (lambda (cc)
+      (rec asm-ipbool-internal
+        (lambda (code* dest self x y)
+          (Trivit (dest self x y)
+            (safe-assert (equal? self dest))
+            (let* ([rn (ax-ea-reg-code dest)]
+                   [rm (fxlogand rn 7)]
+                   [w (fxlogor #x48 (fxsrl rn 3))]     ; REX.W(+B)
+                   [setcc-bytes (if (fx>= rn 4)
+                                    (list (fxlogor #x40 (fxsrl rn 3)) #x0F cc (fxlogor #xC0 rm))
+                                    (list #x0F cc (fxlogor #xC0 rm)))]
+                   [tail-bytes (append setcc-bytes
+                                 (list w #xC1 (fxlogor #xE0 rm) 3      ; shl dest, 3
+                                       w #x83 (fxlogor #xC0 rm) 6))])     ; add dest, 6
+              (emit cmp y x
+                (emit movi '(imm 0) dest
+                  (aop-cons* `(asm setcc ,cc ,dest)
+                    (fold-right (lambda (b cs) (cons (build byte b) cs))
+                      code* tail-bytes))))))))))
+
+  (define asm-fpbool
+    ; branchless boolean-producing flonum compare, in one asm node:
+    ; ucomisd sets flags from y vs x (same reversed operand order as
+    ; asm-fp-relop), then dest = 0; jp skip; setcc dest-low; and
+    ; dest = dest*8 + 6 turns 0/1 into the Chez boolean immediates
+    ; sfalse/strue (6/14).  ucomisd sets ZF=CF=PF=1 on NaN (unordered),
+    ; and every setcc condition would treat at least one of those flags
+    ; as true, so an explicit jp over the setcc keeps NaN results at 0
+    ; (#f), as R6RS requires.  Past the jp the operands are known
+    ; ordered, and on ordered operands:
+    ;   fpbool<  (e1<e2 <=> e2>e1)     seta  (CF=0 & ZF=0)
+    ;   fpbool<= (e1<=e2 <=> e2>=e1)    setae (CF=0)
+    ;   fpbool=  ordered equality       sete  (ZF=1)
+    ;   fpbool>  (e1>e2 <=> e2<e1)      setb  (CF=1)
+    ;   fpbool>= (e1>=e2 <=> e2<=e1)    setbe (CF=1 | ZF=1)
+    ; ucomisd reads x and y before anything writes dest, so any
+    ; dest/x/y aliasing is safe.  Byte encodings verified against GNU
+    ; as: seta %al/%sil/%r8b = 0f 97 c0 / 40 0f 97 c6 / 41 0f 97 c0;
+    ; jp rel8 = 7a 03/04 (rel8 = setcc length, 3 or 4 with REX); shl $3
+    ; and add $6 as 48 c1 e0 03 / 48 83 c0 06.  SETcc writes an r/m8:
+    ; dest's low byte goes in modrm r/m (mod=11, /0) and REX is required
+    ; for sil/dil/bpl/spl (codes 4-7) and r8b-r15b, else codes 4-7
+    ; would name ah/ch/dh/bh.
+    (lambda (cc)
+      (rec asm-fpbool-internal
+        (lambda (code* dest self x y)
+          (Trivit (dest self x y)
+            (safe-assert (equal? self dest))
+            (let* ([rn (ax-ea-reg-code dest)]
+                   [rm (fxlogand rn 7)]
+                   [w (fxlogor #x48 (fxsrl rn 3))]     ; REX.W(+B)
+                   [setcc-bytes (if (fx>= rn 4)
+                                    (list (fxlogor #x40 (fxsrl rn 3)) #x0F cc (fxlogor #xC0 rm))
+                                    (list #x0F cc (fxlogor #xC0 rm)))]
+                   [tail-bytes (append (list #x7A (length setcc-bytes))  ; jp skip over the setcc
+                                 setcc-bytes
+                                 (list w #xC1 (fxlogor #xE0 rm) 3      ; shl dest, 3
+                                       w #x83 (fxlogor #xC0 rm) 6))])    ; add dest, 6
+              (emit sse.ucomisd x y
+                (emit movi '(imm 0) dest
+                  (aop-cons* `(asm fpbool ,cc ,dest)
+                    (fold-right (lambda (b cs) (cons (build byte b) cs))
+                      code* tail-bytes))))))))))
+
+  (define asm-isel
+    ; branchless select between two immediates, in one asm node: flags
+    ; from cmp (x - y), then u = then-value, z = else-value, and cmovcc
+    ; u -> z finishes the selection.  The cmp is emitted before either
+    ; preset, so even a destination that aliases x or y compares the
+    ; original operand values, exactly as the source if did.
+    (lambda (cc)
+      (rec asm-isel-internal
+        (lambda (code* dest self x y u ie)
+          (Trivit (dest self x y u ie)
+            (safe-assert (equal? self dest))
+            (emit cmp y x
+              (emit movi ie dest
+                (cmov-op 'isel 'quad cc u dest code*))))))))
 
   (define asm-div
     (lambda (code* dest-rax src-rax src-rdx src2)
