@@ -3299,6 +3299,46 @@
            (fold-left (lambda (body x e) `(seq (set! ,x ,e) ,body))
              `(goto ,(car Ltop.x*)) (cdr Ltop.x*) e*))]))
 
+    ; setcc counterpart of the five fixnum relops for branchless boolean
+    ; materialization, or #f for any other predicate (fp relops etc.),
+    ; which keeps the (if p #t #f) conversion.  Only genuine value
+    ; contexts reach these converters, so predicates feeding branches
+    ; keep the cmp + jcc path.
+    (define pred->ipbool
+      (constant-case setcc-instruction
+        [(#t)
+         (lambda (prim)
+           ; prim is a nanopass primitive (np-languages); compare by
+           ; identity against the declared % bindings
+           (cond
+             [(eq? prim %<) %ipbool<]
+             [(eq? prim %<=) %ipbool<=]
+             [(eq? prim %eq?) %ipbool=]
+             [(eq? prim %>) %ipbool>]
+             [(eq? prim %>=) %ipbool>=]
+             [(eq? prim %u<) %ipboolu<]
+             [else #f]))]
+        [else (lambda (prim) #f)]))
+
+    ; setcc counterpart of the fp relops for branchless boolean
+    ; materialization, or #f for any other predicate, which keeps the
+    ; (if p #t #f) conversion.  Only genuine value contexts reach these
+    ; converters, so predicates feeding branches keep the ucomisd + jcc
+    ; path.  fl>? and fl>=? are swapped onto fp</fp<= by cpprim, so the
+    ; only fp pred primitives that can appear here are fp<, fp<=, fp=.
+    (define pred->fpbool
+      (constant-case setcc-instruction
+        [(#t)
+         (lambda (prim)
+           ; prim is a nanopass primitive (np-languages); compare by
+           ; identity against the declared % bindings
+           (cond
+             [(eq? prim %fp<) %fpbool<]
+             [(eq? prim %fp<=) %fpbool<=]
+             [(eq? prim %fp=) %fpbool=]
+             [else #f]))]
+        [else (lambda (prim) #f)]))
+
     (define-pass np-optimize-pred-in-value : L9.75 (ir) -> L9.75 ()
       (definitions
         (define bar
@@ -3755,9 +3795,27 @@
             (with-output-language (L11 Effect)
               (cond
                 [(pred-primitive? prim)
-                 `(if (inline ,info ,prim ,t* ...)
-                      (set! ,lvalue ,(%constant strue))
-                      (set! ,lvalue ,(%constant sfalse)))]
+                 (cond
+                   [(pred->ipbool prim)
+                    => (lambda (ipbool)
+                         ; bind the result to a register variable, like
+                         ; cpprim-generated value inlines (fxmin etc.), so
+                         ; the instruction never sees a memory destination
+                         (let ([u (make-tmp 'u)])
+                           `(seq
+                              (set! ,u (inline ,null-info ,ipbool ,t* ...))
+                              (set! ,lvalue ,u))))]
+                   [(pred->fpbool prim)
+                    => (lambda (fpbool)
+                         ; same as ipbool above
+                         (let ([u (make-tmp 'u)])
+                           `(seq
+                              (set! ,u (inline ,null-info ,fpbool ,t* ...))
+                              (set! ,lvalue ,u))))]
+                   [else
+                    `(if (inline ,info ,prim ,t* ...)
+                         (set! ,lvalue ,(%constant strue))
+                         (set! ,lvalue ,(%constant sfalse)))])]
                 [(effect-primitive? prim)
                  `(seq
                     (inline ,info ,prim ,t* ...)
@@ -3895,9 +3953,23 @@
       (Tail : Expr (ir) -> Tail ()
         [(inline ,info ,prim ,[t*] ...)
          (guard (pred-primitive? prim))
-         `(if (inline ,info ,prim ,t* ...)
-              ,(%constant strue)
-              ,(%constant sfalse))]
+         (cond
+           [(pred->ipbool prim)
+            => (lambda (ipbool)
+                 (let ([u (make-tmp 'u)])
+                   `(seq
+                      (set! ,u (inline ,null-info ,ipbool ,t* ...))
+                      ,u)))]
+           [(pred->fpbool prim)
+            => (lambda (fpbool)
+                 (let ([u (make-tmp 'u)])
+                   `(seq
+                      (set! ,u (inline ,null-info ,fpbool ,t* ...))
+                      ,u)))]
+           [else
+            `(if (inline ,info ,prim ,t* ...)
+                 ,(%constant strue)
+                 ,(%constant sfalse))])]
         [(inline ,info ,prim ,[t*] ...)
          (guard (effect-primitive? prim))
          `(seq (inline ,info ,prim ,t* ...) ,(%constant svoid))]

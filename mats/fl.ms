@@ -227,6 +227,70 @@
    (guard (c [#t #t]) (not (fl>= (error #f "oops"))))
  )
 
+(mat fl-compare-value-position
+   ; fl compares whose boolean result is used as a value (stored in an
+   ; aggregate, passed to a call, returned) must produce the same
+   ; booleans as in test position, NaN included; on x86_64 these
+   ; materialize via ucomisd + jp + setcc
+   (equal? (list (fl< 3.0 4.0) (fl< 4.0 3.0) (fl< 4.0 4.0)) '(#t #f #f))
+   (equal? (list (fl<= 3.0 4.0) (fl<= 4.0 4.0) (fl<= 4.0 3.0)) '(#t #t #f))
+   (equal? (list (fl= 4.0 4.0) (fl= 4.0 3.0) (fl= -0.0 0.0)) '(#t #f #t))
+   (equal? (list (fl> 4.0 3.0) (fl> 3.0 4.0) (fl> 4.0 4.0)) '(#t #f #f))
+   (equal? (list (fl>= 4.0 3.0) (fl>= 4.0 4.0) (fl>= 3.0 4.0)) '(#t #t #f))
+   ; r6rs variants, value position
+   (equal? (list (fl<? 3.0 4.0) (fl<? 4.0 3.0) (fl<? 4.0 4.0)) '(#t #f #f))
+   (equal? (list (fl<=? 3.0 4.0) (fl<=? 4.0 4.0) (fl<=? 4.0 3.0)) '(#t #t #f))
+   (equal? (list (fl=? 4.0 4.0) (fl=? 4.0 3.0) (fl=? -0.0 0.0)) '(#t #f #t))
+   (equal? (list (fl>? 4.0 3.0) (fl>? 3.0 4.0) (fl>? 4.0 4.0)) '(#t #f #f))
+   (equal? (list (fl>=? 4.0 3.0) (fl>=? 4.0 4.0) (fl>=? 3.0 4.0)) '(#t #t #f))
+   ; NaN operands are unordered: every compare is #f, both directions
+   (equal? (list (fl< +nan.0 1.0) (fl< 1.0 +nan.0) (fl< +nan.0 +nan.0)) '(#f #f #f))
+   (equal? (list (fl<= +nan.0 1.0) (fl<= 1.0 +nan.0) (fl<= +nan.0 +nan.0)) '(#f #f #f))
+   (equal? (list (fl= +nan.0 1.0) (fl= 1.0 +nan.0) (fl= +nan.0 +nan.0)) '(#f #f #f))
+   (equal? (list (fl> +nan.0 1.0) (fl> 1.0 +nan.0) (fl> +nan.0 +nan.0)) '(#f #f #f))
+   (equal? (list (fl>= +nan.0 1.0) (fl>= 1.0 +nan.0) (fl>= +nan.0 +nan.0)) '(#f #f #f))
+   ; infinities and signed zero
+   (equal? (list (fl< -inf.0 +inf.0) (fl< +inf.0 +inf.0) (fl= +inf.0 +inf.0)) '(#t #f #t))
+   (equal? (list (fl< -0.0 0.0) (fl<= -0.0 0.0) (fl> -0.0 0.0)) '(#f #t #f))
+   ; one-argument compares are #t even for NaN, matching the
+   ; nan-single-comparison-true? compatibility semantics
+   (equal? (list (fl< 1.0) (fl< +nan.0) (fl<= 1.0) (fl<= +nan.0)) '(#t #t #t #t))
+   (equal? (list (fl> 1.0) (fl> +nan.0) (fl>= 1.0) (fl>= +nan.0)) '(#t #t #t #t))
+   (equal? (list (fl= 1.0) (fl= +nan.0)) '(#t #t))
+   ; n-ary compares reduce to chains, still value position
+   (equal? (list (fl< 1.0 2.0 3.0) (fl< 1.0 3.0 2.0) (fl< 3.0 2.0 1.0)) '(#t #f #f))
+   (equal? (list (fl<= 1.0 1.0 2.0) (fl= 2.0 2.0 2.0) (fl= 2.0 2.0 3.0)) '(#t #t #f))
+   (equal? (list (fl> 3.0 2.0 1.0) (fl>= 3.0 3.0 1.0) (fl> 1.0 2.0 3.0)) '(#t #t #f))
+   ; vector materialization
+   (let ([v (make-vector 10 #f)])
+     (vector-set! v 0 (fl< 1.0 2.0))
+     (vector-set! v 1 (fl> 1.0 2.0))
+     (vector-set! v 2 (fl= 2.0 2.0))
+     (vector-set! v 3 (fl<= +nan.0 2.0))
+     (vector-set! v 4 (fl>= 2.0 1.0))
+     (vector-set! v 5 (fl<? 1.0 2.0))
+     (vector-set! v 6 (fl>? 1.0 2.0))
+     (vector-set! v 7 (fl=? 2.0 2.0))
+     (vector-set! v 8 (fl<=? +nan.0 2.0))
+     (vector-set! v 9 (fl>=? 2.0 1.0))
+     (equal? v '#(#t #f #t #f #t #t #f #t #f #t)))
+   ; predicate feeding a branch is unchanged (test position)
+   (eq? (if (fl< 1.0 2.0) 'yes 'no) 'yes)
+   (eq? (if (fl< 2.0 1.0) 'yes 'no) 'no)
+   (eq? (if (fl< +nan.0 2.0) 'yes 'no) 'no)
+   (eq? (if (fl= +nan.0 +nan.0) 'yes 'no) 'no)
+   ; results flowing through boolean operators
+   (eq? (not (fl< 1.0 2.0)) #f)
+   (eq? (not (fl< +nan.0 2.0)) #t)
+   (eq? (and (fl< 1.0 2.0) (fl< 2.0 3.0)) #t)
+   (eq? (and (fl< 1.0 2.0) (fl< 3.0 2.0)) #f)
+   (eq? (or (fl< 3.0 2.0) (fl< 1.0 2.0)) #t)
+   (eq? (or (fl< +nan.0 2.0) (fl< 3.0 2.0)) #f)
+   ; non-flonum arguments still raise the usual errors
+   (error? (vector-set! (make-vector 1) 0 (fl< 'a 2.0)))
+   (error? (list (fl< 1.0 'a)))
+ )
+
 (mat fl=?
    (not (fl=? 3.0 4.0))
    (not (fl=? 4.0 3.0))

@@ -43,6 +43,7 @@
 (define-constant-default integer-divide-instruction #f)
 (define-constant-default popcount-instruction #f)
 (define-constant-default fpround-instruction #f)
+(define-constant-default setcc-instruction #f)
 (define-constant-default sqrt-instruction #f)
 (define-constant-default fence-instruction #f)
 (define-constant-default software-floating-point #f)

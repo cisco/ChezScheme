@@ -2006,6 +2006,7 @@ primvars.mo:Expected error in mat trace-output-port: "trace-output-port: #<input
 5_4.mo:Expected error in mat char>=?/char-ci>=?: "char-ci>=?: a is not a character".
 5_4.mo:Expected error in mat char>=?/char-ci>=?: "char-ci>=?: a is not a character".
 5_4.mo:Expected error in mat char>=?/char-ci>=?: "char-ci>=?: a is not a character".
+5_4.mo:Expected error in mat char-compare-value-position: "char<?: a is not a character".
 5_4.mo:Expected error in mat r6rs:char=?/r6rs:char-ci=?: "incorrect argument count in call (char=?)".
 5_4.mo:Expected error in mat r6rs:char=?/r6rs:char-ci=?: "incorrect argument count in call (char=? (quote a))".
 5_4.mo:Expected error in mat r6rs:char=?/r6rs:char-ci=?: "char=?: a is not a character".
@@ -10093,6 +10094,8 @@ fl.mo:Expected error in mat fl>=: "fl>=: 3 is not a flonum".
 fl.mo:Expected error in mat fl>=: "fl>=: 3 is not a flonum".
 fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
 fl.mo:Expected error in mat fl>=: "fl>=: 7/2 is not a flonum".
+fl.mo:Expected error in mat fl-compare-value-position: "fl<: a is not a flonum".
+fl.mo:Expected error in mat fl-compare-value-position: "fl<: a is not a flonum".
 fl.mo:Expected error in mat fl=?: "incorrect argument count in call (fl=?)".
 fl.mo:Expected error in mat fl=?: "incorrect argument count in call (fl=? 3.4)".
 fl.mo:Expected error in mat fl=?: "fl=?: a is not a flonum".
