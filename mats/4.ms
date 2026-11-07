@@ -3186,6 +3186,33 @@
            (display "O" p))
        (get-output-string p))
      "EIEIO")
+
+   ;; regression test for GC and a captured empty stack segment
+   (let ()
+     (define deep
+       (black-box (lambda (n th) (if (fx= n 0) (th) (#%$value (deep (fx- n 1) th))))))
+     (define empty-k
+       (black-box
+        (lambda (a b c d e f g h i j k l m n o p q)
+          (collect (collect-maximum-generation))
+          (call/cc (lambda (k) k))
+          (if (fx= 0 a b c d e f g h i j k l m n o p q) (call/cc (lambda (k) k)) #f))))
+     (define (trial)
+       ;; deep 50000: leave the boot stacks; collect: empty the stack cache,
+       ;; so that call/cc runs its body on a fresh stack
+       (let ([ks (deep 50000
+                       (lambda ()
+                         (collect)
+                         (call/1cc
+                          (lambda (escape)
+                            (let ([k0 (empty-k 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)])
+                              (deep 10000 (lambda () (call/cc (lambda (k) (escape (list k0 k)))))))))))])
+         (collect (collect-maximum-generation))
+         (let ([junk (make-list 100000 (cons 1 2))])
+           (collect (collect-maximum-generation))
+           (and (= (length junk) 100000) (= (length ks) 2)))))
+     (do ([i 0 (+ i 1)]) ((= i 1)) (trial))
+     #t)
  )
 
 (mat continuation-attachments
