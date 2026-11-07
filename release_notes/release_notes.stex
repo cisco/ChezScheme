@@ -3120,6 +3120,13 @@ condition of type \scheme{\&implementation-restriction} instead of
 \scheme{make-string}, \scheme{make-bytevector}, and their immobile or reference
 variants.
 
+\subsection{Repair collection with empty continuation stacks (10.5.0)}
+
+A continuation whose stack is empty can be captured when the current
+frame is at the base of a stack segment, and the garbage collector did
+not handle that case correctly. Empty-stack references are now handled
+correctly.
+
 \subsection{Repair large-object \scheme{make-immobile-bytevector} (10.5.0)}
 
 When \scheme{make-immobile-bytevector} was called with a size greater
