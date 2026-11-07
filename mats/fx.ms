@@ -384,6 +384,75 @@
   (test-cp0-expansion eqv? '(#%$fxu< 0 -3) #t)
  )
 
+(mat fx-compare-value-position-select
+  ; selects between immediates whose condition is a fixnum compare,
+  ; materialized as a value: at optimize level 3 on x86_64 these
+  ; compile to cmp + cmovcc instead of cmp + branch + two moves, and
+  ; must produce the same values the branchy form would.  All five
+  ; signed relops in tail position, both argument orders, equal
+  ; operands included.
+  (let ([sel< (lambda (x y) (if (fx< x y) 1 2))]
+        [sel<= (lambda (x y) (if (fx<= x y) 11 22))]
+        [sel= (lambda (x y) (if (fx= x y) 111 222))]
+        [sel> (lambda (x y) (if (fx> x y) 1111 2222))]
+        [sel>= (lambda (x y) (if (fx>= x y) 11111 22222))])
+    (and (eqv? (sel< 1 2) 1) (eqv? (sel< 2 1) 2) (eqv? (sel< 2 2) 2)
+         (eqv? (sel<= 1 2) 11) (eqv? (sel<= 2 2) 11) (eqv? (sel<= 2 1) 22)
+         (eqv? (sel= 2 2) 111) (eqv? (sel= 1 2) 222) (eqv? (sel= 2 1) 222)
+         (eqv? (sel> 2 1) 1111) (eqv? (sel> 1 2) 2222) (eqv? (sel> 2 2) 2222)
+         (eqv? (sel>= 2 1) 11111) (eqv? (sel>= 2 2) 11111) (eqv? (sel>= 1 2) 22222)))
+  ; least/greatest immediates, and negative immediates
+  (let ([sel (lambda (x y) (if (fx< x y) (most-negative-fixnum) (most-positive-fixnum)))])
+    (and (eqv? (sel 1 2) (most-negative-fixnum))
+         (eqv? (sel 2 1) (most-positive-fixnum))
+         (eqv? (sel 2 2) (most-positive-fixnum))))
+  (let ([sel (lambda (x y) (if (fx< x y) -1 0))])
+    (and (eqv? (sel 1 2) -1) (eqv? (sel 2 1) 0) (eqv? (sel 2 2) 0)))
+  ; same-destination set! in both branches (effect position), with the
+  ; destination itself one of the compare operands: the select must
+  ; still compare the original operand values
+  (let ([f (lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x)])
+    (and (eqv? (f 1 2) 10) (eqv? (f 2 1) 20) (eqv? (f 2 2) 20)))
+  (let ([f (lambda (x y) (if (fx< x y) (set! y 10) (set! y 20)) (fx+ x y))])
+    (and (eqv? (f 1 2) 11) (eqv? (f 2 1) 22) (eqv? (f 2 2) 22)))
+  (let ([f (lambda (x y) (if (fx<= x y) (set! x 10) (set! x 20)) x)])
+    (and (eqv? (f 1 2) 10) (eqv? (f 2 2) 10) (eqv? (f 2 1) 20)))
+  ; unsigned fixnum compare, negative operands exercising the unsigned
+  ; condition
+  (let ([sel (lambda (x y) (if (#%$fxu< x y) 1 2))])
+    (and (eqv? (sel 1 2) 1) (eqv? (sel 2 1) 2)
+         (eqv? (sel -1 2) 2) (eqv? (sel 2 -1) 1)
+         (eqv? (sel -2 -1) 1) (eqv? (sel -1 -2) 2)))
+  ; vector materialization of select results
+  (let ([v (make-vector 4 0)])
+    (vector-set! v 0 (if (fx< 1 2) 7 8))
+    (vector-set! v 1 (if (fx< 2 1) 7 8))
+    (vector-set! v 2 (if (fx= 3 3) 7 8))
+    (vector-set! v 3 (if (fx> 3 3) 7 8))
+    (equal? v '#(7 8 7 8)))
+  ; compare feeding a branch is unchanged (test position)
+  (eq? (if (fx< 1 2) 'yes 'no) 'yes)
+  (eq? (if (fx< 2 1) 'yes 'no) 'no)
+  (eq? (if (fx= 2 2) 'yes 'no) 'yes)
+  ; results flowing through operators
+  (eqv? (fx+ (if (fx< 1 2) 10 20) 1) 11)
+  (eqv? (fx+ (if (fx< 2 1) 10 20) 1) 21)
+  (eq? (not (eqv? (if (fx< 1 2) 1 2) 2)) #t)
+  ; a loop whose body select must survive compilation whole
+  (let loop ([n 1000] [acc 0])
+    (if (fx= n 0)
+        (eqv? acc 1500)
+        (loop (fx- n 1) (fx+ acc (if (fx< (fxmodulo n 2) 1) 1 2)))))
+  ; selects between the boolean immediates keep working both ways
+  (let ([sel (lambda (x y) (if (fx< x y) #t #f))])
+    (and (eq? (sel 1 2) #t) (eq? (sel 2 1) #f) (eq? (sel 2 2) #f)))
+  (let ([sel (lambda (x y) (if (fx< x y) #f #t))])
+    (and (eq? (sel 1 2) #f) (eq? (sel 2 1) #t) (eq? (sel 2 2) #t)))
+  (let ([sel (lambda (x y) (if (fx< x y) #t #f))])
+    (and (eq? (vector-ref (vector (sel 1 2)) 0) #t)
+         (eq? (vector-ref (vector (sel 2 1)) 0) #f)))
+ )
+
 (mat fx+
    (eqv? (fx+ 3 0) 3)
    (eqv? (fx+ 3 1) 4)
