@@ -399,6 +399,10 @@
     [(op (z ur) (x fpur))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-fptrunc ,x))])
 
+  (define-instruction value (fpfma)
+    [(op (x fpur) (a fpur) (b fpur) (c fpur))
+     `(set! ,(make-live-info) ,x (asm ,info ,asm-fpfma ,a ,b ,c))])
+
   (define-instruction value (fp+ fp- fp/ fp*)
     [(op (x fpur) (y fpur) (z fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,(asm-fpop-2 op) ,y ,z))])
@@ -618,7 +622,7 @@
                     asm-read-performance-monitoring-counter asm-read-time-stamp-counter asm-inc-cc-counter
                     asm-enter asm-sll asm-srl asm-sra asm-fpsqrt asm-fptrunc asm-fpt asm-fpcastto asm-fpcastfrom
                     asm-single->double asm-double->single
-                    asm-cas asm-relop asm-fp-relop asm-fpop-2 asm-save-flrv asm-restore-flrv
+                    asm-cas asm-relop asm-fp-relop asm-fpop-2 asm-fpfma asm-save-flrv asm-restore-flrv
                     asm-direct-jump asm-indirect-jump asm-literal-jump asm-condition-code
                     asm-jump asm-conditional-jump asm-library-jump
                     asm-get-tc asm-activate-thread asm-deactivate-thread asm-unactivate-thread
@@ -668,6 +672,7 @@
   (define-op mul.d  three-R-op #b111011)
   (define-op mulh.d three-R-op #b111100)
   (define-op div.d three-R-op #b1000100)
+  (define-op fmadd.d four-R-op #x82)
   (define-op fadd.d three-R-op #b1000000010)
   (define-op fsub.d three-R-op #b1000000110)
   (define-op fmul.d three-R-op #b1000001010)
@@ -773,6 +778,15 @@
                  [10 (fxlogand (ax-imm-data shamt op) #b111111)]
                  [5 (ax-ea-reg-code src)]
                  [0 (ax-ea-reg-code dest)])))
+
+  (define four-R-op
+    (lambda (op opcode dest a b c code*)
+      (emit-code (op dest a b c code*)
+        [20 opcode]
+        [15 (ax-ea-reg-code c)]
+        [10 (ax-ea-reg-code b)]
+        [5 (ax-ea-reg-code a)]
+        [0 (ax-ea-reg-code dest)])))
 
   (define three-R-op
     (lambda (op opcode dest src0 src1 code*)
@@ -1225,6 +1239,11 @@
                         [(integer-8  unsigned-8)  (emit stx.b src base index code*)]
                         [else (sorry! who "unexpected mref type ~s" type)])]
                      [else (sorry! who "expected zero index or 0 offset, got ~s and ~s" index offset)])))))))
+
+  (define asm-fpfma
+    (lambda (code* dest a b c)
+      (Trivit (dest a b c)
+        (emit fmadd.d dest a b c code*))))
 
   (define-who asm-fpop-2
     (lambda (op)

@@ -526,6 +526,14 @@
   (define-instruction value (fpsingle)
     [(op (x fpur) (y fpur)) `(set! ,(make-live-info) ,x (asm ,info ,asm-fpsingle ,y))])
 
+  (define-instruction value (fpfma)
+    ;; Only two FP registers are allocable, so keep the addend in the
+    ;; reserved scratch register instead of requiring a third unspillable.
+    [(op (x fpur) (a fpur) (b fpur) (c fpmem fpur))
+     (seq
+      `(set! ,(make-live-info) ,%fptmp1 ,c)
+      `(set! ,(make-live-info) ,x (asm ,info ,asm-fpfma ,a ,b ,%fptmp1)))])
+
   (define-instruction value (fp+ fp- fp/ fp*)
     [(op (x fpur) (y fpur) (z fpur))
      `(set! ,(make-live-info) ,x (asm ,info ,(asm-fpop-2 op) ,y ,z))])
@@ -766,7 +774,7 @@
                      asm-trunc asm-fpt asm-fpcastto asm-fpcastfrom asm-fpsingle
                      asm-lock asm-lock+/- asm-cas asm-fence
                      asm-load-single->double asm-store-double->single
-                     asm-fpop-2 asm-c-simple-call
+                     asm-fpop-2 asm-fpfma asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
                      asm-set-cr-bit
@@ -937,6 +945,7 @@
   (define-op fctiwz flsingle-op #b001111 #b0)
   (define-op frsp   flsingle-op #b001100 #b0)
 
+  (define-op fmadd flfma-op)
   (define-op fadd flreg-op #b010101 #b0)
   (define-op fdiv flreg-op #b010010 #b0)
   (define-op fmul flmul-op #b0)
@@ -1102,6 +1111,17 @@
         [6  #b00000]
         [1  opcode]
         [0  set-cr?])))
+
+  (define flfma-op
+    (lambda (op dest a b c code*)
+      (emit-code (op dest a b c code*)
+        [26 #b111111]
+        [21 (ax-ea-reg-code dest)]
+        [16 (ax-ea-reg-code a)]
+        [11 (ax-ea-reg-code c)]
+        [6 (ax-ea-reg-code b)]
+        [1 #b11101]
+        [0 #b0])))
 
   (define flmul-op
     (lambda (op set-cr? dest-ea opnd0-ea opnd1-ea code*)
@@ -1695,6 +1715,11 @@
     (lambda (code* dest-reg src-reg)
       (Trivit (dest-reg src-reg)
         (emit frsp dest-reg src-reg code*))))
+
+  (define asm-fpfma
+    (lambda (code* dest a b c)
+      (Trivit (dest a b c)
+        (emit fmadd dest a b c code*))))
 
   (define-who asm-fpop-2
     (lambda (op)
