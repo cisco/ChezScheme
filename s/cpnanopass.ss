@@ -3801,7 +3801,7 @@
         ; clause; a mixed pair matches no clause
         (define select-operands-ok?
           (lambda (a1 a2)
-            (and (not (uvar? a1)) (not (uvar? a2)))))
+            (or (and (uvar? a1) (uvar? a2)) (and (not (uvar? a1)) (not (uvar? a2))))))
         ; Convert a processed (if (inline pred ...) (set! x t1) (set! x
         ; t2)) with t1/t2 select operands into one set! of a branchless
         ; value instruction, or #f when the shape or predicate has no
@@ -3836,6 +3836,7 @@
                           [sel (or (pred->isel prim) (pred->fpsel prim))])
                      (and sel
                           (select-operands-ok? a1 a2)
+                          (not (and (uvar? a1) (eq? a1 x)))
                           (with-output-language (L11 Effect)
                             `(set! ,x (inline ,null-info ,sel ,t* ... ,a1 ,a2)))))))))
         ; Convert a processed (if (inline pred ...) t1 t2) in tail

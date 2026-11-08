@@ -389,6 +389,18 @@
     ; operand still compares the original operand values; the caller
     ; declines the one unsafe register case (destination is the
     ; then-value).
+    [(op (z ur) (x ur) (y ur) (u ur) (v ur))
+     `(set! ,(make-live-info) ,z
+        (asm ,null-info
+             ,(asm-isel-regs (case op
+                               [(isel<) #x0C]   ; cmovl
+                               [(isel<=) #x0E]  ; cmovle
+                               [(isel=) #x04]   ; cmove
+                               [(isel>) #x0F]   ; cmovg
+                               [(isel>=) #x0D]  ; cmovge
+                               [(iselu<) #x02]  ; cmovb (unsigned <)
+                               [else ($oops 'isel "unsupported ~s" op)]))
+             ,z ,x ,y ,u ,v))]
     [(op (z ur) (x ur) (y ur) (it imm) (ie imm))
      (let ([u (make-tmp 'u)])
        (seq
@@ -417,6 +429,17 @@
     ; anything writes z, so aliasing with the compare operands is
     ; safe; the caller declines the one unsafe register case
     ; (destination is the then-value).
+    [(op (z ur) (x fpur) (y fpur) (u ur) (v ur))
+     `(set! ,(make-live-info) ,z
+        (asm ,null-info
+             ,(asm-fpsel-regs (case op
+                                [(fpsel<) #x07]   ; cmova
+                                [(fpsel<=) #x03]  ; cmovae
+                                [(fpsel=) #x04]   ; cmove (with jp)
+                                [(fpsel>) #x02]   ; cmovb
+                                [(fpsel>=) #x06]  ; cmovbe
+                                [else ($oops 'fpsel "unsupported ~s" op)]))
+             ,z ,x ,y ,u ,v))]
     [(op (z ur) (x fpur) (y fpur) (it imm) (ie imm))
      (let ([u (make-tmp 'u)])
        (seq
@@ -2235,18 +2258,53 @@
         (emit muls src1 dest code*))))
 
   (define asm-isel-regs
-    ; register form of the fixnum select: flags from cmp (x - y), then
-    ; dest = else-value and cmovcc then-value -> dest.  cmp is emitted
-    ; before either write, so aliasing of dest with x or y is safe;
-    ; the caller declines the case where dest is the then-value.
+    ; register form of the fixnum select.  (emit cmp A B) sets flags
+    ; for B - A, so the operands below are ordered to compare x against
+    ; y.  The register allocator may coalesce dest with any operand, so
+    ; every aliasing case is handled here, after the fashion of
+    ; asm-ipminmax; the cmp is always emitted before any write, so
+    ; aliasing of dest with x or y only affects the preset, and the
+    ; dest == then-value case must not preset (it would clobber the
+    ; value the cmov reads), using the inverted condition to take the
+    ; else-value instead:
+    ;   dest == u: cmp y x; cmovcc' v -> dest   (cc' inverted; dest
+    ;     already holds the then-value)
+    ;   dest == v: cmp y x; cmovcc u -> dest    (preset would be a nop)
+    ;   otherwise: cmp y x; mov v -> dest; cmovcc u -> dest
+    ;     (dest may still alias x or y; the cmp has already read them)
     (lambda (cc)
       (rec asm-isel-regs-internal
         (lambda (code* dest self x y u v)
           (Trivit (dest self x y u v)
             (safe-assert (equal? self dest))
-            (emit cmp y x
-              (emit mov v dest
-                (cmov-op 'isel 'quad cc u dest code*))))))))
+            (cond
+              [(equal? dest u)
+               (emit cmp y x
+                 (cmov-op 'isel 'quad (invert-cc cc) v dest code*))]
+              [(equal? dest v)
+               (emit cmp y x
+                 (cmov-op 'isel 'quad cc u dest code*))]
+              [else
+               (emit cmp y x
+                 (emit mov v dest
+                   (cmov-op 'isel 'quad cc u dest code*)))]))))))
+
+  (define invert-cc
+    ; inverse condition code for cmovcc, for the dest == then-value
+    ; register select form
+    (lambda (cc)
+      (case cc
+        [(#x0C) #x0D]  ; cmovl  <-> cmovge
+        [(#x0D) #x0C]
+        [(#x0E) #x0F]  ; cmovle <-> cmovg
+        [(#x0F) #x0E]
+        [(#x04) #x05]  ; cmove  <-> cmovne
+        [(#x05) #x04]
+        [(#x02) #x03]  ; cmovb  <-> cmovae
+        [(#x03) #x02]
+        [(#x06) #x07]  ; cmovbe <-> cmova
+        [(#x07) #x06]
+        [else ($oops 'invert-cc "unsupported ~s" cc)])))
 
   (define asm-isel-imms
     ; immediate form of the fixnum select: the then-value is already
