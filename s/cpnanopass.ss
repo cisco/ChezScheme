@@ -3739,45 +3739,16 @@
 
     (define-pass np-normalize-context : L10.5 (ir) -> L11 ()
       (definitions
-        ; branchless-materialization counterparts of the fixnum relops,
-        ; or #f for any other predicate (fp relops etc.), which keeps the
-        ; branchy conversion.  Gate: like popcount-instruction; other
-        ; architectures keep the (if p #t #f) form via the default.def #f.
-        (define pred->ipbool
+        ; branchless-select counterparts of the fixnum relops, or #f
+        ; for any other predicate, which keeps the branchy conversion.
+        ; Gate: like popcount-instruction; other architectures keep the
+        ; branchy form via the default.def #f.
+        (define pred->isel
           (constant-case setcc-instruction
             [(#t)
              (lambda (prim)
                ; prim is a nanopass primitive (np-languages); compare by
                ; identity against the declared % bindings
-               (cond
-                 [(eq? prim %<) %ipbool<]
-                 [(eq? prim %<=) %ipbool<=]
-                 [(eq? prim %eq?) %ipbool=]
-                 [(eq? prim %>) %ipbool>]
-                 [(eq? prim %>=) %ipbool>=]
-                 [(eq? prim %u<) %ipboolu<]
-                 [else #f]))]
-            [else (lambda (prim) #f)]))
-        ; setcc counterpart of the fp relops for branchless boolean
-        ; materialization, or #f for any other predicate.  fl>? and fl>=?
-        ; are swapped onto fp</fp<= by cpprim, so the only fp pred
-        ; primitives that can appear here are fp<, fp<=, fp=.
-        (define pred->fpbool
-          (constant-case setcc-instruction
-            [(#t)
-             (lambda (prim)
-               (cond
-                 [(eq? prim %fp<) %fpbool<]
-                 [(eq? prim %fp<=) %fpbool<=]
-                 [(eq? prim %fp=) %fpbool=]
-                 [else #f]))]
-            [else (lambda (prim) #f)]))
-        ; cmov counterpart of the fixnum relops for branchless select
-        ; between two immediates, or #f for any other predicate.
-        (define pred->isel
-          (constant-case setcc-instruction
-            [(#t)
-             (lambda (prim)
                (cond
                  [(eq? prim %<) %isel<]
                  [(eq? prim %<=) %isel<=]
@@ -3787,11 +3758,24 @@
                  [(eq? prim %u<) %iselu<]
                  [else #f]))]
             [else (lambda (prim) #f)]))
-        ; both immediates are the boolean constants (in either order)
-        (define boolean-imms?
-          (lambda (imm1 imm2)
-            (and (or (eqv? imm1 (constant strue)) (eqv? imm1 (constant sfalse)))
-                 (or (eqv? imm2 (constant strue)) (eqv? imm2 (constant sfalse))))))
+        ; branchless-select counterparts of the fp relops, or #f for
+        ; any other predicate.  fl>? and fl>=? are swapped onto fp</fp<=
+        ; by cpprim, so the only fp pred primitives that can appear here
+        ; are fp<, fp<=, fp=.  fp= is excluded for now: its cmov would
+        ; fire on the unordered ZF=1, and the compensating jp's offset
+        ; has proven fragile under register coalescing, so equality
+        ; selects keep the branchy form until the skip is computed from
+        ; the emitted code rather than a length guess.
+        (define pred->fpsel
+          (constant-case setcc-instruction
+            [(#t)
+             (lambda (prim)
+               (cond
+                 [(eq? prim %fp<) #f] ; BISECT: fpsel disabled
+                 [(eq? prim %fp<=) #f]
+                 [else #f]))]
+            [else (lambda (prim) #f)]))
+
         (define local*)
         (define make-tmp
           (lambda (x)
@@ -3803,10 +3787,26 @@
           (nanopass-case (L10.5 Lvalue) lvalue
             [,x (and (uvar? x) (eq? (uvar-type x) 'fp))]
             [(mref ,x1 ,x2 ,imm ,type) (eq? type 'fp)]))
-        ; Convert a processed (if (inline pred ...) (set! x imm1) (set! x
-        ; imm2)) into one set! of a branchless value instruction, or #f when
-        ; the shape or predicate has no branchless form.  e0 is a processed
-        ; L11 Pred, e1/e2 processed L11 Effects.
+        ; a select operand: a uvar or an immediate triv, returned as
+        ; the term to splice into the inline form, or #f when t is
+        ; anything else (mrefs, literals, label-refs, nested inlines),
+        ; which declines the conversion
+        (define select-triv-operand
+          (lambda (t)
+            (nanopass-case (L11 Triv) t
+              [(immediate ,imm) t]
+              [else (and (uvar? t) t)])))
+        ; both select operands must be of one kind: two immediates use
+        ; the immediate instruction clause, two uvars the register
+        ; clause; a mixed pair matches no clause
+        (define select-operands-ok?
+          (lambda (a1 a2)
+            (and (not (uvar? a1)) (not (uvar? a2)))))
+        ; Convert a processed (if (inline pred ...) (set! x t1) (set! x
+        ; t2)) with t1/t2 select operands into one set! of a branchless
+        ; value instruction, or #f when the shape or predicate has no
+        ; branchless form.  e0 is a processed L11 Pred, e1/e2 processed
+        ; L11 Effects.
         (define select-if
           (lambda (e0 e1 e2)
             (define pred-and-trivs
@@ -3814,50 +3814,33 @@
                 (nanopass-case (L11 Pred) e0
                   [(inline ,info ,pred-prim ,t* ...) (list pred-prim t*)]
                   [else #f])))
-            (define dest-and-imm
+            (define dest-and-operand
               (lambda (e)
                 (nanopass-case (L11 Effect) e
-                  [(set! ,x (immediate ,imm)) (list x imm)]
+                  [(set! ,x ,t)
+                   (let ([a (select-triv-operand t)])
+                     (and a (list x a)))]
                   [else #f])))
             (let ([pt (pred-and-trivs)]
-                  [d1 (dest-and-imm e1)]
-                  [d2 (dest-and-imm e2)])
+                  [d1 (dest-and-operand e1)]
+                  [d2 (dest-and-operand e2)])
               (and pt
                    d1
                    d2
                    (eq? (car d1) (car d2))
-                   (let ([prim (car pt)]
-                         [t* (cadr pt)]
-                         [x (car d1)]
-                         [imm1 (cadr d1)]
-                         [imm2 (cadr d2)])
-                     (cond
-                       [(and (or (pred->ipbool prim) (pred->fpbool prim))
-                             (boolean-imms? imm1 imm2))
-                        (let ([u (make-tmp 'u)])
+                   (let* ([prim (car pt)]
+                          [t* (cadr pt)]
+                          [x (car d1)]
+                          [a1 (cadr d1)]
+                          [a2 (cadr d2)]
+                          [sel (or (pred->isel prim) (pred->fpsel prim))])
+                     (and sel
+                          (select-operands-ok? a1 a2)
                           (with-output-language (L11 Effect)
-                            `(seq
-                               (set! ,u (inline ,null-info
-                                                 ,(or (pred->ipbool prim)
-                                                      (pred->fpbool prim))
-                                                 ,t* ...))
-                               (set! ,x ,u))))]
-                       [(pred->isel prim)
-                        ; one value instruction; the x86_64 clause presets
-                        ; the then-value into an L15d scratch and the
-                        ; else-value into the destination, with the cmp
-                        ; emitted before either preset, so no aliasing of
-                        ; the destination with the compare operands is
-                        ; possible
-                        (with-output-language (L11 Effect)
-                          `(set! ,x (inline ,null-info
-                                            ,(pred->isel prim)
-                                            ,t* ...
-                                            (immediate ,imm1)
-                                            (immediate ,imm2))))]
-                       [else #f]))))))
-        ; Convert a processed (if (inline pred ...) imm1 imm2) in tail
-        ; position into a select followed by the selected value, or #f.
+                            `(set! ,x (inline ,null-info ,sel ,t* ... ,a1 ,a2)))))))))
+        ; Convert a processed (if (inline pred ...) t1 t2) in tail
+        ; position, with t1/t2 select operands, into a select followed
+        ; by the selected value, or #f.
         (define select-tail
           (lambda (e0 tl1 tl2)
             (define pred-and-trivs
@@ -3865,58 +3848,45 @@
                 (nanopass-case (L11 Pred) e0
                   [(inline ,info ,pred-prim ,t* ...) (list pred-prim t*)]
                   [else #f])))
-            (define imm-of
+            (define operand-of
               (lambda (tl)
                 (nanopass-case (L11 Tail) tl
-                  [(immediate ,imm) (list imm)]
-                  [else #f])))
+                  [(immediate ,imm) tl]
+                  [else (and (uvar? tl) tl)])))
             (let ([pt (pred-and-trivs)]
-                  [i1 (imm-of tl1)]
-                  [i2 (imm-of tl2)])
+                  [a1 (operand-of tl1)]
+                  [a2 (operand-of tl2)])
               (and pt
-                   i1
-                   i2
-                   (let ([prim (car pt)]
-                         [t* (cadr pt)]
-                         [imm1 (car i1)]
-                         [imm2 (car i2)])
-                     (cond
-                       [(and (or (pred->ipbool prim) (pred->fpbool prim))
-                             (boolean-imms? imm1 imm2))
-                        (let ([u (make-tmp 'u)])
-                          (with-output-language (L11 Tail)
-                            `(seq
-                               (set! ,u (inline ,null-info
-                                                 ,(or (pred->ipbool prim)
-                                                      (pred->fpbool prim))
-                                                 ,t* ...))
-                               ,u)))]
-                       [(pred->isel prim)
-                        (let ([w (make-tmp 'w)])
-                          (with-output-language (L11 Tail)
-                            `(seq
-                               (set! ,w (inline ,null-info
-                                                 ,(pred->isel prim)
-                                                 ,t* ...
-                                                 (immediate ,imm1)
-                                                 (immediate ,imm2)))
-                               ,w)))]
-                       [else #f]))))))
+                   a1
+                   a2
+                   (let* ([prim (car pt)]
+                          [t* (cadr pt)]
+                          [sel (or (pred->isel prim) (pred->fpsel prim))])
+                     (and sel
+                          (select-operands-ok? a1 a2)
+                          (let ([w (make-tmp 'w)])
+                            (with-output-language (L11 Tail)
+                              `(seq
+                                 (set! ,w (inline ,null-info ,sel ,t* ... ,a1 ,a2))
+                                 ,w)))))))))
         (define rhs-inline
           (lambda (lvalue info prim t*)
             (with-output-language (L11 Effect)
               (cond
                 [(pred-primitive? prim)
-                 (let ([ipbool (pred->ipbool prim)]
-                       [fpbool (pred->fpbool prim)])
+                 (let ([sel (or (pred->isel prim) (pred->fpsel prim))])
                    (cond
-                     [(or ipbool fpbool)
-                      ; branchless cmp/ucomisd + setcc materialization; bind
-                      ; the result like cpprim-generated value inlines so the
-                      ; instruction never sees a memory destination
+                     [sel
+                      ; branchless select between the boolean
+                      ; immediates; the backend specializes the
+                      ; immediate form when both values are #t/#f
                       (let ([u (make-tmp 'u)])
                         `(seq
-                           (set! ,u (inline ,null-info ,(or ipbool fpbool) ,t* ...))
+                           (set! ,u (inline ,null-info
+                                             ,sel
+                                             ,t* ...
+                                             ,(%constant strue)
+                                             ,(%constant sfalse)))
                            (set! ,lvalue ,u)))]
                      [else
                       `(if (inline ,info ,prim ,t* ...)
@@ -4071,13 +4041,19 @@
          (or (select-tail e0 tl1 tl2) `(if ,e0 ,tl1 ,tl2))]
         [(inline ,info ,prim ,[t*] ...)
          (guard (pred-primitive? prim))
-         (let ([ipbool (pred->ipbool prim)]
-               [fpbool (pred->fpbool prim)])
+         (let ([sel (or (pred->isel prim) (pred->fpsel prim))])
            (cond
-             [(or ipbool fpbool)
+             [sel
+              ; branchless select between the boolean immediates;
+              ; the backend specializes this immediate form when both
+              ; values are #t/#f
               (let ([u (make-tmp 'u)])
                 `(seq
-                   (set! ,u (inline ,null-info ,(or ipbool fpbool) ,t* ...))
+                   (set! ,u (inline ,null-info
+                                     ,sel
+                                     ,t* ...
+                                     ,(%constant strue)
+                                     ,(%constant sfalse)))
                    ,u))]
              [else
               `(if (inline ,info ,prim ,t* ...)

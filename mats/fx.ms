@@ -451,6 +451,25 @@
   (let ([sel (lambda (x y) (if (fx< x y) #t #f))])
     (and (eq? (vector-ref (vector (sel 1 2)) 0) #t)
          (eq? (vector-ref (vector (sel 2 1)) 0) #f)))
+  ; selects between variable values, not just immediates
+  (let ([sel (lambda (x y c d) (if (fx< x y) c d))])
+    (and (eqv? (sel 1 2 10 20) 10) (eqv? (sel 2 1 10 20) 20) (eqv? (sel 2 2 10 20) 20)))
+  ; let-bound select result
+  (let ([f (lambda (x y c d) (let ([a (if (fx< x y) c d)]) (fx+ a 1)))])
+    (and (eqv? (f 1 2 10 20) 11) (eqv? (f 2 1 10 20) 21)))
+  ; destination-is-then-value declines the register form and must
+  ; still produce the right value
+  (let ([f (lambda (x y) (if (fx< x y) (set! x x) (set! x 5)) x)])
+    (and (eqv? (f 1 2) 1) (eqv? (f 2 1) 5) (eqv? (f 2 2) 5)))
+  ; flonum-compare selects, NaN taking the else value like the branch
+  (let ([sel (lambda (x y) (if (fl< x y) 1 2))])
+    (and (eqv? (sel 1.0 2.0) 1) (eqv? (sel 2.0 1.0) 2) (eqv? (sel 2.0 2.0) 2)
+         (eqv? (sel +nan.0 2.0) 2) (eqv? (sel 2.0 +nan.0) 2)))
+  (let ([sel (lambda (x y) (if (fl= x y) 1 2))])
+    (and (eqv? (sel 2.0 2.0) 1) (eqv? (sel 1.0 2.0) 2)
+         (eqv? (sel +nan.0 +nan.0) 2)))
+  (let ([sel (lambda (x y) (if (fl< x y) #t #f))])
+    (and (eq? (sel 1.0 2.0) #t) (eq? (sel 2.0 1.0) #f) (eq? (sel +nan.0 2.0) #f)))
  )
 
 (mat fx+
