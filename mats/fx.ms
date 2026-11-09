@@ -527,6 +527,27 @@
       (vector-set! v 0 (if (fl<= 1.0 2.0) a b))
       (vector-set! v 1 (if (fl<= +nan.0 2.0) a b)))
     (equal? v '#(10 20)))
+  ; effects ahead of the comparison in test position lift out of the
+  ; branch, exposing the compare to the select conversion; the effect
+  ; must still run exactly once, before the branch
+  (let ([v (make-vector 1 0)])
+    (and (eqv? (if (begin (vector-set! v 0 1) (fx< 1 2)) 10 20) 10)
+         (eqv? (if (begin (vector-set! v 0 2) (fx< 2 1)) 10 20) 20)
+         (eqv? (vector-ref v 0) 2)))
+  (let ([v (make-vector 1 0)])
+    (and (eqv? (if (begin (vector-set! v 0 3) (fl< 1.0 2.0)) 10 20) 10)
+         (eqv? (if (begin (vector-set! v 0 4) (fl< +nan.0 2.0)) 10 20) 20)
+         (eqv? (vector-ref v 0) 4)))
+  (let ([v (make-vector 1 0)] [n 0])
+    (if (begin (vector-set! v 0 5) (fx< 1 2)) (set! n 10) (set! n 20))
+    (and (eqv? n 10) (eqv? (vector-ref v 0) 5)))
+  ; calls in test position arrive as (eq? <tmp> #f) after the single
+  ; call evaluation, with the arms swapping onto the comparison
+  (eqv? (let ([f (lambda () #t)]) (if (f) 10 20)) 10)
+  (eqv? (let ([f (lambda () #f)]) (if (f) 10 20)) 20)
+  (eqv? (let ([f (lambda () 7)]) (if (f) 10 20)) 10)
+  (eqv? (let ([f (lambda () #f)] [n 0])
+          (if (f) (set! n 10) (set! n 20)) n) 20)
  )
 
 (mat fx+
