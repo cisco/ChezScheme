@@ -470,6 +470,39 @@
          (eqv? (sel +nan.0 +nan.0) 2)))
   (let ([sel (lambda (x y) (if (fl< x y) #t #f))])
     (and (eq? (sel 1.0 2.0) #t) (eq? (sel 2.0 1.0) #f) (eq? (sel +nan.0 2.0) #f)))
+  ; fp-conditioned selects between variable values exercise the fpsel
+  ; register form; NaN in either operand takes the else value, as the
+  ; source branch does
+  (let ([sel (lambda (x y a b) (if (fl< x y) a b))])
+    (and (eqv? (sel 1.0 2.0 10 20) 10) (eqv? (sel 2.0 1.0 10 20) 20)
+         (eqv? (sel 1.0 1.0 10 20) 20)
+         (eqv? (sel +nan.0 2.0 10 20) 20) (eqv? (sel 2.0 +nan.0 10 20) 20)
+         (eqv? (sel +nan.0 +nan.0 10 20) 20)))
+  (let ([sel (lambda (x y a b) (if (fl<= x y) a b))])
+    (and (eqv? (sel 1.0 2.0 10 20) 10) (eqv? (sel 2.0 2.0 10 20) 10)
+         (eqv? (sel 2.0 1.0 10 20) 20) (eqv? (sel +nan.0 2.0 10 20) 20)))
+  ; fl> and fl>= swap onto the fp</fp<= conditions via cpprim
+  (let ([sel (lambda (x y a b) (if (fl> x y) a b))])
+    (and (eqv? (sel 2.0 1.0 10 20) 10) (eqv? (sel 1.0 2.0 10 20) 20)
+         (eqv? (sel 2.0 2.0 10 20) 20) (eqv? (sel +nan.0 1.0 10 20) 20)))
+  (let ([sel (lambda (x y a b) (if (fl>= x y) a b))])
+    (and (eqv? (sel 2.0 2.0 10 20) 10) (eqv? (sel 1.0 2.0 10 20) 20)
+         (eqv? (sel 1.0 +nan.0 10 20) 20)))
+  ; same-destination set! with uvar arms on an fp condition: the
+  ; register allocator may coalesce the destination with either arm
+  (let ([f (lambda (x y b c) (let ([a 7]) (if (fl< x y) (set! a b) (set! a c)) (fx+ a (fx+ b c))))])
+    (and (eqv? (f 1.0 2.0 10 20) 40) (eqv? (f 2.0 1.0 10 20) 50)
+         (eqv? (f 2.0 2.0 10 20) 50) (eqv? (f +nan.0 2.0 10 20) 50)))
+  ; destination-is-then-value declines the register form and must
+  ; still produce the right value
+  (let ([f (lambda (x y c) (let ([a 7]) (if (fl< x y) (set! a a) (set! a c)) (fx+ a c)))])
+    (and (eqv? (f 1.0 2.0 3) 10) (eqv? (f 2.0 1.0 3) 6) (eqv? (f +nan.0 1.0 3) 6)))
+  ; destination-is-else-value keeps the destination on the else path
+  (let ([f (lambda (x y b) (let ([a 7]) (if (fl< x y) (set! a b) (set! a a)) (fx+ a b)))])
+    (and (eqv? (f 1.0 2.0 3) 6) (eqv? (f 2.0 1.0 3) 10) (eqv? (f +nan.0 1.0 3) 10)))
+  ; fixnum-conditioned same-destination set! between uvar arms
+  (let ([f (lambda (x y b c) (let ([a 7]) (if (fx< x y) (set! a b) (set! a c)) (fx+ a (fx+ b c))))])
+    (and (eqv? (f 1 2 10 20) 40) (eqv? (f 2 1 10 20) 50) (eqv? (f 2 2 10 20) 50)))
  )
 
 (mat fx+
