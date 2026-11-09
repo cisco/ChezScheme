@@ -389,6 +389,47 @@
     ; operand still compares the original operand values; the caller
     ; declines the one unsafe register case (destination is the
     ; then-value).
+    ; memory destination: cmov needs a register destination, so
+    ; compute into an unspillable temp and store.  the temp is
+    ; preset before the self-referential select asm: the
+    ; unspillable-conflict walk requires every unspillable to have a
+    ; plain preceding assignment in the same effect sequence, and an
+    ; instruction-selection temp as the destination (the only way a
+    ; select gets an unspillable destination) would otherwise be
+    ; referenced by the asm before any assignment.
+    [(op (z mem) (x ur) (y ur) (it imm) (ie imm))
+     (let ([u (make-tmp 'u)] [t (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u ,it)
+         `(set! ,(make-live-info) ,t ,ie)
+         `(set! ,(make-live-info) ,t
+            (asm ,null-info
+                 ,(asm-isel-imms (case op
+                                   [(isel<) #x0C]
+                                   [(isel<=) #x0E]
+                                   [(isel=) #x04]
+                                   [(isel>) #x0F]
+                                   [(isel>=) #x0D]
+                                   [(iselu<) #x02]
+                                   [else ($oops 'isel "unsupported ~s" op)]))
+                 ,t ,x ,y ,u ,ie))
+         `(set! ,(make-live-info) ,z ,t)))]
+    [(op (z mem) (x ur) (y ur) (u ur) (v ur))
+     (let ([t (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,t ,v)
+         `(set! ,(make-live-info) ,t
+            (asm ,null-info
+                 ,(asm-isel-regs (case op
+                               [(isel<) #x0C]   ; cmovl
+                               [(isel<=) #x0E]  ; cmovle
+                               [(isel=) #x04]   ; cmove
+                               [(isel>) #x0F]   ; cmovg
+                               [(isel>=) #x0D]  ; cmovge
+                               [(iselu<) #x02]  ; cmovb (unsigned <)
+                               [else ($oops 'isel "unsupported ~s" op)]))
+                 ,t ,x ,y ,u ,v))
+         `(set! ,(make-live-info) ,z ,t)))]
     [(op (z ur) (x ur) (y ur) (u ur) (v ur))
      `(set! ,(make-live-info) ,z
         (asm ,null-info
@@ -429,6 +470,40 @@
     ; anything writes z, so aliasing with the compare operands is
     ; safe; the caller declines the one unsafe register case
     ; (destination is the then-value).
+    ; memory destination: cmov needs a register destination, so
+    ; compute into a preset unspillable temp and store; see the isel
+    ; memory clauses.
+    [(op (z mem) (x fpur) (y fpur) (it imm) (ie imm))
+     (let ([u (make-tmp 'u)] [t (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u ,it)
+         `(set! ,(make-live-info) ,t ,ie)
+         `(set! ,(make-live-info) ,t
+            (asm ,null-info
+                 ,(asm-fpsel-imms (case op
+                                    [(fpsel<) #x07]
+                                    [(fpsel<=) #x03]
+                                    [(fpsel=) #x04]
+                                    [(fpsel>) #x02]
+                                    [(fpsel>=) #x06]
+                                    [else ($oops 'fpsel "unsupported ~s" op)]))
+                 ,t ,x ,y ,u ,ie))
+         `(set! ,(make-live-info) ,z ,t)))]
+    [(op (z mem) (x fpur) (y fpur) (u ur) (v ur))
+     (let ([t (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,t ,v)
+         `(set! ,(make-live-info) ,t
+            (asm ,null-info
+                 ,(asm-fpsel-regs (case op
+                                [(fpsel<) #x07]   ; cmova
+                                [(fpsel<=) #x03]  ; cmovae
+                                [(fpsel=) #x04]   ; cmove (with jp)
+                                [(fpsel>) #x02]   ; cmovb
+                                [(fpsel>=) #x06]  ; cmovbe
+                                [else ($oops 'fpsel "unsupported ~s" op)]))
+                 ,t ,x ,y ,u ,v))
+         `(set! ,(make-live-info) ,z ,t)))]
     [(op (z ur) (x fpur) (y fpur) (u ur) (v ur))
      `(set! ,(make-live-info) ,z
         (asm ,null-info
