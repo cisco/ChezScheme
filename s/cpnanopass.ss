@@ -3839,6 +3839,35 @@
                           (not (and (uvar? a1) (eq? a1 x)))
                           (with-output-language (L11 Effect)
                             `(set! ,x (inline ,null-info ,sel ,t* ... ,a1 ,a2)))))))))
+        ; Unwrap a processed Pred of the shape (seq e ... p) when it
+        ; ends in a comparison with a branchless-select form, returning
+        ; the prefix effects, the final comparison pred, and whether
+        ; the caller's arms swap onto it; or (#f #f #f) when the
+        ; predicate is not liftable.  Lifting
+        ; (if (seq e ... p) t1 t2) into (seq e ... (if p t1 t2)) exposes
+        ; the trailing comparison to the select conversion:
+        ; safe-operation checks keep their effects ahead of the compare,
+        ; and calls in test position, which arrive as
+        ; (seq ... (if (eq? <tmp> #f) (false) (true))), keep the single
+        ; evaluation of the call, with the arms swapping onto the eq?.
+        (define lift-seq-pred
+          (lambda (p)
+            (let loop ([p p] [pfx '()])
+              (nanopass-case (L11 Pred) p
+                [(seq ,e0 ,p1)
+                 (loop p1 (cons e0 pfx))]
+                [(inline ,info ,pred-prim ,t* ...)
+                 (if (or (pred->isel pred-prim) (pred->fpsel pred-prim))
+                     (values (reverse pfx) p #f)
+                     (values #f #f #f))]
+                [(if (inline ,info ,pred-prim ,t* ...) (false) (true))
+                 (if (pred->isel pred-prim)
+                     (values (reverse pfx)
+                             (with-output-language (L11 Pred)
+                               `(inline ,info ,pred-prim ,t* ...))
+                             #t)
+                     (values #f #f #f))]
+                [else (values #f #f #f)]))))
         ; Convert a processed (if (inline pred ...) t1 t2) in tail
         ; position, with t1/t2 select operands, into a select followed
         ; by the selected value, or #f.
@@ -3987,7 +4016,12 @@
         ; branchless form, everything else falls through to the generic if
         ; production below and keeps the conditional branch
         [(if ,[Pred : e0] ,[e1] ,[e2])
-         (or (select-if e0 e1 e2) `(if ,e0 ,e1 ,e2))]
+         (let-values ([(pfx p swap?) (lift-seq-pred e0)])
+           (if p
+               (let ([th (if swap? e2 e1)] [el (if swap? e1 e2)])
+                 (let ([body (or (select-if p th el) `(if ,p ,th ,el))])
+                   (fold-right (lambda (e rest) `(seq ,e ,rest)) body pfx)))
+               (or (select-if e0 e1 e2) `(if ,e0 ,e1 ,e2))))]
         [,x `(nop)]
         [(mref ,x1 ,x2 ,imm ,type) `(nop)]
         [(literal ,info) `(nop)]
@@ -4039,7 +4073,12 @@
         ; same general select as the Effect context, for selects in tail
         ; position (e.g. (lambda () (if (fx< a b) 1 2)))
         [(if ,[Pred : e0] ,[tl1] ,[tl2])
-         (or (select-tail e0 tl1 tl2) `(if ,e0 ,tl1 ,tl2))]
+         (let-values ([(pfx p swap?) (lift-seq-pred e0)])
+           (if p
+               (let ([th (if swap? tl2 tl1)] [el (if swap? tl1 tl2)])
+                 (let ([body (or (select-tail p th el) `(if ,p ,th ,el))])
+                   (fold-right (lambda (e rest) `(seq ,e ,rest)) body pfx)))
+               (or (select-tail e0 tl1 tl2) `(if ,e0 ,tl1 ,tl2))))]
         [(inline ,info ,prim ,[t*] ...)
          (guard (pred-primitive? prim))
          (let ([sel (or (pred->isel prim) (pred->fpsel prim))])
