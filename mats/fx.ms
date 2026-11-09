@@ -503,6 +503,30 @@
   ; fixnum-conditioned same-destination set! between uvar arms
   (let ([f (lambda (x y b c) (let ([a 7]) (if (fx< x y) (set! a b) (set! a c)) (fx+ a (fx+ b c))))])
     (and (eqv? (f 1 2 10 20) 40) (eqv? (f 2 1 10 20) 50) (eqv? (f 2 2 10 20) 50)))
+  ; select stored straight to memory exercises the memory-destination
+  ; instruction form (cmov needs a register destination, so the value
+  ; is computed into a temp and stored)
+  (let ([v (make-vector 3 0)])
+    (vector-set! v 0 (if (fx< 1 2) 10 20))
+    (vector-set! v 1 (if (fx< 2 1) 10 20))
+    (vector-set! v 2 (if (fx< 2 2) 10 20))
+    (equal? v '#(10 20 20)))
+  (let ([v (make-vector 2 0)])
+    (let ([a 10] [b 20])
+      (vector-set! v 0 (if (fx< 1 2) a b))
+      (vector-set! v 1 (if (fx< 2 1) a b)))
+    (equal? v '#(10 20)))
+  (let ([v (make-vector 4 0)])
+    (vector-set! v 0 (if (fl< 1.0 2.0) 10 20))
+    (vector-set! v 1 (if (fl< 2.0 1.0) 10 20))
+    (vector-set! v 2 (if (fl< 2.0 2.0) 10 20))
+    (vector-set! v 3 (if (fl< +nan.0 2.0) 10 20))
+    (equal? v '#(10 20 20 20)))
+  (let ([v (make-vector 2 0)])
+    (let ([a 10] [b 20])
+      (vector-set! v 0 (if (fl<= 1.0 2.0) a b))
+      (vector-set! v 1 (if (fl<= +nan.0 2.0) a b)))
+    (equal? v '#(10 20)))
  )
 
 (mat fx+
