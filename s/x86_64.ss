@@ -2348,63 +2348,53 @@
                       code* tail-bytes))))))))))
 
   (define asm-fpsel-regs
-    ; register form of the flonum select: flags from ucomisd (same
-    ; reversed operand order as asm-fp-relop), then dest = else-value
-    ; and cmovcc then-value -> dest.  On unordered operands ucomisd
-    ; sets ZF=CF=PF=1 and every condition here reads at least one of
-    ; those as false, so NaN selects the else value, exactly as the
-    ; source branch does; equality (whose cmove would fire on the
-    ; unordered ZF=1) gets an explicit jp over the cmov.  ucomisd
-    ; reads x and y before anything writes dest, so aliasing with the
-    ; compare operands is safe; the caller declines the case where
-    ; dest is the then-value.
     (lambda (cc)
       (rec asm-fpsel-regs-internal
         (lambda (code* dest self x y u v)
           (Trivit (dest self x y u v)
             (safe-assert (equal? self dest))
-            (if (eq? cc #x04)
-                ; e: skip the cmov when unordered so NaN keeps the
-                ; else value; mov reg,reg is REX.W + 89 /r (3 or 4
-                ; bytes, extended registers on either side), cmov is
-                ; REX.W + 0F 40+cc /r (4 bytes)
-                (let ([skip (fx+ (if (or (fx>= (ax-ea-reg-code v) 8)
-                                         (fx>= (ax-ea-reg-code dest) 8))
-                                    4 3)
-                                 4)])
-                  (emit sse.ucomisd x y
-                    (fold-right (lambda (b cs) (cons (build byte b) cs))
-                      (emit mov v dest
-                        (cmov-op 'fpsel 'quad cc u dest code*))
-                      (list #x7A skip))))
-                (emit sse.ucomisd x y
-                  (emit mov v dest
-                    (cmov-op 'fpsel 'quad cc u dest code*)))))))))
+            (cond
+              [(and (eq? cc #x04) (equal? dest u))
+               (let ([movlen (if (or (fx>= (ax-ea-reg-code v) 8)
+                                     (fx>= (ax-ea-reg-code dest) 8))
+                                 4 3)])
+                 (emit sse.ucomisd x y
+                   (emit-bytes
+                     (cmov-op 'fpsel 'quad (invert-cc cc) v dest
+                       (emit-bytes
+                         (emit mov v dest code*)
+                         (list #xEB movlen)))
+                     (list #x7A 6))))]
+              [(equal? dest u)
+               (emit sse.ucomisd x y
+                 (cmov-op 'fpsel 'quad (invert-cc cc) v dest code*))]
+              [(equal? dest v)
+               (emit sse.ucomisd x y
+                 (cmov-op 'fpsel 'quad cc u dest code*))]
+              [else
+               (emit sse.ucomisd x y
+                 (emit mov v dest
+                   (emit-bytes
+                     (cmov-op 'fpsel 'quad cc u dest code*)
+                     (if (eq? cc #x04) (list #x7A 4) '()))))]))))))
+
+  (define-syntax emit-bytes
+    (syntax-rules ()
+      [(_ code* bytes)
+       (fold-right (lambda (b cs) (cons (build byte b) cs))
+         code* bytes)]))
 
   (define asm-fpsel-imms
-    ; immediate form of the flonum select: the then-value is already
-    ; bound to u by the instruction clause; flags from ucomisd, then
-    ; dest = else-value and cmovcc u -> dest, with the same NaN
-    ; reasoning (and jp for equality) as asm-fpsel-regs.
     (lambda (cc)
       (rec asm-fpsel-imms-internal
         (lambda (code* dest self x y u ie)
           (Trivit (dest self x y u ie)
             (safe-assert (equal? self dest))
-            (if (eq? cc #x04)
-                ; movi to a register is REX.W + C7 /0 imm32 (7 bytes)
-                ; for imm32-range immediates, or the imm64 form (10
-                ; bytes) otherwise; cmov is 4 bytes
-                (let ([skip (fx+ (if (ax-range? #x-80000000 (cadr ie) #x7fffffff) 7 10)
-                                 4)])
-                  (emit sse.ucomisd x y
-                    (fold-right (lambda (b cs) (cons (build byte b) cs))
-                      (emit movi ie dest
-                        (cmov-op 'fpsel 'quad cc u dest code*))
-                      (list #x7A skip))))
-                (emit sse.ucomisd x y
-                  (emit movi ie dest
-                    (cmov-op 'fpsel 'quad cc u dest code*)))))))))
+            (emit sse.ucomisd x y
+              (emit movi ie dest
+                (emit-bytes
+                  (cmov-op 'fpsel 'quad cc u dest code*)
+                  (if (eq? cc #x04) (list #x7A 4) '())))))))))
 
   (define asm-fpsel-bool
     ; boolean-materialization specialization of the flonum select for

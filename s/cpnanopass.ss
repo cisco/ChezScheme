@@ -3771,8 +3771,8 @@
             [(#t)
              (lambda (prim)
                (cond
-                 [(eq? prim %fp<) #f] ; BISECT: fpsel disabled
-                 [(eq? prim %fp<=) #f]
+                 [(eq? prim %fp<) %fpsel<]
+                 [(eq? prim %fp<=) %fpsel<=]
                  [else #f]))]
             [else (lambda (prim) #f)]))
 
