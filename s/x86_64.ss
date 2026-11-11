@@ -387,11 +387,16 @@
       (define invert-cc-select
         (lambda (cc)
           (case cc
-            [(#x0C) #x0D] [(#x0D) #x0C]  ; l  <-> ge
-            [(#x0E) #x0F] [(#x0F) #x0E]  ; le <-> g
-            [(#x04) #x05] [(#x05) #x04]  ; e  <-> ne
-            [(#x02) #x03] [(#x03) #x02]  ; b  <-> ae
-            [(#x06) #x07] [(#x07) #x06]  ; be <-> a
+            [(#x0C) #x0D]                    ; l  <-> ge
+            [(#x0D) #x0C]
+            [(#x0E) #x0F]                    ; le <-> g
+            [(#x0F) #x0E]
+            [(#x04) #x05]                    ; e  <-> ne
+            [(#x05) #x04]
+            [(#x02) #x03]                    ; b  <-> ae
+            [(#x03) #x02]
+            [(#x06) #x07]                    ; be <-> a
+            [(#x07) #x06]
             [else ($oops 'invert-cc-select "unsupported ~s" cc)])))
       ; setcc condition byte for the boolean specialization: the low
       ; nibble matches the cmovcc condition for the operator, inverted
@@ -408,15 +413,19 @@
                       [(iselu<) #x02]  ; setb
                       [else ($oops 'isel "unsupported ~s" op)])])
             (fxlogor #x90 (if then-false? (invert-cc-select cc) cc))))))
-    ; branchless select on a fixnum compare; see asm-isel-regs and
-    ; asm-isel-imms.  The register form selects between two arbitrary
-    ; values; the immediate form selects between two immediates.  The
-    ; register clause is listed first: its ur operands also accept
-    ; immediates (which the select-instructions machinery coerces to
-    ; registers), so the immediate clause serves as documentation of
-    ; both arms immediates with a memory destination: cmov needs a
-    ; register destination, so compute into an unspillable temp and
-    ; store
+    ; branchless select on a fixnum compare; see asm-isel-regs,
+    ; asm-isel-imms, and asm-isel-bool.  The register form selects
+    ; between two arbitrary values; the immediate form selects between
+    ; two immediates, with a setcc specialization when both are the
+    ; boolean immediates.  Every form emits the compare before any
+    ; write, so a destination that aliases a compare operand still
+    ; compares the original operand values; the caller declines the
+    ; one unsafe register case (destination is the then-value).
+    ; The memory clauses are listed first: the ur predicate accepts
+    ; memory destinations, and letting a ur clause see them would
+    ; route the store through an instruction-selection temporary
+    ; whose self-referential select asm trips the unspillable-conflict
+    ; walk.
     [(op (z mem) (x ur) (y ur) (it imm) (ie imm))
      (let ([u (make-tmp 'u)] [t (make-tmp 'u)])
        (seq
@@ -449,8 +458,9 @@
                                [(iselu<) #x02]  ; cmovb (unsigned <)
                                [else ($oops 'isel "unsupported ~s" op)]))
                  ,t ,x ,y ,u ,v))
-         `(set! ,(make-live-info) ,z ,t)))]    ; both arms immediates: #t/#f pairs take the setcc specialization
-    ; (asm-isel-bool), anything else the immediate form with a
+         `(set! ,(make-live-info) ,z ,t)))]
+    ; both arms immediates: #t/#f pairs take the setcc specialization
+    ; (asm-isel-bool); anything else takes the immediate form with a
     ; scratch for the then-value (asm-isel-imms)
     [(op (z ur) (x ur) (y ur) (u imm) (v imm))
      (let ([uv (imm-value u)] [vv (imm-value v)])
@@ -487,9 +497,7 @@
                                [(isel>=) #x0D]  ; cmovge
                                [(iselu<) #x02]  ; cmovb (unsigned <)
                                [else ($oops 'isel "unsupported ~s" op)]))
-             ,z ,x ,y ,u ,v))]
-
-    )
+             ,z ,x ,y ,u ,v))])
 
   (define-instruction value (fpsel< fpsel<= fpsel= fpsel> fpsel>=)
     (definitions
@@ -502,11 +510,16 @@
       (define invert-cc-select
         (lambda (cc)
           (case cc
-            [(#x0C) #x0D] [(#x0D) #x0C]  ; l  <-> ge
-            [(#x0E) #x0F] [(#x0F) #x0E]  ; le <-> g
-            [(#x04) #x05] [(#x05) #x04]  ; e  <-> ne
-            [(#x02) #x03] [(#x03) #x02]  ; b  <-> ae
-            [(#x06) #x07] [(#x07) #x06]  ; be <-> a
+            [(#x0C) #x0D]                    ; l  <-> ge
+            [(#x0D) #x0C]
+            [(#x0E) #x0F]                    ; le <-> g
+            [(#x0F) #x0E]
+            [(#x04) #x05]                    ; e  <-> ne
+            [(#x05) #x04]
+            [(#x02) #x03]                    ; b  <-> ae
+            [(#x03) #x02]
+            [(#x06) #x07]                    ; be <-> a
+            [(#x07) #x06]
             [else ($oops 'invert-cc-select "unsupported ~s" cc)])))
       ; setcc condition byte for the boolean specialization: the low
       ; nibble matches the cmovcc condition for the operator, inverted
@@ -522,20 +535,18 @@
                       [(fpsel>=) #x06] ; setbe
                       [else ($oops 'fpsel "unsupported ~s" op)])])
             (fxlogor #x90 (if then-false? (invert-cc-select cc) cc))))))
-    ; branchless select on a flonum compare; see asm-fpsel-regs and
-    ; asm-fpsel-imms.  Same clause structure as the fixnum isel
-    ; instructions.  ucomisd's flags drive cmovcc directly; on
-    ; unordered operands every condition here reads at least one of
-    ; the set flags as false, so a NaN compare selects the else value,
-    ; exactly as the source branch does, except equality whose cmove
-    ; would fire on the unordered ZF=1 and so gets an explicit jp
-    ; over the cmov in both forms.  ucomisd reads x and y before
-    ; anything writes z, so aliasing with the compare operands is
-    ; safe; the caller declines the one unsafe register case
-    ; (destination is the then-value).
-    ; both arms immediates with a memory destination: cmov needs a
-    ; register destination, so compute into an unspillable temp and
-    ; store
+    ; branchless select on a flonum compare; see asm-fpsel-regs,
+    ; asm-fpsel-imms, and asm-fpsel-bool.  Same clause structure as
+    ; the fixnum isel instructions.  ucomisd's flags drive cmovcc
+    ; directly; on unordered operands every condition here reads at
+    ; least one of the set flags as false, so a NaN compare selects
+    ; the else value, exactly as the source branch does, except
+    ; equality whose cmove would fire on the unordered ZF=1 and so
+    ; gets an explicit jp over the cmov in both forms.  ucomisd reads
+    ; x and y before anything writes z, so aliasing with the compare
+    ; operands is safe; the caller declines the one unsafe register
+    ; case (destination is the then-value).  The memory clauses are
+    ; listed first for the same reason as the isel clauses.
     [(op (z mem) (x fpur) (y fpur) (it imm) (ie imm))
      (let ([u (make-tmp 'u)] [t (make-tmp 'u)])
        (seq
@@ -566,14 +577,14 @@
                                 [(fpsel>=) #x06]  ; cmovbe
                                 [else ($oops 'fpsel "unsupported ~s" op)]))
                  ,t ,x ,y ,u ,v))
-         `(set! ,(make-live-info) ,z ,t)))]    ; both arms immediates: #t/#f pairs take the setcc specialization
-    ; (asm-fpsel-bool), anything else the immediate form with a
-    ; scratch for the then-value (asm-fpsel-imms)
+         `(set! ,(make-live-info) ,z ,t)))]
+    ; both arms immediates: #t/#f pairs take the setcc specialization
+    ; (asm-fpsel-bool); anything else takes the immediate form with a
+    ; scratch for the then-value (asm-fpsel-imms).  The emitter's jp
+    ; keeps NaN at #f, the else value of every fp condition.
     [(op (z ur) (x fpur) (y fpur) (u imm) (v imm))
      (let ([uv (imm-value u)] [vv (imm-value v)])
        (cond
-         ; the emitter's jp keeps NaN at #f, the else value of every
-         ; fp condition
          [(and (eqv? uv (constant strue)) (eqv? vv (constant sfalse)))
           `(set! ,(make-live-info) ,z
              (asm ,null-info ,(asm-fpsel-bool (setcc-cc op #f)) ,z ,x ,y))]
@@ -604,10 +615,7 @@
                                 [(fpsel>) #x02]   ; cmovb
                                 [(fpsel>=) #x06]  ; cmovbe
                                 [else ($oops 'fpsel "unsupported ~s" op)]))
-             ,z ,x ,y ,u ,v))]
-
-    )
-
+             ,z ,x ,y ,u ,v))])
 
   (define-instruction value (+/ovfl +/carry) ; must set condition codes, so can't use lea
     [(op (z mem) (x z) (y ur imm32))
