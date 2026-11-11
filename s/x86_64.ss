@@ -377,26 +377,46 @@
        `(set! ,(make-live-info) ,z (asm ,info ,(asm-lea2 0) ,x ,y)))])
 
   (define-instruction value (isel< isel<= isel= isel> isel>= iselu<)
+    (definitions
+      (define imm-value
+        (lambda (t)
+          (nanopass-case (L15c Triv) t
+            [(immediate ,imm) imm]
+            [else #f])))
+      ; condition-code inversion local to the select family
+      (define invert-cc-select
+        (lambda (cc)
+          (case cc
+            [(#x0C) #x0D] [(#x0D) #x0C]  ; l  <-> ge
+            [(#x0E) #x0F] [(#x0F) #x0E]  ; le <-> g
+            [(#x04) #x05] [(#x05) #x04]  ; e  <-> ne
+            [(#x02) #x03] [(#x03) #x02]  ; b  <-> ae
+            [(#x06) #x07] [(#x07) #x06]  ; be <-> a
+            [else ($oops 'invert-cc-select "unsupported ~s" cc)])))
+      ; setcc condition byte for the boolean specialization: the low
+      ; nibble matches the cmovcc condition for the operator, inverted
+      ; when the then-immediate is #f, so the emitter always receives
+      ; the condition for "select strue"
+      (define setcc-cc
+        (lambda (op then-false?)
+          (let ([cc (case op
+                      [(isel<) #x0C]   ; setl
+                      [(isel<=) #x0E]  ; setle
+                      [(isel=) #x04]   ; sete
+                      [(isel>) #x0F]   ; setg
+                      [(isel>=) #x0D]  ; setge
+                      [(iselu<) #x02]  ; setb
+                      [else ($oops 'isel "unsupported ~s" op)])])
+            (fxlogor #x90 (if then-false? (invert-cc-select cc) cc))))))
     ; branchless select on a fixnum compare; see asm-isel-regs and
     ; asm-isel-imms.  The register form selects between two arbitrary
     ; values; the immediate form selects between two immediates.  The
     ; register clause is listed first: its ur operands also accept
     ; immediates (which the select-instructions machinery coerces to
     ; registers), so the immediate clause serves as documentation of
-    ; the intended shape and as the hook for a backend that wants to
-    ; specialize on immediate operands.  Every form emits the compare
-    ; before any write, so a destination that aliases a compare
-    ; operand still compares the original operand values; the caller
-    ; declines the one unsafe register case (destination is the
-    ; then-value).
-    ; memory destination: cmov needs a register destination, so
-    ; compute into an unspillable temp and store.  the temp is
-    ; preset before the self-referential select asm: the
-    ; unspillable-conflict walk requires every unspillable to have a
-    ; plain preceding assignment in the same effect sequence, and an
-    ; instruction-selection temp as the destination (the only way a
-    ; select gets an unspillable destination) would otherwise be
-    ; referenced by the asm before any assignment.
+    ; both arms immediates with a memory destination: cmov needs a
+    ; register destination, so compute into an unspillable temp and
+    ; store
     [(op (z mem) (x ur) (y ur) (it imm) (ie imm))
      (let ([u (make-tmp 'u)] [t (make-tmp 'u)])
        (seq
@@ -429,7 +449,33 @@
                                [(iselu<) #x02]  ; cmovb (unsigned <)
                                [else ($oops 'isel "unsupported ~s" op)]))
                  ,t ,x ,y ,u ,v))
-         `(set! ,(make-live-info) ,z ,t)))]
+         `(set! ,(make-live-info) ,z ,t)))]    ; both arms immediates: #t/#f pairs take the setcc specialization
+    ; (asm-isel-bool), anything else the immediate form with a
+    ; scratch for the then-value (asm-isel-imms)
+    [(op (z ur) (x ur) (y ur) (u imm) (v imm))
+     (let ([uv (imm-value u)] [vv (imm-value v)])
+       (cond
+         [(and (eqv? uv (constant strue)) (eqv? vv (constant sfalse)))
+          `(set! ,(make-live-info) ,z
+             (asm ,null-info ,(asm-isel-bool (setcc-cc op #f)) ,z ,x ,y))]
+         [(and (eqv? uv (constant sfalse)) (eqv? vv (constant strue)))
+          `(set! ,(make-live-info) ,z
+             (asm ,null-info ,(asm-isel-bool (setcc-cc op #t)) ,z ,x ,y))]
+         [else
+          (let ([ut (make-tmp 'u)])
+            (seq
+              `(set! ,(make-live-info) ,ut ,u)
+              `(set! ,(make-live-info) ,z
+                 (asm ,null-info
+                      ,(asm-isel-imms (case op
+                                        [(isel<) #x0C]
+                                        [(isel<=) #x0E]
+                                        [(isel=) #x04]
+                                        [(isel>) #x0F]
+                                        [(isel>=) #x0D]
+                                        [(iselu<) #x02]
+                                        [else ($oops 'isel "unsupported ~s" op)]))
+                      ,z ,x ,y ,ut ,v))))]))]
     [(op (z ur) (x ur) (y ur) (u ur) (v ur))
      `(set! ,(make-live-info) ,z
         (asm ,null-info
@@ -442,23 +488,40 @@
                                [(iselu<) #x02]  ; cmovb (unsigned <)
                                [else ($oops 'isel "unsupported ~s" op)]))
              ,z ,x ,y ,u ,v))]
-    [(op (z ur) (x ur) (y ur) (it imm) (ie imm))
-     (let ([u (make-tmp 'u)])
-       (seq
-         `(set! ,(make-live-info) ,u ,it)
-         `(set! ,(make-live-info) ,z
-            (asm ,null-info
-                 ,(asm-isel-imms (case op
-                                   [(isel<) #x0C]
-                                   [(isel<=) #x0E]
-                                   [(isel=) #x04]
-                                   [(isel>) #x0F]
-                                   [(isel>=) #x0D]
-                                   [(iselu<) #x02]
-                                   [else ($oops 'isel "unsupported ~s" op)]))
-                 ,z ,x ,y ,u ,ie))))])
+
+    )
 
   (define-instruction value (fpsel< fpsel<= fpsel= fpsel> fpsel>=)
+    (definitions
+      (define imm-value
+        (lambda (t)
+          (nanopass-case (L15c Triv) t
+            [(immediate ,imm) imm]
+            [else #f])))
+      ; condition-code inversion local to the select family
+      (define invert-cc-select
+        (lambda (cc)
+          (case cc
+            [(#x0C) #x0D] [(#x0D) #x0C]  ; l  <-> ge
+            [(#x0E) #x0F] [(#x0F) #x0E]  ; le <-> g
+            [(#x04) #x05] [(#x05) #x04]  ; e  <-> ne
+            [(#x02) #x03] [(#x03) #x02]  ; b  <-> ae
+            [(#x06) #x07] [(#x07) #x06]  ; be <-> a
+            [else ($oops 'invert-cc-select "unsupported ~s" cc)])))
+      ; setcc condition byte for the boolean specialization: the low
+      ; nibble matches the cmovcc condition for the operator, inverted
+      ; when the then-immediate is #f, so the emitter always receives
+      ; the condition for "select strue"; see the isel definitions
+      (define setcc-cc
+        (lambda (op then-false?)
+          (let ([cc (case op
+                      [(fpsel<) #x07]  ; seta
+                      [(fpsel<=) #x03] ; setae
+                      [(fpsel=) #x04]  ; sete
+                      [(fpsel>) #x02]  ; setb
+                      [(fpsel>=) #x06] ; setbe
+                      [else ($oops 'fpsel "unsupported ~s" op)])])
+            (fxlogor #x90 (if then-false? (invert-cc-select cc) cc))))))
     ; branchless select on a flonum compare; see asm-fpsel-regs and
     ; asm-fpsel-imms.  Same clause structure as the fixnum isel
     ; instructions.  ucomisd's flags drive cmovcc directly; on
@@ -470,9 +533,9 @@
     ; anything writes z, so aliasing with the compare operands is
     ; safe; the caller declines the one unsafe register case
     ; (destination is the then-value).
-    ; memory destination: cmov needs a register destination, so
-    ; compute into a preset unspillable temp and store; see the isel
-    ; memory clauses.
+    ; both arms immediates with a memory destination: cmov needs a
+    ; register destination, so compute into an unspillable temp and
+    ; store
     [(op (z mem) (x fpur) (y fpur) (it imm) (ie imm))
      (let ([u (make-tmp 'u)] [t (make-tmp 'u)])
        (seq
@@ -503,7 +566,34 @@
                                 [(fpsel>=) #x06]  ; cmovbe
                                 [else ($oops 'fpsel "unsupported ~s" op)]))
                  ,t ,x ,y ,u ,v))
-         `(set! ,(make-live-info) ,z ,t)))]
+         `(set! ,(make-live-info) ,z ,t)))]    ; both arms immediates: #t/#f pairs take the setcc specialization
+    ; (asm-fpsel-bool), anything else the immediate form with a
+    ; scratch for the then-value (asm-fpsel-imms)
+    [(op (z ur) (x fpur) (y fpur) (u imm) (v imm))
+     (let ([uv (imm-value u)] [vv (imm-value v)])
+       (cond
+         ; the emitter's jp keeps NaN at #f, the else value of every
+         ; fp condition
+         [(and (eqv? uv (constant strue)) (eqv? vv (constant sfalse)))
+          `(set! ,(make-live-info) ,z
+             (asm ,null-info ,(asm-fpsel-bool (setcc-cc op #f)) ,z ,x ,y))]
+         [(and (eqv? uv (constant sfalse)) (eqv? vv (constant strue)))
+          `(set! ,(make-live-info) ,z
+             (asm ,null-info ,(asm-fpsel-bool (setcc-cc op #t)) ,z ,x ,y))]
+         [else
+          (let ([ut (make-tmp 'u)])
+            (seq
+              `(set! ,(make-live-info) ,ut ,u)
+              `(set! ,(make-live-info) ,z
+                 (asm ,null-info
+                      ,(asm-fpsel-imms (case op
+                                         [(fpsel<) #x07]
+                                         [(fpsel<=) #x03]
+                                         [(fpsel=) #x04]
+                                         [(fpsel>) #x02]
+                                         [(fpsel>=) #x06]
+                                         [else ($oops 'fpsel "unsupported ~s" op)]))
+                      ,z ,x ,y ,ut ,v))))]))]
     [(op (z ur) (x fpur) (y fpur) (u ur) (v ur))
      `(set! ,(make-live-info) ,z
         (asm ,null-info
@@ -515,20 +605,8 @@
                                 [(fpsel>=) #x06]  ; cmovbe
                                 [else ($oops 'fpsel "unsupported ~s" op)]))
              ,z ,x ,y ,u ,v))]
-    [(op (z ur) (x fpur) (y fpur) (it imm) (ie imm))
-     (let ([u (make-tmp 'u)])
-       (seq
-         `(set! ,(make-live-info) ,u ,it)
-         `(set! ,(make-live-info) ,z
-            (asm ,null-info
-                 ,(asm-fpsel-imms (case op
-                                    [(fpsel<) #x07]
-                                    [(fpsel<=) #x03]
-                                    [(fpsel=) #x04]
-                                    [(fpsel>) #x02]
-                                    [(fpsel>=) #x06]
-                                    [else ($oops 'fpsel "unsupported ~s" op)]))
-                 ,z ,x ,y ,u ,ie))))])
+
+    )
 
 
   (define-instruction value (+/ovfl +/carry) ; must set condition codes, so can't use lea
