@@ -580,8 +580,10 @@
          `(set! ,(make-live-info) ,z ,t)))]
     ; both arms immediates: #t/#f pairs take the setcc specialization
     ; (asm-fpsel-bool); anything else takes the immediate form with a
-    ; scratch for the then-value (asm-fpsel-imms).  The emitter's jp
-    ; keeps NaN at #f, the else value of every fp condition.
+    ; scratch for the then-value (asm-fpsel-imms).  On unordered
+    ; operands ucomisd sets CF=ZF=PF=1, and the setcc conditions read
+    ; the flags so that NaN selects the else value in either arm order;
+    ; only ordered equality (not generated yet) needs the emitter's jp.
     [(op (z ur) (x fpur) (y fpur) (u imm) (v imm))
      (let ([uv (imm-value u)] [vv (imm-value v)])
        (cond
@@ -2561,19 +2563,27 @@
     ; boolean-materialization specialization of the flonum select for
     ; when both selected immediates are #t/#f: ucomisd sets flags from
     ; y vs x (same reversed operand order as asm-fp-relop), then dest
-    ; = 0; jp skip over the setcc keeps NaN results at 0 (#f), as R6RS
-    ; requires; setcc dest-low; and dest = dest*8 + 6 turns 0/1 into
-    ; the boolean immediates sfalse/strue (6/14).  Past the jp the
-    ; operands are known ordered, and on ordered operands (reversed
+    ; = 0; setcc dest-low; and dest = dest*8 + 6 turns 0/1 into
+    ; the boolean immediates sfalse/strue (6/14).  cc is the setcc
+    ; condition for selecting strue, already inverted by the clause
+    ; when the then-immediate is #f.  On ordered operands (reversed
     ; order giving flags for y vs x, exactly as asm-fp-relop):
     ;   fpsel<  (e1<e2 <=> e2>e1)     seta  (CF=0 & ZF=0)
     ;   fpsel<= (e1<=e2 <=> e2>=e1)    setae (CF=0)
     ;   fpsel=  ordered equality       sete  (ZF=1)
     ;   fpsel>  (e1>e2 <=> e2<e1)      setb  (CF=1)
     ;   fpsel>= (e1>=e2 <=> e2<=e1)    setbe (CF=1 | ZF=1)
+    ; On unordered operands ucomisd sets CF=ZF=PF=1, and every
+    ; condition above already yields the else-value's bit in either
+    ; arm order, so no jp is needed: NaN takes the else value, exactly
+    ; as the source branch does.  Only sete (and its invert setne)
+    ; misfire on unordered ZF=1, so the equality condition keeps a jp
+    ; pinning NaN at 0 (#f), correct for the forward form; equality
+    ; selects are not generated yet (see pred->fpsel), and the reverse
+    ; equality form must not reach this emitter until the skip targets
+    ; the strue materialization.
     ; ucomisd reads x and y before anything writes dest, so any
-    ; aliasing is safe.  cc is the setcc condition, already inverted
-    ; by the clause when the then-value is #f.
+    ; aliasing is safe.
     (lambda (cc)
       (rec asm-fpsel-bool-internal
         (lambda (code* dest self x y)
@@ -2585,7 +2595,9 @@
                    [setcc-bytes (if (fx>= rn 4)
                                     (list (fxlogor #x40 (fxsrl rn 3)) #x0F cc (fxlogor #xC0 rm))
                                     (list #x0F cc (fxlogor #xC0 rm)))]
-                   [tail-bytes (append (list #x7A (length setcc-bytes))  ; jp skip over the setcc
+                   [tail-bytes (append (if (eq? cc #x04) ; jp keeps ordered equality NaN-safe
+                                           (list #x7A (length setcc-bytes))
+                                           '())
                                  setcc-bytes
                                  (list w #xC1 (fxlogor #xE0 rm) 3      ; shl dest, 3
                                        w #x83 (fxlogor #xC0 rm) 6))])   ; add dest, 6
