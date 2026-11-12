@@ -470,6 +470,25 @@
          (eqv? (sel +nan.0 +nan.0) 2)))
   (let ([sel (lambda (x y) (if (fl< x y) #t #f))])
     (and (eq? (sel 1.0 2.0) #t) (eq? (sel 2.0 1.0) #f) (eq? (sel +nan.0 2.0) #f)))
+  ; boundary operands: signed zeros compare equal (else path, ZF=1),
+  ; infinities sit at the value-range ends, and a NaN operand takes the
+  ; else value against an infinity exactly as against a finite number
+  (let ([sel (lambda (x y) (if (fl< x y) #t #f))])
+    (and (eq? (sel -0.0 0.0) #f) (eq? (sel 0.0 -0.0) #f)
+         (eq? (sel -inf.0 +inf.0) #t) (eq? (sel +inf.0 -inf.0) #f)
+         (eq? (sel +inf.0 +inf.0) #f) (eq? (sel -inf.0 -inf.0) #f)
+         (eq? (sel +nan.0 +inf.0) #f) (eq? (sel -inf.0 +nan.0) #f)))
+  (let ([sel (lambda (x y) (if (fl< x y) 10 20))])
+    (and (eqv? (sel -0.0 0.0) 20) (eqv? (sel 0.0 -0.0) 20)
+         (eqv? (sel -inf.0 +inf.0) 10) (eqv? (sel +inf.0 -inf.0) 20)
+         (eqv? (sel +nan.0 -inf.0) 20) (eqv? (sel +inf.0 +nan.0) 20)))
+  ; fixnum-extreme compare operands on the select conditions
+  (let ([sel (lambda (x y) (if (fx< x y) 10 20))])
+    (and (eqv? (sel (most-negative-fixnum) 0) 10)
+         (eqv? (sel 0 (most-negative-fixnum)) 20)
+         (eqv? (sel (most-negative-fixnum) (most-positive-fixnum)) 10)
+         (eqv? (sel (most-positive-fixnum) (most-negative-fixnum)) 20)
+         (eqv? (sel (most-positive-fixnum) (most-positive-fixnum)) 20)))
   ; reverse flonum boolean selects with NaN, compiled with cp0
   ; bypassed: the opaque (#%$value (values ...)) arms keep cp0 from
   ; normalizing the if, so the arm order reaches the setcc
