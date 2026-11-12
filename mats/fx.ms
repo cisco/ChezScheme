@@ -470,6 +470,28 @@
          (eqv? (sel +nan.0 +nan.0) 2)))
   (let ([sel (lambda (x y) (if (fl< x y) #t #f))])
     (and (eq? (sel 1.0 2.0) #t) (eq? (sel 2.0 1.0) #f) (eq? (sel +nan.0 2.0) #f)))
+  ; reverse flonum boolean selects with NaN, compiled with cp0
+  ; bypassed: the opaque (#%$value (values ...)) arms keep cp0 from
+  ; normalizing the if, so the arm order reaches the setcc
+  ; materialization; NaN takes the else value, exactly as the branch
+  (let ([sel (parameterize ([optimize-level 3]
+                            [run-cp0 (lambda (cp0 x) x)])
+               (compile '(lambda (x y)
+                           (let ([r (if (fl< x y)
+                                        (#%$value (values #f))
+                                        (#%$value (values #t)))])
+                             r))))])
+    (and (eq? (sel 1.0 2.0) #f) (eq? (sel 2.0 1.0) #t) (eq? (sel 2.0 2.0) #t)
+         (eq? (sel +nan.0 2.0) #t) (eq? (sel 2.0 +nan.0) #t)))
+  (let ([sel (parameterize ([optimize-level 3]
+                            [run-cp0 (lambda (cp0 x) x)])
+               (compile '(lambda (x y)
+                           (let ([r (if (fl< x y)
+                                        (#%$value (values #t))
+                                        (#%$value (values #f)))])
+                             r))))])
+    (and (eq? (sel 1.0 2.0) #t) (eq? (sel 2.0 1.0) #f) (eq? (sel 2.0 2.0) #f)
+         (eq? (sel +nan.0 2.0) #f) (eq? (sel 2.0 +nan.0) #f)))
   ; fp-conditioned selects between variable values exercise the fpsel
   ; register form; NaN in either operand takes the else value, as the
   ; source branch does
