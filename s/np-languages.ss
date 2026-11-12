@@ -769,7 +769,6 @@
   (declare-primitive iselu< value #t) ; x86_64 only (so we don't use it elsewhere)
   (declare-primitive fpsel< value #t) ; x86_64 only (so we don't use it elsewhere)
   (declare-primitive fpsel<= value #t) ; x86_64 only (so we don't use it elsewhere)
-  (declare-primitive fpsel= value #t) ; x86_64 only (so we don't use it elsewhere)
   (declare-primitive fpsel> value #t) ; x86_64 only (so we don't use it elsewhere)
   (declare-primitive fpsel>= value #t) ; x86_64 only (so we don't use it elsewhere)
   (declare-primitive fpround value #t) ; x86_64 and arm64 only (so we don't use it elsewhere)

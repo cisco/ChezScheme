@@ -499,7 +499,7 @@
                                [else ($oops 'isel "unsupported ~s" op)]))
              ,z ,x ,y ,u ,v))])
 
-  (define-instruction value (fpsel< fpsel<= fpsel= fpsel> fpsel>=)
+  (define-instruction value (fpsel< fpsel<= fpsel> fpsel>=)
     (definitions
       (define imm-value
         (lambda (t)
@@ -530,7 +530,6 @@
           (let ([cc (case op
                       [(fpsel<) #x07]  ; seta
                       [(fpsel<=) #x03] ; setae
-                      [(fpsel=) #x04]  ; sete
                       [(fpsel>) #x02]  ; setb
                       [(fpsel>=) #x06] ; setbe
                       [else ($oops 'fpsel "unsupported ~s" op)])])
@@ -538,11 +537,14 @@
     ; branchless select on a flonum compare; see asm-fpsel-regs,
     ; asm-fpsel-imms, and asm-fpsel-bool.  Same clause structure as
     ; the fixnum isel instructions.  ucomisd's flags drive cmovcc
-    ; directly; on unordered operands every condition here reads at
-    ; least one of the set flags as false, so a NaN compare selects
-    ; the else value, exactly as the source branch does, except
-    ; equality whose cmove would fire on the unordered ZF=1 and so
-    ; gets an explicit jp over the cmov in both forms.  ucomisd reads
+    ; directly; on unordered operands every condition reads at least
+    ; one of the set flags as false, so a NaN compare selects the
+    ; else value, exactly as the source branch does.  Equality has
+    ; no select in the family at all: its cmov would fire on the
+    ; unordered ZF=1 and the compensating skip proved fragile under
+    ; register coalescing, so %fpsel= was dropped (and removed from
+    ; np-languages) until the skip can be computed from the emitted
+    ; code; equality selects keep the branchy form.  ucomisd reads
     ; x and y before anything writes z, so aliasing with the compare
     ; operands is safe; the caller declines the one unsafe register
     ; case (destination is the then-value).  The memory clauses are
@@ -557,7 +559,6 @@
                  ,(asm-fpsel-imms (case op
                                     [(fpsel<) #x07]
                                     [(fpsel<=) #x03]
-                                    [(fpsel=) #x04]
                                     [(fpsel>) #x02]
                                     [(fpsel>=) #x06]
                                     [else ($oops 'fpsel "unsupported ~s" op)]))
@@ -572,7 +573,6 @@
                  ,(asm-fpsel-regs (case op
                                 [(fpsel<) #x07]   ; cmova
                                 [(fpsel<=) #x03]  ; cmovae
-                                [(fpsel=) #x04]   ; cmove (with jp)
                                 [(fpsel>) #x02]   ; cmovb
                                 [(fpsel>=) #x06]  ; cmovbe
                                 [else ($oops 'fpsel "unsupported ~s" op)]))
@@ -583,7 +583,7 @@
     ; scratch for the then-value (asm-fpsel-imms).  On unordered
     ; operands ucomisd sets CF=ZF=PF=1, and the setcc conditions read
     ; the flags so that NaN selects the else value in either arm order;
-    ; only ordered equality (not generated yet) needs the emitter's jp.
+    ; no jp is needed for any condition the family generates.
     [(op (z ur) (x fpur) (y fpur) (u imm) (v imm))
      (let ([uv (imm-value u)] [vv (imm-value v)])
        (cond
@@ -602,7 +602,6 @@
                       ,(asm-fpsel-imms (case op
                                          [(fpsel<) #x07]
                                          [(fpsel<=) #x03]
-                                         [(fpsel=) #x04]
                                          [(fpsel>) #x02]
                                          [(fpsel>=) #x06]
                                          [else ($oops 'fpsel "unsupported ~s" op)]))
@@ -613,7 +612,6 @@
              ,(asm-fpsel-regs (case op
                                 [(fpsel<) #x07]   ; cmova
                                 [(fpsel<=) #x03]  ; cmovae
-                                [(fpsel=) #x04]   ; cmove (with jp)
                                 [(fpsel>) #x02]   ; cmovb
                                 [(fpsel>=) #x06]  ; cmovbe
                                 [else ($oops 'fpsel "unsupported ~s" op)]))
@@ -2511,23 +2509,16 @@
                       code* tail-bytes))))))))))
 
   (define asm-fpsel-regs
+    ; cc is never the equality condition: %fpsel= was dropped from
+    ; the family because its unordered escape could not be made
+    ; robust (see the fpsel clause comments), so no equality case
+    ; appears below and no jp is emitted.
     (lambda (cc)
       (rec asm-fpsel-regs-internal
         (lambda (code* dest self x y u v)
           (Trivit (dest self x y u v)
             (safe-assert (equal? self dest))
             (cond
-              [(and (eq? cc #x04) (equal? dest u))
-               (let ([movlen (if (or (fx>= (ax-ea-reg-code v) 8)
-                                     (fx>= (ax-ea-reg-code dest) 8))
-                                 4 3)])
-                 (emit sse.ucomisd x y
-                   (emit-bytes
-                     (cmov-op 'fpsel 'quad (invert-cc cc) v dest
-                       (emit-bytes
-                         (emit mov v dest code*)
-                         (list #xEB movlen)))
-                     (list #x7A 6))))]
               [(equal? dest u)
                (emit sse.ucomisd x y
                  (cmov-op 'fpsel 'quad (invert-cc cc) v dest code*))]
@@ -2537,9 +2528,7 @@
               [else
                (emit sse.ucomisd x y
                  (emit mov v dest
-                   (emit-bytes
-                     (cmov-op 'fpsel 'quad cc u dest code*)
-                     (if (eq? cc #x04) (list #x7A 4) '()))))]))))))
+                   (cmov-op 'fpsel 'quad cc u dest code*)))]))))))
 
   (define-syntax emit-bytes
     (syntax-rules ()
@@ -2548,6 +2537,9 @@
          code* bytes)]))
 
   (define asm-fpsel-imms
+    ; cc is never the equality condition (see asm-fpsel-regs), so no
+    ; unordered jp is needed: every generated condition already yields
+    ; the else value's bit on unordered operands.
     (lambda (cc)
       (rec asm-fpsel-imms-internal
         (lambda (code* dest self x y u ie)
@@ -2555,9 +2547,7 @@
             (safe-assert (equal? self dest))
             (emit sse.ucomisd x y
               (emit movi ie dest
-                (emit-bytes
-                  (cmov-op 'fpsel 'quad cc u dest code*)
-                  (if (eq? cc #x04) (list #x7A 4) '())))))))))
+                (cmov-op 'fpsel 'quad cc u dest code*))))))))
 
   (define asm-fpsel-bool
     ; boolean-materialization specialization of the flonum select for
@@ -2570,18 +2560,15 @@
     ; order giving flags for y vs x, exactly as asm-fp-relop):
     ;   fpsel<  (e1<e2 <=> e2>e1)     seta  (CF=0 & ZF=0)
     ;   fpsel<= (e1<=e2 <=> e2>=e1)    setae (CF=0)
-    ;   fpsel=  ordered equality       sete  (ZF=1)
     ;   fpsel>  (e1>e2 <=> e2<e1)      setb  (CF=1)
     ;   fpsel>= (e1>=e2 <=> e2<=e1)    setbe (CF=1 | ZF=1)
     ; On unordered operands ucomisd sets CF=ZF=PF=1, and every
     ; condition above already yields the else-value's bit in either
-    ; arm order, so no jp is needed: NaN takes the else value, exactly
-    ; as the source branch does.  Only sete (and its invert setne)
-    ; misfire on unordered ZF=1, so the equality condition keeps a jp
-    ; pinning NaN at 0 (#f), correct for the forward form; equality
-    ; selects are not generated yet (see pred->fpsel), and the reverse
-    ; equality form must not reach this emitter until the skip targets
-    ; the strue materialization.
+    ; arm order, so no jp is emitted: NaN takes the else value, exactly
+    ; as the source branch does.  Equality has no select in the family
+    ; at all; if one is ever added, the setcc materialization cannot
+    ; serve it in both arm orders (unordered ZF=1 aliases ordered-
+    ; equal) and needs a different sequence.
     ; ucomisd reads x and y before anything writes dest, so any
     ; aliasing is safe.
     (lambda (cc)
@@ -2595,10 +2582,7 @@
                    [setcc-bytes (if (fx>= rn 4)
                                     (list (fxlogor #x40 (fxsrl rn 3)) #x0F cc (fxlogor #xC0 rm))
                                     (list #x0F cc (fxlogor #xC0 rm)))]
-                   [tail-bytes (append (if (eq? cc #x04) ; jp keeps ordered equality NaN-safe
-                                           (list #x7A (length setcc-bytes))
-                                           '())
-                                 setcc-bytes
+                   [tail-bytes (append setcc-bytes
                                  (list w #xC1 (fxlogor #xE0 rm) 3      ; shl dest, 3
                                        w #x83 (fxlogor #xC0 rm) 6))])   ; add dest, 6
               (emit sse.ucomisd x y

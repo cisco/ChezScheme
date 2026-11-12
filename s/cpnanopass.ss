@@ -3761,11 +3761,12 @@
         ; branchless-select counterparts of the fp relops, or #f for
         ; any other predicate.  fl>? and fl>=? are swapped onto fp</fp<=
         ; by cpprim, so the only fp pred primitives that can appear here
-        ; are fp<, fp<=, fp=.  fp= is excluded for now: its cmov would
-        ; fire on the unordered ZF=1, and the compensating jp's offset
-        ; has proven fragile under register coalescing, so equality
-        ; selects keep the branchy form until the skip is computed from
-        ; the emitted code rather than a length guess.
+        ; are fp<, fp<=.  fp= has no select at all: its cmov would fire
+        ; on the unordered ZF=1, and the compensating jp's offset has
+        ; proven fragile under register coalescing, so %fpsel= was
+        ; dropped from the instruction family (and from np-languages);
+        ; equality selects keep the branchy form until the skip can be
+        ; computed from the emitted code rather than a length guess.
         (define pred->fpsel
           (constant-case setcc-instruction
             [(#t)
