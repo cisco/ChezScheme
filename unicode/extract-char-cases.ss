@@ -228,10 +228,9 @@
 (define (build-grapheme-step-table ls)
   ;; We encode the state of finding cluster boundaries as a fixnum:
   ;; - Low bits are the previous character's grapheme-break property plus one
-  ;; - Two bits for the GB9c Indic_Conjunct_Break match state:
+  ;; - One bit for the GB9c Indic_Conjunct_Break match state:
   ;;   - 0: nothing
-  ;;   - 1: Consonant Extend*
-  ;;   - 2: Consonant Extend* Linker (Extend|Linker)*
+  ;;   - 1: Linker (Extend|Linker)*
   ;; - Two bits for the GB11 Extended_Pictographic match state:
   ;;   - 0: nothing
   ;;   - 1: Extended_Pictographic Extend*
@@ -257,11 +256,10 @@
   ;; "flush" the state by consuming that last grapheme cluster.
 
   (define grapheme-cluster-break-bits (bitwise-length (vector-length grapheme-cluster-break-props)))
-  (define state-mask (sub1 (fxsll 1 (fx+ grapheme-cluster-break-bits 4))))
+  (define state-mask (sub1 (fxsll 1 (fx+ grapheme-cluster-break-bits 3))))
 
   (define GB9c-none 0)
   (define GB9c-one 1)
-  (define GB9c-two 2)
 
   (define GB11-none 0)
   (define GB11-one 1)
@@ -272,13 +270,13 @@
   (define (encode-state prop-n GB9c-state GB11-state)
     (fxior (add1 prop-n)
            (fxsll GB9c-state grapheme-cluster-break-bits)
-           (fxsll GB11-state (fx+ grapheme-cluster-break-bits 2))))
+           (fxsll GB11-state (fx+ grapheme-cluster-break-bits 1))))
 
   (define (decode-state state)
     (values
      (sub1 (fxand state (sub1 (fxsll 1 grapheme-cluster-break-bits))))
-     (fxand (fxsrl state grapheme-cluster-break-bits) #b11)
-     (fxsrl state (fx+ grapheme-cluster-break-bits 2))))
+     (fxand (fxsrl state grapheme-cluster-break-bits) #b1)
+     (fxsrl state (fx+ grapheme-cluster-break-bits 1))))
 
   (define initial-state 0)
 
@@ -286,20 +284,11 @@
     (encode-state
      prop-n
      (cond
-      [(fx= GB9c-state GB9c-none)
-       (cond
-        [(eq? incb-type 'Consonant) GB9c-one]
-        [else GB9c-none])]
-      [(fx= GB9c-state GB9c-one)        ; Consonant Extend*
-       (cond
-        [(eq? incb-type 'Linker) GB9c-two]
-        [(eq? incb-type 'None) GB9c-none]
-        [else GB9c-one])]
-      [else                             ; Consonant Extend* Linker (Extend|Linker)*
-       (cond
-        [(eq? incb-type 'Consonant) GB9c-one]
-        [(eq? incb-type 'None) GB9c-none]
-        [else GB9c-two])])
+      [(eq? incb-type 'Linker) GB9c-one]
+      [(and (fx= GB9c-state GB9c-one)   ; Linker (Extend|Linker)*
+            (eq? incb-type 'Extend))
+       GB9c-one]
+      [else GB9c-none])
      (cond
       [(fx= GB11-state GB11-none)
        (cond
@@ -387,7 +376,7 @@
          [(eq? prev 'Prepend)
           (values #f (next-state))]
          ;; GB9c
-         [(and (fx= GB9c-state GB9c-two)
+         [(and (fx= GB9c-state GB9c-one)
                (eq? incb-type 'Consonant))
           (values #f (next-state))]
          ;; GB11

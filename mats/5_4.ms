@@ -1336,7 +1336,7 @@
       (if (not (= n (length chars)))
           (begin (display " but expected ")
                  (write n)
-                 (display " in Unicode 17.0.0")))
+                 (display " in Unicode 18.0.0")))
       (newline)
       0)
     (define-syntax test
@@ -1364,6 +1364,8 @@
    ; #x890 #x891 #x8E2 #x2E55 #x2E56 #x2E57 #x2E58 #x2E59 #x2E5A
    ; #x2E5B #x2E5C #x110CD #x13430 #x13431 #x13432 #x13433 #x13434
    ; #x13435 #x13436 #x13437 #x13438
+   ; Unicode 18.0 adds:
+   ; #x2E62 #x2E63
     (define excluded-code-points-above-127
       '(
 
@@ -1403,6 +1405,7 @@
      #x2E28 #x2E29                                           ; Unicode 5.1
      #x2E42                                                  ; Unicode 7.0
      #x2E55 #x2E56 #x2E57 #x2E58 #x2E59 #x2E5A #x2E5B #x2E5C ; Unicode 14.0
+     #x2E62 #x2E63                                           ; Unicode 18.0
      #x3000
      #x3008 #x3009 #x300A #x300B #x300C #x300D #x300E #x300F
      #x3010 #x3011 #x3014 #x3015 #x3016 #x3017 #x3018 #x3019
@@ -1524,11 +1527,11 @@
         => 0)
 
   (test alphabetic?
-        (report (filter-all-chars char-alphabetic?) 147421)
+        (report (filter-all-chars char-alphabetic?) 160254)
         => 0)
 
   (test numeric?
-        (report (filter-all-chars char-numeric?) 1940)
+        (report (filter-all-chars char-numeric?) 2263)
         => 0)
 
   (test whitespace?
@@ -1536,11 +1539,11 @@
         => 0)
 
   (test upper-case?
-        (report (filter-all-chars char-upper-case?) 2006)
+        (report (filter-all-chars char-upper-case?) 2026)
         => 0)
 
   (test lower-case?
-        (report (filter-all-chars char-lower-case?) 2595)
+        (report (filter-all-chars char-lower-case?) 2740)
         => 0)
 
   (test title-case?
