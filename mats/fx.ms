@@ -457,10 +457,20 @@
   ; let-bound select result
   (let ([f (lambda (x y c d) (let ([a (if (fx< x y) c d)]) (fx+ a 1)))])
     (and (eqv? (f 1 2 10 20) 11) (eqv? (f 2 1 10 20) 21)))
-  ; destination-is-then-value declines the register form and must
-  ; still produce the right value
+  ; destination-is-then-value: the register emitter takes the
+  ; then-value already in the destination with the inverted condition
   (let ([f (lambda (x y) (if (fx< x y) (set! x x) (set! x 5)) x)])
     (and (eqv? (f 1 2) 1) (eqv? (f 2 1) 5) (eqv? (f 2 2) 5)))
+  ; min/max shapes: both arms are the destination and the other
+  ; compare operand, in both orders, on every signed condition
+  (let ([f (lambda (x y) (if (fx< x y) (set! x x) (set! x y)) x)])
+    (and (eqv? (f 1 2) 1) (eqv? (f 2 1) 1) (eqv? (f 2 2) 2)))
+  (let ([f (lambda (x y) (if (fx< x y) (set! x y) (set! x x)) x)])
+    (and (eqv? (f 1 2) 2) (eqv? (f 2 1) 2) (eqv? (f 2 2) 2)))
+  (let ([f (lambda (x y) (if (fx> x y) (set! x x) (set! x y)) x)])
+    (and (eqv? (f 1 2) 2) (eqv? (f 2 1) 2) (eqv? (f 2 2) 2)))
+  (let ([f (lambda (x y) (if (fx<= x y) (set! x x) (set! x y)) x)])
+    (and (eqv? (f 1 2) 1) (eqv? (f 2 1) 1) (eqv? (f 2 2) 2)))
   ; flonum-compare selects, NaN taking the else value like the branch
   (let ([sel (lambda (x y) (if (fl< x y) 1 2))])
     (and (eqv? (sel 1.0 2.0) 1) (eqv? (sel 2.0 1.0) 2) (eqv? (sel 2.0 2.0) 2)
@@ -565,10 +575,16 @@
   (let ([f (lambda (x y b c) (let ([a 7]) (if (fl< x y) (set! a b) (set! a c)) (fx+ a (fx+ b c))))])
     (and (eqv? (f 1.0 2.0 10 20) 40) (eqv? (f 2.0 1.0 10 20) 50)
          (eqv? (f 2.0 2.0 10 20) 50) (eqv? (f +nan.0 2.0 10 20) 50)))
-  ; destination-is-then-value declines the register form and must
-  ; still produce the right value
+  ; destination-is-then-value: the register emitter takes the
+  ; then-value already in the destination with the inverted condition
   (let ([f (lambda (x y c) (let ([a 7]) (if (fl< x y) (set! a a) (set! a c)) (fx+ a c)))])
     (and (eqv? (f 1.0 2.0 3) 10) (eqv? (f 2.0 1.0 3) 6) (eqv? (f +nan.0 1.0 3) 6)))
+  ; flonum min/max shapes; NaN takes the else arm, exactly as the
+  ; source branch does
+  (let ([f (lambda (x y) (if (fl< x y) (set! x x) (set! x y)) x)])
+    (and (eqv? (f 1.0 2.0) 1.0) (eqv? (f 2.0 1.0) 1.0) (eqv? (f +nan.0 2.0) 2.0)))
+  (let ([f (lambda (x y) (if (fl< x y) (set! x y) (set! x x)) x)])
+    (and (eqv? (f 1.0 2.0) 2.0) (eqv? (f 2.0 1.0) 2.0) (eqv? (f +nan.0 2.0) 2.0)))
   ; destination-is-else-value keeps the destination on the else path
   (let ([f (lambda (x y b) (let ([a 7]) (if (fl< x y) (set! a b) (set! a a)) (fx+ a b)))])
     (and (eqv? (f 1.0 2.0 3) 6) (eqv? (f 2.0 1.0 3) 10) (eqv? (f +nan.0 1.0 3) 10)))

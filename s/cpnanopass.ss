@@ -3857,7 +3857,6 @@
                      (and sel
                           (let-values ([(pfx op1 op2) (select-operands-mixed a1 a2)])
                             (and pfx
-                                 (not (and (uvar? op1) (eq? op1 x)))
                                  (with-output-language (L11 Effect)
                                    `(seq ,pfx (set! ,x (inline ,null-info ,sel ,t* ... ,op1 ,op2))))))))))))
         ; Unwrap a processed Pred of the shape (seq e ... p) when it
