@@ -638,6 +638,73 @@
           (if (f) (set! n 10) (set! n 20)) n) 20)
  )
 
+(mat fx-compare-safe-op-select
+  ; selects whose condition is a safe fixnum compare on arguments of
+  ; unknown type: at optimize levels below 3 the compare arrives
+  ; wrapped in the fixnum-check/error-call shape (if (if check cmp
+  ; cold) t1 t2), and the wrapper is flattened so the hot path is
+  ; still one cmp + cmovcc; the cold path keeps raising for non-fixnum
+  ; arguments (error checks are ignored at level 3, where the compare
+  ; is unchecked and this reduces to the value-position cases above)
+  (let ([f (lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x)])
+    (and (eqv? (f 1 2) 10) (eqv? (f 2 1) 20) (eqv? (f 2 2) 20)
+         (eqv? (f (most-negative-fixnum) (most-positive-fixnum)) 10)
+         (eqv? (f (most-positive-fixnum) (most-negative-fixnum)) 20)))
+  (error? (f 'a 1))
+  (error? (f 1 'b))
+  (error? ((lambda (x y) (if (fx< x y) 10 20)) 'a 1))
+  ; tail position
+  (let ([g (lambda (x y) (if (fx< x y) 10 20))])
+    (and (eqv? (g 1 2) 10) (eqv? (g 2 1) 20) (eqv? (g 2 2) 20)
+         (eqv? (g (most-negative-fixnum) (most-positive-fixnum)) 10)))
+  ; mixed uvar/immediate arms
+  (let ([h (lambda (x y a b) (if (fx< x y) (set! a 5) (set! a b)) a)])
+    (and (eqv? (h 1 2 'c 33) 5) (eqv? (h 2 1 'c 33) 33)))
+  ; under an operator: value position through a temp
+  (let ([k (lambda (x y) (fx+ (if (fx< x y) 1 2) 3))])
+    (and (eqv? (k 1 2) 4) (eqv? (k 2 1) 5) (eqv? (k 2 2) 5)))
+  ; all five signed relops through the wrapper, tail position
+  (let ([sel< (lambda (x y) (if (fx< x y) 1 2))]
+        [sel<= (lambda (x y) (if (fx<= x y) 11 22))]
+        [sel= (lambda (x y) (if (fx= x y) 111 222))]
+        [sel> (lambda (x y) (if (fx> x y) 1111 2222))]
+        [sel>= (lambda (x y) (if (fx>= x y) 11111 22222))])
+    (and (eqv? (sel< 1 2) 1) (eqv? (sel< 2 2) 2)
+         (eqv? (sel<= 1 2) 11) (eqv? (sel<= 2 2) 11)
+         (eqv? (sel= 2 2) 111) (eqv? (sel= 1 2) 222)
+         (eqv? (sel> 2 1) 1111) (eqv? (sel> 2 2) 2222)
+         (eqv? (sel>= 2 2) 11111) (eqv? (sel>= 1 2) 22222)))
+  ; unsigned compare through the wrapper
+  (let ([selu (lambda (x y) (if (#%$fxu< x y) 1 2))])
+    (and (eqv? (selu 1 2) 1) (eqv? (selu 2 1) 2)
+         (eqv? (selu -1 2) 2) (eqv? (selu 2 -1) 1)))
+  ; flonum compare through the wrapper, effect and tail position;
+  ; NaN takes the else value, exactly as the branchy form
+  (let ([fl (lambda (x y) (if (fl< x y) (set! x 1.5) (set! x 2.5)) x)])
+    (and (eqv? (fl 1.0 2.0) 1.5) (eqv? (fl 2.0 1.0) 2.5) (eqv? (fl 1.0 1.0) 2.5)
+         (eqv? (fl +nan.0 1.0) 2.5) (eqv? (fl 1.0 +nan.0) 2.5)))
+  (let ([fl (lambda (x y) (if (fl< x y) 10.5 20.5))])
+    (and (eqv? (fl 1.0 2.0) 10.5) (eqv? (fl 2.0 1.0) 20.5)
+         (eqv? (fl +nan.0 1.0) 20.5)))
+  (error? ((lambda (x y) (if (fl< x y) 1.5 2.5)) 'a 1.0))
+  ; single evaluation: the wrapper's check and the compare share
+  ; the argument values, so both uses must see the same value (the
+  ; counter sits in a box because mat clauses are evaled at top
+  ; level, where closures cannot capture let-bound variables)
+  (let ([count (box 0)])
+    (let ([bump (lambda (x) (set-box! count (fx+ (unbox count) 1)) x)])
+      (let ([r ((lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x)
+                (bump 1) (bump 2))])
+        (and (eqv? r 10) (eqv? (unbox count) 2)))))
+  ; the flattened form must stay correct across repeated calls
+  (let ([f (lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x)])
+    (let loop ([i 0] [ok #t])
+      (if (fx= i 100)
+          ok
+          (loop (fx+ i 1)
+                (and ok (eqv? (f i (fx+ i 1)) 10))))))
+  )
+
 (mat fx+
    (eqv? (fx+ 3 0) 3)
    (eqv? (fx+ 3 1) 4)
