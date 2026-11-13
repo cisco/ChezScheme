@@ -381,7 +381,10 @@
        ($fasl-wrf-graph x p t a?
          (lambda (x p t a?)
            (put-u8 p (constant fasl-type-code))
-           (put-u8 p subtype)
+           ;; the fasl format has one byte for the code flags; the ones
+           ;; above that byte, such as `code-flag-no-interrupt-trap`,
+           ;; matter only while compiling
+           (put-u8 p (fxlogand subtype #xff))
            (put-uptr p free)
            (put-uptr p size)
            ($fasl-out name p t a?)

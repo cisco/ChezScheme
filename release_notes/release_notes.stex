@@ -3080,6 +3080,16 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair compiling a \scheme{__disable_interrupts} callable to a file (10.5.0)}
+
+When Chez Scheme itself was compiled at an optimize level below 3,
+compiling a \scheme{foreign-callable} with the
+\scheme{__disable_interrupts} convention to a file failed with an
+exception from \scheme{put-u8}, because the callable's code-object
+flags do not fit in the byte that the fasl format provides. Only the
+low byte is now written; the other flags matter only during
+compilation.
+
 \subsection{Repair duplicate checking in \scheme{import} (10.5.0)}
 
 Repair checking of duplicate names on \scheme{import} in the case of
