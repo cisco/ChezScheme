@@ -3799,10 +3799,29 @@
               [else (and (uvar? t) t)])))
         ; both select operands must be of one kind: two immediates use
         ; the immediate instruction clause, two uvars the register
-        ; clause; a mixed pair matches no clause
+        ; clause.  A mixed pair (one uvar, one immediate) is accepted by
+        ; coercing the immediate into a fresh scratch, the same preset
+        ; the immediate clause pays for its then-value; the register
+        ; clause then handles the pair.
         (define select-operands-ok?
           (lambda (a1 a2)
             (or (and (uvar? a1) (uvar? a2)) (and (not (uvar? a1)) (not (uvar? a2))))))
+        ; Coerce a mixed uvar/immediate operand pair by binding the
+        ; immediate to a fresh scratch, returning (values prefix-effect
+        ; op1 op2) with both ops uvars; same-kind pairs pass through
+        ; with no prefix.  #f when the pair is not coercible.
+        (define select-operands-mixed
+          (lambda (a1 a2)
+            (cond
+              [(select-operands-ok? a1 a2)
+               (values (with-output-language (L11 Effect) `(nop)) a1 a2)]
+              [(uvar? a1)
+               (let ([t (make-tmp 's)])
+                 (values (with-output-language (L11 Effect) `(set! ,t ,a2)) a1 t))]
+              [(uvar? a2)
+               (let ([t (make-tmp 's)])
+                 (values (with-output-language (L11 Effect) `(set! ,t ,a1)) t a2))]
+              [else (values #f #f #f)])))
         ; Convert a processed (if (inline pred ...) (set! x t1) (set! x
         ; t2)) with t1/t2 select operands into one set! of a branchless
         ; value instruction, or #f when the shape or predicate has no
@@ -3836,10 +3855,11 @@
                           [a2 (cadr d2)]
                           [sel (or (pred->isel prim) (pred->fpsel prim))])
                      (and sel
-                          (select-operands-ok? a1 a2)
-                          (not (and (uvar? a1) (eq? a1 x)))
-                          (with-output-language (L11 Effect)
-                            `(set! ,x (inline ,null-info ,sel ,t* ... ,a1 ,a2)))))))))
+                          (let-values ([(pfx op1 op2) (select-operands-mixed a1 a2)])
+                            (and pfx
+                                 (not (and (uvar? op1) (eq? op1 x)))
+                                 (with-output-language (L11 Effect)
+                                   `(seq ,pfx (set! ,x (inline ,null-info ,sel ,t* ... ,op1 ,op2))))))))))))
         ; Unwrap a processed Pred of the shape (seq e ... p) when it
         ; ends in a comparison with a branchless-select form, returning
         ; the prefix effects, the final comparison pred, and whether
@@ -3894,12 +3914,14 @@
                           [t* (cadr pt)]
                           [sel (or (pred->isel prim) (pred->fpsel prim))])
                      (and sel
-                          (select-operands-ok? a1 a2)
-                          (let ([w (make-tmp 'w)])
-                            (with-output-language (L11 Tail)
-                              `(seq
-                                 (set! ,w (inline ,null-info ,sel ,t* ... ,a1 ,a2))
-                                 ,w)))))))))
+                          (let-values ([(pfx op1 op2) (select-operands-mixed a1 a2)])
+                            (and pfx
+                                 (let ([w (make-tmp 'w)])
+                                   (with-output-language (L11 Tail)
+                                     `(seq ,pfx
+                                           (seq
+                                              (set! ,w (inline ,null-info ,sel ,t* ... ,op1 ,op2))
+                                              ,w))))))))))))
         (define rhs-inline
           (lambda (lvalue info prim t*)
             (with-output-language (L11 Effect)
