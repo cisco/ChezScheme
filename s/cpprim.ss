@@ -2168,6 +2168,21 @@
                            (let ([,x4 ,(build-fx logand (build-fx + x3 (build-fx srl x3 4)) #x0f0f0f0f0f0f0f0f)])
                              (let ([,x5 ,(build-fx logand (build-fx + x4 (build-fx srl x4 8)) #x00ff00ff00ff00ff)])
                                ,(build-fix (build-fx logand (build-fx srl (build-fx * x5 #x0101010101010101) 56) #x7f))))))))])]))
+          ; R6RS defines fxbit-count on a negative fixnum as
+          ; (fxnot (fxpopcount (fxnot n))).  An arithmetic shift spreads the
+          ; sign bit across the word; clearing the tag bits, which are 0 in a
+          ; fixnum, leaves a mask that is the fixnum -1 for a negative argument
+          ; and 0 otherwise.  xor-ing with the mask before and after the
+          ; popcount applies both fxnots or neither, with no branch and only
+          ; one popcount.  e must be bound, since it's used twice.
+          (define (build-fxbit-count e)
+            (let ([mask (make-tmp 'mask)])
+              `(let ([,mask ,(%inline logand
+                               ,(%inline sra ,e (immediate ,(fx- (constant ptr-bits) 1)))
+                               (immediate ,(lognot (constant mask-fixnum))))])
+                 ,(%inline logxor
+                    ,(build-popcount (%inline logxor ,e ,mask))
+                    ,mask))))
           (define-inline 3 fxpopcount
             [(e)
              (bind #f (e)
@@ -2207,7 +2222,17 @@
                           (%type-check mask-fixnum type-fixnum ,e)
                           (%inline u< ,e (immediate ,(fix #x10000))))
                         ,(build-popcount16 e)
-                        ,(build-libcall #t #f sexpr fxpopcount16 e)))]))))
+                        ,(build-libcall #t #f sexpr fxpopcount16 e)))])
+          (define-inline 3 fxbit-count
+            [(e)
+             (bind #t (e)
+               (build-fxbit-count e))])
+          (define-inline 2 fxbit-count
+            [(e)
+             (bind #t (e)
+               `(if ,(%type-check mask-fixnum type-fixnum ,e)
+                    ,(build-fxbit-count e)
+                    ,(build-libcall #t #f sexpr fxbit-count e)))]))))
     (let ()
       (define do-fxsll
         (lambda (e1 e2)
