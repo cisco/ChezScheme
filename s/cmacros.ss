@@ -3120,6 +3120,7 @@
      (fpfloor-slow #f 0 #f #t)
      (fpceiling-slow #f 0 #f #t)
      (fptruncate-slow #f 0 #f #t)
+     (fxbit-count #f 1 #t #t)
   ))
 
 (let ()

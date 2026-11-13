@@ -208,6 +208,14 @@ site into a loop form. That transformation can, in turn, aid
 floating-point unboxing (in the sense of
 Section~\ref{sec:unbox-floats}).
 
+\subsection{Inline \scheme{fxbit-count} (10.5.0)}
+
+The compiler now generates inline code for \scheme{fxbit-count}, as
+it already does for \scheme{fxpopcount}, instead of calling a library
+procedure. The inline code uses the same population-count instruction
+as \scheme{fxpopcount} when one is available, and its speed does not
+depend on the argument's sign.
+
 \subsection{Named Cost Center (10.4.0)}
 
 The procedure \scheme{make-cost-center} now
