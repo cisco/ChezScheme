@@ -523,12 +523,12 @@
   (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) x 5))])
     (and (eqv? (sel 1 2) 1) (eqv? (sel 2 1) 5) (eqv? (sel 2 2) 5)))
   (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) 10 y))])
-    (and (eqv? (sel 1 2) 10) (eqv? (sel 2 1) 2) (eqv? (sel 2 2) 2)))
+    (and (eqv? (sel 1 2) 10) (eqv? (sel 2 1) 1) (eqv? (sel 2 2) 2)))
   (let ([sel (lambda (x y) (if (fl< (fl+ x 0.0) (fl+ y 0.0)) x 5))])
     (and (eqv? (sel 1.0 2.0) 1.0) (eqv? (sel 2.0 1.0) 5)
          (eqv? (sel +nan.0 2.0) 5) (eqv? (sel 2.0 +nan.0) 5)))
   (let ([sel (lambda (x y) (if (fl< (fl+ x 0.0) (fl+ y 0.0)) 10 y))])
-    (and (eqv? (sel 1.0 2.0) 10) (eqv? (sel 2.0 1.0) 2.0)
+    (and (eqv? (sel 1.0 2.0) 10) (eqv? (sel 2.0 1.0) 1.0)
          (eqv? (sel +nan.0 2.0) 2.0)))
   ; reverse flonum boolean selects with NaN, compiled with cp0
   ; bypassed: the opaque (#%$value (values ...)) arms keep cp0 from
@@ -584,7 +584,7 @@
   (let ([f (lambda (x y) (if (fl< x y) (set! x x) (set! x y)) x)])
     (and (eqv? (f 1.0 2.0) 1.0) (eqv? (f 2.0 1.0) 1.0) (eqv? (f +nan.0 2.0) 2.0)))
   (let ([f (lambda (x y) (if (fl< x y) (set! x y) (set! x x)) x)])
-    (and (eqv? (f 1.0 2.0) 2.0) (eqv? (f 2.0 1.0) 2.0) (eqv? (f +nan.0 2.0) 2.0)))
+    (and (eqv? (f 1.0 2.0) 2.0) (eqv? (f 2.0 1.0) 2.0) (eqv? (f +nan.0 2.0) +nan.0)))
   ; destination-is-else-value keeps the destination on the else path
   (let ([f (lambda (x y b) (let ([a 7]) (if (fl< x y) (set! a b) (set! a a)) (fx+ a b)))])
     (and (eqv? (f 1.0 2.0 3) 6) (eqv? (f 2.0 1.0 3) 10) (eqv? (f +nan.0 1.0 3) 10)))
