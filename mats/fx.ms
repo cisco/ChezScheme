@@ -489,6 +489,37 @@
          (eqv? (sel (most-negative-fixnum) (most-positive-fixnum)) 10)
          (eqv? (sel (most-positive-fixnum) (most-negative-fixnum)) 20)
          (eqv? (sel (most-positive-fixnum) (most-positive-fixnum)) 20)))
+  ; the general immediate rule select(P, A, B) = B + (A-B)*b: a
+  ; power-of-two A-B takes the arithmetic form (setcc, shift, add),
+  ; a negative power-of-two difference swaps the arms with the
+  ; inverted condition, and any other difference keeps the cmov form
+  ; with a scratch; the compares are type-laundered so the unsafe
+  ; predicate reaches the conversion
+  (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) 40 8))])
+    (and (eqv? (sel 0 1) 40) (eqv? (sel 1 0) 8) (eqv? (sel 0 0) 8)))
+  (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) 8 40))])
+    (and (eqv? (sel 0 1) 8) (eqv? (sel 1 0) 40) (eqv? (sel 0 0) 40)))
+  (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) 13 6))])
+    (and (eqv? (sel 0 1) 13) (eqv? (sel 1 0) 6) (eqv? (sel 0 0) 6)))
+  (let ([sel (lambda (x y) (if (fl< (fl+ x 0.0) (fl+ y 0.0)) 40 8))])
+    (and (eqv? (sel 1.0 2.0) 40) (eqv? (sel 2.0 1.0) 8) (eqv? (sel 2.0 2.0) 8)
+         (eqv? (sel +nan.0 2.0) 8) (eqv? (sel 2.0 +nan.0) 8)))
+  (let ([sel (lambda (x y) (if (fl< (fl+ x 0.0) (fl+ y 0.0)) 8 40))])
+    (and (eqv? (sel 1.0 2.0) 8) (eqv? (sel 2.0 1.0) 40) (eqv? (sel 2.0 2.0) 40)
+         (eqv? (sel +nan.0 2.0) 40)))
+  ; mixed uvar/immediate arms: the immediate binds to a scratch and
+  ; the register form selects; both arm orders, on both condition
+  ; families
+  (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) x 5))])
+    (and (eqv? (sel 1 2) 1) (eqv? (sel 2 1) 5) (eqv? (sel 2 2) 5)))
+  (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) 10 y))])
+    (and (eqv? (sel 1 2) 10) (eqv? (sel 2 1) 2) (eqv? (sel 2 2) 2)))
+  (let ([sel (lambda (x y) (if (fl< (fl+ x 0.0) (fl+ y 0.0)) x 5))])
+    (and (eqv? (sel 1.0 2.0) 1.0) (eqv? (sel 2.0 1.0) 5)
+         (eqv? (sel +nan.0 2.0) 5) (eqv? (sel 2.0 +nan.0) 5)))
+  (let ([sel (lambda (x y) (if (fl< (fl+ x 0.0) (fl+ y 0.0)) 10 y))])
+    (and (eqv? (sel 1.0 2.0) 10) (eqv? (sel 2.0 1.0) 2.0)
+         (eqv? (sel +nan.0 2.0) 2.0)))
   ; reverse flonum boolean selects with NaN, compiled with cp0
   ; bypassed: the opaque (#%$value (values ...)) arms keep cp0 from
   ; normalizing the if, so the arm order reaches the setcc
