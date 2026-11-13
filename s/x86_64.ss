@@ -418,8 +418,9 @@
     ; two immediates, with a setcc specialization when both are the
     ; boolean immediates.  Every form emits the compare before any
     ; write, so a destination that aliases a compare operand still
-    ; compares the original operand values; the caller declines the
-    ; one unsafe register case (destination is the then-value).
+    ; compares the original operand values; the register form handles
+    ; the destination-is-then-value case with the inverted condition
+    ; and no preset, so every aliasing case is safe (asm-isel-regs).
     ; The memory clauses are listed first: the ur predicate accepts
     ; memory destinations, and letting a ur clause see them would
     ; route the store through an instruction-selection temporary
