@@ -3888,6 +3888,94 @@
                              #t)
                      (values #f #f #f))]
                 [else (values #f #f #f)]))))
+        ; Recognize the safe-operation wrapper shape
+        ;   (if (if TEST (inline sel-pred ...) FALSEP) t1 t2)
+        ; produced when a safe fixnum/flonum compare is inlined in test
+        ; position, where the caller reassociates by the rule
+        ;   (if (if test cmp fp) t1 t2)
+        ;     => (if test (if cmp t1 t2) (if fp t1 t2))
+        ; This is sound for any false path: fp's truthiness feeds the
+        ; same arm choice, so no assumption that the false-path call
+        ; escapes is needed.  Only the test-true arm is converted to a
+        ; branchless select; the cold arm is built by
+        ; build-flatten-else.
+        (define flatten-safe-pred
+          (lambda (p)
+            ; plain destructure only: e0 is already processed, so
+            ; invoking the Pred processor on the parts here would
+            ; re-materialize pred-primitive inlines (it is not
+            ; idempotent); cf. lift-seq-pred, which matches the same
+            ; way.
+            (nanopass-case (L11 Pred) p
+              [(if ,p0 ,p1 ,p2)
+               (nanopass-case (L11 Pred) p1
+                 [(inline ,info ,pred-prim ,t* ...)
+                  (if (or (pred->isel pred-prim) (pred->fpsel pred-prim))
+                      (values p0 p1 p2)
+                      (values #f #f #f))]
+                 [else (values #f #f #f)])]
+              [else (values #f #f #f)])))
+        ; Decompose a call-in-test-position truthiness pred (the
+        ; predicafy-rhs product) into its effect prefix and the tmp it
+        ; tests, requiring the generator's exact shape.
+        (define match-call-truthiness
+          (lambda (p)
+            (let loop ([p p] [pfx '()])
+              (nanopass-case (L11 Pred) p
+                [(seq ,e0 ,p1)
+                 (loop p1 (cons e0 pfx))]
+                [(if (inline ,info ,pred-prim ,t* ...) (false) (true))
+                 (if (and (eq? pred-prim %eq?)
+                          (fx= (length t*) 2)
+                          (uvar? (car t*)))
+                     (let ([t0 (car t*)])
+                       (nanopass-case (L11 Triv) (cadr t*)
+                         [(immediate ,imm)
+                          (if (eqv? imm (constant sfalse))
+                              (let ([effs (reverse pfx)])
+                                (if (and (pair? effs)
+                                         (nanopass-case (L11 Effect) (car (last-pair effs))
+                                           [(set! ,x ,t) (eq? x t0)]
+                                           [else #f]))
+                                    (values #t effs t0)
+                                    (values #f #f #f)))
+                              (values #f #f #f))]
+                         [else (values #f #f #f)]))
+                     (values #f #f #f))]
+                [else (values #f #f #f)]))))
+        ; Build the else arm of a flattened safe-operation wrapper: the
+        ; cold path with the original arms.  When the cold path is a
+        ; call in pred position that returns (the predicafy-rhs
+        ; product), its truthiness check picks the arm branchlessly,
+        ; exactly as the nested if did; when it escapes, or has any
+        ; other shape, it is kept whole, which is sound for any false
+        ; path: its result feeds the same arm choice through the
+        ; original pred.
+        (define build-flatten-else
+          (lambda (falsep e1 e2)
+            (let-values ([(ok? effs tmp) (match-call-truthiness falsep)])
+              (if ok?
+                  (let ([eqp (with-output-language (L11 Pred)
+                               `(inline ,null-info ,%eq? ,tmp (immediate ,(constant sfalse))))])
+                    (fold-right
+                      (lambda (e rest) (with-output-language (L11 Effect) `(seq ,e ,rest)))
+                      (or (select-if eqp e2 e1)
+                          (with-output-language (L11 Effect) `(if ,eqp ,e2 ,e1)))
+                      effs))
+                  (with-output-language (L11 Effect) `(if ,falsep ,e1 ,e2))))))
+        ; Tail-context counterpart of build-flatten-else
+        (define build-flatten-else-tail
+          (lambda (falsep tl1 tl2)
+            (let-values ([(ok? effs tmp) (match-call-truthiness falsep)])
+              (if ok?
+                  (let ([eqp (with-output-language (L11 Pred)
+                               `(inline ,null-info ,%eq? ,tmp (immediate ,(constant sfalse))))])
+                    (fold-right
+                      (lambda (e rest) (with-output-language (L11 Tail) `(seq ,e ,rest)))
+                      (or (select-tail eqp tl2 tl1)
+                          (with-output-language (L11 Tail) `(if ,eqp ,tl2 ,tl1)))
+                      effs))
+                  (with-output-language (L11 Tail) `(if ,falsep ,tl1 ,tl2))))))
         ; Convert a processed (if (inline pred ...) t1 t2) in tail
         ; position, with t1/t2 select operands, into a select followed
         ; by the selected value, or #f.
@@ -4038,12 +4126,19 @@
         ; branchless form, everything else falls through to the generic if
         ; production below and keeps the conditional branch
         [(if ,[Pred : e0] ,[e1] ,[e2])
-         (let-values ([(pfx p swap?) (lift-seq-pred e0)])
-           (if p
-               (let ([th (if swap? e2 e1)] [el (if swap? e1 e2)])
-                 (let ([body (or (select-if p th el) `(if ,p ,th ,el))])
-                   (fold-right (lambda (e rest) `(seq ,e ,rest)) body pfx)))
-               (or (select-if e0 e1 e2) `(if ,e0 ,e1 ,e2))))]
+         (let-values ([(test cmp falsep) (flatten-safe-pred e0)]
+                      [(pfx p swap?) (lift-seq-pred e0)])
+           (cond
+             [(and test
+                   (let ([body (select-if cmp e1 e2)])
+                     (and body
+                          (with-output-language (L11 Effect)
+                            `(if ,test ,body ,(build-flatten-else falsep e1 e2))))))]
+             [p
+              (let ([th (if swap? e2 e1)] [el (if swap? e1 e2)])
+                (let ([body (or (select-if p th el) `(if ,p ,th ,el))])
+                  (fold-right (lambda (e rest) `(seq ,e ,rest)) body pfx)))]
+             [else (or (select-if e0 e1 e2) `(if ,e0 ,e1 ,e2))]))]
         [,x `(nop)]
         [(mref ,x1 ,x2 ,imm ,type) `(nop)]
         [(literal ,info) `(nop)]
@@ -4095,12 +4190,19 @@
         ; same general select as the Effect context, for selects in tail
         ; position (e.g. (lambda () (if (fx< a b) 1 2)))
         [(if ,[Pred : e0] ,[tl1] ,[tl2])
-         (let-values ([(pfx p swap?) (lift-seq-pred e0)])
-           (if p
-               (let ([th (if swap? tl2 tl1)] [el (if swap? tl1 tl2)])
-                 (let ([body (or (select-tail p th el) `(if ,p ,th ,el))])
-                   (fold-right (lambda (e rest) `(seq ,e ,rest)) body pfx)))
-               (or (select-tail e0 tl1 tl2) `(if ,e0 ,tl1 ,tl2))))]
+         (let-values ([(test cmp falsep) (flatten-safe-pred e0)]
+                      [(pfx p swap?) (lift-seq-pred e0)])
+           (cond
+             [(and test
+                   (let ([body (select-tail cmp tl1 tl2)])
+                     (and body
+                          (with-output-language (L11 Tail)
+                            `(if ,test ,body ,(build-flatten-else-tail falsep tl1 tl2))))))]
+             [p
+              (let ([th (if swap? tl2 tl1)] [el (if swap? tl1 tl2)])
+                (let ([body (or (select-tail p th el) `(if ,p ,th ,el))])
+                  (fold-right (lambda (e rest) `(seq ,e ,rest)) body pfx)))]
+             [else (or (select-tail e0 tl1 tl2) `(if ,e0 ,tl1 ,tl2))]))]
         [(inline ,info ,prim ,[t*] ...)
          (guard (pred-primitive? prim))
          (let ([sel (or (pred->isel prim) (pred->fpsel prim))])
