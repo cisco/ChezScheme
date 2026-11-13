@@ -344,6 +344,12 @@ static void idiot_checks(void) {
     oops = 1;
   }
 
+  if ((code_flag_fasl_mask & 0xFF) != code_flag_fasl_mask) {
+    /* fasl expect flags to fit in 8 bits */
+    fprintf(stderr, "code flags to fasl do not fit in a byte\n");
+    oops = 1;
+  }
+
   if ((reference_disp != bytevector_data_disp)
       || (reference_disp != flvector_data_disp)) {
     fprintf(stderr, "reference displacement does not match bytevector or flvector displacement\n");
