@@ -570,6 +570,62 @@
   (let ([sel (lambda (x y a b) (if (fl>= x y) a b))])
     (and (eqv? (sel 2.0 2.0 10 20) 10) (eqv? (sel 1.0 2.0 10 20) 20)
          (eqv? (sel 1.0 +nan.0 10 20) 20)))
+  ; fl= equality selects: ucomisd sets ZF=1 on unordered as well as
+  ; on ordered-equal, so the conversion routes NaN around the cmove,
+  ; or to a corrective move, never through an inverted condition;
+  ; NaN takes the else value, and -0.0 = +0.0 takes the then value
+  (let ([sel (lambda (x y) (if (fl= x y) 10 20))])
+    (and (eqv? (sel 2.0 2.0) 10) (eqv? (sel 1.0 2.0) 20)
+         (eqv? (sel +nan.0 +nan.0) 20) (eqv? (sel +nan.0 2.0) 20)
+         (eqv? (sel 2.0 +nan.0) 20)
+         (eqv? (sel -0.0 0.0) 10) (eqv? (sel +inf.0 +inf.0) 10)
+         (eqv? (sel -inf.0 -inf.0) 10)))
+  (let ([sel (lambda (x y) (if (fl= x y) #t #f))])
+    (and (eq? (sel 1.0 1.0) #t) (eq? (sel 1.0 2.0) #f)
+         (eq? (sel +nan.0 1.0) #f) (eq? (sel 1.0 +nan.0) #f)))
+  (let ([sel (lambda (x y) (if (fl= x y) #f #t))])
+    (and (eq? (sel 1.0 1.0) #f) (eq? (sel 1.0 2.0) #t)
+         (eq? (sel +nan.0 1.0) #t) (eq? (sel 1.0 +nan.0) #t)))
+  (let ([sel (lambda (x y a b) (if (fl= x y) a b))])
+    (and (eqv? (sel 2.0 2.0 10 20) 10) (eqv? (sel 1.0 2.0 10 20) 20)
+         (eqv? (sel +nan.0 2.0 10 20) 20) (eqv? (sel 2.0 +nan.0 10 20) 20)))
+  ; fl= behind a lifted effect, laundered operands
+  (let ([f (lambda (x y v)
+             (if (begin (vector-set! v 0 9) (fl= (fl+ x 0.0) (fl+ y 0.0)))
+                 10
+                 20))])
+    (let ([v (make-vector 1 0)])
+      (and (eqv? (f 2.0 2.0 v) 10) (eqv? (f 1.0 2.0 v) 20)
+           (eqv? (f +nan.0 2.0 v) 20) (eqv? (f 2.0 +nan.0 v) 20)
+           (eqv? (vector-ref v 0) 9))))
+  ; fl= destination-is-then-value: ordered-unequal and NaN both reach
+  ; the else value
+  (let ([f (lambda (x y c) (let ([a 7]) (if (fl= x y) (set! a a) (set! a c)) (fx+ a c)))])
+    (and (eqv? (f 1.0 1.0 3) 10) (eqv? (f 1.0 2.0 3) 6)
+         (eqv? (f +nan.0 1.0 3) 6) (eqv? (f 1.0 +nan.0 3) 6)))
+  ; reverse fl= boolean selects with NaN, compiled with cp0 bypassed:
+  ; the opaque (#%$value (values ...)) arms keep cp0 from normalizing
+  ; the if, so the arm order reaches the emitters; NaN takes the else
+  ; value in either order, and the then=#f order exercises the arith
+  ; form's negated-shift path
+  (let ([sel (parameterize ([optimize-level 3]
+                            [run-cp0 (lambda (cp0 x) x)])
+               (compile '(lambda (x y)
+                           (let ([r (if (fl= x y)
+                                        (#%$value (values #f))
+                                        (#%$value (values #t)))])
+                             r))))])
+    (and (eq? (sel 1.0 1.0) #f) (eq? (sel 1.0 2.0) #t)
+         (eq? (sel +nan.0 1.0) #t) (eq? (sel 1.0 +nan.0) #t)))
+  (let ([sel (parameterize ([optimize-level 3]
+                            [run-cp0 (lambda (cp0 x) x)])
+               (compile '(lambda (x y)
+                           (let ([r (if (fl= x y)
+                                        (#%$value (values #t))
+                                        (#%$value (values #f)))])
+                             r))))])
+    (and (eq? (sel 1.0 1.0) #t) (eq? (sel 1.0 2.0) #f)
+         (eq? (sel +nan.0 1.0) #f) (eq? (sel 1.0 +nan.0) #f)))
   ; same-destination set! with uvar arms on an fp condition: the
   ; register allocator may coalesce the destination with either arm
   (let ([f (lambda (x y b c) (let ([a 7]) (if (fl< x y) (set! a b) (set! a c)) (fx+ a (fx+ b c))))])
@@ -717,6 +773,17 @@
     (and (eqv? (fl 1.0 2.0) 10.5) (eqv? (fl 2.0 1.0) 20.5)
          (eqv? (fl +nan.0 1.0) 20.5)))
   (error? ((lambda (x y) (if (fl< x y) 1.5 2.5)) 'a 1.0))
+  ; flonum equality through the safe-operation wrapper, effect and
+  ; tail position: NaN takes the else value, and non-flonum arguments
+  ; still raise
+  (let ([fl (lambda (x y) (if (fl= x y) (set! x 1.5) (set! x 2.5)) x)])
+    (and (eqv? (fl 1.0 1.0) 1.5) (eqv? (fl 1.0 2.0) 2.5)
+         (eqv? (fl +nan.0 1.0) 2.5) (eqv? (fl 1.0 +nan.0) 2.5)))
+  (let ([fl (lambda (x y) (if (fl= x y) 10.5 20.5))])
+    (and (eqv? (fl 2.0 2.0) 10.5) (eqv? (fl 1.0 2.0) 20.5)
+         (eqv? (fl +nan.0 1.0) 20.5)))
+  (error? ((lambda (x y) (if (fl= x y) 1.5 2.5)) 'a 1.0))
+  (error? ((lambda (x y) (if (fl= x y) 1.5 2.5)) 1.0 'b))
   ; single evaluation: the wrapper's check and the compare share
   ; the argument values, so both uses must see the same value (the
   ; counter sits in a box because mat clauses are evaled at top

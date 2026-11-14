@@ -3761,12 +3761,13 @@
         ; branchless-select counterparts of the fp relops, or #f for
         ; any other predicate.  fl>? and fl>=? are swapped onto fp</fp<=
         ; by cpprim, so the only fp pred primitives that can appear here
-        ; are fp<, fp<=.  fp= has no select at all: its cmov would fire
-        ; on the unordered ZF=1, and the compensating jp's offset has
-        ; proven fragile under register coalescing, so %fpsel= was
-        ; dropped from the instruction family (and from np-languages);
-        ; equality selects keep the branchy form until the skip can be
-        ; computed from the emitted code rather than a length guess.
+        ; are fp<, fp<=, fp=.  fp= maps to fpsel=: ucomisd sets ZF=1 on
+        ; unordered as well as on ordered-equal, so the emitters route
+        ; the unordered case around the instruction it must not see, or
+        ; to a corrective move, with a skip whose displacement is the
+        ; size of the emitted fragment being routed around (asm-size*)
+        ; rather than a length guess; the inverted equality condition
+        ; would alias on unordered and is never synthesized.
         (define pred->fpsel
           (constant-case setcc-instruction
             [(#t)
@@ -3774,6 +3775,7 @@
                (cond
                  [(eq? prim %fp<) %fpsel<]
                  [(eq? prim %fp<=) %fpsel<=]
+                 [(eq? prim %fp=) %fpsel=]
                  [else #f]))]
             [else (lambda (prim) #f)]))
 
