@@ -650,8 +650,8 @@
     (and (eqv? (f 1 2) 10) (eqv? (f 2 1) 20) (eqv? (f 2 2) 20)
          (eqv? (f (most-negative-fixnum) (most-positive-fixnum)) 10)
          (eqv? (f (most-positive-fixnum) (most-negative-fixnum)) 20)))
-  (error? (f 'a 1))
-  (error? (f 1 'b))
+  (error? ((lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x) 'a 1))
+  (error? ((lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x) 1 'b))
   (error? ((lambda (x y) (if (fx< x y) 10 20)) 'a 1))
   ; tail position
   (let ([g (lambda (x y) (if (fx< x y) 10 20))])
