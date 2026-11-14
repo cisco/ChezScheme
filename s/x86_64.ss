@@ -474,7 +474,14 @@
     ; fixnum difference would silently wrap.  asm-isel-arith's final
     ; addi encodes at most imm32, so the arithmetic form is taken
     ; only when the base fits that range; wider bases keep the
-    ; immediate form, whose movi covers the full word.
+    ; immediate form, whose movi covers the full word.  Audited
+    ; against the tagged-word domain, this addi is the family's only
+    ; hand-written immediate with an encoding limit: every other
+    ; emission is movi (full word via the movabs path for out-of-imm32
+    ; quads), cmp on registers only (the clause shapes admit no
+    ; immediates), cmov on registers (no immediate form exists), or
+    ; the arith form's setcc/shl bytes (shamt is log2 of a word-range
+    ; power of two, so at most 63).
     [(op (z ur) (x ur) (y ur) (u imm) (v imm))
      (let* ([uv (imm-value u)] [vv (imm-value v)]
             [d (- uv vv)]
@@ -607,6 +614,10 @@
     ; needed for any condition the family generates.  Anything else
     ; takes the immediate form with a scratch for the then-value
     ; (asm-fpsel-imms).
+    ; The base domain matches the isel clauses: asm-fpsel-arith's
+    ; final addi encodes at most imm32, so the arithmetic form is
+    ; taken only when the base fits that range; wider bases keep the
+    ; immediate form, whose movi covers the full word.
     [(op (z ur) (x fpur) (y fpur) (u imm) (v imm))
      (let* ([uv (imm-value u)] [vv (imm-value v)]
             [d (- uv vv)]
