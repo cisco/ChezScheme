@@ -468,16 +468,29 @@
     ; condition and base = A, since B + (A-B)b = A + (B-A)(1-b).
     ; Anything else takes the immediate form with a scratch for the
     ; then-value (asm-isel-imms).
+    ; The tagged words are handled with exact integer arithmetic:
+    ; they may exceed the fixnum range (tagged most-negative-fixnum
+    ; is -2^63), and the compiler's own fx- runs unchecked, so a
+    ; fixnum difference would silently wrap.  asm-isel-arith's final
+    ; addi encodes at most imm32, so the arithmetic form is taken
+    ; only when the base fits that range; wider bases keep the
+    ; immediate form, whose movi covers the full word.
     [(op (z ur) (x ur) (y ur) (u imm) (v imm))
-     (let* ([uv (imm-value u)] [vv (imm-value v)] [d (fx- uv vv)]
+     (let* ([uv (imm-value u)] [vv (imm-value v)]
+            [d (- uv vv)]
+            [m (- vv uv)]
             [cc (sel-cc op)])
        (cond
-         [(and (fx> d 0) (fx= (fxand d (fx- d 1)) 0))
+         [(and (> d 0)
+               (= (bitwise-and d (- d 1)) 0)
+               (<= #x-80000000 vv #x7fffffff))
           `(set! ,(make-live-info) ,z
-             (asm ,null-info ,(asm-isel-arith cc (fx- (fxlength d) 1) vv) ,z ,x ,y))]
-         [(and (fx< d 0) (fx= (fxand (fx- d) (fx- (fx- d) 1)) 0))
+             (asm ,null-info ,(asm-isel-arith cc (- (integer-length d) 1) vv) ,z ,x ,y))]
+         [(and (< d 0)
+               (= (bitwise-and m (- m 1)) 0)
+               (<= #x-80000000 uv #x7fffffff))
           `(set! ,(make-live-info) ,z
-             (asm ,null-info ,(asm-isel-arith (fxlogor #x90 (invert-cc-select (fxlogand cc #x0F))) (fx- (fxlength (fx- d)) 1) uv) ,z ,x ,y))]
+             (asm ,null-info ,(asm-isel-arith (fxlogor #x90 (invert-cc-select (fxlogand cc #x0F))) (- (integer-length m) 1) uv) ,z ,x ,y))]
          [else
           (let ([ut (make-tmp 'u)])
             (seq
@@ -595,15 +608,21 @@
     ; takes the immediate form with a scratch for the then-value
     ; (asm-fpsel-imms).
     [(op (z ur) (x fpur) (y fpur) (u imm) (v imm))
-     (let* ([uv (imm-value u)] [vv (imm-value v)] [d (fx- uv vv)]
+     (let* ([uv (imm-value u)] [vv (imm-value v)]
+            [d (- uv vv)]
+            [m (- vv uv)]
             [cc (sel-cc op)])
        (cond
-         [(and (fx> d 0) (fx= (fxand d (fx- d 1)) 0))
+         [(and (> d 0)
+               (= (bitwise-and d (- d 1)) 0)
+               (<= #x-80000000 vv #x7fffffff))
           `(set! ,(make-live-info) ,z
-             (asm ,null-info ,(asm-fpsel-arith cc (fx- (fxlength d) 1) vv) ,z ,x ,y))]
-         [(and (fx< d 0) (fx= (fxand (fx- d) (fx- (fx- d) 1)) 0))
+             (asm ,null-info ,(asm-fpsel-arith cc (- (integer-length d) 1) vv) ,z ,x ,y))]
+         [(and (< d 0)
+               (= (bitwise-and m (- m 1)) 0)
+               (<= #x-80000000 uv #x7fffffff))
           `(set! ,(make-live-info) ,z
-             (asm ,null-info ,(asm-fpsel-arith (fxlogor #x90 (invert-cc-select (fxlogand cc #x0F))) (fx- (fxlength (fx- d)) 1) uv) ,z ,x ,y))]
+             (asm ,null-info ,(asm-fpsel-arith (fxlogor #x90 (invert-cc-select (fxlogand cc #x0F))) (- (integer-length m) 1) uv) ,z ,x ,y))]
          [else
           (let ([ut (make-tmp 'u)])
             (seq
