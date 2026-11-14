@@ -376,6 +376,319 @@
        `(move-related ,z ,x)
        `(set! ,(make-live-info) ,z (asm ,info ,(asm-lea2 0) ,x ,y)))])
 
+  (define-instruction value (isel< isel<= isel= isel> isel>= iselu<)
+    (definitions
+      (define imm-value
+        (lambda (t)
+          (nanopass-case (L15c Triv) t
+            [(immediate ,imm) imm]
+            [else #f])))
+      ; condition-code inversion local to the select family
+      (define invert-cc-select
+        (lambda (cc)
+          (case cc
+            [(#x0C) #x0D]                    ; l  <-> ge
+            [(#x0D) #x0C]
+            [(#x0E) #x0F]                    ; le <-> g
+            [(#x0F) #x0E]
+            [(#x04) #x05]                    ; e  <-> ne
+            [(#x05) #x04]
+            [(#x02) #x03]                    ; b  <-> ae
+            [(#x03) #x02]
+            [(#x06) #x07]                    ; be <-> a
+            [(#x07) #x06]
+            [else ($oops 'invert-cc-select "unsupported ~s" cc)])))
+      ; setcc condition byte for the power-of-two-difference
+      ; arithmetic form; the low nibble matches the cmovcc condition
+      ; for the operator
+      (define sel-cc
+        (lambda (op)
+          (fxlogor #x90
+            (case op
+              [(isel<) #x0C]   ; setl
+              [(isel<=) #x0E]  ; setle
+              [(isel=) #x04]   ; sete
+              [(isel>) #x0F]   ; setg
+              [(isel>=) #x0D]  ; setge
+              [(iselu<) #x02]  ; setb
+              [else ($oops 'isel "unsupported ~s" op)])))))
+    ; branchless select on a fixnum compare; see asm-isel-regs,
+    ; asm-isel-imms, and asm-isel-arith.  The register form selects
+    ; between two arbitrary values; the immediate form selects between
+    ; two immediates, with a setcc specialization when both are the
+    ; boolean immediates.  Every form emits the compare before any
+    ; write, so a destination that aliases a compare operand still
+    ; compares the original operand values; the register form handles
+    ; the destination-is-then-value case with the inverted condition
+    ; and no preset, so every aliasing case is safe (asm-isel-regs).
+    ; The memory clauses are listed first: the ur predicate accepts
+    ; memory destinations, and letting a ur clause see them would
+    ; route the store through an instruction-selection temporary
+    ; whose self-referential select asm trips the unspillable-conflict
+    ; walk.
+    [(op (z mem) (x ur) (y ur) (it imm) (ie imm))
+     (let ([u (make-tmp 'u)] [t (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u ,it)
+         `(set! ,(make-live-info) ,t ,ie)
+         `(set! ,(make-live-info) ,t
+            (asm ,null-info
+                 ,(asm-isel-imms (case op
+                                   [(isel<) #x0C]
+                                   [(isel<=) #x0E]
+                                   [(isel=) #x04]
+                                   [(isel>) #x0F]
+                                   [(isel>=) #x0D]
+                                   [(iselu<) #x02]
+                                   [else ($oops 'isel "unsupported ~s" op)]))
+                 ,t ,x ,y ,u ,ie))
+         `(set! ,(make-live-info) ,z ,t)))]
+    [(op (z mem) (x ur) (y ur) (u ur) (v ur))
+     (let ([t (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,t ,v)
+         `(set! ,(make-live-info) ,t
+            (asm ,null-info
+                 ,(asm-isel-regs (case op
+                               [(isel<) #x0C]   ; cmovl
+                               [(isel<=) #x0E]  ; cmovle
+                               [(isel=) #x04]   ; cmove
+                               [(isel>) #x0F]   ; cmovg
+                               [(isel>=) #x0D]  ; cmovge
+                               [(iselu<) #x02]  ; cmovb (unsigned <)
+                               [else ($oops 'isel "unsupported ~s" op)]))
+                 ,t ,x ,y ,u ,v))
+         `(set! ,(make-live-info) ,z ,t)))]
+    ; both arms immediates: when A-B (the then minus the else
+    ; immediate) is a power of two, the constant identity
+    ; select(P, A, B) = B + (A-B)*b compiles to the arithmetic form
+    ; (asm-isel-arith): flags, dest = 0, setcc, shift, add — no
+    ; scratch, no cmov; the #t/#f pair is A-B = 8, B = 6.  A negative
+    ; power-of-two difference swaps the arms with the inverted
+    ; condition and base = A, since B + (A-B)b = A + (B-A)(1-b).
+    ; Anything else takes the immediate form with a scratch for the
+    ; then-value (asm-isel-imms).
+    ; The tagged words are handled with exact integer arithmetic:
+    ; they may exceed the fixnum range (tagged most-negative-fixnum
+    ; is -2^63), and the compiler's own fx- runs unchecked, so a
+    ; fixnum difference would silently wrap.  asm-isel-arith's final
+    ; addi encodes at most imm32, so the arithmetic form is taken
+    ; only when the base fits that range; wider bases keep the
+    ; immediate form, whose movi covers the full word.  Audited
+    ; against the tagged-word domain, this addi is the family's only
+    ; hand-written immediate with an encoding limit: every other
+    ; emission is movi (full word via the movabs path for out-of-imm32
+    ; quads), cmp on registers only (the clause shapes admit no
+    ; immediates), cmov on registers (no immediate form exists), or
+    ; the arith form's setcc/shl bytes (shamt is log2 of a word-range
+    ; power of two, so at most 63).
+    [(op (z ur) (x ur) (y ur) (u imm) (v imm))
+     (let* ([uv (imm-value u)] [vv (imm-value v)]
+            [d (- uv vv)]
+            [m (- vv uv)]
+            [cc (sel-cc op)])
+       (cond
+         [(and (> d 0)
+               (= (bitwise-and d (- d 1)) 0)
+               (<= #x-80000000 vv #x7fffffff))
+          `(set! ,(make-live-info) ,z
+             (asm ,null-info ,(asm-isel-arith cc (- (integer-length d) 1) vv) ,z ,x ,y))]
+         [(and (< d 0)
+               (= (bitwise-and m (- m 1)) 0)
+               (<= #x-80000000 uv #x7fffffff))
+          `(set! ,(make-live-info) ,z
+             (asm ,null-info ,(asm-isel-arith (fxlogor #x90 (invert-cc-select (fxlogand cc #x0F))) (- (integer-length m) 1) uv) ,z ,x ,y))]
+         [else
+          (let ([ut (make-tmp 'u)])
+            (seq
+              `(set! ,(make-live-info) ,ut ,u)
+              `(set! ,(make-live-info) ,z
+                 (asm ,null-info
+                      ,(asm-isel-imms (case op
+                                        [(isel<) #x0C]
+                                        [(isel<=) #x0E]
+                                        [(isel=) #x04]
+                                        [(isel>) #x0F]
+                                        [(isel>=) #x0D]
+                                        [(iselu<) #x02]
+                                        [else ($oops 'isel "unsupported ~s" op)]))
+                      ,z ,x ,y ,ut ,v))))]))]
+    [(op (z ur) (x ur) (y ur) (u ur) (v ur))
+     `(set! ,(make-live-info) ,z
+        (asm ,null-info
+             ,(asm-isel-regs (case op
+                               [(isel<) #x0C]   ; cmovl
+                               [(isel<=) #x0E]  ; cmovle
+                               [(isel=) #x04]   ; cmove
+                               [(isel>) #x0F]   ; cmovg
+                               [(isel>=) #x0D]  ; cmovge
+                               [(iselu<) #x02]  ; cmovb (unsigned <)
+                               [else ($oops 'isel "unsupported ~s" op)]))
+             ,z ,x ,y ,u ,v))])
+
+  (define-instruction value (fpsel< fpsel<= fpsel> fpsel>= fpsel=)
+    (definitions
+      (define imm-value
+        (lambda (t)
+          (nanopass-case (L15c Triv) t
+            [(immediate ,imm) imm]
+            [else #f])))
+      ; condition-code inversion local to the select family
+      (define invert-cc-select
+        (lambda (cc)
+          (case cc
+            [(#x0C) #x0D]                    ; l  <-> ge
+            [(#x0D) #x0C]
+            [(#x0E) #x0F]                    ; le <-> g
+            [(#x0F) #x0E]
+            [(#x04) #x05]                    ; e  <-> ne
+            [(#x05) #x04]
+            [(#x02) #x03]                    ; b  <-> ae
+            [(#x03) #x02]
+            [(#x06) #x07]                    ; be <-> a
+            [(#x07) #x06]
+            [else ($oops 'invert-cc-select "unsupported ~s" cc)])))
+      ; setcc condition byte for the power-of-two-difference
+      ; arithmetic form; the low nibble matches the cmovcc condition
+      ; for the operator; see the isel definitions
+      (define sel-cc
+        (lambda (op)
+          (fxlogor #x90
+            (case op
+              [(fpsel<) #x07]  ; seta
+              [(fpsel<=) #x03] ; setae
+              [(fpsel>) #x02]  ; setb
+              [(fpsel>=) #x06] ; setbe
+              [else ($oops 'fpsel "unsupported ~s" op)])))))
+    ; branchless select on a flonum compare; see asm-fpsel-regs,
+    ; asm-fpsel-imms, and asm-fpsel-arith, and the fpsel= counterparts
+    ; asm-fpsel=-regs, asm-fpsel=-imms, and asm-fpsel=-arith.  Same
+    ; clause structure as the fixnum isel instructions.  ucomisd's
+    ; flags drive cmovcc directly; on unordered operands every
+    ; condition the inequality family generates reads at least one of
+    ; the set flags as false, so a NaN compare selects the else value,
+    ; exactly as the source branch does.  The equality member routes
+    ; NaN around the instruction it must not see, or to a corrective
+    ; move, with a skip sized from the emitted code (fpsel-eq-skip);
+    ; its cmov stays in the equality direction in every case, since an
+    ; inverted equality condition aliases on unordered.  ucomisd reads
+    ; x and y before anything writes z, so aliasing with the compare
+    ; operands is safe; the fpsel= register form handles the
+    ; destination-is-then-value case with the corrective move, so no
+    ; register case is declined.  The memory clauses are listed first
+    ; for the same reason as the isel clauses.
+    [(op (z mem) (x fpur) (y fpur) (it imm) (ie imm))
+     (let ([u (make-tmp 'u)] [t (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,u ,it)
+         `(set! ,(make-live-info) ,t ,ie)
+         `(set! ,(make-live-info) ,t
+            (asm ,null-info
+                 ,(if (eq? op 'fpsel=)
+                      asm-fpsel=-imms
+                      (asm-fpsel-imms (case op
+                                        [(fpsel<) #x07]
+                                        [(fpsel<=) #x03]
+                                        [(fpsel>) #x02]
+                                        [(fpsel>=) #x06]
+                                        [else ($oops 'fpsel "unsupported ~s" op)])))
+                 ,t ,x ,y ,u ,ie))
+         `(set! ,(make-live-info) ,z ,t)))]
+    [(op (z mem) (x fpur) (y fpur) (u ur) (v ur))
+     (let ([t (make-tmp 'u)])
+       (seq
+         `(set! ,(make-live-info) ,t ,v)
+         `(set! ,(make-live-info) ,t
+            (asm ,null-info
+                 ,(if (eq? op 'fpsel=)
+                      asm-fpsel=-regs
+                      (asm-fpsel-regs (case op
+                                        [(fpsel<) #x07]   ; cmova
+                                        [(fpsel<=) #x03]  ; cmovae
+                                        [(fpsel>) #x02]   ; cmovb
+                                        [(fpsel>=) #x06]  ; cmovbe
+                                        [else ($oops 'fpsel "unsupported ~s" op)])))
+                 ,t ,x ,y ,u ,v))
+         `(set! ,(make-live-info) ,z ,t)))]
+    ; both arms immediates: when A-B is a power of two, the constant
+    ; identity select(P, A, B) = B + (A-B)*b compiles to the
+    ; arithmetic form (asm-fpsel-arith); the #t/#f pair is A-B = 8,
+    ; B = 6.  A negative power-of-two difference swaps the arms with
+    ; the inverted condition and base = A.  On unordered operands
+    ; ucomisd sets CF=ZF=PF=1, and the setcc conditions read the flags
+    ; so that NaN selects the else value in either arm order; no jp is
+    ; needed for any condition the family generates.  Anything else
+    ; takes the immediate form with a scratch for the then-value
+    ; (asm-fpsel-imms).
+    ; The base domain matches the isel clauses: asm-fpsel-arith's
+    ; final addi encodes at most imm32, so the arithmetic form is
+    ; taken only when the base fits that range; wider bases keep the
+    ; immediate form, whose movi covers the full word.
+    [(op (z ur) (x fpur) (y fpur) (u imm) (v imm))
+     (let* ([uv (imm-value u)] [vv (imm-value v)]
+            [d (- uv vv)]
+            [m (- vv uv)])
+       (if (eq? op 'fpsel=)
+           ; equality: |A-B| a positive power of two takes the
+           ; arithmetic form with the exact equality bit
+           ; (asm-fpsel=-arith); a negative difference lowers to a neg
+           ; of the shifted bit, never to an inverted condition, which
+           ; would alias on unordered.  The base is the else value
+           ; either way and is guarded to addi's imm32 domain as in
+           ; the other arith clauses; anything else takes the
+           ; immediate form with a scratch for the then-value
+           ; asm-fpsel=-imms.
+           (let ([a (if (< d 0) m d)])
+             (cond
+               [(and (> a 0)
+                     (= (bitwise-and a (- a 1)) 0)
+                     (<= #x-80000000 vv #x7fffffff))
+                `(set! ,(make-live-info) ,z
+                   (asm ,null-info ,(asm-fpsel=-arith (- (integer-length a) 1) vv (< d 0)) ,z ,x ,y))]
+               [else
+                (let ([ut (make-tmp 'u)])
+                  (seq
+                    `(set! ,(make-live-info) ,ut ,u)
+                    `(set! ,(make-live-info) ,z
+                       (asm ,null-info ,asm-fpsel=-imms ,z ,x ,y ,ut ,v))))]))
+           (let ([cc (sel-cc op)])
+             (cond
+               [(and (> d 0)
+                     (= (bitwise-and d (- d 1)) 0)
+                     (<= #x-80000000 vv #x7fffffff))
+                `(set! ,(make-live-info) ,z
+                   (asm ,null-info ,(asm-fpsel-arith cc (- (integer-length d) 1) vv) ,z ,x ,y))]
+               [(and (< d 0)
+                     (= (bitwise-and m (- m 1)) 0)
+                     (<= #x-80000000 uv #x7fffffff))
+                `(set! ,(make-live-info) ,z
+                   (asm ,null-info ,(asm-fpsel-arith (fxlogor #x90 (invert-cc-select (fxlogand cc #x0F))) (- (integer-length m) 1) uv) ,z ,x ,y))]
+               [else
+                (let ([ut (make-tmp 'u)])
+                  (seq
+                    `(set! ,(make-live-info) ,ut ,u)
+                    `(set! ,(make-live-info) ,z
+                       (asm ,null-info
+                            ,(asm-fpsel-imms (case op
+                                               [(fpsel<) #x07]
+                                               [(fpsel<=) #x03]
+                                               [(fpsel>) #x02]
+                                               [(fpsel>=) #x06]
+                                               [else ($oops 'fpsel "unsupported ~s" op)]))
+                            ,z ,x ,y ,ut ,v))))]))))]
+    [(op (z ur) (x fpur) (y fpur) (u ur) (v ur))
+     `(set! ,(make-live-info) ,z
+        (asm ,null-info
+             ,(if (eq? op 'fpsel=)
+                  asm-fpsel=-regs
+                  (asm-fpsel-regs (case op
+                                    [(fpsel<) #x07]   ; cmova
+                                    [(fpsel<=) #x03]  ; cmovae
+                                    [(fpsel>) #x02]   ; cmovb
+                                    [(fpsel>=) #x06]  ; cmovbe
+                                    [else ($oops 'fpsel "unsupported ~s" op)])))
+             ,z ,x ,y ,u ,v))])
+
   (define-instruction value (+/ovfl +/carry) ; must set condition codes, so can't use lea
     [(op (z mem) (x z) (y ur imm32))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-add ,z ,y))]
@@ -926,7 +1239,10 @@
                      asm-pop asm-shiftop asm-sll asm-logand asm-lognot
                      asm-logtest asm-fp-relop asm-relop asm-push asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
-                     asm-lea1 asm-lea2 asm-indirect-call asm-condition-code
+                     asm-lea1 asm-lea2 asm-isel-regs asm-isel-imms asm-isel-arith
+                     asm-fpsel-regs asm-fpsel-imms asm-fpsel-arith
+                     asm-fpsel=-regs asm-fpsel=-imms asm-fpsel=-arith fpsel-eq-skip
+                     asm-indirect-call asm-condition-code
                      asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount
                      asm-exchange asm-pause asm-debug asm-locked-incr asm-locked-decr asm-locked-cmpxchg
                      asm-fpsqrt asm-fpround asm-fpfma asm-fpop-2 asm-fpminmax asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
@@ -1106,6 +1422,13 @@
 
   (define-op vfmadd213sd fma-op #xa9)
   (define-op vfmadd231sd fma-op #xb9)
+
+  (define-op cmovl cmov-op #b1100)  ; move on less than
+  (define-op cmovle cmov-op #b1110) ; move on less or equal
+  (define-op cmove cmov-op #b0100)  ; move on equal
+  (define-op cmovg cmov-op #b1111)  ; move on greater than
+  (define-op cmovge cmov-op #b1101) ; move on greater or equal
+  (define-op cmovb cmov-op #b0010)  ; move on below (unsigned <)
 
   ; SSE2 instructions
   (define-op sse.addsd     sse-op1 #xF2 #x58 0)
@@ -1463,6 +1786,21 @@
            (ax-ea-addr-disp source))]
         [else
           ($oops 'assembler-internal "xchg-op source=~s dest=~s" source dest)])))
+
+  (define cmov-op
+    ; cmovcc dest, source.  Unlike mov/add (dest = r/m), CMOVcc encodes
+    ; the destination in the modrm reg field and the source as r/m, so the
+    ; ax-ea-modrm-reg arguments are swapped relative to binary-op, and the
+    ; rex R/B bits follow the same swap.  Signature matches the other op
+    ; handlers: (op size opcode source dest code*).
+    (lambda (op size condition-code source dest code*)
+      (emit-code (op source dest code*)
+        (ax-ea-rex (if (eq? size 'quad) 1 0) source dest size)
+        (build byte #x0F)
+        (build byte (byte-fields [4 4] [0 condition-code]))
+        (ax-ea-modrm-reg source dest)
+        (ax-ea-sib source)
+        (ax-ea-addr-disp source))))
 
   (define branch-op
     (lambda (op condition-code disp code*)
@@ -2152,6 +2490,287 @@
       (Trivit (dest src1)
         (safe-assert (equal? (Triv->rand src0) dest))
         (emit muls src1 dest code*))))
+
+  (define asm-isel-regs
+    ; register form of the fixnum select.  (emit cmp A B) sets flags
+    ; for B - A, so the operands below are ordered to compare x against
+    ; y.  The register allocator may coalesce dest with any operand, so
+    ; every aliasing case is handled here, after the fashion of
+    ; asm-ipminmax; the cmp is always emitted before any write, so
+    ; aliasing of dest with x or y only affects the preset, and the
+    ; dest == then-value case must not preset (it would clobber the
+    ; value the cmov reads), using the inverted condition to take the
+    ; else-value instead:
+    ;   dest == u: cmp y x; cmovcc' v -> dest   (cc' inverted; dest
+    ;     already holds the then-value)
+    ;   dest == v: cmp y x; cmovcc u -> dest    (preset would be a nop)
+    ;   otherwise: cmp y x; mov v -> dest; cmovcc u -> dest
+    ;     (dest may still alias x or y; the cmp has already read them)
+    (lambda (cc)
+      (rec asm-isel-regs-internal
+        (lambda (code* dest self x y u v)
+          (Trivit (dest self x y u v)
+            (safe-assert (equal? self dest))
+            (cond
+              [(equal? dest u)
+               (emit cmp y x
+                 (cmov-op 'isel 'quad (invert-cc cc) v dest code*))]
+              [(equal? dest v)
+               (emit cmp y x
+                 (cmov-op 'isel 'quad cc u dest code*))]
+              [else
+               (emit cmp y x
+                 (emit mov v dest
+                   (cmov-op 'isel 'quad cc u dest code*)))]))))))
+
+  (define invert-cc
+    ; inverse condition code for cmovcc, for the dest == then-value
+    ; register select form
+    (lambda (cc)
+      (case cc
+        [(#x0C) #x0D]  ; cmovl  <-> cmovge
+        [(#x0D) #x0C]
+        [(#x0E) #x0F]  ; cmovle <-> cmovg
+        [(#x0F) #x0E]
+        [(#x04) #x05]  ; cmove  <-> cmovne
+        [(#x05) #x04]
+        [(#x02) #x03]  ; cmovb  <-> cmovae
+        [(#x03) #x02]
+        [(#x06) #x07]  ; cmovbe <-> cmova
+        [(#x07) #x06]
+        [else ($oops 'invert-cc "unsupported ~s" cc)])))
+
+  (define asm-isel-imms
+    ; immediate form of the fixnum select: the then-value is already
+    ; bound to u by the instruction clause; flags from cmp (x - y),
+    ; then dest = else-value and cmovcc u -> dest.
+    (lambda (cc)
+      (rec asm-isel-imms-internal
+        (lambda (code* dest self x y u ie)
+          (Trivit (dest self x y u ie)
+            (safe-assert (equal? self dest))
+            (emit cmp y x
+              (emit movi ie dest
+                (cmov-op 'isel 'quad cc u dest code*))))))))
+
+  (define asm-isel-arith
+    ; arithmetic specialization of the fixnum immediate select for a
+    ; power-of-two difference A-B: flags from cmp (x - y), dest = 0,
+    ; setcc with the condition for "P true", dest = dest << shamt, and
+    ; dest = dest + base turns the 0/1 bit into the selected immediate,
+    ; implementing select(P, A, B) = B + (A-B)*b with no scratch and
+    ; no cmov; the #t/#f pair is A-B = 8, base = 6.  cmp reads x and
+    ; y before anything writes dest, so any aliasing is safe.  When
+    ; the clause swaps the arms (A-B negative) it passes the inverted
+    ; condition and base = A, since B + (A-B)b = A + (B-A)(1-b).
+    (lambda (cc shamt base)
+      (rec asm-isel-arith-internal
+        (lambda (code* dest self x y)
+          (Trivit (dest self x y)
+            (safe-assert (equal? self dest))
+            (let* ([rn (ax-ea-reg-code dest)]
+                   [rm (fxlogand rn 7)]
+                   [w (fxlogor #x48 (fxsrl rn 3))]     ; REX.W(+B)
+                   [setcc-bytes (if (fx>= rn 4)
+                                    (list (fxlogor #x40 (fxsrl rn 3)) #x0F cc (fxlogor #xC0 rm))
+                                    (list #x0F cc (fxlogor #xC0 rm)))])
+              (emit cmp y x
+                (emit movi '(imm 0) dest
+                  (aop-cons* `(asm isel-arith ,cc ,shamt ,base ,dest)
+                    (emit-bytes
+                      (emit addi `(imm ,base) dest code*)
+                      (append setcc-bytes
+                        (list w #xC1 (fxlogor #xE0 rm) shamt))))))))))))
+
+  (define asm-fpsel-regs
+    ; cc is never the equality condition: fp= has its own emitters
+    ; (asm-fpsel=-regs and company), which route the unordered case
+    ; with a measured skip instead of an inverted condition, so no
+    ; equality case appears below and no jp is emitted here.
+    (lambda (cc)
+      (rec asm-fpsel-regs-internal
+        (lambda (code* dest self x y u v)
+          (Trivit (dest self x y u v)
+            (safe-assert (equal? self dest))
+            (cond
+              [(equal? dest u)
+               (emit sse.ucomisd x y
+                 (cmov-op 'fpsel 'quad (invert-cc cc) v dest code*))]
+              [(equal? dest v)
+               (emit sse.ucomisd x y
+                 (cmov-op 'fpsel 'quad cc u dest code*))]
+              [else
+               (emit sse.ucomisd x y
+                 (emit mov v dest
+                   (cmov-op 'fpsel 'quad cc u dest code*)))]))))))
+
+  (define-syntax emit-bytes
+    (syntax-rules ()
+      [(_ code* bytes)
+       (fold-right (lambda (b cs) (cons (build byte b) cs))
+         code* bytes)]))
+
+  (define asm-fpsel-imms
+    ; cc is never the equality condition (see asm-fpsel-regs), so no
+    ; unordered jp is needed: every generated condition already yields
+    ; the else value's bit on unordered operands.
+    (lambda (cc)
+      (rec asm-fpsel-imms-internal
+        (lambda (code* dest self x y u ie)
+          (Trivit (dest self x y u ie)
+            (safe-assert (equal? self dest))
+            (emit sse.ucomisd x y
+              (emit movi ie dest
+                (cmov-op 'fpsel 'quad cc u dest code*))))))))
+
+  (define asm-fpsel-arith
+    ; arithmetic specialization of the flonum immediate select for a
+    ; power-of-two difference A-B, implementing select(P, A, B) =
+    ; B + (A-B)*b with no scratch and no cmov; the #t/#f pair is
+    ; A-B = 8, base = 6.  cc is the setcc condition for "P true"; the
+    ; clause swaps the arms with the inverted condition when A-B is
+    ; negative, since B + (A-B)b = A + (B-A)(1-b).  ucomisd sets flags
+    ; from y vs x (same reversed operand order as asm-fp-relop); on
+    ; ordered operands (flags for y vs x, exactly as asm-fp-relop):
+    ;   fpsel<  (e1<e2 <=> e2>e1)     seta  (CF=0 & ZF=0)
+    ;   fpsel<= (e1<=e2 <=> e2>=e1)    setae (CF=0)
+    ;   fpsel>  (e1>e2 <=> e2<e1)      setb  (CF=1)
+    ;   fpsel>= (e1>=e2 <=> e2<=e1)    setbe (CF=1 | ZF=1)
+    ; On unordered operands ucomisd sets CF=ZF=PF=1, and every
+    ; condition above already yields the else-value's bit in either
+    ; arm order, so no jp is emitted: NaN takes the else value, exactly
+    ; as the source branch does.  Equality has its own arith emitter
+    ; (asm-fpsel=-arith): the setcc materialization cannot serve it
+    ; (unordered ZF=1 aliases ordered-equal), so the equality bit is
+    ; corrected by a measured jnp skip over a re-zeroing movi, and a
+    ; negative A-B lowers to a neg of the shifted bit rather than an
+    ; inverted condition.
+    ; ucomisd reads x and y before anything writes dest, so any
+    ; aliasing is safe.
+    (lambda (cc shamt base)
+      (rec asm-fpsel-arith-internal
+        (lambda (code* dest self x y)
+          (Trivit (dest self x y)
+            (safe-assert (equal? self dest))
+            (let* ([rn (ax-ea-reg-code dest)]
+                   [rm (fxlogand rn 7)]
+                   [w (fxlogor #x48 (fxsrl rn 3))]     ; REX.W(+B)
+                   [setcc-bytes (if (fx>= rn 4)
+                                    (list (fxlogor #x40 (fxsrl rn 3)) #x0F cc (fxlogor #xC0 rm))
+                                    (list #x0F cc (fxlogor #xC0 rm)))])
+              (emit sse.ucomisd x y
+                (emit movi '(imm 0) dest
+                  (aop-cons* `(asm fpsel-arith ,cc ,shamt ,base ,dest)
+                    (emit-bytes
+                      (emit addi `(imm ,base) dest code*)
+                      (append setcc-bytes
+                        (list w #xC1 (fxlogor #xE0 rm) shamt))))))))))))
+
+  ; NaN routing for the fp equality select.  ucomisd sets ZF=1 on
+  ; unordered as well as on ordered-equal, so no cmovcc condition
+  ; distinguishes "equal" from "NaN" and the unordered case must be
+  ; steered around, or to, one emitted instruction.  The steering is a
+  ; jp/jnp rel8 whose displacement is the size of the already-emitted
+  ; fragment being routed around or to (asm-size*), so the offset
+  ; follows whatever the register allocator and spills did to that
+  ; fragment's encoding; it is computed from the emitted code, never a
+  ; length guess.  Skips are at most a few bytes, far inside rel8.
+  ; cmovcc and setcc do not modify flags, so a branch placed after
+  ; them still reads ucomisd's flags; mov/movi do not modify flags
+  ; either, so a preset between ucomisd and the branch is free.
+  (define fpsel-eq-skip
+    (lambda (frag jp? code*)
+      (let ([disp (asm-size* frag)])
+        (safe-assert (fx<= 0 disp 127))
+        (emit-bytes (append frag code*)
+          (list (if jp? #x7A #x7B) disp)))))
+
+  (define asm-fpsel=-regs
+    ; register form of the flonum equality select.  The cmov stays in
+    ; the equality direction in every case; there is no inverted
+    ; condition anywhere (cmovne would alias on unordered).  ucomisd
+    ; reads x and y before anything writes dest, so any aliasing of
+    ; dest with the compare operands is safe.
+    ;   dest == u: ucomisd; cmovne v -> dest; jnp L; mov v -> dest
+    ;     ordered-unequal takes v by the cmov, ordered-equal keeps u,
+    ;     and unordered (PF=1) falls through the jnp to the corrective
+    ;     move of the else value
+    ;   dest == v: ucomisd; jp L; cmove u -> dest
+    ;     (unordered skips the cmove, keeping the else value)
+    ;   otherwise: ucomisd; mov v -> dest; jp L; cmove u -> dest
+    (lambda (code* dest self x y u v)
+      (Trivit (dest self x y u v)
+        (safe-assert (equal? self dest))
+        (emit sse.ucomisd x y
+          (cond
+            [(equal? dest u)
+             (cmov-op 'fpsel= 'quad #x05 v dest
+               (fpsel-eq-skip (emit mov v dest '()) #f code*))]
+            [(equal? dest v)
+             (fpsel-eq-skip
+               (cmov-op 'fpsel= 'quad #x04 u dest '())
+               #t code*)]
+            [else
+             (emit mov v dest
+               (fpsel-eq-skip
+                 (cmov-op 'fpsel= 'quad #x04 u dest '())
+                 #t code*))])))))
+
+  (define asm-fpsel=-imms
+    ; immediate form of the flonum equality select: the then-value is
+    ; already bound to u by the instruction clause, ie is the else
+    ; immediate, and the NaN routing matches asm-fpsel=-regs:
+    ; ucomisd; movi ie -> dest; jp L; cmove u -> dest
+    (lambda (code* dest self x y u ie)
+      (Trivit (dest self x y u ie)
+        (safe-assert (equal? self dest))
+        (emit sse.ucomisd x y
+          (emit movi ie dest
+            (fpsel-eq-skip
+              (cmov-op 'fpsel= 'quad #x04 u dest '())
+              #t code*))))))
+
+  (define asm-fpsel=-arith
+    ; arithmetic specialization of the flonum equality immediate
+    ; select for a power-of-two |A-B|: select(P, A, B) = B + (A-B)*b
+    ; with b the exact equality bit.  The bit is ZF & ~PF, and since
+    ; sete alone cannot clear PF's contribution (ucomisd sets ZF=1 on
+    ; unordered), the bit is corrected by a jnp skip over a re-zeroing
+    ; movi:
+    ;   ucomisd; movi 0 -> dest; sete dest; jnp L; movi 0 -> dest;
+    ;   L: [neg]; shl shamt; addi base
+    ; A negative A-B takes the neg of the shifted bit rather than an
+    ; inverted condition, which would alias on unordered; the base is
+    ; the else value either way, and it is clause-guarded to addi's
+    ; imm32 domain exactly as the other arith forms.  The skipped
+    ; fragment's size comes from asm-size*, as in fpsel-eq-skip.
+    (lambda (shamt base neg?)
+      (rec asm-fpsel=-arith-internal
+        (lambda (code* dest self x y)
+          (Trivit (dest self x y)
+            (safe-assert (equal? self dest))
+            (let* ([rn (ax-ea-reg-code dest)]
+                   [rm (fxlogand rn 7)]
+                   [w (fxlogor #x48 (fxsrl rn 3))]     ; REX.W(+B)
+                   [sete-bytes (if (fx>= rn 4)
+                                   (list (fxlogor #x40 (fxsrl rn 3)) #x0F #x94 (fxlogor #xC0 rm))
+                                   (list #x0F #x94 (fxlogor #xC0 rm)))]
+                   [neg-bytes (if neg? (list w #xF7 (fxlogor #xD8 rm)) '())])
+              (emit sse.ucomisd x y
+                (emit movi '(imm 0) dest
+                  (emit-bytes
+                    (fpsel-eq-skip
+                      (emit movi '(imm 0) dest '())
+                      #f
+                      (emit-bytes
+                        (aop-cons* `(asm fpsel=-arith ,shamt ,base ,neg? ,dest)
+                          (emit addi `(imm ,base) dest code*))
+                        (append neg-bytes
+                          (list w #xC1 (fxlogor #xE0 rm) shamt))))
+                    sete-bytes)))))))))
+
+
+
 
   (define asm-div
     (lambda (code* dest-rax src-rax src-rdx src2)

@@ -384,6 +384,424 @@
   (test-cp0-expansion eqv? '(#%$fxu< 0 -3) #t)
  )
 
+(mat fx-compare-value-position-select
+  ; selects between immediates whose condition is a fixnum compare,
+  ; materialized as a value: at optimize level 3 on x86_64 these
+  ; compile to cmp + cmovcc instead of cmp + branch + two moves, and
+  ; must produce the same values the branchy form would.  All five
+  ; signed relops in tail position, both argument orders, equal
+  ; operands included.
+  (let ([sel< (lambda (x y) (if (fx< x y) 1 2))]
+        [sel<= (lambda (x y) (if (fx<= x y) 11 22))]
+        [sel= (lambda (x y) (if (fx= x y) 111 222))]
+        [sel> (lambda (x y) (if (fx> x y) 1111 2222))]
+        [sel>= (lambda (x y) (if (fx>= x y) 11111 22222))])
+    (and (eqv? (sel< 1 2) 1) (eqv? (sel< 2 1) 2) (eqv? (sel< 2 2) 2)
+         (eqv? (sel<= 1 2) 11) (eqv? (sel<= 2 2) 11) (eqv? (sel<= 2 1) 22)
+         (eqv? (sel= 2 2) 111) (eqv? (sel= 1 2) 222) (eqv? (sel= 2 1) 222)
+         (eqv? (sel> 2 1) 1111) (eqv? (sel> 1 2) 2222) (eqv? (sel> 2 2) 2222)
+         (eqv? (sel>= 2 1) 11111) (eqv? (sel>= 2 2) 11111) (eqv? (sel>= 1 2) 22222)))
+  ; least/greatest immediates, and negative immediates
+  (let ([sel (lambda (x y) (if (fx< x y) (most-negative-fixnum) (most-positive-fixnum)))])
+    (and (eqv? (sel 1 2) (most-negative-fixnum))
+         (eqv? (sel 2 1) (most-positive-fixnum))
+         (eqv? (sel 2 2) (most-positive-fixnum))))
+  (let ([sel (lambda (x y) (if (fx< x y) -1 0))])
+    (and (eqv? (sel 1 2) -1) (eqv? (sel 2 1) 0) (eqv? (sel 2 2) 0)))
+  ; same-destination set! in both branches (effect position), with the
+  ; destination itself one of the compare operands: the select must
+  ; still compare the original operand values
+  (let ([f (lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x)])
+    (and (eqv? (f 1 2) 10) (eqv? (f 2 1) 20) (eqv? (f 2 2) 20)))
+  (let ([f (lambda (x y) (if (fx< x y) (set! y 10) (set! y 20)) (fx+ x y))])
+    (and (eqv? (f 1 2) 11) (eqv? (f 2 1) 22) (eqv? (f 2 2) 22)))
+  (let ([f (lambda (x y) (if (fx<= x y) (set! x 10) (set! x 20)) x)])
+    (and (eqv? (f 1 2) 10) (eqv? (f 2 2) 10) (eqv? (f 2 1) 20)))
+  ; unsigned fixnum compare, negative operands exercising the unsigned
+  ; condition
+  (let ([sel (lambda (x y) (if (#%$fxu< x y) 1 2))])
+    (and (eqv? (sel 1 2) 1) (eqv? (sel 2 1) 2)
+         (eqv? (sel -1 2) 2) (eqv? (sel 2 -1) 1)
+         (eqv? (sel -2 -1) 1) (eqv? (sel -1 -2) 2)))
+  ; vector materialization of select results
+  (let ([v (make-vector 4 0)])
+    (vector-set! v 0 (if (fx< 1 2) 7 8))
+    (vector-set! v 1 (if (fx< 2 1) 7 8))
+    (vector-set! v 2 (if (fx= 3 3) 7 8))
+    (vector-set! v 3 (if (fx> 3 3) 7 8))
+    (equal? v '#(7 8 7 8)))
+  ; compare feeding a branch is unchanged (test position)
+  (eq? (if (fx< 1 2) 'yes 'no) 'yes)
+  (eq? (if (fx< 2 1) 'yes 'no) 'no)
+  (eq? (if (fx= 2 2) 'yes 'no) 'yes)
+  ; results flowing through operators
+  (eqv? (fx+ (if (fx< 1 2) 10 20) 1) 11)
+  (eqv? (fx+ (if (fx< 2 1) 10 20) 1) 21)
+  (eq? (not (eqv? (if (fx< 1 2) 1 2) 2)) #t)
+  ; a loop whose body select must survive compilation whole
+  (let loop ([n 1000] [acc 0])
+    (if (fx= n 0)
+        (eqv? acc 1500)
+        (loop (fx- n 1) (fx+ acc (if (fx< (fxmodulo n 2) 1) 1 2)))))
+  ; selects between the boolean immediates keep working both ways
+  (let ([sel (lambda (x y) (if (fx< x y) #t #f))])
+    (and (eq? (sel 1 2) #t) (eq? (sel 2 1) #f) (eq? (sel 2 2) #f)))
+  (let ([sel (lambda (x y) (if (fx< x y) #f #t))])
+    (and (eq? (sel 1 2) #f) (eq? (sel 2 1) #t) (eq? (sel 2 2) #t)))
+  (let ([sel (lambda (x y) (if (fx< x y) #t #f))])
+    (and (eq? (vector-ref (vector (sel 1 2)) 0) #t)
+         (eq? (vector-ref (vector (sel 2 1)) 0) #f)))
+  ; selects between variable values, not just immediates
+  (let ([sel (lambda (x y c d) (if (fx< x y) c d))])
+    (and (eqv? (sel 1 2 10 20) 10) (eqv? (sel 2 1 10 20) 20) (eqv? (sel 2 2 10 20) 20)))
+  ; let-bound select result
+  (let ([f (lambda (x y c d) (let ([a (if (fx< x y) c d)]) (fx+ a 1)))])
+    (and (eqv? (f 1 2 10 20) 11) (eqv? (f 2 1 10 20) 21)))
+  ; destination-is-then-value: the register emitter takes the
+  ; then-value already in the destination with the inverted condition
+  (let ([f (lambda (x y) (if (fx< x y) (set! x x) (set! x 5)) x)])
+    (and (eqv? (f 1 2) 1) (eqv? (f 2 1) 5) (eqv? (f 2 2) 5)))
+  ; min/max shapes: both arms are the destination and the other
+  ; compare operand, in both orders, on every signed condition
+  (let ([f (lambda (x y) (if (fx< x y) (set! x x) (set! x y)) x)])
+    (and (eqv? (f 1 2) 1) (eqv? (f 2 1) 1) (eqv? (f 2 2) 2)))
+  (let ([f (lambda (x y) (if (fx< x y) (set! x y) (set! x x)) x)])
+    (and (eqv? (f 1 2) 2) (eqv? (f 2 1) 2) (eqv? (f 2 2) 2)))
+  (let ([f (lambda (x y) (if (fx> x y) (set! x x) (set! x y)) x)])
+    (and (eqv? (f 1 2) 2) (eqv? (f 2 1) 2) (eqv? (f 2 2) 2)))
+  (let ([f (lambda (x y) (if (fx<= x y) (set! x x) (set! x y)) x)])
+    (and (eqv? (f 1 2) 1) (eqv? (f 2 1) 1) (eqv? (f 2 2) 2)))
+  ; flonum-compare selects, NaN taking the else value like the branch
+  (let ([sel (lambda (x y) (if (fl< x y) 1 2))])
+    (and (eqv? (sel 1.0 2.0) 1) (eqv? (sel 2.0 1.0) 2) (eqv? (sel 2.0 2.0) 2)
+         (eqv? (sel +nan.0 2.0) 2) (eqv? (sel 2.0 +nan.0) 2)))
+  (let ([sel (lambda (x y) (if (fl= x y) 1 2))])
+    (and (eqv? (sel 2.0 2.0) 1) (eqv? (sel 1.0 2.0) 2)
+         (eqv? (sel +nan.0 +nan.0) 2)))
+  (let ([sel (lambda (x y) (if (fl< x y) #t #f))])
+    (and (eq? (sel 1.0 2.0) #t) (eq? (sel 2.0 1.0) #f) (eq? (sel +nan.0 2.0) #f)))
+  ; boundary operands: signed zeros compare equal (else path, ZF=1),
+  ; infinities sit at the value-range ends, and a NaN operand takes the
+  ; else value against an infinity exactly as against a finite number
+  (let ([sel (lambda (x y) (if (fl< x y) #t #f))])
+    (and (eq? (sel -0.0 0.0) #f) (eq? (sel 0.0 -0.0) #f)
+         (eq? (sel -inf.0 +inf.0) #t) (eq? (sel +inf.0 -inf.0) #f)
+         (eq? (sel +inf.0 +inf.0) #f) (eq? (sel -inf.0 -inf.0) #f)
+         (eq? (sel +nan.0 +inf.0) #f) (eq? (sel -inf.0 +nan.0) #f)))
+  (let ([sel (lambda (x y) (if (fl< x y) 10 20))])
+    (and (eqv? (sel -0.0 0.0) 20) (eqv? (sel 0.0 -0.0) 20)
+         (eqv? (sel -inf.0 +inf.0) 10) (eqv? (sel +inf.0 -inf.0) 20)
+         (eqv? (sel +nan.0 -inf.0) 20) (eqv? (sel +inf.0 +nan.0) 20)))
+  ; fixnum-extreme compare operands on the select conditions
+  (let ([sel (lambda (x y) (if (fx< x y) 10 20))])
+    (and (eqv? (sel (most-negative-fixnum) 0) 10)
+         (eqv? (sel 0 (most-negative-fixnum)) 20)
+         (eqv? (sel (most-negative-fixnum) (most-positive-fixnum)) 10)
+         (eqv? (sel (most-positive-fixnum) (most-negative-fixnum)) 20)
+         (eqv? (sel (most-positive-fixnum) (most-positive-fixnum)) 20)))
+  ; the general immediate rule select(P, A, B) = B + (A-B)*b: a
+  ; power-of-two A-B takes the arithmetic form (setcc, shift, add),
+  ; a negative power-of-two difference swaps the arms with the
+  ; inverted condition, and any other difference keeps the cmov form
+  ; with a scratch; the compares are type-laundered so the unsafe
+  ; predicate reaches the conversion
+  (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) 40 8))])
+    (and (eqv? (sel 0 1) 40) (eqv? (sel 1 0) 8) (eqv? (sel 0 0) 8)))
+  (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) 8 40))])
+    (and (eqv? (sel 0 1) 8) (eqv? (sel 1 0) 40) (eqv? (sel 0 0) 40)))
+  (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) 13 6))])
+    (and (eqv? (sel 0 1) 13) (eqv? (sel 1 0) 6) (eqv? (sel 0 0) 6)))
+  (let ([sel (lambda (x y) (if (fl< (fl+ x 0.0) (fl+ y 0.0)) 40 8))])
+    (and (eqv? (sel 1.0 2.0) 40) (eqv? (sel 2.0 1.0) 8) (eqv? (sel 2.0 2.0) 8)
+         (eqv? (sel +nan.0 2.0) 8) (eqv? (sel 2.0 +nan.0) 8)))
+  (let ([sel (lambda (x y) (if (fl< (fl+ x 0.0) (fl+ y 0.0)) 8 40))])
+    (and (eqv? (sel 1.0 2.0) 8) (eqv? (sel 2.0 1.0) 40) (eqv? (sel 2.0 2.0) 40)
+         (eqv? (sel +nan.0 2.0) 40)))
+  ; mixed uvar/immediate arms: the immediate binds to a scratch and
+  ; the register form selects; both arm orders, on both condition
+  ; families
+  (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) x 5))])
+    (and (eqv? (sel 1 2) 1) (eqv? (sel 2 1) 5) (eqv? (sel 2 2) 5)))
+  (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) 10 y))])
+    (and (eqv? (sel 1 2) 10) (eqv? (sel 2 1) 1) (eqv? (sel 2 2) 2)))
+  (let ([sel (lambda (x y) (if (fl< (fl+ x 0.0) (fl+ y 0.0)) x 5))])
+    (and (eqv? (sel 1.0 2.0) 1.0) (eqv? (sel 2.0 1.0) 5)
+         (eqv? (sel +nan.0 2.0) 5) (eqv? (sel 2.0 +nan.0) 5)))
+  (let ([sel (lambda (x y) (if (fl< (fl+ x 0.0) (fl+ y 0.0)) 10 y))])
+    (and (eqv? (sel 1.0 2.0) 10) (eqv? (sel 2.0 1.0) 1.0)
+         (eqv? (sel +nan.0 2.0) 2.0)))
+  ; reverse flonum boolean selects with NaN, compiled with cp0
+  ; bypassed: the opaque (#%$value (values ...)) arms keep cp0 from
+  ; normalizing the if, so the arm order reaches the setcc
+  ; materialization; NaN takes the else value, exactly as the branch
+  (let ([sel (parameterize ([optimize-level 3]
+                            [run-cp0 (lambda (cp0 x) x)])
+               (compile '(lambda (x y)
+                           (let ([r (if (fl< x y)
+                                        (#%$value (values #f))
+                                        (#%$value (values #t)))])
+                             r))))])
+    (and (eq? (sel 1.0 2.0) #f) (eq? (sel 2.0 1.0) #t) (eq? (sel 2.0 2.0) #t)
+         (eq? (sel +nan.0 2.0) #t) (eq? (sel 2.0 +nan.0) #t)))
+  (let ([sel (parameterize ([optimize-level 3]
+                            [run-cp0 (lambda (cp0 x) x)])
+               (compile '(lambda (x y)
+                           (let ([r (if (fl< x y)
+                                        (#%$value (values #t))
+                                        (#%$value (values #f)))])
+                             r))))])
+    (and (eq? (sel 1.0 2.0) #t) (eq? (sel 2.0 1.0) #f) (eq? (sel 2.0 2.0) #f)
+         (eq? (sel +nan.0 2.0) #f) (eq? (sel 2.0 +nan.0) #f)))
+  ; fp-conditioned selects between variable values exercise the fpsel
+  ; register form; NaN in either operand takes the else value, as the
+  ; source branch does
+  (let ([sel (lambda (x y a b) (if (fl< x y) a b))])
+    (and (eqv? (sel 1.0 2.0 10 20) 10) (eqv? (sel 2.0 1.0 10 20) 20)
+         (eqv? (sel 1.0 1.0 10 20) 20)
+         (eqv? (sel +nan.0 2.0 10 20) 20) (eqv? (sel 2.0 +nan.0 10 20) 20)
+         (eqv? (sel +nan.0 +nan.0 10 20) 20)))
+  (let ([sel (lambda (x y a b) (if (fl<= x y) a b))])
+    (and (eqv? (sel 1.0 2.0 10 20) 10) (eqv? (sel 2.0 2.0 10 20) 10)
+         (eqv? (sel 2.0 1.0 10 20) 20) (eqv? (sel +nan.0 2.0 10 20) 20)))
+  ; fl> and fl>= swap onto the fp</fp<= conditions via cpprim
+  (let ([sel (lambda (x y a b) (if (fl> x y) a b))])
+    (and (eqv? (sel 2.0 1.0 10 20) 10) (eqv? (sel 1.0 2.0 10 20) 20)
+         (eqv? (sel 2.0 2.0 10 20) 20) (eqv? (sel +nan.0 1.0 10 20) 20)))
+  (let ([sel (lambda (x y a b) (if (fl>= x y) a b))])
+    (and (eqv? (sel 2.0 2.0 10 20) 10) (eqv? (sel 1.0 2.0 10 20) 20)
+         (eqv? (sel 1.0 +nan.0 10 20) 20)))
+  ; fl= equality selects: ucomisd sets ZF=1 on unordered as well as
+  ; on ordered-equal, so the conversion routes NaN around the cmove,
+  ; or to a corrective move, never through an inverted condition;
+  ; NaN takes the else value, and -0.0 = +0.0 takes the then value
+  (let ([sel (lambda (x y) (if (fl= x y) 10 20))])
+    (and (eqv? (sel 2.0 2.0) 10) (eqv? (sel 1.0 2.0) 20)
+         (eqv? (sel +nan.0 +nan.0) 20) (eqv? (sel +nan.0 2.0) 20)
+         (eqv? (sel 2.0 +nan.0) 20)
+         (eqv? (sel -0.0 0.0) 10) (eqv? (sel +inf.0 +inf.0) 10)
+         (eqv? (sel -inf.0 -inf.0) 10)))
+  (let ([sel (lambda (x y) (if (fl= x y) #t #f))])
+    (and (eq? (sel 1.0 1.0) #t) (eq? (sel 1.0 2.0) #f)
+         (eq? (sel +nan.0 1.0) #f) (eq? (sel 1.0 +nan.0) #f)))
+  (let ([sel (lambda (x y) (if (fl= x y) #f #t))])
+    (and (eq? (sel 1.0 1.0) #f) (eq? (sel 1.0 2.0) #t)
+         (eq? (sel +nan.0 1.0) #t) (eq? (sel 1.0 +nan.0) #t)))
+  (let ([sel (lambda (x y a b) (if (fl= x y) a b))])
+    (and (eqv? (sel 2.0 2.0 10 20) 10) (eqv? (sel 1.0 2.0 10 20) 20)
+         (eqv? (sel +nan.0 2.0 10 20) 20) (eqv? (sel 2.0 +nan.0 10 20) 20)))
+  ; fl= behind a lifted effect, laundered operands
+  (let ([f (lambda (x y v)
+             (if (begin (vector-set! v 0 9) (fl= (fl+ x 0.0) (fl+ y 0.0)))
+                 10
+                 20))])
+    (let ([v (make-vector 1 0)])
+      (and (eqv? (f 2.0 2.0 v) 10) (eqv? (f 1.0 2.0 v) 20)
+           (eqv? (f +nan.0 2.0 v) 20) (eqv? (f 2.0 +nan.0 v) 20)
+           (eqv? (vector-ref v 0) 9))))
+  ; fl= destination-is-then-value: ordered-unequal and NaN both reach
+  ; the else value
+  (let ([f (lambda (x y c) (let ([a 7]) (if (fl= x y) (set! a a) (set! a c)) (fx+ a c)))])
+    (and (eqv? (f 1.0 1.0 3) 10) (eqv? (f 1.0 2.0 3) 6)
+         (eqv? (f +nan.0 1.0 3) 6) (eqv? (f 1.0 +nan.0 3) 6)))
+  ; reverse fl= boolean selects with NaN, compiled with cp0 bypassed:
+  ; the opaque (#%$value (values ...)) arms keep cp0 from normalizing
+  ; the if, so the arm order reaches the emitters; NaN takes the else
+  ; value in either order, and the then=#f order exercises the arith
+  ; form's negated-shift path
+  (let ([sel (parameterize ([optimize-level 3]
+                            [run-cp0 (lambda (cp0 x) x)])
+               (compile '(lambda (x y)
+                           (let ([r (if (fl= x y)
+                                        (#%$value (values #f))
+                                        (#%$value (values #t)))])
+                             r))))])
+    (and (eq? (sel 1.0 1.0) #f) (eq? (sel 1.0 2.0) #t)
+         (eq? (sel +nan.0 1.0) #t) (eq? (sel 1.0 +nan.0) #t)))
+  (let ([sel (parameterize ([optimize-level 3]
+                            [run-cp0 (lambda (cp0 x) x)])
+               (compile '(lambda (x y)
+                           (let ([r (if (fl= x y)
+                                        (#%$value (values #t))
+                                        (#%$value (values #f)))])
+                             r))))])
+    (and (eq? (sel 1.0 1.0) #t) (eq? (sel 1.0 2.0) #f)
+         (eq? (sel +nan.0 1.0) #f) (eq? (sel 1.0 +nan.0) #f)))
+  ; same-destination set! with uvar arms on an fp condition: the
+  ; register allocator may coalesce the destination with either arm
+  (let ([f (lambda (x y b c) (let ([a 7]) (if (fl< x y) (set! a b) (set! a c)) (fx+ a (fx+ b c))))])
+    (and (eqv? (f 1.0 2.0 10 20) 40) (eqv? (f 2.0 1.0 10 20) 50)
+         (eqv? (f 2.0 2.0 10 20) 50) (eqv? (f +nan.0 2.0 10 20) 50)))
+  ; destination-is-then-value: the register emitter takes the
+  ; then-value already in the destination with the inverted condition
+  (let ([f (lambda (x y c) (let ([a 7]) (if (fl< x y) (set! a a) (set! a c)) (fx+ a c)))])
+    (and (eqv? (f 1.0 2.0 3) 10) (eqv? (f 2.0 1.0 3) 6) (eqv? (f +nan.0 1.0 3) 6)))
+  ; flonum min/max shapes; NaN takes the else arm, exactly as the
+  ; source branch does
+  (let ([f (lambda (x y) (if (fl< x y) (set! x x) (set! x y)) x)])
+    (and (eqv? (f 1.0 2.0) 1.0) (eqv? (f 2.0 1.0) 1.0) (eqv? (f +nan.0 2.0) 2.0)))
+  (let ([f (lambda (x y) (if (fl< x y) (set! x y) (set! x x)) x)])
+    (and (eqv? (f 1.0 2.0) 2.0) (eqv? (f 2.0 1.0) 2.0) (eqv? (f +nan.0 2.0) +nan.0)))
+  ; destination-is-else-value keeps the destination on the else path
+  (let ([f (lambda (x y b) (let ([a 7]) (if (fl< x y) (set! a b) (set! a a)) (fx+ a b)))])
+    (and (eqv? (f 1.0 2.0 3) 6) (eqv? (f 2.0 1.0 3) 10) (eqv? (f +nan.0 1.0 3) 10)))
+  ; fixnum-conditioned same-destination set! between uvar arms
+  (let ([f (lambda (x y b c) (let ([a 7]) (if (fx< x y) (set! a b) (set! a c)) (fx+ a (fx+ b c))))])
+    (and (eqv? (f 1 2 10 20) 40) (eqv? (f 2 1 10 20) 50) (eqv? (f 2 2 10 20) 50)))
+  ; select stored straight to memory exercises the memory-destination
+  ; instruction form (cmov needs a register destination, so the value
+  ; is computed into a temp and stored)
+  (let ([v (make-vector 3 0)])
+    (vector-set! v 0 (if (fx< 1 2) 10 20))
+    (vector-set! v 1 (if (fx< 2 1) 10 20))
+    (vector-set! v 2 (if (fx< 2 2) 10 20))
+    (equal? v '#(10 20 20)))
+  (let ([v (make-vector 2 0)])
+    (let ([a 10] [b 20])
+      (vector-set! v 0 (if (fx< 1 2) a b))
+      (vector-set! v 1 (if (fx< 2 1) a b)))
+    (equal? v '#(10 20)))
+  (let ([v (make-vector 4 0)])
+    (vector-set! v 0 (if (fl< 1.0 2.0) 10 20))
+    (vector-set! v 1 (if (fl< 2.0 1.0) 10 20))
+    (vector-set! v 2 (if (fl< 2.0 2.0) 10 20))
+    (vector-set! v 3 (if (fl< +nan.0 2.0) 10 20))
+    (equal? v '#(10 20 20 20)))
+  (let ([v (make-vector 2 0)])
+    (let ([a 10] [b 20])
+      (vector-set! v 0 (if (fl<= 1.0 2.0) a b))
+      (vector-set! v 1 (if (fl<= +nan.0 2.0) a b)))
+    (equal? v '#(10 20)))
+  ; effects ahead of the comparison in test position lift out of the
+  ; branch, exposing the compare to the select conversion; the effect
+  ; must still run exactly once, before the branch
+  (let ([v (make-vector 1 0)])
+    (and (eqv? (if (begin (vector-set! v 0 1) (fx< 1 2)) 10 20) 10)
+         (eqv? (if (begin (vector-set! v 0 2) (fx< 2 1)) 10 20) 20)
+         (eqv? (vector-ref v 0) 2)))
+  (let ([v (make-vector 1 0)])
+    (and (eqv? (if (begin (vector-set! v 0 3) (fl< 1.0 2.0)) 10 20) 10)
+         (eqv? (if (begin (vector-set! v 0 4) (fl< +nan.0 2.0)) 10 20) 20)
+         (eqv? (vector-ref v 0) 4)))
+  (let ([v (make-vector 1 0)] [n 0])
+    (if (begin (vector-set! v 0 5) (fx< 1 2)) (set! n 10) (set! n 20))
+    (and (eqv? n 10) (eqv? (vector-ref v 0) 5)))
+  ; flonum compare behind a lifted effect, with laundered
+  ; (known-flonum, non-foldable) operands so the unsafe fp predicate
+  ; reaches the arms-swap conversion at every level: NaN takes the else
+  ; value exactly as the branch does, and the effect still runs exactly
+  ; once.  Tail and effect position.
+  (let ([f (lambda (x y v)
+             (if (begin (vector-set! v 0 6) (fl< (fl+ x 0.0) (fl+ y 0.0)))
+                 10
+                 20))])
+    (let ([v (make-vector 1 0)])
+      (and (eqv? (f 1.0 2.0 v) 10) (eqv? (f 2.0 1.0 v) 20)
+           (eqv? (f 2.0 2.0 v) 20) (eqv? (f +nan.0 2.0 v) 20)
+           (eqv? (f 2.0 +nan.0 v) 20)
+           (eqv? (vector-ref v 0) 6))))
+  (let ([f (lambda (x y v)
+             (if (begin (vector-set! v 0 7) (fl<= (fl+ x 0.0) (fl+ y 0.0)))
+                 10
+                 20))])
+    (let ([v (make-vector 1 0)])
+      (and (eqv? (f 2.0 2.0 v) 10) (eqv? (f 2.0 1.0 v) 20)
+           (eqv? (f +nan.0 2.0 v) 20)
+           (eqv? (vector-ref v 0) 7))))
+  (let ([f (lambda (x y n v)
+             (if (begin (vector-set! v 0 8) (fl< (fl+ x 0.0) (fl+ y 0.0)))
+                 (set! n 10)
+                 (set! n 20))
+             (fx+ n (vector-ref v 0)))])
+    (and (eqv? (f 1.0 2.0 0 (make-vector 1 0)) 18)
+         (eqv? (f 2.0 1.0 0 (make-vector 1 0)) 28)
+         (eqv? (f +nan.0 2.0 0 (make-vector 1 0)) 28)))
+  ; calls in test position arrive as (eq? <tmp> #f) after the single
+  ; call evaluation, with the arms swapping onto the comparison
+  (eqv? (let ([f (lambda () #t)]) (if (f) 10 20)) 10)
+  (eqv? (let ([f (lambda () #f)]) (if (f) 10 20)) 20)
+  (eqv? (let ([f (lambda () 7)]) (if (f) 10 20)) 10)
+  (eqv? (let ([f (lambda () #f)] [n 0])
+          (if (f) (set! n 10) (set! n 20)) n) 20)
+ )
+
+(mat fx-compare-safe-op-select
+  ; selects whose condition is a safe fixnum compare on arguments of
+  ; unknown type: at optimize levels below 3 the compare arrives
+  ; wrapped in the fixnum-check/error-call shape (if (if check cmp
+  ; cold) t1 t2), and the wrapper is flattened so the hot path is
+  ; still one cmp + cmovcc; the cold path keeps raising for non-fixnum
+  ; arguments (error checks are ignored at level 3, where the compare
+  ; is unchecked and this reduces to the value-position cases above)
+  (let ([f (lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x)])
+    (and (eqv? (f 1 2) 10) (eqv? (f 2 1) 20) (eqv? (f 2 2) 20)
+         (eqv? (f (most-negative-fixnum) (most-positive-fixnum)) 10)
+         (eqv? (f (most-positive-fixnum) (most-negative-fixnum)) 20)))
+  (error? ((lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x) 'a 1))
+  (error? ((lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x) 1 'b))
+  (error? ((lambda (x y) (if (fx< x y) 10 20)) 'a 1))
+  ; tail position
+  (let ([g (lambda (x y) (if (fx< x y) 10 20))])
+    (and (eqv? (g 1 2) 10) (eqv? (g 2 1) 20) (eqv? (g 2 2) 20)
+         (eqv? (g (most-negative-fixnum) (most-positive-fixnum)) 10)))
+  ; mixed uvar/immediate arms
+  (let ([h (lambda (x y a b) (if (fx< x y) (set! a 5) (set! a b)) a)])
+    (and (eqv? (h 1 2 'c 33) 5) (eqv? (h 2 1 'c 33) 33)))
+  ; under an operator: value position through a temp
+  (let ([k (lambda (x y) (fx+ (if (fx< x y) 1 2) 3))])
+    (and (eqv? (k 1 2) 4) (eqv? (k 2 1) 5) (eqv? (k 2 2) 5)))
+  ; all five signed relops through the wrapper, tail position
+  (let ([sel< (lambda (x y) (if (fx< x y) 1 2))]
+        [sel<= (lambda (x y) (if (fx<= x y) 11 22))]
+        [sel= (lambda (x y) (if (fx= x y) 111 222))]
+        [sel> (lambda (x y) (if (fx> x y) 1111 2222))]
+        [sel>= (lambda (x y) (if (fx>= x y) 11111 22222))])
+    (and (eqv? (sel< 1 2) 1) (eqv? (sel< 2 2) 2)
+         (eqv? (sel<= 1 2) 11) (eqv? (sel<= 2 2) 11)
+         (eqv? (sel= 2 2) 111) (eqv? (sel= 1 2) 222)
+         (eqv? (sel> 2 1) 1111) (eqv? (sel> 2 2) 2222)
+         (eqv? (sel>= 2 2) 11111) (eqv? (sel>= 1 2) 22222)))
+  ; unsigned compare through the wrapper
+  (let ([selu (lambda (x y) (if (#%$fxu< x y) 1 2))])
+    (and (eqv? (selu 1 2) 1) (eqv? (selu 2 1) 2)
+         (eqv? (selu -1 2) 2) (eqv? (selu 2 -1) 1)))
+  ; flonum compare through the wrapper, effect and tail position;
+  ; NaN takes the else value, exactly as the branchy form
+  (let ([fl (lambda (x y) (if (fl< x y) (set! x 1.5) (set! x 2.5)) x)])
+    (and (eqv? (fl 1.0 2.0) 1.5) (eqv? (fl 2.0 1.0) 2.5) (eqv? (fl 1.0 1.0) 2.5)
+         (eqv? (fl +nan.0 1.0) 2.5) (eqv? (fl 1.0 +nan.0) 2.5)))
+  (let ([fl (lambda (x y) (if (fl< x y) 10.5 20.5))])
+    (and (eqv? (fl 1.0 2.0) 10.5) (eqv? (fl 2.0 1.0) 20.5)
+         (eqv? (fl +nan.0 1.0) 20.5)))
+  (error? ((lambda (x y) (if (fl< x y) 1.5 2.5)) 'a 1.0))
+  ; flonum equality through the safe-operation wrapper, effect and
+  ; tail position: NaN takes the else value, and non-flonum arguments
+  ; still raise
+  (let ([fl (lambda (x y) (if (fl= x y) (set! x 1.5) (set! x 2.5)) x)])
+    (and (eqv? (fl 1.0 1.0) 1.5) (eqv? (fl 1.0 2.0) 2.5)
+         (eqv? (fl +nan.0 1.0) 2.5) (eqv? (fl 1.0 +nan.0) 2.5)))
+  (let ([fl (lambda (x y) (if (fl= x y) 10.5 20.5))])
+    (and (eqv? (fl 2.0 2.0) 10.5) (eqv? (fl 1.0 2.0) 20.5)
+         (eqv? (fl +nan.0 1.0) 20.5)))
+  (error? ((lambda (x y) (if (fl= x y) 1.5 2.5)) 'a 1.0))
+  (error? ((lambda (x y) (if (fl= x y) 1.5 2.5)) 1.0 'b))
+  ; single evaluation: the wrapper's check and the compare share
+  ; the argument values, so both uses must see the same value (the
+  ; counter sits in a box because mat clauses are evaled at top
+  ; level, where closures cannot capture let-bound variables)
+  (let ([count (box 0)])
+    (let ([bump (lambda (x) (set-box! count (fx+ (unbox count) 1)) x)])
+      (let ([r ((lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x)
+                (bump 1) (bump 2))])
+        (and (eqv? r 10) (eqv? (unbox count) 2)))))
+  ; the flattened form must stay correct across repeated calls
+  (let ([f (lambda (x y) (if (fx< x y) (set! x 10) (set! x 20)) x)])
+    (let loop ([i 0] [ok #t])
+      (if (fx= i 100)
+          ok
+          (loop (fx+ i 1)
+                (and ok (eqv? (f i (fx+ i 1)) 10))))))
+  )
+
 (mat fx+
    (eqv? (fx+ 3 0) 3)
    (eqv? (fx+ 3 1) 4)
