@@ -3870,6 +3870,9 @@
         ; and calls in test position, which arrive as
         ; (seq ... (if (eq? <tmp> #f) (false) (true))), keep the single
         ; evaluation of the call, with the arms swapping onto the eq?.
+        ; Both select families are accepted: on a flonum compare the
+        ; fpsel family's NaN-takes-else semantics is exactly the source
+        ; branch's false arm, so the swap is sound for fp predicates.
         (define lift-seq-pred
           (lambda (p)
             (let loop ([p p] [pfx '()])
@@ -3881,7 +3884,7 @@
                      (values (reverse pfx) p #f)
                      (values #f #f #f))]
                 [(if (inline ,info ,pred-prim ,t* ...) (false) (true))
-                 (if (pred->isel pred-prim)
+                 (if (or (pred->isel pred-prim) (pred->fpsel pred-prim))
                      (values (reverse pfx)
                              (with-output-language (L11 Pred)
                                `(inline ,info ,pred-prim ,t* ...))

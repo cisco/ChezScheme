@@ -629,6 +629,36 @@
   (let ([v (make-vector 1 0)] [n 0])
     (if (begin (vector-set! v 0 5) (fx< 1 2)) (set! n 10) (set! n 20))
     (and (eqv? n 10) (eqv? (vector-ref v 0) 5)))
+  ; flonum compare behind a lifted effect, with laundered
+  ; (known-flonum, non-foldable) operands so the unsafe fp predicate
+  ; reaches the arms-swap conversion at every level: NaN takes the else
+  ; value exactly as the branch does, and the effect still runs exactly
+  ; once.  Tail and effect position.
+  (let ([f (lambda (x y v)
+             (if (begin (vector-set! v 0 6) (fl< (fl+ x 0.0) (fl+ y 0.0)))
+                 10
+                 20))])
+    (let ([v (make-vector 1 0)])
+      (and (eqv? (f 1.0 2.0 v) 10) (eqv? (f 2.0 1.0 v) 20)
+           (eqv? (f 2.0 2.0 v) 20) (eqv? (f +nan.0 2.0 v) 20)
+           (eqv? (f 2.0 +nan.0 v) 20)
+           (eqv? (vector-ref v 0) 6))))
+  (let ([f (lambda (x y v)
+             (if (begin (vector-set! v 0 7) (fl<= (fl+ x 0.0) (fl+ y 0.0)))
+                 10
+                 20))])
+    (let ([v (make-vector 1 0)])
+      (and (eqv? (f 2.0 2.0 v) 10) (eqv? (f 2.0 1.0 v) 20)
+           (eqv? (f +nan.0 2.0 v) 20)
+           (eqv? (vector-ref v 0) 7))))
+  (let ([f (lambda (x y n v)
+             (if (begin (vector-set! v 0 8) (fl< (fl+ x 0.0) (fl+ y 0.0)))
+                 (set! n 10)
+                 (set! n 20))
+             (fx+ n (vector-ref v 0)))])
+    (and (eqv? (f 1.0 2.0 0 (make-vector 1 0)) 18)
+         (eqv? (f 2.0 1.0 0 (make-vector 1 0)) 28)
+         (eqv? (f +nan.0 2.0 0 (make-vector 1 0)) 28)))
   ; calls in test position arrive as (eq? <tmp> #f) after the single
   ; call evaluation, with the arms swapping onto the comparison
   (eqv? (let ([f (lambda () #t)]) (if (f) 10 20)) 10)
