@@ -9564,6 +9564,10 @@ fx.mo:Expected error in mat fx>=?: "incorrect argument count in call (fx>=? 1)".
 fx.mo:Expected error in mat $fxu<: "incorrect number of arguments 1 to #<procedure $fxu<>".
 fx.mo:Expected error in mat $fxu<: "incorrect number of arguments 3 to #<procedure $fxu<>".
 fx.mo:Expected error in mat $fxu<: "$fxu<: <-int> is not a fixnum".
+fx.mo:Expected error in mat fx-compare-safe-op-select: "fx<: a is not a fixnum".
+fx.mo:Expected error in mat fx-compare-safe-op-select: "fx<: b is not a fixnum".
+fx.mo:Expected error in mat fx-compare-safe-op-select: "fx<: a is not a fixnum".
+fx.mo:Expected error in mat fx-compare-safe-op-select: "fl<: a is not a flonum".
 fx.mo:Expected error in mat fx+: "fx+: (a . b) is not a fixnum".
 fx.mo:Expected error in mat fx+: "fx+: fixnum overflow with arguments <int> and 1".
 fx.mo:Expected error in mat fx+: "fx+: <int> is not a fixnum".
