@@ -638,7 +638,7 @@
                     asm-fpcastto asm-fpcastfrom
                     asm-return-address asm-indirect-call asm-library-call asm-library-call! asm-c-simple-call
                     asm-foreign-call asm-foreign-callable
-                    asm-size signed12? shamt?)
+                    asm-size asm-nop signed12? shamt?)
 
   (define-syntax define-op
     (lambda (x)
@@ -1779,6 +1779,10 @@
                                                 (aop-cons* `(asm "quad call addr")
                                                            (emit jalr %ra tmp 0
                                                                  (asm-helper-relocation code* reloc)))))))))))
+
+  (define asm-nop
+    (lambda ()
+      (make-chunk (emit addi %real-zero %real-zero 0 '()))))
 
   (define asm-kill
     (lambda (code* dest)

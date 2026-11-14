@@ -3098,6 +3098,15 @@ Distinguish flags used only during compilation from those that need to
 be saved in fasl form, and ensure that compilation-time flags do not
 cause an error when Chez Scheme itself was compiled in safe mode.
 
+\subsection{Avoid misaligned 8-byte accesses on riscv64 (10.5.0)}
+
+On riscv64, the run-time system read and wrote some 8-byte values,
+including literals in machine code and return-point headers, at
+addresses that were only 4-byte aligned. Those accesses are undefined
+behavior in C, and they can be slow or trap on some hardware. Literals
+are now accessed as two 4-byte halves, and return-point headers are
+padded to 8-byte alignment.
+
 \subsection{Repair duplicate checking in \scheme{import} (10.5.0)}
 
 Repair checking of duplicate names on \scheme{import} in the case of
