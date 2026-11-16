@@ -817,7 +817,7 @@
                                          hangul-tcount)))))]
                       [(and (and (char<=? hangul-sbase c)
                                  (char<=? c hangul-slimit))
-                            (and (char<=? hangul-tbase c1)
+                            (and (char<? hangul-tbase c1)
                                  (char<=? c1 hangul-tlimit))
                             (let ([sindex (char- c hangul-sbase)])
                               (fxzero? (fxmod sindex hangul-tcount))))

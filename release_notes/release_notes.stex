@@ -122,6 +122,11 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
+\subsection{Unicode 18.0.0 support (10.5.0)}
+
+The character sets, character classes, and word-breaking algorithms for character, string,
+and Unicode-related bytevector operations have now been updated to Unicode 18.0.0.
+
 \subsection{Additional flonum procedures (10.5.0)}
 
 The new \scheme{flhypot}, \scheme{flfma}, \scheme{fllog1p},
