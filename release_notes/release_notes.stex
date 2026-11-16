@@ -122,10 +122,6 @@ Online versions of both books can be found at
 %-----------------------------------------------------------------------------
 \section{Functionality Changes}\label{section:functionality}
 
-\subsection{zlib library updated (10.5.0)}
-
-The zlib compression library was updated from v1.3.2 to v1.4.
-
 \subsection{Additional flonum procedures (10.5.0)}
 
 The new \scheme{flhypot}, \scheme{flfma}, \scheme{fllog1p},
@@ -250,14 +246,14 @@ The new \scheme{__alloc} foreign-procedure convention modifies a preceding
 Scheme's C library routines to allocate Scheme values, such as
 allocating a string or pair.
 
-The new \scheme{__disable_interrupts} convention disables interupts
+The new \scheme{__disable_interrupts} convention disables interrupts
 during a foreign call or during the invocation of a foreign callable.
 A foreign call could be wrapped just as well with
 \scheme{with-interrupts-disabled}; the
 \scheme{__disable_interrupts} convention is intended more for foreign
 callables. For a callable, interrupts are disabled just before the
 first point that a callable would otherwise allow interrupt handling,
-and interrupts after reenabled after the last point where the callable
+and interrupts are re-enabled after the last point where the callable
 would otherwise allow interrupt handling.
 
 \subsection{New machine types for GNU/Hurd and Haiku on x86\_64 (10.4.0)}
@@ -283,7 +279,7 @@ List operations such as \scheme{length}, \scheme{list-ref},
 \scheme{list-tail}, \scheme{append}, \scheme{reverse}, \scheme{assq},
 and \scheme{memq} suffer from the same problem only in unsafe mode.
 Direct use of these procedures in unsafe mode continues to be treated
-as essentialy constant-time.
+as essentially constant-time.
 
 \subsection{Type recovery improvements (10.4.0)}
 
@@ -1055,8 +1051,8 @@ To better support the pb machine type, where endianness is not known
 statically, endianness in a foreign type can not be \scheme{native} or
 \scheme{swapped} in addition to \scheme{big} or \scheme{little}.
 
-Chez Scheme's kernel also expose record-type and field access to
-C, mainly useful for for records that contain only pointer-sized
+Chez Scheme's kernel also exposes record-type and field access to
+C, mainly useful for records that contain only pointer-sized
 values:
 
 \schemedisplay
@@ -2007,7 +2003,7 @@ will be compressed.
 If the port is an input port, subsequent input will be decompressed
 if and only if the port is currently pointing at compressed data.
 
-When the parameter \scheme{compile-compressed} is set ot \scheme{#t},
+When the parameter \scheme{compile-compressed} is set to \scheme{#t},
 the \scheme{compile-script} and \scheme{compile-program} procedures
 take advantage of this functionality to copy the \scheme{#!} prefix,
 if present in the source file, uncompressed in the object file while
@@ -3068,9 +3064,9 @@ registers and possibly a different configuration for those registers.
 
 Within the interactive inspector, closure and frame variables can now
 be set by name, and the forward (f) and back (b) commands can now be
-used to to move among the frames that comprise a continuation.
+used to move among the frames that comprise a continuation.
 
-A new show-local (sl) command can be be used to look at just the local
+A new show-local (sl) command can be used to look at just the local
 variables of a stack frame.
 This contrasts with the show (s) command, which shows the free variables
 of the frame's closure as well.
@@ -3091,6 +3087,14 @@ in fasl files does not generally make sense.
 
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
+
+\subsection{LZ4 library updated (10.5.0)}
+
+The LZ4 compression library was updated from v1.10.0 to v1.11.1.
+
+\subsection{zlib library updated (10.5.0)}
+
+The zlib compression library was updated from v1.3.2 to v1.4.
 
 \subsection{Repair fasl write of code flags (10.5.0)}
 
@@ -3163,7 +3167,7 @@ correctly.
 \subsection{Repair large-object \scheme{make-immobile-bytevector} (10.5.0)}
 
 When \scheme{make-immobile-bytevector} was called with a size greater
-than the minimum segment allocation, which is roughtly 2MB on a 64-bit
+than the minimum segment allocation, which is roughly 2MB on a 64-bit
 platform, then the resulting bytevector was not reliably immobile.
 That bug has been fixed.
 
@@ -3488,7 +3492,7 @@ bytevector whose length is not a multiple of the word size.
 \subsection{Missing C implementation for \scheme{Smake_flvector} (10.1.0)}
 
 The header file scheme.h Scheme defines \scheme{Smake_flvector}, but
-Chez Scheme does not provide an implmentation. The
+Chez Scheme does not provide an implementation. The
 \scheme{Smake_flvector} function is now implemented.
 
 \subsection{\scheme{library-exports} for library that is not yet imported (10.0.0)}
@@ -3519,9 +3523,9 @@ The values have the same printed representation, yet comparing the resulting big
 A bug where \scheme{import} did not recognize a \var{library-spec}
 of the form \scheme{(library \var{library-reference})} has been fixed.
 
-\subsection{Garbage collector incorrectly handles emphemerons (9.6.0)}
+\subsection{Garbage collector incorrectly handles ephemerons (9.6.0)}
 
-A bug where the garbage collector sometimes incorrectly handles epehemeron pairs has
+A bug where the garbage collector sometimes incorrectly handles ephemeron pairs has
 been fixed.
 
 \subsection{Garbage collector incorrectly handles mutated weak pairs (9.6.0)}
@@ -3706,7 +3710,7 @@ of the mutually recursive ftypes is a subtype of another, as in:
 
 It manifested in the fasl reader raising bogus "incompatible record
 type" exceptions when two or more references to one of the ftypes
-occur in in separate compiled files or in separate top-level forms
+occur in separate compiled files or in separate top-level forms
 of a file compiled via \scheme{compile-file}.
 The bug could also have affected other record-type descriptors with
 cycles involving parent rtds and ``extra'' fields as well as fasl
