@@ -759,6 +759,127 @@
          (eq? (f 2 1 #t #f) 'two) (eq? (f 2 1 #f 7) 'one)))
  )
 
+(mat fx-compare-boxed-select
+  ; source-level min/max and clamps whose destination is an assigned
+  ; variable: assignment conversion boxes the destination. The arms may
+  ; write an mref cell directly or produce a uvar followed by a boxed
+  ; writeback; both forms must materialize branchlessly. Cover the
+  ; running-min self arm, signed and unsigned relops, both arm orders,
+  ; safe-mode cold paths, mixed operands, boundaries, and loops.
+  ; running min on an assigned variable (mref self arm)
+  (let ([f (lambda (x y)
+             (let ([m x])
+               (set! m (if (fx< m y) m y))
+               (set! m (if (fx< m y) m y))
+               m))])
+    (and (eqv? (f 5 3) 3) (eqv? (f 3 5) 3) (eqv? (f 4 4) 4)
+         (eqv? (f (most-positive-fixnum) 0) 0)
+         (eqv? (f (most-negative-fixnum) 0) (most-negative-fixnum))))
+  ; running max, compare operands in the other order
+  (let ([f (lambda (x y)
+             (let ([m x])
+               (set! m (if (fx> y m) y m))
+               m))])
+    (and (eqv? (f 5 3) 5) (eqv? (f 3 5) 5) (eqv? (f 4 4) 4)))
+  ; unsigned comparison with the same self-mref arm
+  (let ([f (lambda (x y)
+             (let ([m x])
+               (set! m (if (#%$fxu< m y) m y))
+               m))])
+    (and (eqv? (f 3 -7) 3) (eqv? (f -3 -7) -7)
+         (eqv? (f -3 0) 0) (eqv? (f 0 -3) 0)))
+  ; all five signed relops writing a boxed destination
+  (let ([f (lambda (x y)
+             (let ([a 0])
+               (set! a (if (fx< x y) 10 20))
+               (let ([r1 a])
+                 (set! a (if (fx<= x y) 10 20))
+                 (let ([r2 a])
+                   (set! a (if (fx= x y) 10 20))
+                   (let ([r3 a])
+                     (set! a (if (fx>= x y) 10 20))
+                     (let ([r4 a])
+                       (set! a (if (fx> x y) 10 20))
+                       (list r1 r2 r3 r4 a)))))))])
+    (and (equal? (f 1 2) '(10 10 20 20 20))
+         (equal? (f 2 1) '(20 20 20 10 10))
+         (equal? (f 2 2) '(20 10 10 10 20))))
+  ; immediate arms, including least/greatest fixnum and negatives
+  (let ([f (lambda (x)
+             (let ([a 0])
+               (set! a (if (fx< x 5) (most-negative-fixnum) (most-positive-fixnum)))
+               a))])
+    (and (eqv? (f 3) (most-negative-fixnum))
+         (eqv? (f 7) (most-positive-fixnum))
+         (eqv? (f 5) (most-positive-fixnum))))
+  ; clamp to a range with two boxed destinations
+  (let ([f (lambda (x lo hi)
+             (let ([r x])
+               (set! r (if (fx< r lo) lo r))
+               (set! r (if (fx> r hi) hi r))
+               r))])
+    (and (eqv? (f 1 3 7) 3) (eqv? (f 5 3 7) 5) (eqv? (f 9 3 7) 7)
+         (eqv? (f 3 3 3) 3)))
+  ; safe-mode type errors retain the cold path and the old destination
+  (let ([f (parameterize ([optimize-level 0])
+             (compile '(lambda (x y)
+                         (let ([m x])
+                           (guard (c [#t m])
+                             (set! m (if (fx< m y) m y))
+                             m)))))])
+    (and (eqv? (f 1 2) 1) (eqv? (f 2 1) 1)
+         (eqv? (f 'a 2) 'a) (eqv? (f 1 'a) 1)))
+  ; effects in the predicate happen once, before the self-mref read
+  (let* ([calls 0]
+         [f (lambda (x)
+             (let ([m x])
+               (set! m (if (begin (set! calls (+ calls 1)) (fx< m 0)) m 0))
+               m))])
+    (and (eqv? (f -1) -1) (eqv? (f 1) 0) (eqv? calls 2)))
+  ; distinct destinations must not be combined into one select
+  (let ([f (lambda (x y)
+             (let ([a 0] [b 0])
+               (if (fx< x y) (set! a 1) (set! b 2))
+               (list a b)))])
+    (and (equal? (f 1 2) '(1 0)) (equal? (f 2 1) '(0 2))))
+  ; an mref that is not read by the predicate must stay in its arm
+  (let ([f (lambda (x y v)
+             (let ([a 0])
+               (set! a (if (fx< x y) (vector-ref v 0) 0))
+               a))])
+    (and (eqv? (f 1 2 (vector 7)) 7)
+         (eqv? (f 2 1 #f) 0)))
+  ; boxed destination fed by an unboxed source variable
+  (let ([f (lambda (x y)
+             (let ([a 0])
+               (do ([i 50 (fx- i 1)])
+                   ((fx= i 0) a)
+                 (set! a (if (fx< x y) x y)))))])
+    (and (eqv? (f 2 9) 2) (eqv? (f 9 2) 2) (eqv? (f -3 -9) -9)))
+  ; float compare on boxed flonum cells: NaN takes the else value, and
+  ; -0.0 = +0.0 takes the then value
+  (let ([f (lambda (x y)
+             (let ([a 0.0])
+               (set! a (if (fl< x y) x y))
+               a))])
+    (and (eqv? (f 1.5 2.5) 1.5) (eqv? (f 2.5 1.5) 1.5)
+         (eqv? (f +nan.0 1.0) 1.0) (eqv? (f 1.0 +nan.0) +nan.0)))
+  (let ([f (lambda (x y)
+             (let ([a 0.0])
+               (set! a (if (fl= x y) x y))
+               a))])
+    (and (eqv? (f 1.5 1.5) 1.5) (eqv? (f 1.5 2.5) 2.5)
+         (eqv? (f +nan.0 +nan.0) +nan.0)
+         (eqv? (f -0.0 0.0) -0.0) (eqv? (f 0.0 -0.0) 0.0)))
+  ; long accumulation loop through a boxed destination (the shape whose
+  ; branchless form pays off on unpredictable data)
+  (let ([f (lambda (n)
+             (let ([s 0])
+               (do ([i n (fx- i 1)])
+                   ((fx= i 0) s)
+                 (set! s (if (fx< (fxmodulo i 17) 5) (fx+ s 1) (fx- s 1))))))])
+    (eqv? (f 1000) -412)))
+
 (mat fx-compare-safe-op-select
   ; selects whose condition is a safe fixnum compare on arguments of
   ; unknown type: at optimize levels below 3 the compare arrives
