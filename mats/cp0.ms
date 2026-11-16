@@ -3363,7 +3363,10 @@
          (procedure-known-single-valued? (lambda (f)
                                            (if (f #t)
                                                (mk (mk f))
-                                               #f))))))
+                                               #f)))))
+
+   (procedure-known-single-valued? car)
+   (procedure-known-single-valued? cons))
 
 (mat make-wrapper-procedure
   (equivalent-expansion?
