@@ -8,4 +8,5 @@
 (define-constant native-endianness 'little)
 (define-constant unaligned-floats #t)
 (define-constant unaligned-integers #t)
+(define-constant align-rpheader #t)
 (define-constant integer-divide-instruction #t)
