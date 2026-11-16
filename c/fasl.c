@@ -2130,12 +2130,12 @@ static void sparc64_set_literal(void* address, uptr item) {
 #ifdef RISCV64
 static uptr riscv64_get_abs(void* address)
 {
-  return *((I64 *)((I32 *)address + 3));
+  return LOAD_UNALIGNED_UPTR((I32 *)address + 3);
 }
 
 static uptr riscv64_get_jump(void* address)
 {
-  return *((I64 *)((I32 *)address + 3));
+  return LOAD_UNALIGNED_UPTR((I32 *)address + 3);
 }
 
 #define AUIPC_INSTR(dest, offset)   (0x17 | ((dest) << 7) | ((offset) << 12))
@@ -2161,7 +2161,7 @@ static void riscv64_set_abs(void* address, uptr item)
   int dest = EXTRACT_LD_INSTR_DEST(((I32 *)address)[1]);
   ((I32 *)address)[0] = AUIPC_INSTR(dest, 0);
 
-  (*((I64 *)((I32 *)address + 3))) = item;
+  STORE_UNALIGNED_UPTR((I32 *)address + 3, item);
 }
 
 static void riscv64_set_jump(void* address, uptr item)
@@ -2180,7 +2180,7 @@ static void riscv64_set_jump(void* address, uptr item)
   */
   ((I32 *)address)[0] = AUIPC_INSTR(JUMP_REG, 0);
 
-  (*((I64 *)((I32 *)address + 3))) = item;
+  STORE_UNALIGNED_UPTR((I32 *)address + 3, item);
 }
 #endif /* RISCV64 */
 

@@ -1022,10 +1022,11 @@ static void s_set_code_long2(ptr p, ptr n, ptr h, ptr l) {
 }
 
 static ptr s_set_code_quad(ptr p, ptr n, ptr x) {
-  I64 *a, val;
+  void *a;
+  I64 val;
     ptr tc = get_thread_context();
 
-    a = (I64 *)TO_VOIDP((uptr)p + UNFIX(n));
+    a = TO_VOIDP((uptr)p + UNFIX(n));
     S_thread_start_code_write(tc, 0, 0, TO_VOIDP(a), sizeof(I64));
     val = Sfixnump(x) ? UNFIX(x) : S_int64_value("\\#set-code-quad!", x);
     memcpy(a, &val, sizeof(I64));
