@@ -1901,6 +1901,25 @@
             (and (= (fxbit-count r) (slow-bit-count r))
                  (= (fxbit-count (- r)) (slow-bit-count (- r)))
                  (f (fx- i 1)))))))
+  (let ([n (+ (greatest-fixnum) 1)])
+    (let f ([i 2] [j 1])
+      (or (= i n)
+          (and (eqv? (fxbit-count (fxnot i)) -2)
+               (eqv? (fxbit-count (fxnot (+ i 1))) -3)
+               (eqv? (fxbit-count (fxnot (- i 1))) (fxnot j))
+               (f (bitwise-arithmetic-shift i 1) (+ j 1))))))
+  ;; Using `black-box` ensures that these exercise generated code
+  ;; instead of cp0's folding
+  (let ([bc (black-box (lambda (x) (fxbit-count x)))])
+    (and (eqv? (bc 0) 0)
+         (eqv? (bc -1) -1)
+         (eqv? (bc (greatest-fixnum)) (- (fixnum-width) 1))
+         (eqv? (bc (least-fixnum)) (- (fixnum-width)))))
+  ; the argument is evaluated once
+  (let ([k 0])
+    (and (eqv? (fxbit-count (begin (set! k (fx+ k 1)) (black-box -10))) -3)
+         (eqv? (fxbit-count (begin (set! k (fx+ k 1)) (black-box 10))) 2)
+         (eqv? k 2)))
 )
 
 (mat fxfirst-bit-set

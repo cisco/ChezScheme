@@ -570,6 +570,7 @@
 (define-library-entry (fxpopcount x) ($oops 'fxpopcount "~s is not a non-negative fixnum" x))
 (define-library-entry (fxpopcount32 x) ($oops 'fxpopcount32 "~s is not a 32-bit fixnum" x))
 (define-library-entry (fxpopcount16 x) ($oops 'fxpopcount16 "~s is not a 16-bit fixnum" x))
+(define-library-entry (fxbit-count x) (fxnonfixnum1 'fxbit-count x))
 
 (define-library-entry (fxsll x y)
   (cond
