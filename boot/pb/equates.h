@@ -116,6 +116,7 @@ typedef uint64_t U64;
 #define code_data_disp 0x41
 #define code_flag_arity_in_closure 0x20
 #define code_flag_continuation 0x2
+#define code_flag_fasl_mask 0x3F
 #define code_flag_guardian 0x8
 #define code_flag_lift_barrier 0x80
 #define code_flag_mutable_closure 0x10
@@ -337,7 +338,7 @@ typedef uint64_t U64;
 #define int_bits 0x20
 #define integer_divide_instruction 1
 #define keyboard_interrupt_index 0x3
-#define library_entry_vector_size 0x294
+#define library_entry_vector_size 0x29C
 #define libspec_closure_index 0xD
 #define libspec_does_not_expect_headroom_index 0x0
 #define libspec_error_index 0xE
@@ -1677,3 +1678,7 @@ typedef uint64_t U64;
 #define library_dounderflow 164
 #define library_popcount_slow 656
 #define library_cpu_features 658
+#define library_fpround_slow 660
+#define library_fpfloor_slow 662
+#define library_fpceiling_slow 664
+#define library_fptruncate_slow 666

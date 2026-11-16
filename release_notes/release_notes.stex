@@ -3080,6 +3080,12 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair fasl write of code flags (10.5.0)}
+
+Distinguish flags used only during compilation from those that need to
+be saved in fasl form, and ensure that compilation-time flags do not
+cause an error when Chez Scheme itself was compiled in safe mode.
+
 \subsection{Repair duplicate checking in \scheme{import} (10.5.0)}
 
 Repair checking of duplicate names on \scheme{import} in the case of

@@ -912,6 +912,8 @@
 (define-constant code-flag-guardian          #b000001000)
 (define-constant code-flag-mutable-closure   #b000010000)
 (define-constant code-flag-arity-in-closure  #b000100000)
+(define-constant code-flag-fasl-mask         #b000111111) ; must be <= 8 bits
+;; Flags used only during compilation, so not fasled
 (define-constant code-flag-single-valued     #b001000000)
 (define-constant code-flag-lift-barrier      #b010000000)
 (define-constant code-flag-no-interrupt-trap #b100000000)
