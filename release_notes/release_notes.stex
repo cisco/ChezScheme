@@ -3093,6 +3093,14 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Platform-independent random integers below 4294967088 (10.5.0)}
+
+On 32-bit platforms, \scheme{pseudo-random-generator-next!} on an
+exact integer argument between the largest fixnum and 4294967087
+used a different algorithm than for the same argument on 64-bit
+platforms, so a generator with a given state produced different
+results on different platforms. Results now agree.
+
 \subsection{LZ4 library updated (10.5.0)}
 
 The LZ4 compression library was updated from v1.10.0 to v1.11.1.
