@@ -386,9 +386,9 @@
 
 (mat fx-compare-value-position-select
   ; selects between immediates whose condition is a fixnum compare,
-  ; materialized as a value: at optimize level 3 on x86_64 these
-  ; compile to cmp + cmovcc instead of cmp + branch + two moves, and
-  ; must produce the same values the branchy form would.  All five
+  ; materialized as a value: on machines with a conditional-select
+  ; instruction, these compile to a compare and select instead of a
+  ; branch, and must produce the same values the branchy form would.  All five
   ; signed relops in tail position, both argument orders, equal
   ; operands included.
   (let ([sel< (lambda (x y) (if (fx< x y) 1 2))]
@@ -502,8 +502,8 @@
   ; the general immediate rule select(P, A, B) = B + (A-B)*b: a
   ; power-of-two A-B takes the arithmetic form (setcc, shift, add),
   ; a negative power-of-two difference swaps the arms with the
-  ; inverted condition, and any other difference keeps the cmov form
-  ; with a scratch; the compares are type-laundered so the unsafe
+  ; inverted condition, and any other difference keeps the general
+  ; select form; the compares are type-laundered so the unsafe
   ; predicate reaches the conversion
   (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) 40 8))])
     (and (eqv? (sel 0 1) 40) (eqv? (sel 1 0) 8) (eqv? (sel 0 0) 8)))
@@ -517,8 +517,7 @@
   (let ([sel (lambda (x y) (if (fl< (fl+ x 0.0) (fl+ y 0.0)) 8 40))])
     (and (eqv? (sel 1.0 2.0) 8) (eqv? (sel 2.0 1.0) 40) (eqv? (sel 2.0 2.0) 40)
          (eqv? (sel +nan.0 2.0) 40)))
-  ; mixed uvar/immediate arms: the immediate binds to a scratch and
-  ; the register form selects; both arm orders, on both condition
+  ; mixed variable/immediate arms; both arm orders, on both condition
   ; families
   (let ([sel (lambda (x y) (if (fx< (fx+ x 1) (fx+ y 1)) x 5))])
     (and (eqv? (sel 1 2) 1) (eqv? (sel 2 1) 5) (eqv? (sel 2 2) 5)))
@@ -570,9 +569,8 @@
   (let ([sel (lambda (x y a b) (if (fl>= x y) a b))])
     (and (eqv? (sel 2.0 2.0 10 20) 10) (eqv? (sel 1.0 2.0 10 20) 20)
          (eqv? (sel 1.0 +nan.0 10 20) 20)))
-  ; fl= equality selects: ucomisd sets ZF=1 on unordered as well as
-  ; on ordered-equal, so the conversion routes NaN around the cmove,
-  ; or to a corrective move, never through an inverted condition;
+  ; fl= equality selects: x86_64's ucomisd sets ZF=1 on unordered as
+  ; well as on ordered-equal, so NaN must be checked separately;
   ; NaN takes the else value, and -0.0 = +0.0 takes the then value
   (let ([sel (lambda (x y) (if (fl= x y) 10 20))])
     (and (eqv? (sel 2.0 2.0) 10) (eqv? (sel 1.0 2.0) 20)
@@ -647,9 +645,7 @@
   ; fixnum-conditioned same-destination set! between uvar arms
   (let ([f (lambda (x y b c) (let ([a 7]) (if (fx< x y) (set! a b) (set! a c)) (fx+ a (fx+ b c))))])
     (and (eqv? (f 1 2 10 20) 40) (eqv? (f 2 1 10 20) 50) (eqv? (f 2 2 10 20) 50)))
-  ; select stored straight to memory exercises the memory-destination
-  ; instruction form (cmov needs a register destination, so the value
-  ; is computed into a temp and stored)
+  ; select stored straight to memory
   (let ([v (make-vector 3 0)])
     (vector-set! v 0 (if (fx< 1 2) 10 20))
     (vector-set! v 1 (if (fx< 2 1) 10 20))
@@ -722,6 +718,45 @@
   (eqv? (let ([f (lambda () 7)]) (if (f) 10 20)) 10)
   (eqv? (let ([f (lambda () #f)] [n 0])
           (if (f) (set! n 10) (set! n 20)) n) 20)
+  ; unboxed flonum arms must not be selected as integers
+  (let ([f (lambda (a b x y)
+             (let ([x (fl+ x 1.0)] [y (fl+ y 1.0)])
+               (let ([z (if (fx< a b) x y)])
+                 (fl* z 2.0))))])
+    (and (eqv? (f 1 2 1.5 2.5) 5.0) (eqv? (f 2 1 1.5 2.5) 7.0)))
+  ; non-fixnum constants, and a mixture of variable and constant arms
+  (let ([f (lambda (a b) (if (fx< a b) 'yes "no"))]
+        [g (lambda (a b c) (if (fx< a b) c 'no))]
+        [h (lambda (a b c) (if (fl< a b) 17 c))])
+    (and (eq? (f 1 2) 'yes) (equal? (f 2 1) "no")
+         (eq? (g 1 2 'c) 'c) (eq? (g 2 1 'c) 'no)
+         (eqv? (h 1.0 2.0 'c) 17) (eq? (h 2.0 1.0 'c) 'c) (eq? (h +nan.0 1.0 'c) 'c)))
+  ; comparison against a constant, either side, including a wide one
+  (let ([f (lambda (a) (if (fx< a 10) 'small 'big))]
+        [g (lambda (a) (if (fx< 10 a) 'big 'small))]
+        [h (lambda (a) (if (fx< a (most-positive-fixnum)) 1 2))])
+    (and (eq? (f 9) 'small) (eq? (f 10) 'big) (eq? (g 11) 'big) (eq? (g 10) 'small)
+         (eqv? (h 0) 1) (eqv? (h (most-positive-fixnum)) 2)))
+  ; values stored directly to memory
+  (let ([f (lambda (v a b c d)
+             (vector-set! v 0 (if (fx< a b) 10 20))
+             (vector-set! v 1 (if (fx< a b) c d))
+             (vector-set! v 2 (fx< a b))
+             (vector-set! v 3 (fl< (fixnum->flonum a) (fixnum->flonum b)))
+             v)])
+    (and (equal? (f (make-vector 4) 1 2 'c 'd) '#(10 c #t #t))
+         (equal? (f (make-vector 4) 2 1 'c 'd) '#(20 d #f #f))))
+  ; tests built from `and`, `or`, and `not`
+  (let ([f (lambda (a b c) (if (and (fx< a b) (fx< b c)) 1 2))]
+        [g (lambda (a b c) (if (or (fx< a b) (fx< b c)) 1 2))]
+        [h (lambda (a b) (if (not (fx< a b)) 1 2))])
+    (and (eqv? (f 1 2 3) 1) (eqv? (f 1 2 2) 2) (eqv? (f 2 1 3) 2)
+         (eqv? (g 1 2 0) 1) (eqv? (g 2 1 3) 1) (eqv? (g 2 2 2) 2)
+         (eqv? (h 1 2) 2) (eqv? (h 2 1) 1)))
+  ; selected value consumed as a test
+  (let ([f (lambda (a b x y) (if (if (fx< a b) x y) 'one 'two))])
+    (and (eq? (f 1 2 #t #f) 'one) (eq? (f 1 2 #f #t) 'two)
+         (eq? (f 2 1 #t #f) 'two) (eq? (f 2 1 #f 7) 'one)))
  )
 
 (mat fx-compare-safe-op-select
