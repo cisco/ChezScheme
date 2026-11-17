@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="D_bin">
+      <Directory Id="D_bin_tarm64nt" Name="tarm64nt">
+        <Component Id="cmpACE1E2391CBAE2E5E42BE8997F266DDD" Guid="*">
+          <File Id="filCC7636C5FD9120EE2A2C2E9FAA62BAC1" KeyPath="yes" Source="..\tarm64nt\bin\tarm64nt\csv1050.dll" />
+        </Component>
+        <Component Id="cmp94F1A4D3501FBFA1B0E1881469964864" Guid="*">
+          <File Id="fil463EE9625452E5FCC3190F30CC2AB419" KeyPath="yes" Source="..\tarm64nt\bin\tarm64nt\csv1050.exp" />
+        </Component>
+        <Component Id="cmp77E043E75AE463EB3B79E2D3158891C4" Guid="*">
+          <File Id="filE53DC93B27459EFC181E4C5D9A833EE4" KeyPath="yes" Source="..\tarm64nt\bin\tarm64nt\csv1050.lib" />
+        </Component>
+        <Component Id="cmp920B37D0B79D1AA3F006F72D11A24D6C" Guid="*">
+          <File Id="fil28706329FCC5A4E6E3E3032AF98198EA" KeyPath="yes" Source="..\tarm64nt\bin\tarm64nt\csv1050.pdb" />
+        </Component>
+        <Component Id="cmpAE7F39A997865702C5637CD3010B4E99" Guid="*">
+          <File Id="fil6129E9F312E5EBD39AC9CF8D96FA734B" KeyPath="yes" Source="..\tarm64nt\bin\tarm64nt\petite.exe" />
+        </Component>
+        <Component Id="cmp453ECF72FA826201915DD1EBC898D11E" Guid="*">
+          <File Id="filB6A7F911215DEDEC5B323FC7B6B245DE" KeyPath="yes" Source="..\tarm64nt\bin\tarm64nt\petite.pdb" />
+        </Component>
+        <Component Id="cmp6A1BB2C36104E2A9128066A508C03818" Guid="*">
+          <File Id="fil999582CFF6A7739ECA434B2E9F254843" KeyPath="yes" Source="..\tarm64nt\bin\tarm64nt\scheme.exe">
+            <Shortcut Id="cs_tarm64nt_shortcut"
+                      Advertise="yes"
+                      Name="Chez Scheme ARM64 threaded"
+                      Description="Chez Scheme Version $(var.Version) ARM64 threaded"
+                      Directory="D_shortcuts"
+                      Icon="cs.ico"
+                      WorkingDirectory="APPLICATIONFOLDER"/>
+          </File>
+        </Component>
+        <Component Id="cmpE4E1364FA2E7BA8DEB31314B7AB05BBA" Guid="*">
+          <File Id="fil71469E25F94FF05EE4789EB760895A64" KeyPath="yes" Source="..\tarm64nt\bin\tarm64nt\scheme.pdb" />
+        </Component>
+      </Directory>
+    </DirectoryRef>
+    <DirectoryRef Id="D_boot">
+      <Directory Id="D_boot_tarm64nt" Name="tarm64nt">
+        <Component Id="cmp9F24245C811FE62583591B29F2EF52C4" Guid="*">
+          <File Id="fil40FFADA6DF9539F1A6BA07E40CDDA095" KeyPath="yes" Source="..\tarm64nt\boot\tarm64nt\csv1050md.lib" />
+        </Component>
+        <Component Id="cmp2D484DD2B48B24967EA7091E4B4F0B84" Guid="*">
+          <File Id="fil6C4F44526CD89CE846780F6B4D766403" KeyPath="yes" Source="..\tarm64nt\boot\tarm64nt\csv1050mt.lib" />
+        </Component>
+        <Component Id="cmp995AF630A113E350A788FB41DC2EC668" Guid="*">
+          <File Id="fil7FE36E1F844DD5A97B59CBC57ED3ACEE" KeyPath="yes" Source="..\tarm64nt\boot\tarm64nt\mainmd.obj" />
+        </Component>
+        <Component Id="cmpF772014FB76CEDA53F8DA4653A7F3C00" Guid="*">
+          <File Id="filE38231C8020B631CE18C504A6809C904" KeyPath="yes" Source="..\tarm64nt\boot\tarm64nt\mainmt.obj" />
+        </Component>
+        <Component Id="cmpF85F67F20150C23DACC58DDDA3CCEDC9" Guid="*">
+          <File Id="fil309A9A937596A1A2A0ADE3296E25B28B" KeyPath="yes" Source="..\tarm64nt\boot\tarm64nt\petite.boot" />
+        </Component>
+        <Component Id="cmpD639C3F5BF54925786C5678C2276C635" Guid="*">
+          <File Id="fil611E2905E192FE8BBF0BA04614782382" KeyPath="yes" Source="..\tarm64nt\boot\tarm64nt\scheme.boot" />
+        </Component>
+        <Component Id="cmp72F7F6E720AA23AC7212BC2085DC71C6" Guid="*">
+          <File Id="fil1099909A8E648031D81DCC92A8E89E81" KeyPath="yes" Source="..\tarm64nt\boot\tarm64nt\scheme.h" />
+        </Component>
+        <Component Id="cmp8E4AA3FD8D8DF0F2BF07CF816DF8A7D8" Guid="*">
+          <File Id="filB1B51D17DB7C6D096B34EA31DDF0BB6B" KeyPath="yes" Source="..\tarm64nt\boot\tarm64nt\scheme.res" />
+        </Component>
+        <Component Id="cmp2CF898661CE8EEF468D074DC93AC639C" Guid="*">
+          <File Id="fil349E72656304229957BEE651EEEC236D" KeyPath="yes" Source="..\tarm64nt\boot\tarm64nt\revision" />
+        </Component>
+      </Directory>
+    </DirectoryRef>
+    <ComponentGroup Id="tarm64nt">
+      <ComponentRef Id="cmpACE1E2391CBAE2E5E42BE8997F266DDD" />
+      <ComponentRef Id="cmp94F1A4D3501FBFA1B0E1881469964864" />
+      <ComponentRef Id="cmp77E043E75AE463EB3B79E2D3158891C4" />
+      <ComponentRef Id="cmp920B37D0B79D1AA3F006F72D11A24D6C" />
+      <ComponentRef Id="cmpAE7F39A997865702C5637CD3010B4E99" />
+      <ComponentRef Id="cmp453ECF72FA826201915DD1EBC898D11E" />
+      <ComponentRef Id="cmp6A1BB2C36104E2A9128066A508C03818" />
+      <ComponentRef Id="cmpE4E1364FA2E7BA8DEB31314B7AB05BBA" />
+      <ComponentRef Id="cmp9F24245C811FE62583591B29F2EF52C4" />
+      <ComponentRef Id="cmp2D484DD2B48B24967EA7091E4B4F0B84" />
+      <ComponentRef Id="cmp995AF630A113E350A788FB41DC2EC668" />
+      <ComponentRef Id="cmpF772014FB76CEDA53F8DA4653A7F3C00" />
+      <ComponentRef Id="cmpF85F67F20150C23DACC58DDDA3CCEDC9" />
+      <ComponentRef Id="cmpD639C3F5BF54925786C5678C2276C635" />
+      <ComponentRef Id="cmp72F7F6E720AA23AC7212BC2085DC71C6" />
+      <ComponentRef Id="cmp8E4AA3FD8D8DF0F2BF07CF816DF8A7D8" />
+      <ComponentRef Id="cmp2CF898661CE8EEF468D074DC93AC639C" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>

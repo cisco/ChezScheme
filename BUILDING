@@ -375,7 +375,10 @@ development with C++" on the "Workloads" tab. The `build.bat` script
 will use `c\vs.bat` to find and set up Microsoft Visual Studio
 command-line tools automatically for <machine type>; supply `/keepvs`
 if you have set up command-line tools already so that `c\vs.bat`
-should be skipped.
+should be skipped. On ARM64 Windows, `build.bat` uses the native
+ARM64-hosted compilers for every machine type, which requires Visual
+Studio 2022 version 17.4 or later with the ARM64 and x64/x86 build
+tools installed.
 
 The generated executables "scheme.exe" and "petite.exe" are in
 "<machine type>\bin\<machine type>", and each relies on generated boot
@@ -468,10 +471,13 @@ To create an installer you will need to use WSL or MSYS2:
   make
 
 These commands will create workareas and compile binaries for the
-`a6nt`, `i3nt`, `ta6nt`, and `ti3nt` machine types and then include
-them in a single Windows installer package "Chez Scheme.exe". The
-package also includes example files and the redistributable Microsoft
-Visual C++ run-time libraries.
+`a6nt`, `i3nt`, `ta6nt`, `ti3nt`, `arm64nt`, and `tarm64nt` machine
+types and then include them in a single Windows installer package
+"Chez Scheme.exe". The package also includes example files. The
+installer installs the Intel binaries on all Windows systems and also
+installs the ARM64 binaries on ARM64 Windows. Building the installer
+requires WiX Toolset 3.14 or later and must be done on ARM64 Windows so
+that the ARM64 binaries can run during the build.
 
 When testing on Windows, the iconv tests in "mats/io.ms" require that
 a 32-bit or 64-bit (as appropriate) "iconv.dll", "libiconv.dll", or

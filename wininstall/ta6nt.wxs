@@ -25,8 +25,8 @@
           <File Id="fil25DA5700F745B21085322BA7CBBEFEB7" KeyPath="yes" Source="..\ta6nt\bin\ta6nt\scheme.exe">
             <Shortcut Id="cs_ta6nt_shortcut"
                       Advertise="yes"
-                      Name="Chez Scheme 64-bit threaded"
-                      Description="Chez Scheme Version $(var.Version) 64-bit threaded"
+                      Name="Chez Scheme x86_64 threaded"
+                      Description="Chez Scheme Version $(var.Version) x86_64 threaded"
                       Directory="D_shortcuts"
                       Icon="cs.ico"
                       WorkingDirectory="APPLICATIONFOLDER"/>

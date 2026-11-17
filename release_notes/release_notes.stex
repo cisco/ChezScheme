@@ -53,8 +53,8 @@ procedure) is given in parentheses.
 \item Windows
      \begin{itemizeC}
      \item x86, nonthreaded (i3nt) and threaded (ti3nt)
-     \item Windows x86\_64, nonthreaded (a6nt) and threaded (ta6nt)
-     \item AArch64, nonthreaded (arm64nt) and threaded (tarm64nt)
+     \item x86\_64, nonthreaded (a6nt) and threaded (ta6nt)
+     \item ARM64, nonthreaded (arm64nt) and threaded (tarm64nt)
      \end{itemizeC}
 \item OpenBSD
      \begin{itemizeC}

@@ -6,9 +6,16 @@
 <?if $(sys.BUILDARCH)="x86"?>
     <?define UpgradeCode="e183c83e-1216-446f-bee1-f25db3297efa"?>
     <?define PlatformProgramFilesFolder="ProgramFilesFolder"?>
+    <?define InstallerVersion="301"?>
 <?elseif $(sys.BUILDARCH)="x64"?>
     <?define UpgradeCode="07a89f71-9c12-4e7d-b618-f7c255337640"?>
     <?define PlatformProgramFilesFolder="ProgramFiles64Folder"?>
+    <?define InstallerVersion="301"?>
+<?elseif $(sys.BUILDARCH)="arm64"?>
+    <?define UpgradeCode="f266f2a2-cb84-4b5c-8627-340f1d0c5627"?>
+    <?define PlatformProgramFilesFolder="ProgramFiles64Folder"?>
+    <!-- Windows Installer 5.0 is the minimum for ARM64 packages -->
+    <?define InstallerVersion="500"?>
 <?else?>
     <?error Unsupported value of sys.BUILDARCH=$(sys.BUILDARCH)?>
 <?endif?>
@@ -23,7 +30,7 @@
       Version="$(var.Version)"
       Manufacturer="$(var.Manufacturer)">
     <Package
-        InstallerVersion="301"
+        InstallerVersion="$(var.InstallerVersion)"
         Keywords="Installer"
         Description="$(var.ProductName) Installer"
         Manufacturer="$(var.Manufacturer)"
@@ -71,6 +78,15 @@
       </Feature>
       <Feature Id="ta6nt" Level="1" Title="Chez Scheme 64-bit threaded">
         <ComponentGroupRef Id="ta6nt"/>
+      </Feature>
+    <?endif?>
+
+    <?if $(sys.BUILDARCH)="arm64"?>
+      <Feature Id="arm64nt" Level="1" Title="Chez Scheme ARM64 nonthreaded">
+        <ComponentGroupRef Id="arm64nt"/>
+      </Feature>
+      <Feature Id="tarm64nt" Level="1" Title="Chez Scheme ARM64 threaded">
+        <ComponentGroupRef Id="tarm64nt"/>
       </Feature>
     <?endif?>
 

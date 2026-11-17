@@ -49,6 +49,23 @@ if "%M%"=="a6nt" set VSCONFIG=x86_amd64
 if "%M%"=="ta6nt" set VSCONFIG=x86_amd64
 if "%M%"=="arm64nt" set VSCONFIG=x64_arm64
 if "%M%"=="tarm64nt" set VSCONFIG=x64_arm64
+
+:: On ARM64 Windows, use Visual Studio's native ARM64-hosted compilers
+:: (VS 2022 17.4 or later). Check the registry rather than
+:: PROCESSOR_ARCHITECTURE, which reflects the current process and may
+:: be AMD64 when run from an emulated x64 shell such as MSYS2.
+set VSHOST=
+reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PROCESSOR_ARCHITECTURE 2>NUL | find "ARM64" >NUL && set VSHOST=arm64
+if "%VSHOST%"=="arm64" (
+  if "%M%"=="pb" set VSCONFIG=arm64_x86
+  if "%M%"=="i3nt" set VSCONFIG=arm64_x86
+  if "%M%"=="ti3nt" set VSCONFIG=arm64_x86
+  if "%M%"=="a6nt" set VSCONFIG=arm64_amd64
+  if "%M%"=="ta6nt" set VSCONFIG=arm64_amd64
+  if "%M%"=="arm64nt" set VSCONFIG=arm64
+  if "%M%"=="tarm64nt" set VSCONFIG=arm64
+)
+
 if "%VSCONFIG%"=="" (
   echo Unrecognized machine type %M%
   exit /B 1
