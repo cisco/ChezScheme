@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="D_bin">
+      <Directory Id="D_bin_arm64nt" Name="arm64nt">
+        <Component Id="cmp31E4440E9CFB3D402B03BE58E76E07AB" Guid="*">
+          <File Id="filA788A09EB7140F4A2076328D77F629B9" KeyPath="yes" Source="..\arm64nt\bin\arm64nt\csv1050.dll" />
+        </Component>
+        <Component Id="cmp79B40AA3874843F0E13910B95ED05F59" Guid="*">
+          <File Id="fil5B58D00DD9E42A3F317437EC32DB47FB" KeyPath="yes" Source="..\arm64nt\bin\arm64nt\csv1050.exp" />
+        </Component>
+        <Component Id="cmpEEEAFEAB672D31B0239E66B5DDA19E83" Guid="*">
+          <File Id="fil569FF63FDFA68E81B4735461FC89AB65" KeyPath="yes" Source="..\arm64nt\bin\arm64nt\csv1050.lib" />
+        </Component>
+        <Component Id="cmp55713F48F3EB0759D810CF448B9FFCDC" Guid="*">
+          <File Id="filB99A907B32C089D8A1485B9C719F088B" KeyPath="yes" Source="..\arm64nt\bin\arm64nt\csv1050.pdb" />
+        </Component>
+        <Component Id="cmp933E66E064970379C67B72529C0D0F31" Guid="*">
+          <File Id="filB967F41391DDCCFF44F729BBA18FBF90" KeyPath="yes" Source="..\arm64nt\bin\arm64nt\petite.exe" />
+        </Component>
+        <Component Id="cmpB2EBBEB388C484D10D6D8564207F508B" Guid="*">
+          <File Id="filBCC21389DE74FAE45E9A985D591ACB4E" KeyPath="yes" Source="..\arm64nt\bin\arm64nt\petite.pdb" />
+        </Component>
+        <Component Id="cmpF76C54197246115D2BA7697691DF8E86" Guid="*">
+          <File Id="filE5DA4F2B25F16B6C51B1FE628DB89673" KeyPath="yes" Source="..\arm64nt\bin\arm64nt\scheme.exe">
+            <Shortcut Id="cs_arm64nt_shortcut"
+                      Advertise="yes"
+                      Name="Chez Scheme ARM64 nonthreaded"
+                      Description="Chez Scheme Version $(var.Version) ARM64 nonthreaded"
+                      Directory="D_shortcuts"
+                      Icon="cs.ico"
+                      WorkingDirectory="APPLICATIONFOLDER"/>
+          </File>
+        </Component>
+        <Component Id="cmpC3E210EFB3D41F7800CC1B8928481795" Guid="*">
+          <File Id="fil297B8F36AAEC3B984467535186FD2705" KeyPath="yes" Source="..\arm64nt\bin\arm64nt\scheme.pdb" />
+        </Component>
+      </Directory>
+    </DirectoryRef>
+    <DirectoryRef Id="D_boot">
+      <Directory Id="D_boot_arm64nt" Name="arm64nt">
+        <Component Id="cmp3CB677BD831F455EA2CAC49DCA1780E7" Guid="*">
+          <File Id="filB04218B1005EA2F9B830ED4D98AF1CD6" KeyPath="yes" Source="..\arm64nt\boot\arm64nt\csv1050md.lib" />
+        </Component>
+        <Component Id="cmp3BE321EB0D086FC8B0A8477AF189987F" Guid="*">
+          <File Id="fil5591002EC80B114D4DA7A897B4EECA97" KeyPath="yes" Source="..\arm64nt\boot\arm64nt\csv1050mt.lib" />
+        </Component>
+        <Component Id="cmp2F46CCFAD59B440EEB0AC7FE3C3EDB8D" Guid="*">
+          <File Id="fil490AF11DC103AA01F013A920B408C591" KeyPath="yes" Source="..\arm64nt\boot\arm64nt\mainmd.obj" />
+        </Component>
+        <Component Id="cmp2572173D87BF32436BCF91819E4BAF83" Guid="*">
+          <File Id="filE28ADA78760E5DF84EB4EC3A403D7E47" KeyPath="yes" Source="..\arm64nt\boot\arm64nt\mainmt.obj" />
+        </Component>
+        <Component Id="cmp0ED7F0F8C55FA338040AADB2A9816145" Guid="*">
+          <File Id="filD0FB5F25123216BDEF36025AA671F54B" KeyPath="yes" Source="..\arm64nt\boot\arm64nt\petite.boot" />
+        </Component>
+        <Component Id="cmp9A52E95040FE58226FAF3131B657079D" Guid="*">
+          <File Id="fil7D0F3B0703A23D2E20740F3278FD8F4E" KeyPath="yes" Source="..\arm64nt\boot\arm64nt\scheme.boot" />
+        </Component>
+        <Component Id="cmp9F68988F72B8998D77EB3168AE65B72F" Guid="*">
+          <File Id="filBD1E8463C3863955D7A68A736DCB1D52" KeyPath="yes" Source="..\arm64nt\boot\arm64nt\scheme.h" />
+        </Component>
+        <Component Id="cmpFDF27A9E14986B436235D110DB4E269A" Guid="*">
+          <File Id="fil9ACDCD3025A84E36104E4A8B53547B08" KeyPath="yes" Source="..\arm64nt\boot\arm64nt\scheme.res" />
+        </Component>
+        <Component Id="cmp372AC7E3D884C1FAE9CFA5FDBB12C581" Guid="*">
+          <File Id="fil190AA4EF0AF99320937B6D444B49732A" KeyPath="yes" Source="..\arm64nt\boot\arm64nt\revision" />
+        </Component>
+      </Directory>
+    </DirectoryRef>
+    <ComponentGroup Id="arm64nt">
+      <ComponentRef Id="cmp31E4440E9CFB3D402B03BE58E76E07AB" />
+      <ComponentRef Id="cmp79B40AA3874843F0E13910B95ED05F59" />
+      <ComponentRef Id="cmpEEEAFEAB672D31B0239E66B5DDA19E83" />
+      <ComponentRef Id="cmp55713F48F3EB0759D810CF448B9FFCDC" />
+      <ComponentRef Id="cmp933E66E064970379C67B72529C0D0F31" />
+      <ComponentRef Id="cmpB2EBBEB388C484D10D6D8564207F508B" />
+      <ComponentRef Id="cmpF76C54197246115D2BA7697691DF8E86" />
+      <ComponentRef Id="cmpC3E210EFB3D41F7800CC1B8928481795" />
+      <ComponentRef Id="cmp3CB677BD831F455EA2CAC49DCA1780E7" />
+      <ComponentRef Id="cmp3BE321EB0D086FC8B0A8477AF189987F" />
+      <ComponentRef Id="cmp2F46CCFAD59B440EEB0AC7FE3C3EDB8D" />
+      <ComponentRef Id="cmp2572173D87BF32436BCF91819E4BAF83" />
+      <ComponentRef Id="cmp0ED7F0F8C55FA338040AADB2A9816145" />
+      <ComponentRef Id="cmp9A52E95040FE58226FAF3131B657079D" />
+      <ComponentRef Id="cmp9F68988F72B8998D77EB3168AE65B72F" />
+      <ComponentRef Id="cmpFDF27A9E14986B436235D110DB4E269A" />
+      <ComponentRef Id="cmp372AC7E3D884C1FAE9CFA5FDBB12C581" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>

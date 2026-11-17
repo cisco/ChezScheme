@@ -25,8 +25,8 @@
           <File Id="filE30343224C6DDDA38B98EFAFC66A3E13" KeyPath="yes" Source="..\ti3nt\bin\ti3nt\scheme.exe">
             <Shortcut Id="cs_ti3nt_shortcut"
                       Advertise="yes"
-                      Name="Chez Scheme 32-bit threaded"
-                      Description="Chez Scheme Version $(var.Version) 32-bit threaded"
+                      Name="Chez Scheme x86 threaded"
+                      Description="Chez Scheme Version $(var.Version) x86 threaded"
                       Directory="D_shortcuts"
                       Icon="cs.ico"
                       WorkingDirectory="APPLICATIONFOLDER"/>

@@ -18,9 +18,17 @@
           SuppressOptionsUI="yes" />
     </BootstrapperApplicationRef>
 
+    <!-- NativeMachine (WiX 3.14+) holds the IMAGE_FILE_MACHINE_* value of
+         the native OS architecture: 43620 (0xAA64) is ARM64. It is unset on
+         Windows versions before 10 1709, which never run on ARM64. Intel
+         binaries are installed everywhere (ARM64 Windows runs them under
+         emulation), and ARM64 binaries are added on ARM64 Windows. -->
     <Chain>
-      <MsiPackage SourceFile="ChezScheme32.msi" Cache="yes" />
-      <MsiPackage InstallCondition="VersionNT64" SourceFile="ChezScheme64.msi" Cache="yes" />
+      <MsiPackage SourceFile="ChezSchemeX86.msi" Cache="yes" />
+      <MsiPackage InstallCondition="VersionNT64"
+                  SourceFile="ChezSchemeX64.msi" Cache="yes" />
+      <MsiPackage InstallCondition="NativeMachine = 43620"
+                  SourceFile="ChezSchemeArm64.msi" Cache="yes" />
     </Chain>
   </Bundle>
 </Wix>

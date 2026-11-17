@@ -25,8 +25,8 @@
           <File Id="filC9140B162E813FF1382AAFCAD00F39F7" KeyPath="yes" Source="..\i3nt\bin\i3nt\scheme.exe">
             <Shortcut Id="cs_i3nt_shortcut"
                       Advertise="yes"
-                      Name="Chez Scheme 32-bit nonthreaded"
-                      Description="Chez Scheme Version $(var.Version) 32-bit nonthreaded"
+                      Name="Chez Scheme x86 nonthreaded"
+                      Description="Chez Scheme Version $(var.Version) x86 nonthreaded"
                       Directory="D_shortcuts"
                       Icon="cs.ico"
                       WorkingDirectory="APPLICATIONFOLDER"/>

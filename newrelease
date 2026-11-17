@@ -97,7 +97,7 @@ sed -e "s/^version = .*/version = $R/" \
 
 sed -e "s/VERSION := .*/VERSION := $R/" \
     -I "" wininstall/Makefile
-foreach fn (wininstall/{,t}{a6,i3}nt.wxs)
+foreach fn (wininstall/{,t}{a6,i3,arm64}nt.wxs)
   sed -e "s/csv[0-9][0-9][0-9]*/csv$ZR/" \
       -I "" $fn
 end

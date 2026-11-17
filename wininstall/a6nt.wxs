@@ -25,8 +25,8 @@
           <File Id="filA4D665DE511690E448BF115110B44A21" KeyPath="yes" Source="..\a6nt\bin\a6nt\scheme.exe">
             <Shortcut Id="cs_a6nt_shortcut"
                       Advertise="yes"
-                      Name="Chez Scheme 64-bit nonthreaded"
-                      Description="Chez Scheme Version $(var.Version) 64-bit nonthreaded"
+                      Name="Chez Scheme x86_64 nonthreaded"
+                      Description="Chez Scheme Version $(var.Version) x86_64 nonthreaded"
                       Directory="D_shortcuts"
                       Icon="cs.ico"
                       WorkingDirectory="APPLICATIONFOLDER"/>
