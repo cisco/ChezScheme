@@ -3093,6 +3093,16 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Dead arguments retained across a non-tail loop call (10.5.0)}
+
+When a procedure that receives some arguments in its stack frame made
+a non-tail call to a loop label in the same procedure, such as a named
+\scheme{let} called recursively in non-tail position, the compiler
+treated those argument slots as live up to the call, even after the
+arguments were dead. Objects referenced only from those slots were
+retained by the garbage collector during earlier calls in the
+procedure body.
+
 \subsection{Platform-independent random integers below 4294967088 (10.5.0)}
 
 On 32-bit platforms, \scheme{pseudo-random-generator-next!} on an

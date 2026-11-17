@@ -4681,6 +4681,30 @@
     '(((1 . 2)) #f))
 )
 
+;; A non-tail call to a loop's own label must not keep the caller's
+;; frame-argument slots live across the call. Enough loop variables are
+;; used that `v` and `w` are passed in the frame on all platforms.
+(mat frame-argument-liveness
+  (or (eq? (current-eval) interpret)
+      (let ([N 10])
+        (define (go check vals ws)
+          (let loop ([a 1] [b 2] [c 3] [d 4] [e 5] [g 6] [h 7] [i 8] [j 9] [v vals] [w ws])
+            (if (null? v)
+                (+ a b c d e g h i j)
+                (let ([nv (cdr v)] [nw (cdr w)])
+                  (+ (check (car w))
+                     (loop j a b c d e g h i nv nw))))))
+        (let* ([vals (let f ([i 0]) (if (fx= i N) '() (cons (string #\a) (f (fx+ i 1)))))]
+               [ws (map (lambda (v) (weak-cons v #f)) vals)]
+               [retained 0])
+          (go (lambda (w)
+                (collect (collect-maximum-generation))
+                (unless (bwp-object? (car w)) (set! retained (fx+ retained 1)))
+                0)
+              vals ws)
+          (fx< retained (fxquotient N 2)))))
+)
+
 (mat pariah
   (error? ; invalid syntax
     (pariah))
