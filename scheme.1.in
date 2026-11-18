@@ -48,6 +48,13 @@ Run \fIfile\fP as a shell script.
 .B --program \fIfile\fP
 Run rnrs program in \fIfile\fP as a shell script.
 .TP
+.B --compile-executable \fIfile\fP
+Compile \fIfile\fP into a self-contained native executable.
+The output pathname must be specified with \fB-o\fP.
+.TP
+.B -o \fIfile\fP
+Set the output pathname for \fB--compile-executable\fP.
+.TP
 .B --libdirs \fIdir\fP:...
 Set library directories to \fIdir\fP:....
 .TP
@@ -108,6 +115,8 @@ user (see COMMAND-LINE FILE ARGUMENTS), unless \*(lq--script\*(rq or
 \*(lq--program\*(rq is present, in which case the remaining arguments
 are made available to the script via the \fIcommand-line\fP parameter
 (see SCHEME SCRIPTS).
+The \*(lq--compile-executable\*(rq option does not accept additional
+file arguments.
 .SH WAITERS and CAFES
 .LP
 Interaction of the system with the user is performed
@@ -653,6 +662,51 @@ compile-script instead of compile-file.
 compile-script is like compile-program, but, like compile-file, implements
 the interactive top-level semantics rather than the RNRS top-level
 program semantics.
+.SH COMPILING NATIVE EXECUTABLES
+.LP
+A Scheme source file that defines a suitable \fImain\fP procedure
+may be compiled into a self-contained native executable with the
+\*(lq--compile-executable\*(rq option.
+For example:
+.br
+.sp
+{InstallSchemeName} --compile-executable hello.ss -o hello
+.sp
+.br
+The source file must define \fImain\fP as a procedure that accepts
+one argument, a list of command-line arguments excluding the
+executable pathname.
+For example:
+.br
+.sp
+(define (main args)
+.br
+  (display "hello")
+.br
+  (newline)
+.br
+  0)
+.sp
+.br
+The return value of \fImain\fP determines the process exit status.
+.LP
+The equivalent operation is available programmatically through
+\fIcompile-executable\fP:
+.br
+.sp
+(compile-executable "hello.ss" "hello")
+.sp
+.br
+The generated executable contains the compiled Scheme application
+and the Chez Scheme boot code required to run it, and does not
+require a separate application boot file at run time.
+.LP
+Compiler and library options such as
+\*(lq--optimize-level\*(rq,
+\*(lq--libdirs\*(rq,
+\*(lq--libexts\*(rq, and
+\*(lq--compile-imported-libraries\*(rq
+are applied before executable compilation.
 .SH BOOT and HEAP FILES
 .LP
 When \*s is run, it looks for one or more boot files to load.

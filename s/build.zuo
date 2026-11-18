@@ -116,7 +116,7 @@
 
 ;; Note: `rktboot` looks for this definition:
 (define compiler-names
-  (list "cpnanopass.ss" "cpprim.ss" "compile.ss" "cback.ss"))
+  (list "cpnanopass.ss" "cpprim.ss" "compile.ss" "cback.ss" "executable.ss"))
 
 (define type-src-names
   ;; files that are `include`d by other files:

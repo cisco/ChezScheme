@@ -195,6 +195,8 @@ void S_prim_init(void) {
     create_c_entry_vector();
 
     Sforeign_symbol("(cs)fixedpathp", (void *)S_fixedpathp);
+    Sforeign_symbol("(cs)process_executable_path", (void *)S_process_executable_path);
+    Sforeign_symbol("(cs)petite_boot_path", (void *)S_petite_boot_path);
     Sforeign_symbol("(cs)bytes_allocated", (void *)S_compute_bytes_allocated);
     Sforeign_symbol("(cs)bytes_finalized", (void *)S_bytes_finalized);
     Sforeign_symbol("(cs)curmembytes", (void *)S_curmembytes);
