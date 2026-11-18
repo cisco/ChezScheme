@@ -2981,6 +2981,18 @@
     (= 0.970453319804345 (pseudo-random-generator-next! prgen))
     (= 0.41754101818626094 (pseudo-random-generator-next! prgen))
     (= 0.13061439482676662 (pseudo-random-generator-next! prgen))
+    ;; same result on 32-bit and 64-bit platforms, even though 4294967087
+    ;; is a bignum on a 32-bit platform
+    (= 1110944503
+       (pseudo-random-generator-next!
+        (vector->pseudo-random-generator
+         '#(2182378604 1199273501 1921976687 2184096762 3398188531 1221198170))
+        4294967087))
+    (= 370314834
+       (pseudo-random-generator-next!
+        (vector->pseudo-random-generator
+         '#(2182378604 1199273501 1921976687 2184096762 3398188531 1221198170))
+        (expt 2 30)))
     (let nloop ([ns (list (expt 2 31)
                           (expt 2 32)
                           (expt 2 33)

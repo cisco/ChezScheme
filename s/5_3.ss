@@ -3237,7 +3237,15 @@
              (random-int s x)])]
           [(bignum? x)
            (unless ($bigpositive? x) ($oops who "not a positive exact integer ~s" x))
-           (random-integer s x)]
+           (meta-cond
+            [(<= (constant most-negative-fixnum) 4294967087 (constant most-positive-fixnum))
+             (random-integer s x)]
+            [else
+             ;; same as for a fixnum on a 64-bit platform, so that results
+             ;; do not depend on the platform's fixnum range
+             (if (<= x 4294967087)
+                 (random-int s x)
+                 (random-integer s x))])]
           [else
            ($oops who "not a positive exact integer ~s" x)])])))
 

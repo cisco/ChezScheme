@@ -9001,7 +9001,7 @@
                              (let ([new-next (remove-var next (get-ptr-fv i))])
                                (if (eq? new-next next)
                                    next
-                                   (add-var next (car nfv*)))))))))]
+                                   (add-var new-next (car nfv*)))))))))]
                 [(newframe-block? block)
                  (let ([next-block (newframe-block-next block)]
                        [rp-block* (newframe-block-rp* block)]
