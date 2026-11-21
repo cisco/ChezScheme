@@ -3093,6 +3093,14 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair collection of mutated records with non-pointer fields (10.5.0)}
+
+When a record whose type has both pointer and non-pointer fields was
+in an old generation and one of its pointer fields was set to a
+younger object, the garbage collector could crash while collecting a
+younger generation into the record's generation. Such records are now
+handled correctly.
+
 \subsection{Dead arguments retained across a non-tail loop call (10.5.0)}
 
 When a procedure that receives some arguments in its stack frame made

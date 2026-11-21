@@ -2465,11 +2465,14 @@ static uptr sweep_dirty_segments(thread_gc *tgc, seginfo **dirty_segments) {
                        area, then relocate any mutable pointers in that
                        record and those that follow within the dirty area. */
 
-                    /* find first segment of group of like segments */
+                    /* find first segment of group of like segments,
+                       excluding segments being collected, which already
+                       have their target generation */
                     j = seg - 1;
                     while ((si = MaybeSegInfo(j)) != NULL &&
                            si->space == s &&
                            si->generation == from_g &&
+                           !si->old_space &&
                            !si->marked_mask)
                       j -= 1;
                     j += 1;
