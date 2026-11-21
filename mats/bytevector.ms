@@ -11398,4 +11398,8 @@
     (error?
      ;; Claming a too-large size in the header should fail with a suitable message:
      (bytevector-uncompress '#vu8(255 255 255 255 255 255 255 255 1 2 3)))
-)
+    ;; test for a signed integer overflow in the c implementation.
+    (let ([len (expt 2 28)])
+      (parameterize ([compress-format 'lz4] [compress-level 'low])
+        (eqv? len (bytevector-length (bytevector-uncompress (bytevector-compress (make-bytevector len 0)))))))
+    )

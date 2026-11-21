@@ -3093,6 +3093,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{\scheme{bytevector-uncompress} of large bytevectors}
+
+Calling \scheme{bytevector-uncompress} on a bytevector with a large
+uncompressed size using the LZ4 \scheme{compress-format} could result in
+an exception "uncompressed size ... is smaller than expected size".  That
+bug has been fixed.
+
 \subsection{Dead arguments retained across a non-tail loop call (10.5.0)}
 
 When a procedure that receives some arguments in its stack frame made
