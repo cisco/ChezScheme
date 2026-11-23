@@ -288,6 +288,62 @@
                               (k u)
                               (build-set! ,c ,u))))))])))
 
+  (define invert-condition
+    (lambda (cc)
+      (case cc
+        [(o) 'no] [(no) 'o]
+        [(b) 'ae] [(ae) 'b]
+        [(e) 'ne] [(ne) 'e]
+        [(be) 'a] [(a) 'be]
+        [(p) 'np] [(np) 'p]
+        [(l) 'ge] [(ge) 'l]
+        [(le) 'g] [(g) 'le]
+        [else ($oops 'assembler-internal "unrecognized condition code ~s" cc)])))
+
+  ;; Builds `z := (if (compare x y) u v)` for a select instruction.
+  ;; Each condition in `else-cc*` is sufficient (after the compare) to
+  ;; select `v`, and their disjunction is necessary.
+  (define build-select
+    (lambda (fp? else-cc* z x y u v)
+      (define (immediate-value a)
+        (nanopass-case (L15c Triv) a
+          [(immediate ,imm) imm]
+          [else #f]))
+      (define (power-of-two-shift n)
+        (and (> n 0)
+             (= (bitwise-and n (- n 1)) 0)
+             (- (integer-length n) 1)))
+      (with-output-language (L15d Effect)
+        (let* ([uv (and (fx= (length else-cc*) 1) (immediate-value u))]
+               [vv (and uv (immediate-value v))])
+          (cond
+            [(and vv
+                  ;; result = u + (v - u)*b, where b is 1 when v is selected
+                  (let ([shift (power-of-two-shift (- vv uv))])
+                    (and shift (signed-32? uv)
+                         `(set! ,(make-live-info) ,z
+                                (asm ,null-info ,(asm-select-bit fp? (car else-cc*) shift uv) ,x ,y)))))]
+            [(and vv
+                  ;; result = v + (u - v)*b, where b is 1 when u is selected
+                  (let ([shift (power-of-two-shift (- uv vv))])
+                    (and shift (signed-32? vv)
+                         `(set! ,(make-live-info) ,z
+                                (asm ,null-info ,(asm-select-bit fp? (invert-condition (car else-cc*)) shift vv) ,x ,y)))))]
+            [else
+             ;; t := u, then conditionally move v into t
+             (let ([t (make-tmp 'u)])
+               (define (finish v)
+                 (seq
+                   `(set! ,(make-live-info) ,t ,u)
+                   `(set! ,(make-live-info) ,t (asm ,null-info ,(asm-select fp? else-cc*) ,x ,y ,v ,t))
+                   `(set! ,(make-live-info) ,z ,t)))
+               (if (ur? v)
+                   (finish v)
+                   (let ([w (make-tmp 'u)])
+                     (seq
+                       `(set! ,(make-live-info) ,w ,v)
+                       (finish w)))))])))))
+
   ; x is not the same as z in any clause that follows a clause where (x z)
   ; and y is coercible to one of its types, however:
   ; WARNING: do not assume that if x isn't the same as z then x is independent
@@ -375,6 +431,29 @@
        `(move-related ,z ,y)
        `(move-related ,z ,x)
        `(set! ,(make-live-info) ,z (asm ,info ,(asm-lea2 0) ,x ,y)))])
+
+  (define-instruction value (isel< isel<= isel= isel> isel>= iselu<)
+    [(op (z ur) (x ur) (y ur imm32) (u ur imm) (v ur imm))
+     (build-select #f
+                   (case op
+                     [(isel<) '(ge)]
+                     [(isel<=) '(g)]
+                     [(isel=) '(ne)]
+                     [(isel>) '(le)]
+                     [(isel>=) '(l)]
+                     [(iselu<) '(ae)])
+                   z x y u v)])
+
+  (define-instruction value (fpsel< fpsel<= fpsel=)
+    ;; ucomisd sets ZF, PF, and CF on unordered, so a NaN selects the
+    ;; "else" value for each set of conditions
+    [(op (z ur) (x fpmem fpur) (y fpur) (u ur imm) (v ur imm))
+     (build-select #t
+                   (case op
+                     [(fpsel<) '(be)]
+                     [(fpsel<=) '(b)]
+                     [(fpsel=) '(ne p)])
+                   z x y u v)])
 
   (define-instruction value (+/ovfl +/carry) ; must set condition codes, so can't use lea
     [(op (z mem) (x z) (y ur imm32))
@@ -926,7 +1005,8 @@
                      asm-pop asm-shiftop asm-sll asm-logand asm-lognot
                      asm-logtest asm-fp-relop asm-relop asm-push asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
-                     asm-lea1 asm-lea2 asm-indirect-call asm-condition-code
+                     asm-lea1 asm-lea2 asm-select asm-select-bit
+                     asm-indirect-call asm-condition-code
                      asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount
                      asm-exchange asm-pause asm-debug asm-locked-incr asm-locked-decr asm-locked-cmpxchg
                      asm-fpsqrt asm-fpround asm-fpfma asm-fpop-2 asm-fpminmax asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
@@ -1106,6 +1186,9 @@
 
   (define-op vfmadd213sd fma-op #xa9)
   (define-op vfmadd231sd fma-op #xb9)
+
+  (define-op cmov cmov-op)
+  (define-op setcc setcc-op)
 
   ; SSE2 instructions
   (define-op sse.addsd     sse-op1 #xF2 #x58 0)
@@ -1463,6 +1546,48 @@
            (ax-ea-addr-disp source))]
         [else
           ($oops 'assembler-internal "xchg-op source=~s dest=~s" source dest)])))
+
+  (define cmov-op
+    ;; cmovcc source, dest (64-bit); the destination is in the modrm reg field
+    (lambda (op cc source dest code*)
+      (emit-code (op cc source dest code*)
+        (ax-ea-rex 1 source dest 'quad)
+        (build byte #x0F)
+        (build byte (byte-fields [4 #b0100] [0 (condition-code-bits cc)]))
+        (ax-ea-modrm-reg source dest)
+        (ax-ea-sib source)
+        (ax-ea-addr-disp source))))
+
+  (define setcc-op
+    ;; setcc dest, which sets only the low byte of dest
+    (lambda (op cc dest code*)
+      (emit-code (op cc dest code*)
+        (ax-ea-rex 0 dest #f 'byte)
+        (build byte #x0F)
+        (build byte (byte-fields [4 #b1001] [0 (condition-code-bits cc)]))
+        (ax-ea-modrm-ttt dest #b000)
+        (ax-ea-sib dest)
+        (ax-ea-addr-disp dest))))
+
+  ;; condition codes for `cmov` and `setcc`
+  (define condition-code-bits
+    (lambda (cc)
+      (case cc
+        [(o) #b0000]
+        [(no) #b0001]
+        [(b) #b0010]   ; unsigned <, carry set
+        [(ae) #b0011]  ; unsigned >=, carry clear
+        [(e) #b0100]
+        [(ne) #b0101]
+        [(be) #b0110]  ; unsigned <=
+        [(a) #b0111]   ; unsigned >
+        [(p) #b1010]
+        [(np) #b1011]
+        [(l) #b1100]
+        [(ge) #b1101]
+        [(le) #b1110]
+        [(g) #b1111]
+        [else ($oops 'assembler-internal "unrecognized condition code ~s" cc)])))
 
   (define branch-op
     (lambda (op condition-code disp code*)
@@ -2152,6 +2277,46 @@
       (Trivit (dest src1)
         (safe-assert (equal? (Triv->rand src0) dest))
         (emit muls src1 dest code*))))
+
+  ;; compare for a select, setting flags as for `asm-relop` or `asm-fp-relop`
+  (define emit-select-compare
+    (lambda (fp? x y code*)
+      (if fp?
+          (emit sse.ucomisd x y code*)
+          (record-case y
+            [(imm literal) stuff (emit cmpi y x code*)]
+            [else (emit cmp y x code*)]))))
+
+  (define asm-select
+    ;; dest starts out as the "then" value; move src to dest if any
+    ;; condition in `else-cc*` holds after the compare
+    (lambda (fp? else-cc*)
+      (lambda (code* dest x y src dest0)
+        (Trivit (dest x y src)
+          (safe-assert (equal? (Triv->rand dest0) dest))
+          (emit-select-compare fp? x y
+            (fold-right (lambda (cc code*) (emit cmov cc src dest code*))
+                        code*
+                        else-cc*))))))
+
+  (define asm-select-bit
+    ;; dest := base + (cc ? 1 : 0) << shift
+    (lambda (fp? cc shift base)
+      (lambda (code* dest x y)
+        (Trivit (dest x y)
+          ;; dest may be the same as x or y, so compare first, and
+          ;; then use only instructions that do not change flags until
+          ;; after setcc
+          (emit-select-compare fp? x y
+            (emit movi '(imm 0) dest
+              (emit setcc cc dest
+                (let* ([code* (if (eqv? base 0)
+                                  code*
+                                  (emit addi `(imm ,base) dest code*))]
+                       [code* (if (fx= shift 0)
+                                  code*
+                                  (emit asli `(imm ,shift) dest code*))])
+                  code*))))))))
 
   (define asm-div
     (lambda (code* dest-rax src-rax src-rdx src2)

@@ -3099,6 +3099,13 @@ Calling \scheme{bytevector-uncompress} on a bytevector with a large
 uncompressed size using the LZ4 \scheme{compress-format} could result in
 an exception "uncompressed size ... is smaller than expected size".  That
 bug has been fixed.
+\subsection{Repair collection of mutated records with non-pointer fields (10.5.0)}
+
+When a record whose type has both pointer and non-pointer fields was
+in an old generation and one of its pointer fields was set to a
+younger object, the garbage collector could crash while collecting a
+younger generation into the record's generation. Such records are now
+handled correctly.
 
 \subsection{Dead arguments retained across a non-tail loop call (10.5.0)}
 

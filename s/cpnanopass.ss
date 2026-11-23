@@ -3750,14 +3750,135 @@
           (nanopass-case (L10.5 Lvalue) lvalue
             [,x (and (uvar? x) (eq? (uvar-type x) 'fp))]
             [(mref ,x1 ,x2 ,imm ,type) (eq? type 'fp)]))
+        ; Maps a predicate primitive to its select counterpart, if
+        ; the target machine supports selects, or returns #f. A select
+        ; primitive accepts the predicate's operands followed by the
+        ; values to produce when the predicate is true and false.
+        (define pred->select
+          (constant-case conditional-select-instruction
+            [(#t)
+             (lambda (prim)
+               (cond
+                 [(eq? prim %<) %isel<]
+                 [(eq? prim %<=) %isel<=]
+                 [(eq? prim %eq?) %isel=]
+                 [(eq? prim %>) %isel>]
+                 [(eq? prim %>=) %isel>=]
+                 [(eq? prim %u<) %iselu<]
+                 ; no fp> or fp>=, since cpprim converts those to fp< and fp<=
+                 [(eq? prim %fp<) %fpsel<]
+                 [(eq? prim %fp<=) %fpsel<=]
+                 [(eq? prim %fp=) %fpsel=]
+                 [else #f]))]
+            [else (lambda (prim) #f)]))
+        ; Returns t if it can be a selected value: a non-fp variable or
+        ; a constant; otherwise #f
+        (define select-operand
+          (lambda (t)
+            (nanopass-case (L11 Triv) t
+              [(immediate ,imm) t]
+              [(literal ,info) (and (not (info-literal-indirect? info)) t)]
+              [else (and (uvar? t) (not (eq? (uvar-type t) 'fp)) t)])))
+        ; Creates a converter for `(if p a1 a2)`, where `p` is an L11
+        ; Pred and `a1` and `a2` are L11 arms (Effects or Tails), that
+        ; uses a select when `p` is a comparison with a select
+        ; counterpart and the arms each deliver a select operand to
+        ; the same destination. To expose such a comparison, the
+        ; conversion looks through
+        ;
+        ;  * a `seq` prefix: (if (seq e p) a1 a2) => (seq e (if p a1 a2))
+        ;
+        ;  * a negation: (if (if p (false) (true)) a1 a2) => (if p a2 a1),
+        ;    which is the shape of a test on a variable or a call result
+        ;
+        ;  * a nested `if`, when the conversion succeeds for at least one
+        ;    of the nested branches:
+        ;      (if (if p0 p1 p2) a1 a2) => (if p0 (if p1 a1 a2) (if p2 a1 a2))
+        ;    which is the shape of a safe-mode comparison, where `p0`
+        ;    checks argument types, `p1` is the inlined comparison, and `p2`
+        ;    is the out-of-line call; duplicating the arms is ok, since
+        ;    they're small if the conversion succeeds
+        ;
+        ; The arguments to `make-select-converter`:
+        ;   arm-operand : arm -> (values dest operand), where `dest` is #f
+        ;                 if the arm does not just deliver an operand
+        ;   build-select : dest sel t* v1 v2 -> arm
+        ;   build-if : p arm arm -> arm
+        ;   build-seq : e arm -> arm
+        (define make-select-converter
+          (lambda (arm-operand build-select build-if build-seq)
+            (define (try p a1 a2)
+              (nanopass-case (L11 Pred) p
+                [(inline ,info ,pred-prim ,t* ...)
+                 (let ([sel (pred->select pred-prim)])
+                   (and sel
+                        (let-values ([(d1 v1) (arm-operand a1)]
+                                     [(d2 v2) (arm-operand a2)])
+                          (and d1
+                               (eq? d1 d2)
+                               (build-select d1 sel t* v1 v2)))))]
+                [(seq ,e0 ,p1)
+                 (let ([r (try p1 a1 a2)])
+                   (and r (build-seq e0 r)))]
+                [(if ,p0 (false) (true)) (try p0 a2 a1)]
+                [(if ,p0 (true) (false)) (try p0 a1 a2)]
+                [(if ,p0 ,p1 ,p2)
+                 (let ([r1 (try p1 a1 a2)]
+                       [r2 (try p2 a1 a2)])
+                   (and (or r1 r2)
+                        (build-if p0
+                                  (or r1 (simple-if p1 a1 a2))
+                                  (or r2 (simple-if p2 a1 a2)))))]
+                [else #f]))
+            (define (simple-if p a1 a2)
+              (nanopass-case (L11 Pred) p
+                [(true) a1]
+                [(false) a2]
+                [else (build-if p a1 a2)]))
+            (lambda (p a1 a2)
+              (or (try p a1 a2) (build-if p a1 a2)))))
+        (define convert-effect-if
+          (make-select-converter
+            (lambda (e)
+              (nanopass-case (L11 Effect) e
+                [(set! ,x ,t)
+                 (let ([v (and (not (and (uvar? x) (eq? (uvar-type x) 'fp)))
+                               (select-operand t))])
+                   (if v (values x v) (values #f #f)))]
+                [else (values #f #f)]))
+            (lambda (x sel t* v1 v2)
+              (with-output-language (L11 Effect)
+                `(set! ,x (inline ,null-info ,sel ,t* ... ,v1 ,v2))))
+            (lambda (p e1 e2) (with-output-language (L11 Effect) `(if ,p ,e1 ,e2)))
+            (lambda (e0 e1) (with-output-language (L11 Effect) `(seq ,e0 ,e1)))))
+        (define convert-tail-if
+          (make-select-converter
+            (lambda (tl)
+              (let ([v (nanopass-case (L11 Tail) tl
+                         [,rhs (nanopass-case (L11 Rhs) rhs
+                                 [,t (select-operand t)]
+                                 [else #f])]
+                         [else #f])])
+                (if v (values 'tail v) (values #f #f))))
+            (lambda (ignored sel t* v1 v2)
+              (let ([w (make-tmp 'w)])
+                (with-output-language (L11 Tail)
+                  `(seq (set! ,w (inline ,null-info ,sel ,t* ... ,v1 ,v2)) ,w))))
+            (lambda (p tl1 tl2) (with-output-language (L11 Tail) `(if ,p ,tl1 ,tl2)))
+            (lambda (e0 tl1) (with-output-language (L11 Tail) `(seq ,e0 ,tl1)))))
         (define rhs-inline
           (lambda (lvalue info prim t*)
             (with-output-language (L11 Effect)
               (cond
                 [(pred-primitive? prim)
-                 `(if (inline ,info ,prim ,t* ...)
-                      (set! ,lvalue ,(%constant strue))
-                      (set! ,lvalue ,(%constant sfalse)))]
+                 (let ([sel (pred->select prim)])
+                   (if sel
+                       `(set! ,lvalue (inline ,null-info ,sel ,t* ...
+                                              ,(%constant strue)
+                                              ,(%constant sfalse)))
+                       `(if (inline ,info ,prim ,t* ...)
+                            (set! ,lvalue ,(%constant strue))
+                            (set! ,lvalue ,(%constant sfalse)))))]
                 [(effect-primitive? prim)
                  `(seq
                     (inline ,info ,prim ,t* ...)
@@ -3845,6 +3966,7 @@
                  ())
             (true))])
       (Effect : Expr (ir) -> Effect ()
+        [(if ,[Pred : e0] ,[e1] ,[e2]) (convert-effect-if e0 e1 e2)]
         [,x `(nop)]
         [(mref ,x1 ,x2 ,imm ,type) `(nop)]
         [(literal ,info) `(nop)]
@@ -3893,11 +4015,20 @@
         [(attachment-get ,reified? ,t?) `(nop)]
         [(continuation-get) `(nop)])
       (Tail : Expr (ir) -> Tail ()
+        [(if ,[Pred : e0] ,[tl1] ,[tl2]) (convert-tail-if e0 tl1 tl2)]
         [(inline ,info ,prim ,[t*] ...)
          (guard (pred-primitive? prim))
-         `(if (inline ,info ,prim ,t* ...)
-              ,(%constant strue)
-              ,(%constant sfalse))]
+         (let ([sel (pred->select prim)])
+           (if sel
+               (let ([w (make-tmp 'w)])
+                 `(seq
+                    (set! ,w (inline ,null-info ,sel ,t* ...
+                                     ,(%constant strue)
+                                     ,(%constant sfalse)))
+                    ,w))
+               `(if (inline ,info ,prim ,t* ...)
+                    ,(%constant strue)
+                    ,(%constant sfalse))))]
         [(inline ,info ,prim ,[t*] ...)
          (guard (effect-primitive? prim))
          `(seq (inline ,info ,prim ,t* ...) ,(%constant svoid))]
