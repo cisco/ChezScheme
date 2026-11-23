@@ -131,6 +131,18 @@
                   (eq? (car p) (fudge-a x))
                   (equal? (car p) '(3 . 4))))))
   (error? (set-fudge-b! x 4))
+  ;; regression test for sweeping dirty cards of old records with a
+  ;; non-pointer field while a younger generation is collected into theirs
+  (let ()
+    (define-record fudge ((mutable a) (mutable double-float b)))
+    (define v (make-vector 1000))
+    (do ([i 0 (fx+ i 1)]) ((fx= i 1000)) (vector-set! v i (make-fudge #f 0.0)))
+    (collect (collect-maximum-generation))
+    (do ([i 0 (fx+ i 1)]) ((fx= i 100000) #t)
+      (let ([x (make-fudge #f 0.0)])
+        (set-fudge-a! (vector-ref v (fxmodulo i 1000)) x)
+        (vector-set! v (fxmodulo (fx* i 13) 1000) x))
+      (when (fx= 0 (fxmodulo i 100)) (collect))))
 )
 
 (mat record6
