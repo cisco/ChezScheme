@@ -26,6 +26,11 @@
 #define ptr_to_addr(p) TO_VOIDP(p)
 #define addr_to_ptr(a) TO_PTR(a)
 
+/* a shared object's handle is not necessarily an address, so it could
+ * look like a pointer into the heap; keep it as an exact integer */
+#define ptr_to_handle(p) TO_VOIDP(Sunsigned_value(p))
+#define handle_to_ptr(h) Sunsigned((uptr)TO_PTR(h))
+
 /* buckets should be prime */
 #define buckets 457
 #define multiplier 3
@@ -115,7 +120,7 @@ static ptr lookup_dynamic(const char *s, ptr tbl) {
 
 #ifdef HPUX
         void *value = NULL;
-        shl_t handle = (shl_t)ptr_to_addr(Scar(p));
+        shl_t handle = (shl_t)ptr_to_handle(Scar(p));
 
         /*
          * With NULL path, use RTLD_SELF to act like dlopen(NULL, ...)
@@ -128,7 +133,7 @@ static ptr lookup_dynamic(const char *s, ptr tbl) {
            return addr_to_ptr(proc2entry(value, NULL));
 #else /* HPUX */
         void *value;
-        void *handle = ptr_to_addr(Scar(p));
+        void *handle = ptr_to_handle(Scar(p));
 
 #ifdef WIN32
         if (!handle) {
@@ -266,7 +271,7 @@ static void load_shared_object(const char *path) {
             S_error2("", "(while loading ~a) ~a", Sstring_utf8(path, -1), s_dlerror());
     }
 
-    S_foreign_dynamic = Scons(addr_to_ptr(handle), S_foreign_dynamic);
+    S_foreign_dynamic = Scons(handle_to_ptr(handle), S_foreign_dynamic);
 
     tc_mutex_release();
 

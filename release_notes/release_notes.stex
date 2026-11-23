@@ -3093,6 +3093,15 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair collection after \scheme{load-shared-object} on macOS (10.5.0)}
+
+The handle of each shared object loaded by \scheme{load-shared-object}
+was kept where the garbage collector could take it for a pointer. A
+handle is not necessarily an address, as on macOS 13 and later, so
+once the heap had grown to include the address that a handle
+resembled, the collector could crash. Handles are now kept as exact
+integers.
+
 \subsection{\scheme{bytevector-uncompress} of large bytevectors}
 
 Calling \scheme{bytevector-uncompress} on a bytevector with a large
