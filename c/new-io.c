@@ -951,7 +951,7 @@ ptr S_bytevector_uncompress(ptr dest_bv, iptr d_start, iptr d_count,
         r = LZ4_decompress_safe((char *)&BVIT(src_bv, s_start), (char *)&BVIT(dest_bv, d_start), (int)s_count, (int)d_count);
 
         if (r >= 0)
-          return Sfixnum(r);
+          return Sfixnum((iptr)r);
         else
           return Sstring("internal error uncompressing ~s");
       }

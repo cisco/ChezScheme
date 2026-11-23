@@ -11398,4 +11398,17 @@
     (error?
      ;; Claming a too-large size in the header should fail with a suitable message:
      (bytevector-uncompress '#vu8(255 255 255 255 255 255 255 255 1 2 3)))
-)
+    ;; test for a signed integer overflow in the c implementation.  The
+    ;; bug was specifically in the lz4 implementation, but might as well
+    ;; test all the parameter combinations.
+    (case (fixnum-width)
+      [(30)
+       ;; This test _should_ work on 32-bit systems, if it can allocate
+       ;; enough memory.  The 32-bit Windows runners in the GitHub CI
+       ;; apparently cannot.
+       #t]
+      [(61)
+       (let ([len (expt 2 28)])
+         (eqv? len (bytevector-length (bytevector-uncompress (bytevector-compress (make-bytevector len 0))))))]
+      [else (errorf #f "mat does not handle fixnum width ~s" (fixnum-width))])
+    )
