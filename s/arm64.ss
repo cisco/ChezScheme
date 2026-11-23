@@ -605,6 +605,76 @@
   (define-instruction pred (condition-code)
     [(op) (values '() `(asm ,info ,(asm-condition-code info)))])
 
+  (let ()
+    ;; condition after `cmp x y` or `fcmp x y` for selecting the "then"
+    ;; value; `fcmp` sets C and V and clears N and Z for unordered, so
+    ;; each fp condition is false for a NaN, which selects "else"
+    (define select-condition
+      (lambda (op)
+        (case op
+          [(isel<) 'lt]
+          [(isel<=) 'le]
+          [(isel=) 'eq]
+          [(isel>) 'gt]
+          [(isel>=) 'ge]
+          [(iselu<) 'cc]
+          [(fpsel<) 'cc]
+          [(fpsel<=) 'ls]
+          [(fpsel=) 'eq])))
+    ;; Builds `z := (if (compare x y) u v)`, where `compare` is 'int,
+    ;; 'neg-int (when `y` is a negated immediate), or 'fp
+    (define build-select
+      (lambda (op compare z x y u v)
+        (define (immediate-value a)
+          (nanopass-case (L15c Triv) a
+            [(immediate ,imm) imm]
+            [else #f]))
+        (define (power-of-two-shift n)
+          (and (> n 0)
+               (= (bitwise-and n (- n 1)) 0)
+               (- (integer-length n) 1)))
+        (define (->ur a k)
+          (if (ur? a)
+              (k a)
+              (let ([t (make-tmp 'u)])
+                (seq
+                  (build-set! ,t ,a)
+                  (k t)))))
+        (with-output-language (L15d Effect)
+          (let* ([cc (select-condition op)]
+                 [uv (immediate-value u)]
+                 [vv (and uv (immediate-value v))])
+            ;; for immediates that differ by a power of two, use
+            ;; base + (bit-cc ? 1 : 0) << shift
+            (define (try-bit bit-cc diff base)
+              (let ([shift (power-of-two-shift diff)])
+                (and shift
+                     (fixnum? base)
+                     (fx< -4096 base 4096)
+                     `(set! ,(make-live-info) ,z
+                            (asm ,null-info ,(asm-select-bit compare bit-cc shift base) ,x ,y)))))
+            (or (and vv
+                     (or (try-bit cc (- uv vv) vv)
+                         (try-bit (invert-condition cc) (- vv uv) uv)))
+                (->ur u
+                  (lambda (u)
+                    (->ur v
+                      (lambda (v)
+                        `(set! ,(make-live-info) ,z
+                               (asm ,null-info ,(asm-select compare cc) ,x ,y ,u ,v)))))))))))
+
+    (define-instruction value (isel< isel<= isel= isel> isel>= iselu<)
+      [(op (z ur) (x ur) (y unsigned12) (u ur imm-constant) (v ur imm-constant))
+       (build-select op 'int z x y u v)]
+      [(op (z ur) (x ur) (y neg-unsigned12) (u ur imm-constant) (v ur imm-constant))
+       (build-select op 'neg-int z x y u v)]
+      [(op (z ur) (x ur) (y ur) (u ur imm-constant) (v ur imm-constant))
+       (build-select op 'int z x y u v)])
+
+    (define-instruction value (fpsel< fpsel<= fpsel=)
+      [(op (z ur) (x fpur) (y fpur) (u ur imm-constant) (v ur imm-constant))
+       (build-select op 'fp z x y u v)]))
+
   (define-instruction pred (type-check?)
     [(op (x ur) (mask funkymask ur) (type unsigned12 ur))
      (let ([tmp (make-tmp 'u)])
@@ -735,7 +805,7 @@
                      asm-logtest asm-fp-relop asm-relop asm-push-multiple asm-push-fpmultiple asm-pop-fpmultiple
                      asm-indirect-jump asm-literal-jump
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
-                     asm-indirect-call asm-condition-code
+                     asm-indirect-call asm-condition-code asm-select asm-select-bit invert-condition
                      asm-fpmove-single asm-fl-cvt asm-fpt asm-fpmove asm-fpcastto asm-fpcastfrom
                      asm-fptrunc asm-fpsingle
                      asm-lock asm-lock+/- asm-cas asm-fence
@@ -827,6 +897,9 @@
   (define-op cmp        cmp-op  #b1101011 #b00 0)
   (define-op tst        cmp-op  #b1101010 #b00 0)
   (define-op cmp/asr63  cmp-op  #b1101011 #b10 63)
+
+  (define-op csel  csel-op #b0) ; selector is at bit 10 (o2)
+  (define-op csinc csel-op #b1)
 
   (define-op cmpi  cmp-imm-op #b1) ; selector is at bit 30 (op)
   (define-op cmni  cmp-imm-op #b0)
@@ -1083,6 +1156,18 @@
         [10 shift-amt]
         [5  (ax-ea-reg-code src0)]
         [0  #b11111])))
+
+  (define csel-op
+    ;; dest := (cond ? src0 : src1), where src1 is incremented for csinc
+    (lambda (op o2 dest src0 src1 cond code*)
+      (emit-code (op dest src0 src1 cond code*)
+        [31 #b1]
+        [21 #b011010100]
+        [16 (ax-ea-reg-code src1)]
+        [12 (ax-cond cond)]
+        [10 o2]
+        [5  (ax-ea-reg-code src0)]
+        [0  (ax-ea-reg-code dest)])))
 
   (define cmp-imm-op
     (lambda (op opc src imm code*)
@@ -2089,6 +2174,55 @@
                 [(reg) ignore (safe-assert (not negated-imm?)) (emit cmp x y '())]
                 [else (sorry! who "unexpected second operand ~s" y)])
               (asm-conditional-jump info l1 l2 offset)))))))
+
+  (define asm-select-compare
+    (lambda (compare x y code*)
+      (case compare
+        [(fp) (emit fcmp x y code*)]
+        [else
+         (record-case y
+           [(imm) (n) (if (eq? compare 'neg-int)
+                          (emit cmni x n code*)
+                          (emit cmpi x n code*))]
+           [else (emit cmp x y code*)])])))
+
+  (define asm-select
+    ;; dest := (cc ? u : v) after comparing x and y
+    (lambda (compare cc)
+      (lambda (code* dest x y u v)
+        (Trivit (dest x y u v)
+          (asm-select-compare compare x y
+            (emit csel dest u v cc code*))))))
+
+  (define asm-select-bit
+    ;; dest := base + (cc ? 1 : 0) << shift after comparing x and y
+    (lambda (compare cc shift base)
+      (lambda (code* dest x y)
+        (Trivit (dest x y)
+          (let ([zero `(reg . ,%real-zero)])
+            (asm-select-compare compare x y
+              ;; `cset dest, cc` is `csinc dest, xzr, xzr, !cc`
+              (emit csinc dest zero zero (invert-condition cc)
+                (let* ([code* (cond
+                                [(eqv? base 0) code*]
+                                [(fx> base 0) (emit addi #f dest dest base code*)]
+                                [else (emit subi #f dest dest (fx- base) code*)])]
+                       [code* (if (fx= shift 0)
+                                  code*
+                                  (emit lsli dest dest shift code*))])
+                  code*))))))))
+
+  (define invert-condition
+    (lambda (cc)
+      (case cc
+        [(eq) 'ne] [(ne) 'eq]
+        [(cs) 'cc] [(cc) 'cs]
+        [(mi) 'pl] [(pl) 'mi]
+        [(vs) 'vc] [(vc) 'vs]
+        [(hi) 'ls] [(ls) 'hi]
+        [(ge) 'lt] [(lt) 'ge]
+        [(gt) 'le] [(le) 'gt]
+        [else (sorry! 'invert-condition "unrecognized condition ~s" cc)])))
 
   (define asm-condition-code
     (lambda (info)
