@@ -9189,6 +9189,8 @@
   (error? (bytevector->sint-list #vu8(1 3 7 4 3 253 5 250 127 128 206 50) 'little 11))
   (error? (begin (bytevector->sint-list #vu8(1 3 7 4 3 253 5 250 127 128 206 50) (native-endianness) 50) #t))
 
+  (equal? (list 'wrapped (bytevector->sint-list #vu8() 'little 3)) '(wrapped ()))
+
   (equal?
     (bytevector->sint-list #vu8(#xff #x01 #x02 #xfb #x80 #x7f) 'little 1)
     '(#x-1 #x01 #x02 #x-5 #x-80 #x7f))
@@ -9276,6 +9278,8 @@
   (error? (bytevector->uint-list #vu8(1 3 7 4 3 253 5 250 127 128 206 50) 'big 10))
   (error? (bytevector->uint-list #vu8(1 3 7 4 3 253 5 250 127 128 206 50) 'little 11))
   (error? (begin (bytevector->uint-list #vu8(1 3 7 4 3 253 5 250 127 128 206 50) (native-endianness) 50) #t))
+
+  (equal? (list 'wrapped (bytevector->uint-list #vu8() 'big 1)) '(wrapped ()))
 
   (equal?
     (bytevector->uint-list #vu8(#xff #x01 #x02 #xfb #x80 #x7f) 'little 1)
