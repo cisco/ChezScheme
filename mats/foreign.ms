@@ -319,6 +319,22 @@
       read)
     '(#f #t)))
 
+(mat load-shared-object-handle
+  ;; a shared object's handle is not necessarily an address, so it is
+  ;; kept in a form that the collector cannot take for a pointer
+  (equal?
+    (with-input-from-string
+      (separate-eval
+        '(begin
+           (load-shared-object #f)
+           (let ([table (foreign-procedure "(cs)foreign_dynamic_table" ()
+                          scheme-object)])
+             (printf "~S~%"
+               (andmap (lambda (h) (and (integer? h) (exact? h))) (table))))
+           (void)))
+      read)
+    #t))
+
 (mat foreign-entry?
    (foreign-entry? "id")
    (foreign-entry? "idid")
