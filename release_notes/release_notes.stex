@@ -3093,6 +3093,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair compilation of empty bytevector conversions (10.5.0)}
+
+The compiler now recognizes that \scheme{bytevector->uint-list} and
+\scheme{bytevector->sint-list} return the empty list for an empty bytevector.
+Previously, when the compiler knew the bytevector was empty, it could
+incorrectly discard code that should run after the conversion.
+
 \subsection{\scheme{bytevector-uncompress} of large bytevectors}
 
 Calling \scheme{bytevector-uncompress} on a bytevector with a large
