@@ -880,6 +880,82 @@
                  (set! s (if (fx< (fxmodulo i 17) 5) (fx+ s 1) (fx- s 1))))))])
     (eqv? (f 1000) -412)))
 
+(mat fx-compare-store-select
+  ; selects whose destination is an object field rather than an
+  ; assigned variable: a store of a select-able value writes the select
+  ; directly into the field when no write barrier is needed, and
+  ; otherwise selects into a temporary before the barriered store
+  (let ()
+    (define-record-type pt (fields (mutable a) (mutable b)) (nongenerative))
+    (and
+     ; record field with immediate arms
+     (let ([f (lambda (r x y) (pt-a-set! r (if (fx< x y) 1 2)) (pt-a r))])
+       (and (eqv? (f (make-pt 0 0) 1 2) 1)
+            (eqv? (f (make-pt 0 0) 2 1) 2)
+            (eqv? (f (make-pt 0 0) 2 2) 2)))
+     ; record field with fixnum arms
+     (let ([f (lambda (r x y) (pt-b-set! r (if (fx< x y) x y)) (pt-b r))])
+       (and (eqv? (f (make-pt 0 0) 3 9) 3)
+            (eqv? (f (make-pt 0 0) 9 3) 3)
+            (eqv? (f (make-pt 0 0) (most-negative-fixnum) 0) (most-negative-fixnum))))
+     ; record field with arbitrary arms, which need a write barrier
+     (let ([f (lambda (r x y a b) (pt-a-set! r (if (fx< x y) a b)) (pt-a r))])
+       (and (equal? (f (make-pt 0 0) 1 2 '(a) '(b)) '(a))
+            (equal? (f (make-pt 0 0) 2 1 '(a) '(b)) '(b))))
+     ; running min in a record field: the arm reads the destination field
+     (let ([f (lambda (r y) (pt-a-set! r (if (fx< (pt-a r) y) (pt-a r) y)) (pt-a r))])
+       (and (eqv? (f (make-pt 5 0) 3) 3) (eqv? (f (make-pt 3 0) 5) 3)))
+     ; only the selected field changes
+     (let ([r (make-pt 7 8)])
+       (pt-b-set! r (if (fx< 1 2) 10 20))
+       (and (eqv? (pt-a r) 7) (eqv? (pt-b r) 10)))))
+  ; vector element and pair fields
+  (let ([f (lambda (v x y) (vector-set! v 1 (if (fx< x y) x y)) v)])
+    (and (equal? (f (vector 0 0 0) 4 6) '#(0 4 0))
+         (equal? (f (vector 0 0 0) 6 4) '#(0 4 0))))
+  (let ([f (lambda (p x y) (set-car! p (if (fx> x y) x y)) (set-cdr! p (if (fx> x y) y x)) p)])
+    (and (equal? (f (cons 0 0) 4 6) '(6 . 4))
+         (equal? (f (cons 0 0) 6 4) '(6 . 4))))
+  ; both arms store to the same cell
+  (let ([f (lambda (v x y) (if (fx< x y) (vector-set! v 0 1) (vector-set! v 0 2)) v)])
+    (and (equal? (f (vector 0 0) 1 2) '#(1 0))
+         (equal? (f (vector 0 0) 2 1) '#(2 0))))
+  ; arms storing to different elements or objects must not be combined
+  (let ([f (lambda (v x y) (if (fx< x y) (vector-set! v 0 1) (vector-set! v 1 2)) v)])
+    (and (equal? (f (vector 0 0) 1 2) '#(1 0))
+         (equal? (f (vector 0 0) 2 1) '#(0 2))))
+  (let ([f (lambda (p q x y) (if (fx< x y) (set-car! p 1) (set-car! q 1)) (list p q))])
+    (and (equal? (f (cons 0 0) (cons 0 0) 1 2) '((1 . 0) (0 . 0)))
+         (equal? (f (cons 0 0) (cons 0 0) 2 1) '((0 . 0) (1 . 0)))))
+  ; running min and clamp in a box: arms read the destination cell
+  (let ([f (lambda (b y) (set-box! b (if (fx< (unbox b) y) (unbox b) y)) (unbox b))])
+    (and (eqv? (f (box 5) 3) 3) (eqv? (f (box 3) 5) 3) (eqv? (f (box 4) 4) 4)))
+  (let ([f (lambda (b lo hi)
+             (set-box! b (if (fx< (unbox b) lo) lo (unbox b)))
+             (set-box! b (if (fx> (unbox b) hi) hi (unbox b)))
+             (unbox b))])
+    (and (eqv? (f (box 1) 3 7) 3) (eqv? (f (box 5) 3 7) 5) (eqv? (f (box 9) 3 7) 7)))
+  ; an element read that the predicate does not perform must stay in its arm
+  (let ([f (lambda (v w x y) (vector-set! v 0 (if (fx< x y) (vector-ref w 0) 0)) v)])
+    (and (equal? (f (vector 1) (vector 7) 1 2) '#(7))
+         (equal? (f (vector 1) #f 2 1) '#(0))))
+  ; safe mode: type errors leave the field unchanged
+  (let ([f (parameterize ([optimize-level 0])
+             (compile '(lambda (v x y)
+                         (guard (c [#t v])
+                           (vector-set! v 0 (if (fx< x y) x y))
+                           v))))])
+    (and (equal? (f (vector 0) 1 2) '#(1))
+         (equal? (f (vector 0) 2 1) '#(1))
+         (equal? (f (vector 0) 'a 1) '#(0))))
+  ; fxvector and flvector elements
+  (let ([f (lambda (v x y) (fxvector-set! v 0 (if (fx< x y) x y)) v)])
+    (and (equal? (f (fxvector 0) 4 6) (fxvector 4))
+         (equal? (f (fxvector 0) 6 4) (fxvector 4))))
+  (let ([f (lambda (v x y) (flvector-set! v 0 (if (fl< x y) x y)) v)])
+    (and (equal? (f (flvector 0.0) 1.5 2.5) (flvector 1.5))
+         (equal? (f (flvector 0.0) +nan.0 2.5) (flvector 2.5)))))
+
 (mat fx-compare-safe-op-select
   ; selects whose condition is a safe fixnum compare on arguments of
   ; unknown type: at optimize levels below 3 the compare arrives
