@@ -626,7 +626,7 @@
     (define build-select
       (lambda (op compare z x y u v)
         (define (immediate-value a)
-          (nanopass-case (L15c Triv) a
+          (nanopass-case (L15d Triv) a
             [(immediate ,imm) imm]
             [else #f]))
         (define (power-of-two-shift n)
