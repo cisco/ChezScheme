@@ -8652,13 +8652,13 @@
         [(e-ls e-n)
          (nanopass-case (L7 Expr) e-n
            [(quote ,d)
-            (and (and (fixnum? d) (fx< d 4))
+            (and (and (fixnum? d) (fx<= 0 d 3))
                  (%mref ,(add-cdrs d e-ls) ,(constant pair-car-disp)))]
            [else #f])])
       (define-inline 3 list-tail
         [(e-ls e-n)
          (nanopass-case (L7 Expr) e-n
-           [(quote ,d) (and (and (fixnum? d) (fx<= d 4)) (add-cdrs d e-ls))]
+           [(quote ,d) (and (and (fixnum? d) (fx<= 0 d 4)) (add-cdrs d e-ls))]
            [else #f])]))
     (let ()
       (define (go0 src sexpr subtype)
