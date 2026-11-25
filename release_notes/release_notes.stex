@@ -3093,6 +3093,19 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair continuation marks on entry to a one-shot continuation (10.5.0)}
+
+A continuation mark set in the receiver of \scheme{call/1cc} stayed
+in place after the receiver had been left in either of two ways: by
+returning, when the \scheme{with-continuation-mark} form was in tail
+position of the receiver, or by invoking the continuation from the
+body of the form. The mark was reported by
+\scheme{current-continuation-marks} afterwards, and a mark could
+remain for the rest of the thread's execution. Returning to a
+continuation created by \scheme{call/1cc}, or invoking it, now
+restores the marks of the continuation, as it does for a continuation
+created by \scheme{call/cc}.
+
 \subsection{Repair collection after \scheme{load-shared-object} on macOS (10.5.0)}
 
 The handle of each shared object loaded by \scheme{load-shared-object}
