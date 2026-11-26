@@ -3093,6 +3093,13 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair compilation of file timestamp calls on ports (10.5.0)}
+
+The compiler now recognizes that \scheme{file-access-time},
+\scheme{file-change-time}, and \scheme{file-modification-time} can return
+normally when called with a file port. Previously, when the compiler knew
+the argument was a port, it could incorrectly discard code that should run
+after the call.
 \subsection{Repair continuation marks on entry to a one-shot continuation (10.5.0)}
 
 A continuation mark set in the receiver of \scheme{call/1cc} stayed
