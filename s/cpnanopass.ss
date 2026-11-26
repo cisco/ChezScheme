@@ -5287,6 +5287,11 @@
                              ,(%seq
                                 ; set up stack link
                                 (set! ,(%tc-ref stack-link) ,(%mref ,xp/cp ,(constant continuation-link-disp)))
+                                ; potentially pop an attachment
+                                (set! ,%ts ,(%mref ,xp/cp ,(constant continuation-attachments-disp)))
+                                (if ,(%inline eq? ,(%constant sfalse) ,%ts)
+                                    (nop)
+                                    (set! ,(%tc-ref attachments) ,%ts))
                                 ; place old stack in ac1 for now to cache him later (after we've removed
                                 ; the values, so that we have a place to store the length and link)
                                 (set! ,(ref-reg %ac1) ,%sfp)
