@@ -3815,7 +3815,7 @@
                         (let-values ([(d1 v1) (arm-operand a1)]
                                      [(d2 v2) (arm-operand a2)])
                           (and d1
-                               (eq? d1 d2)
+                               (if (pair? d1) (equal? d1 d2) (eq? d1 d2))
                                (build-select d1 sel t* v1 v2)))))]
                 [(seq ,e0 ,p1)
                  (let ([r (try p1 a1 a2)])
@@ -3837,18 +3837,69 @@
                 [else (build-if p a1 a2)]))
             (lambda (p a1 a2)
               (or (try p a1 a2) (build-if p a1 a2)))))
+        ; An mref arm is a pure read. Bind it to a scratch before the
+        ; select only when it is the destination's own cell or when the
+        ; predicate already reads the same cell.
+        (define triv-mref-key
+          (lambda (t)
+            (nanopass-case (L11 Triv) t
+              [(mref ,x1 ,x2 ,imm ,type) (list x1 x2 imm type)]
+              [else #f])))
+        (define mref-select-operand
+          (lambda (key t* t)
+            (nanopass-case (L11 Triv) t
+              [(mref ,x1 ,x2 ,imm ,type)
+               (let ([mkey (list x1 x2 imm type)])
+                 (if (and (not (eq? type 'fp))
+                          (if key
+                              (equal? key mkey)
+                              (ormap (lambda (p) (equal? mkey (triv-mref-key p))) t*)))
+                     (let ([s (make-tmp 's)])
+                       (values (with-output-language (L11 Effect) `(set! ,s ,t)) s))
+                     (values #f #f)))]
+              [else (values #f (select-operand t))])))
+        (define effect-select-operand
+          (lambda (t)
+            (nanopass-case (L11 Triv) t
+              [(mref ,x1 ,x2 ,imm ,type) (and (not (eq? type 'fp)) t)]
+              [else (select-operand t)])))
+        ; Builds a select into `dest`, which is either a uvar or an mref
+        ; key from `triv-mref-key`, preceded by any hoisted mref reads
+        (define build-effect-select
+          (lambda (dest sel t* v1 v2)
+            (let ([key (and (pair? dest) dest)])
+              (let-values ([(h1 o1) (mref-select-operand key t* v1)]
+                           [(h2 o2) (mref-select-operand key t* v2)])
+                (and o1
+                     o2
+                     (let ([lvalue (if key
+                                       (apply (lambda (x1 x2 imm type)
+                                                (with-output-language (L11 Lvalue)
+                                                  `(mref ,x1 ,x2 ,imm ,type)))
+                                              key)
+                                       dest)])
+                       (with-output-language (L11 Effect)
+                         (let* ([body `(set! ,lvalue (inline ,null-info ,sel ,t* ... ,o1 ,o2))]
+                                [body (if h2 `(seq ,h2 ,body) body)])
+                           (if h1 `(seq ,h1 ,body) body)))))))))
         (define convert-effect-if
           (make-select-converter
-            (lambda (e)
-              (nanopass-case (L11 Effect) e
-                [(set! ,x ,t)
-                 (let ([v (and (not (and (uvar? x) (eq? (uvar-type x) 'fp)))
-                               (select-operand t))])
-                   (if v (values x v) (values #f #f)))]
-                [else (values #f #f)]))
-            (lambda (x sel t* v1 v2)
-              (with-output-language (L11 Effect)
-                `(set! ,x (inline ,null-info ,sel ,t* ... ,v1 ,v2))))
+            (rec arm-operand
+              (lambda (e)
+                (nanopass-case (L11 Effect) e
+                  [(set! ,x ,t)
+                   (let ([v (and (not (and (uvar? x) (eq? (uvar-type x) 'fp)))
+                                 (effect-select-operand t))])
+                     (if v (values x v) (values #f #f)))]
+                  [(set! (mref ,x1 ,x2 ,imm ,type) ,t)
+                   (if (eq? type 'fp)
+                       (values #f #f)
+                       (values (list x1 x2 imm type) t))]
+                  ; a store in effect context ends with a `(nop)`, which
+                  ; the select replacing the arm can drop
+                  [(seq ,e0 (nop)) (arm-operand e0)]
+                  [else (values #f #f)])))
+            build-effect-select
             (lambda (p e1 e2) (with-output-language (L11 Effect) `(if ,p ,e1 ,e2)))
             (lambda (e0 e1) (with-output-language (L11 Effect) `(seq ,e0 ,e1)))))
         (define convert-tail-if
