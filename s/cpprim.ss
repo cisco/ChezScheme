@@ -114,12 +114,14 @@
           (map Expr1 e*)))
       (define unboxed-fp->boxed
         (lambda (e)
-          (let ([t (make-tmp 't)])
+          (let ([t (make-tmp 't)]
+                [v (make-tmp 'v 'fp)])
             (with-output-language (L9 Expr)
-              `(let ([,t ,(%constant-alloc type-flonum (constant size-flonum))])
-                 (seq
-                  (set! ,(%mref ,t ,%zero ,(constant flonum-data-disp) fp) ,e)
-                  ,t))))))
+              `(let ([,v ,e])
+                 (let ([,t ,(%constant-alloc type-flonum (constant size-flonum))])
+                   (seq
+                    (set! ,(%mref ,t ,%zero ,(constant flonum-data-disp) fp) ,v)
+                    ,t)))))))
       (define (fp-lvalue? lvalue)
         (nanopass-case (L9 Lvalue) lvalue
           [,x (and (uvar? x) (eq? (uvar-type x) 'fp))]

@@ -1766,6 +1766,15 @@
   (eqv? (let ([x 4.0]) (fl+ (fl- x 1.0))) 3.0)
   (eqv? (let ([x 5.0]) (fl* x)) 5.0)
 
+  (equal? (let* ([k #f]
+                 [first #f]
+                 [r (fl+ 1.0 (call/cc (lambda (c) (set! k c) 0.0)))])
+            (if first
+                (list first r)
+                (begin
+                  (set! first r)
+                  (k 5.0))))
+          (list 1.0 6.0))
   )
 
 (mat flfma

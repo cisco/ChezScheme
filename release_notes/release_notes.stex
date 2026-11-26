@@ -3275,6 +3275,13 @@ For consistency with \scheme{flmin}, \scheme{min}, and \scheme{max},
 ensure that \scheme{flmax} always returns the last of arguments that
 are all \scheme{0.0} and \scheme{-0.0}.
 
+\subsection{Repair multiple continuation invocation with flonum unboxing (10.5.0)}
+
+When the continuation of a potentially unboxed operation's argument is
+captured and invoked multiple times, it no longer captures a
+once-allocated flonum object to hold the result, which could
+incorrectly mutate that object on each invocation.
+
 \subsection{Repair allocation in \scheme{logtest} (10.4.1)}
 
 In Version 10.4.0, the \scheme{logtest} procedure could allocate incorrectly when given a
