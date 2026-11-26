@@ -455,6 +455,16 @@
                      [(fpsel=) '(ne p)])
                    z x y u v)])
 
+  (define-instruction value (fpselfp< fpselfp<= fpselfp=)
+    [(op (z fpur) (x fpur) (y fpur) (u fpur fpmem) (v fpur fpmem))
+     `(set! ,(make-live-info) ,z
+        (asm ,null-info
+             ,(asm-fpsel-fp (case op
+                              [(fpselfp<) 'lt]
+                              [(fpselfp<=) 'le]
+                              [(fpselfp=) 'eq]))
+             ,x ,y ,u ,v))])
+
   (define-instruction value (+/ovfl +/carry) ; must set condition codes, so can't use lea
     [(op (z mem) (x z) (y ur imm32))
      `(set! ,(make-live-info) ,z (asm ,info ,asm-add ,z ,y))]
@@ -1009,7 +1019,7 @@
                      asm-indirect-call asm-condition-code
                      asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount
                      asm-exchange asm-pause asm-debug asm-locked-incr asm-locked-decr asm-locked-cmpxchg
-                     asm-fpsqrt asm-fpround asm-fpfma asm-fpop-2 asm-fpminmax asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
+                     asm-fpsqrt asm-fpround asm-fpfma asm-fpop-2 asm-fpminmax asm-fpsel-fp asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
                      asm-c-simple-call
                      asm-save-flrv asm-restore-flrv asm-return asm-c-return asm-size
                      asm-enter asm-foreign-call asm-foreign-callable
@@ -1214,6 +1224,10 @@
   (define-op sse.orpd      sse-op1 #x66 #x56 0)
   (define-op sse.cmpunordpd sse-cmpunord-op #x66 #xC2 0)
   (define-op sse.cmpunordsd sse-cmpunord-op #xF2 #xC2 0)
+  (define-op sse.cmpesd      sse-cmpsd-op #xF2 #xC2 0 0)
+  (define-op sse.cmpltsd     sse-cmpsd-op #xF2 #xC2 0 1)
+  (define-op sse.cmplesd     sse-cmpsd-op #xF2 #xC2 0 2)
+  (define-op sse.andnpd      sse-op1 #x66 #x55 0)
 
   (define sse-cmpunord-op
     ; CMPPD/CMPSD with the UNORD predicate, emitted with a trailing
@@ -1228,6 +1242,19 @@
         (ax-ea-sib source)
         (ax-ea-addr-disp source)
         (build byte 3))))
+
+  (define sse-cmpsd-op
+    ; CMPSD with an ordered predicate: 0 = eq, 1 = lt, 2 = le
+    (lambda (op prefix-code op-code w pred source dest-reg code*)
+      (emit-code (op source dest-reg code*)
+        (build byte prefix-code)
+        (ax-ea-rex w source dest-reg #f)
+        (build byte #x0F)
+        (build byte op-code)
+        (ax-ea-modrm-reg source dest-reg)
+        (ax-ea-sib source)
+        (ax-ea-addr-disp source)
+        (build byte pred))))
 
   ; SSE4.1
   (define sse-roundsd-op
@@ -2135,6 +2162,28 @@
               (emit-fpmove src1 dest-reg
                 (emit-min/max dest-reg (cons 'reg %Cfparg2)
                   (emit sse.orpd (cons 'reg %Cfparg1) dest-reg code*)))))))))))
+
+  (define asm-fpsel-fp
+    ; mask = ordered-cmpsd(x, y), so a NaN selects v, including for equality.
+    ; The C fp-argument registers are scratch here as in asm-fpminmax.
+    ;   mask = x; mask = cmpsd(mask, y, pred)
+    ;   t = u & mask; mask = ~mask & v; dest = t | mask
+    ; The comparison and both arm reads happen before dest is written.
+    ; Move t into dest before the final or; dest's old value is not a result.
+    (lambda (pred)
+      (lambda (code* dest x y u v)
+        (Trivit (dest x y u v)
+          (let ([mask (cons 'reg %Cfparg1)] [t (cons 'reg %Cfparg2)])
+            (emit-fpmove x mask
+              ((case pred
+                 [(lt) (lambda (code*) (emit sse.cmpltsd y mask code*))]
+                 [(le) (lambda (code*) (emit sse.cmplesd y mask code*))]
+                 [(eq) (lambda (code*) (emit sse.cmpesd y mask code*))])
+               (emit-fpmove u t
+                 (emit sse.andpd mask t
+                   (emit sse.andnpd v mask
+                     (emit-fpmove t dest
+                       (emit sse.orpd mask dest code*))))))))))))
 
   (define asm-fpfma
     (lambda (code* dest a b c)

@@ -770,6 +770,9 @@
   (declare-primitive fpsel< value #t)
   (declare-primitive fpsel<= value #t)
   (declare-primitive fpsel= value #t)
+  (declare-primitive fpselfp< value #t) ; only when unboxed-fp-select-instruction
+  (declare-primitive fpselfp<= value #t)
+  (declare-primitive fpselfp= value #t)
   (declare-primitive fpround value #t) ; x86_64 and arm64 only (so we don't use it elsewhere)
   (declare-primitive fpfloor value #t) ; x86_64 and arm64 only (so we don't use it elsewhere)
   (declare-primitive fpceiling value #t) ; x86_64 and arm64 only (so we don't use it elsewhere)
