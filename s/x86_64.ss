@@ -456,7 +456,9 @@
                    z x y u v)])
 
   (define-instruction value (fpselfp< fpselfp<= fpselfp=)
-    [(op (z fpur) (x fpur) (y fpur) (u fpur fpmem) (v fpur fpmem))
+    ; Packed bitwise operations need aligned 128-bit memory operands, so
+    ; unboxed spill slots are not suitable for the selected arms.
+    [(op (z fpur) (x fpur) (y fpur) (u fpur) (v fpur))
      `(set! ,(make-live-info) ,z
         (asm ,null-info
              ,(asm-fpsel-fp (case op
@@ -1227,6 +1229,9 @@
   (define-op sse.cmpesd      sse-cmpsd-op #xF2 #xC2 0 0)
   (define-op sse.cmpltsd     sse-cmpsd-op #xF2 #xC2 0 1)
   (define-op sse.cmplesd     sse-cmpsd-op #xF2 #xC2 0 2)
+  (define-op sse.cmpnesd     sse-cmpsd-op #xF2 #xC2 0 4)
+  (define-op sse.cmpnltsd    sse-cmpsd-op #xF2 #xC2 0 5)
+  (define-op sse.cmpnlesd    sse-cmpsd-op #xF2 #xC2 0 6)
   (define-op sse.andnpd      sse-op1 #x66 #x55 0)
 
   (define sse-cmpunord-op
@@ -1244,7 +1249,8 @@
         (build byte 3))))
 
   (define sse-cmpsd-op
-    ; CMPSD with an ordered predicate: 0 = eq, 1 = lt, 2 = le
+    ; CMPSD predicates: 0 = eq, 1 = lt, 2 = le, 4 = neq, 5 = nlt, 6 = nle;
+    ; the negated forms also succeed on unordered inputs
     (lambda (op prefix-code op-code w pred source dest-reg code*)
       (emit-code (op source dest-reg code*)
         (build byte prefix-code)
@@ -2164,26 +2170,71 @@
                   (emit sse.orpd (cons 'reg %Cfparg1) dest-reg code*)))))))))))
 
   (define asm-fpsel-fp
-    ; mask = ordered-cmpsd(x, y), so a NaN selects v, including for equality.
-    ; The C fp-argument registers are scratch here as in asm-fpminmax.
-    ;   mask = x; mask = cmpsd(mask, y, pred)
-    ;   t = u & mask; mask = ~mask & v; dest = t | mask
-    ; The comparison and both arm reads happen before dest is written.
-    ; Move t into dest before the final or; dest's old value is not a result.
+    ; Strict min/max patterns map directly to MINSD/MAXSD: ties and NaNs
+    ; select the second arm, matching the source conditional. Other forms
+    ; use a true or inverted mask, depending on which arm aliases the result.
     (lambda (pred)
       (lambda (code* dest x y u v)
         (Trivit (dest x y u v)
-          (let ([mask (cons 'reg %Cfparg1)] [t (cons 'reg %Cfparg2)])
-            (emit-fpmove x mask
-              ((case pred
-                 [(lt) (lambda (code*) (emit sse.cmpltsd y mask code*))]
-                 [(le) (lambda (code*) (emit sse.cmplesd y mask code*))]
-                 [(eq) (lambda (code*) (emit sse.cmpesd y mask code*))])
-               (emit-fpmove u t
-                 (emit sse.andpd mask t
-                   (emit sse.andnpd v mask
-                     (emit-fpmove t dest
-                       (emit sse.orpd mask dest code*))))))))))))
+          (let ([mask (cons 'reg %Cfparg1)])
+            (define (emit-comparison inverted? dest-reg code*)
+              (case pred
+                [(lt) (if inverted?
+                          (emit sse.cmpnltsd y dest-reg code*)
+                          (emit sse.cmpltsd y dest-reg code*))]
+                [(le) (if inverted?
+                          (emit sse.cmpnlesd y dest-reg code*)
+                          (emit sse.cmplesd y dest-reg code*))]
+                [(eq) (if inverted?
+                          (emit sse.cmpnesd y dest-reg code*)
+                          (emit sse.cmpesd y dest-reg code*))]))
+            (define (emit-compare inverted? code*)
+              (emit-fpmove x mask
+                (emit-comparison inverted? mask code*)))
+            (define (emit-min/max dest-reg src2 code*)
+              (if (equal? u x)
+                  (emit sse.minsd src2 dest-reg code*)
+                  (emit sse.maxsd src2 dest-reg code*)))
+            (cond
+             [(and (eq? pred 'lt)
+                   (or (and (equal? u x) (equal? v y))
+                       (and (equal? u y) (equal? v x))))
+              (cond
+               [(equal? dest u) (emit-min/max dest v code*)]
+               [(equal? dest v)
+                (emit-fpmove v mask
+                  (emit-fpmove u dest
+                    (emit-min/max dest mask code*)))]
+               [else
+                (emit-fpmove u dest
+                  (emit-min/max dest v code*))])]
+             [(equal? u v)
+              (emit-compare #f
+                (if (equal? dest u)
+                    code*
+                    (emit-fpmove u dest code*)))]
+             [(equal? dest u)
+              (emit-compare #f
+                (emit sse.andpd mask dest
+                  (emit sse.andnpd v mask
+                    (emit sse.orpd mask dest code*))))]
+             [(equal? dest v)
+              (emit-compare #t
+                (emit sse.andpd mask dest
+                  (emit sse.andnpd u mask
+                    (emit sse.orpd mask dest code*))))]
+             [(equal? dest x)
+              (emit-comparison #f dest
+                (emit-fpmove u mask
+                  (emit sse.andpd dest mask
+                    (emit sse.andnpd v dest
+                      (emit sse.orpd mask dest code*)))))]
+             [else
+              (emit-compare #f
+                (emit-fpmove u dest
+                  (emit sse.andpd mask dest
+                    (emit sse.andnpd v mask
+                      (emit sse.orpd mask dest code*)))))]))))))
 
   (define asm-fpfma
     (lambda (code* dest a b c)

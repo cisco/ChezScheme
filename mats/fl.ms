@@ -1892,6 +1892,53 @@
                          (fl+ m (let ([t (if (fl< (fl* (fixnum->flonum i) 0.5) 1.0) 0.25 0.75)])
                                   t))))))])
     (eqv? (f 100) 75.5))
+  ; Exercise independent arms, including inverted masks and signed zeros.
+  (let ([lt (lambda (x y a b)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)]
+                    [a (fl- a 0.0)] [b (fl- b 0.0)])
+                (fl- (if (fl< x y) a b) 0.0)))]
+        [le (lambda (x y a b)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)]
+                    [a (fl- a 0.0)] [b (fl- b 0.0)])
+                (fl- (if (fl<= x y) a b) 0.0)))]
+        [eq (lambda (x y a b)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)]
+                    [a (fl- a 0.0)] [b (fl- b 0.0)])
+                (fl- (if (fl= x y) a b) 0.0)))]
+        [rev (lambda (x y a b)
+               (let ([x (fl- x 0.0)] [y (fl- y 0.0)]
+                     [a (fl- a 0.0)] [b (fl- b 0.0)])
+                 (fl- (if (fl< x y) b a) 0.0)))])
+    (and (eqv? (lt 1.5 2.5 -0.0 4.5) -0.0)
+         (eqv? (lt 2.5 1.5 1.5 -0.0) -0.0)
+         (eqv? (lt +nan.0 1.0 1.5 4.5) 4.5)
+         (eqv? (lt 1.0 +nan.0 1.5 4.5) 4.5)
+         (eqv? (le 2.0 2.0 -0.0 4.5) -0.0)
+         (eqv? (le 2.5 1.5 1.5 -0.0) -0.0)
+         (eqv? (le +nan.0 1.0 1.5 4.5) 4.5)
+         (eqv? (eq -0.0 0.0 -0.0 4.5) -0.0)
+         (eqv? (eq 0.0 1.0 1.5 -0.0) -0.0)
+         (eqv? (eq +nan.0 1.0 1.5 4.5) 4.5)
+         (eqv? (rev 1.5 2.5 -0.0 4.5) 4.5)
+         (eqv? (rev 2.5 1.5 1.5 -0.0) 1.5)
+         (eqv? (rev +nan.0 1.0 1.5 4.5) 1.5)
+         (eqv? (rev 1.0 +nan.0 1.5 4.5) 1.5)))
+  ; Keep many independent selections live together to exercise spilled arms.
+  (let ([f (lambda (x y a b)
+             (let ([x (fl- x 0.0)] [y (fl- y 0.0)]
+                   [a (fl- a 0.0)] [b (fl- b 0.0)])
+               (list (fl- (if (fl< x y) a b) 0.0)
+                     (fl- (if (fl< x y) b a) 0.0)
+                     (fl- (if (fl<= x y) a b) 0.0)
+                     (fl- (if (fl<= x y) b a) 0.0)
+                     (fl- (if (fl> x y) a b) 0.0)
+                     (fl- (if (fl> x y) b a) 0.0)
+                     (fl- (if (fl>= x y) a b) 0.0)
+                     (fl- (if (fl>= x y) b a) 0.0)
+                     (fl- (if (fl= x y) a b) 0.0)
+                     (fl- (if (fl= x y) b a) 0.0))))])
+    (equal? (apply f (list 1.5 2.5 -0.0 4.5))
+            (list -0.0 4.5 -0.0 4.5 4.5 -0.0 4.5 -0.0 4.5 -0.0)))
   ; An integer predicate with fp arms must retain the branch form.
   (let ([f (lambda (i j x y)
              (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
