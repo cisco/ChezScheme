@@ -3669,6 +3669,48 @@
                    (k (lambda () #t)))))])
     (proc))
 
+  ;; escape through a one-shot continuation restores its attachments
+  (equal? '(1 (a))
+          (#%$call-setting-continuation-attachment
+           'a
+           (lambda ()
+             (let ([v (call/1cc
+                       (lambda (k)
+                         (#%$call-setting-continuation-attachment
+                          'b
+                          (lambda ()
+                            (list (k 1))))))])
+               (list v (#%$current-attachments))))))
+  (equal? '(1 (a))
+          (#%$call-setting-continuation-attachment
+           'a
+           (lambda ()
+             (let ([v (call/1cc
+                       (lambda (k)
+                         (list
+                          (#%$call-setting-continuation-attachment
+                           'b
+                           (lambda ()
+                             (list
+                              (let loop ([n 100])
+                                (if (zero? n)
+                                    (k 1)
+                                    (add1 (loop (sub1 n)))))))))))])
+               (list v (#%$current-attachments))))))
+  ;; as does a return to one; `k` is referenced so that the `call/1cc`
+  ;; is not optimized away
+  (equal? '((b a) (a))
+          (#%$call-setting-continuation-attachment
+           'a
+           (lambda ()
+             (let ([v (call/1cc
+                       (lambda (k)
+                         (#%$call-setting-continuation-attachment
+                          'b
+                          (lambda ()
+                            (cons k (#%$current-attachments))))))])
+               (list (cdr v) (#%$current-attachments))))))
+
   (equal?
    '(2 2)
    (let ([f (parameterize ([run-cp0
@@ -3880,6 +3922,67 @@
               (guard (c [#f #f])
                 (with-continuation-mark 'key 'inner
                   (raise #f)))))))))
+
+  ;; marks after an escape through a one-shot continuation
+  (equal? '(1 (outer))
+    (with-continuation-mark 'key 'outer
+      (let ([v (call/1cc
+                 (lambda (k)
+                   (with-continuation-mark 'key 'inner
+                     (list (k 1)))))])
+        (list v (continuation-marks->list (current-continuation-marks) 'key)))))
+  (equal? '(1 ((next outer)))
+    (with-continuation-mark 'key 'outer
+      (let ([v (call/1cc
+                 (lambda (k)
+                   (list
+                     (with-continuation-mark 'key 'inner
+                       (list (k 1))))))])
+        (list v
+              (with-continuation-mark 'key 'next
+                (list (continuation-marks->list
+                        (current-continuation-marks)
+                        'key)))))))
+  ;; marks after a return to a one-shot continuation; `k` is referenced
+  ;; so that the `call/1cc` is not optimized away
+  (equal? '((inner outer) (outer))
+    (with-continuation-mark 'key 'outer
+      (let ([v (call/1cc
+                 (lambda (k)
+                   (with-continuation-mark 'key 'inner
+                     (cons k (continuation-marks->list
+                               (current-continuation-marks)
+                               'key)))))])
+        (list (cdr v)
+              (continuation-marks->list (current-continuation-marks) 'key)))))
+  ;; and no mark is left behind once a marking form that is not in tail
+  ;; position has returned
+  (equal? '((outer) ())
+    (let ([marks (lambda ()
+                   (continuation-marks->list
+                     (current-continuation-marks)
+                     'key))])
+      (let ([inside (with-continuation-mark 'key 'outer
+                      (begin
+                        (call/1cc
+                          (lambda (k)
+                            (with-continuation-mark 'key 'inner
+                              (list (k 1)))))
+                        (marks)))])
+        (list inside (marks)))))
+  (equal? '((outer) ())
+    (let ([marks (lambda ()
+                   (continuation-marks->list
+                     (current-continuation-marks)
+                     'key))])
+      (let ([inside (with-continuation-mark 'key 'outer
+                      (begin
+                        (call/1cc
+                          (lambda (k)
+                            (with-continuation-mark 'key 'inner
+                              (cons k (marks)))))
+                        (marks)))])
+        (list inside (marks)))))
 
   )
 

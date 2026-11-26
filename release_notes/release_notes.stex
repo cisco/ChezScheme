@@ -3097,6 +3097,25 @@ in fasl files does not generally make sense.
 
 Compiling a call to \scheme{list-ref} or \scheme{list-tail} with a
 negative constant index at optimize level 3 no longer loops forever.
+\subsection{Repair compilation of file timestamp calls on ports (10.5.0)}
+
+The compiler now recognizes that \scheme{file-access-time},
+\scheme{file-change-time}, and \scheme{file-modification-time} can return
+normally when called with a file port. Previously, when the compiler knew
+the argument was a port, it could incorrectly discard code that should run
+after the call.
+\subsection{Repair continuation marks on entry to a one-shot continuation (10.5.0)}
+
+A continuation mark set in the receiver of \scheme{call/1cc} stayed
+in place after the receiver had been left in either of two ways: by
+returning, when the \scheme{with-continuation-mark} form was in tail
+position of the receiver, or by invoking the continuation from the
+body of the form. The mark was reported by
+\scheme{current-continuation-marks} afterwards, and a mark could
+remain for the rest of the thread's execution. Returning to a
+continuation created by \scheme{call/1cc}, or invoking it, now
+restores the marks of the continuation, as it does for a continuation
+created by \scheme{call/cc}.
 
 \subsection{Repair collection after \scheme{load-shared-object} on macOS (10.5.0)}
 
@@ -3279,6 +3298,13 @@ small and with only \scheme{double} or \scheme{float} members.
 For consistency with \scheme{flmin}, \scheme{min}, and \scheme{max},
 ensure that \scheme{flmax} always returns the last of arguments that
 are all \scheme{0.0} and \scheme{-0.0}.
+
+\subsection{Repair multiple continuation invocation with flonum unboxing (10.5.0)}
+
+When the continuation of a potentially unboxed operation's argument is
+captured and invoked multiple times, it no longer captures a
+once-allocated flonum object to hold the result, which could
+incorrectly mutate that object on each invocation.
 
 \subsection{Repair allocation in \scheme{logtest} (10.4.1)}
 
