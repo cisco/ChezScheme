@@ -3779,6 +3779,12 @@
               [(immediate ,imm) t]
               [(literal ,info) (and (not (info-literal-indirect? info)) t)]
               [else (and (uvar? t) (not (eq? (uvar-type t) 'fp)) t)])))
+        (define fp-select-operand
+          (constant-case unboxed-fp-select-instruction
+            [(#t)
+             (lambda (t)
+               (and (uvar? t) (eq? (uvar-type t) 'fp) t))]
+            [else (lambda (t) #f)]))
         ; Creates a converter for `(if p a1 a2)`, where `p` is an L11
         ; Pred and `a1` and `a2` are L11 arms (Effects or Tails), that
         ; uses a select when `p` is a comparison with a select
@@ -3842,13 +3848,22 @@
             (lambda (e)
               (nanopass-case (L11 Effect) e
                 [(set! ,x ,t)
-                 (let ([v (and (not (and (uvar? x) (eq? (uvar-type x) 'fp)))
-                               (select-operand t))])
+                 (let ([v (if (and (uvar? x) (eq? (uvar-type x) 'fp))
+                              (fp-select-operand t)
+                              (select-operand t))])
                    (if v (values x v) (values #f #f)))]
                 [else (values #f #f)]))
             (lambda (x sel t* v1 v2)
-              (with-output-language (L11 Effect)
-                `(set! ,x (inline ,null-info ,sel ,t* ... ,v1 ,v2))))
+              (let ([sel (if (and (uvar? x) (eq? (uvar-type x) 'fp))
+                             (cond
+                               [(eq? sel %fpsel<) %fpselfp<]
+                               [(eq? sel %fpsel<=) %fpselfp<=]
+                               [(eq? sel %fpsel=) %fpselfp=]
+                               [else #f])
+                             sel)])
+                (and sel
+                     (with-output-language (L11 Effect)
+                       `(set! ,x (inline ,null-info ,sel ,t* ... ,v1 ,v2))))))
             (lambda (p e1 e2) (with-output-language (L11 Effect) `(if ,p ,e1 ,e2)))
             (lambda (e0 e1) (with-output-language (L11 Effect) `(seq ,e0 ,e1)))))
         (define convert-tail-if

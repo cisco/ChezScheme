@@ -1815,3 +1815,133 @@
         (eqv? x 1000.0)
         (loop (fx- n 1) (flfma x 1.0 1.0))))
 )
+
+(mat fl-compare-unboxed-select
+  ; The fl- operations keep values unboxed and preserve signed zero.
+  ; Ordered comparisons produce a mask that selects the else arm on NaN.
+  (let ([lt (lambda (x y)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+                (fl- (if (fl< x y) x y) 0.0)))]
+        [le (lambda (x y)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+                (fl- (if (fl<= x y) x y) 0.0)))]
+        [gt (lambda (x y)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+                (fl- (if (fl> x y) x y) 0.0)))]
+        [ge (lambda (x y)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+                (fl- (if (fl>= x y) x y) 0.0)))]
+        [eq (lambda (x y)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+                (fl- (if (fl= x y) x y) 0.0)))])
+    (and (eqv? (lt 1.5 2.5) 1.5) (eqv? (lt 2.5 1.5) 1.5) (eqv? (lt 2.0 2.0) 2.0)
+         (eqv? (lt +nan.0 1.0) 1.0) (flnan? (lt 1.0 +nan.0))
+         (flnan? (lt +nan.0 +nan.0))
+         (eqv? (lt -0.0 0.0) 0.0) (eqv? (lt 0.0 -0.0) -0.0)
+         (eqv? (le 1.5 2.5) 1.5) (eqv? (le 2.5 1.5) 1.5) (eqv? (le 2.0 2.0) 2.0)
+         (eqv? (le +nan.0 1.0) 1.0) (flnan? (le 1.0 +nan.0))
+         (eqv? (gt 1.5 2.5) 2.5) (eqv? (gt 2.5 1.5) 2.5) (eqv? (gt 2.0 2.0) 2.0)
+         (eqv? (gt +nan.0 1.0) 1.0) (flnan? (gt 1.0 +nan.0))
+         (eqv? (ge 1.5 2.5) 2.5) (eqv? (ge 2.5 1.5) 2.5) (eqv? (ge 2.0 2.0) 2.0)
+         (eqv? (ge +nan.0 1.0) 1.0) (flnan? (ge 1.0 +nan.0))
+         (eqv? (eq 2.0 2.0) 2.0) (eqv? (eq 1.5 2.5) 2.5)
+         (eqv? (eq +nan.0 1.0) 1.0) (flnan? (eq 1.0 +nan.0))
+         (flnan? (eq +nan.0 +nan.0))
+         (eqv? (eq -0.0 0.0) -0.0) (eqv? (eq 0.0 -0.0) 0.0)
+         (eqv? (lt +inf.0 1.0) 1.0) (eqv? (lt -inf.0 1.0) -inf.0)
+         (eqv? (gt +inf.0 +inf.0) +inf.0)))
+  ; Exercise the opposite arm order as well as reversed comparisons.
+  (let ([lt (lambda (x y)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+                (fl- (if (fl< x y) y x) 0.0)))]
+        [le (lambda (x y)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+                (fl- (if (fl<= x y) y x) 0.0)))]
+        [eq (lambda (x y)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+                (fl- (if (fl= x y) y x) 0.0)))])
+    (and (eqv? (lt 1.5 2.5) 2.5) (eqv? (lt 2.5 1.5) 2.5)
+         (flnan? (lt +nan.0 1.0)) (eqv? (lt 1.0 +nan.0) 1.0)
+         (eqv? (le 1.5 2.5) 2.5) (eqv? (le 2.5 1.5) 2.5)
+         (flnan? (le +nan.0 1.0)) (eqv? (le 1.0 +nan.0) 1.0)
+         (eqv? (eq 2.0 2.0) 2.0) (eqv? (eq 1.5 2.5) 1.5)
+         (flnan? (eq +nan.0 1.0)) (eqv? (eq 1.0 +nan.0) 1.0)
+         (eqv? (eq -0.0 0.0) 0.0) (eqv? (eq 0.0 -0.0) -0.0)))
+  (let ([f (lambda (x y)
+             (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+               (fl+ (if (fl< x y) x y) 1.0)))])
+    (and (eqv? (f 1.5 2.5) 2.5) (eqv? (f 2.5 1.5) 2.5)
+         (eqv? (f +nan.0 1.0) 2.0)))
+  (let ([v (make-flvector 3 0.0)]
+        [store (lambda (v i x y)
+                 (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+                   (flvector-set! v i (if (fl< x y) x y))))]
+        [store-eq (lambda (v i x y)
+                    (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+                      (flvector-set! v i (if (fl= x y) x y))))])
+    (store v 0 1.5 2.5)
+    (store v 1 +nan.0 1.0)
+    (store-eq v 2 -0.0 0.0)
+    (and (= (flvector-ref v 0) 1.5) (= (flvector-ref v 1) 1.0)
+         (eqv? (flvector-ref v 2) -0.0)))
+  (let ([f (lambda (n)
+             (let loop ([i n] [m 1.0])
+               (if (fx= i 0)
+                   m
+                   (loop (fx- i 1)
+                         (fl+ m (let ([t (if (fl< (fl* (fixnum->flonum i) 0.5) 1.0) 0.25 0.75)])
+                                  t))))))])
+    (eqv? (f 100) 75.5))
+  ; Exercise independent arms, including inverted masks and signed zeros.
+  (let ([lt (lambda (x y a b)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)]
+                    [a (fl- a 0.0)] [b (fl- b 0.0)])
+                (fl- (if (fl< x y) a b) 0.0)))]
+        [le (lambda (x y a b)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)]
+                    [a (fl- a 0.0)] [b (fl- b 0.0)])
+                (fl- (if (fl<= x y) a b) 0.0)))]
+        [eq (lambda (x y a b)
+              (let ([x (fl- x 0.0)] [y (fl- y 0.0)]
+                    [a (fl- a 0.0)] [b (fl- b 0.0)])
+                (fl- (if (fl= x y) a b) 0.0)))]
+        [rev (lambda (x y a b)
+               (let ([x (fl- x 0.0)] [y (fl- y 0.0)]
+                     [a (fl- a 0.0)] [b (fl- b 0.0)])
+                 (fl- (if (fl< x y) b a) 0.0)))])
+    (and (eqv? (lt 1.5 2.5 -0.0 4.5) -0.0)
+         (eqv? (lt 2.5 1.5 1.5 -0.0) -0.0)
+         (eqv? (lt +nan.0 1.0 1.5 4.5) 4.5)
+         (eqv? (lt 1.0 +nan.0 1.5 4.5) 4.5)
+         (eqv? (le 2.0 2.0 -0.0 4.5) -0.0)
+         (eqv? (le 2.5 1.5 1.5 -0.0) -0.0)
+         (eqv? (le +nan.0 1.0 1.5 4.5) 4.5)
+         (eqv? (eq -0.0 0.0 -0.0 4.5) -0.0)
+         (eqv? (eq 0.0 1.0 1.5 -0.0) -0.0)
+         (eqv? (eq +nan.0 1.0 1.5 4.5) 4.5)
+         (eqv? (rev 1.5 2.5 -0.0 4.5) 4.5)
+         (eqv? (rev 2.5 1.5 1.5 -0.0) 1.5)
+         (eqv? (rev +nan.0 1.0 1.5 4.5) 1.5)
+         (eqv? (rev 1.0 +nan.0 1.5 4.5) 1.5)))
+  ; Keep many independent selections live together to exercise spilled arms.
+  (let ([f (lambda (x y a b)
+             (let ([x (fl- x 0.0)] [y (fl- y 0.0)]
+                   [a (fl- a 0.0)] [b (fl- b 0.0)])
+               (list (fl- (if (fl< x y) a b) 0.0)
+                     (fl- (if (fl< x y) b a) 0.0)
+                     (fl- (if (fl<= x y) a b) 0.0)
+                     (fl- (if (fl<= x y) b a) 0.0)
+                     (fl- (if (fl> x y) a b) 0.0)
+                     (fl- (if (fl> x y) b a) 0.0)
+                     (fl- (if (fl>= x y) a b) 0.0)
+                     (fl- (if (fl>= x y) b a) 0.0)
+                     (fl- (if (fl= x y) a b) 0.0)
+                     (fl- (if (fl= x y) b a) 0.0))))])
+    (equal? (apply f (list 1.5 2.5 -0.0 4.5))
+            (list -0.0 4.5 -0.0 4.5 4.5 -0.0 4.5 -0.0 4.5 -0.0)))
+  ; An integer predicate with fp arms must retain the branch form.
+  (let ([f (lambda (i j x y)
+             (let ([x (fl- x 0.0)] [y (fl- y 0.0)])
+               (fl+ (if (fx< i j) x y) 0.0)))])
+    (and (eqv? (f 1 2 1.5 2.5) 1.5) (eqv? (f 2 1 1.5 2.5) 2.5)
+         (flnan? (f 1 2 +nan.0 2.5)) (eqv? (f 2 1 +nan.0 2.5) 2.5))))
