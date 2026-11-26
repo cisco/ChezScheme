@@ -667,6 +667,8 @@
   (declare-primitive keep-live effect #f)
   (declare-primitive locked-decr! effect #f)
   (declare-primitive locked-incr! effect #f)
+  (declare-primitive memfill8 effect #f) ; x86_64 only (so we don't use it elsewhere)
+  (declare-primitive memfill64 effect #f) ; x86_64 only (so we don't use it elsewhere)
   (declare-primitive pause effect #f)
   (declare-primitive push effect #f)
   (declare-primitive pop-multiple effect #f) ; arm

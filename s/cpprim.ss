@@ -866,6 +866,40 @@
                      [else (super-size-expr e-fill)])]
                   [(immediate ,imm) (super-size-imm imm)]
                   [else (super-size-expr e-fill)]))))
+        (define build-fill-loop
+          (lambda (e-vec e-bytes e-fill interrupt-trap?)
+            (let ([Ltop (make-local-label 'Ltop)]
+                  [t (make-assigned-tmp 't 'uptr)]
+                  [orig-t (make-tmp 'orig-t 'uptr)]
+                  [len (if (fx>= elt-bytes ptr-bytes)
+                           e-bytes
+                           (nanopass-case (L7 Expr) e-bytes
+                             [(immediate ,imm)
+                              `(immediate ,(logand (+ imm (fx- ptr-bytes 1)) (fx- ptr-bytes)))]
+                             [else
+                              (%inline logand
+                               ,(%inline +
+                                   ,e-bytes
+                                   (immediate ,(fx- ptr-bytes 1)))
+                                (immediate ,(fx- ptr-bytes)))]))])
+              (bind #t ([e-fill (super-size e-fill)])
+                `(let ([,t ,len])
+                   (let ([,orig-t ,t]) ; will be unused if `t` is immediate
+                     (label ,Ltop
+                       (if ,(%inline eq? ,t (immediate 0))
+                           ,(if interrupt-trap?
+                                `(seq
+                                  ,(nanopass-case (L7 Expr) len
+                                     [(immediate ,imm)
+                                      (build-use-trap-fuel len)]
+                                     [else
+                                      (build-use-trap-fuel orig-t)])
+                                  ,e-vec)
+                                e-vec)
+                           ,(%seq
+                             (set! ,t ,(%inline - ,t (immediate ,ptr-bytes)))
+                             (set! ,(%mref ,e-vec ,t ,data-disp) ,e-fill)
+                             (goto ,Ltop))))))))))
         (define build-fill
          (lambda (e-vec e-bytes e-fill interrupt-trap?)
           ; NB: caller must bind e-vec and e-fill
@@ -885,38 +919,41 @@
                           (set! ,(%mref ,e-vec ,(fx+ data-disp n)) ,e-fill)
                           ,(if (fx= n 0) e-vec (f n)))))))]
             [else
-             (let ([Ltop (make-local-label 'Ltop)]
-                   [t (make-assigned-tmp 't 'uptr)]
-                   [orig-t (make-tmp 'orig-t 'uptr)]
-                   [len (if (fx>= elt-bytes ptr-bytes)
-                            e-bytes
-                            (nanopass-case (L7 Expr) e-bytes
-                              [(immediate ,imm)
-                               `(immediate ,(logand (+ imm (fx- ptr-bytes 1)) (fx- ptr-bytes)))]
-                              [else
-                               (%inline logand
-                                ,(%inline +
-                                    ,e-bytes
-                                    (immediate ,(fx- ptr-bytes 1)))
-                                 (immediate ,(fx- ptr-bytes)))]))])
-               (bind #t ([e-fill (super-size e-fill)])
-                 `(let ([,t ,len])
-                    (let ([,orig-t ,t]) ; will be unused if `t` is immediate
-                      (label ,Ltop
-                        (if ,(%inline eq? ,t (immediate 0))
-                            ,(if interrupt-trap?
-                                 `(seq
-                                   ,(nanopass-case (L7 Expr) len
-                                      [(immediate ,imm)
-                                       (build-use-trap-fuel len)]
-                                      [else
-                                       (build-use-trap-fuel orig-t)])
-                                   ,e-vec)
-                                 e-vec)
-                            ,(%seq
-                              (set! ,t ,(%inline - ,t (immediate ,ptr-bytes)))
-                              (set! ,(%mref ,e-vec ,t ,data-disp) ,e-fill)
-                              (goto ,Ltop))))))))])))
+             (constant-case architecture
+               [(x86_64)
+                (if-feature windows
+                  ; REP STOS requires %rdi, which is reserved as %ap
+                  ; on Windows.
+                  (build-fill-loop e-vec e-bytes e-fill interrupt-trap?)
+                  (let ([memfill64? (fx= elt-bytes ptr-bytes)])
+                    (if (or (fx= elt-bytes 1) memfill64?)
+                        ; REP STOSB/STOSQ fills exactly the requested extent,
+                        ; and a zero count is a no-op, so no length guard is needed.
+                        ; Compute the fuel amount before REP STOS clobbers %rcx.
+                        (bind #t uptr ([t-bytes e-bytes])
+                          (bind #t uptr ([t-fuel
+                                          (%inline sra ,t-bytes
+                                             (immediate ,(+ (constant fuel-word-count-shift)
+                                                            (constant log2-ptr-bytes))))])
+                            (bind #t uptr ([t-fill (if memfill64?
+                                                       (%inline srl ,t-bytes (immediate ,(constant log2-ptr-bytes)))
+                                                       t-bytes)])
+                              `(seq
+                                 ,(if memfill64?
+                                      (%inline memfill64
+                                         ,(%inline + ,e-vec (immediate ,data-disp))
+                                         ,t-fill
+                                         ,e-fill)
+                                      (%inline memfill8
+                                         ,(%inline + ,e-vec (immediate ,data-disp))
+                                         ,t-fill
+                                         ,e-fill))
+                                 ,(if interrupt-trap?
+                                      `(seq ,(build-use-trap-fuel t-fuel `(immediate ,(- (constant log2-ptr-bytes)))) ,e-vec)
+                                      e-vec)))))
+                        (build-fill-loop e-vec e-bytes e-fill interrupt-trap?))))]
+               [else
+                (build-fill-loop e-vec e-bytes e-fill interrupt-trap?)])])))
         (case-lambda
          [(e-vec e-bytes e-fill) (build-fill e-vec e-bytes e-fill #t)]
          [(e-vec e-bytes e-fill interrupt-trap?) (build-fill e-vec e-bytes e-fill interrupt-trap?)])))

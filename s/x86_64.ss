@@ -514,6 +514,30 @@
     [(op (z mem) (x ur mem imm) (y ur mem)) (go z x y)]
     [(op (z ur) (x ur mem imm) (y ur mem)) (go z x y)])
 
+  (define-instruction effect (memfill8 memfill64)
+    ; REP STOSB (memfill8): fill rcx bytes at [rdi] with the low byte
+    ; of rax.  REP STOSQ (memfill64): fill rcx pointer-sized words at
+    ; [rdi] with rax.  Used by cpprim's build-fill fast paths for
+    ; 1-byte-element fills (bytevector-fill! and utf-8 string-fill!)
+    ; and pointer-sized-element fills (vector, fxvector, flvector).
+    ; Chez never sets DF, and the ABI keeps DF clear at call
+    ; boundaries, so the forward copy is safe.  Kill info on the asm
+    ; node keeps other live values out of %rdi and %rcx across the
+    ; instruction.
+    (definitions
+      (define go
+        (lambda (op dest count fill)
+          (let ([urdi (make-precolored-unspillable 'urdi %rdi)]
+                [urax (make-precolored-unspillable 'urax %rax)]
+                [urcx (make-precolored-unspillable 'urcx %rcx)])
+            (with-output-language (L15d Effect)
+              (seq
+                `(set! ,(make-live-info) ,urdi ,dest)
+                `(set! ,(make-live-info) ,urax ,fill)
+                `(set! ,(make-live-info) ,urcx ,count)
+                `(asm ,(make-info-kill* (reg-list %rdi %rcx)) ,(if (eq? op 'memfill64) (asm-memfill64) (asm-memfill8)) ,urdi ,urax ,urcx)))))))
+    [(op (dest ur) (count ur) (fill ur)) (go op dest count fill)])
+
   (define-instruction value (logand logor logxor)
     [(op (z mem) (x z) (y ur imm32))
      `(set! ,(make-live-info) ,z (asm ,info ,(asm-addop op) ,z ,y))]
@@ -1007,7 +1031,7 @@
                      asm-direct-jump asm-return-address asm-jump asm-conditional-jump
                      asm-lea1 asm-lea2 asm-select asm-select-bit
                      asm-indirect-call asm-condition-code
-                     asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount
+                     asm-fl-cvt asm-store-single asm-load-single asm-fpt asm-fptrunc asm-div asm-popcount asm-memfill8 asm-memfill64
                      asm-exchange asm-pause asm-debug asm-locked-incr asm-locked-decr asm-locked-cmpxchg
                      asm-fpsqrt asm-fpround asm-fpfma asm-fpop-2 asm-fpminmax asm-fpmove asm-fpmove128 asm-fpcast asm-fpsingle
                      asm-c-simple-call
@@ -2317,6 +2341,30 @@
                                   code*
                                   (emit asli `(imm ,shift) dest code*))])
                   code*))))))))
+
+  (define asm-memfill8
+    ; REP STOSB: F3 AA.  Operands are the precolored %rdi (dest
+    ; pointer), %rax (fill byte in %al), and %rcx (byte count; zero
+    ; is a no-op).  Byte encodings verified against GNU as:
+    ; rep stosb = f3 aa.
+    (lambda ()
+      (lambda (code* dest-reg fill-reg count-reg)
+        (safe-assert (and (eq? dest-reg %rdi) (eq? fill-reg %rax) (eq? count-reg %rcx)))
+        (emit-code (dest-reg fill-reg count-reg code*)
+          (build byte #xF3)
+          (build byte #xAA)))))
+
+  (define asm-memfill64
+    ; REP STOSQ: F3 48 AB.  Same operands as asm-memfill8, but %rax
+    ; holds a full pointer-sized fill word and %rcx counts words.
+    ; Byte encodings verified against GNU as: rep stosq = f3 48 ab.
+    (lambda ()
+      (lambda (code* dest-reg fill-reg count-reg)
+        (safe-assert (and (eq? dest-reg %rdi) (eq? fill-reg %rax) (eq? count-reg %rcx)))
+        (emit-code (dest-reg fill-reg count-reg code*)
+          (build byte #xF3)
+          (build byte #x48)
+          (build byte #xAB)))))
 
   (define asm-div
     (lambda (code* dest-rax src-rax src-rdx src2)
