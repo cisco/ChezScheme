@@ -924,26 +924,27 @@
                       ; REP STOSB/STOSQ fills exactly the requested extent,
                       ; and a zero count is a no-op, so no length guard is needed.
                       ; Compute the fuel amount before REP STOS clobbers %rcx.
-                      (bind #t uptr ([t-fuel
-                                      (%inline sra ,e-bytes
-                                         (immediate ,(+ (constant fuel-word-count-shift)
-                                                        (constant log2-ptr-bytes))))])
-                        (bind #t uptr ([t-fill (if memfill64?
-                                                   (%inline srl ,e-bytes (immediate ,(constant log2-ptr-bytes)))
-                                                   e-bytes)])
-                          `(seq
-                             ,(if memfill64?
-                                  (%inline memfill64
-                                     ,(%inline + ,e-vec (immediate ,data-disp))
-                                     ,t-fill
-                                     ,e-fill)
-                                  (%inline memfill8
-                                     ,(%inline + ,e-vec (immediate ,data-disp))
-                                     ,t-fill
-                                     ,e-fill))
-                             ,(if interrupt-trap?
-                                  `(seq ,(build-use-trap-fuel t-fuel `(immediate ,(- (constant log2-ptr-bytes)))) ,e-vec)
-                                  e-vec))))
+                      (bind #t uptr ([t-bytes e-bytes])
+                        (bind #t uptr ([t-fuel
+                                        (%inline sra ,t-bytes
+                                           (immediate ,(+ (constant fuel-word-count-shift)
+                                                          (constant log2-ptr-bytes))))])
+                          (bind #t uptr ([t-fill (if memfill64?
+                                                     (%inline srl ,t-bytes (immediate ,(constant log2-ptr-bytes)))
+                                                     t-bytes)])
+                            `(seq
+                               ,(if memfill64?
+                                    (%inline memfill64
+                                       ,(%inline + ,e-vec (immediate ,data-disp))
+                                       ,t-fill
+                                       ,e-fill)
+                                    (%inline memfill8
+                                       ,(%inline + ,e-vec (immediate ,data-disp))
+                                       ,t-fill
+                                       ,e-fill))
+                               ,(if interrupt-trap?
+                                    `(seq ,(build-use-trap-fuel t-fuel `(immediate ,(- (constant log2-ptr-bytes)))) ,e-vec)
+                                    e-vec)))))
                       (build-fill-loop e-vec e-bytes e-fill interrupt-trap?)))]
                [else
                 (build-fill-loop e-vec e-bytes e-fill interrupt-trap?)])])))
