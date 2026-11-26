@@ -3093,6 +3093,15 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Repair negative bignums in vfasl files (10.5.0)}
+
+A negative bignum in a file created by \scheme{vfasl-convert-file},
+such as a constant in the code of a vfasl boot file, was written with
+the bits of its two's complement representation in place of its
+magnitude, so nearly every such number was read back as a different
+one. For example, \scheme{(- (expt 2 64))} was read back as a bignum
+that prints as \scheme{-0}.
+
 \subsection{Compiler loop on negative \scheme{list-ref} index (10.5.0)}
 
 Compiling a call to \scheme{list-ref} or \scheme{list-tail} with a

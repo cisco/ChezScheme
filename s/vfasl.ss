@@ -988,9 +988,11 @@
 (define (exact-integer-copy v n vfi)
   (if (<= (constant most-negative-fixnum) n (constant most-positive-fixnum))
       (fix n)
-      (let ([len (fxquotient (fx+ (integer-length n) (fx- (constant bigit-bits) 1)) (constant bigit-bits))])
-        (vector-copy v n vfi
-                     (lambda (n) len)
+      ;; a bignum holds the magnitude; the sign is in its type word
+      (let* ([m (abs n)]
+             [len (fxquotient (fx+ (integer-length m) (fx- (constant bigit-bits) 1)) (constant bigit-bits))])
+        (vector-copy v m vfi
+                     (lambda (m) len)
                      vspace-data
                      header-size-bignum bignum-data-disp
                      bigit-bytes
@@ -1000,10 +1002,10 @@
                                       (constant type-positive-bignum)))
                      bignum-type-disp
                      set-bigit!
-                     (lambda (n i)
+                     (lambda (m i)
                        (let ([i (- len i 1)])
                          (let ([i (fx* i (constant bigit-bits))])
-                           (bitwise-bit-field n i (fx+ i (constant bigit-bits))))))))))
+                           (bitwise-bit-field m i (fx+ i (constant bigit-bits))))))))))
 
 (define (base-rtd-copy v vfi)
   (let ([new-p (or (vfasl-info-base-rtd vfi)
