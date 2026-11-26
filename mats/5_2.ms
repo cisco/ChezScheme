@@ -367,6 +367,10 @@
     (error? (list-ref '(a b c) -1))
     (error? (list-ref '(a b c) -4444444444444444444444))
     (error? (list-ref '(a b c) 'a))
+    ;; a negative constant index must not make the optimize-level 3
+    ;; inline loop forever
+    (procedure? (parameterize ([optimize-level 3])
+                  (compile '(lambda (p) (list-ref p -985)))))
  )
 
 (mat list-tail
@@ -407,6 +411,10 @@
     (error? (list-tail '(a b c) -1))
     (error? (list-tail '(a b c) -4444444444444444444444))
     (error? (list-tail '(a b c) 'a))
+    ;; a negative constant index must not make the optimize-level 3
+    ;; inline loop forever
+    (procedure? (parameterize ([optimize-level 3])
+                  (compile '(lambda (p) (list-tail p -985)))))
  )
 
 (mat list-head

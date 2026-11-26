@@ -3093,6 +3093,10 @@ in fasl files does not generally make sense.
 %-----------------------------------------------------------------------------
 \section{Bug Fixes}\label{section:bugfixes}
 
+\subsection{Compiler loop on negative \scheme{list-ref} index (10.5.0)}
+
+Compiling a call to \scheme{list-ref} or \scheme{list-tail} with a
+negative constant index at optimize level 3 no longer loops forever.
 \subsection{Repair compilation of file timestamp calls on ports (10.5.0)}
 
 The compiler now recognizes that \scheme{file-access-time},
