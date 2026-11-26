@@ -8854,8 +8854,8 @@
           (errorf #f "wrong value for ~s" n)))))
 
   ; runtime-produced sizes exercise the dynamic-size fill path (on
-  ; x86_64, REP STOSB); lengths straddle the pointer-size boundary and
-  ; scale up past a page, with values checked at both ends
+  ; non-Windows x86_64, REP STOSB); lengths straddle the pointer-size
+  ; boundary and scale up past a page, with values checked at both ends
   (let ([v (make-bytevector (string->number "0"))])
     (bytevector-fill! v #xab)
     (bytevector? v))

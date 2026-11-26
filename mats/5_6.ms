@@ -538,8 +538,8 @@
 
 (mat pointer-sized-fill-runtime-sizes
     ; runtime-produced sizes exercise the dynamic-size fill path for
-    ; pointer-sized elements (on x86_64, REP STOSQ); lengths straddle
-    ; the pointer-size boundary and scale up past a page, with values
+    ; pointer-sized elements (on non-Windows x86_64, REP STOSQ);
+    ; lengths straddle the pointer-size boundary and scale up past a page, with values
     ; checked at both ends.  Fill values deliberately have non-zero low
     ; bytes so a byte-at-a-time fill would be caught.
     (let ([v (make-fxvector (string->number "0"))])
