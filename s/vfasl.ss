@@ -703,7 +703,7 @@
                      vspace-data
                      header-size-fxvector fxvector-data-disp
                      ptr-bytes
-                     (bitwise-ior (bitwise-arithmetic-shift-left (vector-length v) (constant fxvector-length-offset))
+                     (bitwise-ior (bitwise-arithmetic-shift-left (vector-length vec) (constant fxvector-length-offset))
                                   (constant type-fxvector))
                      fxvector-type-disp
                      set-iptr!
